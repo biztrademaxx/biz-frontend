@@ -1,0 +1,10 @@
+{
+  "test@gmail.co": {
+    "otp": "338849",
+    "expiresAt": 1759210843274
+  },
+  "test@gmail.com": {
+    "otp": "840439",
+    "expiresAt": 1759210898573
+  }
+}

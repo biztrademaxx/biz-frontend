@@ -1,0 +1,51 @@
+[33m16faf0f[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32msandeep/restructures[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m HEAD@{0}: pull origin main: Fast-forward
+[33m7abfed4[m[33m ([m[1;31morigin/sandeep/restructures[m[33m)[m HEAD@{1}: commit: venue exdash
+[33med4d397[m HEAD@{2}: pull origin main: Fast-forward
+[33m2a7ad37[m HEAD@{3}: commit: events category
+[33m7da40d2[m HEAD@{4}: commit: events category
+[33mcddc3ba[m HEAD@{5}: pull origin main: Fast-forward
+[33mdc2788f[m HEAD@{6}: reset: moving to HEAD
+[33mdc2788f[m HEAD@{7}: pull origin main: Fast-forward
+[33me7a2837[m HEAD@{8}: commit: org speaker venue venues
+[33m388a487[m HEAD@{9}: pull origin main: Fast-forward
+[33me0c8403[m HEAD@{10}: reset: moving to HEAD
+[33me0c8403[m HEAD@{11}: pull origin main: Fast-forward
+[33m856df3e[m HEAD@{12}: pull origin main: Fast-forward
+[33m8669f6b[m HEAD@{13}: commit: venue and event pages
+[33m63fa54e[m HEAD@{14}: pull origin main: Fast-forward
+[33m900a3f0[m HEAD@{15}: commit: event location
+[33m3926002[m HEAD@{16}: pull origin main: Fast-forward
+[33m64dd6c6[m HEAD@{17}: reset: moving to HEAD
+[33m64dd6c6[m HEAD@{18}: reset: moving to HEAD
+[33m64dd6c6[m HEAD@{19}: reset: moving to HEAD
+[33m64dd6c6[m HEAD@{20}: pull origin main: Fast-forward
+[33m19cbc2f[m HEAD@{21}: commit: home venue myevents
+[33m4e09acd[m HEAD@{22}: pull origin main: Fast-forward
+[33mb7391cd[m HEAD@{23}: reset: moving to HEAD
+[33mb7391cd[m HEAD@{24}: pull origin main: Fast-forward
+[33mb29fde3[m HEAD@{25}: pull origin main: Fast-forward
+[33m7c94a66[m HEAD@{26}: pull origin main: Fast-forward
+[33m75ab13d[m HEAD@{27}: reset: moving to HEAD
+[33m75ab13d[m HEAD@{28}: pull origin main: Fast-forward
+[33m06612c3[m HEAD@{29}: commit: past events
+[33md648297[m HEAD@{30}: pull origin main: Fast-forward
+[33m2f609a3[m HEAD@{31}: reset: moving to HEAD
+[33m2f609a3[m HEAD@{32}: commit: event overview
+[33m2baa4d4[m HEAD@{33}: pull origin main: Merge made by the 'ort' strategy.
+[33m640d806[m HEAD@{34}: commit: venue
+[33medbf5fc[m HEAD@{35}: commit: fetch venue venueprofile venuelayout
+[33mde82af6[m HEAD@{36}: pull origin main: Fast-forward
+[33m36590f2[m HEAD@{37}: commit: event-dashboard
+[33m459f011[m HEAD@{38}: pull origin main: Fast-forward
+[33m47f9598[m HEAD@{39}: reset: moving to HEAD
+[33m47f9598[m HEAD@{40}: pull origin main: Fast-forward
+[33m46da4f3[m HEAD@{41}: commit: Updated appointment GET API to include event name
+[33m5ee3bc5[m HEAD@{42}: pull origin main: Merge made by the 'ort' strategy.
+[33m3b95604[m HEAD@{43}: reset: moving to HEAD
+[33m3b95604[m HEAD@{44}: pull origin main: updating HEAD
+[33m3b95604[m HEAD@{45}: commit: prop
+[33m3497cb9[m HEAD@{46}: pull origin main: Fast-forward
+[33mca27330[m[33m ([m[1;32mmain[m[33m)[m HEAD@{47}: reset: moving to HEAD
+[33mca27330[m[33m ([m[1;32mmain[m[33m)[m HEAD@{48}: checkout: moving from main to sandeep/restructures
+[33mca27330[m[33m ([m[1;32mmain[m[33m)[m HEAD@{49}: reset: moving to HEAD
+[33mca27330[m[33m ([m[1;32mmain[m[33m)[m HEAD@{50}: clone: from https://github.com/vamshichi/biz.git

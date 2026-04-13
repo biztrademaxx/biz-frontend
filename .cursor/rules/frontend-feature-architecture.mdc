@@ -1,0 +1,24 @@
+---
+description: Frontend feature layout — lib domain layer, feature folders, typed API boundaries
+globs: app/**/*.{ts,tsx},components/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Frontend architecture (biz-frontend)
+
+When adding or refactoring UI that talks to HTTP APIs or shared domain shapes:
+
+1. **`lib/<domain>/`** — Server-safe types, normalizers (`normalize*` from `unknown`), and fetch helpers (e.g. `fetch-*-server.ts` with `cache` strategy documented in code). No React imports in normalizers/types unless unavoidable.
+
+2. **`components/<feature-name>/`** — One vertical slice per home-page-style feature:
+   - Async **section** (RSC) composes heading + data fetch + client subtree.
+   - **`*Client.tsx`** or **`*GridClient.tsx`** only where hooks, browser APIs, or interactivity are required (`"use client"`).
+   - **`hooks/`**, **`utils/`** (pure helpers), optional **`types.ts`** that re-exports from `@/lib/.../types` for convenience.
+
+3. **Stable barrel at `components/`** — Keep existing import paths stable: e.g. `components/FeaturedEvents.tsx` re-exports the feature section default (and public types if needed).
+
+4. **Typing** — Prefer `unknown` at API boundaries and narrow with small helpers. Avoid `any` for API JSON. Client components consume **`FeaturedEventPayload`-style types** from `@/lib/...`, not duplicate ad-hoc interfaces.
+
+5. **Styling** — Shared animation/layout for a feature belongs in `app/globals.css` with a clear class prefix (e.g. `.organizers-marquee-*`).
+
+Long-form template, home reference list, and migration checklist: `docs/frontend-architecture.md`.

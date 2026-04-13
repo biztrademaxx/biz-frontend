@@ -1,0 +1,37 @@
+# Dependencies
+node_modules
+.pnp
+.pnp.*
+
+# Next.js
+.next/
+out/
+build
+
+# Env (keep local only)
+.env
+.env*.local
+
+# Testing
+coverage
+
+# Debug / IDE
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Vercel
+.vercel
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# Prisma generated (if any)
+lib/generated/prisma
+app/generated/prisma
+
+# Misc
+.DS_Store
+*.pem
