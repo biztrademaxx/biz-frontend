@@ -213,50 +213,50 @@ function TrendingEventsSideCard({ event, imageUrl }: { event: Event; imageUrl: s
 
   return (
     <Link href={path} className="group block">
-      <article className="mb-2 rounded-md border border-gray-100 bg-white p-2 shadow-[0_2px_12px_rgba(0,0,0,0.08),0_4px_20px_rgba(0,0,0,0.06)] transition-shadow hover:shadow-[0_4px_20px_rgba(0,0,0,0.12)]">
-        <div className="mb-1 flex items-center justify-end gap-1.5 text-[11px] font-medium leading-none text-gray-800">
-          <span className="h-3 w-3 shrink-0 rounded-sm bg-amber-400" aria-hidden />
+      <article className="mb-3 rounded-lg border border-gray-100 bg-white p-3 shadow-[0_2px_12px_rgba(0,0,0,0.08),0_4px_20px_rgba(0,0,0,0.06)] transition-shadow hover:shadow-[0_4px_20px_rgba(0,0,0,0.12)]">
+        <div className="mb-1.5 flex items-center justify-end gap-1.5 text-xs font-medium leading-none text-gray-800">
+          <span className="h-3.5 w-3.5 shrink-0 rounded-sm bg-amber-400" aria-hidden />
           <span>Trending</span>
         </div>
-        <p className="mb-0.5 text-[11px] font-medium leading-tight text-gray-800">
+        <p className="mb-1 text-xs font-medium leading-tight text-gray-800">
           {formatTrendingEventDateRange(event.timings.startDate, event.timings.endDate)}
         </p>
-        <div className="relative pr-12">
-          <p className="line-clamp-2 pr-0.5 text-xs font-bold leading-snug text-[#1F5D84] group-hover:underline">
+        <div className="relative pr-14">
+          <p className="line-clamp-2 pr-1 text-sm font-bold leading-snug text-[#1F5D84] group-hover:underline">
             {subtitle}
           </p>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={imageUrl}
             alt={event.title}
-            className="absolute right-0 top-0 h-10 w-10 rounded-md border border-gray-100 object-cover"
+            className="absolute right-0 top-0 h-12 w-12 rounded-md border border-gray-100 object-cover"
           />
         </div>
-        <p className="mt-0.5 text-[11px] font-semibold leading-tight text-gray-900 line-clamp-1">
+        <p className="mt-1 text-xs font-semibold leading-tight text-gray-900 line-clamp-1">
           {trendingLocationLine(event)}
         </p>
         {(event.categories?.length ?? 0) > 0 && (
-          <div className="mt-1 flex flex-wrap gap-0.5 overflow-hidden max-h-[1.35rem]">
+          <div className="mt-1.5 flex flex-wrap gap-1 overflow-hidden max-h-[1.5rem]">
             {event.categories.slice(0, 2).map((cat) => (
               <span
                 key={cat}
-                className="inline-block max-w-[7rem] truncate rounded bg-gray-100 px-1 py-0.5 text-[10px] leading-none text-gray-600"
+                className="inline-block max-w-[7.5rem] truncate rounded bg-gray-100 px-1.5 py-0.5 text-[11px] leading-none text-gray-600"
               >
                 {cat}
               </span>
             ))}
           </div>
         )}
-        <div className="mt-1.5 flex items-center justify-between border-t border-gray-100 pt-1.5">
-          <span className="inline-flex items-center gap-0.5 text-[11px] text-gray-700">
-            <Users className="h-3 w-3 shrink-0 text-gray-600" aria-hidden />
+        <div className="mt-2 flex items-center justify-between border-t border-gray-100 pt-2">
+          <span className="inline-flex items-center gap-1 text-xs text-gray-700">
+            <Users className="h-3.5 w-3.5 shrink-0 text-gray-600" aria-hidden />
             {formatMembersShort(followers)} Members
           </span>
           <span
-            className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-gray-100 text-gray-700 transition-colors group-hover:bg-gray-200"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-700 transition-colors group-hover:bg-gray-200"
             aria-hidden
           >
-            <Bookmark className="h-3 w-3" fill="currentColor" />
+            <Bookmark className="h-3.5 w-3.5" fill="currentColor" />
           </span>
         </div>
       </article>
@@ -1515,8 +1515,7 @@ export default function EventsPageContent({
 
   return (
     <div className="min-h-screen bg-gray-50" style={{ fontFamily: "'Inter', 'Segoe UI', system-ui, sans-serif" }}>
-      <div className="w-full px-4 sm:px-6 md:px-8 lg:px-12 xl:px-35 2xl:px-50 py-6">
-        <div className="w-full py-6">
+      <div className="mx-auto w-full min-w-0 max-w-7xl py-6">
           {/* Tabs Navigation - Added Verified Tab */}
           <div className="flex flex-wrap gap-1 sm:gap-2 mb-6 border-b border-gray-300 overflow-x-auto">
             {tabs.map((tab) => (
@@ -1597,7 +1596,7 @@ export default function EventsPageContent({
           </div>
 
           {/* Main Grid Layout */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6 lg:gap-8 xl:gap-10 2xl:gap-12">
+          <div className="grid grid-cols-1 gap-3 md:gap-4 lg:grid-cols-12 lg:gap-5 xl:gap-6">
             {/* Left Sidebar - 3 columns on desktop */}
             <div className="lg:col-span-3 hidden lg:block">
               <div className="sticky top-6">
@@ -2144,7 +2143,7 @@ export default function EventsPageContent({
                 <div className="lg:hidden">
                   <div className="flex gap-3 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide">
                     {trendingSidebarEvents.map((event) => (
-                      <div key={event.id} className="w-[min(100%,300px)] shrink-0 snap-start">
+                      <div key={event.id} className="w-[min(100%,340px)] shrink-0 snap-start">
                         <TrendingEventsSideCard
                           event={event}
                           imageUrl={getEventImage(event) || "/placeholder.svg"}
@@ -2213,7 +2212,6 @@ export default function EventsPageContent({
               </div>
             </div>
           </div>
-        </div>
       </div>
     </div>
   )

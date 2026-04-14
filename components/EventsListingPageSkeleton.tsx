@@ -66,15 +66,14 @@ export default function EventsListingPageSkeleton() {
       aria-busy="true"
       aria-label="Loading events"
     >
-      <div className="w-full px-4 py-6 sm:px-6 md:px-8 lg:px-12 xl:px-35 2xl:px-50">
-        <div className="w-full py-6">
+      <div className="mx-auto w-full min-w-0 max-w-7xl py-6">
           <div className="mb-6 flex flex-wrap gap-2 overflow-x-auto border-b border-gray-300 pb-0">
             {Array.from({ length: 6 }).map((_, i) => (
               <div key={i} className="home-shimmer mb-[-1px] h-11 w-24 shrink-0 rounded-t-md sm:w-28" />
             ))}
           </div>
 
-          <div className="grid grid-cols-1 gap-4 md:gap-6 lg:grid-cols-12 lg:gap-8 xl:gap-10 2xl:gap-12">
+          <div className="grid grid-cols-1 gap-3 md:gap-4 lg:grid-cols-12 lg:gap-5 xl:gap-6">
             <div className="hidden lg:col-span-3 lg:block">
               <div className="sticky top-6 border border-gray-200 bg-white">
                 <SidebarBlockSkeleton rows={4} />
@@ -120,7 +119,6 @@ export default function EventsListingPageSkeleton() {
               </div>
             </div>
           </div>
-        </div>
       </div>
     </div>
   )
