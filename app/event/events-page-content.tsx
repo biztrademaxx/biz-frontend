@@ -508,16 +508,46 @@ function EventListingCardImages({
   }, [count, key])
 
   const viewportClass =
-    "relative mx-auto h-[180px] w-full max-w-lg overflow-hidden rounded-md bg-slate-100 md:mx-0 md:h-[180px] md:w-[240px] md:max-w-none"
+    "relative mx-auto h-[120px] w-full max-w-lg overflow-hidden rounded-md bg-slate-100 md:mx-0 md:h-[120px] md:w-[180px] md:max-w-none"
+
+  const carouselDots = (
+    <div
+      className="flex min-h-[24px] items-center justify-center gap-1.5 px-1"
+      role={count > 1 ? "tablist" : undefined}
+      aria-label={count > 1 ? `${title} photos` : undefined}
+    >
+      {count > 1
+        ? urls.map((_, i) => (
+            <button
+              key={i}
+              type="button"
+              role="tab"
+              aria-selected={i === index}
+              className={`h-1.5 rounded-full transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1F5D84] focus-visible:ring-offset-1 ${
+                i === index ? "w-4 bg-slate-700" : "w-1.5 bg-slate-300 hover:bg-slate-400"
+              }`}
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                setIndex(i)
+              }}
+            />
+          ))
+        : null}
+    </div>
+  )
 
   if (count <= 1) {
     return (
-      <Link href={href} className="block">
-        <div className={viewportClass}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={urls[0]} alt={title} className="absolute inset-0 h-full w-full object-cover" />
-        </div>
-      </Link>
+      <>
+        <Link href={href} className="block">
+          <div className={viewportClass}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={urls[0]} alt={title} className="absolute inset-0 h-full w-full object-cover" />
+          </div>
+        </Link>
+        {carouselDots}
+      </>
     )
   }
 
@@ -549,28 +579,7 @@ function EventListingCardImages({
           </div>
         </div>
       </Link>
-      <div
-        className="mt-2 flex justify-center gap-1.5 px-1"
-        role="tablist"
-        aria-label={`${title} photos`}
-      >
-        {urls.map((_, i) => (
-          <button
-            key={i}
-            type="button"
-            role="tab"
-            aria-selected={i === index}
-            className={`h-1.5 rounded-full transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1F5D84] focus-visible:ring-offset-1 ${
-              i === index ? "w-4 bg-slate-700" : "w-1.5 bg-slate-300 hover:bg-slate-400"
-            }`}
-            onClick={(e) => {
-              e.preventDefault()
-              e.stopPropagation()
-              setIndex(i)
-            }}
-          />
-        ))}
-      </div>
+      {carouselDots}
     </>
   )
 }
@@ -1732,12 +1741,12 @@ export default function EventsPageContent({
             <div className="lg:col-span-5 order-1 lg:order-2 w-full">
               {/* Dynamic Banner Section — brand gradient + white type (10times-style listing header) */}
               <div
-                className="relative mb-8 min-h-[168px] overflow-hidden rounded-lg border border-white/15 shadow-lg sm:min-h-[180px]"
+                className="relative mb-6 min-h-[128px] overflow-hidden rounded-lg border border-white/15 shadow-lg sm:min-h-[140px]"
                 style={listingBannerSurfaceStyle}
               >
-                <div className="relative z-10 w-full p-4 pb-0 sm:p-6 sm:pb-0">
+                <div className="relative z-10 w-full p-3 pb-0 sm:p-4 sm:pb-0">
                   <h1
-                    className="mb-6 font-sans text-2xl font-bold tracking-tight text-white sm:text-3xl"
+                    className="mb-3 font-sans text-xl font-bold tracking-tight text-white sm:text-2xl"
                     style={{
                       textShadow:
                         "0 1px 2px rgba(0,0,0,0.5), 0 2px 16px rgba(0,0,0,0.35), 0 0 1px rgba(0,0,0,0.8)",
@@ -1878,47 +1887,48 @@ export default function EventsPageContent({
                         key={event.id}
                         className="bg-white border border-gray-300 rounded-lg overflow-hidden w-full hover:shadow-lg transition-shadow duration-300"
                       >
-                        {/* Top: main content (left) + fixed-size image (right) */}
-                        <div className="flex flex-col md:flex-row md:items-start">
-                          <div className="min-w-0 flex-1 px-4 sm:px-5 py-4">
-                            <Link href={path} className="block group">
-                              <p className="text-xs sm:text-sm font-medium text-gray-600 mb-1">
+                        {/* Top: main content (left) + fixed-size image (right); min-height keeps card rows uniform */}
+                        <div className="flex flex-col md:flex-row md:items-stretch md:min-h-[252px]">
+                          <div className="flex min-h-0 min-w-0 flex-1 flex-col px-4 py-4 sm:px-5">
+                            <Link href={path} className="group flex min-h-0 flex-1 flex-col">
+                              <p className="mb-1 text-xs font-medium text-gray-600 sm:text-sm">
                                 {formatDate(event.timings.startDate)}
                                 {event.timings.endDate && <> - {formatDate(event.timings.endDate)}</>}
                                 {" "}
                                 {formatYear(event.timings.startDate)}
                               </p>
 
-                              <div className="mb-1 flex items-start gap-3">
-                                <h3 className="min-w-0 flex-1 text-[18px] sm:text-[20px] font-bold leading-snug text-[#1F5D84] group-hover:underline">
-                                  {event.title}
-                                </h3>
-                              </div>
+                              <h3 className="mb-1 min-h-[2.5rem] text-[18px] font-bold leading-snug text-[#1F5D84] line-clamp-2 sm:text-[20px] group-hover:underline">
+                                {event.title}
+                              </h3>
 
-                              <p className="mb-3 flex items-center text-[14px] font-normal font-sans text-[#212529]">
-                                <MapPin className="w-4 h-4 mr-1 shrink-0 text-[#6C757D]" />
-                                {event.location?.city}, {event.location?.country}
+                              <p className="mb-3 flex min-h-[1.5rem] items-center text-[14px] font-normal font-sans text-[#212529]">
+                                <MapPin className="mr-1 h-4 w-4 shrink-0 text-[#6C757D]" />
+                                <span className="line-clamp-1">
+                                  {event.location?.city}, {event.location?.country}
+                                </span>
                               </p>
 
                               <p
                                 className="
-    text-[14px]
-    text-[#5E5E5E]
-    font-normal
-    font-sans
-    leading-relaxed
+    mb-4
+    min-h-[3.75rem]
+    max-w-[95%]
     text-left
     break-words
     whitespace-normal
+    text-[14px]
+    font-normal
+    font-sans
+    leading-relaxed
+    text-[#5E5E5E]
     line-clamp-3
-    mb-4
-    max-w-[95%]
   "
                               >
                                 {event.description}
                               </p>
 
-                              <div className="flex flex-wrap gap-2">
+                              <div className="mt-auto flex min-h-[1.75rem] flex-wrap gap-2">
                                 {event.categories.slice(0, 3).map((cat, i) => (
                                   <span
                                     key={i}
@@ -1941,18 +1951,18 @@ export default function EventsPageContent({
                             </Link>
                           </div>
 
-                          <div className="flex w-full shrink-0 flex-col items-stretch md:w-[252px] md:shrink-0">
-                            {event.isVerified ? (
-                              <div className="flex justify-end px-3 pb-1.5 pt-2 md:px-3 md:pb-2 md:pl-0 md:pt-3">
-                                <EventListingVerifiedBadge event={event} />
+                          <div className="flex w-full shrink-0 flex-col items-stretch md:w-[200px] md:shrink-0">
+                            <div className="flex min-h-[2.5rem] items-start justify-end px-3 pb-1.5 pt-2 md:min-h-[2.75rem] md:px-3 md:pb-2 md:pl-0 md:pt-3">
+                              {event.isVerified ? <EventListingVerifiedBadge event={event} /> : null}
+                            </div>
+                            <div className="flex flex-1 flex-col px-3 pb-3 pt-0 md:px-3 md:pb-3 md:pl-0 md:pt-0">
+                              <div className="mt-auto w-full">
+                                <EventListingCardImages
+                                  href={path}
+                                  urls={normalizeEventImageUrls(event)}
+                                  title={event.title}
+                                />
                               </div>
-                            ) : null}
-                            <div className="px-3 pb-3 pt-2 md:px-3 md:pb-3 md:pl-0 md:pt-2">
-                              <EventListingCardImages
-                                href={path}
-                                urls={normalizeEventImageUrls(event)}
-                                title={event.title}
-                              />
                             </div>
                           </div>
                         </div>

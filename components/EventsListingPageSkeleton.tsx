@@ -24,8 +24,8 @@ function SidebarBlockSkeleton({ rows = 5 }: { rows?: number }) {
 function EventListCardSkeleton() {
   return (
     <div className="overflow-hidden rounded-lg border border-gray-300 bg-white">
-      <div className="flex flex-col md:flex-row">
-        <div className="flex-1 space-y-3 px-4 py-4 sm:px-5">
+      <div className="flex flex-col md:min-h-[252px] md:flex-row md:items-stretch">
+        <div className="flex min-h-0 flex-1 flex-col space-y-3 px-4 py-4 sm:px-5">
           <div className="home-shimmer h-3.5 w-40 rounded-md" />
           <div className="space-y-2">
             <div className="home-shimmer h-6 w-[95%] max-w-xl rounded-md" />
@@ -50,8 +50,8 @@ function EventListCardSkeleton() {
             <div className="home-shimmer h-8 w-32 rounded-md" />
           </div>
         </div>
-        <div className="w-full flex-shrink-0 p-3 md:w-[220px]">
-          <div className="hero-card-shimmer h-[150px] w-full rounded-md md:h-full md:min-h-[140px]" />
+        <div className="flex w-full shrink-0 flex-col justify-end p-3 md:w-[200px]">
+          <div className="hero-card-shimmer mx-auto h-[120px] w-full max-w-lg rounded-md md:mx-0 md:w-[180px]" />
         </div>
       </div>
     </div>
@@ -86,7 +86,7 @@ export default function EventsListingPageSkeleton() {
             </div>
 
             <div className="order-1 w-full lg:order-2 lg:col-span-5">
-              <div className="relative mb-8 h-48 overflow-hidden rounded-sm border border-gray-200 shadow-md">
+              <div className="relative mb-6 h-36 overflow-hidden rounded-sm border border-gray-200 shadow-md">
                 <div className="hero-card-shimmer absolute inset-0 h-full w-full" />
                 <div className="relative z-10 flex h-full flex-col justify-center space-y-3 p-4 sm:p-6 lg:p-8">
                   <div className="home-shimmer h-9 w-[min(100%,320px)] rounded-md" />
@@ -114,7 +114,7 @@ export default function EventsListingPageSkeleton() {
 
             <div className="order-3 w-full lg:col-span-4">
               <div className="sticky top-6 space-y-4">
-                <div className="home-shimmer min-h-[280px] w-full rounded-lg border border-gray-200" />
+                <div className="home-shimmer min-h-[252px] w-full rounded-lg border border-gray-200" />
                 <div className="home-shimmer min-h-[200px] w-full rounded-lg border border-gray-200" />
               </div>
             </div>
