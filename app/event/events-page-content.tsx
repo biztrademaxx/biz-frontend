@@ -206,6 +206,41 @@ function trendingLocationLine(event: Event): string {
   return "Location TBD"
 }
 
+function normalizeEventFormatName(event: Pick<Event, "eventType" | "categories">): string {
+  let formatName = ""
+  if (event.eventType && typeof event.eventType === "string") {
+    formatName = event.eventType.trim()
+  } else if (event.categories && Array.isArray(event.categories) && event.categories.length > 0) {
+    const firstCategory = event.categories[0]
+    if (typeof firstCategory === "string") {
+      formatName = firstCategory.trim()
+    }
+  }
+  if (!formatName) {
+    return "Other"
+  }
+  const normalizedFormat = formatName.toLowerCase()
+  if (normalizedFormat.includes("trade show") || normalizedFormat.includes("tradeshow")) {
+    return "Exhibition"
+  }
+  if (normalizedFormat.includes("conference")) {
+    return "Conference"
+  }
+  if (normalizedFormat.includes("workshop") || normalizedFormat.includes("workshops")) {
+    return "Workshops"
+  }
+  if (normalizedFormat.includes("exhibition") || normalizedFormat.includes("expo")) {
+    return "Exhibition"
+  }
+  if (normalizedFormat.includes("seminar")) {
+    return "Seminar"
+  }
+  if (normalizedFormat.includes("meetup") || normalizedFormat.includes("meeting")) {
+    return "Meetup"
+  }
+  return formatName
+}
+
 function TrendingEventsSideCard({ event, imageUrl }: { event: Event; imageUrl: string }) {
   const path = eventPublicPath(event)
   const followers = typeof event.followersCount === "number" ? event.followersCount : 0
@@ -947,32 +982,7 @@ export default function EventsPageContent({
     const formatMap = new Map<string, number>()
     formatMap.set("All Formats", events.length)
     events.forEach((event) => {
-      let formatName = ""
-      if (event.eventType && typeof event.eventType === "string") {
-        formatName = event.eventType.trim()
-      } else if (event.categories && Array.isArray(event.categories) && event.categories.length > 0) {
-        const firstCategory = event.categories[0]
-        if (typeof firstCategory === "string") {
-          formatName = firstCategory.trim()
-        }
-      }
-      if (!formatName) {
-        formatName = "Other"
-      }
-      const normalizedFormat = formatName.toLowerCase()
-      if (normalizedFormat.includes("trade show") || normalizedFormat.includes("tradeshow")) {
-        formatName = "Exhibition"
-      } else if (normalizedFormat.includes("conference")) {
-        formatName = "Conference"
-      } else if (normalizedFormat.includes("workshop") || normalizedFormat.includes("workshops")) {
-        formatName = "Workshops"
-      } else if (normalizedFormat.includes("exhibition") || normalizedFormat.includes("expo")) {
-        formatName = "Exhibition"
-      } else if (normalizedFormat.includes("seminar")) {
-        formatName = "Seminar"
-      } else if (normalizedFormat.includes("meetup") || normalizedFormat.includes("meeting")) {
-        formatName = "Meetup"
-      }
+      const formatName = normalizeEventFormatName(event)
       formatMap.set(formatName, (formatMap.get(formatName) || 0) + 1)
     })
     const allFormatsCount = formatMap.get("All Formats") || 0
@@ -1195,12 +1205,13 @@ export default function EventsPageContent({
     if (selectedFormat && selectedFormat !== "All Formats") {
       const wantKey = exploreKeyFromFormatName(selectedFormat)
       filtered = filtered.filter((event) => {
+        const normalizedEventFormat = normalizeEventFormatName(event)
+        if (normalizedEventFormat.toLowerCase() === selectedFormat.toLowerCase().trim()) {
+          return true
+        }
         const eventKey = classifyExploreEventType(event.eventType || event.categories?.[0])
         if (wantKey && eventKey) return eventKey === wantKey
-        const eventType = event.eventType || event.categories?.[0] || ""
-        const eventTypeStr = String(eventType).toLowerCase().trim()
-        const selectedFormatStr = String(selectedFormat).toLowerCase().trim()
-        return eventTypeStr === selectedFormatStr
+        return false
       })
     }
 
