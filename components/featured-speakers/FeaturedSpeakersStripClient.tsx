@@ -20,7 +20,7 @@ export default function FeaturedSpeakersStripClient({ speakers }: FeaturedSpeake
   if (speakers.length === 0) return null
 
   return (
-    <div className="home-tt-section mx-auto w-full max-w-[1320px] px-4 sm:px-6 lg:px-8">
+    <div className="home-tt-section mx-auto w-full min-w-0 max-w-7xl px-3 sm:px-4 lg:px-6">
       <div className="group relative">
         <div className="border-b border-gray-200 py-6">
           <h2 className="home-tt-h2 mb-3">

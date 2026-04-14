@@ -1535,7 +1535,7 @@ export default function EventsPageContent({
 
   return (
     <div className="min-h-screen bg-gray-50" style={{ fontFamily: "'Inter', 'Segoe UI', system-ui, sans-serif" }}>
-      <div className="mx-auto w-full min-w-0 max-w-7xl py-6">
+      <div className="mx-auto w-full min-w-0 max-w-7xl px-3 py-6 sm:px-4 lg:px-6">
           {/* Tabs Navigation - Added Verified Tab */}
           <div className="flex flex-wrap gap-1 sm:gap-2 mb-6 border-b border-gray-300 overflow-x-auto">
             {tabs.map((tab) => (

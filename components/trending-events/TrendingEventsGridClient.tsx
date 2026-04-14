@@ -173,7 +173,7 @@ export default function TrendingEventsGridClient({ events, goingBundles: initial
   }
 
   return (
-    <section className="home-tt-section mx-auto max-w-[1320px] px-4 py-12 sm:px-6 lg:px-8">
+    <section className="home-tt-section mx-auto w-full min-w-0 max-w-7xl px-3 py-12 sm:px-4 lg:px-6">
       <div className="mb-10 text-start">
         <h2 className="home-tt-h2 mb-3">
           Trending Upcoming Events
@@ -208,7 +208,7 @@ export default function TrendingEventsGridClient({ events, goingBundles: initial
                         handleCardClick(event)
                       }
                     }}
-                    className="group flex h-full cursor-pointer flex-col overflow-hidden rounded-2xl border border-gray-100/90 bg-white shadow-sm ring-1 ring-black/[0.04] transition-all duration-300 hover:-translate-y-0.5 hover:border-[#002C71]/20 hover:shadow-lg hover:shadow-[#002C71]/[0.08]"
+                    className="group flex h-full cursor-pointer flex-col overflow-hidden rounded-sm border border-gray-100/90 bg-white shadow-sm ring-1 ring-black/[0.04] transition-all duration-300 hover:-translate-y-0.5 hover:border-[#002C71]/20 hover:shadow-lg hover:shadow-[#002C71]/[0.08]"
                   >
                     <div className="relative aspect-[5/3] w-full shrink-0 overflow-hidden bg-gradient-to-br from-slate-100 to-slate-200">
                       <img
@@ -225,7 +225,7 @@ export default function TrendingEventsGridClient({ events, goingBundles: initial
                         aria-hidden
                       />
                       <div className="pointer-events-none absolute left-3 top-3 z-20 sm:left-4 sm:top-4">
-                        <div className="pointer-events-auto flex min-w-[3.25rem] flex-col items-center justify-center rounded-md bg-white px-2.5 py-2 shadow-md ring-1 ring-black/[0.06]">
+                        <div className="pointer-events-auto flex min-w-[3.25rem] flex-col items-center justify-center rounded-sm bg-white px-2.5 py-2 shadow-md ring-1 ring-black/[0.06]">
                           <span className="text-2xl font-bold leading-none text-gray-900">{day}</span>
                           {month ? (
                             <span className="mt-1 text-[10px] font-bold leading-none tracking-[0.12em] text-gray-900">
@@ -264,7 +264,7 @@ export default function TrendingEventsGridClient({ events, goingBundles: initial
                         <button
                           type="button"
                           onClick={(e) => handleRegister(e, event)}
-                          className="inline-flex h-10 shrink-0 items-center justify-center rounded-lg bg-[#002C71] px-4 text-sm font-bold text-white shadow-sm transition hover:bg-[#002255] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#002C71]"
+                          className="inline-flex h-10 shrink-0 items-center justify-center rounded-sm bg-[#002C71] px-4 text-sm font-bold text-white shadow-sm transition hover:bg-[#002255] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#002C71]"
                         >
                           Register
                         </button>
@@ -276,12 +276,12 @@ export default function TrendingEventsGridClient({ events, goingBundles: initial
             : Array.from({ length: 4 }).map((_, i) => (
                 <div
                   key={i}
-                  className="flex h-full flex-col overflow-hidden rounded-2xl border border-gray-100/90 bg-white shadow-sm ring-1 ring-black/[0.04]"
+                  className="flex h-full flex-col overflow-hidden rounded-sm border border-gray-100/90 bg-white shadow-sm ring-1 ring-black/[0.04]"
                 >
                   <div className="home-shimmer aspect-[5/3] w-full shrink-0" />
                   <div className="flex min-h-0 flex-1 flex-col space-y-3 px-5 pb-5 pt-4">
-                    <div className="home-shimmer h-5 min-h-[2.75rem] w-[82%] rounded-md md:min-h-[3rem]" />
-                    <div className="home-shimmer h-4 min-h-[2.5rem] w-[88%] rounded-md md:min-h-[2.75rem]" />
+                    <div className="home-shimmer h-5 min-h-[2.75rem] w-[82%] rounded-sm md:min-h-[3rem]" />
+                    <div className="home-shimmer h-4 min-h-[2.5rem] w-[88%] rounded-sm md:min-h-[2.75rem]" />
                     <div className="mt-auto flex items-center justify-between gap-3 border-t border-gray-100 pt-4">
                       <div className="flex min-w-0 flex-1 items-center gap-2">
                         <div className="flex shrink-0">
@@ -295,7 +295,7 @@ export default function TrendingEventsGridClient({ events, goingBundles: initial
                         </div>
                         <div className="home-shimmer h-4 w-24 rounded" />
                       </div>
-                      <div className="home-shimmer h-10 w-[5.5rem] shrink-0 rounded-lg" />
+                      <div className="home-shimmer h-10 w-[5.5rem] shrink-0 rounded-sm" />
                     </div>
                   </div>
                 </div>

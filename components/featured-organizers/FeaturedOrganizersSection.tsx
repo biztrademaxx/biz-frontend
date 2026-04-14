@@ -6,7 +6,7 @@ import FeaturedOrganizersStripClient from "./FeaturedOrganizersStripClient"
 
 function Shell({ children }: { children: ReactNode }) {
   return (
-    <div className="home-tt-section mx-auto w-full max-w-[1320px] px-4 sm:px-6 lg:px-8">
+    <div className="home-tt-section mx-auto w-full min-w-0 max-w-7xl px-3 sm:px-4 lg:px-6">
       <FeaturedOrganizersSectionHeading />
       {children}
     </div>

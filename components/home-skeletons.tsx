@@ -15,7 +15,7 @@ function SectionTitleLines() {
 export function FeaturedOrganizersSkeleton() {
   return (
     <div
-      className="home-tt-section mx-auto w-full max-w-[1320px] px-4 sm:px-6 lg:px-8"
+      className="home-tt-section mx-auto w-full max-w-7xl px-3 sm:px-4 lg:px-6"
       aria-busy="true"
       aria-label="Loading featured organizers"
     >
@@ -25,10 +25,10 @@ export function FeaturedOrganizersSkeleton() {
           {Array.from({ length: 5 }).map((_, i) => (
             <div
               key={i}
-              className="home-shimmer h-[120px] w-[200px] shrink-0 rounded-lg border border-gray-200 bg-white"
+              className="home-shimmer h-[120px] w-[200px] shrink-0 rounded-sm border border-gray-200 bg-white"
             />
           ))}
-          <div className="home-shimmer h-[120px] w-[200px] shrink-0 rounded-lg border-2 border-dashed border-gray-200 bg-gray-50/80" />
+          <div className="home-shimmer h-[120px] w-[200px] shrink-0 rounded-sm border-2 border-dashed border-gray-200 bg-gray-50/80" />
         </div>
       </div>
     </div>
@@ -39,7 +39,7 @@ export function FeaturedOrganizersSkeleton() {
 export function FeaturedSpeakersSkeleton() {
   return (
     <div
-      className="home-tt-section mx-auto w-full max-w-[1320px] px-4 sm:px-6 lg:px-8"
+      className="home-tt-section mx-auto w-full max-w-7xl px-3 sm:px-4 lg:px-6"
       aria-busy="true"
       aria-label="Loading featured speakers"
     >
@@ -66,7 +66,7 @@ export function FeaturedSpeakersSkeleton() {
 export function CategoryBrowseSkeleton() {
   return (
     <div className="home-tt-section bg-[#F3F2F0] py-6 sm:py-8" aria-busy="true" aria-label="Loading categories">
-      <div className="mx-auto max-w-[1320px] px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl px-3 sm:px-4 lg:px-6">
         <div className="home-shimmer mb-3 h-6 w-56 max-w-[85%] rounded-md" />
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-6 md:gap-4">
           {Array.from({ length: 5 }).map((_, i) => (
@@ -90,7 +90,7 @@ export function CategoryBrowseSkeleton() {
 
 function VenueCardSkeleton() {
   return (
-    <div className="flex flex-col overflow-hidden rounded-md border border-gray-200 bg-white shadow-sm">
+    <div className="flex flex-col overflow-hidden rounded-sm border border-gray-200 bg-white shadow-sm">
       <div className="home-shimmer h-28 w-full sm:h-32" />
       <div className="flex flex-col gap-1.5 p-3 sm:p-3.5">
         <div className="flex items-start justify-between gap-2">
@@ -110,7 +110,7 @@ function VenueCardSkeleton() {
 export function ExploreVenuesSkeleton() {
   return (
     <section
-      className="home-tt-section mx-auto mb-12 w-full max-w-[1320px] px-4 sm:px-6 lg:px-8"
+      className="home-tt-section mx-auto mb-12 w-full max-w-7xl px-3 sm:px-4 lg:px-6"
       aria-busy="true"
       aria-label="Loading venues"
     >
@@ -140,7 +140,7 @@ export function ExploreVenuesSkeleton() {
 export function BrowseByCountrySkeleton() {
   return (
     <section className="home-tt-section w-full py-16" aria-busy="true" aria-label="Loading countries">
-      <div className="mx-auto w-full min-w-0 max-w-[1320px] px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto w-full min-w-0 max-w-7xl px-3 sm:px-4 lg:px-6">
         <div className="mb-12 text-start">
           <div className="home-shimmer mb-1.5 h-6 w-64 max-w-[90%] rounded-md" />
           <div className="home-shimmer h-4 w-80 max-w-[95%] rounded-md" />
@@ -166,7 +166,7 @@ export function BrowseByCountrySkeleton() {
 export function BrowseByCitySkeleton() {
   return (
     <section className="home-tt-section w-full py-16" aria-busy="true" aria-label="Loading cities">
-      <div className="mx-auto w-full min-w-0 max-w-[1320px] px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto w-full min-w-0 max-w-7xl px-3 sm:px-4 lg:px-6">
         <div className="mb-12 text-start">
           <div className="home-shimmer mb-1.5 h-6 w-64 max-w-[90%] rounded-md" />
           <div className="home-shimmer h-4 w-80 max-w-[95%] rounded-md" />
@@ -192,7 +192,7 @@ export function BrowseByCitySkeleton() {
 export function TrendingEventsSkeleton() {
   return (
     <section
-      className="home-tt-section mx-auto max-w-[1320px] px-4 py-12 sm:px-6 lg:px-8"
+      className="home-tt-section mx-auto max-w-7xl px-3 py-12 sm:px-4 lg:px-6"
       aria-busy="true"
       aria-label="Loading trending events"
     >
@@ -203,7 +203,7 @@ export function TrendingEventsSkeleton() {
       </div>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="overflow-hidden rounded-lg border border-gray-200 bg-white">
+          <div key={i} className="overflow-hidden rounded-sm border border-gray-200 bg-white">
             <div className="home-shimmer h-48 w-full" />
             <div className="space-y-3 p-5">
               <div className="home-shimmer h-5 w-full rounded" />

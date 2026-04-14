@@ -4,7 +4,7 @@ import Link from "next/link"
 import { memo } from "react"
 
 const VIEW_ALL_CLASS =
-  "flex h-[120px] w-[200px] shrink-0 items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 transition-all duration-200 hover:border-blue-400 hover:bg-blue-50"
+  "flex h-[120px] w-[200px] shrink-0 items-center justify-center rounded-sm border-2 border-dashed border-gray-300 bg-gray-50 transition-all duration-200 hover:border-blue-400 hover:bg-blue-50"
 
 export interface OrganizersViewAllTileProps {
   href: string

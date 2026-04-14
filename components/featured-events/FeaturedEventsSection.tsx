@@ -7,7 +7,7 @@ export default async function FeaturedEventsSection() {
   return (
     <section
       id="featured_events"
-      className="home-tt-section mx-auto mb-12 mt-8 w-full max-w-[1320px] bg-white px-4 py-4 sm:px-6 lg:px-8"
+      className="home-tt-section mx-auto mb-12 mt-8 w-full min-w-0 max-w-7xl bg-white px-3 py-4 sm:px-4 lg:px-6"
     >
       <h2 className="home-tt-h2 mb-3">
         Featured Events

@@ -339,7 +339,7 @@ export default function Navbar() {
 
   return (
     <nav className="sticky top-0 z-50 bg-white shadow-[0_4px_12px_rgba(0,0,0,0.12)]">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl px-3 sm:px-4 lg:px-6">
         <div className="flex h-[5.5rem] min-h-[5.5rem] items-center justify-between gap-2 sm:gap-3">
           <div className="flex min-w-0 items-center gap-3 sm:gap-4">
             <button

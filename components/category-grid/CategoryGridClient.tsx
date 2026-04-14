@@ -101,7 +101,7 @@ export default function CategoryGridClient({ categories, variant = "home" }: Cat
       className="home-tt-section bg-[#F3F2F0] py-6 sm:py-8"
       aria-label="Browse events by category"
     >
-      <div className="mx-auto max-w-[1320px] px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto w-full min-w-0 max-w-7xl px-3 sm:px-4 lg:px-6">
         <h2 className="home-tt-h2 mb-3">{isFull ? "Browse By Category" : "Browse Events By Category"}</h2>
 
         <div id="category-grid-tiles" className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-6 md:gap-4">

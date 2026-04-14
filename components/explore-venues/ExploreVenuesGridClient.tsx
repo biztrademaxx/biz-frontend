@@ -14,7 +14,7 @@ function VenueCard({ venue, onNavigate }: { venue: ExploreVenueCard; onNavigate:
       type="button"
       onClick={onNavigate}
       aria-label={`View venue: ${venue.name}`}
-      className="group flex h-full w-full cursor-pointer flex-col overflow-hidden rounded-md border border-gray-200 bg-white text-left shadow-sm transition-shadow duration-200 hover:border-gray-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+      className="group flex h-full w-full cursor-pointer flex-col overflow-hidden rounded-sm border border-gray-200 bg-white text-left shadow-sm transition-shadow duration-200 hover:border-gray-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
     >
       <div className="relative h-28 w-full shrink-0 overflow-hidden bg-gray-100 sm:h-32">
         <img
@@ -44,7 +44,7 @@ function VenueCard({ venue, onNavigate }: { venue: ExploreVenueCard; onNavigate:
           </h3>
           {showRating ? (
             <div
-              className="flex shrink-0 items-center gap-0.5 rounded-md bg-amber-50 px-1.5 py-0.5 text-[11px] font-semibold text-amber-900 sm:text-xs"
+              className="flex shrink-0 items-center gap-0.5 rounded-sm bg-amber-50 px-1.5 py-0.5 text-[11px] font-semibold text-amber-900 sm:text-xs"
               title={`${venue.totalReviews} review${venue.totalReviews === 1 ? "" : "s"}`}
             >
               <Star className="h-3 w-3 fill-amber-400 text-amber-500 sm:h-3.5 sm:w-3.5" aria-hidden />
@@ -79,7 +79,7 @@ export default function ExploreVenuesGridClient({ venues }: ExploreVenuesGridCli
   const row2 = venues.slice(3, 6)
 
   return (
-    <section className="home-tt-section mx-auto mb-12 w-full max-w-[1320px] px-4 sm:px-6 lg:px-8">
+    <section className="home-tt-section mx-auto mb-12 w-full min-w-0 max-w-7xl px-3 sm:px-4 lg:px-6">
       <div className="mb-10 text-start">
         <h2 className="home-tt-h2 mb-3">
           Explore Venues
@@ -116,7 +116,7 @@ export default function ExploreVenuesGridClient({ venues }: ExploreVenuesGridCli
             <div className="mt-10 flex justify-center">
               <Link
                 href="/venues"
-                className="inline-flex items-center justify-center rounded-md bg-[#002C71] px-8 py-3 text-sm font-semibold text-white shadow-sm transition-colors duration-200 hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                className="inline-flex items-center justify-center rounded-sm bg-[#002C71] px-8 py-3 text-sm font-semibold text-white shadow-sm transition-colors duration-200 hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
               >
                 View all venues
               </Link>
