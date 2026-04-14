@@ -29,6 +29,7 @@ interface Speaker {
   certifications: string[]
   speakingExperience: string | null
   isVerified: boolean
+  /** Denormalized on user — used for listing without N+1 event fetches */
   totalEvents: number
   activeEvents: number
   totalAttendees: number
@@ -55,10 +56,24 @@ interface ApiResponse {
   }
 }
 
-interface SpeakerEventsResponse {
-  success: boolean
-  upcoming: any[]
-  past: any[]
+function speakerMatchesFilters(s: Speaker, search: string, expertise: string) {
+  if (expertise && !(s.specialties || []).includes(expertise)) return false
+  const q = search.trim().toLowerCase()
+  if (!q) return true
+  const blob = [
+    s.firstName,
+    s.lastName,
+    `${s.firstName} ${s.lastName}`,
+    s.company,
+    s.bio,
+    s.jobTitle,
+    s.location,
+    ...(s.specialties || []),
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase()
+  return blob.includes(q)
 }
 
 export default function SpeakersPage() {
@@ -72,86 +87,57 @@ export default function SpeakersPage() {
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
 
+  /** One list fetch: backend ignores search query params; N+1 /events calls were inflating edge/server load on every keystroke. */
   useEffect(() => {
+    let cancelled = false
+
     async function fetchSpeakers() {
       try {
         setLoading(true)
-
-        // Build query parameters
-        const params = new URLSearchParams()
-        if (searchQuery) params.append('search', searchQuery)
-        if (selectedExpertise) params.append('expertise', selectedExpertise)
-
-        const data = await apiFetch<ApiResponse>(`/api/speakers?${params.toString()}`, {
+        const data = await apiFetch<ApiResponse>(`/api/speakers`, {
           auth: false,
         })
 
-        if (data.success) {
-          // Extract expertise from speakers' specialties
-          const allExpertise = data.speakers.flatMap(speaker => speaker.specialties || [])
-          const uniqueExpertise = [...new Set(allExpertise)].filter(Boolean)
+        if (!data.success) {
+          throw new Error("Failed to load speakers")
+        }
 
-          // Fetch events count for each speaker
-          const speakersWithEventsCount = await Promise.all(
-            data.speakers.map(async (speaker) => {
-              try {
-                // Fetch events for each speaker to get counts
-                const eventsData = await apiFetch<SpeakerEventsResponse>(
-                  `/api/speakers/${speaker.id}/events`,
-                  { auth: false },
-                )
-                if (eventsData.success) {
-                  const upcomingCount = eventsData.upcoming?.length || 0
-                  const pastCount = eventsData.past?.length || 0
-                  const totalEventsCount = upcomingCount + pastCount
+        const allExpertise = data.speakers.flatMap((speaker) => speaker.specialties || [])
+        const uniqueExpertise = [...new Set(allExpertise)].filter(Boolean)
 
-                  return {
-                    ...speaker,
-                    upcomingEventsCount: upcomingCount,
-                    pastEventsCount: pastCount,
-                    // Use calculated total if not provided by API, otherwise use API value
-                    totalEvents: speaker.totalEvents || totalEventsCount,
-                  }
-                }
-                // Return speaker with zero counts if API fails
-                return {
-                  ...speaker,
-                  upcomingEventsCount: 0,
-                  pastEventsCount: 0,
-                  totalEvents: speaker.totalEvents || 0
-                }
-              } catch (error) {
-                console.error(`Error fetching events for speaker ${speaker.id}:`, error)
-                return {
-                  ...speaker,
-                  upcomingEventsCount: 0,
-                  pastEventsCount: 0,
-                  totalEvents: speaker.totalEvents || 0
-                }
-              }
-            })
-          )
+        const withEventCounts: Speaker[] = data.speakers.map((speaker) => {
+          const total = speaker.totalEvents ?? 0
+          const active = speaker.activeEvents ?? 0
+          return {
+            ...speaker,
+            upcomingEventsCount: active,
+            pastEventsCount: Math.max(0, total - active),
+            totalEvents: total,
+            activeEvents: active,
+          }
+        })
 
-          setSpeakers(speakersWithEventsCount)
-          setAvailableExpertise(uniqueExpertise) // Use derived expertise instead of data.filters.expertise
-        } else {
-          throw new Error('Failed to load speakers')
+        if (!cancelled) {
+          setSpeakers(withEventCounts)
+          setAvailableExpertise(uniqueExpertise)
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'An error occurred')
-        console.error('Error fetching speakers:', err)
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : "An error occurred")
+          console.error("Error fetching speakers:", err)
+        }
       } finally {
-        setLoading(false)
+        if (!cancelled) {
+          setLoading(false)
+        }
       }
     }
 
-    // Debounce the search to avoid too many API calls
-    const timeoutId = setTimeout(() => {
-      fetchSpeakers()
-    }, 300)
-
-    return () => clearTimeout(timeoutId)
-  }, [searchQuery, selectedExpertise])
+    fetchSpeakers()
+    return () => {
+      cancelled = true
+    }
+  }, [])
   const toggleFavorite = (speakerId: string) => {
     const newFavorites = new Set(favorites)
     if (newFavorites.has(speakerId)) {
@@ -162,11 +148,11 @@ export default function SpeakersPage() {
     setFavorites(newFavorites)
   }
 
-  // Filter and sort speakers
   const filteredSpeakers = useMemo(() => {
-    let filtered = [...speakers]
+    let filtered = speakers.filter((s) =>
+      speakerMatchesFilters(s, searchQuery, selectedExpertise),
+    )
 
-    // Sort speakers based on selected criteria
     filtered.sort((a, b) => {
       switch (sortBy) {
         case "rating":
@@ -184,7 +170,7 @@ export default function SpeakersPage() {
     })
 
     return filtered
-  }, [speakers, sortBy])
+  }, [speakers, sortBy, searchQuery, selectedExpertise])
 
   const handleSpeakerClick = (speaker: Speaker) => {
     router.push(
