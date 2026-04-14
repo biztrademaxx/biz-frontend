@@ -23,7 +23,7 @@ function SidebarBlockSkeleton({ rows = 5 }: { rows?: number }) {
 
 function EventListCardSkeleton() {
   return (
-    <div className="overflow-hidden rounded-lg border border-gray-300 bg-white">
+    <div className="overflow-hidden rounded-sm border border-gray-300 bg-white">
       <div className="flex flex-col md:min-h-[252px] md:flex-row md:items-stretch">
         <div className="flex min-h-0 flex-1 flex-col space-y-3 px-4 py-4 sm:px-5">
           <div className="home-shimmer h-3.5 w-40 rounded-md" />
@@ -51,7 +51,7 @@ function EventListCardSkeleton() {
           </div>
         </div>
         <div className="flex w-full shrink-0 flex-col justify-end p-3 md:w-[200px]">
-          <div className="hero-card-shimmer mx-auto h-[120px] w-full max-w-lg rounded-md md:mx-0 md:w-[180px]" />
+          <div className="hero-card-shimmer mx-auto h-[120px] w-full max-w-lg rounded-sm md:mx-0 md:w-[180px]" />
         </div>
       </div>
     </div>
@@ -114,8 +114,8 @@ export default function EventsListingPageSkeleton() {
 
             <div className="order-3 w-full lg:col-span-4">
               <div className="sticky top-6 space-y-4">
-                <div className="home-shimmer min-h-[252px] w-full rounded-lg border border-gray-200" />
-                <div className="home-shimmer min-h-[200px] w-full rounded-lg border border-gray-200" />
+                <div className="home-shimmer min-h-[252px] w-full rounded-sm border border-gray-200" />
+                <div className="home-shimmer min-h-[200px] w-full rounded-sm border border-gray-200" />
               </div>
             </div>
           </div>

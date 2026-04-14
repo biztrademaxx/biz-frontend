@@ -248,7 +248,7 @@ function TrendingEventsSideCard({ event, imageUrl }: { event: Event; imageUrl: s
 
   return (
     <Link href={path} className="group block">
-      <article className="mb-3 rounded-lg border border-gray-100 bg-white p-3 shadow-[0_2px_12px_rgba(0,0,0,0.08),0_4px_20px_rgba(0,0,0,0.06)] transition-shadow hover:shadow-[0_4px_20px_rgba(0,0,0,0.12)]">
+      <article className="mb-3 rounded-sm border border-gray-100 bg-white p-3 shadow-[0_2px_12px_rgba(0,0,0,0.08),0_4px_20px_rgba(0,0,0,0.06)] transition-shadow hover:shadow-[0_4px_20px_rgba(0,0,0,0.12)]">
         <div className="mb-1.5 flex items-center justify-end gap-1.5 text-xs font-medium leading-none text-gray-800">
           <span className="h-3.5 w-3.5 shrink-0 rounded-sm bg-amber-400" aria-hidden />
           <span>Trending</span>
@@ -264,7 +264,7 @@ function TrendingEventsSideCard({ event, imageUrl }: { event: Event; imageUrl: s
           <img
             src={imageUrl}
             alt={event.title}
-            className="absolute right-0 top-0 h-12 w-12 rounded-md border border-gray-100 object-cover"
+            className="absolute right-0 top-0 h-12 w-12 rounded-sm border border-gray-100 object-cover"
           />
         </div>
         <p className="mt-1 text-xs font-semibold leading-tight text-gray-900 line-clamp-1">
@@ -508,7 +508,7 @@ function EventListingCardImages({
   }, [count, key])
 
   const viewportClass =
-    "relative mx-auto h-[120px] w-full max-w-lg overflow-hidden rounded-md bg-slate-100 md:mx-0 md:h-[120px] md:w-[180px] md:max-w-none"
+    "relative mx-auto h-[120px] w-full max-w-lg overflow-hidden rounded-sm bg-slate-100 md:mx-0 md:h-[120px] md:w-[180px] md:max-w-none"
 
   const carouselDots = (
     <div
@@ -1741,7 +1741,7 @@ export default function EventsPageContent({
             <div className="lg:col-span-5 order-1 lg:order-2 w-full">
               {/* Dynamic Banner Section — brand gradient + white type (10times-style listing header) */}
               <div
-                className="relative mb-6 min-h-[128px] overflow-hidden rounded-lg border border-white/15 shadow-lg sm:min-h-[140px]"
+                className="relative mb-6 min-h-[128px] overflow-hidden rounded-sm border border-white/15 shadow-lg sm:min-h-[140px]"
                 style={listingBannerSurfaceStyle}
               >
                 <div className="relative z-10 w-full p-3 pb-0 sm:p-4 sm:pb-0">
@@ -1856,7 +1856,7 @@ export default function EventsPageContent({
               {/* Events List - Cards with fixed 460x270 dimensions */}
               <div className="space-y-6">
                 {paginatedEvents.length === 0 ? (
-                  <div className="text-center py-12 bg-white rounded-lg sm:rounded-xl shadow">
+                  <div className="text-center py-12 bg-white rounded-sm shadow">
                     <p className="text-gray-500 text-lg sm:text-xl font-bold mb-4">
                       {activeTab === "Verified"
                         ? "No verified events found"
@@ -1885,7 +1885,7 @@ export default function EventsPageContent({
                     return (
                       <div
                         key={event.id}
-                        className="bg-white border border-gray-300 rounded-lg overflow-hidden w-full hover:shadow-lg transition-shadow duration-300"
+                        className="bg-white border border-gray-300 rounded-sm overflow-hidden w-full hover:shadow-lg transition-shadow duration-300"
                       >
                         {/* Top: main content (left) + fixed-size image (right); min-height keeps card rows uniform */}
                         <div className="flex flex-col md:flex-row md:items-stretch md:min-h-[252px]">
@@ -2063,7 +2063,7 @@ export default function EventsPageContent({
                       .map((event) => (
                         <Card
                           key={event.id}
-                          className="hover:shadow-xl transition-all duration-300 border border-gray-300 rounded-xl overflow-hidden group"
+                          className="hover:shadow-xl transition-all duration-300 border border-gray-300 rounded-sm overflow-hidden group"
                         >
                           <div className="relative aspect-video overflow-hidden">
                             <img
@@ -2109,7 +2109,7 @@ export default function EventsPageContent({
                               </span>
                             </div>
                             <button
-                              className="w-full bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900 text-white py-3 px-4 rounded-lg text-base font-bold shadow-lg hover:shadow-xl transition-all duration-300"
+                              className="w-full bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900 text-white py-3 px-4 rounded-sm text-base font-bold shadow-lg hover:shadow-xl transition-all duration-300"
                               onClick={(e) => {
                                 e.preventDefault()
                                 e.stopPropagation()
@@ -2176,7 +2176,7 @@ export default function EventsPageContent({
 
                 {/* Featured Event Card */}
                 {featuredEvents[0] && (
-                  <Card className="bg-white shadow-xl border border-gray-300 rounded-xl overflow-hidden">
+                  <Card className="bg-white shadow-xl border border-gray-300 rounded-sm overflow-hidden">
                     <div className="relative aspect-video">
                       <img
                         src={getEventImage(featuredEvents[0]) || "/placeholder.svg"}
@@ -2198,7 +2198,7 @@ export default function EventsPageContent({
                           </Badge>
                         )}
                       </div>
-                      <div className="absolute bottom-3 right-3 bg-green-100 text-green-800 px-4 py-2 rounded-lg text-sm font-bold shadow-lg">
+                      <div className="absolute bottom-3 right-3 bg-green-100 text-green-800 px-4 py-2 rounded-sm text-sm font-bold shadow-lg">
                         ⭐{" "}
                         {Number.isFinite(featuredEvents[0].rating?.average)
                           ? featuredEvents[0].rating.average.toFixed(1)
@@ -2217,7 +2217,7 @@ export default function EventsPageContent({
                         )}
                       </div>
                       <button
-                        className="w-full flex items-center justify-center bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white py-3 px-4 rounded-lg text-base font-bold shadow-lg hover:shadow-xl transition-all duration-300"
+                        className="w-full flex items-center justify-center bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white py-3 px-4 rounded-sm text-base font-bold shadow-lg hover:shadow-xl transition-all duration-300"
                         onClick={(e) => {
                           e.preventDefault()
                           e.stopPropagation()

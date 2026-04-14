@@ -41,7 +41,7 @@ function resolveClickTarget(raw: string): { href: string; external: boolean } | 
 }
 
 const shellClass =
-  "bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden no-underline text-inherit"
+  "bg-white border border-gray-200 rounded-sm shadow-sm overflow-hidden no-underline text-inherit"
 
 const shellInteractiveClass =
   `${shellClass} block cursor-pointer hover:opacity-[0.97] transition-opacity focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1F5D84] focus-visible:ring-offset-2`
