@@ -1,0 +1,22 @@
+{
+  "codeConnect": {
+    "label": "biz-frontend",
+    "parser": "react",
+    "include": [
+      "components/**/*.{tsx,jsx}",
+      "app/**/*.{tsx,jsx}"
+    ],
+    "exclude": [
+      "**/*.test.{tsx,jsx}",
+      "**/__tests__/**",
+      "node_modules/**",
+      ".next/**"
+    ],
+    "importPaths": {
+      "components/*": "@/components"
+    },
+    "paths": {
+      "@/*": ["./*"]
+    }
+  }
+}
