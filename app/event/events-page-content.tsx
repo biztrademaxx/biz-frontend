@@ -1718,7 +1718,7 @@ export default function EventsPageContent({
 
 
             {/* Main Content Area - 6 columns on desktop */}
-            <div className="lg:col-span-6 order-1 lg:order-2 w-full">
+            <div className="lg:col-span-5 order-1 lg:order-2 w-full">
               {/* Dynamic Banner Section — brand gradient + white type (10times-style listing header) */}
               <div
                 className="relative mb-8 min-h-[168px] overflow-hidden rounded-lg border border-white/15 shadow-lg sm:min-h-[180px]"
@@ -2117,7 +2117,7 @@ export default function EventsPageContent({
             </div>
 
             {/* Right Column - Ads and Trending Events - 3 columns on desktop */}
-            <div className="lg:col-span-3 order-3 w-full">
+            <div className="lg:col-span-4 order-3 w-full">
               <div className="lg:sticky lg:top-6 self-start space-y-6">
                 {/* Single Ad Card */}
                 <div className="w-full">

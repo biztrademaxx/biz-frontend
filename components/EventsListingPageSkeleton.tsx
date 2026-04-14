@@ -85,7 +85,7 @@ export default function EventsListingPageSkeleton() {
               </div>
             </div>
 
-            <div className="order-1 w-full lg:order-2 lg:col-span-6">
+            <div className="order-1 w-full lg:order-2 lg:col-span-5">
               <div className="relative mb-8 h-48 overflow-hidden rounded-sm border border-gray-200 shadow-md">
                 <div className="hero-card-shimmer absolute inset-0 h-full w-full" />
                 <div className="relative z-10 flex h-full flex-col justify-center space-y-3 p-4 sm:p-6 lg:p-8">
@@ -112,7 +112,7 @@ export default function EventsListingPageSkeleton() {
               </div>
             </div>
 
-            <div className="order-3 w-full lg:col-span-3">
+            <div className="order-3 w-full lg:col-span-4">
               <div className="sticky top-6 space-y-4">
                 <div className="home-shimmer min-h-[280px] w-full rounded-lg border border-gray-200" />
                 <div className="home-shimmer min-h-[200px] w-full rounded-lg border border-gray-200" />
