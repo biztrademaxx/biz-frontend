@@ -508,11 +508,11 @@ function EventListingCardImages({
   }, [count, key])
 
   const viewportClass =
-    "relative mx-auto h-[120px] w-full max-w-lg overflow-hidden rounded-sm bg-slate-100 md:mx-0 md:h-[120px] md:w-[180px] md:max-w-none"
+    "relative mx-auto h-[84px] w-full max-w-lg overflow-hidden rounded-sm bg-slate-100 md:mx-0 md:h-[84px] md:w-[136px] md:max-w-none"
 
   const carouselDots = (
     <div
-      className="flex min-h-[24px] items-center justify-center gap-1.5 px-1"
+      className="flex min-h-[14px] items-center justify-center gap-1 px-1"
       role={count > 1 ? "tablist" : undefined}
       aria-label={count > 1 ? `${title} photos` : undefined}
     >
@@ -720,11 +720,11 @@ export default function EventsPageContent({
           (typeof event._id === "object" && event._id.$oid) ||
           (typeof event._id === "string" ? event._id : undefined)
         const avg =
-          typeof event?.averageRating === "number" && event.averageRating > 0
+          typeof event?.averageRating === "number" && Number.isFinite(event.averageRating)
             ? event.averageRating
-            : typeof event?.rating?.average === "number"
+            : typeof event?.rating?.average === "number" && Number.isFinite(event.rating.average)
               ? event.rating.average
-              : 4.5
+              : 0
         const categories = Array.isArray(event.category)
           ? event.category
           : Array.isArray(event.categories)
@@ -1853,8 +1853,8 @@ export default function EventsPageContent({
                 </div>
               </div>
 
-              {/* Events List - Cards with fixed 460x270 dimensions */}
-              <div className="space-y-6">
+              {/* Events list — compact cards (text + thumbnail + footer strip) */}
+              <div className="space-y-5">
                 {paginatedEvents.length === 0 ? (
                   <div className="text-center py-12 bg-white rounded-sm shadow">
                     <p className="text-gray-500 text-lg sm:text-xl font-bold mb-4">
@@ -1887,23 +1887,35 @@ export default function EventsPageContent({
                         key={event.id}
                         className="bg-white border border-gray-300 rounded-sm overflow-hidden w-full hover:shadow-lg transition-shadow duration-300"
                       >
-                        {/* Top: main content (left) + fixed-size image (right); min-height keeps card rows uniform */}
-                        <div className="flex flex-col md:flex-row md:items-stretch md:min-h-[252px]">
-                          <div className="flex min-h-0 min-w-0 flex-1 flex-col px-4 py-4 sm:px-5">
-                            <Link href={path} className="group flex min-h-0 flex-1 flex-col">
-                              <p className="mb-1 text-xs font-medium text-gray-600 sm:text-sm">
-                                {formatDate(event.timings.startDate)}
-                                {event.timings.endDate && <> - {formatDate(event.timings.endDate)}</>}
-                                {" "}
-                                {formatYear(event.timings.startDate)}
-                              </p>
-
-                              <h3 className="mb-1 min-h-[2.5rem] text-[18px] font-bold leading-snug text-[#1F5D84] line-clamp-2 sm:text-[20px] group-hover:underline">
+                        {/* Date + title full width (wraps across card, including above image column — no ellipsis) */}
+                        <div className="px-4 pt-2.5 sm:px-5 sm:pt-3">
+                          <Link href={path} className="group block">
+                            <p className="mb-0.5 text-[11px] font-medium text-gray-600 sm:text-xs">
+                              {formatDate(event.timings.startDate)}
+                              {event.timings.endDate && <> - {formatDate(event.timings.endDate)}</>}
+                              {" "}
+                              {formatYear(event.timings.startDate)}
+                            </p>
+                            <div className="flex flex-wrap items-start gap-2">
+                              <h3 className="min-w-0 flex-1 text-left text-[17px] font-bold leading-tight text-[#1F5D84] break-words sm:text-[19px] group-hover:underline">
                                 {event.title}
                               </h3>
+                              {event.isVerified ? (
+                                <EventListingVerifiedBadge
+                                  event={event}
+                                  className="shrink-0 self-start p-0 pt-0.5 [&_img]:h-5 [&_img]:max-h-5 [&_img]:max-w-[72px]"
+                                />
+                              ) : null}
+                            </div>
+                          </Link>
+                        </div>
 
-                              <p className="mb-3 flex min-h-[1.5rem] items-center text-[14px] font-normal font-sans text-[#212529]">
-                                <MapPin className="mr-1 h-4 w-4 shrink-0 text-[#6C757D]" />
+                        {/* Body: main content (left) + fixed-size image (right); min-height keeps card rows uniform */}
+                        <div className="flex flex-col md:flex-row md:items-stretch md:min-h-[176px]">
+                          <div className="flex min-h-0 min-w-0 flex-1 flex-col px-4 pb-2.5 pt-1.5 sm:px-5 sm:pb-2.5 sm:pt-2.5">
+                            <Link href={path} className="group flex min-h-0 min-w-0 flex-1 flex-col">
+                              <p className="mb-1.5 flex items-center text-[12px] font-normal font-sans text-[#212529] sm:text-[13px]">
+                                <MapPin className="mr-1 h-3.5 w-3.5 shrink-0 text-[#6C757D] sm:h-4 sm:w-4" />
                                 <span className="line-clamp-1">
                                   {event.location?.city}, {event.location?.country}
                                 </span>
@@ -1911,34 +1923,34 @@ export default function EventsPageContent({
 
                               <p
                                 className="
-    mb-4
-    min-h-[3.75rem]
+    mb-1.5
     max-w-[95%]
     text-left
     break-words
     whitespace-normal
-    text-[14px]
+    text-[12px]
     font-normal
     font-sans
-    leading-relaxed
+    leading-snug
     text-[#5E5E5E]
-    line-clamp-3
+    line-clamp-2
+    sm:text-[13px]
   "
                               >
                                 {event.description}
                               </p>
 
-                              <div className="mt-auto flex min-h-[1.75rem] flex-wrap gap-2">
+                              <div className="mt-auto flex flex-wrap gap-1.5">
                                 {event.categories.slice(0, 3).map((cat, i) => (
                                   <span
                                     key={i}
                                     className="
         bg-[#F8F9FA]
         text-[#666666]
-        px-2
-        py-1
+        px-1.5
+        py-0.5
         rounded
-        text-[12.25px]
+        text-[11px]
         font-normal
         leading-none
         font-sans
@@ -1951,11 +1963,8 @@ export default function EventsPageContent({
                             </Link>
                           </div>
 
-                          <div className="flex w-full shrink-0 flex-col items-stretch md:w-[200px] md:shrink-0">
-                            <div className="flex min-h-[2.5rem] items-start justify-end px-3 pb-1.5 pt-2 md:min-h-[2.75rem] md:px-3 md:pb-2 md:pl-0 md:pt-3">
-                              {event.isVerified ? <EventListingVerifiedBadge event={event} /> : null}
-                            </div>
-                            <div className="flex flex-1 flex-col px-3 pb-3 pt-0 md:px-3 md:pb-3 md:pl-0 md:pt-0">
+                          <div className="flex w-full shrink-0 flex-col items-stretch md:w-[156px] md:shrink-0">
+                            <div className="flex flex-1 flex-col px-3 pb-1.5 pt-1.5 md:px-3 md:pb-1.5 md:pl-0 md:pt-2.5">
                               <div className="mt-auto w-full">
                                 <EventListingCardImages
                                   href={path}
@@ -1969,7 +1978,7 @@ export default function EventsPageContent({
 
                         {/* Bottom: follow + rating + share on one row */}
                         <div
-                          className="flex flex-nowrap items-center gap-2  px-4 py-2.5 sm:px-5 sm:gap-3"
+                          className="flex flex-nowrap items-center gap-2 px-4 py-1.5 sm:px-5 sm:gap-3"
                           onClick={(e) => e.stopPropagation()}
                         >
                           <div className="min-w-0 flex-1 overflow-hidden">
@@ -2105,7 +2114,7 @@ export default function EventsPageContent({
                                 {event.categories[0] || "Event"}
                               </Badge>
                               <span className="text-lg font-black text-green-700">
-                                ⭐ {Number.isFinite(event.rating?.average) ? event.rating.average.toFixed(1) : "4.5"}
+                                ⭐ {Number.isFinite(event.rating?.average) ? event.rating.average.toFixed(1) : "0.0"}
                               </span>
                             </div>
                             <button
@@ -2202,7 +2211,7 @@ export default function EventsPageContent({
                         ⭐{" "}
                         {Number.isFinite(featuredEvents[0].rating?.average)
                           ? featuredEvents[0].rating.average.toFixed(1)
-                          : "4.5"}
+                          : "0.0"}
                       </div>
                     </div>
                     <CardContent className="p-5">

@@ -24,34 +24,33 @@ function SidebarBlockSkeleton({ rows = 5 }: { rows?: number }) {
 function EventListCardSkeleton() {
   return (
     <div className="overflow-hidden rounded-sm border border-gray-300 bg-white">
-      <div className="flex flex-col md:min-h-[252px] md:flex-row md:items-stretch">
-        <div className="flex min-h-0 flex-1 flex-col space-y-3 px-4 py-4 sm:px-5">
-          <div className="home-shimmer h-3.5 w-40 rounded-md" />
-          <div className="space-y-2">
-            <div className="home-shimmer h-6 w-[95%] max-w-xl rounded-md" />
-            <div className="home-shimmer h-6 w-[70%] max-w-lg rounded-md" />
+      <div className="flex flex-col md:min-h-[176px] md:flex-row md:items-stretch">
+        <div className="flex min-h-0 flex-1 flex-col space-y-1.5 px-4 py-2.5 sm:px-5">
+          <div className="home-shimmer h-3 w-36 rounded-md" />
+          <div className="space-y-1">
+            <div className="home-shimmer h-[18px] w-[95%] max-w-xl rounded-md" />
+            <div className="home-shimmer h-[18px] w-[70%] max-w-lg rounded-md" />
           </div>
-          <div className="flex items-center gap-2">
-            <div className="home-shimmer h-4 w-4 shrink-0 rounded-sm" />
-            <div className="home-shimmer h-4 w-48 max-w-[80%] rounded-md" />
+          <div className="flex items-center gap-1.5">
+            <div className="home-shimmer h-3 w-3 shrink-0 rounded-sm" />
+            <div className="home-shimmer h-3 w-48 max-w-[80%] rounded-md" />
           </div>
-          <div className="space-y-2 pt-1">
-            <div className="home-shimmer h-3.5 w-full rounded-md" />
-            <div className="home-shimmer h-3.5 w-full rounded-md" />
-            <div className="home-shimmer h-3.5 w-[80%] rounded-md" />
+          <div className="space-y-1 pt-0.5">
+            <div className="home-shimmer h-3 w-full rounded-md" />
+            <div className="home-shimmer h-3 w-[80%] rounded-md" />
           </div>
-          <div className="flex flex-wrap gap-2">
-            <div className="home-shimmer h-7 w-20 rounded-md" />
-            <div className="home-shimmer h-7 w-24 rounded-md" />
-            <div className="home-shimmer h-7 w-16 rounded-md" />
+          <div className="flex flex-wrap gap-1">
+            <div className="home-shimmer h-5 w-20 rounded-md" />
+            <div className="home-shimmer h-5 w-24 rounded-md" />
+            <div className="home-shimmer h-5 w-16 rounded-md" />
           </div>
-          <div className="flex flex-wrap gap-3 pt-1">
-            <div className="home-shimmer h-8 w-28 rounded-md" />
-            <div className="home-shimmer h-8 w-32 rounded-md" />
+          <div className="flex flex-wrap gap-1.5 pt-0.5">
+            <div className="home-shimmer h-6 w-28 rounded-md" />
+            <div className="home-shimmer h-6 w-32 rounded-md" />
           </div>
         </div>
-        <div className="flex w-full shrink-0 flex-col justify-end p-3 md:w-[200px]">
-          <div className="hero-card-shimmer mx-auto h-[120px] w-full max-w-lg rounded-sm md:mx-0 md:w-[180px]" />
+        <div className="flex w-full shrink-0 flex-col justify-end p-2 md:w-[156px] md:p-2.5">
+          <div className="hero-card-shimmer mx-auto h-[84px] w-full max-w-lg rounded-sm md:mx-0 md:w-[136px]" />
         </div>
       </div>
     </div>
@@ -105,7 +104,7 @@ export default function EventsListingPageSkeleton() {
                 </div>
               </div>
 
-              <div className="space-y-6">
+              <div className="space-y-5">
                 {Array.from({ length: 6 }).map((_, i) => (
                   <EventListCardSkeleton key={i} />
                 ))}
