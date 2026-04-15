@@ -430,7 +430,7 @@ export default function Navbar() {
             <Link href="/speakers" className={navLinkClass}>
               <span className="text-sm">Speakers</span>
             </Link>
-            <Link href="/event" className={navLinkClass}>
+            <Link href="/organizer-signup" className={navLinkClass}>
               <span className="text-sm">Add Event</span>
             </Link>
             <div className="relative inline-block text-left" ref={desktopAccountRef}>

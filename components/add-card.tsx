@@ -46,7 +46,7 @@ const shellClass =
 const shellInteractiveClass =
   `${shellClass} block cursor-pointer hover:opacity-[0.97] transition-opacity focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1F5D84] focus-visible:ring-offset-2`
 
-/** Placeholder while the client fetches banners (avoids flashing the demo ad before DB data). */
+/** Placeholder while the client fetches banners — same shimmer system as listing skeleton (no gray pulse boxes). */
 function AdCardSkeleton() {
   return (
     <div
@@ -54,13 +54,13 @@ function AdCardSkeleton() {
       aria-busy="true"
       aria-label="Loading advertisement"
     >
-      <div className="h-44 sm:h-52 w-full animate-pulse bg-gray-200" />
+      <div className="hero-card-shimmer h-44 w-full sm:h-52" />
       <div className="border-t border-gray-200 px-4 py-3 space-y-2">
-        <div className="h-5 w-3/4 max-w-[200px] animate-pulse rounded bg-gray-200" />
-        <div className="h-4 w-full animate-pulse rounded bg-gray-100" />
+        <div className="home-shimmer h-5 w-3/4 max-w-[200px] rounded-md" />
+        <div className="home-shimmer h-4 w-full rounded-md" />
         <div className="mt-3 flex items-center justify-between">
-          <div className="h-3 w-28 animate-pulse rounded bg-gray-100" />
-          <div className="h-10 w-10 shrink-0 animate-pulse rounded-full bg-gray-200" />
+          <div className="home-shimmer h-3 w-28 rounded-md" />
+          <div className="home-shimmer h-10 w-10 shrink-0 rounded-full" />
         </div>
       </div>
     </div>

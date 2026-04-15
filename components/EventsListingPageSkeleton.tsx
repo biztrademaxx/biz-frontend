@@ -112,9 +112,12 @@ export default function EventsListingPageSkeleton() {
             </div>
 
             <div className="order-3 w-full lg:col-span-4">
-              <div className="sticky top-6 space-y-4">
-                <div className="home-shimmer min-h-[252px] w-full rounded-sm border border-gray-200" />
-                <div className="home-shimmer min-h-[200px] w-full rounded-sm border border-gray-200" />
+              <div className="sticky top-6">
+                {/* Single shimmer panel (matches banner `hero-card-shimmer`) — avoids two empty bordered boxes */}
+                <div
+                  className="hero-card-shimmer min-h-[min(380px,45vh)] w-full rounded-sm border border-gray-200"
+                  aria-hidden
+                />
               </div>
             </div>
           </div>
