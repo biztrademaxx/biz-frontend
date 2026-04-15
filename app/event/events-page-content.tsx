@@ -436,12 +436,12 @@ function EventListingVerifiedBadge({
     >
       {showImg ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={src}
-          alt="Verified"
-          className="h-6 max-h-7 w-auto max-w-[100px] shrink-0 object-contain object-left"
-          onError={onImgError}
-        />
+     <img
+  src={src}
+  alt="Verified"
+  className="h-6 max-h-6 w-auto max-w-[80px] object-contain object-left"
+  onError={onImgError}
+/>
       ) : (
         <span className="text-[11px] font-bold leading-none text-emerald-800 sm:text-xs">Verified</span>
       )}
@@ -1128,8 +1128,7 @@ export default function EventsPageContent({
         return true
       case "Upcoming":
         return eventDate >= today
-      case "Past":
-        return eventDate < today
+ 
       case "This Week":
         return eventDate >= today && eventDate <= weekFromNow
       case "This Month":
@@ -1418,7 +1417,7 @@ export default function EventsPageContent({
   const formatYear = (date: string) =>
     new Date(date).getFullYear()
 
-  const tabs = ["All Events", "Upcoming", "Past", "This Week", "This Month", "Verified"] // Added Verified tab
+  const tabs = ["All Events", "Upcoming",  "This Week", "This Month", "Verified"] // Added Verified tab
 
   const handleCategoryToggle = (categoryName: string) => {
     setSelectedCategories((prev) => {
@@ -1549,7 +1548,7 @@ export default function EventsPageContent({
               >
                 {tab === "Verified" ? (
                   <span className="flex items-center gap-2">
-                    <ShieldCheck className="w-4 h-4" />
+                    <ShieldCheck className="w-10 h-10" />
                     Verified
                   </span>
                 ) : (
@@ -1903,7 +1902,7 @@ export default function EventsPageContent({
                               {event.isVerified ? (
                                 <EventListingVerifiedBadge
                                   event={event}
-                                  className="shrink-0 self-start p-0 pt-0.5 [&_img]:h-5 [&_img]:max-h-5 [&_img]:max-w-[72px]"
+                                  className="shrink-0 self-start p-0 pt-0.5 [&_img]:h-7 [&_img]:max-h-7 [&_img]:max-w-[90px]"
                                 />
                               ) : null}
                             </div>
@@ -1911,7 +1910,7 @@ export default function EventsPageContent({
                         </div>
 
                         {/* Body: main content (left) + fixed-size image (right); min-height keeps card rows uniform */}
-                        <div className="flex flex-col md:flex-row md:items-stretch md:min-h-[176px]">
+                        <div className="flex flex-col md:flex-row md:items-start md:min-h-[176px]">
                           <div className="flex min-h-0 min-w-0 flex-1 flex-col px-4 pb-2.5 pt-1.5 sm:px-5 sm:pb-2.5 sm:pt-2.5">
                             <Link href={path} className="group flex min-h-0 min-w-0 flex-1 flex-col">
                               <p className="mb-1.5 flex items-center text-[12px] font-normal font-sans text-[#212529] sm:text-[13px]">
@@ -1932,8 +1931,8 @@ export default function EventsPageContent({
     font-normal
     font-sans
     leading-snug
-    text-[#5E5E5E]
-    line-clamp-2
+    text-gray-700
+    line-clamp-5
     sm:text-[13px]
   "
                               >
@@ -1998,10 +1997,10 @@ export default function EventsPageContent({
                               title="Rating"
                             >
                               <Image
-                                src="/icons/star_icon.png"
+                                src="/icons/rating-xxl.png"
                                 alt=""
-                                width={32}
-                                height={14}
+                                width={20}
+                                height={8}
                                 className="shrink-0 opacity-90"
                               />
                               <span className="text-sm font-semibold tabular-nums">
@@ -2092,12 +2091,12 @@ export default function EventsPageContent({
                           </div>
                           <CardContent className="p-5">
                             <div className="flex items-start justify-between mb-2">
-                              <h3 className="text-xl font-black text-gray-900 line-clamp-2 flex-1">{event.title}</h3>
+                              <h3 className="text-2xl font-black text-gray-900 line-clamp-2 flex-1">{event.title}</h3>
                               {event.isVerified && event.verifiedBadgeImage && (
                                 <img
                                   src={event.verifiedBadgeImage}
                                   alt="Verified"
-                                  className="ml-2 h-6 w-6 object-contain"
+                                  className="ml-1 h-10 w-10 object-contain"
                                 />
                               )}
                             </div>
@@ -2155,7 +2154,7 @@ export default function EventsPageContent({
                 </div>
                 {/* Trending/Premium Events */}
                 <div className="flex items-center justify-between">
-                  <h3 className="text-2xl font-black text-gray-900">🔥 Trending Events</h3>
+                  <h3 className="text-2xl font-semibold font-black text-gray-900">🔥 Trending Events</h3>
                 </div>
 
                 {/* Desktop View - Vertical List (10times-style premium cards) */}
