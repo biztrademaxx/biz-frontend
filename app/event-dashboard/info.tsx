@@ -3,8 +3,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Mail, Edit2, Trash2, Save, X, Plus, FileText, ExternalLink } from "lucide-react"
-import { useEffect, useState } from "react"
+import { Mail, Edit2, Trash2, Save, X, Plus, FileText, ExternalLink, Download } from "lucide-react"
+import { useEffect, useMemo, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { getCurrentUserId, isAuthenticated } from "@/lib/api"
 import { useToast } from "@/hooks/use-toast"
@@ -12,12 +12,98 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import ExhibitorsTab from "./exhibitors-tab"
 import EventHero from "./EventHero"
-import Image from "next/image"
 import { apiFetch } from "@/lib/api"
 import { getPublicProfilePath } from "@/lib/profile-path"
+import {
+  brochureFriendlyFilename,
+  downloadUrlAsFile,
+  getGoogleDocsViewerUrl,
+  getBrochurePreviewUrl,
+  resolveBrochureUrl,
+} from "@/lib/utils"
 
 interface EventPageProps {
   params: { id: string }
+}
+
+/**
+ * Preview routing. Cloudinary `raw/upload` PDFs often have **no `.pdf` in the URL** (public id only),
+ * so we must not rely only on `endsWith(".pdf")`.
+ */
+function inferBrochureDisplayKind(url: string): "pdf" | "office" | "image" | "embed" {
+  const clean = url.split("?")[0].split("#")[0].toLowerCase()
+  const hasOfficeExt = /\.(doc|docx|ppt|pptx|xls|xlsx|odt|ods|odp)$/.test(clean)
+  const hasImageExt = /\.(jpe?g|png|gif|webp|bmp|svg)$/.test(clean)
+
+  if (/\.pdf(\?|#|$)/i.test(clean) || clean.includes(".pdf/")) return "pdf"
+  if (hasOfficeExt) return "office"
+  if (hasImageExt || url.includes("/image/upload/")) return "image"
+
+  // Cloudinary raw documents (typical brochure upload) — usually PDF; iframe + Content-Type works
+  if (url.includes("/raw/upload/") && !hasOfficeExt && !hasImageExt) {
+    return "pdf"
+  }
+
+  // Other HTTPS URLs: let the browser try inline (often PDF without extension in path)
+  if (url.startsWith("http://") || url.startsWith("https://")) {
+    return "embed"
+  }
+
+  return "embed"
+}
+
+function EventBrochurePreview({ url }: { url: string }) {
+  const kind = useMemo(() => inferBrochureDisplayKind(url), [url])
+  /** Cloudinary raw: original URL for iframe (attachment transforms are not needed for preview). */
+  const iframeSrc = useMemo(() => {
+    const u = url.trim()
+    if (u.includes("res.cloudinary.com") && u.includes("/raw/upload/")) {
+      return getBrochurePreviewUrl(u)
+    }
+    return u
+  }, [url])
+  const officeSrc =
+    kind === "office"
+      ? `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(url)}`
+      : null
+
+  const iframeClass = "h-[min(70vh,560px)] w-full border-0 bg-white"
+  const useGoogleViewer =
+    /^https:\/\//i.test(iframeSrc) && !/localhost|127\.0\.0\.1/i.test(iframeSrc)
+
+  if (kind === "image") {
+    return (
+      <div className="relative flex min-h-[280px] items-center justify-center bg-slate-50 p-3">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={url}
+          alt="Event brochure"
+          className="max-h-[min(70vh,560px)] w-auto max-w-full object-contain"
+          loading="lazy"
+        />
+      </div>
+    )
+  }
+
+  if (kind === "office" && officeSrc) {
+    return (
+      <iframe
+        title="Brochure document preview"
+        src={officeSrc}
+        className={iframeClass}
+      />
+    )
+  }
+
+  // PDF / embed: match public event page behavior for consistent preview reliability.
+  return (
+    <iframe
+      title="Brochure preview"
+      src={useGoogleViewer ? getGoogleDocsViewerUrl(iframeSrc) : iframeSrc}
+      className={iframeClass}
+      loading="lazy"
+    />
+  )
 }
 
 export default function EventPage({ params }: EventPageProps) {
@@ -40,6 +126,17 @@ export default function EventPage({ params }: EventPageProps) {
   const [editingSpaceId, setEditingSpaceId] = useState<string | null>(null)
   const [editingSpaceData, setEditingSpaceData] = useState<any>({})
   const [updatingBrochure, setUpdatingBrochure] = useState(false)
+  const [downloadingBrochure, setDownloadingBrochure] = useState(false)
+  const brochureUrl = event?.brochure ? resolveBrochureUrl(event.brochure) : ""
+  const layoutPlanUrl = event?.layoutPlan ? resolveBrochureUrl(event.layoutPlan) : ""
+  const layoutPath = layoutPlanUrl.split("?")[0].toLowerCase()
+  const isLayoutImage =
+    /\.(jpe?g|png|gif|webp|bmp|svg)$/.test(layoutPath) || layoutPlanUrl.includes("/image/upload/")
+  const isLayoutPdf =
+    /\.pdf(\?|#|$)/i.test(layoutPlanUrl) ||
+    (layoutPlanUrl.includes("/raw/upload/") && !isLayoutImage)
+  const useGoogleLayoutViewer =
+    isLayoutPdf && /^https:\/\//i.test(layoutPlanUrl) && !/localhost|127\.0\.0\.1/i.test(layoutPlanUrl)
   const [addingSpace, setAddingSpace] = useState(false)
   const [newSpaceForm, setNewSpaceForm] = useState({
     name: "",
@@ -191,26 +288,37 @@ export default function EventPage({ params }: EventPageProps) {
       })
     }
   }
+
+  const handleBrochureDownload = async () => {
+    if (!brochureUrl) return
+    setDownloadingBrochure(true)
+    try {
+      const filename = brochureFriendlyFilename(
+        brochureUrl,
+        event.title ? `${event.title} brochure` : undefined,
+      )
+      await downloadUrlAsFile(brochureUrl, filename)
+    } catch (error) {
+      console.error("Error downloading brochure:", error)
+      toast({
+        title: "Download failed",
+        description: error instanceof Error ? error.message : "Could not download the brochure.",
+        variant: "destructive",
+      })
+    } finally {
+      setDownloadingBrochure(false)
+    }
+  }
+
   const handleBrochureUpdate = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-
-    // PDF only (backend /upload/brochure accepts PDF; same as other working PDF uploads)
-    const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')
-    if (!isPdf) {
-      toast({
-        title: "Invalid file type",
-        description: "Please upload a PDF file for the brochure.",
-        variant: "destructive",
-      })
-      return
-    }
 
     // 15MB max (matches backend document limit)
     if (file.size > 15 * 1024 * 1024) {
       toast({
         title: "File too large",
-        description: "Please upload a PDF smaller than 15MB",
+        description: "Please upload a file smaller than 15MB.",
         variant: "destructive",
       })
       return
@@ -294,22 +402,31 @@ export default function EventPage({ params }: EventPageProps) {
     const file = e.target.files?.[0]
     if (!file) return
 
-    // Validate file type
-    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'application/pdf']
-    if (!validTypes.includes(file.type)) {
+    const isPdf =
+      file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf")
+    const isImage = file.type.startsWith("image/")
+
+    if (!isPdf && !isImage) {
       toast({
         title: "Invalid file type",
-        description: "Please upload an image (JPEG, PNG, GIF) or PDF file",
+        description: "Please upload an image (JPEG, PNG, GIF, WebP) or a PDF file",
         variant: "destructive",
       })
       return
     }
 
-    // Validate file size (5MB max)
-    if (file.size > 5 * 1024 * 1024) {
+    if (isPdf && file.size > 15 * 1024 * 1024) {
       toast({
         title: "File too large",
-        description: "Please upload a file smaller than 5MB",
+        description: "Please upload a PDF smaller than 15MB",
+        variant: "destructive",
+      })
+      return
+    }
+    if (isImage && file.size > 10 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Please upload an image smaller than 10MB",
         variant: "destructive",
       })
       return
@@ -317,31 +434,26 @@ export default function EventPage({ params }: EventPageProps) {
 
     try {
       const formData = new FormData()
-      formData.append('file', file)
-      formData.append('type', 'layout')
+      formData.append("file", file)
 
-      const uploadRes = await fetch('/api/upload/cloudinary', {
-        method: 'POST',
-        body: formData,
+      // Backend uploads (same JWT as brochure) — not Next.js :3000 /api/upload/cloudinary (NextAuth)
+      const uploadData = await apiFetch<{ url?: string }>(
+        isPdf ? "/api/upload/brochure" : "/api/upload/cloudinary",
+        {
+          method: "POST",
+          body: formData,
+          auth: true,
+        },
+      )
+
+      const layoutUrl = uploadData?.url
+      if (!layoutUrl) throw new Error("No URL returned from upload")
+
+      await apiFetch(`/api/events/${event.id}`, {
+        method: "PATCH",
+        body: { layoutPlan: layoutUrl },
+        auth: true,
       })
-
-      if (!uploadRes.ok) {
-        const err = await uploadRes.json().catch(() => ({}))
-        throw new Error(err.error || 'Failed to upload layout plan')
-      }
-
-      const uploadData = await uploadRes.json()
-      const layoutUrl = uploadData.url as string
-
-      const saveRes = await fetch(`/api/events/${event.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ layoutPlan: layoutUrl }),
-      })
-      if (!saveRes.ok) {
-        const err = await saveRes.json().catch(() => ({}))
-        throw new Error(err.error || 'Failed to update layout plan')
-      }
 
       setEvent((prev: any) => ({
         ...prev,
@@ -349,16 +461,16 @@ export default function EventPage({ params }: EventPageProps) {
       }))
 
       toast({
-        title: 'Success',
-        description: 'Layout plan updated successfully',
+        title: "Success",
+        description: "Layout plan updated successfully",
       })
-      e.target.value = ''
+      e.target.value = ""
     } catch (error) {
-      console.error('Error updating layout plan:', error)
+      console.error("Error updating layout plan:", error)
       toast({
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to update layout plan',
-        variant: 'destructive',
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update layout plan",
+        variant: "destructive",
       })
     }
   }
@@ -494,8 +606,11 @@ export default function EventPage({ params }: EventPageProps) {
     if (!confirm("Are you sure you want to delete the layout plan?")) return
 
     try {
-      const res = await fetch(`/api/events/${event.id}/layout`, { method: "DELETE" })
-      if (!res.ok) throw new Error("Failed to delete layout")
+      await apiFetch(`/api/events/${event.id}`, {
+        method: "PATCH",
+        body: { layoutPlan: null },
+        auth: true,
+      })
       setEvent((prev: any) => ({ ...prev, layoutPlan: null }))
       toast({
         title: "Success",
@@ -632,17 +747,14 @@ export default function EventPage({ params }: EventPageProps) {
                             size="sm"
                             onClick={async () => {
                               try {
-                                const res = await fetch(`/api/events/${event.id}`, {
-                                  method: "PUT",
-                                  headers: { "Content-Type": "application/json" },
-                                  body: JSON.stringify({ description: aboutText }),
+                                await apiFetch(`/api/events/${event.id}`, {
+                                  method: "PATCH",
+                                  body: { description: aboutText },
+                                  auth: true,
                                 })
-
-                                if (res.ok) {
-                                  setEvent((prev: any) => ({ ...prev, description: aboutText }))
-                                  toast({ title: "Saved", description: "About section updated" })
-                                  setEditingSection(null)
-                                }
+                                setEvent((prev: any) => ({ ...prev, description: aboutText }))
+                                toast({ title: "Saved", description: "About section updated" })
+                                setEditingSection(null)
                               } catch (err) {
                                 console.error(err)
                                 toast({ title: "Error", description: "Failed to save changes", variant: "destructive" })
@@ -688,17 +800,14 @@ export default function EventPage({ params }: EventPageProps) {
                                   .map((tag) => tag.trim())
                                   .filter(Boolean)
 
-                                const res = await fetch(`/api/events/${event.id}`, {
-                                  method: "PUT",
-                                  headers: { "Content-Type": "application/json" },
-                                  body: JSON.stringify({ tags: newTags }),
+                                await apiFetch(`/api/events/${event.id}`, {
+                                  method: "PATCH",
+                                  body: { tags: newTags },
+                                  auth: true,
                                 })
-
-                                if (res.ok) {
-                                  setEvent((prev: any) => ({ ...prev, tags: newTags }))
-                                  setEditingTags(false)
-                                  toast({ title: "Saved", description: "Tags updated successfully" })
-                                }
+                                setEvent((prev: any) => ({ ...prev, tags: newTags }))
+                                setEditingTags(false)
+                                toast({ title: "Saved", description: "Tags updated successfully" })
                               } catch (err) {
                                 console.error(err)
                                 toast({ title: "Error", description: "Failed to save tags", variant: "destructive" })
@@ -982,32 +1091,27 @@ export default function EventPage({ params }: EventPageProps) {
                   </CardHeader>
                   <CardContent>
                     <div className="bg-gray-100 h-96 rounded-lg flex items-center justify-center overflow-hidden">
-                      {event?.layoutPlan ? (
-                        event.layoutPlan.startsWith('/uploads/') ? (
-                          <Image
-                            src={event.layoutPlan}
+                      {layoutPlanUrl ? (
+                        isLayoutImage ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={layoutPlanUrl}
                             alt="Event Layout Plan"
-                            width={800}
-                            height={600}
-                            className="object-contain rounded-lg"
-                            onError={(e) => {
-                              console.error('Error loading image:', event.layoutPlan)
-                              e.currentTarget.style.display = 'none'
-                            }}
+                            className="h-full w-full object-contain rounded-lg"
+                            loading="lazy"
                           />
-                        ) : event.layoutPlan.startsWith('http') ? (
-                          <Image
-                            src={event.layoutPlan}
-                            alt="Event Layout Plan"
-                            width={800}
-                            height={600}
-                            className="object-contain rounded-lg"
+                        ) : isLayoutPdf ? (
+                          <iframe
+                            title="Event Layout Plan"
+                            src={useGoogleLayoutViewer ? getGoogleDocsViewerUrl(layoutPlanUrl) : layoutPlanUrl}
+                            className="h-full w-full border-0 bg-white"
+                            loading="lazy"
                           />
                         ) : (
                           <div className="text-center">
                             <p className="text-gray-500 mb-2">Layout plan available</p>
                             <Button asChild>
-                              <a href={event.layoutPlan} target="_blank" rel="noopener noreferrer">
+                              <a href={layoutPlanUrl} target="_blank" rel="noopener noreferrer">
                                 View Layout Plan
                               </a>
                             </Button>
@@ -1045,7 +1149,7 @@ export default function EventPage({ params }: EventPageProps) {
                         <input
                           id="brochure-upload"
                           type="file"
-                          accept=".pdf,image/*"
+                          accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.csv,.rtf,.odt,.ods,.odp,.png,.jpg,.jpeg,.webp,.gif,application/*,image/*"
                           className="hidden"
                           onChange={handleBrochureUpdate}
                         />
@@ -1061,29 +1165,49 @@ export default function EventPage({ params }: EventPageProps) {
                   <CardContent>
                     <div className="space-y-4">
                       {event?.brochure ? (
-                        <>
-                          {/* Brochure card - same pattern as Layout Plan: link to stored URL */}
-                          <div className="bg-gray-50 rounded-lg border border-gray-200 min-h-[280px] flex flex-col items-center justify-center p-8">
-                            <div className="flex flex-col items-center gap-4 max-w-sm text-center">
-                              <div className="rounded-full bg-primary/10 p-4">
-                                <FileText className="h-12 w-12 text-primary" />
-                              </div>
-                              <div>
-                                <p className="font-medium text-gray-900">Event Brochure</p>
-                                <p className="text-sm text-gray-500 mt-1">
-                                  View or download the PDF.
-                                </p>
-                              </div>
-                              <Button
-                                onClick={() => window.open(event.brochure, "_blank")}
-                                className="gap-2"
-                              >
-                                <ExternalLink className="h-4 w-4" />
-                                View / Download PDF
-                              </Button>
+                        <div className="flex flex-col gap-4 lg:flex-row lg:items-stretch">
+                          <div className="min-h-0 flex-1 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+                            <div className="border-b border-gray-100 bg-slate-50 px-4 py-2">
+                              <p className="text-sm font-semibold text-gray-900">Event Brochure</p>
+                              <p className="text-xs text-gray-500">
+                                Preview below (PDF, Word, Excel, PowerPoint, or images). Other types: download to open.
+                              </p>
                             </div>
+                            <EventBrochurePreview url={brochureUrl} />
                           </div>
-                        </>
+                          <aside className="flex w-full shrink-0 flex-col gap-3 rounded-lg border border-gray-200 bg-gray-50 p-4 lg:w-52">
+                            <div>
+                              <p className="text-sm font-semibold text-gray-900">Download</p>
+                              <p
+                                className="mt-1 truncate text-xs text-gray-500"
+                                title={brochureFriendlyFilename(
+                                  brochureUrl,
+                                  event.title ? `${event.title} brochure` : undefined,
+                                )}
+                              >
+                                {brochureFriendlyFilename(
+                                  brochureUrl,
+                                  event.title ? `${event.title} brochure` : undefined,
+                                )}
+                              </p>
+                            </div>
+                            <Button
+                              type="button"
+                              className="w-full gap-2"
+                              disabled={downloadingBrochure}
+                              onClick={handleBrochureDownload}
+                            >
+                              <Download className="h-4 w-4 shrink-0" />
+                              {downloadingBrochure ? "Downloading…" : "Download"}
+                            </Button>
+                            <Button variant="outline" asChild className="w-full gap-2">
+                              <a href={brochureUrl} target="_blank" rel="noopener noreferrer">
+                                <ExternalLink className="h-4 w-4 shrink-0" />
+                                Open in new tab
+                              </a>
+                            </Button>
+                          </aside>
+                        </div>
                       ) : (
                         <div className="bg-gray-100 h-96 rounded-lg flex flex-col items-center justify-center">
                           <p className="text-gray-600 mb-4">No brochure available</p>

@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { Star, Mail, MapPin, Clock, IndianRupee, Wifi, Utensils, Car, Tag, Trash2, Calendar, Users, Edit2, Plus, Share2, Bookmark, FileText, ExternalLink } from "lucide-react"
+import { Star, Mail, MapPin, Clock, IndianRupee, Wifi, Utensils, Car, Tag, Trash2, Calendar, Users, Edit2, Plus, Share2, Bookmark, ExternalLink, Download } from "lucide-react"
 import EventHero from "@/components/event-hero"
 import EventImageGallery from "@/components/event-image-gallery"
 import { useEffect, useState } from "react"
@@ -24,6 +24,7 @@ import {
 } from "@/lib/event-leads-client"
 import { apiFetch, getCurrentUserEmail, getCurrentUserId, isAuthenticated, getCurrentUserRole } from "@/lib/api"
 import { getPublicProfilePath } from "@/lib/profile-path"
+import { brochureFriendlyFilename, downloadUrlAsFile, getGoogleDocsViewerUrl, resolveBrochureUrl } from "@/lib/utils"
 
 interface PlaceToVisit {
   name: string;
@@ -92,6 +93,18 @@ export default function EventPageContent({ event, session: _session, router, toa
   const [interestVisit, setInterestVisit] = useState(false)
   const [interestExhibit, setInterestExhibit] = useState(false)
   const [interestSubmitting, setInterestSubmitting] = useState<"visit" | "exhibit" | null>(null)
+  const [brochureDownloading, setBrochureDownloading] = useState(false)
+  const brochureUrl = event?.brochure ? resolveBrochureUrl(event.brochure) : ""
+  const useGoogleViewer = /^https:\/\//i.test(brochureUrl) && !/localhost|127\.0\.0\.1/i.test(brochureUrl)
+  const layoutPlanUrl = event?.layoutPlan ? resolveBrochureUrl(event.layoutPlan) : ""
+  const layoutPath = layoutPlanUrl.split("?")[0].toLowerCase()
+  const isLayoutImage =
+    /\.(jpe?g|png|gif|webp|bmp|svg)$/.test(layoutPath) || layoutPlanUrl.includes("/image/upload/")
+  const isLayoutPdf =
+    /\.pdf(\?|#|$)/i.test(layoutPlanUrl) ||
+    (layoutPlanUrl.includes("/raw/upload/") && !isLayoutImage)
+  const useGoogleLayoutViewer =
+    isLayoutPdf && /^https:\/\//i.test(layoutPlanUrl) && !/localhost|127\.0\.0\.1/i.test(layoutPlanUrl)
 
   useEffect(() => {
     setAverageRating(event.averageRating || 0)
@@ -417,6 +430,27 @@ export default function EventPageContent({ event, session: _session, router, toa
       }
     } finally {
       setInterestSubmitting(null)
+    }
+  }
+
+  const handleBrochureDownload = async () => {
+    if (!brochureUrl) return
+    setBrochureDownloading(true)
+    try {
+      const filename = brochureFriendlyFilename(
+        brochureUrl,
+        event.title ? `${event.title} brochure` : undefined,
+      )
+      await downloadUrlAsFile(brochureUrl, filename)
+    } catch (error) {
+      console.error("Error downloading brochure:", error)
+      toast({
+        title: "Download failed",
+        description: error instanceof Error ? error.message : "Could not download the brochure.",
+        variant: "destructive",
+      })
+    } finally {
+      setBrochureDownloading(false)
     }
   }
 
@@ -1055,16 +1089,33 @@ export default function EventPageContent({ event, session: _session, router, toa
                   </CardHeader>
                   <CardContent>
                     <div className="bg-gray-100 h-96 rounded-lg flex items-center justify-center overflow-hidden">
-                      {event?.layoutPlan ? (
-                        <Image
-                          src={event.layoutPlan.startsWith("http")
-                            ? event.layoutPlan
-                            : `/uploads/${event.layoutPlan}`}
-                          alt="Event Layout Plan"
-                          width={800}
-                          height={600}
-                          className="object-contain rounded-lg"
-                        />
+                      {layoutPlanUrl ? (
+                        isLayoutImage ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={layoutPlanUrl}
+                            alt="Event Layout Plan"
+                            className="h-full w-full object-contain rounded-lg"
+                            loading="lazy"
+                          />
+                        ) : isLayoutPdf ? (
+                          <iframe
+                            title="Event Layout Plan"
+                            src={useGoogleLayoutViewer ? getGoogleDocsViewerUrl(layoutPlanUrl) : layoutPlanUrl}
+                            className="h-full w-full border-0 bg-white"
+                            loading="lazy"
+                          />
+                        ) : (
+                          <div className="text-center">
+                            <p className="text-gray-500 mb-4">Layout plan available</p>
+                            <Button variant="outline" asChild>
+                              <a href={layoutPlanUrl} target="_blank" rel="noopener noreferrer">
+                                <ExternalLink className="h-4 w-4 shrink-0" />
+                                Open Layout Plan
+                              </a>
+                            </Button>
+                          </div>
+                        )
                       ) : (
                         <div className="text-center">
                           <p className="text-gray-500 mb-4">Floor plan will be displayed here</p>
@@ -1085,30 +1136,40 @@ export default function EventPageContent({ event, session: _session, router, toa
                   <CardContent>
                     <div className="space-y-4">
                       {event?.brochure ? (
-                        <>
-                          <div className="bg-gray-50 rounded-lg border border-gray-200 min-h-[280px] flex flex-col items-center justify-center p-8">
-                            <div className="flex flex-col items-center gap-4 max-w-sm text-center">
-                              <div className="rounded-full bg-[#FF131C]/10 p-4">
-                                <FileText className="h-12 w-12 text-[#FF131C]" />
-                              </div>
-                              <div>
-                                <p className="font-medium text-gray-900">Event Brochure</p>
-                                <p className="text-sm text-gray-500 mt-1">
-                                  View or download the PDF.
-                                </p>
-                              </div>
-                              <a
-                                href={event.brochure}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center justify-center gap-2 rounded-md bg-[#FF131C] px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
-                              >
-                                <ExternalLink className="h-4 w-4" />
-                                View / Download PDF
-                              </a>
-                            </div>
+                        <div className="space-y-4">
+                          <p className="text-sm text-gray-600">
+                            Preview (Google Docs Viewer). Use <span className="font-medium">Download</span> for a file with the correct extension.
+                          </p>
+                          <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+                            <iframe
+                              title="Event brochure"
+                              src={useGoogleViewer ? getGoogleDocsViewerUrl(brochureUrl) : brochureUrl}
+                              className="h-[min(70vh,640px)] w-full min-h-[480px] border-0"
+                              loading="lazy"
+                            />
                           </div>
-                        </>
+                          <div className="flex flex-wrap items-center gap-3">
+                            <Button
+                              type="button"
+                              className="gap-2 bg-[#FF131C] hover:bg-red-700"
+                              disabled={brochureDownloading}
+                              onClick={handleBrochureDownload}
+                            >
+                              <Download className="h-4 w-4 shrink-0" />
+                              {brochureDownloading ? "Downloading…" : "Download"}
+                            </Button>
+                            <Button variant="outline" asChild className="gap-2">
+                              <a href={brochureUrl} target="_blank" rel="noopener noreferrer">
+                                <ExternalLink className="h-4 w-4 shrink-0" />
+                                Open file URL
+                              </a>
+                            </Button>
+                          </div>
+                          <p className="truncate text-xs text-gray-500" title={brochureFriendlyFilename(brochureUrl, event.title ? `${event.title} brochure` : undefined)}>
+                            Save as:{" "}
+                            {brochureFriendlyFilename(brochureUrl, event.title ? `${event.title} brochure` : undefined)}
+                          </p>
+                        </div>
                       ) : (
                         <div className="bg-gray-100 h-96 rounded-lg flex flex-col items-center justify-center">
                           <p className="text-gray-600 mb-4">No brochure available</p>

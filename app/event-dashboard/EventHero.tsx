@@ -93,23 +93,19 @@ export default function EventHero({ event, onImagesUpdate }: EventHeroProps) {
     try {
       const updatedImages = [...images, newImageUrl]
 
-      const response = await fetch(`/api/events/${event.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ images: updatedImages }),
+      await apiFetch(`/api/events/${event.id}`, {
+        method: "PATCH",
+        body: { images: updatedImages },
+        auth: true,
       })
 
-      if (response.ok) {
-        setImages(updatedImages)
-        setNewImageUrl("")
-        onImagesUpdate?.(updatedImages)
-        toast({
-          title: "Success",
-          description: "Image added successfully",
-        })
-      } else {
-        throw new Error("Failed to add image")
-      }
+      setImages(updatedImages)
+      setNewImageUrl("")
+      onImagesUpdate?.(updatedImages)
+      toast({
+        title: "Success",
+        description: "Image added successfully",
+      })
     } catch (error) {
       console.error("Error adding image:", error)
       toast({
@@ -134,11 +130,11 @@ export default function EventHero({ event, onImagesUpdate }: EventHeroProps) {
       return
     }
 
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
+    // Backend image limit 10MB
+    if (file.size > 10 * 1024 * 1024) {
       toast({
         title: "Error",
-        description: "Image size must be less than 5MB",
+        description: "Image size must be less than 10MB",
         variant: "destructive",
       })
       return
@@ -149,32 +145,24 @@ export default function EventHero({ event, onImagesUpdate }: EventHeroProps) {
     try {
       const formData = new FormData()
       formData.append("file", file)
-      formData.append("type", "image")
 
-      // Use Next.js Cloudinary route (NextAuth-based), no backend JWT needed
-      const res = await fetch("/api/upload/cloudinary", {
+      // Backend `POST /api/upload/cloudinary` (Bearer JWT) — not Next.js :3000 route (NextAuth session)
+      const uploadData = await apiFetch<{ url?: string }>("/api/upload/cloudinary", {
         method: "POST",
         body: formData,
+        auth: true,
       })
 
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}))
-        throw new Error(err.error || "Failed to upload image")
-      }
+      const imageUrl = uploadData?.url
+      if (!imageUrl) throw new Error("No URL returned from upload")
 
-      const uploadData = (await res.json()) as { url: string }
-      const updatedImages = [...images, uploadData.url]
+      const updatedImages = [...images, imageUrl]
 
-      const response = await fetch(`/api/events/${event.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ images: updatedImages }),
+      await apiFetch(`/api/events/${event.id}`, {
+        method: "PATCH",
+        body: { images: updatedImages },
+        auth: true,
       })
-
-      if (!response.ok) {
-        const err = await response.json().catch(() => ({}))
-        throw new Error(err.error || "Failed to save image")
-      }
 
       setImages(updatedImages)
       onImagesUpdate?.(updatedImages)
@@ -211,22 +199,18 @@ export default function EventHero({ event, onImagesUpdate }: EventHeroProps) {
     try {
       const updatedImages = images.filter((_, index) => index !== currentSlide)
 
-      const response = await fetch(`/api/events/${event.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ images: updatedImages }),
+      await apiFetch(`/api/events/${event.id}`, {
+        method: "PATCH",
+        body: { images: updatedImages },
+        auth: true,
       })
 
-      if (response.ok) {
-        setImages(updatedImages)
-        onImagesUpdate?.(updatedImages)
-        toast({
-          title: "Success",
-          description: "Image deleted successfully",
-        })
-      } else {
-        throw new Error("Failed to delete image")
-      }
+      setImages(updatedImages)
+      onImagesUpdate?.(updatedImages)
+      toast({
+        title: "Success",
+        description: "Image deleted successfully",
+      })
     } catch (error) {
       console.error("Error deleting image:", error)
       toast({

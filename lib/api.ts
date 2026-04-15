@@ -47,6 +47,7 @@ export function clearTokens() {
 /** Decode JWT payload without verification (client-side only; for reading sub/role/permissions). */
 function decodeJwtPayload(token: string): {
   sub?: string;
+  exp?: number;
   role?: string;
   domain?: string;
   permissions?: string[];
@@ -63,6 +64,34 @@ function decodeJwtPayload(token: string): {
   } catch {
     return null;
   }
+}
+
+/** Multipart body must be re-built per fetch attempt (retry after 401 can otherwise send an empty body). */
+function cloneFormData(fd: FormData): FormData {
+  const out = new FormData();
+  for (const [key, value] of fd.entries()) {
+    if (value instanceof File) {
+      out.append(key, value, value.name);
+    } else {
+      out.append(key, value as string);
+    }
+  }
+  return out;
+}
+
+/**
+ * If access token expires within `bufferSec`, refresh first — avoids 401 on large uploads
+ * (e.g. POST /api/upload/brochure) when the token expired between page load and click.
+ */
+async function refreshAccessTokenIfExpiringSoon(bufferSec = 120): Promise<void> {
+  const token = getAccessToken();
+  if (!token) return;
+  const payload = decodeJwtPayload(token);
+  const exp = payload?.exp;
+  if (typeof exp !== "number") return;
+  const nowSec = Math.floor(Date.now() / 1000);
+  if (exp - nowSec > bufferSec) return;
+  await refreshAccessToken();
 }
 
 /** Current user id from stored access token (for use when backend expects userId in body). */
@@ -166,6 +195,10 @@ export async function apiFetch<T = any>(path: string, options: ApiRequestOptions
   const url = `${API_BASE_URL}${path}`;
   const { method = "GET", body, headers, auth = true } = options;
 
+  if (auth && typeof window !== "undefined") {
+    await refreshAccessTokenIfExpiringSoon();
+  }
+
   const makeHeaders = (authorization: string | null): Record<string, string> => {
     const h: Record<string, string> = {
       ...(body && !(body instanceof FormData) ? { "Content-Type": "application/json" } : {}),
@@ -185,12 +218,13 @@ export async function apiFetch<T = any>(path: string, options: ApiRequestOptions
     return h;
   };
 
-  const requestBody =
-    body && !(body instanceof FormData)
-      ? JSON.stringify(body)
-      : body instanceof FormData
-        ? body
-        : undefined;
+  const jsonBody =
+    body && !(body instanceof FormData) ? JSON.stringify(body) : undefined;
+
+  const buildBody = (): BodyInit | undefined => {
+    if (body instanceof FormData) return cloneFormData(body);
+    return jsonBody;
+  };
 
   const token = auth && typeof window !== "undefined" ? getAccessToken() : null;
   const firstAuth = token ? `Bearer ${token}` : null;
@@ -200,7 +234,7 @@ export async function apiFetch<T = any>(path: string, options: ApiRequestOptions
     response = await fetch(url, {
       method,
       headers: makeHeaders(firstAuth),
-      body: requestBody,
+      body: buildBody(),
     });
   } catch (cause: any) {
     const base = getBackendApiBaseUrl();
@@ -215,7 +249,7 @@ export async function apiFetch<T = any>(path: string, options: ApiRequestOptions
     throw error;
   }
 
-  // Single refresh + retry on 401: rebuild headers + body so the new token is always sent
+  // Single refresh + retry on 401: new token + fresh body (FormData clone) for multipart uploads
   if (auth && response.status === 401 && typeof window !== "undefined") {
     const newToken = await refreshAccessToken();
     if (newToken) {
@@ -223,7 +257,7 @@ export async function apiFetch<T = any>(path: string, options: ApiRequestOptions
         response = await fetch(url, {
           method,
           headers: makeHeaders(`Bearer ${newToken}`),
-          body: requestBody,
+          body: buildBody(),
         });
       } catch (cause: any) {
         const error: any = new Error(
