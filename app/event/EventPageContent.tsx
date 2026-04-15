@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { Star, Mail, MapPin, Clock, IndianRupee, Wifi, Utensils, Car, Tag, Trash2, Calendar, Users, Edit2, Plus, Share2, Bookmark, ExternalLink, Download } from "lucide-react"
+import { Star, Mail, MapPin, Clock, IndianRupee, Tag, Trash2, Calendar, Users, Edit2, Plus, Share2, Bookmark, ExternalLink, Download } from "lucide-react"
 import EventHero from "@/components/event-hero"
 import EventImageGallery from "@/components/event-image-gallery"
 import { useEffect, useState } from "react"
@@ -25,12 +25,6 @@ import {
 import { apiFetch, getCurrentUserEmail, getCurrentUserId, isAuthenticated, getCurrentUserRole } from "@/lib/api"
 import { getPublicProfilePath } from "@/lib/profile-path"
 import { brochureFriendlyFilename, downloadUrlAsFile, getGoogleDocsViewerUrl, resolveBrochureUrl } from "@/lib/utils"
-
-interface PlaceToVisit {
-  name: string;
-  category: string;
-  image: string;
-}
 
 interface TicketType {
   name: string
@@ -53,6 +47,70 @@ interface EventPageContentProps {
   session: any
   router: any
   toast: any
+}
+
+type ContentBanner = {
+  id: string
+  title?: string
+  imageUrl?: string
+  link?: string
+  isActive?: boolean
+}
+
+const FEATURED_HOTELS_UI_MOCK = [
+  { name: "Katelya Hotel", stars: 2, price: "324", image: "/places/ifal.jpeg" },
+  { name: "The Hera Premium Hotels", stars: 4, price: "666.73", image: "/places/OIP.jpeg" },
+  { name: "Urban Hotel Bomonti", stars: 2, price: "143.1", image: "/places/th.jpeg" },
+  { name: "Avantgarde Urban Taksim", stars: 4, price: "130.5", image: "/places/ifal.jpeg" },
+]
+
+const COUNTRY_CURRENCY_MAP: Record<string, string> = {
+  india: "INR",
+  china: "CNY",
+  japan: "JPY",
+  turkey: "TRY",
+  uk: "GBP",
+  "united kingdom": "GBP",
+  usa: "USD",
+  "united states": "USD",
+  canada: "CAD",
+  australia: "AUD",
+  singapore: "SGD",
+  uae: "AED",
+  "saudi arabia": "SAR",
+  germany: "EUR",
+  france: "EUR",
+  italy: "EUR",
+  spain: "EUR",
+  netherlands: "EUR",
+  portugal: "EUR",
+}
+
+const getCurrencyByCountry = (event: any) => {
+  const countryCandidates = [
+    event?.country,
+    event?.eventCountry,
+    event?.venue?.country,
+    event?.venue?.venueCountry,
+    event?.organizer?.country,
+    event?.location?.country,
+  ]
+    .filter(Boolean)
+    .map((value) => String(value).trim().toLowerCase())
+
+  for (const country of countryCandidates) {
+    if (COUNTRY_CURRENCY_MAP[country]) {
+      return COUNTRY_CURRENCY_MAP[country]
+    }
+
+    // Handle values like "People's Republic of China" or "India (IN)"
+    const matchedKey = Object.keys(COUNTRY_CURRENCY_MAP).find((key) => country.includes(key))
+    if (matchedKey) {
+      return COUNTRY_CURRENCY_MAP[matchedKey]
+    }
+  }
+
+  return "EUR"
 }
 
 // Helper function to get company initials
@@ -85,8 +143,6 @@ export default function EventPageContent({ event, session: _session, router, toa
   const [saving, setSaving] = useState(false)
   const [averageRating, setAverageRating] = useState(event.averageRating || 0)
   const [totalReviews, setTotalReviews] = useState(event.reviewCount || 0)
-  const [featuredHotels, setFeaturedHotels] = useState<any[]>([])
-  const [hotelsLoading, setHotelsLoading] = useState(true)
   const [userRole, setUserRole] = useState<string | null>(null)
   const [spaceCosts, setSpaceCosts] = useState<SpaceCost[]>([])
   const [isOrganizer, setIsOrganizer] = useState(false)
@@ -94,9 +150,11 @@ export default function EventPageContent({ event, session: _session, router, toa
   const [interestExhibit, setInterestExhibit] = useState(false)
   const [interestSubmitting, setInterestSubmitting] = useState<"visit" | "exhibit" | null>(null)
   const [brochureDownloading, setBrochureDownloading] = useState(false)
+  const [sidebarBanner, setSidebarBanner] = useState<ContentBanner | null>(null)
   const brochureUrl = event?.brochure ? resolveBrochureUrl(event.brochure) : ""
   const useGoogleViewer = /^https:\/\//i.test(brochureUrl) && !/localhost|127\.0\.0\.1/i.test(brochureUrl)
   const layoutPlanUrl = event?.layoutPlan ? resolveBrochureUrl(event.layoutPlan) : ""
+  const hotelCurrency = getCurrencyByCountry(event)
   const layoutPath = layoutPlanUrl.split("?")[0].toLowerCase()
   const isLayoutImage =
     /\.(jpe?g|png|gif|webp|bmp|svg)$/.test(layoutPath) || layoutPlanUrl.includes("/image/upload/")
@@ -110,7 +168,6 @@ export default function EventPageContent({ event, session: _session, router, toa
     setAverageRating(event.averageRating || 0)
     setTotalReviews(event.reviewCount || 0)
     if (event.id) fetchSpaceCosts(event.id)
-    loadFeaturedHotels()
     if (event?.id && userId) {
       checkIfSaved()
       checkUserRole()
@@ -145,46 +202,28 @@ export default function EventPageContent({ event, session: _session, router, toa
     }
   }, [event?.id, userId])
 
-  const getPlacesToVisit = (city: string): PlaceToVisit[] => {
-    const placesByCity: Record<string, PlaceToVisit[]> = {
-      "Paris": [
-        { name: "Eiffel Tower", category: "Historical places", image: "/places/ifal.jpeg" },
-        { name: "Louvre Museum", category: "Museum", image: "/places/ifal.jpeg" },
-        { name: "Notre-Dame Cathedral", category: "Historical places", image: "/places/ifal.jpeg" }
-      ],
-      "Delhi": [
-        { name: "Taj Mahal", category: "Historical places", image: "/places/ifal.jpeg" },
-        { name: "Red Fort", category: "Historical places", image: "/places/ifal.jpeg" },
-        { name: "Qutub Minar", category: "Historical places", image: "/places/ifal.jpeg" }
-      ],
-      "Sydney": [
-        { name: "Sydney Opera House", category: "Beach", image: "/places/ifal.jpeg" },
-        { name: "Bondi Beach", category: "Beach", image: "/places/ifal.jpeg" },
-        { name: "Harbour Bridge", category: "Landmark", image: "/places/ifal.jpeg" }
-      ],
-      "New York": [
-        { name: "Statue of Liberty", category: "Historical places", image: "/places/ifal.jpeg" },
-        { name: "Central Park", category: "Park", image: "/places/ifal.jpeg" },
-        { name: "Times Square", category: "Entertainment", image: "/places/ifal.jpeg" }
-      ],
-      "Tokyo": [
-        { name: "Tokyo Tower", category: "Landmark", image: "/places/ifal.jpeg" },
-        { name: "Senso-ji Temple", category: "Temple", image: "/places/ifal.jpeg" },
-        { name: "Shibuya Crossing", category: "Landmark", image: "/places/ifal.jpeg" }
-      ],
-      "London": [
-        { name: "Big Ben", category: "Historical places", image: "/places/ifal.jpeg" },
-        { name: "London Eye", category: "Entertainment", image: "/places/ifal.jpeg" },
-        { name: "Tower Bridge", category: "Historical places", image: "/places/ifal.jpeg" }
-      ]
-    };
-
-    return placesByCity[city] || [
-      { name: "Eiffel Tower", category: "Historical places", image: "/places/ifal.jpeg" },
-      { name: "Taj Mahal", category: "Historical places", image: "/places/OIP.jpeg" },
-      { name: "Sydney Opera House", category: "Beach", image: "/places/th.jpeg" }
-    ];
-  };
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      try {
+        const data = await apiFetch<ContentBanner[]>(`/api/content/banners?page=event-detail&position=sidebar`, {
+          auth: false,
+        })
+        if (cancelled) return
+        const list = Array.isArray(data) ? data : []
+        const active = list.find((b) => b?.isActive !== false && b?.imageUrl)
+        setSidebarBanner(active ?? null)
+      } catch (error) {
+        if (!cancelled) {
+          console.error("Failed to fetch sidebar banner:", error)
+          setSidebarBanner(null)
+        }
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const fetchSpaceCosts = async (eventId: string) => {
     try {
@@ -208,43 +247,6 @@ export default function EventPageContent({ event, session: _session, router, toa
         { type: "Premium Booth", price: 8000, currency: "₹", description: "3x3 meter space with premium location" },
         { type: "VIP Booth", price: 12000, currency: "₹", description: "3x3 meter space with prime location" }
       ])
-    }
-  }
-
-  const loadFeaturedHotels = async () => {
-    if (!event?.id) return
-    setHotelsLoading(true)
-    const demo: any[] = [
-      {
-        id: "demo-1",
-        name: "Kanazawa Grand Inn Hotel",
-        rating: 4.8,
-        reviews: 1257,
-        locationNote: "Excellent Location",
-        price: 48,
-        priceNote: "28%",
-        dealLabel: "Deal",
-        badgeText: "20% OFF",
-        image: "/city/c2.jpg",
-        amenities: ["Free Wifi", "Food", "Parking"],
-      },
-    ]
-    try {
-      const raw = await apiFetch<unknown>(
-        `/api/featured-hotels?eventId=${encodeURIComponent(event.id)}`,
-        { auth: false },
-      )
-      const data = Array.isArray(raw) ? raw : []
-      if (data.length > 0) {
-        setFeaturedHotels(data)
-      } else {
-        setFeaturedHotels(demo)
-      }
-    } catch (err) {
-      console.log("[v0] featured hotels fetch failed, using demo:", (err as Error).message)
-      setFeaturedHotels(demo)
-    } finally {
-      setHotelsLoading(false)
     }
   }
 
@@ -1326,176 +1328,100 @@ export default function EventPageContent({ event, session: _session, router, toa
 
           {/* Sidebar - Right Side */}
           <div className="w-full lg:w-80 xl:w-96 space-y-6 flex-shrink-0">
-            <Card className="hover:shadow-md transition-shadow border border-gray-200 rounded-lg h-60">
-              <CardHeader className="pb-3"></CardHeader>
-              <CardContent className="space-y-4"></CardContent>
+            <Card className="gap-0 p-0 overflow-hidden rounded-sm border border-gray-200 shadow-sm">
+              {sidebarBanner?.imageUrl ? (
+                sidebarBanner.link?.trim() ? (
+                  <a
+                    href={sidebarBanner.link.trim()}
+                    target={sidebarBanner.link.startsWith("http") ? "_blank" : "_self"}
+                    rel={sidebarBanner.link.startsWith("http") ? "noopener noreferrer" : undefined}
+                  >
+                    <div className="relative h-52 w-full">
+                      <Image
+                        src={sidebarBanner.imageUrl}
+                        alt={sidebarBanner.title || "Event sidebar banner"}
+                        fill
+                        sizes="(max-width: 1024px) 100vw, 380px"
+                        className="absolute inset-0 h-full w-full object-cover"
+                      />
+                      {sidebarBanner.title?.trim() ? (
+                        <>
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                          <div className="absolute bottom-3 left-3 right-3">
+                            <p className="line-clamp-2 text-sm font-semibold text-white drop-shadow-sm">
+                              {sidebarBanner.title.trim()}
+                            </p>
+                          </div>
+                        </>
+                      ) : null}
+                    </div>
+                  </a>
+                ) : (
+                  <div className="relative h-52 w-full">
+                    <Image
+                      src={sidebarBanner.imageUrl}
+                      alt={sidebarBanner.title || "Event sidebar banner"}
+                      fill
+                      sizes="(max-width: 1024px) 100vw, 380px"
+                        className="absolute inset-0 h-full w-full object-cover"
+                    />
+                    {sidebarBanner.title?.trim() ? (
+                      <>
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                        <div className="absolute bottom-3 left-3 right-3">
+                          <p className="line-clamp-2 text-sm font-semibold text-white drop-shadow-sm">
+                            {sidebarBanner.title.trim()}
+                          </p>
+                        </div>
+                      </>
+                    ) : null}
+                  </div>
+                )
+              ) : (
+                <div className="relative h-52 w-full">
+                  <Image
+                    src="/banners/banner1.jpg"
+                    alt="Event sidebar banner"
+                    fill
+                    sizes="(max-width: 1024px) 100vw, 380px"
+                    className="absolute inset-0 h-full w-full object-cover"
+                  />
+                </div>
+              )}
             </Card>
 
-            {/* Featured Hotels Card */}
-            {/* <div className="hover:shadow-md transition-shadow border border-gray-200 rounded-lg">
+            <Card className="overflow-hidden rounded-md border border-gray-300 bg-[#efefef] shadow-sm">
               <CardHeader className="pb-2">
-                <CardTitle className="text-lg font-semibold">Featured Hotels</CardTitle>
-              </CardHeader>
-
-              <CardContent className="space-y-4">
-                {hotelsLoading ? (
-                  <div className="text-center py-4">
-                    <p className="text-gray-600 text-sm">Loading featured hotels…</p>
-                  </div>
-                ) : featuredHotels.length === 0 ? (
-                  <div className="text-center py-4">
-                    <p className="text-gray-600 text-sm">No featured hotels available.</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4 mb-4">
-                    {featuredHotels.map((h: any) => (
-                      <div
-                        key={h.id}
-                        className="w-full bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden"
-                      >
-                        <div className="flex flex-col sm:flex-row">
-                          {/* Image Section */}
-                          {/* <div className="sm:w-1/3 relative h-40 sm:h-32">
-                            <Image
-                              src={h.image || "/api/placeholder/200/128?text=Hotel"}
-                              alt={h.name || "Featured Hotel"}
-                              fill
-                              className="object-cover m-2"
-                              sizes="(max-width: 640px) 100vw, 33vw"
-                            />
-                            {h.badgeText && (
-                              <span className="absolute bottom-2 left-2 rounded-full bg-[#004A96] px-2 py-1 text-xs font-semibold text-white">
-                                {h.badgeText}
-                              </span>
-                            )}
-                          </div> */}
-
-                          {/* Content Section */}
-                          {/* <div className="sm:w-2/3 p-3">
-                            <div className="flex flex-col h-full">
-                              {/* Header */}
-                              {/* <div className="flex justify-between items-start gap-2 mb-2">
-                                <div className="flex-1 min-w-0">
-                                  <h3 className="text-sm font-semibold text-gray-900 line-clamp-2 mb-1">
-                                    {h.name}
-                                  </h3> */} 
-
-                                  {/* Rating and Location */}
-                                  {/* <div className="flex items-center gap-1 text-xs text-gray-600 mb-2">
-                                    <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                                    <span className="font-medium">{(h.rating ?? 0).toFixed(1)}</span>
-                                    <span>({(h.reviews || 0).toLocaleString()})</span>
-                                    <span className="mx-1">•</span>
-                                    <span className="truncate">{h.locationNote || "Excellent Location"}</span>
-                                  </div>
-                                </div>
-                              </div> */}
-
-                              {/* Amenities */}
-                              {/* <div className="flex flex-wrap gap-1 mb-3">
-                                {h.amenities?.includes("Free Wifi") || h.amenities?.includes("wifi") ? (
-                                  <span className="inline-flex items-center gap-1 bg-gray-50 px-2 py-1 rounded text-xs text-gray-600">
-                                    <Wifi className="h-3 w-3" />
-                                    WiFi
-                                  </span>
-                                ) : null}
-                                {h.amenities?.includes("Food") || h.amenities?.includes("food") ? (
-                                  <span className="inline-flex items-center gap-1 bg-gray-50 px-2 py-1 rounded text-xs text-gray-600">
-                                    <Utensils className="h-3 w-3" />
-                                    Food
-                                  </span>
-                                ) : null}
-                                {h.amenities?.includes("Parking") || h.amenities?.includes("parking") ? (
-                                  <span className="inline-flex items-center gap-1 bg-gray-50 px-2 py-1 rounded text-xs text-gray-600">
-                                    <Car className="h-3 w-3" />
-                                    Parking
-                                  </span>
-                                ) : null}
-                              </div> */}
-
-                              {/* Price and Booking */}
-                              {/* <div className="flex items-center justify-between gap-2 mt-auto">
-                                <div className="flex items-center gap-2">
-                                  <span className="rounded-full bg-[#004A96] px-2 py-1 text-xs font-semibold text-white">
-                                    {h.dealLabel || "Deal"}
-                                  </span>
-                                  <div className="flex items-baseline gap-1">
-                                    <span className="text-lg font-bold text-gray-900">
-                                      {h.currency || "$"}
-                                      {h.price}
-                                    </span>
-                                    <span className="text-xs text-gray-500 hidden sm:inline">
-                                      {h.priceNote || "28% less than usual"}
-                                    </span>
-                                  </div>
-                                </div>
-
-                                <Button
-                                  className="rounded-full bg-[#004A96] px-3 py-1 text-white hover:bg-[#003a75] text-xs font-medium whitespace-nowrap flex-shrink-0"
-                                  size="sm"
-                                >
-                                  Book Now
-                                </Button>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent> */}
-            {/* </div>  */}
-
-
-
-            {/* Places to Visit */}
-            <Card className="border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all">
-              <CardHeader className="pb-3">
                 <CardTitle className="text-lg font-semibold">
-                  Places to Visit in {event.city || "the area"}
+                  Featured Hotels in {event.city || "this city"}
                 </CardTitle>
               </CardHeader>
-
-              <CardContent className="space-y-5">
-                {getPlacesToVisit(event.city).map((place, index) => (
-                  <div key={index} className="rounded-xl overflow-hidden border border-gray-100 bg-white">
-                    {/* Image with overlayed title and gradient */}
-                    <div className="relative w-full h-48">
-                      <Image
-                        src={place.image}
-                        alt={place.name}
-                        fill
-                        sizes="(max-width: 640px) 100vw, 600px"
-                        className="object-cover"
-                      />
-
-                      {/* Gradient overlay for better text visibility */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent"></div>
-
-                      {/* Title overlay */}
-                      <div className="absolute left-4 bottom-4 pr-4">
-                        <h3 className="text-white text-lg font-semibold drop-shadow-md">
-                          {place.name}
-                        </h3>
+              <CardContent className="space-y-4 pt-0">
+                {FEATURED_HOTELS_UI_MOCK.map((hotel) => (
+                  <div key={hotel.name} className="bg-[#e4e4e6] p-3">
+                    <div className="flex gap-4">
+                      <div className="relative h-[74px] w-[74px] shrink-0 overflow-hidden">
+                        <Image src={hotel.image} alt={hotel.name} fill sizes="74px" className="object-cover" />
                       </div>
-                    </div>
-
-                    {/* White area under image: category on left, button on right */}
-                    <div className="px-4 py-3 flex items-center justify-between">
-                      <p className="text-gray-600 text-sm">{place.category}</p>
-
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-[#004A96] hover:text-[#003a75] hover:bg-[#f0f0f0]"
-                        aria-label={`More details about ${place.name}`}
-                      >
-                        More details →
-                      </Button>
+                      <div className="min-w-0 flex-1">
+                        <p className="line-clamp-1 text-[15px] font-normal text-[#0f5a8d]">
+                          {hotel.name}
+                        </p>
+                        <div className="-mt-1 flex items-center gap-1">
+                          {Array.from({ length: hotel.stars }).map((_, index) => (
+                            <Star key={`${hotel.name}-${index}`} className="h-3.5 w-3.5 fill-[#e64700] text-[#e64700]" />
+                          ))}
+                          <span className="ml-1 text-[15px] text-[#4f5963]">
+                            from {hotelCurrency} {hotel.price}
+                          </span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ))}
+                <Button className="h-10 rounded-md bg-[#5b79ac] px-6 text-[14px] font-semibold text-white hover:bg-[#4f6fa8]">
+                  More Hotels
+                </Button>
               </CardContent>
             </Card>
           </div>

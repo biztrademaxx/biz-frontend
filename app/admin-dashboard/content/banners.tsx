@@ -474,7 +474,7 @@ export default function BannersPage() {
 
       {/* Upload Dialog */}
       <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[88vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Upload New Banner</DialogTitle>
             <DialogDescription>Upload a banner image for a specific page location</DialogDescription>
@@ -493,37 +493,37 @@ export default function BannersPage() {
 
             <div>
               <Label htmlFor="page">Page Location *</Label>
-              <Select value={uploadForm.page} onValueChange={(value) => setUploadForm({ ...uploadForm, page: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select page" />
-                </SelectTrigger>
-                <SelectContent>
-                  {PAGE_OPTIONS.map((page) => (
-                    <SelectItem key={page.value} value={page.value}>
-                      {page.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <select
+                id="page"
+                value={uploadForm.page}
+                onChange={(e) => setUploadForm({ ...uploadForm, page: e.target.value })}
+                className="border-input bg-background w-full rounded-md border px-3 py-2 text-sm shadow-xs outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+              >
+                <option value="" disabled>
+                  Select page
+                </option>
+                {PAGE_OPTIONS.map((page) => (
+                  <option key={page.value} value={page.value}>
+                    {page.label}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div>
               <Label htmlFor="position">Position on Page</Label>
-              <Select
+              <select
+                id="position"
                 value={uploadForm.position}
-                onValueChange={(value) => setUploadForm({ ...uploadForm, position: value })}
+                onChange={(e) => setUploadForm({ ...uploadForm, position: e.target.value })}
+                className="border-input bg-background w-full rounded-md border px-3 py-2 text-sm shadow-xs outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
               >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {POSITION_OPTIONS.map((pos) => (
-                    <SelectItem key={pos.value} value={pos.value}>
-                      {pos.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                {POSITION_OPTIONS.map((pos) => (
+                  <option key={pos.value} value={pos.value}>
+                    {pos.label}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div>
@@ -608,37 +608,37 @@ export default function BannersPage() {
 
             <div>
               <Label htmlFor="edit-page">Page Location *</Label>
-              <Select value={editForm.page} onValueChange={(value) => setEditForm({ ...editForm, page: value })}>
-                <SelectTrigger id="edit-page">
-                  <SelectValue placeholder="Select page" />
-                </SelectTrigger>
-                <SelectContent>
-                  {PAGE_OPTIONS.map((page) => (
-                    <SelectItem key={page.value} value={page.value}>
-                      {page.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <select
+                id="edit-page"
+                value={editForm.page}
+                onChange={(e) => setEditForm({ ...editForm, page: e.target.value })}
+                className="border-input bg-background w-full rounded-md border px-3 py-2 text-sm shadow-xs outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+              >
+                <option value="" disabled>
+                  Select page
+                </option>
+                {PAGE_OPTIONS.map((page) => (
+                  <option key={page.value} value={page.value}>
+                    {page.label}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div>
               <Label htmlFor="edit-position">Position on Page</Label>
-              <Select
+              <select
+                id="edit-position"
                 value={editForm.position}
-                onValueChange={(value) => setEditForm({ ...editForm, position: value })}
+                onChange={(e) => setEditForm({ ...editForm, position: e.target.value })}
+                className="border-input bg-background w-full rounded-md border px-3 py-2 text-sm shadow-xs outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
               >
-                <SelectTrigger id="edit-position">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {POSITION_OPTIONS.map((pos) => (
-                    <SelectItem key={pos.value} value={pos.value}>
-                      {pos.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                {POSITION_OPTIONS.map((pos) => (
+                  <option key={pos.value} value={pos.value}>
+                    {pos.label}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div>

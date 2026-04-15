@@ -252,7 +252,7 @@ export default function EventHero({ event }: EventHeroProps) {
                       src={banner.imageUrl || "/placeholder.svg"}
                       alt={banner.title}
                       fill
-                      className="object-cover"
+                      className="h-full w-full object-cover"
                       priority={index === 0}
                       sizes="100vw"
                     />
@@ -294,7 +294,7 @@ export default function EventHero({ event }: EventHeroProps) {
           }
               alt={event.title}
               fill
-              className="object-cover scale-105"
+              className="h-full w-full object-cover"
               priority
             />
           
