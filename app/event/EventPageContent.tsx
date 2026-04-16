@@ -1390,7 +1390,7 @@ export default function EventPageContent({ event, session: _session, router, toa
               )}
             </Card>
 
-            <Card className="overflow-hidden rounded-md border border-gray-300 bg-[#efefef] shadow-sm">
+            <Card className="overflow-hidden rounded-sm border border-gray-300 bg-white shadow-sm">
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg font-semibold">
                   Featured Hotels in {event.city || "this city"}

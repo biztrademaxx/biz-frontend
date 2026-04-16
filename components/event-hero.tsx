@@ -282,27 +282,27 @@ export default function EventHero({ event }: EventHeroProps) {
         ) : (
           // Fallback to default banner if no banners found
           <div className="relative w-full h-full">
-            <Image
-              src={
-            event.images?.filter(
-              (img) =>
-                typeof img === "string" &&
-                img.trim() !== "" &&
-                img !== "null" &&
-                img !== "undefined"
-            )[1] || "/placeholder.svg"
-          }
-              alt={event.title}
-              fill
-              className="h-full w-full object-cover"
-              priority
-            />
+            <Image
+            src={
+              event.images?.filter(
+                (img) =>
+                  typeof img === "string" &&
+                  img.trim() !== "" &&
+                  img !== "null" &&
+                  img !== "undefined"
+              )[0] || "/placeholder.svg"
+            }
+            alt={event.title}
+            fill
+            className="h-full w-full object-cover"
+            priority
+          />
           
-            {/* 🔥 Blur Layer */}
-            <div className="absolute inset-0 backdrop-blur-[6px]" />
+           {/* 🔥 Blur Layer */}
+           <div className="absolute inset-0 backdrop-blur-[6px]" />
           
-            {/* 🔥 Gradient Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+          {/* 🔥 Gradient Overlay */}
+           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
           </div>
           
         )}
