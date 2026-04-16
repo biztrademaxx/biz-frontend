@@ -89,7 +89,7 @@ export default function Home() {
             </div>
           }
         >
-          <InlineBanner page="speakers" maxBanners={3} dismissible={true} />
+          {/* <InlineBanner page="speakers" maxBanners={3} dismissible={true} /> */}
         </Suspense>
       </div>
     </div>

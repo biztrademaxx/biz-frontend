@@ -14,7 +14,7 @@ function getFallbackBanner(): InlineBannerRecord[] {
       page: "speakers",
       title: "Featured Speakers",
       description: "Meet industry experts and thought leaders",
-      imageUrl: "https://s.globalsources.com/IMAGES/website/image/home/rfq_home@2x.jpg",
+      imageUrl: "https://s.bizcdn.com/insight/2024/05/featured-speakers-banner.jpg",
       link: "/speakers",
       buttonText: "Learn More",
       order: 1,

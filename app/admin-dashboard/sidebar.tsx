@@ -330,8 +330,8 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
         { title: "News & Announcements", id: "content-news" },
         { title: "Blog & Articles", id: "content-blog" },
         { title: "Banner & Ads Manager", id: "content-banners" },
-        { title: "Featured Events", id: "content-featured" },
-        { title: "Media Library", id: "content-media" },
+        // { title: "Featured Events", id: "content-featured" },
+        // { title: "Media Library", id: "content-media" },
       ],
     },
     {
@@ -400,8 +400,8 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
       subItems: [
         { title: "Support Tickets", id: "support-tickets" },
         { title: "Contact Logs", id: "support-contacts" },
-        { title: "FAQ Management", id: "support-faq" },
-        { title: "Admin Notes", id: "support-notes" },
+        // { title: "FAQ Management", id: "support-faq" },
+        // { title: "Admin Notes", id: "support-notes" },
       ],
     },
   ]
