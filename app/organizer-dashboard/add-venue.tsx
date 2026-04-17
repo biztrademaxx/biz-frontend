@@ -424,10 +424,10 @@ export default function AddVenue({ organizerId, onVenueChange, selectedVenueId }
                           </div>
 
                           <div className="flex items-center gap-4 text-sm text-gray-500">
-                            <div className="flex items-center gap-1">
+                            {/* <div className="flex items-center gap-1">
                               <Mail className="w-3 h-3" />
                               {venue.email}
-                            </div>
+                            </div> */}
                             {venue.phone && (
                               <div className="flex items-center gap-1">
                                 <Phone className="w-3 h-3" />
