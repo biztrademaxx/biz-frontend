@@ -1398,7 +1398,7 @@ export default function EventPageContent({ event, session: _session, router, toa
               </CardHeader>
               <CardContent className="space-y-4 pt-0">
                 {FEATURED_HOTELS_UI_MOCK.map((hotel) => (
-                  <div key={hotel.name} className="bg-[#e4e4e6] p-3">
+                  <div key={hotel.name} className="bg-gray-100 p-3">
                     <div className="flex gap-4">
                       <div className="relative h-[74px] w-[74px] shrink-0 overflow-hidden">
                         <Image src={hotel.image} alt={hotel.name} fill sizes="74px" className="object-cover" />
