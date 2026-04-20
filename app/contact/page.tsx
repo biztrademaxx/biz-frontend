@@ -1,197 +1,181 @@
-"use client"
+import Link from "next/link";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Button } from "@/components/ui/button"
-import { Label } from "@/components/ui/label"
+export const metadata = {
+  title: "Contact Us | BizTradeFairs.com",
+  description: "Get in touch with BizTradeFairs support and team.",
+};
+
+const Section = ({ title, children }: any) => (
+  <section className="mb-12">
+    <h2 className="text-xl font-semibold text-gray-900 mb-4">{title}</h2>
+    {children}
+  </section>
+);
+
+const Card = ({ title, children }: any) => (
+  <div className="border rounded-lg p-5 bg-white shadow-sm">
+    <h3 className="font-semibold text-gray-900 mb-2">{title}</h3>
+    <div className="text-sm text-gray-600">{children}</div>
+  </div>
+);
 
 export default function ContactPage() {
   return (
-    <div className="max-w-6xl mx-auto px-4 py-10 space-y-10">
+    <main className="mx-auto max-w-6xl px-4 py-12 md:py-16 space-y-12">
 
       {/* Header */}
-      <div className="text-center space-y-3">
-        <h1 className="text-3xl font-bold">Contact Us</h1>
-        <p className="text-lg text-muted-foreground">
+      <div className="text-center">
+        <h1 className="text-3xl md:text-4xl font-bold text-gray-900">
+          Contact Us
+        </h1>
+        <p className="text-gray-600 mt-3 font-medium">
           Let’s Connect & Grow Together
         </p>
-        <p className="text-sm text-muted-foreground max-w-2xl mx-auto">
+        <p className="text-sm text-gray-500 mt-2 max-w-2xl mx-auto">
           Have questions, need support, or looking to partner with us?
-          We’d love to hear from you. We are committed to helping organizers,
-          exhibitors, and visitors succeed through our platform.
+          We’d love to hear from you.
         </p>
       </div>
 
       {/* Contact Info */}
-      <div className="grid md:grid-cols-2 gap-6">
-
-        {/* Email */}
-        <Card>
-          <CardHeader>
-            <CardTitle>📩 Email Us</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p>support@biztradefairs.com</p>
-          </CardContent>
-        </Card>
-
-        {/* Phone */}
-        <Card>
-          <CardHeader>
-            <CardTitle>📞 Call Us</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p>+91 XXXXX XXXXX</p>
-          </CardContent>
-        </Card>
-
-        {/* Address */}
-        <Card>
-          <CardHeader>
-            <CardTitle>📍 Office Address</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p>BizTradeFairs.com</p>
-            <p>(Operated by Maxx Business Media Pvt. Ltd.)</p>
-            <p>Bengaluru, Karnataka, India</p>
-          </CardContent>
-        </Card>
-
-        {/* Working Hours */}
-        <Card>
-          <CardHeader>
-            <CardTitle>🕒 Working Hours</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p>Monday – Saturday</p>
-            <p>10:00 AM – 6:00 PM (IST)</p>
-          </CardContent>
-        </Card>
-
-      </div>
-
-      {/* Contact Categories */}
-      <div className="space-y-6">
-        <h2 className="text-xl font-semibold text-center">Contact by Purpose</h2>
-
-        <div className="grid md:grid-cols-2 gap-6">
-
-          <Card>
-            <CardHeader>
-              <CardTitle>📢 Event Organizers</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <p>• Listing your event</p>
-              <p>• Promotion & marketing packages</p>
-              <p>• Exhibitor lead generation</p>
-              <p className="font-medium">Email: organizers@biztradefairs.com</p>
-            </CardContent>
+      <Section title="Get in Touch">
+        <div className="grid gap-6 md:grid-cols-3">
+          <Card title="📩 Email Us">
+            support@biztradefairs.com
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>🏢 Exhibitors & Sponsors</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <p>• Participation inquiries</p>
-              <p>• Brand promotion opportunities</p>
-              <p>• Featured listings</p>
-              <p className="font-medium">Email: sales@biztradefairs.com</p>
-            </CardContent>
+          <Card title="📞 Call Us">
+            +91 XXXXX XXXXX
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>🎯 Visitors & General Queries</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <p>• Finding events</p>
-              <p>• Platform assistance</p>
-              <p>• Account support</p>
-              <p className="font-medium">Email: support@biztradefairs.com</p>
-            </CardContent>
+          <Card title="📍 Office Address">
+            BizTradeFairs.com <br />
+            (Operated by Maxx Business Media Pvt. Ltd.) <br />
+            Bengaluru, Karnataka, India
+          </Card>
+        </div>
+      </Section>
+
+      {/* Working Hours */}
+      <Section title="Working Hours">
+        <p className="text-gray-600">
+          Monday – Saturday <br />
+          10:00 AM – 6:00 PM (IST)
+        </p>
+      </Section>
+
+      {/* Contact by Purpose */}
+      <Section title="Contact by Purpose">
+        <div className="grid gap-6 md:grid-cols-2">
+
+          <Card title="📢 For Event Organizers">
+            <ul className="space-y-1">
+              <li>• Listing your event</li>
+              <li>• Promotion & marketing</li>
+              <li>• Exhibitor lead generation</li>
+            </ul>
+            <p className="mt-2 font-medium">
+              Email: organizers@biztradefairs.com
+            </p>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>🤝 Partnerships</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <p>• Media partnerships</p>
-              <p>• Industry associations</p>
-              <p>• Strategic collaborations</p>
-              <p className="font-medium">Email: partnerships@biztradefairs.com</p>
-            </CardContent>
+          <Card title="🏢 For Exhibitors & Sponsors">
+            <ul className="space-y-1">
+              <li>• Participation inquiries</li>
+              <li>• Brand promotion</li>
+              <li>• Featured listings</li>
+            </ul>
+            <p className="mt-2 font-medium">
+              Email: sales@biztradefairs.com
+            </p>
+          </Card>
+
+          <Card title="🎯 For Visitors & General Queries">
+            <ul className="space-y-1">
+              <li>• Finding events</li>
+              <li>• Platform assistance</li>
+              <li>• Account support</li>
+            </ul>
+            <p className="mt-2 font-medium">
+              Email: support@biztradefairs.com
+            </p>
+          </Card>
+
+          <Card title="🤝 Partnerships & Collaborations">
+            <ul className="space-y-1">
+              <li>• Media partnerships</li>
+              <li>• Industry associations</li>
+              <li>• Strategic collaborations</li>
+            </ul>
+            <p className="mt-2 font-medium">
+              Email: partnerships@biztradefairs.com
+            </p>
           </Card>
 
         </div>
-      </div>
+      </Section>
 
       {/* Contact Form */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Send Us a Message</CardTitle>
-        </CardHeader>
+      <Section title="Send Us a Message">
+        <form className="grid gap-4 md:grid-cols-2">
+          <input
+            type="text"
+            placeholder="Full Name"
+            className="border rounded-md px-3 py-2 text-sm"
+          />
+          <input
+            type="email"
+            placeholder="Email Address"
+            className="border rounded-md px-3 py-2 text-sm"
+          />
+          <input
+            type="tel"
+            placeholder="Phone Number"
+            className="border rounded-md px-3 py-2 text-sm"
+          />
 
-        <CardContent className="space-y-4">
-          <div className="grid md:grid-cols-2 gap-4">
-            <div>
-              <Label>Full Name</Label>
-              <Input placeholder="Your name" />
-            </div>
+          <select className="border rounded-md px-3 py-2 text-sm">
+            <option>Inquiry Type</option>
+            <option>Organizer</option>
+            <option>Exhibitor</option>
+            <option>Visitor</option>
+            <option>Partnership</option>
+          </select>
 
-            <div>
-              <Label>Email Address</Label>
-              <Input type="email" placeholder="your@email.com" />
-            </div>
+          <textarea
+            placeholder="Your Message"
+            rows={4}
+            className="border rounded-md px-3 py-2 text-sm md:col-span-2"
+          />
 
-            <div>
-              <Label>Phone Number</Label>
-              <Input placeholder="+91 XXXXX XXXXX" />
-            </div>
-
-            <div>
-              <Label>Inquiry Type</Label>
-              <select className="w-full border rounded-md p-2">
-                <option>General</option>
-                <option>Organizer</option>
-                <option>Exhibitor</option>
-                <option>Partnership</option>
-              </select>
-            </div>
-          </div>
-
-          <div>
-            <Label>Message</Label>
-            <Textarea placeholder="Write your message..." rows={4} />
-          </div>
-
-          <Button className="w-full">Submit Inquiry</Button>
-        </CardContent>
-      </Card>
+          <button className="bg-blue-600 text-white px-5 py-2 rounded-md hover:bg-blue-700 md:col-span-2">
+            Submit Inquiry
+          </button>
+        </form>
+      </Section>
 
       {/* Social */}
-      <div className="text-center space-y-3">
-        <h2 className="text-lg font-semibold">Follow Us</h2>
-        <div className="flex justify-center gap-6 text-sm text-blue-600">
-          <a href="#">LinkedIn</a>
-          <a href="#">Instagram</a>
-          <a href="#">Facebook</a>
-          <a href="#">YouTube</a>
+      <Section title="Follow Us">
+        <div className="flex gap-4 flex-wrap text-blue-600">
+          <Link href="#">LinkedIn</Link>
+          <Link href="#">Instagram</Link>
+          <Link href="#">Facebook</Link>
+          <Link href="#">YouTube</Link>
         </div>
-      </div>
+      </Section>
 
-      {/* Footer Note */}
-      <div className="text-center text-sm text-muted-foreground max-w-2xl mx-auto">
-        Whether you’re organizing an event, exploring opportunities, or growing your business—
-        BizTradeFairs.com is your partner in success.
-        <br />
-        <span className="font-medium">
+      {/* Footer Message */}
+      <div className="bg-gray-100 p-6 rounded-lg text-center">
+        <h3 className="font-semibold text-lg">We’re Here to Help</h3>
+        <p className="text-gray-600 mt-2">
+          Whether you're organizing an event or exploring opportunities,
+          BizTradeFairs.com is your partner in success.
+        </p>
+        <p className="text-sm text-gray-500 mt-3">
           Let’s build connections that drive business forward.
-        </span>
+        </p>
       </div>
 
-    </div>
-  )
+    </main>
+  );
 }

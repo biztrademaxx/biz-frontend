@@ -34,44 +34,47 @@ const Footer: React.FC = () => {
               />
             </Link>
             <p className="mb-4 text-sm text-gray-600">Follow us on</p>
-            <div className="flex space-x-3">
-              <a
-                href="https://www.facebook.com/biztradefair/"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Facebook"
-                className="flex items-center justify-center rounded p-1 text-gray-800 transition-colors duration-200 hover:bg-blue-600 hover:text-white"
-              >
-                <FaFacebookSquare className="h-8 w-8" />
-              </a>
-              <a
-                href="https://www.instagram.com/biztradefairs/"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Instagram"
-                className="flex items-center justify-center rounded p-1 text-gray-800 transition-colors duration-200 hover:bg-pink-600 hover:text-white"
-              >
-                <FaInstagramSquare className="h-8 w-8" />
-              </a>
-              <a
-                href="https://x.com/biztradefair"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Twitter"
-                className="flex h-8 w-8 items-center justify-center rounded text-gray-800 transition-colors duration-200 hover:bg-blue-400 hover:text-white"
-              >
-                <FaTwitterSquare className="h-8 w-8" />
-              </a>
-              <a
-                href="https://www.linkedin.com/company/biztradefairs/"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="LinkedIn"
-                className="flex items-center justify-center rounded p-1 text-gray-800 transition-colors duration-200 hover:bg-blue-700 hover:text-white"
-              >
-                <FaLinkedin className="h-8 w-8" />
-              </a>
-            </div>
+            <div className="flex items-center space-x-4">
+  <a
+    href="https://www.facebook.com/biztradefair/"
+    target="_blank"
+    rel="noopener noreferrer"
+    aria-label="Facebook"
+    className="flex h-10 w-10 items-center justify-center rounded-md text-gray-800 transition hover:bg-blue-600 hover:text-white"
+  >
+    <FaFacebookSquare className="h-6 w-6" />
+  </a>
+
+  <a
+    href="https://www.instagram.com/biztradefairs/"
+    target="_blank"
+    rel="noopener noreferrer"
+    aria-label="Instagram"
+    className="flex h-10 w-10 items-center justify-center rounded-md text-gray-800 transition hover:bg-pink-600 hover:text-white"
+  >
+    <FaInstagramSquare className="h-6 w-6" />
+  </a>
+
+  <a
+    href="https://x.com/biztradefair"
+    target="_blank"
+    rel="noopener noreferrer"
+    aria-label="Twitter"
+    className="flex h-10 w-10 items-center justify-center rounded-md text-gray-800 transition hover:bg-blue-400 hover:text-white"
+  >
+    <FaTwitterSquare className="h-6 w-6" />
+  </a>
+
+  <a
+    href="https://www.linkedin.com/company/biztradefairs/"
+    target="_blank"
+    rel="noopener noreferrer"
+    aria-label="LinkedIn"
+    className="flex h-10 w-10 items-center justify-center rounded-md text-gray-800 transition hover:bg-blue-700 hover:text-white"
+  >
+    <FaLinkedin className="h-6 w-6" />
+  </a>
+</div>
           </div>
 
           <div className="lg:col-span-1">

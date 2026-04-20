@@ -33,7 +33,6 @@
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
-    "app/admin-dashboard/help-support",
     ".next/dev/types/**/*.ts"
   ],
   "exclude": [

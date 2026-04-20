@@ -52,6 +52,7 @@ interface TicketType {
 interface EventFormData {
   // Basic Info
   title: string
+  subTitle?: string
   slug: string
   description: string
   eventType: string
@@ -242,6 +243,7 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
 
   const [formData, setFormData] = useState<EventFormData>({
     title: "",
+    subTitle: "",
     slug: "",
     description: "",
     eventType: "CONFERENCE",
@@ -1327,6 +1329,21 @@ const handlePublishEvent = async () => {
                     <p className="text-sm text-red-500 mt-1">This field is required for publishing</p>
                   )}
                 </div>
+                <div className="md:col-span-2">
+  <Label htmlFor="subTitle">Event Subtitle</Label>
+  <Input
+    id="subTitle"
+    value={formData.subTitle || ""}
+    onChange={(e) =>
+      setFormData((prev) => ({ ...prev, subTitle: e.target.value }))
+    }
+    placeholder="Enter short subtitle (optional)"
+  />
+  <p className="text-xs text-muted-foreground mt-1">
+    Optional: short catchy line for your event
+  </p>
+</div>
+
                 <div className="md:col-span-2">
                   <Label htmlFor="slug">Event Slug *</Label>
                   <Input

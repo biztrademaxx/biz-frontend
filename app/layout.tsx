@@ -1,15 +1,14 @@
-import type React from "react"
-import type { Metadata } from "next"
-import "./globals.css"
-import { ClientLayout } from "./client-layout"
-import ConditionalLayout from "./conditional-layout"
-import { ReactQueryProvider } from "@/components/react-query-provider"
-import { Roboto } from "next/font/google"
-import JsonLd from "@/components/seo/JsonLd"
-import { organizationJsonLd, websiteJsonLd } from "@/lib/seo/schemas"
-import { SITE_DESCRIPTION, SITE_NAME, getSiteUrl } from "@/lib/seo/site"
+import type { Metadata } from "next";
+import "./globals.css";
+import { Roboto } from "next/font/google";
+import { ReactQueryProvider } from "@/components/react-query-provider";
+import ClientLayout from "./client-layout";
+import ConditionalLayout from "./conditional-layout";
+import JsonLd from "@/components/seo/JsonLd";
+import { organizationJsonLd, websiteJsonLd } from "@/lib/seo/schemas";
+import { SITE_DESCRIPTION, SITE_NAME, getSiteUrl } from "@/lib/seo/site";
 
-const siteUrl = getSiteUrl()
+const siteUrl = getSiteUrl();
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -18,12 +17,10 @@ export const metadata: Metadata = {
     template: `%s | ${SITE_NAME}`,
   },
   description: SITE_DESCRIPTION,
-  generator: SITE_NAME,
-  applicationName: SITE_NAME,
+  viewport: "width=device-width, initial-scale=1",
   robots: {
     index: true,
     follow: true,
-    googleBot: { index: true, follow: true },
   },
   openGraph: {
     type: "website",
@@ -38,25 +35,32 @@ export const metadata: Metadata = {
     title: SITE_NAME,
     description: SITE_DESCRIPTION,
   },
-}
+};
+
 const roboto = Roboto({
   subsets: ["latin"],
   weight: ["300", "400", "500", "700"],
-})
+  display: "swap", // ✅ important for performance
+});
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={roboto.className} suppressHydrationWarning>
+    <html lang="en">
+      <body className={roboto.className}>
+        {/* SEO Structured Data */}
         <JsonLd data={[organizationJsonLd(), websiteJsonLd()]} />
-        <ClientLayout>
-          <ConditionalLayout><ReactQueryProvider>{children}</ReactQueryProvider></ConditionalLayout>
-        </ClientLayout>
+
+        {/* Global Providers */}
+        <ReactQueryProvider>
+          <ClientLayout>
+            <ConditionalLayout>{children}</ConditionalLayout>
+          </ClientLayout>
+        </ReactQueryProvider>
       </body>
     </html>
-  )
+  );
 }
