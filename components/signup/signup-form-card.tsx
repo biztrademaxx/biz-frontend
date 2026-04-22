@@ -21,31 +21,40 @@ const organizers = [
   { id: 6, name: "Max Entertainment", logo: "/Organizers/maxx.png", description: "Entertainment events" },
 ]
 
-export type SignupFormCardProps = {
+type SignupFormCardProps = {
   variant: "page" | "dialog"
-  /** After successful email/password signup in dialog mode (e.g. close modal). */
   onRegistrationSuccess?: () => void
 }
 
-export function SignupFormCard({ variant, onRegistrationSuccess }: SignupFormCardProps) {
+export default function SignupFormCard({ variant, onRegistrationSuccess }: SignupFormCardProps) {
   const router = useRouter()
   const { toast } = useToast()
+  
+  // 🔥 3-STEP FLOW: form → otp → password
+  const [step, setStep] = useState<"form" | "otp" | "password">("form")
+  
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [userType, setUserType] = useState("visitor")
   const [selectedPlan, setSelectedPlan] = useState("basic")
   const [isLoading, setIsLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [otp, setOtp] = useState("")
 
+  // 🔹 Form fields (NO PASSWORD HERE)
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
-    password: "",
-    confirmPassword: "",
-    companyName: "",
     phone: "",
+    companyName: "",
     designation: "",
     website: "",
+  })
+
+  // 🔹 Password fields (STEP 3)
+  const [passwordData, setPasswordData] = useState({
+    password: "",
+    confirmPassword: "",
   })
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -55,7 +64,21 @@ export function SignupFormCard({ variant, onRegistrationSuccess }: SignupFormCar
       [name]: value,
     }))
 
-    // Clear error when user starts typing and also all the errors
+    if (errors[name]) {
+      setErrors((prev) => ({
+        ...prev,
+        [name]: "",
+      }))
+    }
+  }
+
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target
+    setPasswordData((prev) => ({
+      ...prev,
+      [name]: value,
+    }))
+
     if (errors[name]) {
       setErrors((prev) => ({
         ...prev,
@@ -77,26 +100,14 @@ export function SignupFormCard({ variant, onRegistrationSuccess }: SignupFormCar
       newErrors.email = "Invalid email format"
     }
 
-    if (!formData.password) {
-      newErrors.password = "Password is required"
-    } else if (formData.password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters"
-    }
-
-    if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = "Passwords don't match"
-    }
-
     if (!formData.phone.trim()) {
       newErrors.phone = "Phone number is required"
     }
 
-    // Check required company name for business users
     if (isCompanyRequired() && !formData.companyName.trim()) {
       newErrors.companyName = `${getPlaceholderText()} is required`
     }
 
-    // Validate website URL if provided
     if (formData.website && formData.website.trim()) {
       if (!formData.website.startsWith("http://") && !formData.website.startsWith("https://")) {
         newErrors.website = "Website must start with http:// or https://"
@@ -107,10 +118,26 @@ export function SignupFormCard({ variant, onRegistrationSuccess }: SignupFormCar
     return Object.keys(newErrors).length === 0
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const validatePassword = () => {
+    const newErrors: Record<string, string> = {}
 
-    console.log("Form submitted with data:", formData)
+    if (!passwordData.password) {
+      newErrors.password = "Password is required"
+    } else if (passwordData.password.length < 6) {
+      newErrors.password = "Password must be at least 6 characters"
+    }
+
+    if (passwordData.password !== passwordData.confirmPassword) {
+      newErrors.confirmPassword = "Passwords don't match"
+    }
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
+  // 🔹 STEP 1 → SEND OTP
+  const handleSubmitForm = async (e: React.FormEvent) => {
+    e.preventDefault()
 
     if (!validateForm()) {
       toast({
@@ -124,47 +151,142 @@ export function SignupFormCard({ variant, onRegistrationSuccess }: SignupFormCar
     setIsLoading(true)
 
     try {
+      const res = await fetch(
+        "http://localhost:4000/api/auth/send-otp",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email: formData.email }),
+        }
+      )
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        toast({
+          title: "Error",
+          description: data.message || "Failed to send OTP",
+          variant: "destructive",
+        })
+      } else {
+        toast({
+          title: "OTP Sent",
+          description: "Please check your email for the verification code",
+        })
+        setStep("otp")
+      }
+    } catch {
+      toast({
+        title: "Error",
+        description: "Failed to send OTP",
+        variant: "destructive",
+      })
+    }
+
+    setIsLoading(false)
+  }
+
+  // 🔹 STEP 2 → VERIFY OTP
+  const handleVerifyOtp = async () => {
+    if (!otp.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter the OTP",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setIsLoading(true)
+
+    try {
+      const res = await fetch(
+        "http://localhost:4000/api/auth/verify-otp",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email: formData.email, otp }),
+        }
+      )
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        toast({
+          title: "Invalid OTP",
+          description: data.message || "Verification failed",
+          variant: "destructive",
+        })
+      } else {
+        toast({
+          title: "Verified!",
+          description: "Create your password to complete registration",
+        })
+        setStep("password") // 👉 GO TO PASSWORD STEP
+      }
+    } catch {
+      toast({
+        title: "Error",
+        description: "Invalid OTP or verification failed",
+        variant: "destructive",
+      })
+    }
+
+    setIsLoading(false)
+  }
+
+  // 🔹 STEP 3 → REGISTER WITH PASSWORD
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (!validatePassword()) {
+      toast({
+        title: "Validation Error",
+        description: "Please fix the password errors",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setIsLoading(true)
+
+    try {
       const requestData = {
-        ...formData,
+        fullName: formData.fullName,
+        email: formData.email,
+        password: passwordData.password,
+        phone: formData.phone,
+        companyName: formData.companyName,
+        designation: formData.designation,
+        website: formData.website,
         userType,
         selectedPlan: userType === "organiser" ? selectedPlan : null,
       }
 
-      console.log("Sending request with data:", requestData)
-
-      const response = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(requestData),
-      })
-
-      const data = await response.json()
-      console.log("Response:", response.status, data)
-
-      if (response.ok) {
-        toast({
-          title: "Success!",
-          description: data.message,
-        })
-
-        if (variant === "dialog") {
-          onRegistrationSuccess?.()
-        } else {
-          setTimeout(() => {
-            router.push("/")
-          }, 1200)
+      const res = await fetch(
+        "http://localhost:4000/api/auth/register",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(requestData),
         }
-      } else {
-        console.error("Registration failed:", data)
+      )
+
+      const data = await res.json()
+
+      if (!res.ok) {
         toast({
           title: "Registration Failed",
           description: data.error || "Something went wrong",
           variant: "destructive",
         })
-
-        // Show validation errors if available
+        
         if (data.validationErrors) {
           const validationErrors: Record<string, string> = {}
           data.validationErrors.forEach((error: any) => {
@@ -173,20 +295,31 @@ export function SignupFormCard({ variant, onRegistrationSuccess }: SignupFormCar
           })
           setErrors(validationErrors)
         }
+      } else {
+        toast({
+          title: "Success!",
+          description: data.message || "Account created successfully",
+        })
+
+        if (variant === "dialog") {
+          onRegistrationSuccess?.()
+        } else {
+          setTimeout(() => {
+            router.push("/login")
+          }, 1200)
+        }
       }
-    } catch (error) {
-      console.error("Network error:", error)
+    } catch {
       toast({
         title: "Error",
-        description: "Network error. Please try again.",
+        description: "Something went wrong during registration",
         variant: "destructive",
       })
-    } finally {
-      setIsLoading(false)
     }
+
+    setIsLoading(false)
   }
 
-  // ✅ Added Google Signup Logic
   const handleGoogleSignup = async () => {
     setIsLoading(true)
     try {
@@ -301,14 +434,30 @@ export function SignupFormCard({ variant, onRegistrationSuccess }: SignupFormCar
 
   const content = (
     <div className="w-full">
-          <div>
-            <Card className="w-full max-w-md mx-auto shadow-lg">
-              <CardHeader className="text-center pb-4">
-                <h1 className="text-2xl font-semibold text-gray-900">Welcome</h1>
-              </CardHeader>
+      <div>
+        <Card className="w-full max-w-md mx-auto shadow-lg">
+          <CardHeader className="text-center pb-4">
+            <h1 className="text-2xl font-semibold text-gray-900">
+              {step === "form" ? "Welcome" : step === "otp" ? "Verify OTP" : "Create Password"}
+            </h1>
+            {step === "otp" && (
+              <p className="text-sm text-gray-600 mt-1">
+                Enter the code sent to {formData.email}
+              </p>
+            )}
+            {step === "password" && (
+              <p className="text-sm text-gray-600 mt-1">
+                Set a secure password for your account
+              </p>
+            )}
+          </CardHeader>
 
-              <CardContent className="space-y-3">
-                {/* User Type Selector */}
+          <CardContent className="space-y-3">
+            {/* ===================== */}
+            {/* 🔹 STEP 1: FULL FORM */}
+            {/* ===================== */}
+            {step === "form" && (
+              <>
                 <Tabs value={userType} onValueChange={setUserType} className="w-full">
                   <TabsList className="grid w-full grid-cols-4 h-auto p-1">
                     <TabsTrigger value="visitor" className="text-xs px-2 py-2">
@@ -317,9 +466,6 @@ export function SignupFormCard({ variant, onRegistrationSuccess }: SignupFormCar
                     <TabsTrigger value="exhibitor" className="text-xs px-2 py-2">
                       Exhibitor
                     </TabsTrigger>
-                    {/* <TabsTrigger value="organiser" className="text-xs px-2 py-2">
-                      Organiser
-                    </TabsTrigger> */}
                     <TabsTrigger value="speaker" className="text-xs px-2 py-2">
                       Speaker
                     </TabsTrigger>
@@ -329,7 +475,6 @@ export function SignupFormCard({ variant, onRegistrationSuccess }: SignupFormCar
                   </TabsList>
                 </Tabs>
 
-                {/* Social Signup Buttons - Moved to top */}
                 <div className="flex grid-cols-2 gap-4 justify-center">
                   <div className="w-full">
                     <Button
@@ -360,23 +505,8 @@ export function SignupFormCard({ variant, onRegistrationSuccess }: SignupFormCar
                       <span>Google</span>
                     </Button>
                   </div>
-                  {/* <div className="w-full">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="w-full flex items-center justify-center space-x-2 py-2.5"
-                      onClick={handleLinkedInSignup}
-                      disabled={isLoading}
-                    >
-                      <svg className="w-5 h-5" fill="#0077B5" viewBox="0 0 24 24">
-                        <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
-                      </svg>
-                      <span>LinkedIn</span>
-                    </Button>
-                  </div> */}
                 </div>
 
-                {/* Divider */}
                 <div className="relative">
                   <div className="absolute inset-0 flex items-center">
                     <div className="w-full border-t border-gray-300" />
@@ -386,8 +516,7 @@ export function SignupFormCard({ variant, onRegistrationSuccess }: SignupFormCar
                   </div>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  {/* Full Name */}
+                <form onSubmit={handleSubmitForm} className="space-y-4">
                   <div className="flex grid-cols-2 gap-1">
                     <div className="relative">
                       <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -403,7 +532,6 @@ export function SignupFormCard({ variant, onRegistrationSuccess }: SignupFormCar
                       {errors.fullName && <p className="text-red-500 text-xs mt-1">{errors.fullName}</p>}
                     </div>
 
-                    {/* Email Field */}
                     <div className="relative">
                       <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                       <Input
@@ -419,7 +547,6 @@ export function SignupFormCard({ variant, onRegistrationSuccess }: SignupFormCar
                     </div>
                   </div>
 
-                  {/* Phone Number */}
                   <div className="flex grid-cols-2 gap-1">
                     <div className="relative">
                       <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -435,7 +562,6 @@ export function SignupFormCard({ variant, onRegistrationSuccess }: SignupFormCar
                       {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
                     </div>
 
-                    {/* Company/Organization Name */}
                     <div className="relative">
                       <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                       <Input
@@ -451,7 +577,6 @@ export function SignupFormCard({ variant, onRegistrationSuccess }: SignupFormCar
                     </div>
                   </div>
 
-                  {/* Designation (for business users) */}
                   {userType !== "visitor" && (
                     <div className="relative">
                       <div className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400">💼</div>
@@ -466,7 +591,6 @@ export function SignupFormCard({ variant, onRegistrationSuccess }: SignupFormCar
                     </div>
                   )}
 
-                  {/* Website (for business users) */}
                   {["exhibitor", "organiser", "venue"].includes(userType) && (
                     <div className="relative">
                       <div className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400">🌐</div>
@@ -482,66 +606,6 @@ export function SignupFormCard({ variant, onRegistrationSuccess }: SignupFormCar
                     </div>
                   )}
 
-                  {/* Password Field */}
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <Input
-                      type={showPassword ? "text" : "password"}
-                      name="password"
-                      placeholder="Password"
-                      value={formData.password}
-                      onChange={handleInputChange}
-                      className={`pl-10 pr-10 ${errors.password ? "border-red-500" : ""}`}
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                    >
-                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                    {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
-                  </div>
-
-                  {/* Confirm Password */}
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <Input
-                      type={showConfirmPassword ? "text" : "password"}
-                      name="confirmPassword"
-                      placeholder="Confirm Password"
-                      value={formData.confirmPassword}
-                      onChange={handleInputChange}
-                      className={`pl-10 pr-10 ${errors.confirmPassword ? "border-red-500" : ""}`}
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                    >
-                      {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                    {errors.confirmPassword && <p className="text-red-500 text-xs mt-1">{errors.confirmPassword}</p>}
-                  </div>
-
-                  {/* Terms and Conditions */}
-                  <div className="flex items-start space-x-2 text-sm">
-                    <input type="checkbox" required className="mt-1" />
-                    <span className="text-gray-600">
-                      I agree to the{" "}
-                      <Link href="/terms" className="text-blue-600 hover:text-blue-800">
-                        Terms of Service
-                      </Link>{" "}
-                      and{" "}
-                      <Link href="/privacy" className="text-blue-600 hover:text-blue-800">
-                        Privacy Policy
-                      </Link>
-                    </span>
-                  </div>
-
-                  {/* Submit Button */}
                   <Button
                     type="submit"
                     className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2.5"
@@ -550,15 +614,14 @@ export function SignupFormCard({ variant, onRegistrationSuccess }: SignupFormCar
                     {isLoading ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Creating Account...
+                        Sending OTP...
                       </>
                     ) : (
-                      "Create Account"
+                      "Continue"
                     )}
                   </Button>
                 </form>
 
-                {/* Login Link */}
                 <div className="text-center">
                   <p className="text-sm text-gray-600">
                     Already have an account?{" "}
@@ -567,178 +630,305 @@ export function SignupFormCard({ variant, onRegistrationSuccess }: SignupFormCar
                     </Link>
                   </p>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
+              </>
+            )}
 
-          {userType == "organiser" && (
-            <div className="py-16">
-              <div className="max-w-7xl mx-auto px-4">
-                <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">Our Worldwide Footprint</h2>
-
-                {/* Partner Logos */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-                  {organizers.map((organizer) => (
-                    <div
-                      key={organizer.id}
-                      className="bg-white border border-gray-200 rounded-lg p-3 hover:shadow-md hover:border-gray-300 transition duration-200"
-                    >
-                      <div className="flex items-center justify-center h-10 mb-4">
-                        <img
-                          src={organizer.logo || "/placeholder.svg"}
-                          alt={organizer.name}
-                          className="max-h-full max-w-full object-contain"
-                        />
-                      </div>
-                      <div className="text-center">
-                        <h3 className="font-semibold text-gray-900 text-sm mb-1">{organizer.name}</h3>
-                        <p className="text-xs text-gray-500">{organizer.description}</p>
-                      </div>
-                    </div>
-                  ))}
+            {/* ===================== */}
+            {/* 🔹 STEP 2: OTP */}
+            {/* ===================== */}
+            {step === "otp" && (
+              <div className="space-y-4">
+                <div className="relative">
+                  <Input
+                    type="text"
+                    name="otp"
+                    placeholder="Enter OTP"
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value)}
+                    className="w-full border p-2 text-center text-lg tracking-widest"
+                    maxLength={6}
+                  />
                 </div>
-              </div>
-            </div>
-          )}
 
-          {/* Organiser Pricing Section - Only shown when organiser tab is selected */}
-          {userType === "organiser" && (
-            <div className="space-y-12">
-              {/* Pricing Header */}
-              <div className="text-center">
-                <h2 className="text-3xl font-bold text-gray-900 mb-4">From Invisible to Unmissable</h2>
-                <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                  Select a package that fits your budget and reach requirements
-                </p>
-              </div>
+                <Button
+                  onClick={handleVerifyOtp}
+                  disabled={isLoading}
+                  className="w-full bg-green-600 hover:bg-green-700 text-white py-2.5"
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Verifying...
+                    </>
+                  ) : (
+                    "Verify OTP"
+                  )}
+                </Button>
 
-              {/* Pricing Cards */}
-              <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-                {pricingPlans.map((plan) => (
-                  <Card
-                    key={plan.id}
-                    className={`relative ${plan.popular ? "ring-2 ring-blue-500 shadow-lg" : ""} ${selectedPlan === plan.id ? "ring-2 ring-blue-600" : ""}`}
+                <button
+                  type="button"
+                  onClick={() => setStep("form")}
+                  className="w-full text-sm text-gray-500 hover:text-gray-700"
+                  disabled={isLoading}
+                >
+                  Back to form
+                </button>
+              </div>
+            )}
+
+            {/* ===================== */}
+            {/* 🔹 STEP 3: CREATE PASSWORD */}
+            {/* ===================== */}
+            {step === "password" && (
+              <form onSubmit={handleRegister} className="space-y-4">
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    name="password"
+                    placeholder="Create Password"
+                    value={passwordData.password}
+                    onChange={handlePasswordChange}
+                    className={`pl-10 pr-10 ${errors.password ? "border-red-500" : ""}`}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                   >
-                    {plan.popular && (
-                      <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                        <span className="bg-blue-500 text-white px-4 py-1 rounded-full text-sm font-medium">
-                          Most Popular
-                        </span>
-                      </div>
-                    )}
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                  {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
+                </div>
 
-                    <CardHeader className="text-center pb-4">
-                      <h3 className="text-2xl font-bold text-gray-900">{plan.name}</h3>
-                      <div className="mt-4 space-y-2">
-                        <p className="text-sm text-gray-600">
-                          <strong>Reach:</strong> {plan.reach}
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          <strong>Duration:</strong> {plan.duration}
-                        </p>
-                      </div>
-                    </CardHeader>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Input
+                    type={showConfirmPassword ? "text" : "password"}
+                    name="confirmPassword"
+                    placeholder="Confirm Password"
+                    value={passwordData.confirmPassword}
+                    onChange={handlePasswordChange}
+                    className={`pl-10 pr-10 ${errors.confirmPassword ? "border-red-500" : ""}`}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                  {errors.confirmPassword && <p className="text-red-500 text-xs mt-1">{errors.confirmPassword}</p>}
+                </div>
 
-                    <CardContent className="space-y-4">
-                      <ul className="space-y-3">
-                        {plan.features.map((feature, index) => (
-                          <li key={index} className="flex items-start space-x-3">
-                            <Check className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
-                            <span className="text-sm text-gray-700">{feature}</span>
-                          </li>
-                        ))}
-                      </ul>
+                <div className="flex items-start space-x-2 text-sm">
+                  <input type="checkbox" required className="mt-1" />
+                  <span className="text-gray-600">
+                    I agree to the{" "}
+                    <Link href="/terms" className="text-blue-600 hover:text-blue-800">
+                      Terms of Service
+                    </Link>{" "}
+                    and{" "}
+                    <Link href="/privacy" className="text-blue-600 hover:text-blue-800">
+                      Privacy Policy
+                    </Link>
+                  </span>
+                </div>
 
-                      <Button
-                        onClick={() => setSelectedPlan(plan.id)}
-                        className={`w-full mt-6 ${
-                          selectedPlan === plan.id
-                            ? "bg-blue-600 hover:bg-blue-700 text-white"
-                            : plan.popular
-                              ? "bg-blue-600 hover:bg-blue-700 text-white"
-                              : "bg-gray-100 hover:bg-gray-200 text-gray-900"
-                        }`}
-                        disabled={isLoading}
-                      >
-                        {selectedPlan === plan.id ? "Selected" : "Select Package"}
-                      </Button>
-                    </CardContent>
-                  </Card>
+                <Button
+                  type="submit"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2.5"
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Creating Account...
+                    </>
+                  ) : (
+                    "Create Account"
+                  )}
+                </Button>
+
+                <button
+                  type="button"
+                  onClick={() => setStep("otp")}
+                  className="w-full text-sm text-gray-500 hover:text-gray-700"
+                  disabled={isLoading}
+                >
+                  Back to OTP
+                </button>
+              </form>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {userType === "organiser" && (
+        <>
+          <div className="py-16">
+            <div className="max-w-7xl mx-auto px-4">
+              <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">Our Worldwide Footprint</h2>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+                {organizers.map((organizer) => (
+                  <div
+                    key={organizer.id}
+                    className="bg-white border border-gray-200 rounded-lg p-3 hover:shadow-md hover:border-gray-300 transition duration-200"
+                  >
+                    <div className="flex items-center justify-center h-10 mb-4">
+                      <img
+                        src={organizer.logo || "/placeholder.svg"}
+                        alt={organizer.name}
+                        className="max-h-full max-w-full object-contain"
+                      />
+                    </div>
+                    <div className="text-center">
+                      <h3 className="font-semibold text-gray-900 text-sm mb-1">{organizer.name}</h3>
+                      <p className="text-xs text-gray-500">{organizer.description}</p>
+                    </div>
+                  </div>
                 ))}
               </div>
+            </div>
+          </div>
 
-              {/* Plan Comparison Table */}
-              <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-                <div className="px-6 py-4 bg-gray-50 border-b">
-                  <h3 className="text-xl font-bold text-gray-900">See Plan Comparison</h3>
-                  <p className="text-sm text-gray-600 mt-1">Detailed feature comparison across all plans</p>
-                </div>
+          <div className="space-y-12">
+            <div className="text-center">
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">From Invisible to Unmissable</h2>
+              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                Select a package that fits your budget and reach requirements
+              </p>
+            </div>
 
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Feature
-                        </th>
-                        <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Basic
-                        </th>
-                        <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Premium
-                        </th>
-                        <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Enterprise
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {comparisonFeatures.map((item, index) => (
-                        <tr key={index} className={index % 2 === 0 ? "bg-gray-50" : "bg-white"}>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                            {item.feature}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-center">
-                            {typeof item.basic === "boolean" ? (
-                              item.basic ? (
-                                <Check className="w-5 h-5 text-green-500 mx-auto" />
-                              ) : (
-                                <X className="w-5 h-5 text-red-500 mx-auto" />
-                              )
-                            ) : (
-                              <span className="text-sm text-gray-700">{item.basic}</span>
-                            )}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-center">
-                            {typeof item.premium === "boolean" ? (
-                              item.premium ? (
-                                <Check className="w-5 h-5 text-green-500 mx-auto" />
-                              ) : (
-                                <X className="w-5 h-5 text-red-500 mx-auto" />
-                              )
-                            ) : (
-                              <span className="text-sm text-gray-700">{item.premium}</span>
-                            )}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-center">
-                            {typeof item.enterprise === "boolean" ? (
-                              item.enterprise ? (
-                                <Check className="w-5 h-5 text-green-500 mx-auto" />
-                              ) : (
-                                <X className="w-5 h-5 text-red-500 mx-auto" />
-                              )
-                            ) : (
-                              <span className="text-sm text-gray-700">{item.enterprise}</span>
-                            )}
-                          </td>
-                        </tr>
+            <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+              {pricingPlans.map((plan) => (
+                <Card
+                  key={plan.id}
+                  className={`relative ${plan.popular ? "ring-2 ring-blue-500 shadow-lg" : ""} ${selectedPlan === plan.id ? "ring-2 ring-blue-600" : ""}`}
+                >
+                  {plan.popular && (
+                    <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                      <span className="bg-blue-500 text-white px-4 py-1 rounded-full text-sm font-medium">
+                        Most Popular
+                      </span>
+                    </div>
+                  )}
+
+                  <CardHeader className="text-center pb-4">
+                    <h3 className="text-2xl font-bold text-gray-900">{plan.name}</h3>
+                    <div className="mt-4 space-y-2">
+                      <p className="text-sm text-gray-600">
+                        <strong>Reach:</strong> {plan.reach}
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        <strong>Duration:</strong> {plan.duration}
+                      </p>
+                    </div>
+                  </CardHeader>
+
+                  <CardContent className="space-y-4">
+                    <ul className="space-y-3">
+                      {plan.features.map((feature, index) => (
+                        <li key={index} className="flex items-start space-x-3">
+                          <Check className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                          <span className="text-sm text-gray-700">{feature}</span>
+                        </li>
                       ))}
-                    </tbody>
-                  </table>
-                </div>
+                    </ul>
+
+                    <Button
+                      onClick={() => setSelectedPlan(plan.id)}
+                      className={`w-full mt-6 ${
+                        selectedPlan === plan.id
+                          ? "bg-blue-600 hover:bg-blue-700 text-white"
+                          : plan.popular
+                            ? "bg-blue-600 hover:bg-blue-700 text-white"
+                            : "bg-gray-100 hover:bg-gray-200 text-gray-900"
+                      }`}
+                      disabled={isLoading}
+                    >
+                      {selectedPlan === plan.id ? "Selected" : "Select Package"}
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+              <div className="px-6 py-4 bg-gray-50 border-b">
+                <h3 className="text-xl font-bold text-gray-900">See Plan Comparison</h3>
+                <p className="text-sm text-gray-600 mt-1">Detailed feature comparison across all plans</p>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Feature
+                      </th>
+                      <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Basic
+                      </th>
+                      <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Premium
+                      </th>
+                      <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Enterprise
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {comparisonFeatures.map((item, index) => (
+                      <tr key={index} className={index % 2 === 0 ? "bg-gray-50" : "bg-white"}>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          {item.feature}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                          {typeof item.basic === "boolean" ? (
+                            item.basic ? (
+                              <Check className="w-5 h-5 text-green-500 mx-auto" />
+                            ) : (
+                              <X className="w-5 h-5 text-red-500 mx-auto" />
+                            )
+                          ) : (
+                            <span className="text-sm text-gray-700">{item.basic}</span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                          {typeof item.premium === "boolean" ? (
+                            item.premium ? (
+                              <Check className="w-5 h-5 text-green-500 mx-auto" />
+                            ) : (
+                              <X className="w-5 h-5 text-red-500 mx-auto" />
+                            )
+                          ) : (
+                            <span className="text-sm text-gray-700">{item.premium}</span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                          {typeof item.enterprise === "boolean" ? (
+                            item.enterprise ? (
+                              <Check className="w-5 h-5 text-green-500 mx-auto" />
+                            ) : (
+                              <X className="w-5 h-5 text-red-500 mx-auto" />
+                            )
+                          ) : (
+                            <span className="text-sm text-gray-700">{item.enterprise}</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
-          )}
+          </div>
+        </>
+      )}
     </div>
   )
 

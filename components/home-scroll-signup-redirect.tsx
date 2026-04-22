@@ -4,7 +4,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useEffect, useRef, useState } from "react"
 import { getAccessToken } from "@/lib/api"
-import { SignupFormCard } from "@/components/signup/signup-form-card"
+import  SignupFormCard  from "@/components/signup/signup-form-card"
 import {
   Dialog,
   DialogContent,
