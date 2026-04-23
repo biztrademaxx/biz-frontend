@@ -56,6 +56,33 @@ export interface ReportsOverviewData {
   }
 }
 
+type SubAdminActivityData = {
+  generatedAt: string
+  totals: {
+    events: number
+    organizers: number
+    exhibitors: number
+    speakers: number
+    bulkImports: number
+    total: number
+  }
+  bySubAdmin: Array<{
+    adminId: string
+    name: string
+    email: string
+    isActive: boolean
+    lastLogin: string | null
+    lastActivityAt: string | null
+    onlineStatus: "ONLINE" | "OFFLINE"
+    events: number
+    organizers: number
+    exhibitors: number
+    speakers: number
+    bulkImports: number
+    total: number
+  }>
+}
+
 function formatMoney(n: number) {
   return new Intl.NumberFormat(undefined, { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(
     n || 0,
@@ -67,6 +94,7 @@ export default function ReportsAnalyticsPage({ view = "events" }: { view?: Repor
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [tab, setTab] = useState<ReportsView>(view)
+  const [subAdminActivity, setSubAdminActivity] = useState<SubAdminActivityData | null>(null)
 
   useEffect(() => {
     setTab(view)
@@ -83,6 +111,8 @@ export default function ReportsAnalyticsPage({ view = "events" }: { view?: Repor
         return
       }
       setData(res.data)
+      const sub = await adminApi<{ success?: boolean; data?: SubAdminActivityData }>("/analytics/sub-admin-activity")
+      if (sub?.data) setSubAdminActivity(sub.data)
     } catch (e: any) {
       setError(e?.message || "Failed to load reports")
       setData(null)
@@ -495,8 +525,91 @@ export default function ReportsAnalyticsPage({ view = "events" }: { view?: Repor
               </p>
             </CardContent>
           </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Sub-admin upload tracking</CardTitle>
+              <CardDescription>Track who uploaded events, organizers, exhibitors, speakers and bulk imports.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                <Metric label="Events" value={subAdminActivity?.totals.events ?? 0} />
+                <Metric label="Organizers" value={subAdminActivity?.totals.organizers ?? 0} />
+                <Metric label="Exhibitors" value={subAdminActivity?.totals.exhibitors ?? 0} />
+                <Metric label="Speakers" value={subAdminActivity?.totals.speakers ?? 0} />
+                <Metric label="Bulk Imports" value={subAdminActivity?.totals.bulkImports ?? 0} />
+                <Metric label="Total" value={subAdminActivity?.totals.total ?? 0} />
+              </div>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Sub-admin</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Events</TableHead>
+                    <TableHead className="text-right">Organizers</TableHead>
+                    <TableHead className="text-right">Exhibitors</TableHead>
+                    <TableHead className="text-right">Speakers</TableHead>
+                    <TableHead className="text-right">Bulk</TableHead>
+                    <TableHead className="text-right">Total</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {(subAdminActivity?.bySubAdmin ?? []).length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={8} className="text-muted-foreground">
+                        No sub-admin activity yet.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    (subAdminActivity?.bySubAdmin ?? []).map((row) => (
+                      <TableRow key={row.adminId}>
+                        <TableCell>
+                          <div className="font-medium">{row.name || "Sub Admin"}</div>
+                          <div className="text-xs text-muted-foreground">{row.email}</div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-col gap-1">
+                            <Badge
+                              variant={row.onlineStatus === "ONLINE" ? "default" : "secondary"}
+                              className={row.onlineStatus === "ONLINE" ? "bg-emerald-600 hover:bg-emerald-600" : ""}
+                            >
+                              {row.onlineStatus}
+                            </Badge>
+                            <span className="text-[11px] text-muted-foreground">
+                              Last seen{" "}
+                              {row.lastActivityAt || row.lastLogin
+                                ? new Date(row.lastActivityAt || row.lastLogin || "").toLocaleString()
+                                : "Never"}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right">{row.events}</TableCell>
+                        <TableCell className="text-right">{row.organizers}</TableCell>
+                        <TableCell className="text-right">{row.exhibitors}</TableCell>
+                        <TableCell className="text-right">{row.speakers}</TableCell>
+                        <TableCell className="text-right">{row.bulkImports}</TableCell>
+                        <TableCell className="text-right font-medium">{row.total}</TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>
+  )
+}
+
+function Metric({ label, value }: { label: string; value: number }) {
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-xs font-medium text-muted-foreground">{label}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p className="text-xl font-bold">{value}</p>
+      </CardContent>
+    </Card>
   )
 }

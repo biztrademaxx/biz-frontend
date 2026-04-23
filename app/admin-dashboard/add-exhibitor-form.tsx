@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -9,9 +9,10 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ArrowLeft, Save, User, Building2, Mail, Phone, MapPin, Globe, Linkedin, Twitter } from "lucide-react"
+import { ArrowLeft, Save, User, Building2, Mail, Phone, Globe, Linkedin, Twitter } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 import { apiFetch } from "@/lib/api"
+import { getCityOptions, getCountryOptions, getStateOptions } from "@/lib/location-data"
 
 interface AddExhibitorFormProps {
   onSuccess?: () => void
@@ -19,6 +20,7 @@ interface AddExhibitorFormProps {
 }
 
 export default function AddExhibitorForm({ onSuccess, onCancel }: AddExhibitorFormProps) {
+  const LOCATION_NONE = "__none__"
   const router = useRouter()
   const { toast } = useToast()
   const [loading, setLoading] = useState(false)
@@ -41,6 +43,9 @@ export default function AddExhibitorForm({ onSuccess, onCancel }: AddExhibitorFo
     
     // Location
     location: "",
+    country: "",
+    state: "",
+    city: "",
     
     // Business Information
     businessEmail: "",
@@ -69,6 +74,29 @@ export default function AddExhibitorForm({ onSuccess, onCancel }: AddExhibitorFo
     "Transportation",
     "Other"
   ]
+  const [countryPick, setCountryPick] = useState<string>(LOCATION_NONE)
+  const [statePick, setStatePick] = useState<string>(LOCATION_NONE)
+  const [cityPick, setCityPick] = useState<string>(LOCATION_NONE)
+  const countryOptions = useMemo(() => getCountryOptions(), [])
+  const resolvedCountryCode = useMemo(() => {
+    if (countryPick !== LOCATION_NONE) return countryPick
+    const typed = formData.country.trim().toLowerCase()
+    if (!typed) return ""
+    const row = countryOptions.find((c) => c.name.trim().toLowerCase() === typed)
+    return row?.code ?? ""
+  }, [countryPick, formData.country, countryOptions])
+  const stateOptions = useMemo(() => getStateOptions(resolvedCountryCode), [resolvedCountryCode])
+  const resolvedStateCode = useMemo(() => {
+    if (statePick !== LOCATION_NONE) return statePick
+    const typed = formData.state.trim().toLowerCase()
+    if (!typed) return ""
+    const row = stateOptions.find((s) => s.name.trim().toLowerCase() === typed)
+    return row?.code ?? ""
+  }, [statePick, formData.state, stateOptions])
+  const cityOptions = useMemo(
+    () => getCityOptions(resolvedCountryCode, resolvedStateCode),
+    [resolvedCountryCode, resolvedStateCode],
+  )
 
   const handleChange = (field: string, value: any) => {
     setFormData(prev => ({
@@ -149,7 +177,7 @@ export default function AddExhibitorForm({ onSuccess, onCancel }: AddExhibitorFo
         website: formData.website || null,
         linkedin: formData.linkedin || null,
         twitter: formData.twitter || null,
-        location: formData.location || null,
+        location: [formData.city, formData.state, formData.country].filter(Boolean).join(", ") || formData.location || null,
         businessEmail: formData.businessEmail || null,
         businessPhone: formData.businessPhone || null,
         businessAddress: formData.businessAddress || null,
@@ -466,18 +494,96 @@ export default function AddExhibitorForm({ onSuccess, onCancel }: AddExhibitorFo
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="location">Location</Label>
-                  <div className="relative">
-                    <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                    <Input
-                      id="location"
-                      value={formData.location}
-                      onChange={(e) => handleChange("location", e.target.value)}
-                      placeholder="City, Country"
-                      className="pl-10"
-                      disabled={loading}
-                    />
-                  </div>
+                  <Label>Country</Label>
+                  <Select
+                    value={countryPick}
+                    onValueChange={(value) => {
+                      setCountryPick(value)
+                      if (value === LOCATION_NONE) return
+                      const row = countryOptions.find((c) => c.code === value)
+                      if (!row) return
+                      setStatePick(LOCATION_NONE)
+                      setCityPick(LOCATION_NONE)
+                      setFormData((prev) => ({ ...prev, country: row.name, state: "", city: "", location: row.name }))
+                    }}
+                    disabled={loading}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select country" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={LOCATION_NONE}>-- None --</SelectItem>
+                      {countryOptions.map((country) => (
+                        <SelectItem key={country.code} value={country.code}>
+                          {country.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>State</Label>
+                  <Select
+                    value={statePick}
+                    onValueChange={(value) => {
+                      setStatePick(value)
+                      if (value === LOCATION_NONE) return
+                      const row = stateOptions.find((s) => s.code === value)
+                      if (!row) return
+                      setCityPick(LOCATION_NONE)
+                      setFormData((prev) => ({ ...prev, state: row.name, city: "" }))
+                    }}
+                    disabled={loading || !resolvedCountryCode}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={!resolvedCountryCode ? "Select country first" : "Select state"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={LOCATION_NONE}>-- None --</SelectItem>
+                      {stateOptions.map((state) => (
+                        <SelectItem key={state.code} value={state.code}>
+                          {state.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>City</Label>
+                  <Select
+                    value={cityPick}
+                    onValueChange={(value) => {
+                      setCityPick(value)
+                      if (value === LOCATION_NONE) return
+                      const row = cityOptions.find((c) => c.name === value)
+                      if (row) {
+                        setFormData((prev) => ({
+                          ...prev,
+                          city: row.name,
+                          location: [row.name, prev.state, prev.country].filter(Boolean).join(", "),
+                        }))
+                      }
+                    }}
+                    disabled={loading || !resolvedCountryCode || !resolvedStateCode}
+                  >
+                    <SelectTrigger>
+                      <SelectValue
+                        placeholder={
+                          !resolvedCountryCode ? "Select country first" : !resolvedStateCode ? "Select state first" : "Select city"
+                        }
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={LOCATION_NONE}>-- None --</SelectItem>
+                      {cityOptions.map((city) => (
+                        <SelectItem key={city.name} value={city.name}>
+                          {city.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </CardContent>
             </Card>

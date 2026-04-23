@@ -8,8 +8,8 @@ import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { Textarea } from "@/components/ui/textarea"
 import { Search, Plus, MapPin, Building } from "lucide-react"
+import { getCityOptions, getCountryOptions, getStateOptions } from "@/lib/location-data"
 
 interface Venue {
   id: string
@@ -20,14 +20,6 @@ interface Venue {
   venueCountry?: string
   maxCapacity?: number
   amenities: string[]
-}
-
-type DbCountryRow = {
-  id: string
-  name: string
-  code: string
-  flag: string | null
-  cities: { id: string; name: string; image: string | null }[]
 }
 
 const LOCATION_NONE = "__none__"
@@ -49,10 +41,10 @@ export function SelectVenue({ selectedVenueId, onVenueChange }: SelectVenueProps
   const [searchTerm, setSearchTerm] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [showCreateForm, setShowCreateForm] = useState(false)
-  const [locationLoading, setLocationLoading] = useState(false)
-  const [dbCountries, setDbCountries] = useState<DbCountryRow[]>([])
   const [countryPick, setCountryPick] = useState<string>(LOCATION_NONE)
+  const [statePick, setStatePick] = useState<string>(LOCATION_NONE)
   const [cityPick, setCityPick] = useState<string>(LOCATION_NONE)
+  const countryOptions = useMemo(() => getCountryOptions(), [])
   const [newVenue, setNewVenue] = useState({
     venueName: "",
     venueAddress: "",
@@ -65,24 +57,7 @@ export function SelectVenue({ selectedVenueId, onVenueChange }: SelectVenueProps
 
   useEffect(() => {
     fetchVenues()
-    fetchCountries()
   }, [])
-
-  const fetchCountries = async () => {
-    try {
-      setLocationLoading(true)
-      const res = await apiFetch<{ success?: boolean; data?: DbCountryRow[] }>(
-        "/api/location/countries",
-        { auth: false }
-      )
-      setDbCountries(res?.success && Array.isArray(res.data) ? res.data : [])
-    } catch (error) {
-      console.error("Error fetching countries/cities:", error)
-      setDbCountries([])
-    } finally {
-      setLocationLoading(false)
-    }
-  }
 
   const fetchVenues = async () => {
     try {
@@ -149,6 +124,7 @@ export function SelectVenue({ selectedVenueId, onVenueChange }: SelectVenueProps
         })
         setShowCreateForm(false)
         setCountryPick(LOCATION_NONE)
+        setStatePick(LOCATION_NONE)
         setCityPick(LOCATION_NONE)
         setNewVenue({
           venueName: "",
@@ -171,18 +147,26 @@ export function SelectVenue({ selectedVenueId, onVenueChange }: SelectVenueProps
 
   const selectedVenue = venues.find(venue => venue.id === selectedVenueId)
 
-  const resolvedCountryId = useMemo(() => {
+  const resolvedCountryCode = useMemo(() => {
     if (countryPick !== LOCATION_NONE) return countryPick
     const typed = newVenue.venueCountry.trim().toLowerCase()
     if (!typed) return ""
-    const row = dbCountries.find((c) => c.name.trim().toLowerCase() === typed)
-    return row?.id ?? ""
-  }, [countryPick, newVenue.venueCountry, dbCountries])
+    const row = countryOptions.find((c) => c.name.trim().toLowerCase() === typed)
+    return row?.code ?? ""
+  }, [countryPick, newVenue.venueCountry, countryOptions])
+
+  const stateOptions = useMemo(() => getStateOptions(resolvedCountryCode), [resolvedCountryCode])
+  const resolvedStateCode = useMemo(() => {
+    if (statePick !== LOCATION_NONE) return statePick
+    const typed = newVenue.venueState.trim().toLowerCase()
+    if (!typed) return ""
+    const row = stateOptions.find((s) => s.name.trim().toLowerCase() === typed)
+    return row?.code ?? ""
+  }, [statePick, newVenue.venueState, stateOptions])
 
   const cityOptions = useMemo(() => {
-    if (!resolvedCountryId) return []
-    return dbCountries.find((c) => c.id === resolvedCountryId)?.cities ?? []
-  }, [resolvedCountryId, dbCountries])
+    return getCityOptions(resolvedCountryCode, resolvedStateCode)
+  }, [resolvedCountryCode, resolvedStateCode])
 
   return (
     <Card>
@@ -306,30 +290,58 @@ export function SelectVenue({ selectedVenueId, onVenueChange }: SelectVenueProps
               <div>
                 <Label className="mb-2 block">Choose Your Country</Label>
                 <Select
-                  disabled={locationLoading}
                   value={countryPick}
                   onValueChange={(value) => {
                     setCountryPick(value)
                     if (value === LOCATION_NONE) return
-                    const row = dbCountries.find((x) => x.id === value)
+                    const row = countryOptions.find((x) => x.code === value)
                     if (row) {
                       setNewVenue((prev) => ({
                         ...prev,
                         venueCountry: row.name,
+                        venueState: "",
                         venueCity: "",
                       }))
+                      setStatePick(LOCATION_NONE)
                       setCityPick(LOCATION_NONE)
                     }
                   }}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder={locationLoading ? "Loading..." : "Choose your country"} />
+                    <SelectValue placeholder="Choose your country" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value={LOCATION_NONE}>-- None --</SelectItem>
-                    {dbCountries.map((country) => (
-                      <SelectItem key={country.id} value={country.id}>
+                    {countryOptions.map((country) => (
+                      <SelectItem key={country.code} value={country.code}>
                         {country.name} ({country.code})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="mb-2 block">Choose Your State</Label>
+                <Select
+                  value={statePick}
+                  onValueChange={(value) => {
+                    setStatePick(value)
+                    if (value === LOCATION_NONE) return
+                    const state = stateOptions.find((s) => s.code === value)
+                    if (!state) return
+                    setCityPick(LOCATION_NONE)
+                    setNewVenue((prev) => ({ ...prev, venueState: state.name, venueCity: "" }))
+                  }}
+                  disabled={!resolvedCountryCode}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={!resolvedCountryCode ? "Pick country first" : "Choose your state"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={LOCATION_NONE}>-- None --</SelectItem>
+                    {stateOptions.map((state) => (
+                      <SelectItem key={state.code} value={state.code}>
+                        {state.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -338,12 +350,12 @@ export function SelectVenue({ selectedVenueId, onVenueChange }: SelectVenueProps
               <div>
                 <Label className="mb-2 block">Choose Your City</Label>
                 <Select
-                  disabled={locationLoading || !resolvedCountryId}
+                  disabled={!resolvedCountryCode || !resolvedStateCode}
                   value={cityPick}
                   onValueChange={(value) => {
                     setCityPick(value)
                     if (value === LOCATION_NONE) return
-                    const city = cityOptions.find((c) => c.id === value)
+                    const city = cityOptions.find((c) => c.name === value)
                     if (city) {
                       setNewVenue((prev) => ({ ...prev, venueCity: city.name }))
                     }
@@ -352,10 +364,10 @@ export function SelectVenue({ selectedVenueId, onVenueChange }: SelectVenueProps
                   <SelectTrigger>
                     <SelectValue
                       placeholder={
-                        !resolvedCountryId
-                          ? "Pick/Type country first"
-                          : locationLoading
-                          ? "Loading..."
+                        !resolvedCountryCode
+                          ? "Pick country first"
+                          : !resolvedStateCode
+                          ? "Pick state first"
                           : "Choose your city"
                       }
                     />
@@ -363,46 +375,12 @@ export function SelectVenue({ selectedVenueId, onVenueChange }: SelectVenueProps
                   <SelectContent>
                     <SelectItem value={LOCATION_NONE}>-- None --</SelectItem>
                     {cityOptions.map((city) => (
-                      <SelectItem key={city.id} value={city.id}>
+                      <SelectItem key={city.name} value={city.name}>
                         {city.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
-              <div>
-                <Label htmlFor="venueCity">City *</Label>
-                <Input
-                  id="venueCity"
-                  value={newVenue.venueCity}
-                  onChange={(e) => {
-                    setCityPick(LOCATION_NONE)
-                    setNewVenue(prev => ({ ...prev, venueCity: e.target.value }))
-                  }}
-                  placeholder="New York"
-                />
-              </div>
-              <div>
-                <Label htmlFor="venueState">State</Label>
-                <Input
-                  id="venueState"
-                  value={newVenue.venueState}
-                  onChange={(e) => setNewVenue(prev => ({ ...prev, venueState: e.target.value }))}
-                  placeholder="NY"
-                />
-              </div>
-              <div className="col-span-2">
-                <Label htmlFor="venueCountry">Country</Label>
-                <Input
-                  id="venueCountry"
-                  value={newVenue.venueCountry}
-                  onChange={(e) => {
-                    setCountryPick(LOCATION_NONE)
-                    setCityPick(LOCATION_NONE)
-                    setNewVenue(prev => ({ ...prev, venueCountry: e.target.value }))
-                  }}
-                  placeholder="United States"
-                />
               </div>
               <div className="col-span-2">
                 <Label htmlFor="maxCapacity">Maximum Capacity</Label>

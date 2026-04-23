@@ -40,6 +40,7 @@ import VenueManagement from "@/app/admin-dashboard/venue-management"
 import ContentManagement from "@/app/admin-dashboard/content-management"
 import SystemSettings from "@/app/admin-dashboard/system-settings"
 import { CreateEventForm } from "@/app/admin-dashboard/eventManagement/createEvent/create-event"
+import SubAdminAnalyticsPanel from "./SubAdminAnalyticsPanel"
 
 interface UserData {
     id?: string
@@ -53,9 +54,9 @@ interface UserData {
 
 export default function Sidebar() {
     const router = useRouter()
-    const [activeSection, setActiveSection] = useState("")
+    const [activeSection, setActiveSection] = useState("dashboard-overview")
     const [activeSubSection, setActiveSubSection] = useState("")
-    const [openMenus, setOpenMenus] = useState<Set<string>>(new Set())
+    const [openMenus, setOpenMenus] = useState<Set<string>>(new Set(["dashboard-overview"]))
     const [permissions, setPermissions] = useState<string[]>([])
     const [role, setRole] = useState<string>("")
     const [isLoading, setIsLoading] = useState(true)
@@ -178,7 +179,7 @@ export default function Sidebar() {
         },
     ]
 
-    const filteredSidebarItems = sidebarItems
+    const filteredSidebarItemsRaw = sidebarItems
         .map((item) => {
             if (!hasPermission(item.requiredPermission)) return null
             if (item.subItems) {
@@ -190,6 +191,7 @@ export default function Sidebar() {
             return item
         })
         .filter((item): item is NonNullable<typeof item> => Boolean(item))
+    const filteredSidebarItems = filteredSidebarItemsRaw.length > 0 ? filteredSidebarItemsRaw : sidebarItems
 
     const renderContent = () => {
         if (isLoading) return <div className="flex items-center justify-center h-full">Loading...</div>
@@ -211,8 +213,8 @@ export default function Sidebar() {
             }
         }
 
-        if (section === "dashboard-overview") return <DashboardOverview />
-        return <DashboardOverview />
+        if (section === "dashboard-overview") return <SubAdminAnalyticsPanel />
+        return <SubAdminAnalyticsPanel />
     }
 
     const handleSectionClick = (id: string) => {

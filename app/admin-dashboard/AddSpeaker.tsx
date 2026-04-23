@@ -2,8 +2,11 @@
 
 import Image from "next/image";
 import { Facebook, Linkedin, Twitter, Instagram, Upload, X } from "lucide-react";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { apiFetch } from "@/lib/api";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { getCityOptions, getCountryOptions, getStateOptions } from "@/lib/location-data";
 
 const emptyForm = {
   firstName: "",
@@ -14,6 +17,9 @@ const emptyForm = {
   company: "",
   jobTitle: "",
   location: "",
+  country: "",
+  state: "",
+  city: "",
   website: "",
   linkedin: "",
   twitter: "",
@@ -23,6 +29,7 @@ const emptyForm = {
 };
 
 export default function AddSpeaker() {
+  const LOCATION_NONE = "__none__";
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -30,6 +37,29 @@ export default function AddSpeaker() {
   const [categories, setCategories] = useState<string[]>([]);
   const [newCategory, setNewCategory] = useState("");
   const [formData, setFormData] = useState(emptyForm);
+  const [countryPick, setCountryPick] = useState<string>(LOCATION_NONE);
+  const [statePick, setStatePick] = useState<string>(LOCATION_NONE);
+  const [cityPick, setCityPick] = useState<string>(LOCATION_NONE);
+  const countryOptions = useMemo(() => getCountryOptions(), []);
+  const resolvedCountryCode = useMemo(() => {
+    if (countryPick !== LOCATION_NONE) return countryPick;
+    const typed = formData.country.trim().toLowerCase();
+    if (!typed) return "";
+    const row = countryOptions.find((c) => c.name.trim().toLowerCase() === typed);
+    return row?.code ?? "";
+  }, [countryPick, formData.country, countryOptions]);
+  const stateOptions = useMemo(() => getStateOptions(resolvedCountryCode), [resolvedCountryCode]);
+  const resolvedStateCode = useMemo(() => {
+    if (statePick !== LOCATION_NONE) return statePick;
+    const typed = formData.state.trim().toLowerCase();
+    if (!typed) return "";
+    const row = stateOptions.find((s) => s.name.trim().toLowerCase() === typed);
+    return row?.code ?? "";
+  }, [statePick, formData.state, stateOptions]);
+  const cityOptions = useMemo(
+    () => getCityOptions(resolvedCountryCode, resolvedStateCode),
+    [resolvedCountryCode, resolvedStateCode],
+  );
   /** Free-text fields — avoid splitting on every keystroke (fixes “input not working”) */
   const [achievementsText, setAchievementsText] = useState("");
   const [certificationsText, setCertificationsText] = useState("");
@@ -122,7 +152,7 @@ export default function AddSpeaker() {
         bio: formData.bio.trim() || undefined,
         company: formData.company.trim() || undefined,
         jobTitle: formData.jobTitle.trim() || undefined,
-        location: formData.location.trim() || undefined,
+        location: [formData.city, formData.state, formData.country].filter(Boolean).join(", ") || formData.location.trim() || undefined,
         website: formData.website.trim() || undefined,
         linkedin: formData.linkedin.trim() || undefined,
         twitter: formData.twitter.trim() || undefined,
@@ -144,6 +174,9 @@ export default function AddSpeaker() {
       if (result?.success) {
         alert("Speaker created successfully!");
         setFormData(emptyForm);
+        setCountryPick(LOCATION_NONE);
+        setStatePick(LOCATION_NONE);
+        setCityPick(LOCATION_NONE);
         setProfileImage(null);
         setCategories([]);
         setAchievementsText("");
@@ -291,13 +324,99 @@ export default function AddSpeaker() {
               placeholder="Mobile"
               autoComplete="tel"
             />
-            <input
-              name="location"
-              value={formData.location}
-              onChange={handleInputChange}
-              className="input border border-gray-200 rounded px-3 py-2"
-              placeholder="Location"
-            />
+            <div className="md:col-span-2 rounded-lg border border-slate-200 bg-slate-50 p-4">
+              <p className="text-sm font-medium text-slate-800 mb-3">Location</p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs text-slate-600">Country</Label>
+                  <Select
+                    value={countryPick}
+                    onValueChange={(value) => {
+                      setCountryPick(value);
+                      if (value === LOCATION_NONE) return;
+                      const row = countryOptions.find((c) => c.code === value);
+                      if (!row) return;
+                      setStatePick(LOCATION_NONE);
+                      setCityPick(LOCATION_NONE);
+                      setFormData((prev) => ({ ...prev, country: row.name, state: "", city: "", location: row.name }));
+                    }}
+                  >
+                    <SelectTrigger className="bg-white">
+                      <SelectValue placeholder="Select country" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={LOCATION_NONE}>-- None --</SelectItem>
+                      {countryOptions.map((country) => (
+                        <SelectItem key={country.code} value={country.code}>
+                          {country.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs text-slate-600">State</Label>
+                  <Select
+                    value={statePick}
+                    onValueChange={(value) => {
+                      setStatePick(value);
+                      if (value === LOCATION_NONE) return;
+                      const row = stateOptions.find((s) => s.code === value);
+                      if (!row) return;
+                      setCityPick(LOCATION_NONE);
+                      setFormData((prev) => ({ ...prev, state: row.name, city: "" }));
+                    }}
+                    disabled={!resolvedCountryCode}
+                  >
+                    <SelectTrigger className="bg-white">
+                      <SelectValue placeholder={!resolvedCountryCode ? "Select country first" : "Select state"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={LOCATION_NONE}>-- None --</SelectItem>
+                      {stateOptions.map((state) => (
+                        <SelectItem key={state.code} value={state.code}>
+                          {state.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs text-slate-600">City</Label>
+                  <Select
+                    value={cityPick}
+                    onValueChange={(value) => {
+                      setCityPick(value);
+                      if (value === LOCATION_NONE) return;
+                      const row = cityOptions.find((c) => c.name === value);
+                      if (!row) return;
+                      setFormData((prev) => ({
+                        ...prev,
+                        city: row.name,
+                        location: [row.name, prev.state, prev.country].filter(Boolean).join(", "),
+                      }));
+                    }}
+                    disabled={!resolvedCountryCode || !resolvedStateCode}
+                  >
+                    <SelectTrigger className="bg-white">
+                      <SelectValue
+                        placeholder={
+                          !resolvedCountryCode ? "Select country first" : !resolvedStateCode ? "Select state first" : "Select city"
+                        }
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={LOCATION_NONE}>-- None --</SelectItem>
+                      {cityOptions.map((city) => (
+                        <SelectItem key={city.name} value={city.name}>
+                          {city.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
             <input
               name="website"
               value={formData.website}

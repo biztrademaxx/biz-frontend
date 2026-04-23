@@ -1,62 +1,13 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { LogOut, User, Shield, Calendar } from "lucide-react"
-import { toast } from "sonner"
-import { getAccessToken, clearTokens } from "@/lib/api"
-import AdminDashboard from "../sidebar"
-
-interface User {
-  id: string
-  email: string
-  name: string
-  role: string
-  permissions: string[]
-}
+import AdminDashboard from "@/app/admin-dashboard/sidebar"
+import { useAuth } from "@/hooks/use-auth"
 
 export default function SubAdminDashboard() {
-  const [user, setUser] = useState<User | null>(null)
-  const [loading, setLoading] = useState(true)
-  const router = useRouter()
-
-  useEffect(() => {
-    checkAuth()
-  }, [])
-
-  const checkAuth = () => {
-    try {
-      const token = typeof window !== "undefined" ? getAccessToken() : null
-      const subAdminData = localStorage.getItem("subAdmin")
-      if (token && subAdminData) {
-        const parsed = JSON.parse(subAdminData)
-        if (parsed.role === "SUB_ADMIN" || parsed.role === "SUPER_ADMIN") {
-          setUser(parsed)
-        } else {
-          router.push("/sub-admin/login")
-        }
-      } else {
-        router.push("/sub-admin/login")
-      }
-    } catch (error) {
-      console.error("Auth check error:", error)
-      router.push("/sub-admin/login")
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleLogout = () => {
-    clearTokens()
-    localStorage.removeItem("adminUser")
-    localStorage.removeItem("adminToken")
-    localStorage.removeItem("subAdmin")
-    localStorage.removeItem("subAdminToken")
-    toast.success("Logged out successfully")
-    router.push("/sub-admin/login")
-  }
+  const { role, permissions, loading } = useAuth({
+    requireAuth: true,
+    allowedRoles: ["SUB_ADMIN", "SUPER_ADMIN"],
+  })
 
   if (loading) {
     return (
@@ -69,15 +20,16 @@ export default function SubAdminDashboard() {
     )
   }
 
-  if (!user) {
+  if (role !== "SUB_ADMIN" && role !== "SUPER_ADMIN") {
     return null
   }
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <AdminDashboard  />
-     
+      <AdminDashboard
+        userRole={role === "SUPER_ADMIN" ? "SUPER_ADMIN" : "SUB_ADMIN"}
+        userPermissions={Array.isArray(permissions) ? permissions : []}
+      />
     </div>
   )
 }

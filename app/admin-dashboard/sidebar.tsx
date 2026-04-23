@@ -93,6 +93,7 @@ import PromotionPackagesPage from "./financial/packeges/page"
 import EventApprovalDashboard from "./EventApprovalDashboard"
 import MarketingTrafficPanel from "./marketing-traffic"
 import SeoKeywordsPanel from "./seo-keywords"
+import SubAdminAnalyticsPanel from "../sub-admin/SubAdminAnalyticsPanel"
 
 interface AdminDashboardProps {
   userRole: "SUPER_ADMIN" | "SUB_ADMIN"
@@ -140,9 +141,10 @@ const MENU_PERMISSIONS = {
   "visitors-appointments": "visitors-appointments",
   financial: "financial",
   "financial-payments": "financial-payments",
-  "financial-subscriptions": "financial-subscription",
+  "financial-subscriptions": "financial-subscriptions",
   "financial-invoices": "financial-invoices",
   "financial-transactions": "financial-transactions",
+  "admin-promotions": "admin-promotions",
   content: "content",
   "content-news": "content-news",
   "content-blog": "content-blog",
@@ -152,6 +154,8 @@ const MENU_PERMISSIONS = {
   marketing: "marketing",
   "marketing-email": "marketing-email",
   "marketing-notifications": "marketing-notifications",
+  "template-email": "template-email",
+  "template-notifications": "template-notifications",
   "marketing-traffic": "marketing-traffic",
   "marketing-seo": "marketing-seo",
   reports: "reports",
@@ -174,16 +178,24 @@ const MENU_PERMISSIONS = {
   "settings-security": "settings-security",
   "settings-language": "settings-language",
   "settings-backup": "settings-backup",
-  "settings-deactivations": "settings-modules",
+  "settings-deactivations": "settings-deactivations",
   support: "support",
   "support-tickets": "support-tickets",
   "support-contacts": "support-contacts",
   "support-notes": "support-notes",
   "support-faq": "support-faq",
+  "visitors-suggestions": "visitors-suggestions",
   // Add permissions for locations
   locations: "locations",
   countries: "countries",
   cities: "cities",
+}
+
+const LEGACY_PERMISSION_ALIASES: Record<string, string[]> = {
+  "bulk-data": ["events-approvals"],
+  "events-approvals": ["bulk-data"],
+  "financial-subscriptions": ["financial-subscription"],
+  "settings-deactivations": ["settings-modules"],
 }
 
 export default function AdminDashboard({ userRole, userPermissions }: AdminDashboardProps) {
@@ -202,8 +214,13 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
     // Sub admin needs specific permission
     const requiredPermission = MENU_PERMISSIONS[itemId as keyof typeof MENU_PERMISSIONS]
     if (!requiredPermission) return false
-
-    return userPermissions.includes(requiredPermission)
+    const candidates = new Set<string>([
+      itemId,
+      requiredPermission,
+      ...(LEGACY_PERMISSION_ALIASES[itemId] ?? []),
+      ...(LEGACY_PERMISSION_ALIASES[requiredPermission] ?? []),
+    ])
+    return userPermissions.some((p) => candidates.has(p))
   }
 
   const handleLogout = () => {
@@ -426,7 +443,10 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
     .filter(Boolean) as typeof sidebarItems
 
   // If permission filtering removed everything (e.g. empty permissions array), show full sidebar so menu is never empty
-  const filteredSidebarItems = filteredSidebarItemsRaw.length > 0 ? filteredSidebarItemsRaw : sidebarItems
+  const filteredSidebarItems =
+    userRole === "SUPER_ADMIN"
+      ? sidebarItems
+      : filteredSidebarItemsRaw
 
   /** Used by dashboard Quick Actions to switch main section (and expand that menu). */
   const navigateFromDashboard = (sectionId: string) => {
@@ -625,7 +645,7 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
     // Handle main sections
     switch (section) {
       case "dashboard":
-        return <DashboardPage onNavigate={navigateFromDashboard} />
+        return userRole === "SUB_ADMIN" ? <SubAdminAnalyticsPanel /> : <DashboardPage onNavigate={navigateFromDashboard} />
       case "events":
         return <EventManagement />
       case "locations":

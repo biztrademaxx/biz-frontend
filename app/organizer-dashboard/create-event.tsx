@@ -32,6 +32,7 @@ import { useToast } from "@/hooks/use-toast"
 import AddVenue from "./add-venue"
 import { apiFetch } from "@/lib/api"
 import { EVENT_FORMAT_SELECT_OPTIONS } from "@/lib/explore-event-types"
+import { getCountryTimezoneByName } from "@/lib/location-data"
 
 interface SpaceCost {
   type: string
@@ -145,7 +146,7 @@ interface ValidationErrors {
 }
 
 // Helper function to convert UTC time to local time string
-const convertUTCToLocalTime = (utcDateString: string, timezone: string = "Asia/Kolkata"): string => {
+const convertUTCToLocalTime = (utcDateString: string, timezone: string = "UTC"): string => {
   if (!utcDateString) return "";
 
   try {
@@ -167,7 +168,7 @@ const convertUTCToLocalTime = (utcDateString: string, timezone: string = "Asia/K
 
 
 // Helper function to convert local time to UTC
-const convertLocalToUTC = (localTime: string, dateString: string, timezone: string = "Asia/Kolkata"): string => {
+const convertLocalToUTC = (localTime: string, dateString: string, timezone: string = "UTC"): string => {
   if (!localTime || !dateString) return "";
 
   try {
@@ -253,7 +254,7 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
     endDate: "",
     dailyStart: "08:30",
     dailyEnd: "18:30",
-    timezone: "Asia/Kolkata",
+    timezone: "",
     venueId: "",
     venue: "",
     city: "",
@@ -417,6 +418,7 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
       venue: venueData.venueName,
       address: venueData.venueAddress,
       city: venueData.city,
+      timezone: venueData.country ? getCountryTimezoneByName(venueData.country) || "" : "",
     }))
   }
 
@@ -818,6 +820,7 @@ const handlePublishEvent = async () => {
     const eventData = {
       title: formData.title,
       slug: formData.slug,
+      subTitle: formData.subTitle,
       description: formData.description,
       shortDescription: formData.description.substring(0, 200),
       category: formData.categories,
@@ -890,6 +893,7 @@ const handlePublishEvent = async () => {
     // Reset form after successful submission
     setFormData({
       title: "",
+      subTitle: "",
       slug: "",
       description: "",
       eventType: "CONFERENCE",
@@ -899,7 +903,7 @@ const handlePublishEvent = async () => {
       endDate: "",
       dailyStart: "08:30",
       dailyEnd: "18:30",
-      timezone: "Asia/Kolkata",
+      timezone: "",
       venueId: "",
       venue: "",
       city: "",
@@ -1561,7 +1565,7 @@ const handlePublishEvent = async () => {
                 <div>
                   <Label htmlFor="timezone">Timezone</Label>
                   <Select
-                    value={formData.timezone}
+                    value={formData.timezone || undefined}
                     onValueChange={(value) => setFormData((prevData) => ({ ...prevData, timezone: value }))}
                   >
                     <SelectTrigger>

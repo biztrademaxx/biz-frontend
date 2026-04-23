@@ -40,6 +40,8 @@ export interface EventFormData {
   venueId: string
   venue: string
   city: string
+  state: string
+  country: string
   address: string
   registrationStart: string
   registrationEnd: string

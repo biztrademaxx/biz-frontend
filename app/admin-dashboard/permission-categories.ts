@@ -24,7 +24,8 @@ export const ADMIN_PERMISSION_CATEGORIES: PermissionCategory[] = [
       { title: "All Events", id: "events-all" },
       { title: "Create New Event", id: "events-create" },
       { title: "Event Categories", id: "events-categories" },
-      { title: "Bulk Data / Approvals", id: "events-approvals" },
+      { title: "Event Approvals", id: "events-approvals" },
+      { title: "Bulk Data", id: "bulk-data" },
     ],
   },
   {

@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Building2, Star, Users, Camera, Plus, Edit, Trash2, CheckCircle, Upload, Save } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-import { apiFetch } from "@/lib/api"
+import { getCityOptions, getCountryOptions, getStateOptions } from "@/lib/location-data"
 
 interface VenueData {
   id: string
@@ -48,13 +48,6 @@ interface VenueData {
 
 interface VenueProfileProps {
   venueData: VenueData
-}
-
-type DbCountryRow = {
-  id: string
-  name: string
-  code: string
-  cities: { id: string; name: string }[]
 }
 
 const LOCATION_NONE = "__none__"
@@ -111,9 +104,9 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
     hourlyRate: "",
     features: "",
   })
-  const [locationLoading, setLocationLoading] = useState(false)
-  const [dbCountries, setDbCountries] = useState<DbCountryRow[]>([])
+  const [countryOptions, setCountryOptions] = useState(() => getCountryOptions())
   const [countryPick, setCountryPick] = useState<string>(LOCATION_NONE)
+  const [statePick, setStatePick] = useState<string>(LOCATION_NONE)
   const [cityPick, setCityPick] = useState<string>(LOCATION_NONE)
 
   useEffect(() => {
@@ -152,42 +145,48 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
   }, [venueData.id, toast])
 
   useEffect(() => {
-    let cancelled = false
-    const loadLocations = async () => {
-      try {
-        setLocationLoading(true)
-        const res = await apiFetch<{ success?: boolean; data?: DbCountryRow[] }>(
-          "/api/location/countries",
-          { auth: false },
-        )
-        if (!cancelled && res?.success && Array.isArray(res.data)) {
-          setDbCountries(res.data)
-        }
-      } catch (err) {
-        console.error("Failed to load countries/cities:", err)
-        if (!cancelled) setDbCountries([])
-      } finally {
-        if (!cancelled) setLocationLoading(false)
-      }
-    }
-    loadLocations()
-    return () => {
-      cancelled = true
-    }
+    setCountryOptions(getCountryOptions())
   }, [])
 
-  const resolvedCountryId = useMemo(() => {
+  const resolvedCountryCode = useMemo(() => {
     if (countryPick !== LOCATION_NONE) return countryPick
     const typed = (profileData?.country || "").trim().toLowerCase()
     if (!typed) return ""
-    const row = dbCountries.find((c) => c.name.trim().toLowerCase() === typed)
-    return row?.id ?? ""
-  }, [countryPick, profileData?.country, dbCountries])
+    const row = countryOptions.find((c) => c.name.trim().toLowerCase() === typed)
+    return row?.code ?? ""
+  }, [countryPick, profileData?.country, countryOptions])
 
-  const cityOptions = useMemo(() => {
-    if (!resolvedCountryId) return []
-    return dbCountries.find((c) => c.id === resolvedCountryId)?.cities ?? []
-  }, [resolvedCountryId, dbCountries])
+  const stateOptions = useMemo(() => getStateOptions(resolvedCountryCode), [resolvedCountryCode])
+  const resolvedStateCode = useMemo(() => {
+    if (statePick !== LOCATION_NONE) return statePick
+    const typed = (profileData?.state || "").trim().toLowerCase()
+    if (!typed) return ""
+    const row = stateOptions.find((s) => s.name.trim().toLowerCase() === typed)
+    return row?.code ?? ""
+  }, [statePick, profileData?.state, stateOptions])
+  const cityOptions = useMemo(
+    () => getCityOptions(resolvedCountryCode, resolvedStateCode),
+    [resolvedCountryCode, resolvedStateCode],
+  )
+
+  const tryAutoFillPostalCode = async (cityName: string, stateName: string, countryName: string) => {
+    if (!cityName || !countryName) return
+    try {
+      const params = new URLSearchParams({
+        city: cityName,
+        state: stateName || "",
+        country: countryName,
+      })
+      const res = await fetch(`/api/location/postal-code?${params.toString()}`)
+      const json = (await res.json()) as { success?: boolean; data?: { postalCode?: string | null } }
+      const postalCode = json?.success ? (json.data?.postalCode ?? null) : null
+      if (postalCode) {
+        setProfileData((prev) => (prev ? { ...prev, zipCode: postalCode } : prev))
+      }
+    } catch {
+      // Best-effort only; keep current/manual value when lookup fails.
+    }
+  }
 
   const handleImageUpload = async (file: File, type: "venue" | "floorplan" | "logo") => {
     try {
@@ -534,21 +533,56 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
                             <div className="space-y-2">
                               <Label>Choose Your Country</Label>
                               <Select
-                                disabled={locationLoading}
+                                disabled={false}
                                 value={countryPick}
                                 onValueChange={(value) => {
                                   setCountryPick(value)
                                   if (value === LOCATION_NONE) return
-                                  const row = dbCountries.find((c) => c.id === value)
+                                  const row = countryOptions.find((c) => c.code === value)
                                   if (row) {
                                     setProfileData((prev) =>
                                       prev
                                         ? {
                                             ...prev,
                                             country: row.name,
+                                            state: "",
                                             city: "",
                                           }
                                         : prev,
+                                    )
+                                    setStatePick(LOCATION_NONE)
+                                    setCityPick(LOCATION_NONE)
+                                  }
+                                }}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue
+                                    placeholder="Choose your country"
+                                  />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value={LOCATION_NONE}>-- None --</SelectItem>
+                                  {countryOptions.map((country) => (
+                                    <SelectItem key={country.code} value={country.code}>
+                                      {country.name} ({country.code})
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label>Choose Your State</Label>
+                              <Select
+                                disabled={!resolvedCountryCode}
+                                value={statePick}
+                                onValueChange={(value) => {
+                                  setStatePick(value)
+                                  if (value === LOCATION_NONE) return
+                                  const state = stateOptions.find((s) => s.code === value)
+                                  if (state) {
+                                    setProfileData((prev) =>
+                                      prev ? { ...prev, state: state.name, city: "" } : prev,
                                     )
                                     setCityPick(LOCATION_NONE)
                                   }
@@ -556,14 +590,16 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
                               >
                                 <SelectTrigger>
                                   <SelectValue
-                                    placeholder={locationLoading ? "Loading..." : "Choose your country"}
+                                    placeholder={
+                                      !resolvedCountryCode ? "Choose country first" : "Choose your state"
+                                    }
                                   />
                                 </SelectTrigger>
                                 <SelectContent>
                                   <SelectItem value={LOCATION_NONE}>-- None --</SelectItem>
-                                  {dbCountries.map((country) => (
-                                    <SelectItem key={country.id} value={country.id}>
-                                      {country.name} ({country.code})
+                                  {stateOptions.map((state) => (
+                                    <SelectItem key={state.code} value={state.code}>
+                                      {state.name}
                                     </SelectItem>
                                   ))}
                                 </SelectContent>
@@ -573,24 +609,33 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
                             <div className="space-y-2">
                               <Label>Choose Your City</Label>
                               <Select
-                                disabled={locationLoading || !resolvedCountryId}
+                                disabled={!resolvedCountryCode || !resolvedStateCode}
                                 value={cityPick}
-                                onValueChange={(value) => {
+                                onValueChange={async (value) => {
                                   setCityPick(value)
                                   if (value === LOCATION_NONE) return
-                                  const city = cityOptions.find((c) => c.id === value)
+                                  const city = cityOptions.find((c) => c.name === value)
                                   if (city) {
+                                    const nextState =
+                                      stateOptions.find((s) => s.code === resolvedStateCode)?.name ||
+                                      profileData?.state ||
+                                      ""
+                                    const nextCountry =
+                                      countryOptions.find((c) => c.code === resolvedCountryCode)?.name ||
+                                      profileData?.country ||
+                                      ""
                                     setProfileData((prev) => (prev ? { ...prev, city: city.name } : prev))
+                                    await tryAutoFillPostalCode(city.name, nextState, nextCountry)
                                   }
                                 }}
                               >
                                 <SelectTrigger>
                                   <SelectValue
                                     placeholder={
-                                      !resolvedCountryId
-                                        ? "Pick/Type country first"
-                                        : locationLoading
-                                          ? "Loading..."
+                                      !resolvedCountryCode
+                                        ? "Pick country first"
+                                        : !resolvedStateCode
+                                          ? "Pick state first"
                                           : "Choose your city"
                                     }
                                   />
@@ -598,7 +643,7 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
                                 <SelectContent>
                                   <SelectItem value={LOCATION_NONE}>-- None --</SelectItem>
                                   {cityOptions.map((city) => (
-                                    <SelectItem key={city.id} value={city.id}>
+                                    <SelectItem key={city.name} value={city.name}>
                                       {city.name}
                                     </SelectItem>
                                   ))}
@@ -607,75 +652,6 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
                             </div>
                           </>
                         ) : null}
-
-                        <div className="space-y-2">
-                          <Label htmlFor="city">City (Manual Entry)</Label>
-                          {isEditing ? (
-                            <Input
-                              id="city"
-                              value={profileData?.city}
-                              onChange={(e) =>
-                                (setCityPick(LOCATION_NONE),
-                                setProfileData(
-                                  (prev) =>
-                                    ({
-                                      ...(prev ?? {}),
-                                      city: e.target.value,
-                                    }) as VenueData,
-                                ))
-                              }
-                              placeholder="Enter city if not listed"
-                            />
-                          ) : (
-                            <div className="p-2 bg-muted rounded">{profileData?.city || "Not specified"}</div>
-                          )}
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="state">State/Province</Label>
-                          {isEditing ? (
-                            <Input
-                              id="state"
-                              value={profileData?.state}
-                              onChange={(e) =>
-                                setProfileData(
-                                  (prev) =>
-                                    ({
-                                      ...(prev ?? {}),
-                                      state: e.target.value,
-                                    }) as VenueData,
-                                )
-                              }
-                              placeholder="Enter state"
-                            />
-                          ) : (
-                            <div className="p-2 bg-muted rounded">{profileData?.state || "Not specified"}</div>
-                          )}
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="country">Country (Manual Entry)</Label>
-                          {isEditing ? (
-                            <Input
-                              id="country"
-                              value={profileData?.country}
-                              onChange={(e) =>
-                                (setCountryPick(LOCATION_NONE),
-                                setCityPick(LOCATION_NONE),
-                                setProfileData(
-                                  (prev) =>
-                                    ({
-                                      ...(prev ?? {}),
-                                      country: e.target.value,
-                                    }) as VenueData,
-                                ))
-                              }
-                              placeholder="Enter country if not listed"
-                            />
-                          ) : (
-                            <div className="p-2 bg-muted rounded">{profileData?.country || "Not specified"}</div>
-                          )}
-                        </div>
 
                         <div className="space-y-2">
                           <Label htmlFor="zipCode">Postal Code</Label>

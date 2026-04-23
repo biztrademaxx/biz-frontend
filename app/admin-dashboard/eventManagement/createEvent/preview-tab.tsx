@@ -34,7 +34,8 @@ export function PreviewTab({ formData }: PreviewTabProps) {
                   <div className="flex items-center gap-1">
                     <MapPin className="w-4 h-4" />
                     <span>
-                      {formData.venue || "Venue"}, {formData.city || "City"}
+                      {formData.venue || "Venue"},{" "}
+                      {[formData.city || "City", formData.state, formData.country].filter(Boolean).join(", ")}
                     </span>
                   </div>
                 </div>

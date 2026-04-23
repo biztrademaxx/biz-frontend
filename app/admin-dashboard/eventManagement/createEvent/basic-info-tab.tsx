@@ -21,6 +21,8 @@ interface BasicInfoTabProps {
     venueName: string
     venueAddress: string
     city: string
+    state?: string
+    country?: string
   }) => void
 }
 
@@ -172,6 +174,26 @@ export function BasicInfoTab({
                 value={formData.city}
                 onChange={(e) => onFormChange({ city: e.target.value })}
                 placeholder="Enter city"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="state">State</Label>
+              <Input
+                id="state"
+                value={formData.state}
+                onChange={(e) => onFormChange({ state: e.target.value })}
+                placeholder="Enter state"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="country">Country</Label>
+              <Input
+                id="country"
+                value={formData.country}
+                onChange={(e) => onFormChange({ country: e.target.value })}
+                placeholder="Enter country"
               />
             </div>
 

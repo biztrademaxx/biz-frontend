@@ -4,12 +4,21 @@ import { useAuth } from "@/hooks/use-auth"
 import AdminDashboard from "./sidebar"
 import Navbar from "./navbar"
 import { NameBanner } from "./NameBanner"
+import { useRouter } from "next/navigation"
+import { useEffect } from "react"
 
 export default function AdminDashboardPage() {
+  const router = useRouter()
   const { role, permissions, loading, logout } = useAuth({
     requireAuth: true,
     allowedRoles: ["SUPER_ADMIN", "SUB_ADMIN"],
   })
+
+  useEffect(() => {
+    if (!loading && role === "SUB_ADMIN") {
+      router.replace("/sub-admin/dashboard")
+    }
+  }, [loading, role, router])
 
   if (loading) {
     return (

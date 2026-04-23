@@ -17,6 +17,7 @@ import { SelectSpeakers } from "./select-speakers"
 import { SelectExhibitors } from "./select-exhibitors"
 import type { EventFormData, SpaceCost, ExhibitorBooth } from "./types"
 import { apiFetch } from "@/lib/api"
+import { getCountryTimezoneByName } from "@/lib/location-data"
 
 const slugifyTitle = (value: string): string =>
   value
@@ -44,6 +45,8 @@ export function CreateEventForm() {
     venueId: "",
     venue: "",
     city: "",
+    state: "",
+    country: "",
     address: "",
     registrationStart: "",
     registrationEnd: "",
@@ -132,6 +135,10 @@ export function CreateEventForm() {
         setSlugManuallyEdited(normalized.length > 0)
         merged.slug = normalized
       }
+      if ("country" in updates && updates.country !== undefined) {
+        const tz = getCountryTimezoneByName(String(updates.country))
+        if (tz) merged.timezone = tz
+      }
       if ("title" in updates && !slugManuallyEdited) {
         merged.slug = slugifyTitle(String(merged.title ?? ""))
       }
@@ -162,6 +169,9 @@ export function CreateEventForm() {
       venue: venueData.venueName,
       address: venueData.venueAddress,
       city: venueData.city,
+      state: venueData.state || "",
+      country: venueData.country || "",
+      timezone: venueData.country ? getCountryTimezoneByName(venueData.country) || prev.timezone : prev.timezone,
     }))
   }
 
