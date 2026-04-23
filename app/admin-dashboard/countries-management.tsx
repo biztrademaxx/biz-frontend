@@ -17,6 +17,7 @@ import {
 } from "lucide-react"
 import CloudinaryUpload from "@/components/cloudinary-upload"
 import { apiFetch } from "@/lib/api"
+import { getCountryOptions } from "@/lib/location-data"
 
 interface Country {
   id: string
@@ -38,6 +39,7 @@ interface Country {
 interface City {
   id: string
   name: string
+  state: string
   countryId: string
   latitude?: number
   longitude?: number
@@ -57,7 +59,22 @@ interface City {
 }
 
 interface CountriesManagementProps {
-  activeTab?: "countries" | "cities"
+  activeTab?: "countries" | "states" | "cities"
+}
+
+interface StateRow {
+  id: string
+  name: string
+  countryId: string
+  isActive: boolean
+  isPermitted: boolean
+  eventCount: number
+  cityCount: number
+  country?: {
+    id: string
+    name: string
+    code: string
+  }
 }
 
 export default function CountriesManagement({ activeTab = "countries" }: CountriesManagementProps) {
@@ -65,10 +82,14 @@ export default function CountriesManagement({ activeTab = "countries" }: Countri
   const [cities, setCities] = useState<City[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
-  const [currentActiveTab, setCurrentActiveTab] = useState<"countries" | "cities">(activeTab)
+  const [currentActiveTab, setCurrentActiveTab] = useState<"countries" | "states" | "cities">(activeTab)
+  const [selectedStateCountry, setSelectedStateCountry] = useState("")
+  const [states, setStates] = useState<StateRow[]>([])
   const [showCountryForm, setShowCountryForm] = useState(false)
+  const [showStateForm, setShowStateForm] = useState(false)
   const [showCityForm, setShowCityForm] = useState(false)
   const [editingCountry, setEditingCountry] = useState<Country | null>(null)
+  const [editingState, setEditingState] = useState<StateRow | null>(null)
   const [editingCity, setEditingCity] = useState<City | null>(null)
   
   const [countryFormData, setCountryFormData] = useState({
@@ -83,6 +104,7 @@ export default function CountriesManagement({ activeTab = "countries" }: Countri
 
   const [cityFormData, setCityFormData] = useState({
     name: "",
+    state: "",
     countryId: "",
     latitude: "",
     longitude: "",
@@ -90,6 +112,12 @@ export default function CountriesManagement({ activeTab = "countries" }: Countri
     image: "",
     isActive: true,
     isPermitted: false
+  })
+  const [stateFormData, setStateFormData] = useState({
+    name: "",
+    countryId: "",
+    isActive: true,
+    isPermitted: false,
   })
 
   // Update active tab when prop changes
@@ -107,6 +135,13 @@ export default function CountriesManagement({ activeTab = "countries" }: Countri
       if (currentActiveTab === "countries") {
         const data = await apiFetch<Country[]>("/api/admin/countries?includeCounts=true", { auth: true })
         setCountries(Array.isArray(data) ? data : [])
+      } else if (currentActiveTab === "states") {
+        const [countryData, statesData] = await Promise.all([
+          apiFetch<Country[]>("/api/admin/countries?includeCounts=true", { auth: true }),
+          apiFetch<StateRow[]>("/api/admin/states?includeCounts=true", { auth: true }),
+        ])
+        setCountries(Array.isArray(countryData) ? countryData : [])
+        setStates(Array.isArray(statesData) ? statesData : [])
       } else {
         const data = await apiFetch<City[]>("/api/admin/cities?includeCounts=true", { auth: true })
         setCities(Array.isArray(data) ? data : [])
@@ -167,6 +202,7 @@ export default function CountriesManagement({ activeTab = "countries" }: Countri
         auth: true,
         body: {
           name: cityFormData.name,
+          state: cityFormData.state,
           countryId: cityFormData.countryId,
           latitude: cityFormData.latitude ? parseFloat(cityFormData.latitude) : undefined,
           longitude: cityFormData.longitude ? parseFloat(cityFormData.longitude) : undefined,
@@ -180,6 +216,7 @@ export default function CountriesManagement({ activeTab = "countries" }: Countri
       setEditingCity(null)
       setCityFormData({
         name: "",
+        state: "",
         countryId: "",
         latitude: "",
         longitude: "",
@@ -191,6 +228,35 @@ export default function CountriesManagement({ activeTab = "countries" }: Countri
       fetchData()
     } catch (err: any) {
       alert(err?.body?.error || err?.message || "Failed to save city")
+    }
+  }
+
+  const handleStateSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    try {
+      const path = editingState ? `/api/admin/states/${editingState.id}` : "/api/admin/states"
+      const method = editingState ? "PUT" : "POST"
+      await apiFetch(path, {
+        method,
+        auth: true,
+        body: {
+          name: stateFormData.name,
+          countryId: stateFormData.countryId,
+          isActive: stateFormData.isActive,
+          isPermitted: stateFormData.isPermitted,
+        },
+      })
+      setShowStateForm(false)
+      setEditingState(null)
+      setStateFormData({
+        name: "",
+        countryId: "",
+        isActive: true,
+        isPermitted: false,
+      })
+      fetchData()
+    } catch (err: any) {
+      alert(err?.body?.error || err?.message || "Failed to save state")
     }
   }
 
@@ -211,6 +277,15 @@ export default function CountriesManagement({ activeTab = "countries" }: Countri
       fetchData()
     } catch (err: any) {
       alert(err?.body?.error || err?.message || "Failed to delete city")
+    }
+  }
+  const handleDeleteState = async (stateId: string) => {
+    if (!confirm("Are you sure you want to delete this state?")) return
+    try {
+      await apiFetch(`/api/admin/states/${stateId}`, { method: "DELETE", auth: true })
+      fetchData()
+    } catch (err: any) {
+      alert(err?.body?.error || err?.message || "Failed to delete state")
     }
   }
 
@@ -239,6 +314,18 @@ export default function CountriesManagement({ activeTab = "countries" }: Countri
       alert(err?.body?.error || err?.message || "Failed to update city permission")
     }
   }
+  const handleToggleStatePermission = async (stateId: string, currentPermission: boolean) => {
+    try {
+      await apiFetch(`/api/admin/states/${stateId}`, {
+        method: "PUT",
+        auth: true,
+        body: { isPermitted: !currentPermission },
+      })
+      fetchData()
+    } catch (err: any) {
+      alert(err?.body?.error || err?.message || "Failed to update state permission")
+    }
+  }
 
   const handleFlagUpload = (flagUrl: string) => {
     setCountryFormData(prev => ({
@@ -263,6 +350,14 @@ export default function CountriesManagement({ activeTab = "countries" }: Countri
     city.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     city.country?.name.toLowerCase().includes(searchTerm.toLowerCase())
   )
+  const filteredStates = states
+    .filter((s) => !selectedStateCountry || s.country?.code === selectedStateCountry)
+    .filter((s) => s.name.toLowerCase().includes(searchTerm.toLowerCase()))
+    .sort((a, b) => b.eventCount - a.eventCount || a.name.localeCompare(b.name))
+  const stateCountryOptions: Array<{ code: string; name: string }> =
+    countries.length > 0
+      ? countries.map((c) => ({ code: c.code, name: c.name }))
+      : getCountryOptions()
 
   if (loading) {
     return (
@@ -278,7 +373,7 @@ export default function CountriesManagement({ activeTab = "countries" }: Countri
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Location Management</h1>
-          <p className="text-gray-600">Manage countries and cities for events</p>
+          <p className="text-gray-600">Manage countries, states and cities for events</p>
         </div>
       </div>
 
@@ -295,6 +390,17 @@ export default function CountriesManagement({ activeTab = "countries" }: Countri
           >
             <Globe className="w-4 h-4 inline mr-2" />
             Countries ({countries.length})
+          </button>
+          <button
+            onClick={() => setCurrentActiveTab("states")}
+            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              currentActiveTab === "states"
+                ? "border-blue-500 text-blue-600"
+                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+            }`}
+          >
+            <MapPin className="w-4 h-4 inline mr-2" />
+            States
           </button>
           <button
             onClick={() => setCurrentActiveTab("cities")}
@@ -346,12 +452,30 @@ export default function CountriesManagement({ activeTab = "countries" }: Countri
             <Plus className="w-4 h-4" />
             Add Country
           </button>
-        ) : (
+        ) : currentActiveTab === "states" ? (
+          <button
+            onClick={() => {
+              setEditingState(null)
+              setStateFormData({
+                name: "",
+                countryId: "",
+                isActive: true,
+                isPermitted: false,
+              })
+              setShowStateForm(true)
+            }}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            Add State
+          </button>
+        ) : currentActiveTab === "cities" ? (
           <button
             onClick={() => {
               setEditingCity(null)
               setCityFormData({
                 name: "",
+                state: "",
                 countryId: "",
                 latitude: "",
                 longitude: "",
@@ -367,8 +491,79 @@ export default function CountriesManagement({ activeTab = "countries" }: Countri
             <Plus className="w-4 h-4" />
             Add City
           </button>
-        )}
+        ) : null}
       </div>
+
+      {currentActiveTab === "states" && (
+        <div className="space-y-4">
+          <div className="max-w-sm">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Country</label>
+            <select
+              value={selectedStateCountry}
+              onChange={(e) => setSelectedStateCountry(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="">Select country</option>
+              {stateCountryOptions.map((c) => (
+                <option key={c.code} value={c.code}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="bg-white rounded-lg border border-gray-200 p-4">
+            {!selectedStateCountry ? (
+              <p className="text-sm text-gray-600">Select a country to view states.</p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                {filteredStates.map((s) => (
+                  <div key={s.id} className="px-3 py-2 rounded-md bg-slate-50 border border-slate-200">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="text-sm font-medium text-slate-900">{s.name}</div>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => handleToggleStatePermission(s.id, s.isPermitted)}
+                          className={`p-1 rounded transition-colors ${
+                            s.isPermitted ? "text-green-600 hover:bg-green-50" : "text-gray-400 hover:bg-gray-50"
+                          }`}
+                          title={s.isPermitted ? "Hide from public" : "Show on public pages"}
+                        >
+                          {s.isPermitted ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                        </button>
+                        <button
+                          onClick={() => {
+                            setEditingState(s)
+                            setStateFormData({
+                              name: s.name,
+                              countryId: s.countryId,
+                              isActive: s.isActive,
+                              isPermitted: s.isPermitted,
+                            })
+                            setShowStateForm(true)
+                          }}
+                          className="p-1 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                        >
+                          <Edit3 className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteState(s.id)}
+                          className="p-1 text-red-600 hover:bg-red-50 rounded transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                    <div className="text-xs text-slate-600 mt-1">
+                      {s.eventCount} events • {s.cityCount} cities
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Stats Summary */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -391,7 +586,7 @@ export default function CountriesManagement({ activeTab = "countries" }: Countri
               <div className="text-sm text-gray-600">Active Countries</div>
             </div>
           </>
-        ) : (
+        ) : currentActiveTab === "cities" ? (
           <>
             <div className="bg-white p-4 rounded-lg border border-gray-200">
               <div className="text-2xl font-bold text-gray-900">{cities.length}</div>
@@ -408,6 +603,27 @@ export default function CountriesManagement({ activeTab = "countries" }: Countri
                 {cities.filter(c => c.isActive).length}
               </div>
               <div className="text-sm text-gray-600">Active Cities</div>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="bg-white p-4 rounded-lg border border-gray-200">
+              <div className="text-2xl font-bold text-gray-900">
+                {selectedStateCountry ? filteredStates.length : 0}
+              </div>
+              <div className="text-sm text-gray-600">Total States</div>
+            </div>
+            <div className="bg-white p-4 rounded-lg border border-gray-200">
+              <div className="text-2xl font-bold text-green-600">
+                {selectedStateCountry ? filteredStates.reduce((sum, s) => sum + s.eventCount, 0) : 0}
+              </div>
+              <div className="text-sm text-gray-600">State Events</div>
+            </div>
+            <div className="bg-white p-4 rounded-lg border border-gray-200">
+              <div className="text-2xl font-bold text-blue-600">
+                {selectedStateCountry ? filteredStates.reduce((sum, s) => sum + s.cityCount, 0) : 0}
+              </div>
+              <div className="text-sm text-gray-600">Mapped Cities</div>
             </div>
           </>
         )}
@@ -544,7 +760,7 @@ export default function CountriesManagement({ activeTab = "countries" }: Countri
                   )}
                   <div>
                     <h3 className="font-semibold text-gray-900">{city.name}</h3>
-                    <p className="text-sm text-gray-600">{city.country?.name}</p>
+                    <p className="text-sm text-gray-600">{city.state}, {city.country?.name}</p>
                   </div>
                 </div>
                 <div className="relative">
@@ -589,6 +805,7 @@ export default function CountriesManagement({ activeTab = "countries" }: Countri
                       setEditingCity(city)
                       setCityFormData({
                         name: city.name,
+                        state: city.state || "",
                         countryId: city.countryId,
                         latitude: city.latitude?.toString() || "",
                         longitude: city.longitude?.toString() || "",
@@ -770,6 +987,90 @@ export default function CountriesManagement({ activeTab = "countries" }: Countri
       )}
 
       {/* City Form Modal */}
+      {showStateForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <h2 className="text-xl font-bold mb-4">{editingState ? "Edit State" : "Add New State"}</h2>
+              <form onSubmit={handleStateSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">State Name *</label>
+                  <input
+                    type="text"
+                    required
+                    value={stateFormData.name}
+                    onChange={(e) => setStateFormData({ ...stateFormData, name: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Enter state name"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Country *</label>
+                  <select
+                    required
+                    value={stateFormData.countryId}
+                    onChange={(e) => setStateFormData({ ...stateFormData, countryId: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="">Select a country</option>
+                    {countries.map((country) => (
+                      <option key={country.id} value={country.id}>
+                        {country.name} ({country.code})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="stateIsActive"
+                      checked={stateFormData.isActive}
+                      onChange={(e) => setStateFormData({ ...stateFormData, isActive: e.target.checked })}
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <label htmlFor="stateIsActive" className="text-sm text-gray-700">
+                      Active State
+                    </label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="stateIsPermitted"
+                      checked={stateFormData.isPermitted}
+                      onChange={(e) => setStateFormData({ ...stateFormData, isPermitted: e.target.checked })}
+                      className="rounded border-gray-300 text-green-600 focus:ring-green-500"
+                    />
+                    <label htmlFor="stateIsPermitted" className="text-sm text-gray-700">
+                      Show on public pages
+                    </label>
+                  </div>
+                </div>
+                <div className="flex gap-3 pt-4">
+                  <button
+                    type="submit"
+                    className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    {editingState ? "Update State" : "Create State"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowStateForm(false)
+                      setEditingState(null)
+                    }}
+                    className="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* City Form Modal */}
       {showCityForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
@@ -790,6 +1091,20 @@ export default function CountriesManagement({ activeTab = "countries" }: Countri
                     onChange={(e) => setCityFormData({ ...cityFormData, name: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder="Enter city name"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    State *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={cityFormData.state}
+                    onChange={(e) => setCityFormData({ ...cityFormData, state: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Enter state"
                   />
                 </div>
 

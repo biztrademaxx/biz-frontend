@@ -651,7 +651,22 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
                               </Select>
                             </div>
                           </>
-                        ) : null}
+                        ) : (
+                          <>
+                            <div className="space-y-2">
+                              <Label>Country</Label>
+                              <div className="p-2 bg-muted rounded">{profileData?.country || "Not specified"}</div>
+                            </div>
+                            <div className="space-y-2">
+                              <Label>State</Label>
+                              <div className="p-2 bg-muted rounded">{profileData?.state || "Not specified"}</div>
+                            </div>
+                            <div className="space-y-2">
+                              <Label>City</Label>
+                              <div className="p-2 bg-muted rounded">{profileData?.city || "Not specified"}</div>
+                            </div>
+                          </>
+                        )}
 
                         <div className="space-y-2">
                           <Label htmlFor="zipCode">Postal Code</Label>

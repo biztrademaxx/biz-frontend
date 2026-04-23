@@ -47,3 +47,23 @@ export async function deleteEvent(id: string) {
 export async function getEventCategories(): Promise<unknown[] | GetCategoriesResponse> {
   return adminApi<unknown[] | GetCategoriesResponse>("/event-categories", { auth: true })
 }
+
+export type EventMailCandidate = {
+  source: "SUB_ADMIN" | "BULK_UPLOAD"
+  eventTitle: string
+  organizerEmail: string
+  organizerName: string
+  createdAt: string
+}
+
+export async function getEventMailCandidates() {
+  return adminApi<{ success?: boolean; data?: EventMailCandidate[] }>("/events/mail-candidates", { auth: true })
+}
+
+export async function sendEventListingEmail(organizerEmail: string, eventTitles: string[]) {
+  return adminApi<{ success?: boolean; message?: string }>("/events/send-listing-email", {
+    method: "POST",
+    auth: true,
+    body: { organizerEmail, eventTitles },
+  })
+}

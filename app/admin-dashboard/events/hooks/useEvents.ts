@@ -67,6 +67,8 @@ export function useEvents() {
   const [isEditing, setIsEditing] = useState(false)
   const [isVerifyDialogOpen, setIsVerifyDialogOpen] = useState(false)
   const [verifying, setVerifying] = useState(false)
+  const [mailCandidates, setMailCandidates] = useState<api.EventMailCandidate[]>([])
+  const [sendingMail, setSendingMail] = useState(false)
 
   const fetchEvents = useCallback(async () => {
     try {
@@ -103,6 +105,20 @@ export function useEvents() {
     fetchCategories()
   }, [fetchCategories])
 
+  const fetchMailCandidates = useCallback(async () => {
+    try {
+      const res = await api.getEventMailCandidates()
+      setMailCandidates(Array.isArray(res?.data) ? res.data : [])
+    } catch (error) {
+      console.error("Error fetching mail candidates:", error)
+      setMailCandidates([])
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchMailCandidates()
+  }, [fetchMailCandidates])
+
   const eventCounts = {
     all: events.length,
     pending: events.filter((e) => e.status === "Pending Review").length,
@@ -111,6 +127,7 @@ export function useEvents() {
     featured: events.filter((e) => e.featured).length,
     vip: events.filter((e) => e.vip).length,
     verified: events.filter((e) => e.isVerified).length,
+    mail: mailCandidates.length,
   }
 
   const handleStatusChange = useCallback(async (eventId: string, newStatus: Event["status"]) => {
@@ -234,6 +251,22 @@ export function useEvents() {
     setIsVerifyDialogOpen(true)
   }, [])
 
+  const handleSendListingEmail = useCallback(async (organizerEmail: string, eventTitles: string[]) => {
+    try {
+      setSendingMail(true)
+      await api.sendEventListingEmail(organizerEmail, eventTitles)
+      toast({ title: "Email sent", description: `Listing mail sent to ${organizerEmail}` })
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to send email",
+        variant: "destructive",
+      })
+    } finally {
+      setSendingMail(false)
+    }
+  }, [])
+
   return {
     events,
     categories,
@@ -248,6 +281,8 @@ export function useEvents() {
     activeTab,
     setActiveTab,
     eventCounts,
+    mailCandidates,
+    sendingMail,
     selectedEvent,
     isEditing,
     isVerifyDialogOpen,
@@ -265,5 +300,6 @@ export function useEvents() {
     handleSaveEvent,
     handleCancelEdit,
     handleVerifyEvent,
+    handleSendListingEmail,
   }
 }

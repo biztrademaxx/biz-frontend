@@ -94,6 +94,7 @@ import EventApprovalDashboard from "./EventApprovalDashboard"
 import MarketingTrafficPanel from "./marketing-traffic"
 import SeoKeywordsPanel from "./seo-keywords"
 import SubAdminAnalyticsPanel from "../sub-admin/SubAdminAnalyticsPanel"
+import SubAdminTrackingPage from "./sub-admin-tracking"
 
 interface AdminDashboardProps {
   userRole: "SUPER_ADMIN" | "SUB_ADMIN"
@@ -172,6 +173,7 @@ const MENU_PERMISSIONS = {
   "roles-superadmin": "roles-superadmin",
   "roles-subadmins": "roles-subadmins",
   "roles-custom-templates": "roles-custom-templates",
+  "roles-subadmin-tracking": "roles-subadmin-tracking",
   settings: "settings",
   "settings-modules": "settings-modules",
   "settings-notifications": "settings-notifications",
@@ -188,6 +190,7 @@ const MENU_PERMISSIONS = {
   // Add permissions for locations
   locations: "locations",
   countries: "countries",
+  states: "states",
   cities: "cities",
 }
 
@@ -262,7 +265,8 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
       id: "locations",
       subItems: [
         { title: "Countries", id: "countries" },
-        // { title: "Cities", id: "cities" },
+        { title: "States", id: "states" },
+        { title: "Cities", id: "cities" },
       ],
     },
     {
@@ -395,6 +399,7 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
         { title: "Super Admin", id: "roles-superadmin" },
         { title: "Sub Admins", id: "roles-subadmins" },
         { title: "Custom role templates", id: "roles-custom-templates" },
+        { title: "Sub Admin Tracking", id: "roles-subadmin-tracking" },
       ],
     },
     {
@@ -479,6 +484,8 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
           return <SuperAdminManagement />
         case "roles-custom-templates":
           return <CustomRolesManagement />
+        case "roles-subadmin-tracking":
+          return <SubAdminTrackingPage />
 
         // Events
         case "events-create":
@@ -489,6 +496,12 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
           return <EventCategories />
         case "bulk-data":
           return <ImportPage />
+        case "countries":
+          return <CountriesManagement activeTab="countries" />
+        case "states":
+          return <CountriesManagement activeTab="states" />
+        case "cities":
+          return <CountriesManagement activeTab="cities" />
 
         // Organizers
         case "organizers-add":
@@ -649,7 +662,7 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
       case "events":
         return <EventManagement />
       case "locations":
-        return <CountriesManagement /> 
+        return <CountriesManagement activeTab="countries" /> 
       case "organizers":
         return <OrganizerManagement />
       case "exhibitors":

@@ -67,6 +67,8 @@ interface EventFormData {
   venueId: string
   venue: string
   city: string
+  state: string
+  country: string
   address: string
 
   // Pricing
@@ -258,6 +260,8 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
     venueId: "",
     venue: "",
     city: "",
+    state: "",
+    country: "",
     address: "",
     currency: "₹",
     generalPrice: 0,
@@ -418,6 +422,8 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
       venue: venueData.venueName,
       address: venueData.venueAddress,
       city: venueData.city,
+      state: venueData.state || "",
+      country: venueData.country || "",
       timezone: venueData.country ? getCountryTimezoneByName(venueData.country) || "" : "",
     }))
   }
@@ -833,6 +839,9 @@ const handlePublishEvent = async () => {
       timezone: formData.timezone,
       isVirtual: false,
       venueId: formData.venueId || null,
+      city: formData.city || null,
+      state: formData.state || null,
+      country: formData.country || null,
       currency: formData.currency,
       images: formData.images,
       documents: [formData.brochure, formData.layoutPlan].filter(Boolean),
@@ -907,6 +916,8 @@ const handlePublishEvent = async () => {
       venueId: "",
       venue: "",
       city: "",
+      state: "",
+      country: "",
       address: "",
       currency: "₹",
       generalPrice: 0,
@@ -2211,7 +2222,8 @@ const handlePublishEvent = async () => {
                       <div className="flex items-center gap-1">
                         <MapPin className="w-4 h-4" />
                         <span>
-                          {formData.venue || "Venue"}, {formData.city || "City"}
+                          {formData.venue || "Venue"},{" "}
+                          {[formData.city || "City", formData.state, formData.country].filter(Boolean).join(", ")}
                         </span>
                       </div>
                     </div>

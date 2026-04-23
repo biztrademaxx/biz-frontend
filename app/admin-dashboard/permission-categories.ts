@@ -143,6 +143,7 @@ export const ADMIN_PERMISSION_CATEGORIES: PermissionCategory[] = [
       { title: "Super Admin (sub-admin accounts)", id: "roles-superadmin" },
       { title: "Sub Admins", id: "roles-subadmins" },
       { title: "Custom role templates", id: "roles-custom-templates" },
+      { title: "Sub Admin Tracking", id: "roles-subadmin-tracking" },
     ],
   },
   {

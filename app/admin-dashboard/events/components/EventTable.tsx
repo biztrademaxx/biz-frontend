@@ -2,6 +2,7 @@
 
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Button } from "@/components/ui/button"
 import { ShieldCheck } from "lucide-react"
 import { EventFilters } from "./EventFilters"
 import { EventRow } from "./EventRow"
@@ -28,6 +29,15 @@ interface EventTableProps {
   onStatusFilterChange: (value: string) => void
   onCategoryFilterChange: (value: string) => void
   onTabChange: (value: string) => void
+  mailCandidates: Array<{
+    source: "SUB_ADMIN" | "BULK_UPLOAD"
+    eventTitle: string
+    organizerEmail: string
+    organizerName: string
+    createdAt: string
+  }>
+  sendingMail: boolean
+  onSendListingEmail: (organizerEmail: string, eventTitles: string[]) => Promise<void>
 }
 
 function getStatusColor(status: Event["status"]): "default" | "secondary" | "destructive" | "outline" {
@@ -92,8 +102,21 @@ export function EventTable({
   onStatusFilterChange,
   onCategoryFilterChange,
   onTabChange,
+  mailCandidates,
+  sendingMail,
+  onSendListingEmail,
 }: EventTableProps) {
-  const tabs = ["all", "pending", "approved", "flagged", "featured", "vip", "verified"]
+  const tabs = ["all", "pending", "approved", "flagged", "featured", "vip", "verified", "mail"]
+  const groupedMail = mailCandidates.reduce(
+    (acc, row) => {
+      const key = row.organizerEmail.toLowerCase()
+      if (!acc[key]) acc[key] = { organizerEmail: row.organizerEmail, organizerName: row.organizerName, rows: [] as typeof mailCandidates }
+      acc[key].rows.push(row)
+      return acc
+    },
+    {} as Record<string, { organizerEmail: string; organizerName: string; rows: typeof mailCandidates }>,
+  )
+  const groupedMailRows = Object.values(groupedMail)
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -113,7 +136,7 @@ export function EventTable({
         categories={categories}
       />
       <Tabs value={activeTab} onValueChange={onTabChange} className="w-full">
-        <TabsList className="grid w-full grid-cols-7">
+        <TabsList className="grid w-full grid-cols-8">
           <TabsTrigger value="all">All ({eventCounts.all})</TabsTrigger>
           <TabsTrigger value="pending">Pending ({eventCounts.pending})</TabsTrigger>
           <TabsTrigger value="approved">Approved ({eventCounts.approved})</TabsTrigger>
@@ -124,24 +147,53 @@ export function EventTable({
             <ShieldCheck className="w-4 h-4 mr-1" />
             Verified ({eventCounts.verified})
           </TabsTrigger>
+          <TabsTrigger value="mail">Mail ({eventCounts.mail ?? 0})</TabsTrigger>
         </TabsList>
         {tabs.map((tab) => (
           <TabsContent key={tab} value={tab} className="space-y-4">
-            {filterEventsByTab(events, tab, searchTerm, selectedStatus, selectedCategory).map((event) => (
-              <EventRow
-                key={event.id}
-                event={event}
-                onEdit={onEdit}
-                onStatusChange={onStatusChange}
-                onFeatureToggle={onFeatureToggle}
-                onVipToggle={onVipToggle}
-                onPublicToggle={onPublicToggle}
-                onDelete={onDelete}
-                onPromote={onPromote}
-                onVerify={onVerify}
-                getStatusColor={getStatusColor}
-              />
-            ))}
+            {tab !== "mail" ? (
+              filterEventsByTab(events, tab, searchTerm, selectedStatus, selectedCategory).map((event) => (
+                <EventRow
+                  key={event.id}
+                  event={event}
+                  onEdit={onEdit}
+                  onStatusChange={onStatusChange}
+                  onFeatureToggle={onFeatureToggle}
+                  onVipToggle={onVipToggle}
+                  onPublicToggle={onPublicToggle}
+                  onDelete={onDelete}
+                  onPromote={onPromote}
+                  onVerify={onVerify}
+                  getStatusColor={getStatusColor}
+                />
+              ))
+            ) : groupedMailRows.length === 0 ? (
+              <div className="rounded-lg border p-4 text-sm text-muted-foreground">No sub-admin or bulk-upload event listings found.</div>
+            ) : (
+              groupedMailRows.map((group) => {
+                const titles = Array.from(new Set(group.rows.map((r) => r.eventTitle).filter(Boolean)))
+                return (
+                  <div key={group.organizerEmail} className="rounded-lg border p-4 bg-white space-y-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="font-medium text-gray-900">{group.organizerName || "Organizer"}</p>
+                        <p className="text-sm text-gray-600">{group.organizerEmail}</p>
+                      </div>
+                      <Button
+                        size="sm"
+                        disabled={sendingMail || titles.length === 0}
+                        onClick={() => onSendListingEmail(group.organizerEmail, titles)}
+                      >
+                        Send Mail
+                      </Button>
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      <span className="font-medium text-gray-900">{titles.length}</span> event(s): {titles.join(", ")}
+                    </div>
+                  </div>
+                )
+              })
+            )}
           </TabsContent>
         ))}
       </Tabs>

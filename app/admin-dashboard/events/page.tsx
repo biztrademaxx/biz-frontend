@@ -20,6 +20,8 @@ export default function EventManagementPage() {
     activeTab,
     setActiveTab,
     eventCounts,
+    mailCandidates,
+    sendingMail,
     selectedEvent,
     isEditing,
     isVerifyDialogOpen,
@@ -35,6 +37,7 @@ export default function EventManagementPage() {
     handleSaveEvent,
     handleCancelEdit,
     handleVerifyEvent,
+    handleSendListingEmail,
   } = useEvents()
 
   if (loading || categoriesLoading) {
@@ -78,6 +81,9 @@ export default function EventManagementPage() {
         onStatusFilterChange={setSelectedStatus}
         onCategoryFilterChange={setSelectedCategory}
         onTabChange={setActiveTab}
+        mailCandidates={mailCandidates}
+        sendingMail={sendingMail}
+        onSendListingEmail={handleSendListingEmail}
       />
       <VerifyEventDialog
         event={selectedEvent}
