@@ -35,6 +35,7 @@ import { useDashboard } from "@/contexts/dashboard-context"
 import { FeedbackSection } from "./FeedbackSection"
 import { OrganizerHelpSupport } from "./help-support"
 import { apiFetch } from "@/lib/api"
+import { DashboardManagedBanner } from "@/components/dashboard-managed-banner"
 
 interface OrganizerDashboardPageProps {
   organizerId: string
@@ -413,7 +414,7 @@ export default function OrganizerDashboardSimplified({ organizerId }: OrganizerD
                         setSidebarOpen(false)
                       }}
                       className={`
-                        w-full flex items-center gap-3 px-3 py-2 text-sm rounded-md transition-colors
+                        w-full flex items-center gap-3 px-3 py-2 text-sm rounded-sm transition-colors
                         ${
                           activeSection === item.id
                             ? "bg-blue-50 text-blue-700 border-l-4 border-blue-700"
@@ -440,7 +441,7 @@ export default function OrganizerDashboardSimplified({ organizerId }: OrganizerD
                   setSidebarOpen(false)
                 }}
                 className={`
-                  w-full flex items-center gap-3 px-3 py-2 text-sm rounded-md transition-colors
+                  w-full flex items-center gap-3 px-3 py-2 text-sm rounded-sm transition-colors
                   ${
                     activeSection === item.id
                       ? "bg-blue-50 text-blue-700 border-l-4 border-blue-700"
@@ -479,6 +480,7 @@ export default function OrganizerDashboardSimplified({ organizerId }: OrganizerD
 
         {/* Main Content */}
         <main className="flex-1 p-6 overflow-auto">
+          <DashboardManagedBanner page="organizer-dashboard" />
           <div className="max-w-7xl mx-auto">
             {/* Dynamic Content */}
             <div className="">

@@ -50,6 +50,7 @@ import { AppointmentsCountCard } from "./AppointmentsCountCard"
 import ActivePromotions from "./active-promotion"
 import { ExhibitorHelpSupport } from "./help-support"
 import ViewFeedback from "./view-feedback"
+import { DashboardManagedBanner } from "@/components/dashboard-managed-banner"
 
 interface ExhibitorData {
   id: string
@@ -716,6 +717,7 @@ case "view-feedback":
 
         {/* Main Content */}
         <main className="flex-1 p-6 overflow-auto">
+          <DashboardManagedBanner page="exhibitor-dashboard" />
           <div className="max-w-7xl mx-auto">
             {/* Dynamic Content */}
             <div className="">

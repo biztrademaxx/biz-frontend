@@ -28,6 +28,7 @@ import { HelpSupport } from "@/components/HelpSupport"
 import { useDashboard } from "@/contexts/dashboard-context"
 import { SpeakerHelpSupport } from "./help-support"
 import { apiFetch } from "@/lib/api"
+import { DashboardManagedBanner } from "@/components/dashboard-managed-banner"
 
 interface SpeakerData {
   id: string
@@ -311,6 +312,7 @@ export function SpeakerDashboard({ userId }: UserDashboardProps) {
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-h-screen">
         <main className="flex-1 p-6 overflow-auto">
+          <DashboardManagedBanner page="speaker-dashboard" />
           <div className="max-w-7xl mx-auto">
             <div className="">
               {renderContent()}

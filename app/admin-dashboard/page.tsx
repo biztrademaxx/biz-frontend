@@ -39,11 +39,11 @@ export default function AdminDashboardPage() {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar onLogout={logout} />
-      <NameBanner
+      {/* <NameBanner
         name="Admin"
         designation={isSuperAdmin ? "Super Administrator" : "Sub Administrator"}
         bannerImage="/admin-banner.jpg"
-      />
+      /> */}
       <AdminDashboard userRole={userRole} userPermissions={userPermissions} />
     </div>
   )

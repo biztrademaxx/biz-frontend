@@ -82,6 +82,15 @@ export default function EventManagement() {
     }
   }
 
+  const getEventKey = (event: any, index: number) => {
+    return (
+      event.id ||
+      event._id ||
+      event.eventId ||
+      `${event.title || "event"}-${event.startDate || "no-date"}-${index}`
+    )
+  }
+
   const EventCard = ({ event, isPast = false }: { event: any; isPast?: boolean }) => (
     <Card className="hover:shadow-md transition-shadow">
       <CardContent className="p-6">
@@ -167,7 +176,7 @@ export default function EventManagement() {
 
           <TabsContent value="upcoming" className="space-y-4">
             {upcomingEvents.length > 0 ? (
-              upcomingEvents.map((event) => <EventCard key={event._id} event={event} />)
+              upcomingEvents.map((event, index) => <EventCard key={getEventKey(event, index)} event={event} />)
             ) : (
               <p className="text-gray-500 text-center">No upcoming events found.</p>
             )}
@@ -175,7 +184,9 @@ export default function EventManagement() {
 
           <TabsContent value="past" className="space-y-4">
             {pastEvents.length > 0 ? (
-              pastEvents.map((event) => <EventCard key={event._id} event={event} isPast={true} />)
+              pastEvents.map((event, index) => (
+                <EventCard key={getEventKey(event, index)} event={event} isPast={true} />
+              ))
             ) : (
               <p className="text-gray-500 text-center">No past events found.</p>
             )}

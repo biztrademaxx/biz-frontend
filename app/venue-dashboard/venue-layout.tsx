@@ -31,6 +31,7 @@ import { ConnectionsSection } from "../dashboard/connections-section"
 import { HelpSupport } from "@/components/HelpSupport"
 import VenueFeedbackManagement from "./ratings-reviews"
 import { useDashboard } from "@/contexts/dashboard-context"
+import { DashboardManagedBanner } from "@/components/dashboard-managed-banner"
 
 type VenueData = {
   id: string
@@ -359,6 +360,7 @@ export default function VenueDashboardPage({ userId }: UserDashboardProps) {
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-h-screen">
         <main className="flex-1 p-6 overflow-auto">
+          <DashboardManagedBanner page="venue-dashboard" />
           <div className="max-w-7xl mx-auto">
             <div className="">
               {renderContent()}

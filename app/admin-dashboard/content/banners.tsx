@@ -39,6 +39,10 @@ interface Banner {
 }
 
 const PAGE_OPTIONS = [
+  { value: "organizer-dashboard", label: "Organizer Dashboard" },
+  { value: "exhibitor-dashboard", label: "Exhibitor Dashboard" },
+  { value: "venue-dashboard", label: "Venue Dashboard" },
+  { value: "speaker-dashboard", label: "Speaker Dashboard" },
   { value: "homepage", label: "Homepage" },
   { value: "events", label: "Events Page" },
   { value: "event-detail", label: "Event Detail Page" },
