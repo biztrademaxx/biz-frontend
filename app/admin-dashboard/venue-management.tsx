@@ -57,6 +57,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { toast } from "sonner"
 import { adminApi } from "@/lib/admin-api"
+import EntityBulkImport from "./entity-bulk-import"
 
 // Updated Types based on your Prisma schema
 interface Venue {
@@ -112,7 +113,11 @@ interface Event {
   venueId: string
 }
 
-export default function VenueManagement() {
+export default function VenueManagement({
+  initialTab = "all",
+}: {
+  initialTab?: "all" | "pending" | "active" | "bulk-import"
+}) {
   const [venues, setVenues] = useState<Venue[]>([])
   const [pendingVenues, setPendingVenues] = useState<Venue[]>([])
   const [loading, setLoading] = useState(true)
@@ -125,7 +130,7 @@ export default function VenueManagement() {
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false)
   const [isApproveDialogOpen, setIsApproveDialogOpen] = useState(false)
   const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false)
-  const [activeTab, setActiveTab] = useState("all")
+  const [activeTab, setActiveTab] = useState<"all" | "pending" | "active" | "bulk-import">(initialTab)
   const [expandedVenues, setExpandedVenues] = useState<Set<string>>(new Set())
   const [detailLoading, setDetailLoading] = useState(false)
 
@@ -210,6 +215,10 @@ export default function VenueManagement() {
     fetchVenues()
     fetchPendingVenues()
   }, [])
+
+  useEffect(() => {
+    setActiveTab(initialTab)
+  }, [initialTab])
 
   // Filter venues based on search and status
   const filteredVenues = venues.filter((venue) => {
@@ -476,8 +485,12 @@ export default function VenueManagement() {
       </div>
 
       {/* Main Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3 mb-6">
+      <Tabs
+        value={activeTab}
+        onValueChange={(value) => setActiveTab(value as "all" | "pending" | "active" | "bulk-import")}
+        className="w-full"
+      >
+        <TabsList className="grid w-full grid-cols-1 sm:grid-cols-4 mb-6">
           <TabsTrigger value="all" className="flex items-center gap-2">
             All Venues
             <Badge variant="secondary" className="ml-1">{totalVenues}</Badge>
@@ -496,6 +509,9 @@ export default function VenueManagement() {
             <Badge variant="secondary" className="ml-1 bg-green-100 text-green-800">
               {activeVenues}
             </Badge>
+          </TabsTrigger>
+          <TabsTrigger value="bulk-import" className="flex items-center gap-2">
+            Bulk Import
           </TabsTrigger>
         </TabsList>
 
@@ -646,6 +662,38 @@ export default function VenueManagement() {
               />
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="bulk-import" className="space-y-6">
+          <EntityBulkImport
+            title="Venue Bulk Import"
+            description="Import venues using the same core fields as Add Venue."
+            endpoint="/venues/import"
+            templateHeaders={[
+              "venueName",
+              "contactPerson",
+              "email",
+              "mobile",
+              "address",
+              "city",
+              "state",
+              "country",
+              "maxCapacity",
+              "isActive",
+            ]}
+            sampleRow={[
+              "Grand Convention Center",
+              "Alex Johnson",
+              "manager@grandcc.com",
+              "+1 555 120 4567",
+              "123 Main Street, Downtown",
+              "Chicago",
+              "Illinois",
+              "United States",
+              "2500",
+              "true",
+            ]}
+          />
         </TabsContent>
       </Tabs>
 

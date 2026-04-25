@@ -13,12 +13,8 @@ import {
   CalendarIcon,
   MapPin,
   Users,
-  Phone,
-  Mail,
   Building,
   Clock,
-  Search,
-  Download,
   Eye,
   MessageSquare,
 } from "lucide-react"
@@ -61,9 +57,9 @@ export default function EventManagement() {
     fetchEvents()
   }, [venueId])
 
-  // Filter upcoming & past events
+  // Filter upcoming (includes ongoing) & past events
   const now = new Date()
-  const upcomingEvents = events.filter((e) => new Date(e.startDate) > now)
+  const upcomingEvents = events.filter((e) => new Date(e.endDate) >= now)
   const pastEvents = events.filter((e) => new Date(e.endDate) < now)
 
   const getStatusColor = (status: string) => {
@@ -101,10 +97,6 @@ export default function EventManagement() {
               <div className="flex items-center gap-2">
                 <Building className="w-4 h-4" />
                 {event.category || "N/A"}
-              </div>
-              <div className="flex items-center gap-2">
-                <Mail className="w-4 h-4" />
-                Organizer ID: {event.organizerId}
               </div>
             </div>
           </div>

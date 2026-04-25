@@ -154,7 +154,7 @@ export default function ResetPasswordPage() {
           
           <p className="text-sm text-gray-600 mt-2">
             {isTokenValid 
-              ? "Enter your new password below"
+              ? "Enter your new password below. This step will verify your email and activate your account access."
               : "This reset link is invalid or has expired"}
           </p>
         </CardHeader>
@@ -268,7 +268,7 @@ export default function ResetPasswordPage() {
                     Resetting Password...
                   </>
                 ) : (
-                  "Reset Password"
+                  "Verify Email & Reset Password"
                 )}
               </Button>
             </form>

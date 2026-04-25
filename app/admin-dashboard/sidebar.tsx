@@ -112,6 +112,7 @@ const MENU_PERMISSIONS = {
   organizers: "organizers",
   "organizers-all": "organizers-all",
   "organizers-add": "organizers-add",
+  "organizers-bulk-import": "organizers-bulk-import",
   "organizers-connections": "organizers-connections",
   promotions: "promotions",
   "organizers-bookings": "organizers-bookings",
@@ -132,6 +133,7 @@ const MENU_PERMISSIONS = {
   venues: "venues",
   "venues-all": "venues-all",
   "venues-add": "venues-add",
+  "venues-bulk-import": "venues-bulk-import",
   "venues-events": "venues-events",
   "venues-bookings": "venues-bookings",
   "venues-feedback": "venues-feedback",
@@ -276,6 +278,7 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
       subItems: [
         { title: "All Organizers", id: "organizers-all" },
         { title: "Add Organizer", id: "organizers-add" },
+        { title: "Bulk Import", id: "organizers-bulk-import" },
         { title: "Followers", id: "organizers-connections" },
         { title: "Promotions", id: "promotions" },
         { title: "Venue Bookings", id: "organizers-bookings" },
@@ -314,6 +317,7 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
       subItems: [
         { title: "All Venues", id: "venues-all" },
         { title: "Add Venue", id: "venues-add" },
+        { title: "Bulk Import", id: "venues-bulk-import" },
         { title: "Events by Venue", id: "venues-events" },
         { title: "Booking Enquiries", id: "venues-bookings" },
         { title: "Feedback", id: "venues-feedback" },
@@ -506,6 +510,8 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
         // Organizers
         case "organizers-add":
           return <AddOrganizerForm />
+        case "organizers-bulk-import":
+          return <OrganizerManagement initialTab="bulk-import" />
         case "organizers-connections":
           return <OrganizerConnectionsPage />
         case "promotions":
@@ -538,6 +544,8 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
         // Venues
         case "venues-add":
           return <AddVenueComponent />
+        case "venues-bulk-import":
+          return <VenueManagement initialTab="bulk-import" />
         case "venues-events":
           return <VenuesEventsPage />
         case "venues-bookings":

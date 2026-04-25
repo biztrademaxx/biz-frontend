@@ -60,7 +60,7 @@ const mapBackendToVenueData = (data: any): VenueData => ({
   contactPerson: data.manager?.name || "",
   email: data.manager?.email || data.contact?.email || "",
   mobile: data.manager?.phone || data.contact?.phone || "",
-  address: data.location?.address || data.manager?.address || "",
+  address: data.location?.address || data.manager?.address || data.address || "",
   city: data.location?.city || "",
   state: data.location?.state || "",
   country: data.location?.country || "",
@@ -147,6 +147,24 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
   useEffect(() => {
     setCountryOptions(getCountryOptions())
   }, [])
+
+  useEffect(() => {
+    if (!isEditing || !profileData) return
+
+    const countryName = (profileData.country || "").trim().toLowerCase()
+    const countryCode = countryOptions.find((c) => c.name.trim().toLowerCase() === countryName)?.code
+    setCountryPick(countryCode || LOCATION_NONE)
+
+    const statesForCountry = getStateOptions(countryCode || "")
+    const stateName = (profileData.state || "").trim().toLowerCase()
+    const stateCode = statesForCountry.find((s) => s.name.trim().toLowerCase() === stateName)?.code
+    setStatePick(stateCode || LOCATION_NONE)
+
+    const citiesForState = getCityOptions(countryCode || "", stateCode || "")
+    const cityName = (profileData.city || "").trim().toLowerCase()
+    const cityValue = citiesForState.find((c) => c.name.trim().toLowerCase() === cityName)?.name
+    setCityPick(cityValue || LOCATION_NONE)
+  }, [isEditing, profileData, countryOptions])
 
   const resolvedCountryCode = useMemo(() => {
     if (countryPick !== LOCATION_NONE) return countryPick
@@ -498,6 +516,11 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
                       ) : (
                         <div className="p-2 bg-muted rounded">{profileData?.website}</div>
                       )}
+                    </div>
+
+                    <div className="space-y-2 md:col-span-2">
+                      <Label>Street Address</Label>
+                      <div className="p-2 bg-muted rounded">{profileData?.address || "Not specified"}</div>
                     </div>
                   </div>
 

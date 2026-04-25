@@ -1,5 +1,6 @@
 "use client"
 
+import { useMemo, useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
@@ -37,7 +38,9 @@ interface EventTableProps {
     createdAt: string
   }>
   sendingMail: boolean
+  sendingMailFor?: string | null
   onSendListingEmail: (organizerEmail: string, eventTitles: string[]) => Promise<void>
+  onSendListingEmailBulk: (items: Array<{ organizerEmail: string; eventTitles: string[] }>) => Promise<void>
 }
 
 function getStatusColor(status: Event["status"]): "default" | "secondary" | "destructive" | "outline" {
@@ -104,9 +107,12 @@ export function EventTable({
   onTabChange,
   mailCandidates,
   sendingMail,
+  sendingMailFor,
   onSendListingEmail,
+  onSendListingEmailBulk,
 }: EventTableProps) {
   const tabs = ["all", "pending", "approved", "flagged", "featured", "vip", "verified", "mail"]
+  const [selectedEmails, setSelectedEmails] = useState<Set<string>>(new Set())
   const groupedMail = mailCandidates.reduce(
     (acc, row) => {
       const key = row.organizerEmail.toLowerCase()
@@ -117,6 +123,44 @@ export function EventTable({
     {} as Record<string, { organizerEmail: string; organizerName: string; rows: typeof mailCandidates }>,
   )
   const groupedMailRows = Object.values(groupedMail)
+  const groupedByEmail = useMemo(
+    () =>
+      groupedMailRows.map((group) => {
+        const titles = Array.from(new Set(group.rows.map((r) => r.eventTitle).filter(Boolean)))
+        return { organizerEmail: group.organizerEmail, titles }
+      }),
+    [groupedMailRows]
+  )
+  const allSelected = groupedByEmail.length > 0 && groupedByEmail.every((g) => selectedEmails.has(g.organizerEmail.toLowerCase()))
+  const selectedCount = groupedByEmail.filter((g) => selectedEmails.has(g.organizerEmail.toLowerCase())).length
+
+  const toggleOne = (email: string, checked: boolean) => {
+    const key = email.toLowerCase()
+    setSelectedEmails((prev) => {
+      const next = new Set(prev)
+      if (checked) next.add(key)
+      else next.delete(key)
+      return next
+    })
+  }
+
+  const toggleAll = (checked: boolean) => {
+    if (!checked) {
+      setSelectedEmails(new Set())
+      return
+    }
+    setSelectedEmails(new Set(groupedByEmail.map((g) => g.organizerEmail.toLowerCase())))
+  }
+
+  const handleSendSelected = async () => {
+    const items = groupedByEmail
+      .filter((g) => selectedEmails.has(g.organizerEmail.toLowerCase()) && g.titles.length > 0)
+      .map((g) => ({ organizerEmail: g.organizerEmail, eventTitles: g.titles }))
+    if (items.length === 0) return
+    await onSendListingEmailBulk(items)
+    setSelectedEmails(new Set())
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -170,21 +214,45 @@ export function EventTable({
             ) : groupedMailRows.length === 0 ? (
               <div className="rounded-lg border p-4 text-sm text-muted-foreground">No sub-admin or bulk-upload event listings found.</div>
             ) : (
-              groupedMailRows.map((group) => {
-                const titles = Array.from(new Set(group.rows.map((r) => r.eventTitle).filter(Boolean)))
+              <>
+                <div className="rounded-lg border p-3 bg-white flex items-center justify-between gap-3">
+                  <label className="flex items-center gap-2 text-sm text-gray-700">
+                    <input
+                      type="checkbox"
+                      checked={allSelected}
+                      onChange={(e) => toggleAll(e.target.checked)}
+                      className="h-4 w-4"
+                    />
+                    Select All
+                  </label>
+                  <Button size="sm" disabled={sendingMail || selectedCount === 0} onClick={handleSendSelected}>
+                    {sendingMail ? "Sending..." : `Send Selected (${selectedCount})`}
+                  </Button>
+                </div>
+                {groupedMailRows.map((group) => {
+                  const titles = Array.from(new Set(group.rows.map((r) => r.eventTitle).filter(Boolean)))
+                const isCurrentRowSending = sendingMail && sendingMailFor === group.organizerEmail.toLowerCase()
                 return (
                   <div key={group.organizerEmail} className="rounded-lg border p-4 bg-white space-y-3">
                     <div className="flex items-center justify-between gap-3">
-                      <div>
+                      <div className="flex items-start gap-3">
+                        <input
+                          type="checkbox"
+                          checked={selectedEmails.has(group.organizerEmail.toLowerCase())}
+                          onChange={(e) => toggleOne(group.organizerEmail, e.target.checked)}
+                          className="h-4 w-4 mt-1"
+                        />
+                        <div>
                         <p className="font-medium text-gray-900">{group.organizerName || "Organizer"}</p>
                         <p className="text-sm text-gray-600">{group.organizerEmail}</p>
+                        </div>
                       </div>
                       <Button
                         size="sm"
-                        disabled={sendingMail || titles.length === 0}
+                        disabled={isCurrentRowSending || titles.length === 0}
                         onClick={() => onSendListingEmail(group.organizerEmail, titles)}
                       >
-                        Send Mail
+                        {isCurrentRowSending ? "Sending..." : "Send Mail"}
                       </Button>
                     </div>
                     <div className="text-sm text-gray-600">
@@ -192,7 +260,8 @@ export function EventTable({
                     </div>
                   </div>
                 )
-              })
+                })}
+              </>
             )}
           </TabsContent>
         ))}

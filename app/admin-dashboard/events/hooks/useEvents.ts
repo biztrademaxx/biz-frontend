@@ -69,6 +69,7 @@ export function useEvents() {
   const [verifying, setVerifying] = useState(false)
   const [mailCandidates, setMailCandidates] = useState<api.EventMailCandidate[]>([])
   const [sendingMail, setSendingMail] = useState(false)
+  const [sendingMailFor, setSendingMailFor] = useState<string | null>(null)
 
   const fetchEvents = useCallback(async () => {
     try {
@@ -254,6 +255,7 @@ export function useEvents() {
   const handleSendListingEmail = useCallback(async (organizerEmail: string, eventTitles: string[]) => {
     try {
       setSendingMail(true)
+      setSendingMailFor(organizerEmail.toLowerCase())
       await api.sendEventListingEmail(organizerEmail, eventTitles)
       toast({ title: "Email sent", description: `Listing mail sent to ${organizerEmail}` })
     } catch (error) {
@@ -264,8 +266,44 @@ export function useEvents() {
       })
     } finally {
       setSendingMail(false)
+      setSendingMailFor(null)
     }
   }, [])
+
+  const handleSendListingEmailBulk = useCallback(
+    async (items: Array<{ organizerEmail: string; eventTitles: string[] }>) => {
+      if (!Array.isArray(items) || items.length === 0) return
+      try {
+        setSendingMail(true)
+        setSendingMailFor(null)
+        const results = await Promise.allSettled(
+          items.map((item) => api.sendEventListingEmail(item.organizerEmail, item.eventTitles))
+        )
+        const successCount = results.filter((r) => r.status === "fulfilled").length
+        const failedCount = results.length - successCount
+        if (successCount > 0) {
+          toast({
+            title: "Bulk mail sent",
+            description:
+              failedCount > 0
+                ? `${successCount} sent, ${failedCount} failed`
+                : `${successCount} organizer mails sent successfully`,
+          })
+        }
+        if (failedCount > 0) {
+          toast({
+            title: "Some mails failed",
+            description: `${failedCount} organizer mail(s) could not be sent`,
+            variant: "destructive",
+          })
+        }
+      } finally {
+        setSendingMail(false)
+        setSendingMailFor(null)
+      }
+    },
+    []
+  )
 
   return {
     events,
@@ -283,6 +321,7 @@ export function useEvents() {
     eventCounts,
     mailCandidates,
     sendingMail,
+    sendingMailFor,
     selectedEvent,
     isEditing,
     isVerifyDialogOpen,
@@ -301,5 +340,6 @@ export function useEvents() {
     handleCancelEdit,
     handleVerifyEvent,
     handleSendListingEmail,
+    handleSendListingEmailBulk,
   }
 }

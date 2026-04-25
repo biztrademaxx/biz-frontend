@@ -31,8 +31,10 @@ import {
 } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { adminApi } from "@/lib/admin-api"
 import { useToast } from "@/components/ui/use-toast"
+import EntityBulkImport from "./entity-bulk-import"
 
 interface Organizer {
   id: string
@@ -97,7 +99,7 @@ interface TransformedOrganizer {
   originalData: Organizer
 }
 
-export default function OrganizerManagement() {
+export default function OrganizerManagement({ initialTab = "all" }: { initialTab?: "all" | "bulk-import" }) {
   const { toast } = useToast()
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
@@ -108,11 +110,16 @@ export default function OrganizerManagement() {
   const [organizers, setOrganizers] = useState<Organizer[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState<"all" | "bulk-import">(initialTab)
 
   // Fetch organizers from API
   useEffect(() => {
     fetchOrganizers()
   }, [])
+
+  useEffect(() => {
+    setActiveTab(initialTab)
+  }, [initialTab])
 
   const fetchOrganizers = async () => {
     try {
@@ -334,73 +341,79 @@ export default function OrganizerManagement() {
           </Button>
         </div>
       </div>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="all">All Organizers</TabsTrigger>
+          <TabsTrigger value="bulk-import">Bulk Import</TabsTrigger>
+        </TabsList>
 
-      {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 ">
-        <Card>
-          <CardContent className="p-6 text-center">
-            <div className="p-3 bg-blue-100 rounded-full w-fit mx-auto mb-4">
-              <Building2 className="w-8 h-8 text-blue-600" />
-            </div>
-            <h3 className="text-2xl font-bold">{stats.total}</h3>
-            <p className="text-gray-600">Total Organizers</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6 text-center">
-            <div className="p-3 bg-green-100 rounded-full w-fit mx-auto mb-4">
-              <CheckCircle className="w-8 h-8 text-green-600" />
-            </div>
-            <h3 className="text-2xl font-bold">{stats.active}</h3>
-            <p className="text-gray-600">Active</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6 text-center">
-            <div className="p-3 bg-yellow-100 rounded-full w-fit mx-auto mb-4">
-              <AlertCircle className="w-8 h-8 text-yellow-600" />
-            </div>
-            <h3 className="text-2xl font-bold">{stats.pending}</h3>
-            <p className="text-gray-600">Pending Review</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6 text-center">
-            <div className="p-3 bg-red-100 rounded-full w-fit mx-auto mb-4">
-              <XCircle className="w-8 h-8 text-red-600" />
-            </div>
-            <h3 className="text-2xl font-bold">{stats.suspended}</h3>
-            <p className="text-gray-600">Suspended</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Search and Filter */}
-      <Card>
-        <CardContent className="w-auto max-w-300">
-          <div className="flex flex-col md:flex-row gap-2 mb-6">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <Input
-                placeholder="Search organizers by name or email..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full md:w-48">
-                <Filter className="w-4 h-4 mr-2" />
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="suspended">Suspended</SelectItem>
-              </SelectContent>
-            </Select>
+        <TabsContent value="all" className="space-y-6">
+          {/* Statistics Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 ">
+            <Card>
+              <CardContent className="p-6 text-center">
+                <div className="p-3 bg-blue-100 rounded-full w-fit mx-auto mb-4">
+                  <Building2 className="w-8 h-8 text-blue-600" />
+                </div>
+                <h3 className="text-2xl font-bold">{stats.total}</h3>
+                <p className="text-gray-600">Total Organizers</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-6 text-center">
+                <div className="p-3 bg-green-100 rounded-full w-fit mx-auto mb-4">
+                  <CheckCircle className="w-8 h-8 text-green-600" />
+                </div>
+                <h3 className="text-2xl font-bold">{stats.active}</h3>
+                <p className="text-gray-600">Active</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-6 text-center">
+                <div className="p-3 bg-yellow-100 rounded-full w-fit mx-auto mb-4">
+                  <AlertCircle className="w-8 h-8 text-yellow-600" />
+                </div>
+                <h3 className="text-2xl font-bold">{stats.pending}</h3>
+                <p className="text-gray-600">Pending Review</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-6 text-center">
+                <div className="p-3 bg-red-100 rounded-full w-fit mx-auto mb-4">
+                  <XCircle className="w-8 h-8 text-red-600" />
+                </div>
+                <h3 className="text-2xl font-bold">{stats.suspended}</h3>
+                <p className="text-gray-600">Suspended</p>
+              </CardContent>
+            </Card>
           </div>
+
+          {/* Search and Filter */}
+          <Card>
+            <CardContent className="w-auto max-w-300">
+              <div className="flex flex-col md:flex-row gap-2 mb-6">
+                <div className="flex-1 relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Input
+                    placeholder="Search organizers by name or email..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-full md:w-48">
+                    <Filter className="w-4 h-4 mr-2" />
+                    <SelectValue placeholder="Filter by status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="suspended">Suspended</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
           {/* Organizers Table */}
           <div className="rounded-md border">
@@ -608,8 +621,56 @@ export default function OrganizerManagement() {
               </TableBody>
             </Table>
           </div>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="bulk-import">
+          <EntityBulkImport
+            title="Organizer Bulk Import"
+            description="Import organizers using all core add-organizer fields."
+            endpoint="/organizers/import"
+            templateHeaders={[
+              "firstName",
+              "lastName",
+              "email",
+              "phone",
+              "organizationName",
+              "description",
+              "city",
+              "state",
+              "country",
+              "founded",
+              "teamSize",
+              "specialties",
+              "businessEmail",
+              "businessPhone",
+              "businessAddress",
+              "taxId",
+              "isActive",
+            ]}
+            sampleRow={[
+              "John",
+              "Doe",
+              "john@eventco.com",
+              "+1 555 000 1000",
+              "EventCo",
+              "Corporate event specialists",
+              "San Francisco",
+              "California",
+              "United States",
+              "2018",
+              "11-50",
+              "Corporate Events|Conferences",
+              "contact@eventco.com",
+              "+1 555 000 1010",
+              "Market Street, SF",
+              "GST-1099",
+              "true",
+            ]}
+          />
+        </TabsContent>
+      </Tabs>
 
       {/* Approval Dialog */}
       <Dialog open={showApprovalDialog} onOpenChange={setShowApprovalDialog}>

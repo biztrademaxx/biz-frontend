@@ -13,6 +13,46 @@ type ImportJobPayload = {
   importedSummary?: { title: string; organizerEmail: string; organizerWasNew?: boolean }[] | null;
 };
 
+const MINIMAL_IMPORT_HEADERS = [
+  'eventTitle',
+  'edition',
+  'eventType',
+  'eventCategoryNames',
+  'eventDescription',
+  'startDate',
+  'endDate',
+  'startTime',
+  'endTime',
+  'organizerEmail',
+  'organizerName',
+  'venueEmail',
+  'venueName',
+  'timezone',
+  'images',
+  'brochure',
+  'layoutPlan',
+] as const;
+
+const MINIMAL_SAMPLE_ROW = [
+  'Tech Expo 2025',
+  '2025 Edition',
+  'CONFERENCE',
+  'Technology,AI',
+  'Annual innovation conference showcasing latest technologies',
+  '2025-05-01',
+  '2025-05-03',
+  '10:00',
+  '18:00',
+  'john@techexpo.com',
+  'John Doe',
+  'info@sfcc.com',
+  'San Francisco Convention Center',
+  'America/Los_Angeles',
+  'https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=1200,https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1200',
+  'https://techexpo2025.com/brochure.pdf',
+  'https://techexpo2025.com/layout.pdf',
+] as const;
+
 export default function ImportPage() {
   const [file, setFile] = useState<File | null>(null);
   const [message, setMessage] = useState('');
@@ -93,138 +133,8 @@ export default function ImportPage() {
   };
 
   const handleDownloadTemplate = () => {
-    const headers = [
-      'eventTitle',
-      'eventDescription',
-      'shortDescription',
-      'slug',
-      'edition',
-      'startDate',
-      'endDate',
-      'registrationStart',
-      'registrationEnd',
-      'timezone',
-      'category',
-      'eventType',
-      'tags',
-      'status',
-      'isFeatured',
-      'isVIP',
-      'isPublic',
-      'requiresApproval',
-      'allowWaitlist',
-      'maxAttendees',
-      'currency',
-      'isVirtual',
-      'virtualLink',
-      'images',
-      'videos',
-      'brochure',
-      'layoutPlan',
-      'documents',
-      'bannerImage',
-      'thumbnailImage',
-      'metaTitle',
-      'metaDescription',
-      'organizerName',
-      'organizerEmail',
-      'speakerNames',
-      'speakerEmails',
-      'exhibitorNames',
-      'exhibitorEmails',
-      'venueName',
-      'venueEmail',
-      'venueAddress',
-      'venueCity',
-      'venueState',
-      'venueCountry',
-      'venueZipCode',
-      'venuePhone',
-      'venueWebsite',
-      'maxCapacity',
-      'totalHalls',
-      'amenities',
-      'venueImages',
-      'venueVideos',
-      'floorPlans',
-      'virtualTour',
-      'basePrice',
-      'venueCurrency',
-      'latitude',
-      'longitude',
-      'refundPolicy',
-      'eventCategoryNames',
-      'countryNames',
-      'cityNames'
-    ];
-
-    const sampleRow = [
-      'Tech Expo 2025',
-      'Annual innovation conference showcasing latest technologies from AI to renewable energy',
-      'Premier tech event of the year',
-      'tech-expo-2025',
-      '2025 Edition',
-      '2025-05-01', // IMPORTANT: Use YYYY-MM-DD format
-      '2025-05-03',
-      '2025-01-01',
-      '2025-04-15',
-      'America/Los_Angeles',
-      'Technology,AI,Innovation',
-      'CONFERENCE,EXHIBITION',
-      'AI,Innovation,Machine Learning,Renewable Energy',
-      'PUBLISHED',
-      'TRUE',
-      'FALSE',
-      'TRUE',
-      'FALSE',
-      'TRUE',
-      '1000',
-      'USD',
-      'FALSE',
-      'https://techexpo2025.com/virtual',
-      'https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=1200,https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1200',
-      'https://youtube.com/watch?v=tech2025,https://youtube.com/watch?v=innovation2025',
-      'https://techexpo2025.com/brochure.pdf',
-      'https://techexpo2025.com/layout.pdf',
-      'https://techexpo2025.com/terms.pdf,https://techexpo2025.com/guide.pdf',
-      'https://images.unsplash.com/photo-1518834103328-0d0b7d4d5c8c?w=1600',
-      'https://images.unsplash.com/photo-1518834103328-0d0b7d4d5c8c?w=400',
-      'Tech Expo 2025 | Technology Conference',
-      'Join the premier technology conference of 2025 featuring AI, ML and innovation',
-      'John Doe',
-      'john@techexpo.com',
-      'Sarah Lee|Mark Johnson|David Chen',
-      'sarah@microsoft.com|mark@google.com|david@openai.com',
-      'Microsoft|Google|Intel|IBM',
-      'contact@microsoft.com|contact@google.com|contact@intel.com|contact@ibm.com',
-      'San Francisco Convention Center',
-      'info@sfcc.com',
-      '747 Howard Street',
-      'San Francisco',
-      'California',
-      'USA',
-      '94103',
-      '+1-415-974-4000',
-      'https://www.sfcc.com',
-      '10000',
-      '25',
-      'WiFi,AV Equipment,Catering,Parking,Conference Rooms,Expo Halls',
-      'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=1200,https://images.unsplash.com/photo-1497366216548-37526070297c?w=1200',
-      'https://youtube.com/watch?v=sfcc-tour',
-      'https://sfcc.com/floorplan-level1.pdf,https://sfcc.com/floorplan-level2.pdf',
-      'https://sfcc.com/virtual-tour',
-      '10000',
-      'USD',
-      '37.785',
-      '-122.4003',
-      'Full refund up to 30 days before event. 50% refund up to 15 days before event.',
-      'Technology,AI',
-      'United States',
-      'San Francisco'
-    ];
-
     // Create TSV (Tab-Separated Values) content
-    const tsvRows = [headers.join('\t'), sampleRow.join('\t')];
+    const tsvRows = [MINIMAL_IMPORT_HEADERS.join('\t'), MINIMAL_SAMPLE_ROW.join('\t')];
     const tsvContent = tsvRows.join('\n');
     
     const blob = new Blob([tsvContent], { type: 'text/tab-separated-values;charset=utf-8;' });
@@ -238,140 +148,10 @@ export default function ImportPage() {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
     
-    setMessage('📥 Template downloaded as TSV file! Open in Excel and FORMAT DATE COLUMNS AS TEXT before editing.');
+    setMessage('📥 Template downloaded (minimal fields). Slug/subtitle auto-generated; default time is 10:00 to 18:00 when time columns are blank.');
   };
 
   const handleDownloadCSVTemplate = () => {
-    const headers = [
-      'eventTitle',
-      'eventDescription',
-      'shortDescription',
-      'slug',
-      'edition',
-      'startDate',
-      'endDate',
-      'registrationStart',
-      'registrationEnd',
-      'timezone',
-      'category',
-      'eventType',
-      'tags',
-      'status',
-      'isFeatured',
-      'isVIP',
-      'isPublic',
-      'requiresApproval',
-      'allowWaitlist',
-      'maxAttendees',
-      'currency',
-      'isVirtual',
-      'virtualLink',
-      'images',
-      'videos',
-      'brochure',
-      'layoutPlan',
-      'documents',
-      'bannerImage',
-      'thumbnailImage',
-      'metaTitle',
-      'metaDescription',
-      'organizerName',
-      'organizerEmail',
-      'speakerNames',
-      'speakerEmails',
-      'exhibitorNames',
-      'exhibitorEmails',
-      'venueName',
-      'venueEmail',
-      'venueAddress',
-      'venueCity',
-      'venueState',
-      'venueCountry',
-      'venueZipCode',
-      'venuePhone',
-      'venueWebsite',
-      'maxCapacity',
-      'totalHalls',
-      'amenities',
-      'venueImages',
-      'venueVideos',
-      'floorPlans',
-      'virtualTour',
-      'basePrice',
-      'venueCurrency',
-      'latitude',
-      'longitude',
-      'refundPolicy',
-      'eventCategoryNames',
-      'countryNames',
-      'cityNames'
-    ];
-
-    const sampleRow = [
-      'Tech Expo 2025',
-      'Annual innovation conference showcasing latest technologies from AI to renewable energy',
-      'Premier tech event of the year',
-      'tech-expo-2025',
-      '2025 Edition',
-      '2025-05-01',
-      '2025-05-03',
-      '2025-01-01',
-      '2025-04-15',
-      'America/Los_Angeles',
-      'Technology,AI,Innovation',
-      'CONFERENCE,EXHIBITION',
-      'AI,Innovation,Machine Learning,Renewable Energy',
-      'PUBLISHED',
-      'TRUE',
-      'FALSE',
-      'TRUE',
-      'FALSE',
-      'TRUE',
-      '1000',
-      'USD',
-      'FALSE',
-      'https://techexpo2025.com/virtual',
-      'https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=1200,https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1200',
-      'https://youtube.com/watch?v=tech2025,https://youtube.com/watch?v=innovation2025',
-      'https://techexpo2025.com/brochure.pdf',
-      'https://techexpo2025.com/layout.pdf',
-      'https://techexpo2025.com/terms.pdf,https://techexpo2025.com/guide.pdf',
-      // 'https://images.unsplash.com/photo-1518834103328-0d0b7d4d5c8c?w=1600',
-      // 'https://images.unsplash.com/photo-1518834103328-0d0b7d4d5c8c?w=400',
-      'Tech Expo 2025 | Technology Conference',
-      'Join the premier technology conference of 2025 featuring AI, ML and innovation',
-      'John Doe',
-      'john@techexpo.com',
-      'Sarah Lee|Mark Johnson|David Chen',
-      'sarah@microsoft.com|mark@google.com|david@openai.com',
-      'Microsoft|Google|Intel|IBM',
-      'contact@microsoft.com|contact@google.com|contact@intel.com|contact@ibm.com',
-      'San Francisco Convention Center',
-      'info@sfcc.com',
-      '747 Howard Street',
-      'San Francisco',
-      'California',
-      'USA',
-      '94103',
-      '+1-415-974-4000',
-      'https://www.sfcc.com',
-      '10000',
-      '25',
-      'WiFi,AV Equipment,Catering,Parking,Conference Rooms,Expo Halls',
-      'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=1200,https://images.unsplash.com/photo-1497366216548-37526070297c?w=1200',
-      'https://youtube.com/watch?v=sfcc-tour',
-      'https://sfcc.com/floorplan-level1.pdf,https://sfcc.com/floorplan-level2.pdf',
-      'https://sfcc.com/virtual-tour',
-      '10000',
-      'USD',
-      '37.785',
-      '-122.4003',
-      'Full refund up to 30 days before event. 50% refund up to 15 days before event.',
-      'Technology,AI',
-      'United States',
-      'San Francisco'
-    ];
-
     // Proper CSV escaping
     const escapeCSV = (field: any) => {
       if (field === null || field === undefined) return '';
@@ -382,7 +162,7 @@ export default function ImportPage() {
       return stringField;
     };
 
-    const csvRows = [headers.map(escapeCSV).join(','), sampleRow.map(escapeCSV).join(',')];
+    const csvRows = [MINIMAL_IMPORT_HEADERS.map(escapeCSV).join(','), MINIMAL_SAMPLE_ROW.map(escapeCSV).join(',')];
     const csvContent = csvRows.join('\r\n');
     
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -396,7 +176,7 @@ export default function ImportPage() {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
     
-    setMessage('📥 CSV template downloaded! IMPORTANT: Format date columns as Text in Excel.');
+    setMessage('📥 CSV template downloaded (minimal fields). Slug/subtitle auto-generated; default time is 10:00 to 18:00.');
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -421,14 +201,14 @@ export default function ImportPage() {
       <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-md p-8">
         <h1 className="text-3xl font-bold text-gray-800 mb-2">Event Data Import</h1>
         <p className="text-gray-600 mb-8">
-          Import multiple events from Excel/CSV/TSV files. Download the template first, fill in your data, then upload.
+          Import multiple events with minimal fields. Slug and subtitle are auto-generated from title.
         </p>
 
         {/* Download Template Section */}
         <div className="mb-10 p-6 bg-blue-50 rounded-lg border border-blue-200">
           <h2 className="text-xl font-semibold text-blue-800 mb-3">📥 Step 1: Download Template</h2>
           <p className="text-blue-700 mb-4">
-            Choose your preferred format. <strong>TSV works better with Excel</strong> for complex data.
+            Choose your preferred format. <strong>TSV works better with Excel</strong>. Template includes only required + core optional fields.
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4">
@@ -454,9 +234,9 @@ export default function ImportPage() {
           </div>
           
           <div className="mt-4 text-sm text-blue-600">
-            <p className="font-semibold">⚠️ IMPORTANT: Format all date columns as "Text" in Excel before entering dates</p>
-            <p><strong>TSV:</strong> Better for Excel, preserves commas in data fields</p>
-            <p><strong>CSV:</strong> Standard format for most applications</p>
+            <p className="font-semibold">⚠️ IMPORTANT: Keep dates in YYYY-MM-DD and time in HH:mm (24h) or hh:mm AM/PM</p>
+            <p><strong>Default time:</strong> If startTime/endTime are blank, import uses 10:00 AM to 6:00 PM</p>
+            <p><strong>Organizer/Venue mapping:</strong> Provide at least one identifier (email or name)</p>
           </div>
         </div>
 
@@ -634,7 +414,7 @@ export default function ImportPage() {
           <ul className="space-y-2 text-gray-600">
             <li className="flex items-start gap-2">
               <span className="text-blue-600 mt-1">•</span>
-              <span><strong>Required fields:</strong> eventTitle, startDate, endDate, organizerName, organizerEmail</span>
+              <span><strong>Minimum fields:</strong> eventTitle, startDate, endDate, organizerEmail or organizerName, venueEmail or venueName</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-blue-600 mt-1">•</span>
@@ -646,15 +426,15 @@ export default function ImportPage() {
             </li>
             <li className="flex items-start gap-2">
               <span className="text-blue-600 mt-1">•</span>
-              <span><strong>Multiple values:</strong> Use commas for arrays (tags, categories) and pipes for multiple people (speakers, exhibitors)</span>
+              <span><strong>Times:</strong> Use HH:mm (e.g., 10:00 / 18:00). If blank, 10:00 to 18:00 is applied.</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-blue-600 mt-1">•</span>
-              <span><strong>Boolean values:</strong> Use "TRUE" or "FALSE" (uppercase)</span>
+              <span><strong>Auto fields:</strong> event slug and subtitle are automatically generated from title</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-blue-600 mt-1">•</span>
-              <span><strong>Phone numbers:</strong> Format as Text and use format like +1-415-974-4000</span>
+              <span><strong>Media & Content fields:</strong> use images (Event Images), brochure (Event Brochure), layoutPlan (Layout Plan)</span>
             </li>
           </ul>
 

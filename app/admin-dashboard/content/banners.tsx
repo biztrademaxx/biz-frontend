@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import {
   Dialog,
   DialogContent,
@@ -26,6 +27,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 interface Banner {
   id: string
   title: string
+  description?: string
   imageUrl: string
   publicId: string
   page: string
@@ -85,6 +87,7 @@ export default function BannersPage() {
   // Upload form state
   const [uploadForm, setUploadForm] = useState({
     title: "",
+    description: "",
     page: "",
     position: "hero",
     link: "",
@@ -93,6 +96,7 @@ export default function BannersPage() {
 
   const [editForm, setEditForm] = useState({
     title: "",
+    description: "",
     page: "",
     position: "hero",
     link: "",
@@ -185,10 +189,12 @@ export default function BannersPage() {
       }
 
       const linkTrim = uploadForm.link.trim()
+      const descTrim = uploadForm.description.trim()
       const created = await apiFetch<{ success?: boolean; data?: Banner }>("/api/admin/content/banners", {
         method: "POST",
         body: {
           title: uploadForm.title,
+          description: descTrim,
           page: uploadForm.page,
           position: uploadForm.position,
           imageUrl: up.secure_url,
@@ -201,7 +207,7 @@ export default function BannersPage() {
       if (created.data) {
         setBanners([created.data, ...banners])
         setIsUploadDialogOpen(false)
-        setUploadForm({ title: "", page: "", position: "hero", link: "", file: null })
+        setUploadForm({ title: "", description: "", page: "", position: "hero", link: "", file: null })
       } else {
         alert("Could not create banner record")
       }
@@ -232,6 +238,7 @@ export default function BannersPage() {
     setEditingBanner(banner)
     setEditForm({
       title: banner.title,
+      description: banner.description ?? "",
       page: banner.page,
       position: banner.position,
       link: banner.link?.trim() ?? "",
@@ -276,12 +283,14 @@ export default function BannersPage() {
       }
 
       const linkTrim = editForm.link.trim()
+      const descTrim = editForm.description.trim()
       const updated = await apiFetch<{ success?: boolean; data?: Banner }>(
         `/api/admin/content/banners/${editingBanner.id}`,
         {
           method: "PATCH",
           body: {
             title: editForm.title.trim(),
+            description: descTrim,
             page: editForm.page,
             position: editForm.position,
             link: linkTrim,
@@ -496,6 +505,16 @@ export default function BannersPage() {
             </div>
 
             <div>
+              <Label htmlFor="description">Banner Description</Label>
+              <Textarea
+                id="description"
+                placeholder="Optional short description for this banner"
+                value={uploadForm.description}
+                onChange={(e) => setUploadForm({ ...uploadForm, description: e.target.value })}
+              />
+            </div>
+
+            <div>
               <Label htmlFor="page">Page Location *</Label>
               <select
                 id="page"
@@ -607,6 +626,16 @@ export default function BannersPage() {
                 id="edit-title"
                 value={editForm.title}
                 onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="edit-description">Banner Description</Label>
+              <Textarea
+                id="edit-description"
+                placeholder="Optional short description for this banner"
+                value={editForm.description}
+                onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
               />
             </div>
 
@@ -768,6 +797,10 @@ export default function BannersPage() {
                   <p className="font-medium">{new Date(selectedBanner.updatedAt).toLocaleDateString()}</p>
                 </div>
                 <div className="col-span-2">
+                  <p className="text-gray-600">Description</p>
+                  <p className="font-medium break-words">{selectedBanner.description?.trim() || "Not set"}</p>
+                </div>
+                <div className="col-span-2">
                   <p className="text-gray-600">Click-through link</p>
                   <p className="font-medium break-all">
                     {selectedBanner.link?.trim() ? (
@@ -832,6 +865,9 @@ function BannerGrid({
 
           <div className="p-4">
             <h3 className="font-semibold mb-1 truncate">{banner.title}</h3>
+            {banner.description?.trim() ? (
+              <p className="text-xs text-gray-600 mb-1 line-clamp-2">{banner.description.trim()}</p>
+            ) : null}
             <p className="text-sm text-gray-600 mb-1">{PAGE_OPTIONS.find((p) => p.value === banner.page)?.label}</p>
             {banner.link?.trim() ? (
               <p className="text-xs text-blue-600 truncate mb-2" title={banner.link}>
