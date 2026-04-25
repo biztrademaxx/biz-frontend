@@ -317,6 +317,24 @@ export default function VenueManagement({
     }
   }
 
+  const handleSendVenueMessage = (venue: Venue) => {
+    if (!venue.email?.trim()) {
+      toast.error("Venue email is missing")
+      return
+    }
+    adminApi("/venues/send-account-email", {
+      method: "POST",
+      body: { venueId: venue.id },
+    })
+      .then(() => {
+        toast.success(`Account email sent to ${venue.email}`)
+      })
+      .catch((error) => {
+        console.error("Error sending venue email:", error)
+        toast.error("Failed to send venue email")
+      })
+  }
+
   const handleAddVenue = async (formData: any) => {
     try {
       const result = await adminApi<{ success?: boolean; error?: string }>("/venues", { method: "POST", body: formData })
@@ -561,6 +579,7 @@ export default function VenueManagement({
                 venues={filteredVenues}
                 expandedVenues={expandedVenues}
                 onToggleEvents={toggleVenueEvents}
+                onSendMessage={handleSendVenueMessage}
                 onView={async (venue) => {
                   const detailed = await fetchVenueById(venue.id)
                   setSelectedVenue(detailed ?? venue)
@@ -644,6 +663,7 @@ export default function VenueManagement({
                 venues={venues.filter(v => v.status === "active")}
                 expandedVenues={expandedVenues}
                 onToggleEvents={toggleVenueEvents}
+                onSendMessage={handleSendVenueMessage}
                 onView={async (venue) => {
                   const detailed = await fetchVenueById(venue.id)
                   setSelectedVenue(detailed ?? venue)
@@ -758,6 +778,7 @@ function VenuesList({
   venues, 
   expandedVenues,
   onToggleEvents,
+  onSendMessage,
   onView, 
   onEdit, 
   onStatusChange, 
@@ -769,6 +790,7 @@ function VenuesList({
   venues: Venue[]
   expandedVenues: Set<string>
   onToggleEvents: (venueId: string) => void
+  onSendMessage: (venue: Venue) => void
   onView: (venue: Venue) => void
   onEdit: (venue: Venue) => void
   onStatusChange: (venueId: string, status: "active" | "pending" | "suspended") => void
@@ -935,6 +957,10 @@ function VenuesList({
                         <DropdownMenuItem onClick={() => onEdit(venue)}>
                           <Edit className="w-4 h-4 mr-2" />
                           Edit Venue
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onSendMessage(venue)}>
+                          <Mail className="w-4 h-4 mr-2" />
+                          Send Message
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => onVerificationToggle(venue.id)}>
                           <CheckCircle className="w-4 h-4 mr-2" />

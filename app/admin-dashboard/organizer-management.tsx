@@ -307,6 +307,26 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
     }
   }
 
+  const handleSendMessage = async (organizer: TransformedOrganizer) => {
+    try {
+      await adminApi("/organizers/send-account-email", {
+        method: "POST",
+        body: { organizerId: organizer.id },
+      })
+      toast({
+        title: "Email sent",
+        description: `Account email sent to ${organizer.email}`,
+      })
+    } catch (error: any) {
+      console.error("Error sending organizer email:", error)
+      toast({
+        title: "Failed to send email",
+        description: error?.message || "Could not send organizer email",
+        variant: "destructive",
+      })
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex justify-center items-center py-12">
@@ -592,7 +612,7 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent>
-                            <DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleSendMessage(organizer)}>
                               <Mail className="w-4 h-4 mr-2" />
                               Send Message
                             </DropdownMenuItem>
