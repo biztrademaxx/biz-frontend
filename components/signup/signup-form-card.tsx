@@ -12,6 +12,8 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Eye, EyeOff, Mail, Lock, User, Building, Phone, Check, X, Loader2 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
+const API_BASE = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000").replace(/\/$/, "")
+
 const organizers = [
   { id: 1, name: "Max Events Pvt Ltd", logo: "/Organizers/maxx.png", description: "Leading event organizer" },
   { id: 2, name: "Max Exhibitions", logo: "/Organizers/maxx.png", description: "Exhibition specialists" },
@@ -152,7 +154,7 @@ export default function SignupFormCard({ variant, onRegistrationSuccess }: Signu
 
     try {
       const res = await fetch(
-        "http://localhost:4000/api/auth/send-otp",
+        `${API_BASE}/api/auth/send-otp`,
         {
           method: "POST",
           headers: {
@@ -203,7 +205,7 @@ export default function SignupFormCard({ variant, onRegistrationSuccess }: Signu
 
     try {
       const res = await fetch(
-        "http://localhost:4000/api/auth/verify-otp",
+        `${API_BASE}/api/auth/verify-otp`,
         {
           method: "POST",
           headers: {
@@ -268,7 +270,7 @@ export default function SignupFormCard({ variant, onRegistrationSuccess }: Signu
       }
 
       const res = await fetch(
-        "http://localhost:4000/api/auth/register",
+        `${API_BASE}/api/auth/register`,
         {
           method: "POST",
           headers: {
