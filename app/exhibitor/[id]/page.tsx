@@ -555,11 +555,26 @@ export default function ExhibitorPage() {
         const data = await apiFetch<{ success?: boolean; events?: Array<{
           id: string
           eventId: string
+          eventSlug?: string
           eventName: string
+          bannerImage?: string | null
+          thumbnailImage?: string | null
           boothNumber: string
+          date?: string
+          endDate?: string
           rawStartDate: string
           rawEndDate: string
-          venue: string
+          venue:
+            | string
+            | {
+                venueName?: string
+                venueAddress?: string
+                venueCity?: string
+                venueState?: string
+                venueCountry?: string
+                venueZipCode?: string
+              }
+            | null
           organizer?: { id: string; firstName: string; lastName: string; company?: string }
           currency?: string
           invoiceAmount?: number
@@ -588,17 +603,17 @@ export default function ExhibitorPage() {
             exhibitor: null,
             event: {
               id: e.eventId,
+              slug: e.eventSlug ?? e.eventId,
               title: e.eventName,
               description: "",
               shortDescription: undefined,
-              slug: "",
               status: "PUBLISHED",
               category: "",
               tags: [],
               isFeatured: false,
               isVIP: false,
-              startDate: e.rawStartDate,
-              endDate: e.rawEndDate,
+              startDate: e.rawStartDate || e.date || "",
+              endDate: e.rawEndDate || e.endDate || "",
               registrationStart: "",
               registrationEnd: "",
               timezone: "",
@@ -608,8 +623,8 @@ export default function ExhibitorPage() {
               maxAttendees: null,
               currentAttendees: 0,
               currency: e.currency ?? "USD",
-              bannerImage: null,
-              thumbnailImage: null,
+              bannerImage: e.bannerImage ?? null,
+              thumbnailImage: e.thumbnailImage ?? null,
               isPublic: true,
               requiresApproval: false,
               allowWaitlist: false,
@@ -624,6 +639,26 @@ export default function ExhibitorPage() {
               organizer: e.organizer
                 ? { id: e.organizer.id, firstName: e.organizer.firstName, lastName: e.organizer.lastName, company: e.organizer.company ?? "" }
                 : { id: "", firstName: "", lastName: "", company: "" },
+              venue:
+                typeof e.venue === "string"
+                  ? {
+                      id: "",
+                      venueName: e.venue,
+                      venueDescription: "",
+                      venueAddress: "",
+                      venueCity: "",
+                      venueState: "",
+                      venueCountry: "",
+                    }
+                  : {
+                      id: "",
+                      venueName: e.venue?.venueName ?? "",
+                      venueDescription: "",
+                      venueAddress: e.venue?.venueAddress ?? "",
+                      venueCity: e.venue?.venueCity ?? "",
+                      venueState: e.venue?.venueState ?? "",
+                      venueCountry: e.venue?.venueCountry ?? "",
+                    },
             },
           }));
           setBooths(mapped);
@@ -891,9 +926,9 @@ export default function ExhibitorPage() {
                   Share
                 </Button>
               </div>
-              <button>
+              <div>
                 <ScheduleMeetingButton exhibitor={exhibitor} eventId={booths[0]?.event.id} />
-              </button>
+              </div>
             </div>
           </div>
         </div>

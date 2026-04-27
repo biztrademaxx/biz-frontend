@@ -91,12 +91,17 @@ export default function PromotionPackagesPage() {
 
   const fetchEventCategories = async () => {
     try {
-      const data = await apiFetch<EventCategoryOption[] | { data?: EventCategoryOption[] }>(
-        "/api/admin/event-categories",
-        { auth: true },
-      )
+      const data = await apiFetch<
+        EventCategoryOption[] | { data?: EventCategoryOption[]; success?: boolean }
+      >("/api/event-categories", { auth: false })
       const list = Array.isArray(data) ? data : data.data ?? []
       setEventCategories(list)
+      if (!editingPackage) {
+        setFormData((prev) => ({
+          ...prev,
+          categories: prev.categories || list[0]?.name || "",
+        }))
+      }
     } catch (error) {
       setEventCategories([])
     }
@@ -164,6 +169,10 @@ export default function PromotionPackagesPage() {
   }
 
   const handleEdit = (pkg: PromotionPackage) => {
+    const normalizedUserType =
+      pkg.userType === "EXHIBITOR" || pkg.userType === "ORGANIZER" || pkg.userType === "BOTH"
+        ? pkg.userType
+        : "BOTH"
     setEditingPackage(pkg)
     setFormData({
       name: pkg.name,
@@ -175,7 +184,7 @@ export default function PromotionPackagesPage() {
       categories: pkg.categories[0] || eventCategories[0]?.name || "",
       recommended: pkg.recommended,
       isActive: pkg.isActive,
-      userType: pkg.userType,
+      userType: normalizedUserType,
       features: pkg.features,
     })
     setIsDialogOpen(true)
@@ -311,7 +320,7 @@ export default function PromotionPackagesPage() {
                     onValueChange={(value) => setFormData({ ...formData, categories: value })}
                   >
                     <SelectTrigger>
-                      <SelectValue />
+                      <SelectValue placeholder="Select category" />
                     </SelectTrigger>
                     <SelectContent>
                       {eventCategories.length === 0 ? (
@@ -337,7 +346,7 @@ export default function PromotionPackagesPage() {
                   onValueChange={(value) => setFormData({ ...formData, userType: value })}
                 >
                   <SelectTrigger>
-                    <SelectValue />
+                    <SelectValue placeholder="Select audience" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="BOTH">Both Exhibitors & Organizers</SelectItem>

@@ -5,7 +5,7 @@ import type { Event } from "./events-section"
 import { Skeleton } from "@/components/ui/skeleton"
 import { CalendarIcon, MapPin } from "lucide-react"
 import type { TicketType } from "@prisma/client"
-import { apiFetch, getCurrentUserId } from "@/lib/api"
+import { apiFetch, getCurrentUserId, isAuthenticated } from "@/lib/api"
 
 /* ---------- Helpers (same as EventsSection) ---------- */
 const DEFAULT_IMAGE = "/image/download2.jpg"
@@ -25,33 +25,23 @@ export function SavedEvents({ userId }: { userId?: string }) {
   const targetUserId = userId || (typeof window !== "undefined" ? getCurrentUserId() : null)
 
   useEffect(() => {
-    if (!targetUserId) return
+    if (!targetUserId || !isAuthenticated()) {
+      setEvents([])
+      setLoading(false)
+      return
+    }
     fetchSavedEvents()
   }, [targetUserId])
 
   const fetchSavedEvents = async () => {
     try {
       setLoading(true)
-      console.log("[v0] Fetching saved events for userId:", targetUserId)
-      console.log("[v0] Current user ID:", targetUserId)
-
-      const response = await fetch(`/api/users/${targetUserId}/saved-events`)
-
-      if (response.status === 403) {
-        console.error("[v0] 403 Forbidden: You can only view your own saved events")
-        throw new Error("You can only view your own saved events")
-      }
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        console.error("[v0] API error:", response.status, errorData)
-        throw new Error(errorData.error || "Failed to fetch saved events")
-      }
-
-      const data = await response.json()
+      const data = await apiFetch<{ events?: Event[] }>(`/api/users/${targetUserId}/saved-events`, {
+        auth: true,
+      })
       setEvents(data.events || [])
     } catch (err) {
-      console.error("Error fetching saved events:", err)
+      // Silent fallback for unauthorized/expired auth on dashboard widget.
       setEvents([])
     } finally {
       setLoading(false)

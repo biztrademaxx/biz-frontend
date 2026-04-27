@@ -36,11 +36,25 @@ export async function GET(
         event: {
           select: {
             id: true,
+            slug: true,
             title: true,
             description: true,
+            bannerImage: true,
+            thumbnailImage: true,
+            images: true,
             startDate: true,
             endDate: true,
-            venue: true,
+            venue: {
+              select: {
+                venueName: true,
+                venueAddress: true,
+                venueCity: true,
+                venueState: true,
+                venueCountry: true,
+                venueZipCode: true,
+                venuepostalCode: true,
+              },
+            },
             status: true,
             organizer: {
               select: {
@@ -67,10 +81,24 @@ export async function GET(
     const events = booths.map((booth) => ({
       id: booth.id,
       eventId: booth.eventId,
+      eventSlug: booth.event.slug ?? booth.event.id,
       eventName: booth.event.title,
+      bannerImage: booth.event.bannerImage ?? booth.event.images?.[0] ?? null,
+      thumbnailImage: booth.event.thumbnailImage ?? booth.event.images?.[0] ?? null,
       date: booth.event.startDate.toISOString().split("T")[0],
       endDate: booth.event.endDate.toISOString().split("T")[0],
-      venue: booth.event.venue || "TBD",
+      rawStartDate: booth.event.startDate.toISOString(),
+      rawEndDate: booth.event.endDate.toISOString(),
+      venue: booth.event.venue
+        ? {
+            venueName: booth.event.venue.venueName ?? "",
+            venueAddress: booth.event.venue.venueAddress ?? "",
+            venueCity: booth.event.venue.venueCity ?? "",
+            venueState: booth.event.venue.venueState ?? "",
+            venueCountry: booth.event.venue.venueCountry ?? "",
+            venueZipCode: booth.event.venue.venueZipCode ?? booth.event.venue.venuepostalCode ?? "",
+          }
+        : null,
       boothSize: `${booth.spaceId}`,
       boothNumber: booth.boothNumber,
       paymentStatus: booth.status === "BOOKED" ? "PAID" : "PENDING",
