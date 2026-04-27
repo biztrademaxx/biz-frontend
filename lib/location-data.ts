@@ -19,6 +19,8 @@ export function getCountryTimezoneByName(countryName: string): string | null {
     return name === typed || code === typed || typed.includes(name) || name.includes(typed)
   })
   if (!country) return null
+  // Prefer canonical business timezones for countries we commonly use.
+  if (country.isoCode === "IN") return "Asia/Kolkata"
   const zones = country.timezones
   if (!Array.isArray(zones) || zones.length === 0) return null
   return zones[0]?.zoneName ?? null

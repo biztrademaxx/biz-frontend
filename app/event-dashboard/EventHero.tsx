@@ -18,6 +18,7 @@ interface Event {
   address?: string
   startDate?: string
   endDate?: string
+  timezone?: string
   postponedReason?: string
   images: string[]
   videos?: string[]
@@ -51,6 +52,17 @@ export default function EventHero({ event, onImagesUpdate }: EventHeroProps) {
   const [currentSlide, setCurrentSlide] = useState(0)
   const { toast } = useToast()
   const [newImageUrl, setNewImageUrl] = useState("")
+  const normalizeTimezone = (tz?: string, countryHint?: string) => {
+    const country = String(countryHint || "").trim().toLowerCase()
+    if (country.includes("india")) return "Asia/Kolkata"
+    if (!tz) return "Asia/Kolkata"
+    if (tz === "Indian/Chagos" && country.includes("india")) return "Asia/Kolkata"
+    return tz
+  }
+  const displayTimezone = normalizeTimezone(
+    event.timezone,
+    (event as any)?.country || event.location?.country || (event as any)?.venue?.venueCountry,
+  )
 
   const formatDate = (dateString: string) =>
     new Date(dateString).toLocaleDateString("en-GB", {
@@ -362,14 +374,14 @@ export default function EventHero({ event, onImagesUpdate }: EventHeroProps) {
                   hour: "2-digit",
                   minute: "2-digit",
                   hour12: true,
-                  timeZone: "UTC",
+                  timeZone: displayTimezone,
                 })}{" "}
                 –{" "}
                 {new Date(event.endDate || "6:00 pm").toLocaleTimeString("en-IN", {
                   hour: "2-digit",
                   minute: "2-digit",
                   hour12: true,
-                  timeZone: "UTC",
+                  timeZone: displayTimezone,
                 })}
               </span>
 

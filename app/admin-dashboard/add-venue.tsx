@@ -17,6 +17,7 @@ interface Venue {
   id?: string
   firstName: string
   lastName: string
+  contactPerson?: string
   email: string
   phone?: string
   avatar?: string
@@ -26,6 +27,8 @@ interface Venue {
   venueCity?: string
   venueCountry?: string
   venueState?: string
+  venueZipCode?: string
+  venuepostalCode?: string
   city?: string
   state?: string
   country?: string
@@ -138,6 +141,34 @@ export default function AddVenue({ organizerId, onVenueChange }: AddVenueProps) 
       venue.venueAddress?.toLowerCase().includes(searchLower)
     )
   })
+
+  const getManagerName = (venue: Venue) => {
+    const byContactPerson = (venue.contactPerson || "").trim()
+    if (byContactPerson) return byContactPerson
+    const byFirstLast = `${venue.firstName || ""} ${venue.lastName || ""}`.trim()
+    if (byFirstLast) return byFirstLast
+    return "Venue Manager"
+  }
+
+  const isMeaningfulPhone = (value?: string) => {
+    if (!value) return false
+    const trimmed = value.trim()
+    if (!trimmed) return false
+    if (/^0+$/.test(trimmed)) return false
+    return true
+  }
+
+  const getVenuePostalCode = (venue: Venue) => {
+    const postal = String(venue.venuepostalCode ?? venue.venueZipCode ?? "").trim()
+    if (!postal || /^0+$/.test(postal)) return ""
+    return postal
+  }
+
+  const getVenueDescription = (venue: Venue) => {
+    const description = String(venue.venueDescription ?? "").trim()
+    if (!description || /^0+$/.test(description)) return ""
+    return description
+  }
 
   const handleVenueSelect = (venueId: string) => {
     setSelectedVenueId(venueId)
@@ -367,7 +398,7 @@ export default function AddVenue({ organizerId, onVenueChange }: AddVenueProps) 
                                 {selectedVenueId === venue.id && <CheckCircle2 className="w-5 h-5 text-green-600" />}
                               </h3>
                               <p className="text-sm text-gray-600">
-                                Managed by {venue.firstName} {venue.lastName}
+                                Managed by {getManagerName(venue)}
                               </p>
                             </div>
                           </div>
@@ -377,7 +408,7 @@ export default function AddVenue({ organizerId, onVenueChange }: AddVenueProps) 
                               <Mail className="w-3 h-3" />
                               {venue.email}
                             </div>
-                            {venue.phone && (
+                            {isMeaningfulPhone(venue.phone) && (
                               <div className="flex items-center gap-1">
                                 <Phone className="w-3 h-3" />
                                 {venue.phone}
@@ -385,14 +416,14 @@ export default function AddVenue({ organizerId, onVenueChange }: AddVenueProps) 
                             )}
                             <div className="flex items-center gap-1">
                               <MapPin className="w-3 h-3" />
-                              {/* <MapPin className="w-3 h-3" /> */}
-                              {venue.venueAddress}, {venue.venueCity}, {venue.venueState}, {venue.venueCountry}
-
+                              {venue.venueAddress || "Address not provided"}, {venue.venueCity || venue.city || "City not provided"},{" "}
+                              {venue.venueState || venue.state || "State not provided"}, {venue.venueCountry || venue.country || "Country not provided"}
                             </div>
+                            {getVenuePostalCode(venue) && <div className="flex items-center gap-1">Postal Code: {getVenuePostalCode(venue)}</div>}
                           </div>
 
-                          {venue.venueDescription && (
-                            <p className="text-sm text-gray-600 line-clamp-2">{venue.venueDescription}</p>
+                          {getVenueDescription(venue) && (
+                            <p className="text-sm text-gray-600 line-clamp-2">{getVenueDescription(venue)}</p>
                           )}
 
                           <div className="flex items-center gap-4 text-sm text-gray-500">

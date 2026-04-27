@@ -538,6 +538,23 @@ export default function EventPageContent({ event, session: _session, router, toa
     return encodeURIComponent(event?.title ? `${event.title} — Location TBA` : "Location TBA")
   }
 
+  /** For "Get Directions", prefer full venue address text (more accurate than stale coordinates). */
+  const getDirectionsDestination = (): string => {
+    const v = event?.venue
+    const street = v?.venueAddress || v?.address || v?.streetAddress || ""
+    const city = v?.venueCity || v?.city || ""
+    const state = v?.venueState || v?.state || ""
+    const postal = v?.venueZipCode || v?.zipCode || ""
+    const country = v?.venueCountry || v?.country || ""
+    const fullVenueAddress = [street, city, state, postal, country]
+      .filter((p) => p && String(p).trim() !== "")
+      .join(", ")
+      .trim()
+
+    if (fullVenueAddress) return encodeURIComponent(fullVenueAddress)
+    return getMapAddress()
+  }
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
       weekday: "long",
@@ -609,7 +626,7 @@ export default function EventPageContent({ event, session: _session, router, toa
                   size="sm"
                   className="flex items-center gap-2 text-[#004A96] hover:text-[#003a75]"
                   onClick={() => {
-                    const address = getMapAddress()
+                    const address = getDirectionsDestination()
                     window.open(
                       `https://www.google.com/maps/dir/?api=1&destination=${address}`,
                       "_blank",
@@ -1005,7 +1022,7 @@ export default function EventPageContent({ event, session: _session, router, toa
                           <Button
                             className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-md transition-colors"
                             onClick={() => {
-                              const address = getMapAddress()
+                              const address = getDirectionsDestination()
                               window.open(
                                 `https://www.google.com/maps/dir/?api=1&destination=${address}`,
                                 "_blank",
@@ -1018,7 +1035,7 @@ export default function EventPageContent({ event, session: _session, router, toa
                             variant="outline"
                             className="w-full"
                             onClick={() => {
-                              const address = getMapAddress()
+                              const address = getDirectionsDestination()
                               window.open(
                                 `https://www.google.com/maps/search/?api=1&query=${address}`,
                                 "_blank",

@@ -58,7 +58,37 @@ export default function ExhibitorsTab({ eventId }: ExhibitorsTabProps) {
         const data = await apiFetch<{ data?: { exhibitors?: Exhibitor[] }; booths?: Exhibitor[] }>(`/api/events/${eventId}/exhibitors`, { auth: false })
         const list = data.booths ?? data.data?.exhibitors ?? []
         console.log("Fetched exhibitors:", list)
-        setExhibitors(Array.isArray(list) ? list : [])
+        const normalized = Array.isArray(list)
+          ? list.map((item: any) => {
+              const nestedExhibitor = item?.exhibitor ?? {}
+              const companyName =
+                (nestedExhibitor?.company && String(nestedExhibitor.company).trim()) ||
+                (item?.companyName && String(item.companyName).trim()) ||
+                ""
+              const fallbackName = `${nestedExhibitor?.firstName || ""} ${nestedExhibitor?.lastName || ""}`.trim()
+              return {
+                exhibitorId: item?.exhibitorId || nestedExhibitor?.id || "",
+                publicSlug: nestedExhibitor?.publicSlug,
+                boothId: item?.id || item?.boothId || "",
+                company: companyName,
+                name: fallbackName || companyName || "Exhibitor",
+                email: nestedExhibitor?.email || item?.email || "",
+                phone: nestedExhibitor?.phone || item?.phone || "",
+                avatar: nestedExhibitor?.avatar || item?.avatar || "",
+                description: nestedExhibitor?.bio || item?.description || "",
+                boothNumber: item?.boothNumber || "No.",
+                status: item?.status || "ACTIVE",
+                totalCost: Number(item?.totalCost ?? 0),
+                totalAppointmentsReceived: Number(item?.totalAppointmentsReceived ?? 0),
+                followersCount: Number(item?.followersCount ?? 0),
+                followerPreview: Array.isArray(item?.followerPreview) ? item.followerPreview : [],
+                spaceReference: item?.spaceReference || item?.space?.name || undefined,
+                isSample: Boolean(item?.isSample),
+                userId: nestedExhibitor?.id || item?.userId,
+              } as Exhibitor
+            })
+          : []
+        setExhibitors(normalized)
       } catch (err) {
         console.error("Error fetching exhibitors:", err)
         setError(err instanceof Error ? err.message : "Failed to load exhibitors")
@@ -103,6 +133,13 @@ export default function ExhibitorsTab({ eventId }: ExhibitorsTabProps) {
 
   const displayExhibitors = exhibitors.length > 0 ? exhibitors : fallbackExhibitors
   const hasRealExhibitors = exhibitors.length > 0
+  const getDisplayCompanyName = (exhibitor: Exhibitor) => {
+    const company = (exhibitor.company || "").trim()
+    if (company) return company
+    const name = (exhibitor.name || "").trim()
+    if (name) return name
+    return "Exhibitor"
+  }
 
   return (
     <div className="py-6">
@@ -142,14 +179,20 @@ export default function ExhibitorsTab({ eventId }: ExhibitorsTabProps) {
             />
             
             {/* Logo Circle */}
-            <div className="relative w-28 h-28 -mt-12 bg-white border-4 border-blue-600 rounded-full flex items-center justify-center z-20 group-hover:border-blue-700 transition-colors">
-              <Image
-                src={exhibitor.avatar || "/Organizers/maxx.png"}
-                alt={`${exhibitor.company} logo`}
-                width={80}
-                height={80}
-                className="object-contain rounded-full"
-              />
+            <div className="relative w-28 h-28 -mt-12 bg-white border-4 border-blue-600 rounded-full flex items-center justify-center z-20 group-hover:border-blue-700 transition-colors overflow-hidden">
+              {exhibitor.avatar ? (
+                <Image
+                  src={exhibitor.avatar}
+                  alt={`${getDisplayCompanyName(exhibitor)} logo`}
+                  width={80}
+                  height={80}
+                  className="object-contain rounded-full"
+                />
+              ) : (
+                <div className="px-3 text-center text-[11px] leading-4 font-semibold text-blue-700 line-clamp-3">
+                  {getDisplayCompanyName(exhibitor)}
+                </div>
+              )}
             </div>
 
             {/* Verified Badge */}
@@ -188,7 +231,7 @@ export default function ExhibitorsTab({ eventId }: ExhibitorsTabProps) {
 
               {/* Company Name */}
               <h3 className="text-lg font-semibold text-gray-800 group-hover:text-blue-600 transition-colors mb-2">
-                {exhibitor.company}
+                {getDisplayCompanyName(exhibitor)}
               </h3>
 
               {/* Location & Booth */}

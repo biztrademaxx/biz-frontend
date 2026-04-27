@@ -13,11 +13,16 @@ import { getCityOptions, getCountryOptions, getStateOptions } from "@/lib/locati
 
 interface Venue {
   id: string
+  firstName?: string
+  lastName?: string
+  contactPerson?: string
   venueName?: string
   venueAddress?: string
   venueCity?: string
   venueState?: string
   venueCountry?: string
+  venueZipCode?: string
+  venuepostalCode?: string
   maxCapacity?: number
   amenities: string[]
 }
@@ -88,6 +93,19 @@ export function SelectVenue({ selectedVenueId, onVenueChange }: SelectVenueProps
       (venue.venueAddress?.toLowerCase() || '').includes(searchLower)
     )
   })
+
+  const getManagerName = (venue: Venue) => {
+    const byContactPerson = (venue.contactPerson || "").trim()
+    if (byContactPerson) return byContactPerson
+    const byFirstLast = `${venue.firstName || ""} ${venue.lastName || ""}`.trim()
+    return byFirstLast || "Venue Manager"
+  }
+
+  const getVenuePostalCode = (venue: Venue) => {
+    const postal = String(venue.venuepostalCode ?? venue.venueZipCode ?? "").trim()
+    if (!postal || /^0+$/.test(postal)) return ""
+    return postal
+  }
 
   const handleCreateVenue = async () => {
     if (!newVenue.venueName || !newVenue.venueCity) {
@@ -237,6 +255,9 @@ export function SelectVenue({ selectedVenueId, onVenueChange }: SelectVenueProps
                           <div className="text-xs text-muted-foreground">
                             {venue.venueCity || "Unknown City"}, {venue.venueState || "N/A"} • Capacity: {venue.maxCapacity || "N/A"}
                           </div>
+                          <div className="text-xs text-muted-foreground">
+                            Managed by {getManagerName(venue)}
+                          </div>
                         </div>
                       </div>
                     </SelectItem>
@@ -255,6 +276,10 @@ export function SelectVenue({ selectedVenueId, onVenueChange }: SelectVenueProps
                     {selectedVenue.venueAddress || "No address"}, {selectedVenue.venueCity || "Unknown City"}, {selectedVenue.venueState || "N/A"}
                   </div>
                   <div className="text-sm text-muted-foreground">
+                    Managed by {getManagerName(selectedVenue)}
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    {getVenuePostalCode(selectedVenue) ? `Postal Code: ${getVenuePostalCode(selectedVenue)} • ` : ""}
                     Capacity: {selectedVenue.maxCapacity || "N/A"} • {selectedVenue.amenities?.length || 0} amenities
                   </div>
                 </div>

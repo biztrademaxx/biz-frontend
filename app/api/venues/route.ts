@@ -1,5 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
+import { getServerSession } from "next-auth/next"
+import { authOptions } from "@/lib/auth-options"
+import { prisma } from "@/lib/prisma"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 
@@ -66,8 +69,11 @@ export async function GET(request: NextRequest) {
         venueCity: v.venueCity ?? "",
         venueState: v.venueState ?? "",
         venueCountry: v.venueCountry ?? "",
+        venueZipCode: v.venueZipCode ?? "",
+        venuepostalCode: v.venueZipCode ?? "",
         website: v.venueWebsite ?? v.website ?? "",
-        description: v.venueDescription ?? v.bio ?? "",
+        venueDescription: v.venueDescription ?? v.description ?? v.bio ?? "",
+        description: v.venueDescription ?? v.description ?? v.bio ?? "",
         maxCapacity: v.maxCapacity ?? 0,
         totalHalls: v.totalHalls ?? 0,
         totalEvents: v.totalEvents ?? 0,
@@ -146,6 +152,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { success: false, error: "Missing required fields" },
         { status: 400 }
+      )
+    }
+
+    if (!prisma) {
+      return NextResponse.json(
+        { success: false, error: "Frontend Prisma is not configured. Use backend API for writes." },
+        { status: 500 }
       )
     }
 
