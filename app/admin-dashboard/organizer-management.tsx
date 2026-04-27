@@ -361,7 +361,11 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
           </Button>
         </div>
       </div>
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+      <Tabs
+        value={activeTab}
+        onValueChange={(value) => setActiveTab(value as "all" | "bulk-import")}
+        className="w-full"
+      >
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="all">All Organizers</TabsTrigger>
           <TabsTrigger value="bulk-import">Bulk Import</TabsTrigger>
