@@ -302,6 +302,15 @@ function TrendingEventsSideCard({ event, imageUrl }: { event: Event; imageUrl: s
 interface ApiResponse {
   events: Event[]
 }
+
+function extractEventsFromResponse(payload: any): any[] {
+  if (Array.isArray(payload)) return payload
+  if (Array.isArray(payload?.events)) return payload.events
+  if (Array.isArray(payload?.data)) return payload.data
+  if (Array.isArray(payload?.data?.events)) return payload.data.events
+  if (Array.isArray(payload?.result?.events)) return payload.result.events
+  return []
+}
 // Enhanced Verified Badge Component for public display
 function SidebarSection({
   title,
@@ -708,12 +717,22 @@ export default function EventsPageContent({
     try {
       setLoading(true)
       setError(null)
-      const response = await fetch(EVENTS_API)
+      // Retry once for transient proxy/backend hiccups.
+      let response = await fetch(EVENTS_API, { cache: "no-store" })
       if (!response.ok) {
-        throw new Error("Failed to fetch events")
+        await new Promise((resolve) => setTimeout(resolve, 350))
+        response = await fetch(EVENTS_API, { cache: "no-store" })
       }
-      const data: ApiResponse = await response.json()
-      const transformedEvents = data.events.map((event: any) => {
+      const payload = await response.json().catch(() => ({}))
+      if (!response.ok) {
+        const message =
+          payload?.error ||
+          payload?.message ||
+          `Failed to fetch events (HTTP ${response.status})`
+        throw new Error(message)
+      }
+      const rawEvents = extractEventsFromResponse(payload)
+      const transformedEvents = rawEvents.map((event: any) => {
         const resolvedId =
           event.id ||
           event._id ||
