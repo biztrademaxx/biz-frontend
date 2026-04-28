@@ -21,7 +21,11 @@ export function slugifyPublicProfile(value: string | null | undefined): string {
 
 function deriveSlug(role: PublicRole, data: ProfilePathInput): string {
   if (role === "organizer") {
-    return slugifyPublicProfile(data.organizationName) || slugifyPublicProfile(data.firstName);
+    return (
+      slugifyPublicProfile(data.organizationName) ||
+      slugifyPublicProfile(data.company) ||
+      slugifyPublicProfile(data.firstName)
+    );
   }
   if (role === "exhibitor") {
     return slugifyPublicProfile(data.organizationName) || slugifyPublicProfile(data.company) || slugifyPublicProfile(data.firstName);

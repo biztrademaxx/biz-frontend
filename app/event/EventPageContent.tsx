@@ -555,6 +555,14 @@ export default function EventPageContent({ event, session: _session, router, toa
     return getMapAddress()
   }
 
+  /** True when the displayed address should open in an external maps app. */
+  const canLinkAddressToMaps = (): boolean => {
+    const d = getDisplayAddress()
+    if (d === "Location TBA") return false
+    if (d === "Online event" || d.startsWith("Online event (")) return false
+    return true
+  }
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
       weekday: "long",
@@ -617,7 +625,18 @@ export default function EventPageContent({ event, session: _session, router, toa
 
               <div className="flex items-center gap-2 text-gray-600 mb-4">
                 <MapPin className="w-4 h-4 shrink-0" />
-                <span>{getDisplayAddress()}</span>
+                {canLinkAddressToMaps() ? (
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${getDirectionsDestination()}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-[#004A96] hover:underline"
+                  >
+                    {getDisplayAddress()}
+                  </a>
+                ) : (
+                  <span>{getDisplayAddress()}</span>
+                )}
               </div>
 
               <div className="flex flex-wrap items-center gap-4">
@@ -923,7 +942,9 @@ export default function EventPageContent({ event, session: _session, router, toa
                     href={getPublicProfilePath("organizer", {
                       id: event.organizer?.id,
                       publicSlug: event.organizer?.publicSlug,
-                      organizationName: event.organizer?.company,
+                      organizationName:
+                        event.organizer?.organizationName ?? event.organizer?.company,
+                      company: event.organizer?.company,
                     })}
                   >
                     <CardHeader className="border-b border-gray-100 pb-2">
@@ -1014,7 +1035,18 @@ export default function EventPageContent({ event, session: _session, router, toa
                               {event?.venue?.venueName || event?.venue?.organizationName || "Venue"}
                             </h3>
                           </Link>
-                          <p className="text-gray-600 text-sm mt-1 whitespace-pre-wrap">{getDisplayAddress()}</p>
+                          {canLinkAddressToMaps() ? (
+                            <a
+                              href={`https://www.google.com/maps/search/?api=1&query=${getDirectionsDestination()}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-gray-600 text-sm mt-1 whitespace-pre-wrap block hover:text-[#004A96] hover:underline"
+                            >
+                              {getDisplayAddress()}
+                            </a>
+                          ) : (
+                            <p className="text-gray-600 text-sm mt-1 whitespace-pre-wrap">{getDisplayAddress()}</p>
+                          )}
                         </div>
 
                         {/* Buttons */}
@@ -1228,7 +1260,18 @@ export default function EventPageContent({ event, session: _session, router, toa
                               {event?.venue?.venueName || event?.venue?.organizationName || "Venue"}
                             </h3>
                           </Link>
-                          <p className="text-gray-600 text-sm mt-1 whitespace-pre-wrap">{getDisplayAddress()}</p>
+                          {canLinkAddressToMaps() ? (
+                            <a
+                              href={`https://www.google.com/maps/search/?api=1&query=${getMapAddress()}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-gray-600 text-sm mt-1 whitespace-pre-wrap block hover:text-[#004A96] hover:underline"
+                            >
+                              {getDisplayAddress()}
+                            </a>
+                          ) : (
+                            <p className="text-gray-600 text-sm mt-1 whitespace-pre-wrap">{getDisplayAddress()}</p>
+                          )}
 
                           {/* Additional venue details if available */}
                           {event?.venue?.capacity && (
@@ -1291,7 +1334,9 @@ export default function EventPageContent({ event, session: _session, router, toa
                     href={getPublicProfilePath("organizer", {
                       id: event.organizer?.id || event.organizer?._id,
                       publicSlug: event.organizer?.publicSlug,
-                      organizationName: event.organizer?.company,
+                      organizationName:
+                        event.organizer?.organizationName ?? event.organizer?.company,
+                      company: event.organizer?.company,
                     })}
                   >
                     <CardContent>
@@ -1313,11 +1358,16 @@ export default function EventPageContent({ event, session: _session, router, toa
                             Professional event organizer
                           </p>
 
-                          {/* Organizer Stats */}
+                          {/* Organizer Stats — use nullish coalescing; 0 is valid (|| 7 was a stale placeholder) */}
                           <div className="mt-3 flex gap-4 text-sm text-gray-500">
-                            <span>{event.organizer?.totalEvents || 7} Total Events</span>
-                            <span>{event.organizer?.averageRating || 4.5} ★ Rating</span>
-                            <span>{event.organizer?.totalReviews || 2} Reviews</span>
+                            <span>{event.organizer?.totalEvents ?? 0} Total Events</span>
+                            <span>
+                              {event.organizer?.averageRating != null
+                                ? Number(event.organizer.averageRating).toFixed(1)
+                                : "—"}{" "}
+                              ★ Rating
+                            </span>
+                            <span>{event.organizer?.totalReviews ?? 0} Reviews</span>
                           </div>
                         </div>
                       </div>
