@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Roboto } from "next/font/google";
 import { ReactQueryProvider } from "@/components/react-query-provider";
@@ -10,6 +10,11 @@ import { SITE_DESCRIPTION, SITE_NAME, getSiteUrl } from "@/lib/seo/site";
 
 const siteUrl = getSiteUrl();
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+};
+
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
@@ -17,7 +22,6 @@ export const metadata: Metadata = {
     template: `%s | ${SITE_NAME}`,
   },
   description: SITE_DESCRIPTION,
-  viewport: "width=device-width, initial-scale=1",
   robots: {
     index: true,
     follow: true,

@@ -43,6 +43,7 @@ interface VenueEvent {
   activeEvents: number
   totalRevenue: number
   averageRating: number
+  totalReviews?: number
   events: Event[]
 }
 
@@ -116,6 +117,13 @@ export default function VenuesEventsPage() {
   const handleViewDetails = (venue: VenueEvent) => {
     setSelectedVenue(venue)
     setIsDetailOpen(true)
+  }
+
+  const formatVenueRating = (venue: VenueEvent) => {
+    const reviews = venue.totalReviews ?? 0
+    const rating = Number(venue.averageRating ?? 0)
+    if (reviews <= 0 || !Number.isFinite(rating)) return { label: "—" as const, sub: null as string | null }
+    return { label: rating.toFixed(1), sub: `${reviews} review${reviews === 1 ? "" : "s"}` }
   }
 
   const getStatusBadge = (status: string) => {
@@ -280,10 +288,18 @@ export default function VenuesEventsPage() {
                         ${venue.totalRevenue.toLocaleString()}
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-1">
-                          <span className="text-yellow-500">★</span>
-                          <span>{venue.averageRating.toFixed(1)}</span>
-                        </div>
+                        {(() => {
+                          const { label, sub } = formatVenueRating(venue)
+                          return (
+                            <div className="flex flex-col gap-0.5">
+                              <div className="flex items-center gap-1">
+                                {label !== "—" ? <span className="text-yellow-500">★</span> : null}
+                                <span>{label}</span>
+                              </div>
+                              {sub ? <span className="text-xs text-muted-foreground">{sub}</span> : null}
+                            </div>
+                          )
+                        })()}
                       </TableCell>
                       <TableCell>
                         <Button
@@ -341,7 +357,18 @@ export default function VenuesEventsPage() {
                 <div>
                   <p className="text-sm text-gray-600">Average Rating</p>
                   <p className="font-medium">
-                    <span className="text-yellow-500">★</span> {selectedVenue.averageRating.toFixed(1)}
+                    {(() => {
+                      const { label, sub } = formatVenueRating(selectedVenue)
+                      return (
+                        <>
+                          {label !== "—" ? <span className="text-yellow-500">★</span> : null}{" "}
+                          {label}
+                          {sub ? (
+                            <span className="block text-xs text-muted-foreground font-normal">{sub}</span>
+                          ) : null}
+                        </>
+                      )
+                    })()}
                   </p>
                 </div>
               </div>

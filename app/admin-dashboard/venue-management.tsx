@@ -59,6 +59,26 @@ import { toast } from "sonner"
 import { adminApi } from "@/lib/admin-api"
 import EntityBulkImport from "./entity-bulk-import"
 
+function spaceCapacityFromRow(row: object): number {
+  const r = row as Record<string, unknown>
+  for (const key of ["capacity", "maxCapacity", "seatingCapacity", "maxAttendees"] as const) {
+    if (!(key in r)) continue
+    const n = Number(r[key])
+    if (!Number.isNaN(n) && n > 0) return n
+  }
+  return 0
+}
+
+/** Align with public /venue page: sum per-space capacity; halls = meetingSpaces.length. */
+function inferCapacityAndHallsFromMeetingSpaces(meetingSpaces: unknown): { capacity: number; halls: number } {
+  if (!Array.isArray(meetingSpaces) || meetingSpaces.length === 0) return { capacity: 0, halls: 0 }
+  let capacity = 0
+  for (const row of meetingSpaces) {
+    if (row && typeof row === "object") capacity += spaceCapacityFromRow(row as object)
+  }
+  return { capacity, halls: meetingSpaces.length }
+}
+
 // Updated Types based on your Prisma schema
 interface Venue {
   id: string
@@ -134,7 +154,20 @@ export default function VenueManagement({
   const [expandedVenues, setExpandedVenues] = useState<Set<string>>(new Set())
   const [detailLoading, setDetailLoading] = useState(false)
 
-  const mapVenueFromApi = (v: any): Venue => ({
+  const mapVenueFromApi = (v: any): Venue => {
+    const inferred = inferCapacityAndHallsFromMeetingSpaces(v.meetingSpaces)
+    let maxCap =
+      v.maxCapacity != null && v.maxCapacity !== ""
+        ? Number(v.maxCapacity)
+        : inferred.capacity
+    if (Number.isFinite(maxCap) && maxCap <= 0 && inferred.capacity > 0) maxCap = inferred.capacity
+    let halls =
+      v.totalHalls != null && v.totalHalls !== "" ? Number(v.totalHalls) : inferred.halls
+    if (Number.isFinite(halls) && halls <= 0 && inferred.halls > 0) halls = inferred.halls
+    const avg = Number(v.averageRating ?? 0)
+    const reviews = Number(v.totalReviews ?? 0)
+
+    return {
     id: v.id,
     venueName: v.venueName ?? v.name ?? "",
     logo: v.logo ?? "",
@@ -149,14 +182,14 @@ export default function VenueManagement({
     city: v.venueCity ?? v.city ?? "",
     state: v.venueState ?? v.state ?? "",
     country: v.venueCountry ?? v.country ?? "",
-    website: v.website ?? "",
-    description: v.description ?? "",
-    maxCapacity: Number(v.maxCapacity ?? 0),
-    totalHalls: Number(v.totalHalls ?? 0),
+    website: v.website ?? v.venueWebsite ?? "",
+    description: v.description ?? v.venueDescription ?? "",
+    maxCapacity: Number.isFinite(maxCap) ? maxCap : 0,
+    totalHalls: Number.isFinite(halls) ? halls : 0,
     totalEvents: Number(v.totalEvents ?? 0),
     activeBookings: Number(v.activeBookings ?? 0),
-    averageRating: Number(v.averageRating ?? 0),
-    totalReviews: Number(v.totalReviews ?? 0),
+    averageRating: Number.isFinite(avg) ? avg : 0,
+    totalReviews: Number.isFinite(reviews) ? reviews : 0,
     amenities: Array.isArray(v.amenities) ? v.amenities : [],
     meetingSpaces: Array.isArray(v.meetingSpaces) ? v.meetingSpaces : [],
     isVerified: Boolean(v.isVerified),
@@ -167,7 +200,8 @@ export default function VenueManagement({
     updatedAt: v.updatedAt,
     rejectionReason: v.rejectionReason,
     events: Array.isArray(v.events) ? v.events : [],
-  })
+    }
+  }
 
   const fetchVenueById = async (venueId: string) => {
     setDetailLoading(true)
@@ -627,8 +661,9 @@ export default function VenueManagement({
                   venues={pendingVenues}
                   expandedVenues={expandedVenues}
                   onToggleEvents={toggleVenueEvents}
-                  onView={(venue) => {
-                    setSelectedVenue(venue)
+                  onView={async (venue) => {
+                    const detailed = await fetchVenueById(venue.id)
+                    setSelectedVenue(detailed ?? venue)
                     setIsViewDialogOpen(true)
                   }}
                   onApprove={(venue) => {
@@ -869,14 +904,14 @@ function VenuesList({
                         <Users className="w-3 h-3" />
                         <span>Capacity</span>
                       </div>
-                      <p className="font-semibold text-gray-900">{venue.maxCapacity.toLocaleString()}</p>
+                      <p className="font-semibold text-gray-900">{(venue.maxCapacity || 0).toLocaleString()}</p>
                     </div>
                     <div className="text-center">
                       <div className="flex items-center justify-center gap-1 text-sm text-gray-600">
                         <Building2 className="w-3 h-3" />
                         <span>Halls</span>
                       </div>
-                      <p className="font-semibold text-gray-900">{venue.totalHalls}</p>
+                      <p className="font-semibold text-gray-900">{venue.totalHalls || 0}</p>
                     </div>
                     <div className="text-center">
                       <div className="flex items-center justify-center gap-1 text-sm text-gray-600">
@@ -890,7 +925,12 @@ function VenuesList({
                         <Star className="w-3 h-3" />
                         <span>Rating</span>
                       </div>
-                      <p className="font-semibold text-gray-900">{venue.averageRating}</p>
+                      <p className="font-semibold text-gray-900">
+                        {venue.totalReviews > 0 ? venue.averageRating.toFixed(1) : "—"}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {venue.totalReviews} review{venue.totalReviews !== 1 ? "s" : ""}
+                      </p>
                     </div>
                   </div>
 
@@ -1080,14 +1120,14 @@ function PendingVenuesList({
                         <Users className="w-3 h-3" />
                         <span>Capacity</span>
                       </div>
-                      <p className="font-semibold text-gray-900">{venue.maxCapacity.toLocaleString()}</p>
+                      <p className="font-semibold text-gray-900">{(venue.maxCapacity || 0).toLocaleString()}</p>
                     </div>
                     <div className="text-center">
                       <div className="flex items-center justify-center gap-1 text-sm text-gray-600">
                         <Building2 className="w-3 h-3" />
                         <span>Halls</span>
                       </div>
-                      <p className="font-semibold text-gray-900">{venue.totalHalls}</p>
+                      <p className="font-semibold text-gray-900">{venue.totalHalls || 0}</p>
                     </div>
                     <div className="text-center">
                       <div className="flex items-center justify-center gap-1 text-sm text-gray-600">
@@ -1101,7 +1141,12 @@ function PendingVenuesList({
                         <Star className="w-3 h-3" />
                         <span>Rating</span>
                       </div>
-                      <p className="font-semibold text-gray-900">{venue.averageRating}</p>
+                      <p className="font-semibold text-gray-900">
+                        {venue.totalReviews > 0 ? venue.averageRating.toFixed(1) : "—"}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {venue.totalReviews} review{venue.totalReviews !== 1 ? "s" : ""}
+                      </p>
                     </div>
                   </div>
 
@@ -1251,11 +1296,11 @@ function ViewVenueDialog({
               <div className="space-y-4">
                 <div>
                   <Label className="text-sm font-medium text-gray-700">Capacity</Label>
-                  <p className="text-sm text-gray-600 mt-1">{venue.maxCapacity.toLocaleString()} people</p>
+                  <p className="text-sm text-gray-600 mt-1">{(venue.maxCapacity || 0).toLocaleString()} people</p>
                 </div>
                 <div>
                   <Label className="text-sm font-medium text-gray-700">Meeting Spaces</Label>
-                  <p className="text-sm text-gray-600 mt-1">{venue.totalHalls} halls</p>
+                  <p className="text-sm text-gray-600 mt-1">{venue.totalHalls || 0} halls</p>
                 </div>
                 <div>
                   <Label className="text-sm font-medium text-gray-700">Status</Label>
@@ -1321,7 +1366,9 @@ function ViewVenueDialog({
               </Card>
               <Card className="bg-yellow-50 border-yellow-200">
                 <CardContent className="p-4 text-center">
-                  <p className="text-2xl font-bold text-yellow-600">{venue.averageRating}</p>
+                  <p className="text-2xl font-bold text-yellow-600">
+                    {venue.totalReviews > 0 ? venue.averageRating.toFixed(1) : "—"}
+                  </p>
                   <p className="text-sm text-gray-600">Average Rating</p>
                 </CardContent>
               </Card>

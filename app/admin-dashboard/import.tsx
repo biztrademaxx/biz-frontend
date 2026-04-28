@@ -48,7 +48,7 @@ const MINIMAL_SAMPLE_ROW = [
   'info@sfcc.com',
   'San Francisco Convention Center',
   'America/Los_Angeles',
-  'https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=1200,https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1200',
+  'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1200,https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1200',
   'https://techexpo2025.com/brochure.pdf',
   'https://techexpo2025.com/layout.pdf',
 ] as const;

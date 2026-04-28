@@ -208,7 +208,7 @@ export default function OrganizerConnectionsPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Organizer</TableHead>
-                <TableHead>Organization</TableHead>
+                {/* <TableHead>Organization</TableHead> */}
                 <TableHead>Email</TableHead>
                 <TableHead>Total Followers</TableHead>
                 <TableHead>Events</TableHead>
@@ -241,12 +241,12 @@ export default function OrganizerConnectionsPage() {
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell>
+                    {/* <TableCell>
                       <div className="flex items-center gap-2">
                         <Building className="h-4 w-4 text-gray-400" />
                         {organizer.organizationName || "N/A"}
                       </div>
-                    </TableCell>
+                    </TableCell> */}
                     <TableCell>{organizer.email}</TableCell>
                     <TableCell>
                       <Badge variant="secondary" className="font-semibold">

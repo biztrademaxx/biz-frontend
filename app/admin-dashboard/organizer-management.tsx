@@ -7,15 +7,12 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
 import {
   Building2,
   CheckCircle,
   AlertCircle,
   XCircle,
   Search,
-  Filter,
   Eye,
   Mail,
   Phone,
@@ -25,9 +22,6 @@ import {
   Star,
   Download,
   MoreHorizontal,
-  Ban,
-  Clock,
-  TrendingUp,
 } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -65,6 +59,8 @@ interface Organizer {
   activeEvents: number
   totalAttendees: number
   totalRevenue: number
+  averageRating?: number | null
+  totalReviews?: number | null
   location: string | null
   website: string | null
   linkedin: string | null
@@ -86,11 +82,11 @@ interface TransformedOrganizer {
   email: string
   phone: string
   location: string
-  status: "active" | "pending" | "suspended"
   joinDate: string
   totalEvents: number
   totalRevenue: number
-  rating: number
+  averageRating: number
+  totalReviews: number
   avatar: string
   category: string
   description: string
@@ -102,11 +98,6 @@ interface TransformedOrganizer {
 export default function OrganizerManagement({ initialTab = "all" }: { initialTab?: "all" | "bulk-import" }) {
   const { toast } = useToast()
   const [searchTerm, setSearchTerm] = useState("")
-  const [statusFilter, setStatusFilter] = useState("all")
-  const [selectedOrganizer, setSelectedOrganizer] = useState<Organizer | null>(null)
-  const [showApprovalDialog, setShowApprovalDialog] = useState(false)
-  const [approvalAction, setApprovalAction] = useState<"approve" | "reject">("approve")
-  const [approvalMessage, setApprovalMessage] = useState("")
   const [organizers, setOrganizers] = useState<Organizer[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -142,56 +133,50 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
   }
 
   const transformOrganizerData = (organizer: Organizer): TransformedOrganizer => {
-    // Determine status based on isActive and isVerified
-    let status: "active" | "pending" | "suspended" = "pending"
-    if (organizer.isActive && organizer.isVerified) {
-      status = "active"
-    } else if (!organizer.isActive) {
-      status = "suspended"
-    } else if (!organizer.isVerified) {
-      status = "pending"
-    }
-
-    // Generate location from available data
     const location = organizer.headquarters || organizer.businessAddress || "Location not specified"
-    
-    // Calculate rating based on reviews or events
-    const rating = organizer.totalEvents > 10 ? 4.5 : organizer.totalEvents > 5 ? 4.0 : organizer.totalEvents > 0 ? 3.5 : 0
+    const eventCount = organizer._count?.organizedEvents ?? organizer.totalEvents ?? 0
+    const avg = Number(organizer.averageRating ?? 0)
+    const reviewCount = organizer.totalReviews ?? 0
 
-    // Mock documents (replace with actual document data when available)
-    const documents = organizer.certifications && organizer.certifications.length > 0 
-      ? organizer.certifications 
-      : ["Business Registration", "Tax ID"]
+    const documents =
+      organizer.certifications && organizer.certifications.length > 0
+        ? organizer.certifications
+        : ["Business Registration", "Tax ID"]
 
     return {
       id: organizer.id,
       name: organizer.organizationName || `${organizer.firstName} ${organizer.lastName}`,
       email: organizer.email,
       phone: organizer.phone || organizer.businessPhone || "Not provided",
-      location: location,
-      status: status,
-      joinDate: new Date(organizer.createdAt).toISOString().split('T')[0],
-      totalEvents: organizer.totalEvents || organizer._count?.organizedEvents || 0,
+      location,
+      joinDate: new Date(organizer.createdAt).toISOString().split("T")[0],
+      totalEvents: eventCount,
       totalRevenue: organizer.totalRevenue || 0,
-      rating: rating,
-      avatar: organizer.avatar || `/placeholder.svg?height=40&width=40&text=${organizer.firstName?.charAt(0) || 'O'}${organizer.lastName?.charAt(0) || 'R'}`,
+      averageRating: avg,
+      totalReviews: reviewCount,
+      avatar:
+        organizer.avatar ||
+        `/placeholder.svg?height=40&width=40&text=${organizer.firstName?.charAt(0) || "O"}${organizer.lastName?.charAt(0) || "R"}`,
       category: organizer.specialties?.[0] || "General Events",
       description: organizer.description || "No description provided",
-      documents: documents,
-      lastActive: organizer.lastLogin ? new Date(organizer.lastLogin).toISOString().split('T')[0] : new Date(organizer.updatedAt).toISOString().split('T')[0],
-      originalData: organizer
+      documents,
+      lastActive: organizer.lastLogin
+        ? new Date(organizer.lastLogin).toISOString().split("T")[0]
+        : new Date(organizer.updatedAt).toISOString().split("T")[0],
+      originalData: organizer,
     }
   }
 
-  // Filter organizers based on search and status
   const filteredOrganizers: TransformedOrganizer[] = organizers
     .map(transformOrganizerData)
     .filter((organizer) => {
-      const matchesSearch =
-        organizer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        organizer.email.toLowerCase().includes(searchTerm.toLowerCase())
-      const matchesStatus = statusFilter === "all" || organizer.status === statusFilter
-      return matchesSearch && matchesStatus
+      const q = searchTerm.trim().toLowerCase()
+      if (!q) return true
+      return (
+        organizer.name.toLowerCase().includes(q) ||
+        organizer.email.toLowerCase().includes(q) ||
+        organizer.category.toLowerCase().includes(q)
+      )
     })
 
   // Calculate statistics
@@ -200,74 +185,6 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
     active: organizers.filter((o) => o.isActive && o.isVerified).length,
     pending: organizers.filter((o) => !o.isVerified).length,
     suspended: organizers.filter((o) => !o.isActive).length,
-  }
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "active":
-        return (
-          <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
-            <CheckCircle className="w-3 h-3 mr-1" />
-            Active
-          </Badge>
-        )
-      case "pending":
-        return (
-          <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">
-            <Clock className="w-3 h-3 mr-1" />
-            Pending
-          </Badge>
-        )
-      case "suspended":
-        return (
-          <Badge className="bg-red-100 text-red-800 hover:bg-red-100">
-            <Ban className="w-3 h-3 mr-1" />
-            Suspended
-          </Badge>
-        )
-      default:
-        return <Badge variant="secondary">{status}</Badge>
-    }
-  }
-
-  const handleApproval = (organizer: TransformedOrganizer, action: "approve" | "reject") => {
-    setSelectedOrganizer(organizer.originalData)
-    setApprovalAction(action)
-    setShowApprovalDialog(true)
-  }
-
-  const submitApproval = async () => {
-    if (!selectedOrganizer) return
-    
-    try {
-      // Here you would implement the actual approval/rejection logic
-      const response = await fetch(`/api/admin/organizers/${selectedOrganizer?.id}/status`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          action: approvalAction,
-          message: approvalMessage
-        })
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to update organizer status')
-      }
-
-      // Refresh the organizers list
-      await fetchOrganizers()
-      setShowApprovalDialog(false)
-      setApprovalMessage("")
-    } catch (error: any) {
-      console.error('Error updating organizer status:', error)
-      toast({
-        title: "Error",
-        description: error.message || "Failed to update organizer status",
-        variant: "destructive"
-      })
-    }
   }
 
   const handleExport = async () => {
@@ -415,28 +332,16 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
           {/* Search and Filter */}
           <Card>
             <CardContent className="w-auto max-w-300">
-              <div className="flex flex-col md:flex-row gap-2 mb-6">
-                <div className="flex-1 relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <div className="mb-6 max-w-xl">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
-                    placeholder="Search organizers by name or email..."
+                    placeholder="Search by name, email, or category…"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10"
                   />
                 </div>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-full md:w-48">
-                    <Filter className="w-4 h-4 mr-2" />
-                    <SelectValue placeholder="Filter by status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="suspended">Suspended</SelectItem>
-                  </SelectContent>
-                </Select>
               </div>
 
           {/* Organizers Table */}
@@ -447,11 +352,10 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
                   <TableHead>Organizer</TableHead>
                   <TableHead>Contact</TableHead>
                   <TableHead>Category</TableHead>
-                  <TableHead>Status</TableHead>
                   <TableHead>Events</TableHead>
                   <TableHead>Revenue</TableHead>
                   <TableHead>Rating</TableHead>
-                  <TableHead>Actions</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -487,7 +391,6 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
                     <TableCell>
                       <Badge variant="outline">{organizer.category}</Badge>
                     </TableCell>
-                    <TableCell>{getStatusBadge(organizer.status)}</TableCell>
                     <TableCell>
                       <div className="flex items-center">
                         <Calendar className="w-4 h-4 mr-1 text-gray-400" />
@@ -500,29 +403,20 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center">
-                        <Star className="w-4 h-4 mr-1 text-yellow-400" />
-                        {organizer.rating || "N/A"}
+                      <div className="flex flex-col gap-0.5">
+                        <div className="flex items-center gap-1">
+                          <Star className="h-4 w-4 shrink-0 text-amber-400" />
+                          <span className="font-medium tabular-nums">
+                            {organizer.totalReviews > 0 ? organizer.averageRating.toFixed(1) : "—"}
+                          </span>
+                        </div>
+                        <span className="text-xs text-muted-foreground">
+                          {organizer.totalReviews} review{organizer.totalReviews !== 1 ? "s" : ""}
+                        </span>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-2">
-                        {organizer.status === "pending" && (
-                          <>
-                            <Button
-                              size="sm"
-                              onClick={() => handleApproval(organizer, "approve")}
-                              className="bg-green-600 hover:bg-green-700"
-                            >
-                              <CheckCircle className="w-3 h-3 mr-1" />
-                              Approve
-                            </Button>
-                            <Button size="sm" variant="destructive" onClick={() => handleApproval(organizer, "reject")}>
-                              <XCircle className="w-3 h-3 mr-1" />
-                              Reject
-                            </Button>
-                          </>
-                        )}
+                      <div className="flex items-center justify-end gap-2">
                         <Dialog>
                           <DialogTrigger asChild>
                             <Button size="sm" variant="outline">
@@ -543,7 +437,6 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
                                 <div>
                                   <h3 className="text-xl font-semibold">{organizer.name}</h3>
                                   <p className="text-gray-600">{organizer.category}</p>
-                                  {getStatusBadge(organizer.status)}
                                 </div>
                               </div>
 
@@ -578,8 +471,10 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
                                       Revenue
                                     </div>
                                     <div className="flex items-center">
-                                      <Star className="w-4 h-4 mr-2" />
-                                      {organizer.rating || "N/A"} Rating
+                                      <Star className="w-4 h-4 mr-2 text-amber-400" />
+                                      {organizer.totalReviews > 0
+                                        ? `${organizer.averageRating.toFixed(1)} (${organizer.totalReviews} reviews)`
+                                        : "No reviews yet"}
                                     </div>
                                   </div>
                                 </div>
@@ -615,27 +510,11 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
                               <MoreHorizontal className="w-4 h-4" />
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent>
+                          <DropdownMenuContent align="end">
                             <DropdownMenuItem onClick={() => handleSendMessage(organizer)}>
                               <Mail className="w-4 h-4 mr-2" />
-                              Send Message
+                              Send account email
                             </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <TrendingUp className="w-4 h-4 mr-2" />
-                              View Analytics
-                            </DropdownMenuItem>
-                            {organizer.status === "active" && (
-                              <DropdownMenuItem className="text-red-600">
-                                <Ban className="w-4 h-4 mr-2" />
-                                Suspend Account
-                              </DropdownMenuItem>
-                            )}
-                            {organizer.status === "suspended" && (
-                              <DropdownMenuItem className="text-green-600">
-                                <CheckCircle className="w-4 h-4 mr-2" />
-                                Reactivate Account
-                              </DropdownMenuItem>
-                            )}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </div>
@@ -696,46 +575,6 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
         </TabsContent>
       </Tabs>
 
-      {/* Approval Dialog */}
-      <Dialog open={showApprovalDialog} onOpenChange={setShowApprovalDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{approvalAction === "approve" ? "Approve Organizer" : "Reject Organizer"}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <p>
-              Are you sure you want to {approvalAction} <strong>{selectedOrganizer?.organizationName || `${selectedOrganizer?.firstName} ${selectedOrganizer?.lastName}`}</strong>?
-            </p>
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                {approvalAction === "approve" ? "Approval Message (Optional)" : "Rejection Reason"}
-              </label>
-              <Textarea
-                placeholder={
-                  approvalAction === "approve"
-                    ? "Welcome message for the organizer..."
-                    : "Please provide a reason for rejection..."
-                }
-                value={approvalMessage}
-                onChange={(e) => setApprovalMessage(e.target.value)}
-                rows={3}
-              />
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setShowApprovalDialog(false)}>
-                Cancel
-              </Button>
-              <Button
-                onClick={submitApproval}
-                className={approvalAction === "approve" ? "bg-green-600 hover:bg-green-700" : ""}
-                variant={approvalAction === "reject" ? "destructive" : "default"}
-              >
-                {approvalAction === "approve" ? "Approve" : "Reject"}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }
