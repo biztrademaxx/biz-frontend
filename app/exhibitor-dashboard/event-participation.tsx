@@ -82,13 +82,38 @@ interface Booth {
   }
 }
 
+/** Matches GET /api/exhibitors/[id]/events nested `event.venue` select. */
+interface EventVenueInfo {
+  venueName: string
+  venueAddress: string
+  venueCity: string
+  venueState: string
+  venueCountry: string
+  venueZipCode: string
+}
+
+function formatEventVenue(venue: string | EventVenueInfo | null | undefined): string {
+  if (venue == null) return "Venue TBA"
+  if (typeof venue === "string") return venue.trim() || "Venue TBA"
+  const parts = [
+    venue.venueName,
+    venue.venueAddress,
+    [venue.venueCity, venue.venueState].filter(Boolean).join(", "),
+    venue.venueCountry,
+    venue.venueZipCode,
+  ]
+    .map((p) => (typeof p === "string" ? p.trim() : ""))
+    .filter(Boolean)
+  return parts.length ? parts.join(" · ") : "Venue TBA"
+}
+
 interface Event {
   id: string
   eventId: string
   eventName: string
   date: string
   endDate: string
-  venue: string
+  venue: string | EventVenueInfo | null
   boothSize: string
   boothNumber: string
   paymentStatus: string
@@ -133,12 +158,8 @@ export default function EventParticipation({ exhibitorId }: EventParticipationPr
         `/api/exhibitors/${exhibitorId}/events`
       )
 
-      if (data?.success && Array.isArray(data.events)) {
-        const list = data.events as Event[]
-        setEvents(list)
-      } else {
-        setEvents([])
-      }
+      const list = Array.isArray(data?.events) ? (data.events as Event[]) : []
+      setEvents(list)
     } catch (err) {
       console.error("Error fetching events:", err)
       setError(err instanceof Error ? err.message : "An error occurred")
@@ -201,7 +222,7 @@ export default function EventParticipation({ exhibitorId }: EventParticipationPr
               </div>
               <div className="flex items-center gap-2">
                 <MapPin className="w-4 h-4" />
-                {event.venue}
+                <span className="line-clamp-2">{formatEventVenue(event.venue)}</span>
               </div>
               <div className="flex items-center gap-2">
                 <Building className="w-4 h-4" />

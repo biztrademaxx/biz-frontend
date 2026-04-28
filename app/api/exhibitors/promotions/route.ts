@@ -1,109 +1,125 @@
-import { devLog } from "@/lib/dev-log"
+import { devLog } from "@/lib/dev-log";
 
-import { prisma } from "@/lib/prisma"
-import { NextRequest, NextResponse } from "next/server"
+import { prisma } from "@/lib/prisma";
+import { NextRequest, NextResponse } from "next/server";
+import { proxyGetToBackend } from "@/lib/proxy-backend-request";
 
 export async function GET(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url)
-    const exhibitorId = searchParams.get("exhibitorId")
+  const { searchParams } = new URL(request.url);
+  const exhibitorId = searchParams.get("exhibitorId");
+  if (!exhibitorId) {
+    return NextResponse.json({ error: "exhibitorId is required" }, { status: 400 });
+  }
 
-    if (!exhibitorId) {
-      return NextResponse.json({ error: "exhibitorId is required" }, { status: 400 })
-    }
+  const backendPath = `/api/exhibitors/promotions?exhibitorId=${encodeURIComponent(exhibitorId)}`;
 
-    // Fetch promotions for this exhibitor
-    const promotions = await prisma.promotion.findMany({
-      where: {
-        exhibitorId,
-      },
-      include: {
-        event: {
-          select: {
-            title: true,
-            startDate: true,
-            endDate: true,
-          }
+  if (prisma) {
+    try {
+      const promotions = await prisma.promotion.findMany({
+        where: { exhibitorId },
+        include: {
+          event: {
+            select: {
+              title: true,
+              startDate: true,
+              endDate: true,
+            },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+      });
+
+      const booths = await prisma.exhibitorBooth.findMany({
+        where: { exhibitorId },
+        include: { event: true },
+        orderBy: { createdAt: "desc" },
+      });
+
+      const eventsMap = new Map<string, Record<string, unknown>>();
+      booths.forEach((b) => {
+        if (b.event?.id && !eventsMap.has(b.event.id)) {
+          eventsMap.set(b.event.id, {
+            id: b.event.id,
+            title: b.event.title,
+            date: b.event.startDate,
+            location: (b.event as { venueId?: string }).venueId || "N/A",
+            status: b.event.status || "Scheduled",
+          });
         }
+      });
+
+      const formattedPromotions = promotions.map((promotion) => ({
+        id: promotion.id,
+        eventId: promotion.eventId,
+        eventName: promotion.event?.title || "Unknown Event",
+        packageType: promotion.packageType,
+        status: promotion.status,
+        impressions: promotion.impressions || 0,
+        clicks: promotion.clicks || 0,
+        conversions: promotion.conversions || 0,
+        startDate: promotion.startDate,
+        endDate: promotion.endDate,
+        amount: promotion.amount,
+        duration: promotion.duration,
+        targetCategories: promotion.targetCategories || [],
+      }));
+
+      return NextResponse.json(
+        {
+          promotions: formattedPromotions,
+          events: Array.from(eventsMap.values()),
+        },
+        { status: 200 },
+      );
+    } catch {
+      // fall through to Express
+    }
+  }
+
+  try {
+    const upstream = await proxyGetToBackend(request, backendPath);
+    const text = await upstream.text();
+    return new NextResponse(text, {
+      status: upstream.status,
+      headers: {
+        "content-type": upstream.headers.get("content-type") || "application/json",
       },
-      orderBy: { createdAt: "desc" },
-    })
-
-    // Also fetch events for the promotion creation form
-    const booths = await prisma.exhibitorBooth.findMany({
-      where: { exhibitorId },
-      include: { event: true },
-      orderBy: { createdAt: "desc" },
-    })
-
-    const eventsMap = new Map<string, any>()
-    booths.forEach((b) => {
-      if (b.event?.id && !eventsMap.has(b.event.id)) {
-        eventsMap.set(b.event.id, {
-          id: b.event.id,
-          title: b.event.title,
-          date: b.event.startDate, // Use startDate for the date display
-          location: b.event.venueId || "N/A",
-          status: b.event.status || "Scheduled",
-        })
-      }
-    })
-
-    // Transform promotions data to match your frontend interface
-    const formattedPromotions = promotions.map(promotion => ({
-      id: promotion.id,
-      eventId: promotion.eventId,
-      eventName: promotion.event?.title || "Unknown Event",
-      packageType: promotion.packageType,
-      status: promotion.status,
-      impressions: promotion.impressions || 0,
-      clicks: promotion.clicks || 0,
-      conversions: promotion.conversions || 0,
-      startDate: promotion.startDate,
-      endDate: promotion.endDate,
-      amount: promotion.amount,
-      duration: promotion.duration,
-      targetCategories: promotion.targetCategories || [],
-    }))
-
-    return NextResponse.json({ 
-      promotions: formattedPromotions,
-      events: Array.from(eventsMap.values()) 
-    }, { status: 200 })
-
+    });
   } catch (error) {
-    console.error("Error fetching promotions:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    console.error("Error proxying exhibitor promotions:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 502 });
   }
 }
+
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
+    const body = await request.json();
     const {
       exhibitorId,
       eventId,
       packageType,
       targetCategories,
       amount,
-      duration
-    } = body
+      duration,
+    } = body;
 
-    devLog("[API] Creating promotion with data:", body)
+    devLog("[API] Creating promotion with data:", body);
 
-    // Validate required fields
     if (!exhibitorId || !eventId || !packageType || !targetCategories) {
-      return NextResponse.json(
-        { error: "Missing required fields" },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    // Calculate start and end dates
-    const startDate = new Date()
-    const endDate = new Date()
-    endDate.setDate(endDate.getDate() + duration)
+    if (!prisma) {
+      return NextResponse.json(
+        { error: "Database not configured on this app; use the main API to create promotions." },
+        { status: 503 },
+      );
+    }
 
-    // Create the promotion
+    const startDate = new Date();
+    const endDate = new Date();
+    endDate.setDate(endDate.getDate() + duration);
+
     const promotion = await prisma.promotion.create({
       data: {
         exhibitorId,
@@ -119,20 +135,11 @@ export async function POST(request: NextRequest) {
         clicks: 0,
         conversions: 0,
       },
-    })
+    });
 
-    devLog("[API] Promotion created successfully:", promotion)
-
-    return NextResponse.json({
-      success: true,
-      promotion
-    }, { status: 201 })
-
+    return NextResponse.json({ success: true, promotion }, { status: 201 });
   } catch (error) {
-    console.error("[API] Error creating promotion:", error)
-    return NextResponse.json(
-      { error: "Failed to create promotion" },
-      { status: 500 }
-    )
+    console.error("[API] Error creating promotion:", error);
+    return NextResponse.json({ error: "Failed to create promotion" }, { status: 500 });
   }
 }

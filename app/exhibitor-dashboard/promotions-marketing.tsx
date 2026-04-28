@@ -4,6 +4,7 @@
 import { devLog } from "@/lib/dev-log"
 
 import { useState, useEffect } from "react"
+import { apiFetch } from "@/lib/api"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -94,11 +95,9 @@ export default function PromotionsMarketing({ exhibitorId, onPromotionCreated }:
     const fetchPackages = async () => {
       try {
         setLoadingPackages(true)
-        const res = await fetch("/api/promotion-packages?userType=EXHIBITOR")
-        if (!res.ok) throw new Error("Failed to fetch packages")
-        const data = await res.json()
+        const data = await apiFetch<{ packages: any[] }>("/api/promotion-packages?userType=EXHIBITOR")
 
-        const transformedPackages = data.packages.map((pkg: any) => ({
+        const transformedPackages = (data.packages ?? []).map((pkg: any) => ({
           id: pkg.id,
           name: pkg.name,
           description: pkg.description,
@@ -133,9 +132,9 @@ export default function PromotionsMarketing({ exhibitorId, onPromotionCreated }:
     const fetchEvents = async () => {
       try {
         setLoadingEvents(true)
-        const res = await fetch(`/api/exhibitors/promotions?exhibitorId=${exhibitorId}`)
-        if (!res.ok) throw new Error("Failed to fetch exhibitor events")
-        const data = await res.json()
+        const data = await apiFetch<{ events?: Event[] }>(
+          `/api/exhibitors/promotions?exhibitorId=${encodeURIComponent(exhibitorId)}`,
+        )
 
         setExhibitorEvents(data.events || [])
       } catch (error) {
