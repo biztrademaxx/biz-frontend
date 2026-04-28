@@ -1,5 +1,8 @@
 "use client"
 
+
+import { devLog } from "@/lib/dev-log"
+
 import type React from "react"
 
 import { useState } from "react"
@@ -39,11 +42,11 @@ export function SecurityForm({ eventId, organizerId }: SecurityFormProps) {
       return
     }
 
-    console.log("Submitting Security Form:", { ...formData, eventId })
+    devLog("Submitting Security Form:", { ...formData, eventId })
   }
 
   const handleDownloadPDF = () => {
-    console.log("Downloading Security Form PDF")
+    devLog("Downloading Security Form PDF")
   }
 
   const totals = calculateTotal()

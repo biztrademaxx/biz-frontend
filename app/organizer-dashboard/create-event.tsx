@@ -1,5 +1,8 @@
 "use client"
 
+
+import { devLog } from "@/lib/dev-log"
+
 import type React from "react"
 
 import { useState, useEffect, useRef } from "react"
@@ -725,7 +728,7 @@ const handlePublishEvent = async () => {
   setIsPublishing(true)
   
   try {
-    console.log("🚀 Starting event submission process...")
+    devLog("🚀 Starting event submission process...")
 
     // Prepare exhibition spaces data
     const exhibitionSpaces = formData.spaceCosts
@@ -776,7 +779,7 @@ const handlePublishEvent = async () => {
         }
       })
 
-    console.log("📊 Exhibition spaces prepared:", exhibitionSpaces.length)
+    devLog("📊 Exhibition spaces prepared:", exhibitionSpaces.length)
 
     // Convert local times to UTC for backend
     const startDateWithTime = convertLocalToUTC(
@@ -791,9 +794,9 @@ const handlePublishEvent = async () => {
       formData.timezone
     ) || formData.endDate
 
-    console.log("⏰ Time conversion complete:")
-    console.log("Daily start:", formData.dailyStart, "-> UTC:", startDateWithTime)
-    console.log("Daily end:", formData.dailyEnd, "-> UTC:", endDateWithTime)
+    devLog("⏰ Time conversion complete:")
+    devLog("Daily start:", formData.dailyStart, "-> UTC:", startDateWithTime)
+    devLog("Daily end:", formData.dailyEnd, "-> UTC:", endDateWithTime)
 
     // Prepare ticket types
     const ticketTypes = [
@@ -820,7 +823,7 @@ const handlePublishEvent = async () => {
       },
     ].filter((ticket) => ticket.isActive)
 
-    console.log("🎟️ Ticket types prepared:", ticketTypes.length)
+    devLog("🎟️ Ticket types prepared:", ticketTypes.length)
 
     // Prepare the complete event data
     const eventData = {
@@ -861,10 +864,10 @@ const handlePublishEvent = async () => {
       ticketTypes: ticketTypes,
     }
 
-    console.log("📤 Submitting event data to API...")
-    console.log("Event title:", eventData.title)
-    console.log("Organizer ID:", organizerId)
-    console.log("Status:", eventData.status)
+    devLog("📤 Submitting event data to API...")
+    devLog("Event title:", eventData.title)
+    devLog("Organizer ID:", organizerId)
+    devLog("Status:", eventData.status)
 
     // Submit event for approval
     await apiFetch(`/api/organizers/${organizerId}/events`, {
@@ -897,7 +900,7 @@ const handlePublishEvent = async () => {
       duration: 10000,
     })
 
-    console.log("🎉 Event submitted successfully!")
+    devLog("🎉 Event submitted successfully!")
 
     // Reset form after successful submission
     setFormData({
@@ -1020,7 +1023,7 @@ const handlePublishEvent = async () => {
     // Reset to first tab
     setActiveTab("basic")
     
-    console.log("🔄 Form reset complete")
+    devLog("🔄 Form reset complete")
 
   } catch (error: any) {
     console.error("❌ Error submitting event:", error)

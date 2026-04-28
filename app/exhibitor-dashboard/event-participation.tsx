@@ -1,5 +1,8 @@
 "use client"
 
+
+import { devLog } from "@/lib/dev-log"
+
 import { useState, useEffect } from "react"
 import { apiFetch } from "@/lib/api"
 import { Button } from "@/components/ui/button"
@@ -151,14 +154,14 @@ export default function EventParticipation({ exhibitorId }: EventParticipationPr
 
   // Get current date for comparison (UTC to avoid timezone issues)
   const currentDate = new Date()
-  console.log("EventParticipation - Current date:", currentDate.toISOString())
+  devLog("EventParticipation - Current date:", currentDate.toISOString())
 
   // Upcoming events: events that haven't ended yet
   const upcomingEvents = events.filter((event) => {
     try {
       const eventEndDate = new Date(event.rawEndDate)
       const isUpcoming = eventEndDate > currentDate
-      console.log(`Event: ${event.eventName}, Raw End: ${event.rawEndDate}, Parsed End: ${eventEndDate.toISOString()}, Is Upcoming: ${isUpcoming}`)
+      devLog(`Event: ${event.eventName}, Raw End: ${event.rawEndDate}, Parsed End: ${eventEndDate.toISOString()}, Is Upcoming: ${isUpcoming}`)
       return isUpcoming
     } catch (error) {
       console.error(`Error parsing date for event ${event.eventName}:`, error)
@@ -171,7 +174,7 @@ export default function EventParticipation({ exhibitorId }: EventParticipationPr
     try {
       const eventEndDate = new Date(event.rawEndDate)
       const isPast = eventEndDate <= currentDate
-      console.log(`Event: ${event.eventName}, Raw End: ${event.rawEndDate}, Parsed End: ${eventEndDate.toISOString()}, Is Past: ${isPast}`)
+      devLog(`Event: ${event.eventName}, Raw End: ${event.rawEndDate}, Parsed End: ${eventEndDate.toISOString()}, Is Past: ${isPast}`)
       return isPast
     } catch (error) {
       console.error(`Error parsing date for event ${event.eventName}:`, error)
@@ -179,11 +182,11 @@ export default function EventParticipation({ exhibitorId }: EventParticipationPr
     }
   })
 
-  console.log("EventParticipation - All events:", events.length)
-  console.log("EventParticipation - Upcoming events:", upcomingEvents.length)
-  console.log("EventParticipation - Past events:", pastEvents.length)
-  console.log("EventParticipation - Upcoming events names:", upcomingEvents.map(e => e.eventName))
-  console.log("EventParticipation - Past events names:", pastEvents.map(e => e.eventName))
+  devLog("EventParticipation - All events:", events.length)
+  devLog("EventParticipation - Upcoming events:", upcomingEvents.length)
+  devLog("EventParticipation - Past events:", pastEvents.length)
+  devLog("EventParticipation - Upcoming events names:", upcomingEvents.map(e => e.eventName))
+  devLog("EventParticipation - Past events names:", pastEvents.map(e => e.eventName))
 
   const EventCard = ({ event, isPast = false }: { event: Event; isPast?: boolean }) => (
     <Card>

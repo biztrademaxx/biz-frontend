@@ -1,3 +1,5 @@
+import { devLog } from "@/lib/dev-log"
+
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -10,22 +12,22 @@ export async function POST(request: NextRequest) {
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.id) {
-      console.log("❌ OTP Error: Unauthorized - No session found");
+      devLog("❌ OTP Error: Unauthorized - No session found");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { email } = await request.json();
-    console.log("📧 OTP Request:", { userId: session.user.id, email });
+    devLog("📧 OTP Request:", { userId: session.user.id, email });
 
     if (!email) {
-      console.log("❌ OTP Error: Email is required");
+      devLog("❌ OTP Error: Email is required");
       return NextResponse.json({ error: "Email is required" }, { status: 400 });
     }
 
     // Basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      console.log("❌ OTP Error: Invalid email format");
+      devLog("❌ OTP Error: Invalid email format");
       return NextResponse.json({ error: "Please enter a valid email address" }, { status: 400 });
     }
 
@@ -35,7 +37,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!currentUser) {
-      console.log("❌ OTP Error: User not found");
+      devLog("❌ OTP Error: User not found");
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
@@ -48,7 +50,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (existingUser) {
-      console.log("❌ OTP Error: Email already registered with another account");
+      devLog("❌ OTP Error: Email already registered with another account");
       return NextResponse.json(
         { error: "This email is already registered with another account" },
         { status: 400 }
@@ -59,7 +61,7 @@ export async function POST(request: NextRequest) {
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 min
 
-    console.log("🔐 Generated OTP:", {
+    devLog("🔐 Generated OTP:", {
       userId: session.user.id,
       email: email,
       otp: otp,
@@ -84,7 +86,7 @@ export async function POST(request: NextRequest) {
     // Send the email
     await sendVerificationEmail(email, otp);
 
-    console.log("✅ OTP sent successfully to:", email);
+    devLog("✅ OTP sent successfully to:", email);
     return NextResponse.json({
       message: "Verification code sent successfully",
     });
@@ -107,19 +109,19 @@ export async function PUT(request: NextRequest) {
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.id) {
-      console.log("❌ OTP Verification Error: Unauthorized");
+      devLog("❌ OTP Verification Error: Unauthorized");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { code, email } = await request.json();
-    console.log("🔍 OTP Verification Request:", { 
+    devLog("🔍 OTP Verification Request:", { 
       userId: session.user.id, 
       email: email, 
       code: code 
     });
 
     if (!code || !email) {
-      console.log("❌ OTP Verification Error: Code and email are required");
+      devLog("❌ OTP Verification Error: Code and email are required");
       return NextResponse.json(
         { error: "Code and email are required" },
         { status: 400 }
@@ -128,7 +130,7 @@ export async function PUT(request: NextRequest) {
 
     // Validate code format
     if (!/^\d{6}$/.test(code)) {
-      console.log("❌ OTP Verification Error: Invalid code format");
+      devLog("❌ OTP Verification Error: Invalid code format");
       return NextResponse.json(
         { error: "Verification code must be 6 digits" },
         { status: 400 }
@@ -138,7 +140,7 @@ export async function PUT(request: NextRequest) {
     // Basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      console.log("❌ OTP Verification Error: Invalid email format");
+      devLog("❌ OTP Verification Error: Invalid email format");
       return NextResponse.json({ error: "Please enter a valid email address" }, { status: 400 });
     }
 
@@ -148,7 +150,7 @@ export async function PUT(request: NextRequest) {
     });
 
     if (!currentUser) {
-      console.log("❌ OTP Verification Error: User not found");
+      devLog("❌ OTP Verification Error: User not found");
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
@@ -161,7 +163,7 @@ export async function PUT(request: NextRequest) {
     });
 
     if (existingUser) {
-      console.log("❌ OTP Verification Error: Email already registered with another account");
+      devLog("❌ OTP Verification Error: Email already registered with another account");
       return NextResponse.json(
         { error: "This email is already registered with another account" },
         { status: 400 }
@@ -174,14 +176,14 @@ export async function PUT(request: NextRequest) {
     });
 
     if (!verification) {
-      console.log("❌ OTP Verification Error: No verification code found for user");
+      devLog("❌ OTP Verification Error: No verification code found for user");
       return NextResponse.json(
         { error: "No verification code found. Please request a new one." },
         { status: 400 }
       );
     }
 
-    console.log("📋 Stored OTP Details:", {
+    devLog("📋 Stored OTP Details:", {
       storedCode: verification.code,
       enteredCode: code,
       expiresAt: verification.expiresAt,
@@ -190,7 +192,7 @@ export async function PUT(request: NextRequest) {
     });
 
     if (verification.verified) {
-      console.log("❌ OTP Verification Error: Code already used");
+      devLog("❌ OTP Verification Error: Code already used");
       return NextResponse.json(
         { error: "This code has already been used. Please request a new one." },
         { status: 400 }
@@ -198,7 +200,7 @@ export async function PUT(request: NextRequest) {
     }
 
     if (verification.expiresAt < new Date()) {
-      console.log("❌ OTP Verification Error: Code expired");
+      devLog("❌ OTP Verification Error: Code expired");
       return NextResponse.json(
         { error: "Verification code expired. Please request a new one." },
         { status: 400 }
@@ -206,7 +208,7 @@ export async function PUT(request: NextRequest) {
     }
 
     if (verification.code !== code) {
-      console.log("❌ OTP Verification Error: Invalid code");
+      devLog("❌ OTP Verification Error: Invalid code");
       return NextResponse.json(
         { error: "Invalid verification code" },
         { status: 400 }
@@ -228,7 +230,7 @@ export async function PUT(request: NextRequest) {
       },
     });
 
-    console.log("✅ OTP Verification Successful:", {
+    devLog("✅ OTP Verification Successful:", {
       userId: session.user.id,
       email: email,
       verified: true
@@ -247,7 +249,7 @@ export async function PUT(request: NextRequest) {
     });
 
     if (error.code === "P2002") {
-      console.log("❌ OTP Verification Error: Email already exists in database");
+      devLog("❌ OTP Verification Error: Email already exists in database");
       return NextResponse.json(
         { error: "This email is already registered with another account" },
         { status: 400 }

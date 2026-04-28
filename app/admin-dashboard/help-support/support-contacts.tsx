@@ -50,11 +50,17 @@ export default function SupportContacts() {
 
   const fetchContacts = async () => {
     try {
-      const response = await fetch('/api/help-support')
+      const response = await fetch("/api/help-support")
       const data = await response.json()
-      setContacts(data)
+      const list = Array.isArray(data)
+        ? data
+        : Array.isArray((data as { data?: unknown })?.data)
+          ? ((data as { data: HelpSupportContent[] }).data)
+          : []
+      setContacts(list)
     } catch (error) {
-      console.error('Error fetching contacts:', error)
+      console.error("Error fetching contacts:", error)
+      setContacts([])
     } finally {
       setLoading(false)
     }
@@ -155,6 +161,11 @@ export default function SupportContacts() {
 
       {/* Contacts Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {contacts.length === 0 ? (
+          <p className="text-muted-foreground col-span-full py-8 text-center">
+            No support contacts yet. Add one to get started.
+          </p>
+        ) : null}
         {contacts.map((contact) => (
           <Card key={contact.id} className={!contact.isActive ? "opacity-60" : ""}>
             <CardHeader className="pb-3">

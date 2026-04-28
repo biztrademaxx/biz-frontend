@@ -1,5 +1,8 @@
 "use client"
 
+
+import { devLog } from "@/lib/dev-log"
+
 import { useState, useRef, useEffect } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -277,7 +280,7 @@ export function CreateEventForm() {
   }
 
   const handlePublish = async () => {
-    console.log("Publishing event:", formData)
+    devLog("Publishing event:", formData)
     
     // Validate required fields
     const errors: any = {}

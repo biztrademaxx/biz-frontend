@@ -1,5 +1,8 @@
 "use client"
 
+
+import { devLog } from "@/lib/dev-log"
+
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -296,13 +299,13 @@ export default function PromotionsMarketing({ exhibitorId, onPromotionCreated }:
   }
 
   const handlePayment = async () => {
-    console.log("[v0] Payment initiated")
-    console.log("[v0] Selected package:", selectedPackageData)
-    console.log("[v0] Selected event:", selectedEvent)
-    console.log("[v0] Selected categories:", selectedCategories)
+    devLog("[v0] Payment initiated")
+    devLog("[v0] Selected package:", selectedPackageData)
+    devLog("[v0] Selected event:", selectedEvent)
+    devLog("[v0] Selected categories:", selectedCategories)
 
     if (!selectedPackageData || !selectedEvent) {
-      console.log("[v0] Validation failed - missing package or event")
+      devLog("[v0] Validation failed - missing package or event")
       toast({
         title: "Error",
         description: "Please select an event and package",
@@ -312,7 +315,7 @@ export default function PromotionsMarketing({ exhibitorId, onPromotionCreated }:
     }
    
     if (selectedCategories.length === 0) {
-      console.log("[v0] Validation failed - no categories selected")
+      devLog("[v0] Validation failed - no categories selected")
       toast({
         title: "Error",
         description: "Please select at least one target category",
@@ -324,7 +327,7 @@ export default function PromotionsMarketing({ exhibitorId, onPromotionCreated }:
     setIsProcessingPayment(true)
 
     try {
-      console.log("[v0] Sending API request...")
+      devLog("[v0] Sending API request...")
       const response = await fetch("/api/promotions", {
         method: "POST",
         headers: {
@@ -340,9 +343,9 @@ export default function PromotionsMarketing({ exhibitorId, onPromotionCreated }:
         }),
       })
 
-      console.log("[v0] API response status:", response.status)
+      devLog("[v0] API response status:", response.status)
       const data = await response.json()
-      console.log("[v0] API response data:", data)
+      devLog("[v0] API response data:", data)
 
       if (!response.ok) {
         throw new Error(data.error || "Failed to process payment")

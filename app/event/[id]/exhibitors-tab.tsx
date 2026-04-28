@@ -1,5 +1,7 @@
-// components/exhibitors-tab.tsx
 "use client"
+
+// components/exhibitors-tab.tsx
+import { devLog } from "@/lib/dev-log"
 
 import { useEffect, useState } from "react"
 import Image from "next/image"
@@ -57,7 +59,7 @@ export default function ExhibitorsTab({ eventId }: ExhibitorsTabProps) {
         setError(null)
         const data = await apiFetch<{ data?: { exhibitors?: Exhibitor[] }; booths?: Exhibitor[] }>(`/api/events/${eventId}/exhibitors`, { auth: false })
         const list = data.booths ?? data.data?.exhibitors ?? []
-        console.log("Fetched exhibitors:", list)
+        devLog("Fetched exhibitors:", list)
         const normalized = Array.isArray(list)
           ? list.map((item: any) => {
               const nestedExhibitor = item?.exhibitor ?? {}

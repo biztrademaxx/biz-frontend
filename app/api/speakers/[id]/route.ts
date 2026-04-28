@@ -1,3 +1,5 @@
+import { devLog } from "@/lib/dev-log"
+
 import { type NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 
@@ -75,9 +77,9 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     const { id } = await params
     const body = await request.json()
 
-    console.log("[v0] Received update request for speaker:", id)
-    console.log("[v0] Update data:", body)
-    console.log("[v0] Avatar in request:", body.avatar)
+    devLog("[v0] Received update request for speaker:", id)
+    devLog("[v0] Update data:", body)
+    devLog("[v0] Avatar in request:", body.avatar)
 
     await prisma.$connect()
 
@@ -107,8 +109,8 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       avatar: body.avatar !== undefined ? body.avatar : existingSpeaker.avatar,
     }
 
-    console.log("[v0] Update data prepared:", updateData)
-    console.log("[v0] Avatar to be saved:", updateData.avatar)
+    devLog("[v0] Update data prepared:", updateData)
+    devLog("[v0] Avatar to be saved:", updateData.avatar)
 
     const updatedSpeaker = await prisma.user.update({
       where: { id },
@@ -130,8 +132,8 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       },
     })
 
-    console.log("[v0] Speaker updated successfully")
-    console.log("[v0] Avatar after update:", updatedSpeaker.avatar)
+    devLog("[v0] Speaker updated successfully")
+    devLog("[v0] Avatar after update:", updatedSpeaker.avatar)
 
     const profile = {
       fullName: `${updatedSpeaker.firstName} ${updatedSpeaker.lastName}`,
@@ -147,8 +149,8 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       avatar: updatedSpeaker.avatar || "",
     }
 
-    console.log("[v0] Profile response:", profile)
-    console.log("[v0] Avatar in response:", profile.avatar)
+    devLog("[v0] Profile response:", profile)
+    devLog("[v0] Avatar in response:", profile.avatar)
 
     return NextResponse.json({
       success: true,

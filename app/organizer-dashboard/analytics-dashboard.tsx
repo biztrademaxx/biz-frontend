@@ -1,5 +1,8 @@
 "use client"
 
+
+import { devLog } from "@/lib/dev-log"
+
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -115,7 +118,7 @@ export default function AnalyticsDashboard({
 
   const downloadReport = (type: string) => {
     // Mock download functionality
-    console.log(`Downloading ${type} report...`)
+    devLog(`Downloading ${type} report...`)
     toast({
       title: "Download Started",
       description: `${type} report is being prepared for download.`,

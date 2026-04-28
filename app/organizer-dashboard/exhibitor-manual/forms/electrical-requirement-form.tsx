@@ -1,5 +1,8 @@
 "use client"
 
+
+import { devLog } from "@/lib/dev-log"
+
 import type React from "react"
 
 import { useState } from "react"
@@ -44,11 +47,11 @@ export function ElectricalRequirementForm({ eventId, organizerId }: ElectricalRe
       return
     }
 
-    console.log("Submitting Electrical Requirement Form:", { ...formData, eventId })
+    devLog("Submitting Electrical Requirement Form:", { ...formData, eventId })
   }
 
   const handleDownloadPDF = () => {
-    console.log("Downloading Electrical Requirement Form PDF")
+    devLog("Downloading Electrical Requirement Form PDF")
   }
 
   const temporaryCost = calculateCost(formData.temporaryLoad)

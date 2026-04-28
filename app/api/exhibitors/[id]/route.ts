@@ -1,3 +1,5 @@
+import { devLog } from "@/lib/dev-log"
+
 import { type NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 // import { ObjectId } from "bson"   // <-- Add this for MongoDB ObjectId validation
@@ -89,7 +91,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         exhibitor: updatedExhibitor,
       })
     } catch (dbError) {
-      console.log("Database update failed, returning mock response:", dbError)
+      devLog("Database update failed, returning mock response:", dbError)
 
       // Return mock success response
       return NextResponse.json({

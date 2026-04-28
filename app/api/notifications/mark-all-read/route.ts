@@ -1,3 +1,5 @@
+import { devLog } from "@/lib/dev-log"
+
 import { type NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import {prisma} from "@/lib/prisma"
@@ -25,7 +27,7 @@ export async function POST(request: NextRequest) {
     })
 
     // The read status will be tracked on the client side using localStorage
-    console.log("[v0] Marking all notifications as read")
+    devLog("[v0] Marking all notifications as read")
 
     // For PushNotifications, we don't have per-user read tracking in the database
     // The frontend will handle read status using localStorage

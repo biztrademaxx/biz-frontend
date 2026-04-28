@@ -1,4 +1,7 @@
 "use client"
+
+import { devLog } from "@/lib/dev-log"
+
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { apiFetch } from "@/lib/api"
@@ -63,16 +66,16 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
       try {
         setLoading(true)
         setError(null)
-        console.log("[v0] Fetching events for organizer:", organizerId)
+        devLog("[v0] Fetching events for organizer:", organizerId)
 
         const data = await apiFetch<{ success?: boolean; events?: Event[]; error?: string }>(
           `/api/organizers/${organizerId}/events?page=1&limit=100`,
           { auth: true },
         )
-        console.log("[v0] Fetched events data:", data)
+        devLog("[v0] Fetched events data:", data)
 
         if (data.events && Array.isArray(data.events)) {
-          console.log("[v0] Setting events:", data.events.length)
+          devLog("[v0] Setting events:", data.events.length)
           const eventsWithStatus = data.events.map((event: Event) => ({
             ...event,
             timelineStatus: calculateTimelineStatus(event.startDate, event.endDate),

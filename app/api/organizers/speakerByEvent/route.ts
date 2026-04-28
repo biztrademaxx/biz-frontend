@@ -1,3 +1,5 @@
+import { devLog } from "@/lib/dev-log"
+
 import { type NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getServerSession } from "next-auth"
@@ -5,7 +7,7 @@ import { authOptions } from "@/lib/auth-options"
 
 export async function GET(request: NextRequest) {
   try {
-    console.log("[v0] GET /api/events/speaker-sessions called")
+    devLog("[v0] GET /api/events/speaker-sessions called")
 
     const { searchParams } = new URL(request.url)
     const eventId = searchParams.get("eventId")

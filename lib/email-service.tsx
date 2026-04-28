@@ -1,3 +1,5 @@
+import { devLog } from "@/lib/dev-log"
+
 import nodemailer from "nodemailer"
 
 // Create reusable transporter
@@ -39,7 +41,7 @@ export async function sendBadgeEmail(email: string, badgeDataUrl: string, attend
       ],
     })
 
-    console.log("[v0] Badge email sent:", info.messageId)
+    devLog("[v0] Badge email sent:", info.messageId)
     return { success: true, messageId: info.messageId }
   } catch (error) {
     console.error("[v0] Error sending badge email:", error)

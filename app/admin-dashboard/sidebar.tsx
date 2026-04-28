@@ -209,8 +209,6 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
   const [activeSubSection, setActiveSubSection] = useState("")
   const [openMenus, setOpenMenus] = useState<Set<string>>(new Set(["dashboard"]))
 
-  console.log("[v0] User Role:", userRole)
-  console.log("[v0] User Permissions:", userPermissions)
 
   const hasPermission = (itemId: string): boolean => {
     // Super admin has access to everything
@@ -425,7 +423,6 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
       id: "support",
       subItems: [
         { title: "Support Tickets", id: "support-tickets" },
-        { title: "Contact Logs", id: "support-contacts" },
         // { title: "FAQ Management", id: "support-faq" },
         // { title: "Admin Notes", id: "support-notes" },
       ],
@@ -474,9 +471,6 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
   const renderContent = () => {
     const section = activeSection
     const subSection = activeSubSection
-
-    console.log("Active Section:", section)
-    console.log("Active Sub Section:", subSection)
 
     // Handle sub-sections first
     if (subSection) {
@@ -658,7 +652,6 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
           return <BannersPage />
 
         default:
-          console.log("Unknown sub-section:", subSection)
           break
       }
     }
@@ -703,13 +696,11 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
   }
 
   const handleSectionClick = (id: string) => {
-    console.log("Main section clicked:", id)
     setActiveSection(id)
     setActiveSubSection("")
   }
 
   const handleSubSectionClick = (parentId: string, subId: string) => {
-    console.log("Sub-section clicked:", parentId, subId)
     setActiveSection(parentId)
     setActiveSubSection(subId)
   }

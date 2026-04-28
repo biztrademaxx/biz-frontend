@@ -1,3 +1,5 @@
+import { devLog } from "@/lib/dev-log"
+
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getServerSession } from "next-auth/next"
@@ -38,10 +40,10 @@ export async function POST(
     // Handle badge file upload to Cloudinary if provided
     if (badgeFile && badgeFile.size > 0) {
       try {
-        console.log("Uploading custom badge to Cloudinary...")
+        devLog("Uploading custom badge to Cloudinary...")
         const uploadResult = await uploadToCloudinary(badgeFile, "event-badges")
         badgeImageUrl = uploadResult.secure_url
-        console.log("Badge uploaded to Cloudinary:", badgeImageUrl)
+        devLog("Badge uploaded to Cloudinary:", badgeImageUrl)
       } catch (uploadError) {
         console.error("Error uploading badge to Cloudinary:", uploadError)
         // Continue with default badge
@@ -84,7 +86,7 @@ export async function POST(
             fullPublicId = `event-badges/${publicId}`
           }
           
-          console.log("Deleting old badge from Cloudinary:", fullPublicId)
+          devLog("Deleting old badge from Cloudinary:", fullPublicId)
           await Cloudinary.uploader.destroy(fullPublicId)
         }
       } catch (deleteError) {

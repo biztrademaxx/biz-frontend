@@ -1,5 +1,8 @@
 "use client"
 
+
+import { devLog } from "@/lib/dev-log"
+
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import {
@@ -326,7 +329,7 @@ export default function VisitorManagement() {
   }
 
   const handleEditVisitor = (visitorId: string) => {
-    console.log("Edit visitor:", visitorId)
+    devLog("Edit visitor:", visitorId)
     setShowActionsMenu(null)
   }
 

@@ -1,3 +1,5 @@
+import { devLog } from "@/lib/dev-log"
+
 import { v2 as cloudinary } from "cloudinary"
 
 // Configure Cloudinary
@@ -53,7 +55,7 @@ export async function uploadToCloudinary(
   folder = "event-badges"
 ): Promise<CloudinaryUploadResult> {
   try {
-    console.log(`Uploading to Cloudinary folder: ${folder}, file size: ${file.size} bytes`)
+    devLog(`Uploading to Cloudinary folder: ${folder}, file size: ${file.size} bytes`)
     
     // Convert File to base64
     const base64Image = await fileToBase64(file)
@@ -77,7 +79,7 @@ export async function uploadToCloudinary(
             console.error('Cloudinary upload error:', error)
             reject(new Error(`Cloudinary upload failed: ${error.message}`))
           } else if (result) {
-            console.log('Cloudinary upload success:', result.secure_url)
+            devLog('Cloudinary upload success:', result.secure_url)
             resolve(result as unknown as CloudinaryUploadResult)
           } else {
             reject(new Error('Cloudinary returned no result'))
@@ -93,9 +95,9 @@ export async function uploadToCloudinary(
 
 export async function deleteFromCloudinary(publicId: string) {
   try {
-    console.log(`Deleting from Cloudinary: ${publicId}`)
+    devLog(`Deleting from Cloudinary: ${publicId}`)
     const result = await cloudinary.uploader.destroy(publicId)
-    console.log('Cloudinary delete result:', result)
+    devLog('Cloudinary delete result:', result)
     return result
   } catch (error) {
     console.error("Error deleting from Cloudinary:", error)

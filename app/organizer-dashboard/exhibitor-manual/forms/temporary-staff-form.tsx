@@ -1,5 +1,8 @@
 "use client"
 
+
+import { devLog } from "@/lib/dev-log"
+
 import type React from "react"
 
 import { useState } from "react"
@@ -48,11 +51,11 @@ export function TemporaryStaffForm({ eventId, organizerId }: TemporaryStaffFormP
       return
     }
 
-    console.log("Submitting Temporary Staff Form:", { ...formData, eventId })
+    devLog("Submitting Temporary Staff Form:", { ...formData, eventId })
   }
 
   const handleDownloadPDF = () => {
-    console.log("Downloading Temporary Staff Form PDF")
+    devLog("Downloading Temporary Staff Form PDF")
   }
 
   const categoryATotal = calculateCategoryATotal()

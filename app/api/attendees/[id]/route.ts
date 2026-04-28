@@ -1,3 +1,5 @@
+import { devLog } from "@/lib/dev-log"
+
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 
@@ -8,7 +10,7 @@ export async function GET(
   try {
     const { id } = await params
 
-    console.log("Fetching attendee with ID:", id)
+    devLog("Fetching attendee with ID:", id)
 
     // Find the event lead (attendee registration)
     const attendeeLead = await prisma.eventLead.findUnique({
@@ -38,11 +40,11 @@ export async function GET(
     })
 
     if (!attendeeLead || !attendeeLead.user) {
-      console.log("Attendee not found for ID:", id)
+      devLog("Attendee not found for ID:", id)
       return NextResponse.json({ error: "Attendee not found" }, { status: 404 })
     }
 
-    console.log("Found attendee:", attendeeLead.user.firstName, attendeeLead.user.lastName)
+    devLog("Found attendee:", attendeeLead.user.firstName, attendeeLead.user.lastName)
 
     // Transform the data to match your frontend interface
     const attendee = {

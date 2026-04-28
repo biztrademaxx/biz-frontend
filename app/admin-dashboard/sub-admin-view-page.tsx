@@ -198,7 +198,6 @@ export default function SubAdminViewPage({ subAdmin, onCancel }: SubAdminViewPag
       id: "support",
       subItems: [
         { title: "Support Tickets", id: "support-tickets" },
-        { title: "Contact Logs", id: "support-contacts" },
         { title: "Admin Notes", id: "support-notes" },
       ],
     },

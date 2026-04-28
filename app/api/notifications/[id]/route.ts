@@ -1,3 +1,5 @@
+import { devLog } from "@/lib/dev-log"
+
 import { type NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import {prisma} from "@/lib/prisma"
@@ -34,7 +36,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     // For PushNotifications, we don't have per-user read tracking in the database
     // The frontend will handle read status using localStorage
     // if (notification.type === "PushNotification") {
-    //   console.log("[v0] Marking notification as read:", id)
+    //   devLog("[v0] Marking notification as read:", id)
     //   return NextResponse.json({
     //     success: true,
     //     message: "Notification marked as read (client-side)",

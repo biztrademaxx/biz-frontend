@@ -1,4 +1,7 @@
 "use client"
+
+import { devLog } from "@/lib/dev-log"
+
 import { useState, useMemo, useEffect, useCallback, type CSSProperties } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -653,7 +656,7 @@ export default function EventsPageContent({
       const raw = typeof window !== "undefined" ? localStorage.getItem("visitorCounts") : null
       if (raw) setVisitorCounts(JSON.parse(raw))
     } catch (e) {
-      console.log("[v0] Failed to load visitorCounts:", e)
+      devLog("[v0] Failed to load visitorCounts:", e)
     }
   }, [])
 
@@ -662,7 +665,7 @@ export default function EventsPageContent({
     try {
       localStorage.setItem("visitorCounts", JSON.stringify(next))
     } catch (e) {
-      console.log("[v0] Failed to persist visitorCounts:", e)
+      devLog("[v0] Failed to persist visitorCounts:", e)
     }
   }
 

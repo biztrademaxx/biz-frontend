@@ -1,6 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  /** Strip console.log / info / debug from client + server bundles in production; keep warn + error. */
+  compiler: {
+    removeConsole: {
+      exclude: ["error", "warn"],
+    },
+  },
   eslint: {
     ignoreDuringBuilds: true,
   },

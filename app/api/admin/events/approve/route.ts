@@ -1,3 +1,5 @@
+import { devLog } from "@/lib/dev-log"
+
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getServerSession } from "next-auth/next"
@@ -170,7 +172,7 @@ async function sendEventApprovalNotification(
       }
     })
     
-    console.log(`Event ${approved ? 'approved' : 'rejected'} notification sent to organizer ${organizerEmail}`)
+    devLog(`Event ${approved ? 'approved' : 'rejected'} notification sent to organizer ${organizerEmail}`)
     
   } catch (error) {
     console.error('Failed to send notification to organizer:', error)
@@ -216,7 +218,7 @@ async function notifyAdminAboutEventUpdate(eventTitle: string, action: "approved
       }
     })
 
-    console.log(`Event ${action} notification sent to admin ${admin.email}`)
+    devLog(`Event ${action} notification sent to admin ${admin.email}`)
 
   } catch (error) {
     console.error("Failed to notify admin:", error)

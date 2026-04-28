@@ -1,3 +1,5 @@
+import { devLog } from "@/lib/dev-log"
+
 import { type NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getServerSession } from "next-auth"
@@ -138,7 +140,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
     
-    console.log("[API] Creating exhibitor with data:", body)
+    devLog("[API] Creating exhibitor with data:", body)
     
     const {
       firstName,
@@ -170,7 +172,7 @@ export async function POST(request: NextRequest) {
     if (!company) missingFields.push("company")
 
     if (missingFields.length > 0) {
-      console.log("[API] Missing required fields:", missingFields)
+      devLog("[API] Missing required fields:", missingFields)
       return NextResponse.json(
         {
           error: "Missing required fields",
@@ -198,7 +200,7 @@ export async function POST(request: NextRequest) {
     })
 
     if (existingUser) {
-      console.log("[API] User with email already exists:", email)
+      devLog("[API] User with email already exists:", email)
       return NextResponse.json(
         {
           error: "User with this email already exists",
@@ -239,7 +241,7 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    console.log("[API] Exhibitor created successfully:", exhibitor.id)
+    devLog("[API] Exhibitor created successfully:", exhibitor.id)
 
     // Remove password from response
     const { password: _, ...exhibitorWithoutPassword } = exhibitor

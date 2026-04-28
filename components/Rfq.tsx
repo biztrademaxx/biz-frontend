@@ -1,5 +1,6 @@
 "use client";
 
+import { devLog } from "@/lib/dev-log";
 import { useState } from "react";
 
 export default function NewsletterSection() {
@@ -7,7 +8,7 @@ export default function NewsletterSection() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log(email);
+    devLog(email);
   };
 
   return (

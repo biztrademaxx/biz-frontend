@@ -1,5 +1,8 @@
 "use client"
 
+
+import { devLog } from "@/lib/dev-log"
+
 import type React from "react"
 
 import { useState } from "react"
@@ -108,11 +111,11 @@ export function AdditionalFurnitureForm({ eventId, organizerId }: AdditionalFurn
     }
 
     const orderedItems = selectedItems.filter((item) => item.quantity > 0)
-    console.log("Submitting Additional Furniture Form:", { ...formData, items: orderedItems, eventId })
+    devLog("Submitting Additional Furniture Form:", { ...formData, items: orderedItems, eventId })
   }
 
   const handleDownloadPDF = () => {
-    console.log("Downloading Additional Furniture Form PDF")
+    devLog("Downloading Additional Furniture Form PDF")
   }
 
   return (

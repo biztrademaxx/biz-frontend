@@ -1,4 +1,6 @@
 // lib/email-service.ts
+import { devLog } from "@/lib/dev-log"
+
 import nodemailer from "nodemailer"
 
 /* ============================================================
@@ -61,7 +63,7 @@ export async function sendPasswordResetEmail(
   // Verify transporter
   try {
     await transporter.verify()
-    console.log("✅ Email server connected")
+    devLog("✅ Email server connected")
   } catch (err) {
     console.error("❌ Email server connection failed:", err)
     throw new Error("Email service unavailable")
@@ -259,8 +261,8 @@ const html = `
 
   try {
     const info = await transporter.sendMail(mailOptions)
-    console.log(`✅ Reset email sent to ${email}`)
-    console.log(`📧 Message ID: ${info.messageId}`)
+    devLog(`✅ Reset email sent to ${email}`)
+    devLog(`📧 Message ID: ${info.messageId}`)
     return true
   } catch (error: any) {
     console.error("❌ Failed to send reset email:", error.message)
@@ -277,7 +279,7 @@ export async function testEmailConfig() {
 
   try {
     await transporter.verify()
-    console.log("✅ Email config OK")
+    devLog("✅ Email config OK")
 
     const info = await transporter.sendMail({
       from: EMAIL_CONFIG.user,
@@ -290,7 +292,7 @@ export async function testEmailConfig() {
       `,
     })
 
-    console.log("📧 Test email sent:", info.messageId)
+    devLog("📧 Test email sent:", info.messageId)
     return true
   } catch (err) {
     console.error("❌ Email test failed:", err)

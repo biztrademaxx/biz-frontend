@@ -1,3 +1,5 @@
+import { devLog } from "@/lib/dev-log"
+
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { prisma } from '@/lib/prisma'
@@ -7,7 +9,7 @@ import { UserRole } from '@prisma/client'
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    console.log('GET Session:', session)
+    devLog('GET Session:', session)
     
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -35,7 +37,7 @@ export async function GET(request: NextRequest) {
 
     // If user is SuperAdmin, they can see all notes regardless of permissions
     if (session.user.adminType === 'SUPER_ADMIN') {
-      console.log('SuperAdmin detected - showing all notes')
+      devLog('SuperAdmin detected - showing all notes')
       whereClause = { isArchived: isArchived }
     } else {
       // TEAM role restriction for regular users
@@ -107,7 +109,7 @@ export async function GET(request: NextRequest) {
       }))
     }))
 
-    console.log(`Returning ${safeNotes.length} notes`)
+    devLog(`Returning ${safeNotes.length} notes`)
     return NextResponse.json(safeNotes)
   } catch (error) {
     console.error('Error fetching admin notes:', error)
@@ -121,18 +123,18 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    console.log('POST Session:', session)
+    devLog('POST Session:', session)
     
     if (!session?.user?.id) {
-      console.log('No session user ID')
+      devLog('No session user ID')
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    console.log('Session user ID:', session.user.id)
-    console.log('Session adminType:', session.user.adminType)
+    devLog('Session user ID:', session.user.id)
+    devLog('Session adminType:', session.user.adminType)
 
     const body = await request.json()
-    console.log('Request body:', body)
+    devLog('Request body:', body)
     
     if (!body.title || !body.content) {
       return NextResponse.json(
@@ -143,7 +145,7 @@ export async function POST(request: NextRequest) {
 
     // Check if this is a SuperAdmin user
     if (session.user.adminType === 'SUPER_ADMIN') {
-      console.log('User is a SuperAdmin, checking SuperAdmin table...')
+      devLog('User is a SuperAdmin, checking SuperAdmin table...')
       
       // Verify SuperAdmin exists
       const superAdminExists = await prisma.superAdmin.findUnique({
@@ -151,10 +153,10 @@ export async function POST(request: NextRequest) {
         select: { id: true, email: true, name: true }
       })
 
-      console.log('SuperAdmin lookup result:', superAdminExists)
+      devLog('SuperAdmin lookup result:', superAdminExists)
 
       if (!superAdminExists) {
-        console.log('SuperAdmin not found in database. Session ID:', session.user.id)
+        devLog('SuperAdmin not found in database. Session ID:', session.user.id)
         return NextResponse.json(
           { error: 'SuperAdmin not found. Please log in again.' },
           { status: 400 }
@@ -199,21 +201,21 @@ export async function POST(request: NextRequest) {
         }
       })
 
-      console.log('Note created successfully by SuperAdmin:', newNote.id)
+      devLog('Note created successfully by SuperAdmin:', newNote.id)
       return NextResponse.json(newNote, { status: 201 })
     } else {
       // Handle regular User (existing logic)
-      console.log('User is a regular user, checking User table...')
+      devLog('User is a regular user, checking User table...')
       
       const userExists = await prisma.user.findUnique({
         where: { id: session.user.id },
         select: { id: true, email: true, firstName: true, lastName: true }
       })
 
-      console.log('User lookup result:', userExists)
+      devLog('User lookup result:', userExists)
 
       if (!userExists) {
-        console.log('User not found in database. Session ID:', session.user.id)
+        devLog('User not found in database. Session ID:', session.user.id)
         return NextResponse.json(
           { error: 'User not found. Please log in again.' },
           { status: 400 }
@@ -247,7 +249,7 @@ export async function POST(request: NextRequest) {
         }
       })
 
-      console.log('Note created successfully by User:', newNote.id)
+      devLog('Note created successfully by User:', newNote.id)
       return NextResponse.json(newNote, { status: 201 })
     }
     

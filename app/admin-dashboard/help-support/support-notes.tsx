@@ -1,5 +1,8 @@
 "use client"
 
+
+import { devLog } from "@/lib/dev-log"
+
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -118,7 +121,7 @@ const handleSave = async () => {
     
     const method = editingNote ? 'PUT' : 'POST'
 
-    console.log('Making request to:', url, 'with method:', method); // Debug log
+    devLog('Making request to:', url, 'with method:', method); // Debug log
 
     const response = await fetch(url, {
       method,
@@ -128,7 +131,7 @@ const handleSave = async () => {
       body: JSON.stringify(formData),
     })
 
-    console.log('Response status:', response.status); // Debug log
+    devLog('Response status:', response.status); // Debug log
 
     if (!response.ok) {
       // If we get a 404, it's a routing issue
@@ -141,7 +144,7 @@ const handleSave = async () => {
     }
 
     const result = await response.json()
-    console.log('Success:', result); // Debug log
+    devLog('Success:', result); // Debug log
 
     fetchNotes()
     setIsDialogOpen(false)

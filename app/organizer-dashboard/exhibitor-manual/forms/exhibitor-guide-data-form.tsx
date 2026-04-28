@@ -1,5 +1,8 @@
 "use client"
 
+
+import { devLog } from "@/lib/dev-log"
+
 import type React from "react"
 
 import { useState } from "react"
@@ -40,11 +43,11 @@ export function ExhibitorGuideDataForm({ eventId, organizerId }: ExhibitorGuideD
       return
     }
 
-    console.log("Submitting Exhibitor Guide Data Form:", { ...formData, eventId })
+    devLog("Submitting Exhibitor Guide Data Form:", { ...formData, eventId })
   }
 
   const handleDownloadPDF = () => {
-    console.log("Downloading Exhibitor Guide Data Form PDF")
+    devLog("Downloading Exhibitor Guide Data Form PDF")
   }
 
   return (

@@ -1,3 +1,5 @@
+import { devLog } from "@/lib/dev-log"
+
 import { NextResponse } from "next/server"
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -6,7 +8,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const body = await request.json()
 
     // In production, this would update the schedule in the database
-    console.log(`Updating schedule ${id}:`, body)
+    devLog(`Updating schedule ${id}:`, body)
 
     return NextResponse.json({
       success: true,
@@ -23,7 +25,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
   try {
     const { id } = await params
 
-    console.log(`Deleting schedule: ${id}`)
+    devLog(`Deleting schedule: ${id}`)
 
     return NextResponse.json({ success: true })
   } catch (error) {

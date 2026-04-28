@@ -1,4 +1,6 @@
 // app/api/admin/upload/route.ts
+import { devLog } from "@/lib/dev-log"
+
 import { NextRequest, NextResponse } from "next/server"
 import { uploadToCloudinary } from "@/lib/cloudinary"
 
@@ -8,7 +10,7 @@ export async function POST(request: NextRequest) {
     const file = formData.get('file') as File
     const folder = formData.get('folder') as string || "speakers"
 
-    console.log('Upload request received:', {
+    devLog('Upload request received:', {
       fileName: file?.name,
       fileType: file?.type,
       fileSize: file?.size,
@@ -77,9 +79,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log('Starting Cloudinary upload...')
+    devLog('Starting Cloudinary upload...')
     const uploadResult = await uploadToCloudinary(file, folder)
-    console.log('Cloudinary upload successful:', uploadResult.public_id)
+    devLog('Cloudinary upload successful:', uploadResult.public_id)
 
     return NextResponse.json({
       success: true,

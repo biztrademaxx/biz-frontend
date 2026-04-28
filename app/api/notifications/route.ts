@@ -1,3 +1,5 @@
+import { devLog } from "@/lib/dev-log"
+
 import { type NextRequest, NextResponse } from "next/server"
 import {prisma} from "@/lib/prisma"
 
@@ -14,7 +16,7 @@ export async function GET(request: NextRequest) {
       take: 50,
     })
 
-    console.log("[v0] Fetched push notifications:", pushNotifications.length)
+    devLog("[v0] Fetched push notifications:", pushNotifications.length)
 
     // For now, we'll treat all notifications as unread since PushNotification doesn't have per-user read status
     // In production, you might want to track read status per user in a separate table

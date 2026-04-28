@@ -1,3 +1,5 @@
+import { devLog } from "@/lib/dev-log"
+
 import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth-options"
@@ -10,38 +12,38 @@ const prisma = new PrismaClient()
 // ✅ PUT Handler - Update existing event
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string; eventId: string }> }) {
   try {
-    console.log("[v0] PUT request received")
+    devLog("[v0] PUT request received")
     const session = await getServerSession(authOptions)
     const { id, eventId } = await params
 
-    console.log("[v0] Params:", { id, eventId })
-    console.log("[v0] Session:", session ? "exists" : "null")
+    devLog("[v0] Params:", { id, eventId })
+    devLog("[v0] Session:", session ? "exists" : "null")
 
     if (!session) {
-      console.log("[v0] No session found")
+      devLog("[v0] No session found")
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     if (!id || id === "undefined") {
-      console.log("[v0] Invalid organizer ID")
+      devLog("[v0] Invalid organizer ID")
       return NextResponse.json({ error: "Invalid organizer ID" }, { status: 400 })
     }
 
     if (!eventId) {
-      console.log("[v0] No event ID provided")
+      devLog("[v0] No event ID provided")
       return NextResponse.json({ error: "Event ID is required" }, { status: 400 })
     }
 
     if (session.user?.id !== id && session.user?.role !== "ORGANIZER") {
-      console.log("[v0] Access forbidden - user:", session.user?.id, "organizer:", id, "role:", session.user?.role)
+      devLog("[v0] Access forbidden - user:", session.user?.id, "organizer:", id, "role:", session.user?.role)
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
     const body = await request.json()
-    console.log("[v0] Request body keys:", Object.keys(body))
+    devLog("[v0] Request body keys:", Object.keys(body))
 
     // Check if event exists and belongs to the organizer
-    console.log("[v0] Checking if event exists...")
+    devLog("[v0] Checking if event exists...")
     const existingEvent = await prisma.event.findFirst({
       where: {
         id: eventId,
@@ -53,10 +55,10 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       },
     })
 
-    console.log("[v0] Existing event found:", existingEvent ? "yes" : "no")
+    devLog("[v0] Existing event found:", existingEvent ? "yes" : "no")
 
     if (!existingEvent) {
-      console.log("[v0] Event not found or access denied")
+      devLog("[v0] Event not found or access denied")
       return NextResponse.json({ error: "Event not found or access denied" }, { status: 404 })
     }
 
@@ -170,7 +172,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       }
     }
 
-    console.log("[v0] Updating event with data keys:", Object.keys(eventUpdateData))
+    devLog("[v0] Updating event with data keys:", Object.keys(eventUpdateData))
     const updatedEvent = await prisma.event.update({
       where: { id: eventId },
       data: eventUpdateData,
@@ -191,7 +193,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       },
     })
 
-    console.log("[v0] Event updated successfully")
+    devLog("[v0] Event updated successfully")
     return NextResponse.json(
       {
         message: "Event updated successfully",

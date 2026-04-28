@@ -163,7 +163,6 @@ export const ADMIN_PERMISSION_CATEGORIES: PermissionCategory[] = [
     id: "support",
     subItems: [
       { title: "Support Tickets", id: "support-tickets" },
-      { title: "Contact Logs", id: "support-contacts" },
       { title: "FAQ Management", id: "support-faq" },
       { title: "Admin Notes", id: "support-notes" },
     ],

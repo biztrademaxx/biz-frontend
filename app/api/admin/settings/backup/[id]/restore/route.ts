@@ -1,3 +1,5 @@
+import { devLog } from "@/lib/dev-log"
+
 import { NextResponse } from "next/server"
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -11,7 +13,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     // 4. Verify integrity
     // 5. Disable maintenance mode
 
-    console.log(`Restoring backup: ${id}`)
+    devLog(`Restoring backup: ${id}`)
 
     return NextResponse.json({
       success: true,

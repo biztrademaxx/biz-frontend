@@ -1,5 +1,8 @@
 "use client"
 
+
+import { devLog } from "@/lib/dev-log"
+
 import type React from "react"
 
 import { useState } from "react"
@@ -31,12 +34,12 @@ export function NameOnFasciaForm({ eventId, organizerId }: NameOnFasciaFormProps
       return
     }
 
-    console.log("Submitting Name on Fascia Form:", { ...formData, eventId })
+    devLog("Submitting Name on Fascia Form:", { ...formData, eventId })
     // API call would go here
   }
 
   const handleDownloadPDF = () => {
-    console.log("Downloading Name on Fascia Form PDF")
+    devLog("Downloading Name on Fascia Form PDF")
     // PDF generation would go here
   }
 

@@ -1,5 +1,8 @@
 "use client"
 
+
+import { devLog } from "@/lib/dev-log"
+
 import type React from "react"
 
 import { useState } from "react"
@@ -39,11 +42,11 @@ export function HousekeepingForm({ eventId, organizerId }: HousekeepingFormProps
       return
     }
 
-    console.log("Submitting Housekeeping Form:", { ...formData, eventId })
+    devLog("Submitting Housekeeping Form:", { ...formData, eventId })
   }
 
   const handleDownloadPDF = () => {
-    console.log("Downloading Housekeeping Form PDF")
+    devLog("Downloading Housekeeping Form PDF")
   }
 
   const totals = calculateTotal()

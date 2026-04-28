@@ -1,5 +1,8 @@
 "use client"
 
+
+import { devLog } from "@/lib/dev-log"
+
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -60,7 +63,7 @@ export default function ExhibitorManagement({ eventId }: ExhibitorManagementProp
   const fetchExhibitors = async () => {
     try {
       setLoading(true)
-      console.log('Fetching exhibitors for event:', eventId)
+      devLog('Fetching exhibitors for event:', eventId)
       
       const response = await fetch(`/api/events/${eventId}/exhibitors`)
       if (!response.ok) {
@@ -70,7 +73,7 @@ export default function ExhibitorManagement({ eventId }: ExhibitorManagementProp
       }
 
       const data = await response.json()
-      console.log('API Response data:', data)
+      devLog('API Response data:', data)
 
       // Backend /api/events/:id/exhibitors returns { success, data: { exhibitors } }
       const rawExhibitors = data.data?.exhibitors ?? data.exhibitors ?? []
@@ -102,7 +105,7 @@ export default function ExhibitorManagement({ eventId }: ExhibitorManagementProp
           } as Exhibitor
         })
 
-        console.log('Transformed exhibitors:', transformedExhibitors)
+        devLog('Transformed exhibitors:', transformedExhibitors)
         setExhibitors(transformedExhibitors)
       } else {
         console.warn('No exhibitors found or unexpected response structure:', data)

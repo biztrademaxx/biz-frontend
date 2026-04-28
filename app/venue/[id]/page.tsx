@@ -1,5 +1,8 @@
 "use client"
 
+
+import { devLog } from "@/lib/dev-log"
+
 import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Image from "next/image"
@@ -290,10 +293,10 @@ export default function VenueDetailPage() {
       const data = await apiFetch<EventsResponse>(`/api/venues/${venueId}/events`, {
         auth: false,
       })
-      console.log("Fetched events data:", data) // Debug log
+      devLog("Fetched events data:", data) // Debug log
       if (data.success) {
         setEvents(data.events || [])
-        console.log("Events set:", data.events?.length) // Debug log
+        devLog("Events set:", data.events?.length) // Debug log
       } else {
         setEvents([])
       }
@@ -321,10 +324,10 @@ export default function VenueDetailPage() {
     const startTime = startDate.getTime()
     const endTime = endDate.getTime()
 
-    console.log('Event:', event.title)
-    console.log('Now:', now.toISOString())
-    console.log('Start:', startDate.toISOString())
-    console.log('End:', endDate.toISOString())
+    devLog('Event:', event.title)
+    devLog('Now:', now.toISOString())
+    devLog('Start:', startDate.toISOString())
+    devLog('End:', endDate.toISOString())
 
     // Check if it's a multi-day event
     const isMultiDay = startDateOnly.getTime() !== endDateOnly.getTime()
@@ -332,30 +335,30 @@ export default function VenueDetailPage() {
     if (isMultiDay) {
       // For multi-day events, use date-only comparison
       if (nowDate < startDateOnly) {
-        console.log('Status: UPCOMING (multi-day)')
+        devLog('Status: UPCOMING (multi-day)')
         return "UPCOMING"
       } else if (nowDate > endDateOnly) {
-        console.log('Status: PAST (multi-day)')
+        devLog('Status: PAST (multi-day)')
         return "PAST"
       } else {
-        console.log('Status: ONGOING (multi-day)')
+        devLog('Status: ONGOING (multi-day)')
         return "ONGOING"
       }
     } else {
       // For single-day events, use precise time comparison
       if (nowTime < startTime) {
-        console.log('Status: UPCOMING (single-day)')
+        devLog('Status: UPCOMING (single-day)')
         return "UPCOMING"
       } else if (nowTime >= startTime && nowTime <= endTime) {
-        console.log('Status: ONGOING (single-day)')
+        devLog('Status: ONGOING (single-day)')
         return "ONGOING"
       } else if (nowTime > endTime) {
-        console.log('Status: PAST (single-day)')
+        devLog('Status: PAST (single-day)')
         return "PAST"
       }
     }
 
-    console.log('Status: UNKNOWN - defaulting to UPCOMING')
+    devLog('Status: UNKNOWN - defaulting to UPCOMING')
     return "UPCOMING"
   }
 

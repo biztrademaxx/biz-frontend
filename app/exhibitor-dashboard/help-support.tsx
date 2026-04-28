@@ -1,5 +1,8 @@
 "use client"
 
+
+import { devLog } from "@/lib/dev-log"
+
 import { useState } from "react"
 import { HelpSupportTicketsSection } from "@/components/support/HelpSupportTicketsSection"
 import {
@@ -93,7 +96,7 @@ export function ExhibitorHelpSupport() {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
-        console.log("Contact Form Submitted", formData)
+        devLog("Contact Form Submitted", formData)
         // Add API call here
         alert("Message sent successfully!")
         setFormData({ name: "", email: "", subject: "", message: "" })

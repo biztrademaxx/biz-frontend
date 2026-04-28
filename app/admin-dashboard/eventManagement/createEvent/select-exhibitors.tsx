@@ -1,5 +1,8 @@
 "use client"
 
+
+import { devLog } from "@/lib/dev-log"
+
 import { useState, useEffect } from "react"
 import { apiFetch } from "@/lib/api"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -132,7 +135,7 @@ export function SelectExhibitors({ exhibitorBooths, onExhibitorBoothsChange }: S
       isActive: true,
     }
 
-    console.log("Sending exhibitor data:", exhibitorData)
+    devLog("Sending exhibitor data:", exhibitorData)
 
     const response = await fetch('/api/admin/exhibitors', {
       method: 'POST',

@@ -1,3 +1,5 @@
+import { devLog } from "@/lib/dev-log"
+
 import { type NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getServerSession } from "next-auth"
@@ -12,16 +14,16 @@ export async function GET(
   { params }: { params: Promise<Params> } // 👈 params is a Promise
 ) {
   try {
-    console.log("[v0] GET /api/exhibitors/[exhibitorId]/events called")
+    devLog("[v0] GET /api/exhibitors/[exhibitorId]/events called")
 
     const session = await getServerSession(authOptions)
     if (!session) {
-      console.log("[v0] No session found")
+      devLog("[v0] No session found")
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     const { exhibitorId } = await params // 👈 await here
-    console.log("[v0] Fetching events for exhibitorId:", exhibitorId)
+    devLog("[v0] Fetching events for exhibitorId:", exhibitorId)
 
     if (!exhibitorId) {
       return NextResponse.json(
@@ -112,7 +114,7 @@ export async function GET(
       organizer: booth.event.organizer,
     }))
 
-    console.log("[v0] Found", events.length, "events for exhibitor")
+    devLog("[v0] Found", events.length, "events for exhibitor")
 
     return NextResponse.json({ events }, { status: 200 })
   } catch (error) {

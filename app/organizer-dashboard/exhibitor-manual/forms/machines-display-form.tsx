@@ -1,5 +1,8 @@
 "use client"
 
+
+import { devLog } from "@/lib/dev-log"
+
 import type React from "react"
 
 import { useState } from "react"
@@ -64,11 +67,11 @@ export function MachinesDisplayForm({ eventId, organizerId }: MachinesDisplayFor
       return
     }
 
-    console.log("Submitting Machines Display Form:", { ...formData, machines, eventId })
+    devLog("Submitting Machines Display Form:", { ...formData, machines, eventId })
   }
 
   const handleDownloadPDF = () => {
-    console.log("Downloading Machines Display Form PDF")
+    devLog("Downloading Machines Display Form PDF")
   }
 
   return (

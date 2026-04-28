@@ -1,3 +1,5 @@
+import { devLog } from "@/lib/dev-log"
+
 import { type NextRequest, NextResponse } from "next/server"
 import { PrismaClient } from "@prisma/client"
 
@@ -8,10 +10,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   try {
     const exhibitorId =(await params).id
 
-    console.log("[v0] Fetching products for exhibitorId:", exhibitorId)
+    devLog("[v0] Fetching products for exhibitorId:", exhibitorId)
 
     if (!exhibitorId) {
-      console.log("[v0] Error: Exhibitor ID is missing")
+      devLog("[v0] Error: Exhibitor ID is missing")
       return NextResponse.json({ error: "Exhibitor ID is required" }, { status: 400 })
     }
 
@@ -24,7 +26,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       },
     })
 
-    console.log("[v0] Found products:", products.length)
+    devLog("[v0] Found products:", products.length)
     return NextResponse.json({ products }, { status: 200 })
   } catch (error) {
     console.error("[v0] Error fetching products:", error)
@@ -44,11 +46,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const exhibitorId = (await params).id
     const body = await request.json()
 
-    console.log("[v0] Creating product for exhibitorId:", exhibitorId)
-    console.log("[v0] Product data:", body)
+    devLog("[v0] Creating product for exhibitorId:", exhibitorId)
+    devLog("[v0] Product data:", body)
 
     if (!exhibitorId) {
-      console.log("[v0] Error: Exhibitor ID is missing")
+      devLog("[v0] Error: Exhibitor ID is missing")
       return NextResponse.json({ error: "Exhibitor ID is required" }, { status: 400 })
     }
 
@@ -58,10 +60,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       })
 
       if (!exhibitor) {
-        console.log("[v0] Warning: Exhibitor not found, but proceeding with product creation")
+        devLog("[v0] Warning: Exhibitor not found, but proceeding with product creation")
       }
     } catch (verifyError) {
-      console.log("[v0] Warning: Could not verify exhibitor, but proceeding:", verifyError)
+      devLog("[v0] Warning: Could not verify exhibitor, but proceeding:", verifyError)
     }
 
     const product = await prisma.product.create({
@@ -78,7 +80,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       },
     })
 
-    console.log("[v0] Product created successfully:", product.id)
+    devLog("[v0] Product created successfully:", product.id)
     return NextResponse.json({ product }, { status: 201 })
   } catch (error) {
     console.error("[v0] Error creating product:", error)

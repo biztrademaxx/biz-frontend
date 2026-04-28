@@ -1,3 +1,5 @@
+import { devLog } from "@/lib/dev-log"
+
 import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth-options"
@@ -73,7 +75,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     }
 
     const body = await request.json()
-    console.log("Received event data:", body)
+    devLog("Received event data:", body)
     
     // Parse categories
     const parseCategory = (category: any): string[] => {
@@ -535,7 +537,7 @@ async function notifyAdminsAboutPendingEvent(event: any) {
       })
     }
 
-    console.log(`Pending event notifications sent to ${allAdmins.length} admins`)
+    devLog(`Pending event notifications sent to ${allAdmins.length} admins`)
 
   } catch (error) {
     console.error("Failed to notify admins:", error)

@@ -1,6 +1,7 @@
-// components/navbar.tsx (Updated)
 "use client";
 
+// components/navbar.tsx (Updated)
+import { devLog } from "@/lib/dev-log";
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
@@ -34,11 +35,11 @@ export default function Navbar({ onLogout }: NavbarProps) {
   };
 
   const navigateToProfile = () => {
-    console.log("Navigate to profile");
+    devLog("Navigate to profile");
   };
 
   const navigateToSettings = () => {
-    console.log("Navigate to settings");
+    devLog("Navigate to settings");
   };
 
   return (

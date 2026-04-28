@@ -1,5 +1,8 @@
 "use client"
 
+
+import { devLog } from "@/lib/dev-log"
+
 import type React from "react"
 
 import { useState, useEffect, useCallback, useMemo } from "react"
@@ -157,10 +160,10 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log("[v0] Avatar upload triggered")
+    devLog("[v0] Avatar upload triggered")
     const file = e.target.files?.[0]
     if (!file) {
-      console.log("[v0] No file selected")
+      devLog("[v0] No file selected")
       return
     }
 
@@ -176,7 +179,7 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
 
     try {
       setUploadingAvatar(true)
-      console.log("[v0] Uploading avatar to Cloudinary...")
+      devLog("[v0] Uploading avatar to Cloudinary...")
 
       const uploadFormData = new FormData()
       uploadFormData.append("file", file)
@@ -189,9 +192,9 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
       })
 
       const avatarUrl = uploadData.url
-      console.log("[v0] Avatar uploaded successfully:", avatarUrl)
+      devLog("[v0] Avatar uploaded successfully:", avatarUrl)
 
-      console.log("[v0] Updating user profile with new avatar...")
+      devLog("[v0] Updating user profile with new avatar...")
       const updatedUser = await apiFetch<{ user?: any; data?: any }>(`/api/users/${localUserData.id}`, {
         method: "PUT",
         body: { avatar: avatarUrl },
@@ -200,7 +203,7 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
       if (!updatedUser) {
         throw new Error("Failed to update avatar")
       }
-      console.log("[v0] Avatar updated successfully in database")
+      devLog("[v0] Avatar updated successfully in database")
 
       setLocalUserData((prev) => ({ ...prev, avatar: avatarUrl }))
       setFormData((prev) => ({ ...prev, avatar: avatarUrl }))
@@ -424,7 +427,7 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
                       htmlFor="avatar-upload"
                       className="absolute bottom-0 right-0 w-7 h-7 bg-blue-600 rounded-full flex items-center justify-center cursor-pointer hover:bg-blue-700 transition-colors z-10 shadow-lg"
                       onClick={(e) => {
-                        console.log("[v0] Camera button clicked")
+                        devLog("[v0] Camera button clicked")
                         // Ensure the click propagates to trigger the file input
                       }}
                     >

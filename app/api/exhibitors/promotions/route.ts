@@ -1,3 +1,5 @@
+import { devLog } from "@/lib/dev-log"
+
 import { prisma } from "@/lib/prisma"
 import { NextRequest, NextResponse } from "next/server"
 
@@ -86,7 +88,7 @@ export async function POST(request: NextRequest) {
       duration
     } = body
 
-    console.log("[API] Creating promotion with data:", body)
+    devLog("[API] Creating promotion with data:", body)
 
     // Validate required fields
     if (!exhibitorId || !eventId || !packageType || !targetCategories) {
@@ -119,7 +121,7 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    console.log("[API] Promotion created successfully:", promotion)
+    devLog("[API] Promotion created successfully:", promotion)
 
     return NextResponse.json({
       success: true,

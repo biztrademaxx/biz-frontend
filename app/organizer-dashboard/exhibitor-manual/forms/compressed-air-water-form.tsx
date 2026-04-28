@@ -1,5 +1,8 @@
 "use client"
 
+
+import { devLog } from "@/lib/dev-log"
+
 import type React from "react"
 
 import { useState } from "react"
@@ -55,11 +58,11 @@ export function CompressedAirWaterForm({ eventId, organizerId }: CompressedAirWa
       return
     }
 
-    console.log("Submitting Compressed Air & Water Form:", { ...formData, eventId })
+    devLog("Submitting Compressed Air & Water Form:", { ...formData, eventId })
   }
 
   const handleDownloadPDF = () => {
-    console.log("Downloading Compressed Air & Water Form PDF")
+    devLog("Downloading Compressed Air & Water Form PDF")
   }
 
   const compressedAirTotal = calculateCompressedAirTotal()

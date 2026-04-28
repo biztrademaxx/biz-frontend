@@ -1,3 +1,5 @@
+import { devLog } from "@/lib/dev-log"
+
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 import { prisma } from "@/lib/prisma"
@@ -10,8 +12,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const body = await request.json()
     const { attendeeIds, badgeDataUrls } = body
 
-    console.log("[v0] Processing bulk badge send for event:", eventId)
-    console.log("[v0] Number of attendees:", attendeeIds?.length)
+    devLog("[v0] Processing bulk badge send for event:", eventId)
+    devLog("[v0] Number of attendees:", attendeeIds?.length)
 
     if (!attendeeIds || !Array.isArray(attendeeIds) || attendeeIds.length === 0) {
       return NextResponse.json({ error: "attendeeIds array is required" }, { status: 400 })
@@ -29,7 +31,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     // Process each attendee
     for (const attendeeId of attendeeIds) {
       try {
-        console.log("[v0] Processing attendee:", attendeeId)
+        devLog("[v0] Processing attendee:", attendeeId)
 
         // Fetch attendee lead with user and event data
         const attendeeLead = await prisma.eventLead.findUnique({
@@ -52,7 +54,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         })
 
         if (!attendeeLead || !attendeeLead.user) {
-          console.log("[v0] Attendee lead not found for ID:", attendeeId)
+          devLog("[v0] Attendee lead not found for ID:", attendeeId)
           results.failed.push({
             id: attendeeId,
             email: "unknown",
@@ -68,7 +70,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         const badgeDataUrl = badgeDataUrls[attendeeId]
 
         if (!badgeDataUrl) {
-          console.log("[v0] Badge data URL not found for attendee:", attendeeId)
+          devLog("[v0] Badge data URL not found for attendee:", attendeeId)
           results.failed.push({
             id: attendeeId,
             email: attendeeEmail,
@@ -77,7 +79,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           continue
         }
 
-        console.log("[v0] Found attendee:", attendeeName, "for event:", event.title)
+        devLog("[v0] Found attendee:", attendeeName, "for event:", event.title)
 
         // Save badge to database
         const badgeSent = await prisma.badgeSent.create({
@@ -90,13 +92,13 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           },
         })
 
-        console.log("[v0] Badge record saved to database:", badgeSent.id)
+        devLog("[v0] Badge record saved to database:", badgeSent.id)
 
         // Send email
         try {
           await sendBadgeEmail(attendeeEmail, badgeDataUrl, attendeeName, event.title)
 
-          console.log("[v0] Badge email sent successfully to:", attendeeEmail)
+          devLog("[v0] Badge email sent successfully to:", attendeeEmail)
           results.success.push(attendeeId)
         } catch (emailError) {
           console.error("[v0] Failed to send badge email:", emailError)
@@ -123,7 +125,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       }
     }
 
-    console.log("[v0] Bulk badge send complete. Success:", results.success.length, "Failed:", results.failed.length)
+    devLog("[v0] Bulk badge send complete. Success:", results.success.length, "Failed:", results.failed.length)
 
     // Return results
     return NextResponse.json({

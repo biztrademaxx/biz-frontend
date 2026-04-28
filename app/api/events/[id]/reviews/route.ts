@@ -1,3 +1,5 @@
+import { devLog } from "@/lib/dev-log"
+
 import { type NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth-options"
@@ -9,7 +11,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const { searchParams } = new URL(request.url)
     const includeReplies = searchParams.get("includeReplies") === "true"
 
-    console.log("[v0] Fetching reviews for event ID:", eventId)
+    devLog("[v0] Fetching reviews for event ID:", eventId)
 
     if (!prisma?.event) {
       return NextResponse.json({
@@ -122,7 +124,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const userId = session.user.id
     const eventId = (await params).id
 
-    console.log("📩 Received review for event:", eventId)
+    devLog("📩 Received review for event:", eventId)
 
     if (!rating || rating < 1 || rating > 5) {
       return NextResponse.json({ error: "Rating must be between 1 and 5" }, { status: 400 })
@@ -167,7 +169,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const totalRating = eventReviews.reduce((sum, r) => sum + r.rating, 0)
     const averageRating = eventReviews.length > 0 ? totalRating / eventReviews.length : 0
 
-    console.log("⭐ Updating event rating:", averageRating, "Reviews:", eventReviews.length)
+    devLog("⭐ Updating event rating:", averageRating, "Reviews:", eventReviews.length)
 
     await prisma.event.update({
       where: { id: eventId },

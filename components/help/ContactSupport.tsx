@@ -1,5 +1,8 @@
 "use client"
 
+
+import { devLog } from "@/lib/dev-log"
+
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -10,7 +13,7 @@ export function ContactSupport() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    console.log("Support request submitted:", form)
+    devLog("Support request submitted:", form)
     alert("Your support request has been submitted.")
     setForm({ name: "", email: "", message: "" })
   }

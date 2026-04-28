@@ -1,5 +1,8 @@
 "use client"
 
+
+import { devLog } from "@/lib/dev-log"
+
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -216,11 +219,11 @@ export default function AddExhibitor({ organizerId }: AddExhibitorProps) {
   }
 
   const handleAddExhibitorToEvent = async () => {
-    console.log("[v0] Add Exhibitor button clicked")
-    console.log("[v0] Selected exhibitor:", selectedExhibitor)
-    console.log("[v0] Selected event:", selectedEvent)
-    console.log("[v0] Selected space:", selectedSpace)
-    console.log("[v0] Booth details:", boothDetails)
+    devLog("[v0] Add Exhibitor button clicked")
+    devLog("[v0] Selected exhibitor:", selectedExhibitor)
+    devLog("[v0] Selected event:", selectedEvent)
+    devLog("[v0] Selected space:", selectedSpace)
+    devLog("[v0] Booth details:", boothDetails)
 
     if (
       !selectedExhibitor ||
@@ -229,7 +232,7 @@ export default function AddExhibitor({ organizerId }: AddExhibitorProps) {
       !boothDetails.boothNumber ||
       !boothDetails.companyName
     ) {
-      console.log("[v0] Validation failed - missing required fields")
+      devLog("[v0] Validation failed - missing required fields")
       toast({
         title: "Missing Information",
         description: "Please select an exhibitor, event, space, and fill in booth details.",

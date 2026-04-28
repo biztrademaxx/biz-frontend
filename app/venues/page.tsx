@@ -1,5 +1,8 @@
 "use client"
 
+
+import { devLog } from "@/lib/dev-log"
+
 import { useState, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -76,7 +79,7 @@ export default function VenuesPage() {
       }
 
       const data = await response.json()
-      console.log("API Response:", data) // Debug log
+      devLog("API Response:", data) // Debug log
       
       // Backend /api/venues returns { success, data: venues, pagination }
       const list = Array.isArray(data.venues) ? data.venues : data.data

@@ -1,5 +1,8 @@
 "use client"
 
+
+import { devLog } from "@/lib/dev-log"
+
 import type React from "react"
 
 import { useState } from "react"
@@ -34,11 +37,11 @@ export default function AuthPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     // Handle form submission
-    console.log("Form submitted:", { ...formData, userType, isLogin })
+    devLog("Form submitted:", { ...formData, userType, isLogin })
   }
 
   const handleSocialLogin = (provider: string) => {
-    console.log(`Login with ${provider}`)
+    devLog(`Login with ${provider}`)
   }
 
   return (

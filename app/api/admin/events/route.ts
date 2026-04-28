@@ -1,3 +1,5 @@
+import { devLog } from "@/lib/dev-log"
+
 import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth-options"
@@ -135,7 +137,7 @@ async function findOrCreateUser(userData: {
   })
   
   if (user) {
-    console.log(`Found existing ${role}:`, user.email)
+    devLog(`Found existing ${role}:`, user.email)
     
     // Update user details if provided
     const updateData: any = {}
@@ -155,14 +157,14 @@ async function findOrCreateUser(userData: {
         where: { id: user.id },
         data: updateData
       })
-      console.log(`Updated ${role} details:`, user.email)
+      devLog(`Updated ${role} details:`, user.email)
     }
     
     return user
   }
   
   // Create new user
-  console.log(`Creating new ${role}:`, email)
+  devLog(`Creating new ${role}:`, email)
   const newUser = await prisma.user.create({
     data: {
       email: email.toLowerCase(),
@@ -299,7 +301,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    console.log("Creating event with data:", JSON.stringify(body, null, 2))
+    devLog("Creating event with data:", JSON.stringify(body, null, 2))
 
     // Basic validation
     const requiredFields = ["title", "description", "startDate", "endDate"]

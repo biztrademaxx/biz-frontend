@@ -1,4 +1,6 @@
 // /api/users/[userId]/saved-events/route.ts
+import { devLog } from "@/lib/dev-log"
+
 import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth-options"
@@ -6,7 +8,7 @@ import { prisma } from "@/lib/prisma"
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    console.log("[v0] Raw params:", params)
+    devLog("[v0] Raw params:", params)
 
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
@@ -16,12 +18,12 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     const resolvedParams = await params
     const userId = resolvedParams.id
 
-    console.log("[v0] Resolved params:", resolvedParams)
-    console.log("[v0] Extracted userId:", userId)
+    devLog("[v0] Resolved params:", resolvedParams)
+    devLog("[v0] Extracted userId:", userId)
 
     // User can see only their own saved events
     if (String(session.user.id) !== String(userId)) {
-      console.log("[v0] Auth mismatch:", {
+      devLog("[v0] Auth mismatch:", {
         sessionUserId: session.user.id,
         requestedUserId: userId,
         sessionUserIdType: typeof session.user.id,

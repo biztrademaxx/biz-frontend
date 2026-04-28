@@ -1,3 +1,5 @@
+import { devLog } from "@/lib/dev-log"
+
 import nodemailer from "nodemailer";
 
 const transporter = nodemailer.createTransport({
@@ -11,7 +13,7 @@ const transporter = nodemailer.createTransport({
 
 export async function sendVerificationEmail(email: string, otp: string) {
   try {
-    console.log("📤 Attempting to send email to:", email);
+    devLog("📤 Attempting to send email to:", email);
     
     const mailOptions = {
       from: `"BizTradeFairs" <${process.env.EMAIL_USER}>`,
@@ -34,7 +36,7 @@ export async function sendVerificationEmail(email: string, otp: string) {
     };
 
     const result = await transporter.sendMail(mailOptions);
-    console.log("✅ Email sent successfully:", {
+    devLog("✅ Email sent successfully:", {
       to: email,
       messageId: result.messageId,
       response: result.response
@@ -55,7 +57,7 @@ export async function sendVerificationEmail(email: string, otp: string) {
 export async function verifyEmailConfig() {
   try {
     await transporter.verify();
-    console.log("✅ Email configuration is correct");
+    devLog("✅ Email configuration is correct");
     return true;
   } catch (error: any) {
     console.error("❌ Email configuration error:", {

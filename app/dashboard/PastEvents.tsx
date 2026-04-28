@@ -1,5 +1,8 @@
 "use client"
 
+
+import { devLog } from "@/lib/dev-log"
+
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -102,15 +105,15 @@ export function PastEvents({ userId }: PastEventsProps) {
       const events: Event[] = data?.events ?? data?.data ?? []
       
       // Debug: Log all events and their dates
-      console.log('=== DEBUG: All events from API ===')
+      devLog('=== DEBUG: All events from API ===')
       events.forEach((event, index) => {
-        console.log(`${index + 1}. ${event.title}`)
-        console.log(`   Start: ${event.startDate}`)
-        console.log(`   End: ${event.endDate}`)
-        console.log(`   End Date Object: ${new Date(event.endDate)}`)
-        console.log(`   Today: ${new Date()}`)
-        console.log(`   Is Past: ${new Date(event.endDate) < new Date()}`)
-        console.log('---')
+        devLog(`${index + 1}. ${event.title}`)
+        devLog(`   Start: ${event.startDate}`)
+        devLog(`   End: ${event.endDate}`)
+        devLog(`   End Date Object: ${new Date(event.endDate)}`)
+        devLog(`   Today: ${new Date()}`)
+        devLog(`   Is Past: ${new Date(event.endDate) < new Date()}`)
+        devLog('---')
       })
 
       // Get today's date at start of day (midnight) for accurate comparison
@@ -128,7 +131,7 @@ export function PastEvents({ userId }: PastEventsProps) {
         return eventEndDate < today
       })
 
-      console.log(`Filtered ${pastOnly.length} past events from ${events.length} total events`)
+      devLog(`Filtered ${pastOnly.length} past events from ${events.length} total events`)
 
       setPastEvents(
         pastOnly.map((ev) => ({

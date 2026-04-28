@@ -1,5 +1,8 @@
 "use client"
 
+
+import { devLog } from "@/lib/dev-log"
+
 import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
@@ -67,7 +70,7 @@ export function BulkBadgeSenderDialog({
   const handleBadgeGenerated = (attendeeId: string, dataUrl: string) => {
     setBadgeDataUrls((prev) => {
       const updated = { ...prev, [attendeeId]: dataUrl }
-      console.log("[v0] Badge generated for attendee:", attendeeId, "Total:", Object.keys(updated).length)
+      devLog("[v0] Badge generated for attendee:", attendeeId, "Total:", Object.keys(updated).length)
       return updated
     })
   }
@@ -75,7 +78,7 @@ export function BulkBadgeSenderDialog({
   // Check if all badges are generated
   useEffect(() => {
     if (generatingBadges && Object.keys(badgeDataUrls).length === attendees.length && attendees.length > 0) {
-      console.log("[v0] All badges generated, ready to send")
+      devLog("[v0] All badges generated, ready to send")
       setGeneratingBadges(false)
     }
   }, [badgeDataUrls, attendees.length, generatingBadges])
@@ -86,7 +89,7 @@ export function BulkBadgeSenderDialog({
       setProgress(0)
       setCurrentIndex(0)
 
-      console.log("[v0] Starting bulk badge send for", attendees.length, "attendees")
+      devLog("[v0] Starting bulk badge send for", attendees.length, "attendees")
 
       const attendeeIds = attendees.map((a) => a.id)
 
@@ -107,7 +110,7 @@ export function BulkBadgeSenderDialog({
         throw new Error(data.error || "Failed to send badges")
       }
 
-      console.log("[v0] Bulk send complete:", data)
+      devLog("[v0] Bulk send complete:", data)
 
       setResults(data.data)
       setProgress(100)

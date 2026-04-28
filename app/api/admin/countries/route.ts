@@ -1,3 +1,5 @@
+import { devLog } from "@/lib/dev-log"
+
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getServerSession } from "next-auth"
@@ -88,7 +90,7 @@ export async function GET(request: NextRequest) {
 
             totalEventCount += countryNewSystemCount + countryOldSystemCount
 
-            console.log(`Country: ${country.name}, Total Events: ${totalEventCount}, Cities: ${countryCities.length}`)
+            devLog(`Country: ${country.name}, Total Events: ${totalEventCount}, Cities: ${countryCities.length}`)
 
             return {
               ...country,

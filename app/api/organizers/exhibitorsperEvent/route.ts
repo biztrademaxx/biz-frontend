@@ -1,3 +1,5 @@
+import { devLog } from "@/lib/dev-log"
+
 import { type NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getServerSession } from "next-auth"
@@ -6,21 +8,21 @@ import { ObjectId } from "mongodb"
 
 export async function GET(request: NextRequest) {
   try {
-    console.log("[v0] GET /api/events/exhibitors called")
+    devLog("[v0] GET /api/events/exhibitors called")
 
     const { searchParams } = new URL(request.url)
     const eventId = searchParams.get("eventId")
     const organizerId = searchParams.get("organizerId")
 
     if (!eventId && !organizerId) {
-      console.log("[v0] Missing eventId or organizerId in query params")
+      devLog("[v0] Missing eventId or organizerId in query params")
       return NextResponse.json(
         { error: "eventId or organizerId is required" },
         { status: 400 }
       )
     }
 
-    console.log(
+    devLog(
       "[v0] Fetching booths for:",
       eventId ? `eventId: ${eventId}` : `organizerId: ${organizerId}`
     )

@@ -1,5 +1,8 @@
 "use client"
 
+
+import { devLog } from "@/lib/dev-log"
+
 import { useState, useEffect, useMemo } from "react"
 import { apiFetch } from "@/lib/api"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -160,12 +163,12 @@ export default function AddVenue({ organizerId, onVenueChange, selectedVenueId }
       const response = await fetch("/api/venues")
       if (response.ok) {
         const result = await response.json()
-        console.log("[v0] Venues API response:", result)
+        devLog("[v0] Venues API response:", result)
 
         // API returns { success: true, data: venues, pagination: {...} }
         if (result.success && Array.isArray(result.data)) {
           setVenues(result.data)
-          console.log("[v0] Loaded venues:", result.data.length)
+          devLog("[v0] Loaded venues:", result.data.length)
         } else {
           console.error("[v0] Invalid API response format:", result)
           setVenues([])

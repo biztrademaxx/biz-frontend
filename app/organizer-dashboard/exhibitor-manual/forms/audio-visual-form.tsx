@@ -1,5 +1,8 @@
 "use client"
 
+
+import { devLog } from "@/lib/dev-log"
+
 import type React from "react"
 
 import { useState } from "react"
@@ -64,11 +67,11 @@ export function AudioVisualForm({ eventId, organizerId }: AudioVisualFormProps) 
     }
 
     const orderedItems = selectedItems.filter((item) => item.quantity > 0)
-    console.log("Submitting Audio Visual Form:", { ...formData, items: orderedItems, eventId })
+    devLog("Submitting Audio Visual Form:", { ...formData, items: orderedItems, eventId })
   }
 
   const handleDownloadPDF = () => {
-    console.log("Downloading Audio Visual Form PDF")
+    devLog("Downloading Audio Visual Form PDF")
   }
 
   const subtotal = calculateSubtotal()

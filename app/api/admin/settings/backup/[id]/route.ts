@@ -1,3 +1,5 @@
+import { devLog } from "@/lib/dev-log"
+
 import { NextResponse } from "next/server"
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -33,7 +35,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     const { id } = await params
 
     // In production, this would delete the actual backup files
-    console.log(`Deleting backup: ${id}`)
+    devLog(`Deleting backup: ${id}`)
 
     return NextResponse.json({ success: true })
   } catch (error) {

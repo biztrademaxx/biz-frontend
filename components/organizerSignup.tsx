@@ -1,4 +1,7 @@
 "use client"
+
+import { devLog } from "@/lib/dev-log"
+
 import React, { useState, useEffect } from 'react';
 import { Eye, EyeOff, User, Mail, Building, MapPin, CheckCircle, ChevronLeft } from 'lucide-react';
 import Link from 'next/link';
@@ -126,7 +129,7 @@ const OrganizerSignup = () => {
   };
 
   const handleResendEmail = () => {
-    console.log('Resending verification email...');
+    devLog('Resending verification email...');
     setShowMessage(true);
   };
 
@@ -156,7 +159,7 @@ const OrganizerSignup = () => {
 
   const handleFinalContinue = () => {
     // Redirect to dashboard or login
-    console.log('Account created successfully');
+    devLog('Account created successfully');
   };
     useEffect(() => {
     const interval = setInterval(() => {

@@ -1,3 +1,5 @@
+import { devLog } from "@/lib/dev-log"
+
 import { type NextRequest, NextResponse } from "next/server"
 import { PrismaClient } from "@prisma/client"
 
@@ -8,7 +10,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   try {
     const { id: eventId } = await params
 
-    console.log("[v0] Fetching event with ID:", eventId)
+    devLog("[v0] Fetching event with ID:", eventId)
 
     // Fetch event details
     const event = await prisma.event.findUnique({
@@ -67,7 +69,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const body = await request.json()
     const { packageType, targetCategories, amount, duration } = body
 
-    console.log("[v0] Creating promotion for event:", eventId)
+    devLog("[v0] Creating promotion for event:", eventId)
 
     // Verify event exists and get organizer
     const event = await prisma.event.findUnique({
@@ -110,7 +112,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       },
     })
 
-    console.log("[v0] Promotion created successfully:", promotion.id)
+    devLog("[v0] Promotion created successfully:", promotion.id)
 
     return NextResponse.json(promotion, { status: 201 })
   } catch (error) {

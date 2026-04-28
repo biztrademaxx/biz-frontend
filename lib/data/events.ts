@@ -1,3 +1,5 @@
+import { devLog } from "@/lib/dev-log"
+
 export interface EventImage {
   id: string
   url: string
@@ -2350,7 +2352,7 @@ export function getEventsByVenue(venueId: string): Event[] {
     const eventVenueName = event.location.venue.toLowerCase()
     const targetVenueName = venue.name.toLowerCase()
 
-    console.log("Comparing:", eventVenueName, "with", targetVenueName)
+    devLog("Comparing:", eventVenueName, "with", targetVenueName)
 
     return eventVenueName === targetVenueName
   })
