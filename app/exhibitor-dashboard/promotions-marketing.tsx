@@ -327,28 +327,17 @@ export default function PromotionsMarketing({ exhibitorId, onPromotionCreated }:
 
     try {
       devLog("[v0] Sending API request...")
-      const response = await fetch("/api/promotions", {
+      await apiFetch("/api/exhibitors/promotions", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+        body: {
           exhibitorId,
           eventId: selectedEvent,
           packageType: selectedPackageData.name,
           targetCategories: selectedCategories,
           amount: selectedPackageData.price,
           duration: selectedPackageData.durationDays,
-        }),
+        },
       })
-
-      devLog("[v0] API response status:", response.status)
-      const data = await response.json()
-      devLog("[v0] API response data:", data)
-
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to process payment")
-      }
 
       toast({
         title: "Success!",

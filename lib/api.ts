@@ -1,9 +1,41 @@
 // lib/api.ts
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+const DEFAULT_BACKEND_API_ORIGIN = "http://localhost:4000";
 
-/** Backend API origin — same host used by {@link apiFetch} (not the Next.js app). */
+function trimmedNextPublicApiUrl(): string {
+  const v = process.env.NEXT_PUBLIC_API_URL;
+  if (typeof v !== "string") return "";
+  return v.trim().replace(/\/$/, "");
+}
+
+/**
+ * Backend origin for Next Route Handlers that proxy to Express (no `window`).
+ * Treats empty env and accidental `http://localhost:3000` as the Express default.
+ */
 export function getBackendApiBaseUrl(): string {
-  return API_BASE_URL.replace(/\/$/, "");
+  const t = trimmedNextPublicApiUrl();
+  if (!t) return DEFAULT_BACKEND_API_ORIGIN;
+  if (/^https?:\/\/(localhost|127\.0\.0\.1):3000\/?$/i.test(t)) {
+    return DEFAULT_BACKEND_API_ORIGIN;
+  }
+  return t;
+}
+
+/**
+ * Origin for browser `apiFetch` / token refresh. Must not equal the current tab origin,
+ * otherwise requests hit Next `/api/*` without reaching Express (typical 401 on protected routes).
+ */
+function getBrowserBackendApiOrigin(): string {
+  if (typeof window === "undefined") {
+    return getBackendApiBaseUrl();
+  }
+  const t = trimmedNextPublicApiUrl();
+  if (!t) return DEFAULT_BACKEND_API_ORIGIN;
+  const pageOrigin = window.location.origin.replace(/\/$/, "");
+  if (t === pageOrigin) return DEFAULT_BACKEND_API_ORIGIN;
+  if (/^https?:\/\/(localhost|127\.0\.0\.1):3000\/?$/i.test(t)) {
+    return DEFAULT_BACKEND_API_ORIGIN;
+  }
+  return t;
 }
 
 const ACCESS_TOKEN_KEY = "accessToken";
@@ -152,7 +184,7 @@ async function refreshAccessToken(): Promise<string | null> {
   if (!refreshToken) return null;
 
   try {
-    const response = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
+    const response = await fetch(`${getBrowserBackendApiOrigin()}/api/auth/refresh`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -192,7 +224,7 @@ async function refreshAccessToken(): Promise<string | null> {
  * not relative to the Next.js site.
  */
 export async function apiFetch<T = any>(path: string, options: ApiRequestOptions = {}): Promise<T> {
-  const url = `${API_BASE_URL}${path}`;
+  const url = `${getBrowserBackendApiOrigin()}${path}`;
   const { method = "GET", body, headers, auth = true } = options;
 
   if (auth && typeof window !== "undefined") {

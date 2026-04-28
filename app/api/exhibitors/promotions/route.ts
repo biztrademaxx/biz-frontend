@@ -2,7 +2,7 @@ import { devLog } from "@/lib/dev-log";
 
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
-import { proxyGetToBackend } from "@/lib/proxy-backend-request";
+import { proxyGetToBackend, proxyPostJsonToBackend } from "@/lib/proxy-backend-request";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -109,37 +109,52 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    if (!prisma) {
-      return NextResponse.json(
-        { error: "Database not configured on this app; use the main API to create promotions." },
-        { status: 503 },
-      );
+    if (prisma) {
+      try {
+        const startDate = new Date();
+        const endDate = new Date();
+        endDate.setDate(endDate.getDate() + duration);
+
+        const promotion = await prisma.promotion.create({
+          data: {
+            exhibitorId,
+            eventId,
+            packageType,
+            targetCategories,
+            amount,
+            duration,
+            status: "ACTIVE",
+            startDate,
+            endDate,
+            impressions: 0,
+            clicks: 0,
+            conversions: 0,
+          },
+        });
+
+        return NextResponse.json(
+          {
+            success: true,
+            message: "Promotion created successfully",
+            promotion,
+          },
+          { status: 201 },
+        );
+      } catch {
+        // fall through to Express
+      }
     }
 
-    const startDate = new Date();
-    const endDate = new Date();
-    endDate.setDate(endDate.getDate() + duration);
-
-    const promotion = await prisma.promotion.create({
-      data: {
-        exhibitorId,
-        eventId,
-        packageType,
-        targetCategories,
-        amount,
-        duration,
-        status: "ACTIVE",
-        startDate,
-        endDate,
-        impressions: 0,
-        clicks: 0,
-        conversions: 0,
+    const upstream = await proxyPostJsonToBackend(request, "/api/exhibitors/promotions", body);
+    const text = await upstream.text();
+    return new NextResponse(text, {
+      status: upstream.status,
+      headers: {
+        "content-type": upstream.headers.get("content-type") || "application/json",
       },
     });
-
-    return NextResponse.json({ success: true, promotion }, { status: 201 });
   } catch (error) {
     console.error("[API] Error creating promotion:", error);
-    return NextResponse.json({ error: "Failed to create promotion" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to create promotion" }, { status: 502 });
   }
 }

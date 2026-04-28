@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { apiFetch } from "@/lib/api"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Eye, MousePointer, TrendingUp, Loader2, Calendar } from "lucide-react"
@@ -40,9 +41,9 @@ export default function ActivePromotions({ exhibitorId, refetchTrigger }: Active
   const fetchPromotions = async () => {
     try {
       setLoading(true)
-      const response = await fetch(`/api/exhibitors/promotions?exhibitorId=${exhibitorId}`)
-      if (!response.ok) throw new Error("Failed to fetch promotions")
-      const data = await response.json()
+      const data = await apiFetch<{ promotions?: Promotion[] }>(
+        `/api/exhibitors/promotions?exhibitorId=${encodeURIComponent(exhibitorId)}`,
+      )
       setPromotions(data.promotions || [])
     } catch (error) {
       console.error("Error fetching promotions:", error)

@@ -17,3 +17,24 @@ export async function proxyGetToBackend(
   if (cookie) headers.set("Cookie", cookie);
   return fetch(url, { method: "GET", headers, cache: "no-store" });
 }
+
+/** Forward JSON POST to Express with `Authorization` and `Cookie` when present. */
+export async function proxyPostJsonToBackend(
+  request: Request,
+  backendPath: string,
+  body: unknown,
+): Promise<Response> {
+  const path = backendPath.startsWith("/") ? backendPath : `/${backendPath}`;
+  const url = `${getBackendApiBaseUrl()}${path}`;
+  const auth = request.headers.get("authorization");
+  const cookie = request.headers.get("cookie");
+  const headers = new Headers({ "Content-Type": "application/json" });
+  if (auth) headers.set("Authorization", auth);
+  if (cookie) headers.set("Cookie", cookie);
+  return fetch(url, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body ?? {}),
+    cache: "no-store",
+  });
+}
