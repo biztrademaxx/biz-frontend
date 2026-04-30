@@ -1,16 +1,14 @@
-import { NextResponse } from "next/server"
+import { NextResponse } from "next/server";
 
-// Cache this route for 60 seconds
-export const revalidate = 60
+export const revalidate = 60;
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 
 export async function GET() {
   try {
     const res = await fetch(`${API_BASE_URL}/api/events/vip`, {
-      // Always fetch fresh VIP events from the backend
-      cache: "no-store",
-    })
+      next: { revalidate: 60 },
+    });
 
     if (!res.ok) {
       console.error("VIP events backend error:", res.status, await res.text())
