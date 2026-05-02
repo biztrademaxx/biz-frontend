@@ -10,6 +10,19 @@ export async function GET(request: NextRequest) {
     const position = searchParams.get("position")
     const venueId = searchParams.get("venueId")
 
+    /** Vercel deploys often omit DATABASE_URL — banner list lives on Express (`/api/content/banners`). */
+    if (!prisma) {
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"
+      const qs = new URLSearchParams()
+      qs.set("page", page)
+      if (position) qs.set("position", position)
+      const target = `${API_BASE_URL}/api/content/banners?${qs.toString()}`
+      const res = await fetch(target, { method: "GET", cache: "no-store" })
+      const data = await res.json().catch(() => [])
+      const list = Array.isArray(data) ? data : []
+      return NextResponse.json(list, { status: res.ok ? 200 : res.status })
+    }
+
     // Build query filter
     const where: any = {
       page,
@@ -44,6 +57,12 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    if (!prisma) {
+      return NextResponse.json(
+        { error: "Banner uploads require DATABASE_URL on this app or use the admin API on the backend." },
+        { status: 503 },
+      )
+    }
     const formData = await request.formData()
     const file = formData.get("file") as File
     const title = formData.get("title") as string
@@ -97,6 +116,9 @@ export async function POST(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
+    if (!prisma) {
+      return NextResponse.json({ error: "Banner updates require DATABASE_URL on this app." }, { status: 503 })
+    }
     const { searchParams } = new URL(request.url)
     const id = searchParams.get("id")
     
@@ -120,6 +142,9 @@ export async function PATCH(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
+    if (!prisma) {
+      return NextResponse.json({ error: "Banner deletes require DATABASE_URL on this app." }, { status: 503 })
+    }
     const { searchParams } = new URL(request.url)
     const id = searchParams.get("id")
     

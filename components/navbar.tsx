@@ -2,7 +2,6 @@
 
 import { useState, useRef, useEffect, useCallback, useMemo } from "react"
 import Link from "next/link"
-import Image from "next/image"
 import { Calendar, ChevronDown, MapPin, Menu, Search, User, X } from "lucide-react"
 import { usePathname, useRouter } from "next/navigation"
 import {
@@ -355,14 +354,14 @@ export default function Navbar() {
               href="/"
               className="flex min-w-0 max-w-[300px] shrink-0 items-center sm:max-w-[360px] lg:max-w-[440px]"
             >
-              <Image
-                src="/images/biztradefairs.png"
+              {/* SVG shipped in public/images — avoids 404 on missing PNG */}
+              <img
+                src="/images/biztradefairs.svg"
                 alt="BizTradeFairs.com"
                 width={440}
                 height={120}
                 className="h-[52px] w-full max-h-[52px] object-contain object-left sm:h-[60px] sm:max-h-[60px] lg:h-[72px] lg:max-h-[72px]"
-                priority
-                sizes="(max-width: 640px) 300px, (max-width: 1024px) 360px, 440px"
+                fetchPriority="high"
               />
             </Link>
             <div className="relative ml-3 shrink-0 sm:ml-4 lg:ml-5" ref={exploreRef}>

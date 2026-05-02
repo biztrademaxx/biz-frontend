@@ -21,7 +21,7 @@ export function absoluteUrl(path: string): string {
 export function getOrgLogoAbsoluteUrl(): string {
   const fromEnv = process.env.NEXT_PUBLIC_ORG_LOGO_URL?.trim()
   if (fromEnv) return fromEnv
-  return absoluteUrl("/logo/biztradefairsLOGO.png")
+  return absoluteUrl("/logo/biztradefairsLOGO.svg")
 }
 
 /** Comma-separated profile URLs (Wikipedia, social) for Knowledge Graph-style `sameAs`. */

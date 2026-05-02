@@ -1,5 +1,4 @@
 import type React from "react"
-import Image from "next/image"
 import Link from "next/link"
 import {
   FaInstagramSquare,
@@ -24,13 +23,12 @@ const Footer: React.FC = () => {
               href="/"
               className="mb-4 flex max-w-[300px] items-center sm:max-w-[360px] lg:max-w-[420px]"
             >
-              <Image
-                src="/images/biztradefairs.png"
+              <img
+                src="/images/biztradefairs.svg"
                 alt="BizTradeFairs.com"
                 width={440}
                 height={120}
                 className="h-14 w-full max-h-14 object-contain object-left sm:h-16 sm:max-h-16 lg:h-[72px] lg:max-h-[72px]"
-                sizes="(max-width: 640px) 300px, (max-width: 1024px) 360px, 420px"
               />
             </Link>
             <p className="mb-4 text-sm text-gray-600">Follow us on</p>

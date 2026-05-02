@@ -22,6 +22,9 @@ export const metadata: Metadata = {
     template: `%s | ${SITE_NAME}`,
   },
   description: SITE_DESCRIPTION,
+  icons: {
+    icon: [{ url: "/images/biztradefairs.svg", type: "image/svg+xml" }],
+  },
   robots: {
     index: true,
     follow: true,
