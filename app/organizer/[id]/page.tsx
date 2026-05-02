@@ -427,7 +427,7 @@ export default function OrganizerPage() {
             {/* Organizer Avatar */}
             <div className="relative">
               <Avatar className="w-32 h-32 border-4 border-white shadow-lg">
-                <AvatarImage src={organizer.avatar || "/placeholder.svg"} alt={organizer.company} />
+                <AvatarImage src={organizer.avatar || "/city/c4.jpg"} alt={organizer.company} />
                 <AvatarFallback className="text-2xl font-bold bg-white text-blue-600">
                   {organizer.company
                     .split(" ")
@@ -543,7 +543,7 @@ export default function OrganizerPage() {
                         <Link href={eventPublicPath(event)} key={event.id}>
                           <div className="flex gap-4 p-4 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
                             <Image
-                              src={event.bannerImage || "/placeholder.svg?height=60&width=80"}
+                              src={event.bannerImage || "/city/c4.jpg"}
                               alt={event.title}
                               width={80}
                               height={60}
@@ -644,7 +644,7 @@ export default function OrganizerPage() {
                     <div className="p-0">
                       <div className="relative">
                         <Image
-                          src={event.bannerImage || "/placeholder.svg?height=200&width=400"}
+                          src={event.bannerImage || "/city/c4.jpg"}
                           alt={event.title}
                           width={400}
                           height={200}

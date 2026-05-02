@@ -82,7 +82,7 @@ export function InlineBannerClient({
         <div key={banner.id} className="group relative overflow-hidden rounded-sm shadow-lg">
           <div className="relative h-32 w-full sm:h-36 md:h-40">
             <Image
-              src={banner.imageUrl || "/placeholder.svg"}
+              src={banner.imageUrl || "/city/c4.jpg"}
               alt={banner.title}
               fill
               className="object-cover"

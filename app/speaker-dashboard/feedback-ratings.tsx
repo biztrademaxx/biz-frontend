@@ -64,7 +64,7 @@ export function FeedbackRatings() {
         name: "Sarah Johnson",
         title: "Senior Developer",
         company: "TechCorp",
-        avatar: "/placeholder.svg?height=40&width=40",
+        avatar: "/city/c4.jpg",
       },
       rating: 5,
       comment:
@@ -80,7 +80,7 @@ export function FeedbackRatings() {
         name: "Mike Chen",
         title: "Tech Lead",
         company: "StartupXYZ",
-        avatar: "/placeholder.svg?height=40&width=40",
+        avatar: "/city/c4.jpg",
       },
       rating: 4,
       comment:
@@ -96,7 +96,7 @@ export function FeedbackRatings() {
         name: "Emily Rodriguez",
         title: "Data Scientist",
         company: "AI Labs",
-        avatar: "/placeholder.svg?height=40&width=40",
+        avatar: "/city/c4.jpg",
       },
       rating: 5,
       comment: "Outstanding workshop! The hands-on approach made complex ML deployment concepts easy to understand.",
@@ -402,7 +402,7 @@ export function FeedbackRatings() {
               <div key={feedback.id} className="p-4 border rounded-lg">
                 <div className="flex items-start space-x-3">
                   <Avatar className="w-10 h-10">
-                    <AvatarImage src={feedback.attendee.avatar || "/placeholder.svg"} />
+                    <AvatarImage src={feedback.attendee.avatar || "/city/c4.jpg"} />
                     <AvatarFallback>
                       {feedback.attendee.name
                         .split(" ")

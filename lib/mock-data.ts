@@ -6,7 +6,7 @@ export const userData = {
   location: "Mumbai, India",
   website: "www.company.com",
   bio: "Experienced business leader with over 15 years in the industry. Passionate about innovation and building meaningful connections through events and conferences.",
-  avatar: "/placeholder.svg?height=120&width=120&text=User",
+  avatar: "/city/c4.jpg",
   followers: 3032,
   following: 1250,
   eventsAttended: 45,
@@ -45,7 +45,7 @@ export const connections = [
     name: "Priya Sharma",
     title: "Marketing Director",
     company: "Tech Solutions Ltd",
-    avatar: "/placeholder.svg?height=60&width=60&text=PS",
+    avatar: "/city/c4.jpg",
     mutualConnections: 12,
   },
   {
@@ -53,7 +53,7 @@ export const connections = [
     name: "Arjun Patel",
     title: "Event Manager",
     company: "Global Events Inc",
-    avatar: "/placeholder.svg?height=60&width=60&text=AP",
+    avatar: "/city/c4.jpg",
     mutualConnections: 8,
   },
   {
@@ -61,7 +61,7 @@ export const connections = [
     name: "Sneha Reddy",
     title: "Business Development",
     company: "Innovation Hub",
-    avatar: "/placeholder.svg?height=60&width=60&text=SR",
+    avatar: "/city/c4.jpg",
     mutualConnections: 15,
   },
 ]
@@ -73,7 +73,7 @@ export const messages = [
     message: "Hi Ramesh! Great meeting you at the conference. Would love to discuss potential collaboration.",
     time: "2 hours ago",
     unread: true,
-    avatar: "/placeholder.svg?height=40&width=40&text=PS",
+    avatar: "/city/c4.jpg",
   },
   {
     id: 2,
@@ -81,7 +81,7 @@ export const messages = [
     message: "Thank you for registering for Global Precision Expo 2025. Here are your event details...",
     time: "1 day ago",
     unread: false,
-    avatar: "/placeholder.svg?height=40&width=40&text=EO",
+    avatar: "/city/c4.jpg",
   },
   {
     id: 3,
@@ -89,6 +89,6 @@ export const messages = [
     message: "Looking forward to your keynote at the upcoming summit!",
     time: "3 days ago",
     unread: false,
-    avatar: "/placeholder.svg?height=40&width=40&text=AP",
+    avatar: "/city/c4.jpg",
   },
 ]

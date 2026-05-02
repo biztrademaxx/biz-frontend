@@ -42,7 +42,7 @@ export default function BrowseEventsByCityGridClient({
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-none">
                     <div className="relative h-7 w-7">
                       <img
-                        src={city.image || "/placeholder.svg"}
+                        src={city.image || "/city/c4.jpg"}
                         alt=""
                         className="h-full w-full object-contain"
                       />

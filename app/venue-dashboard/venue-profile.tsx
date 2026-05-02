@@ -56,7 +56,7 @@ const LOCATION_NONE = "__none__"
 const mapBackendToVenueData = (data: any): VenueData => ({
   id: data.id,
   venueName: data.manager?.venueName || data.name || "",
-  logo: data.manager?.avatar || data.images?.[0] || "/placeholder.svg",
+  logo: data.manager?.avatar || data.images?.[0] || "/city/c4.jpg",
   contactPerson: data.manager?.name || "",
   email: data.manager?.email || data.contact?.email || "",
   mobile: data.manager?.phone || data.contact?.phone || "",
@@ -812,7 +812,7 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
                 {images.map((image, index) => (
                   <div key={index} className="relative group">
                     <Image
-                      src={image || "/placeholder.svg"}
+                      src={image || "/city/c4.jpg"}
                       alt={`Venue image ${index + 1}`}
                       width={300}
                       height={200}
@@ -1015,7 +1015,7 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
                     </div>
                     <div className="relative aspect-square bg-muted rounded-lg border-2 border-dashed border-border overflow-hidden group">
                       <Image
-                        src={plan || "/placeholder.svg"}
+                        src={plan || "/city/c4.jpg"}
                         alt={`Floor Plan ${index + 1}`}
                         fill
                         className="object-contain p-4"

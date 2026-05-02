@@ -117,7 +117,7 @@ export default function ExhibitorManagement() {
           totalProducts: 0,
           revenue: 0,
           rating: 0,
-          avatar: "/placeholder.svg",
+          avatar: "/city/c4.jpg",
           description: "",
         }
       })

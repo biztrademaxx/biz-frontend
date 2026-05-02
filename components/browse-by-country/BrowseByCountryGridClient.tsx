@@ -37,7 +37,7 @@ export default function BrowseByCountryGridClient({
                 <div className="flex min-w-0 flex-col items-start gap-2">
                   <div className="flex h-7 w-11 shrink-0 items-center justify-start overflow-hidden rounded-none">
                     <img
-                      src={country.flag || "/placeholder.svg"}
+                      src={country.flag || "/city/c4.jpg"}
                       alt=""
                       className="h-full w-full object-contain object-left"
                     />

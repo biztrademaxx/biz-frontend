@@ -57,7 +57,7 @@ export function DashboardManagedBanner({ page }: DashboardManagedBannerProps) {
 
   const imageNode = (
     <div className="relative h-full w-full overflow-hidden rounded-sm">
-      <img src={src || "/placeholder.svg"} alt={alt} className="h-full w-full object-cover" />
+      <img src={src || "/city/c4.jpg"} alt={alt} className="h-full w-full object-cover" />
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-slate-950/60 via-slate-900/35 to-transparent" />
       <div className="absolute inset-0 flex items-center px-5 md:px-8">
         <div className="max-w-md">

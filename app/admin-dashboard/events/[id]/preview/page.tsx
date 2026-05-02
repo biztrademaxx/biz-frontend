@@ -497,7 +497,7 @@ export default function EventPreviewPage() {
                   {event.images.slice(0, 4).map((image: string, index: number) => (
                     <div key={index} className="aspect-square relative rounded-md overflow-hidden border">
                       <Image
-                        src={image || "/placeholder.svg"}
+                        src={image || "/city/c4.jpg"}
                         alt={`Event image ${index + 1}`}
                         fill
                         className="object-cover"

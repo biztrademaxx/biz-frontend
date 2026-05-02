@@ -344,7 +344,7 @@ export function ExhibitorLayout({ userId }: UserDashboardProps) {
               <CardContent>
                 <div className="flex items-start space-x-4">
                   <Avatar className="h-16 w-16">
-                    <AvatarImage src={exhibitor.avatar || "/placeholder.svg"} />
+                    <AvatarImage src={exhibitor.avatar || "/city/c4.jpg"} />
                     <AvatarFallback className="text-lg">
                       {(() => {
                         const label = (exhibitor.displayName || `${exhibitor.firstName} ${exhibitor.lastName}`).trim()

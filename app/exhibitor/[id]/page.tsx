@@ -839,7 +839,7 @@ export default function ExhibitorPage() {
             {/* Exhibitor Avatar */}
             <div className="relative">
               <Avatar className="w-32 h-32 border-4 border-white shadow-lg">
-                <AvatarImage src={exhibitorLogo || "/placeholder.svg"} alt={exhibitorName} />
+                <AvatarImage src={exhibitorLogo || "/city/c4.jpg"} alt={exhibitorName} />
                 <AvatarFallback className="text-2xl font-bold bg-white text-blue-600">
                   {exhibitorName
                     .split(" ")

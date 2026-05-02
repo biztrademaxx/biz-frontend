@@ -95,7 +95,7 @@ export default function ViewFeedback({ exhibitorId }: { exhibitorId: string }) {
           <CardHeader>
             <div className="flex items-center space-x-3">
               <Avatar>
-                <AvatarImage src={review.user.avatar || "/placeholder.svg"} />
+                <AvatarImage src={review.user.avatar || "/city/c4.jpg"} />
               <AvatarFallback>
                 {review.user?.firstName?.[0] ?? ""}
                 {review.user?.lastName?.[0] ?? ""}

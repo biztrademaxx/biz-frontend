@@ -1302,7 +1302,7 @@ export default function EventPage({ params }: EventPageProps) {
                         >
                           <div className="flex gap-4">
                             <Avatar className="w-12 h-12">
-                              <AvatarImage src={session.speaker?.avatar || "/placeholder.svg"} />
+                              <AvatarImage src={session.speaker?.avatar || "/city/c4.jpg"} />
                               <AvatarFallback>{session.speaker?.firstName?.charAt(0) || "S"}</AvatarFallback>
                             </Avatar>
                             <div>
@@ -1352,7 +1352,7 @@ export default function EventPage({ params }: EventPageProps) {
                       }
                     >
                       <Avatar className="w-16 h-16">
-                        <AvatarImage src={event.organizer?.avatar || "/placeholder.svg"} />
+                        <AvatarImage src={event.organizer?.avatar || "/city/c4.jpg"} />
                         <AvatarFallback className="text-lg">
                           {event.organizer?.company}
                           {/* {event.organizer?.firstName?.charAt(0) || "O"} */}

@@ -148,7 +148,7 @@ export default function SpeakerManagement() {
           name,
           email: (s.email as string) ?? "",
           phone: (s.phone as string) ?? "",
-          avatar: (s.avatar as string) ?? "/placeholder.svg",
+          avatar: (s.avatar as string) ?? "/city/c4.jpg",
           title: (s.title as string) ?? "",
           company: (s.company as string) ?? "",
           location: (s.location as string) ?? "",

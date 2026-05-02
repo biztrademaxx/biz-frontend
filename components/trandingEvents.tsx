@@ -53,13 +53,13 @@ export default function TrendingEvents() {
                     src={
                       event.image ||
                       event.banner ||
-                      "/placeholder.svg"
+                      "/city/c4.jpg"
                     }
                     alt={event.title}
                     className="w-full h-[140px] object-cover rounded-[4px]"
                     onError={(e) => {
                       const target = e.target as HTMLImageElement
-                      target.src = "/placeholder.svg"
+                      target.src = "/city/c4.jpg"
                     }}
                   />
 

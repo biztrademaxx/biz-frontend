@@ -250,7 +250,7 @@ export default function EventHero({ event, onImagesUpdate }: EventHeroProps) {
                 {images.map((img, index) => (
                   <div key={`image-${index}`} className="keen-slider__slide relative h-full w-full">
                     <Image
-                      src={img || "/placeholder.svg"}
+                      src={img || "/city/c4.jpg"}
                       alt={`${event.title} Image ${index + 1}`}
                       fill
                       className=""

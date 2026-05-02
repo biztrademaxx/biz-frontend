@@ -155,8 +155,7 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
       averageRating: avg,
       totalReviews: reviewCount,
       avatar:
-        organizer.avatar ||
-        `/placeholder.svg?height=40&width=40&text=${organizer.firstName?.charAt(0) || "O"}${organizer.lastName?.charAt(0) || "R"}`,
+        organizer.avatar || "/city/c4.jpg",
       category: organizer.specialties?.[0] || "General Events",
       description: organizer.description || "No description provided",
       documents,

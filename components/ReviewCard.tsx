@@ -152,7 +152,7 @@ export function ReviewCard({ review, organizerId, onReplyAdded, hideReplyButton 
           {/* User Avatar with null check */}
           <Avatar className="w-12 h-12">
             <AvatarImage 
-              src={review.user?.avatar || "/placeholder.svg"} 
+              src={review.user?.avatar || "/city/c4.jpg"} 
               alt={`${review.user?.firstName || "User"} ${review.user?.lastName || ""}`} 
             />
             <AvatarFallback>
@@ -258,7 +258,7 @@ export function ReviewCard({ review, organizerId, onReplyAdded, hideReplyButton 
                     <div key={reply.id} className="flex gap-3">
                       <Avatar className="w-8 h-8">
                         <AvatarImage 
-                          src={reply.user?.avatar || "/placeholder.svg"} 
+                          src={reply.user?.avatar || "/city/c4.jpg"} 
                           alt={`${reply.user?.firstName || "User"} ${reply.user?.lastName || ""}`} 
                         />
                         <AvatarFallback>

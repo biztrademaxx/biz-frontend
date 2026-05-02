@@ -347,7 +347,7 @@ export default function ExhibitorsManagement({ organizerId }: ExhibitorsManageme
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <Avatar className="w-8 h-8">
-                        <AvatarImage src={exhibitor.avatar || "/placeholder.svg"} />
+                        <AvatarImage src={exhibitor.avatar || "/city/c4.jpg"} />
                         <AvatarFallback>
                           {exhibitor.firstName[0]}
                           {exhibitor.lastName[0]}

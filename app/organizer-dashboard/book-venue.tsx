@@ -268,7 +268,7 @@ export default function BookVenue({ organizerId }: BookVenueProps) {
                   <CardContent className="p-4">
                     <div className="flex items-start gap-4">
                       <Avatar className="w-16 h-16">
-                        <AvatarImage src={venue.avatar || "/placeholder.svg"} />
+                        <AvatarImage src={venue.avatar || "/city/c4.jpg"} />
                         <AvatarFallback>
                           {venue.firstName[0]}
                           {venue.lastName[0]}

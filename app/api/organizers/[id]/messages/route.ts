@@ -189,7 +189,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         sender: {
           firstName: "Current",
           lastName: "User",
-          avatar: "/placeholder.svg?height=40&width=40",
+          avatar: "/city/c4.jpg",
         },
       }
 

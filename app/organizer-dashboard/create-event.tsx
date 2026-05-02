@@ -2113,7 +2113,7 @@ const handlePublishEvent = async () => {
                   {formData.images.map((image, index) => (
                     <div key={index} className="relative">
                       <Image
-                        src={image || "/placeholder.svg"}
+                        src={image || "/city/c4.jpg"}
                         alt={`Event image ${index + 1}`}
                         width={200}
                         height={150}

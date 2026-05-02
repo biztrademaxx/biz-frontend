@@ -107,6 +107,32 @@ function VenueCardSkeleton() {
   )
 }
 
+/** Featured Events: title + event cards (matches FeaturedEventsSection layout). */
+export function FeaturedEventsSkeleton() {
+  return (
+    <section
+      id="featured_events"
+      className="home-tt-section mx-auto mb-12 mt-8 w-full min-w-0 max-w-7xl bg-white px-3 py-4 sm:px-4 lg:px-6"
+      aria-busy="true"
+      aria-label="Loading featured events"
+    >
+      <div className="home-shimmer mb-3 h-6 w-56 max-w-[80%] rounded-md" />
+      <div className="home-shimmer mb-8 h-4 w-72 max-w-[90%] rounded-md" />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="overflow-hidden rounded-sm border border-gray-200 bg-white">
+            <div className="home-shimmer h-44 w-full" />
+            <div className="space-y-2 p-4">
+              <div className="home-shimmer h-5 w-[90%] rounded" />
+              <div className="home-shimmer h-3.5 w-[60%] rounded" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  )
+}
+
 export function ExploreVenuesSkeleton() {
   return (
     <section

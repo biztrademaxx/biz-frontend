@@ -432,7 +432,7 @@ export default function ProductListing({ exhibitorId }: ProductListingProps) {
         <div className="flex items-start gap-4">
           <div className="relative">
             <img
-              src={product.images[0] || "/placeholder.svg?height=96&width=96&text=Product"}
+              src={product.images[0] || "/city/c4.jpg"}
               alt={product.name}
               className="w-24 h-24 object-cover rounded-lg"
             />

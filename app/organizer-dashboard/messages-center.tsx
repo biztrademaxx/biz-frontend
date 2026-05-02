@@ -262,7 +262,7 @@ export default function MessagesCenter({ organizerId }: MessagesCenterProps) {
         sender: {
           firstName: "You",
           lastName: "",
-          avatar: "/placeholder.svg"
+          avatar: "/city/c4.jpg"
         }
       }
 
@@ -509,7 +509,7 @@ export default function MessagesCenter({ organizerId }: MessagesCenterProps) {
                         >
                           <div className="relative">
                             <Image
-                              src={connection.avatar || "/placeholder.svg"}
+                              src={connection.avatar || "/city/c4.jpg"}
                               alt={`${connection.firstName} ${connection.lastName}`}
                               width={40}
                               height={40}
@@ -585,7 +585,7 @@ export default function MessagesCenter({ organizerId }: MessagesCenterProps) {
                   >
                     <div className="relative shrink-0">
                       <Image
-                        src={conversation.contact?.avatar || "/placeholder.svg?height=40&width=40"}
+                        src={conversation.contact?.avatar || "/city/c4.jpg"}
                         alt="Contact"
                         width={40}
                         height={40}
@@ -644,7 +644,7 @@ export default function MessagesCenter({ organizerId }: MessagesCenterProps) {
                 <div className="flex items-center gap-3">
                   <div className="relative shrink-0">
                     <Image
-                      src={selectedContactInfo.avatar || "/placeholder.svg"}
+                      src={selectedContactInfo.avatar || "/city/c4.jpg"}
                       alt={`${selectedContactInfo.firstName} ${selectedContactInfo.lastName}`}
                       width={40}
                       height={40}

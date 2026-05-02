@@ -51,7 +51,7 @@ export default function VenueReviewCard({
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
           <Avatar className="h-10 w-10">
-            <AvatarImage src={review.user?.avatar || "/placeholder.svg"} alt={review.user?.firstName ?? ""} />
+            <AvatarImage src={review.user?.avatar || "/city/c4.jpg"} alt={review.user?.firstName ?? ""} />
             <AvatarFallback>
               {review.user?.firstName?.[0] ?? "?"}
               {review.user?.lastName?.[0] ?? ""}
@@ -89,7 +89,7 @@ export default function VenueReviewCard({
                       src={
                         reply.user?.avatar ??
                         venueManagerAvatar ??
-                        "/placeholder.svg"
+                        "/city/c4.jpg"
                       }
                       alt={venueManagerName ?? reply.user?.firstName ?? "Venue"}
                     />

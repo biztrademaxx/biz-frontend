@@ -782,7 +782,7 @@ export default function SignupFormCard({ variant, onRegistrationSuccess }: Signu
                   >
                     <div className="flex items-center justify-center h-10 mb-4">
                       <img
-                        src={organizer.logo || "/placeholder.svg"}
+                        src={organizer.logo || "/city/c4.jpg"}
                         alt={organizer.name}
                         className="max-h-full max-w-full object-contain"
                       />

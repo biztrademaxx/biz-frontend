@@ -105,7 +105,7 @@ const formattedExhibitors = exhibitors.map(exhibitor => ({
   joinDate: exhibitor.createdAt.toISOString(),
   eventsParticipated: exhibitor._count.exhibitorBooths,
   totalProducts: exhibitor._count.products,
-  avatar: exhibitor.avatar || "/placeholder.svg",
+  avatar: exhibitor.avatar || "/city/c4.jpg",
   description: exhibitor.bio || "No description available",
   revenue: Math.floor(Math.random() * 300000) + 50000,
   rating: parseFloat((Math.random() * 1.5 + 3.5).toFixed(1)),

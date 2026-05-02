@@ -171,7 +171,7 @@ export default function MyProfile({ speakerId }: { speakerId: string }) {
             <div className="flex flex-col items-center space-y-4">
               <div className="relative">
                 <Avatar className="w-32 h-32">
-                  <AvatarImage src={profile.avatar || "/placeholder.svg"} alt={profile.fullName} />
+                  <AvatarImage src={profile.avatar || "/city/c4.jpg"} alt={profile.fullName} />
                   <AvatarFallback className="text-2xl">{profile.fullName?.charAt(0)}</AvatarFallback>
                 </Avatar>
                 {isEditing && (

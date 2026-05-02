@@ -398,7 +398,7 @@ export default function FeedbackReplyManagement({ eventId }: { eventId: string }
                       <div className="flex-shrink-0">
                         {review.user.avatar ? (
                           <img
-                            src={review.user.avatar || "/placeholder.svg"}
+                            src={review.user.avatar || "/city/c4.jpg"}
                             alt={`${review.user.firstName} ${review.user.lastName}`}
                             className="w-12 h-12 rounded-full object-cover"
                           />
@@ -455,7 +455,7 @@ export default function FeedbackReplyManagement({ eventId }: { eventId: string }
                                       <div className="flex-shrink-0">
                                         {reply.user.avatar ? (
                                           <img
-                                            src={reply.user.avatar || "/placeholder.svg"}
+                                            src={reply.user.avatar || "/city/c4.jpg"}
                                             alt={`${reply.user.firstName} ${reply.user.lastName}`}
                                             className="w-8 h-8 rounded-full object-cover"
                                           />

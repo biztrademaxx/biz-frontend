@@ -34,7 +34,7 @@ export function OrganizerCommunication() {
       organizer: {
         name: "Sarah Johnson",
         role: "Event Coordinator",
-        avatar: "/placeholder.svg?height=40&width=40",
+        avatar: "/city/c4.jpg",
       },
       lastMessage: "Hi John! Just confirming the AV setup for your keynote. Do you need a wireless mic?",
       lastMessageTime: "2024-02-22 10:30 AM",
@@ -48,7 +48,7 @@ export function OrganizerCommunication() {
       organizer: {
         name: "Mike Chen",
         role: "Technical Director",
-        avatar: "/placeholder.svg?height=40&width=40",
+        avatar: "/city/c4.jpg",
       },
       lastMessage: "The demo environment is ready. Login credentials sent to your email.",
       lastMessageTime: "2024-02-21 3:45 PM",
@@ -210,7 +210,7 @@ export function OrganizerCommunication() {
                   >
                     <div className="flex items-start space-x-3">
                       <Avatar className="w-10 h-10">
-                        <AvatarImage src={conversation.organizer.avatar || "/placeholder.svg"} />
+                        <AvatarImage src={conversation.organizer.avatar || "/city/c4.jpg"} />
                         <AvatarFallback>
                           {conversation.organizer.name
                             .split(" ")

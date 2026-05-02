@@ -2097,7 +2097,7 @@ export default function EventsPageContent({
                         >
                           <div className="relative aspect-video overflow-hidden">
                             <img
-                              src={getEventImage(event) || "/placeholder.svg"}
+                              src={getEventImage(event) || "/city/c4.jpg"}
                               alt={event.title}
                               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                             />
@@ -2185,7 +2185,7 @@ export default function EventsPageContent({
                     <TrendingEventsSideCard
                       key={event.id}
                       event={event}
-                      imageUrl={getEventImage(event) || "/placeholder.svg"}
+                      imageUrl={getEventImage(event) || "/city/c4.jpg"}
                     />
                   ))}
                 </div>
@@ -2197,7 +2197,7 @@ export default function EventsPageContent({
                       <div key={event.id} className="w-[min(100%,340px)] shrink-0 snap-start">
                         <TrendingEventsSideCard
                           event={event}
-                          imageUrl={getEventImage(event) || "/placeholder.svg"}
+                          imageUrl={getEventImage(event) || "/city/c4.jpg"}
                         />
                       </div>
                     ))}
@@ -2209,7 +2209,7 @@ export default function EventsPageContent({
                   <Card className="bg-white shadow-xl border border-gray-300 rounded-sm overflow-hidden">
                     <div className="relative aspect-video">
                       <img
-                        src={getEventImage(featuredEvents[0]) || "/placeholder.svg"}
+                        src={getEventImage(featuredEvents[0]) || "/city/c4.jpg"}
                         alt={featuredEvents[0].title}
                         className="w-full h-full object-cover"
                       />

@@ -139,7 +139,7 @@ export async function GET(request: Request) {
       registrations: 0,
       rating: 0,
       reviews: 0,
-      image: event.bannerImage || "/placeholder.svg",
+      image: event.bannerImage || "/city/c4.jpg",
       bannerImage: event.bannerImage,
       thumbnailImage: event.thumbnailImage,
       images: event.images || [],

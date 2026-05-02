@@ -59,7 +59,7 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
-  const defaultImage = "/placeholder.svg"
+  const defaultImage = "/city/c4.jpg"
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -280,7 +280,7 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
                 <div className="relative w-full md:w-1/3 h-48">
                   <Image
                     src={
-                      event.bannerImage || event.thumbnailImage || "/placeholder.svg?height=200&width=300&query=event"
+                      event.bannerImage || event.thumbnailImage || "/city/c4.jpg"
                     }
                     alt={event.title}
                     fill

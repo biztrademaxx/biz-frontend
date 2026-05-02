@@ -46,19 +46,19 @@ export function SessionPromotion() {
     {
       id: 1,
       name: "Speaker Badge - Blue",
-      preview: "/placeholder.svg?height=200&width=300&text=Speaker+Badge+Blue",
+      preview: "/city/c4.jpg",
       format: "PNG",
     },
     {
       id: 2,
       name: "Speaker Badge - Dark",
-      preview: "/placeholder.svg?height=200&width=300&text=Speaker+Badge+Dark",
+      preview: "/city/c4.jpg",
       format: "PNG",
     },
     {
       id: 3,
       name: "QR Code Badge",
-      preview: "/placeholder.svg?height=200&width=200&text=QR+Code",
+      preview: "/city/c4.jpg",
       format: "PNG",
     },
   ]
@@ -156,7 +156,7 @@ export function SessionPromotion() {
                       <div key={badge.id} className="space-y-3">
                         <div className="border rounded-lg p-4 bg-gray-50">
                           <img
-                            src={badge.preview || "/placeholder.svg"}
+                            src={badge.preview || "/city/c4.jpg"}
                             alt={badge.name}
                             className="w-full h-32 object-cover rounded"
                           />

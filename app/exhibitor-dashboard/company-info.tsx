@@ -210,7 +210,7 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
             <div className="text-center">
               <div className="relative inline-block">
                 <Avatar className="w-32 h-32 mx-auto mb-4">
-                  <AvatarImage src={formData.avatar || "/placeholder.svg"} />
+                  <AvatarImage src={formData.avatar || "/city/c4.jpg"} />
                   <AvatarFallback className="text-2xl">
                     {formData.firstName?.[0]}
                     {formData.lastName?.[0]}

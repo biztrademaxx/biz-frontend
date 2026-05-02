@@ -1,6 +1,5 @@
 import { unstable_noStore as noStore } from "next/cache"
-import { getInternalAppOrigin } from "@/lib/server/internal-origin"
-import { mergeGoingBundleFromJson, normalizeGoingPayload } from "./followers-bundle"
+import { mergeGoingBundleFromJson } from "./followers-bundle"
 import { normalizeTrendingHomeEvent } from "./normalize-trending-event"
 import { pickTrendingHomeEvents } from "./pick-trending-events"
 import type { GoingBundle, TrendingHomeEvent } from "./types"
@@ -18,67 +17,16 @@ function rawEventsFromPayload(data: unknown): unknown[] {
   return []
 }
 
-function goingPayloadLooksUseful(j: unknown): boolean {
-  const { rows, total } = normalizeGoingPayload(j)
-  return rows.length > 0 || total > 0
-}
-
-/**
- * Prefer responses that actually carry counts/rows. Try Next proxy first during SSR (same host),
- * then direct backend `/going` and `/leads`.
- */
-async function fetchGoingJsonForEvent(eventId: string): Promise<unknown | null> {
-  const id = encodeURIComponent(eventId)
-  const base = getApiBaseUrl().replace(/\/$/, "")
-  const backendUrls = [
-    `${base}/api/events/${id}/going`,
-    `${base}/api/events/${id}/leads`,
-    `${base}/api/events/${id}/leads?type=ATTENDEE`,
-    `${base}/api/events/${id}/leads?type=attendee`,
-  ]
-
-  const tryInternal = async (): Promise<unknown | null> => {
-    try {
-      const origin = await getInternalAppOrigin()
-      const res = await fetch(`${origin}/api/events/${id}/leads`, { cache: "no-store" })
-      if (!res.ok) return null
-      return res.json()
-    } catch {
-      return null
-    }
-  }
-
-  const internalFirst = await tryInternal()
-  if (internalFirst != null && goingPayloadLooksUseful(internalFirst)) return internalFirst
-
-  for (const url of backendUrls) {
-    try {
-      const res = await fetch(url, { cache: "no-store" })
-      if (!res.ok) continue
-      const j: unknown = await res.json()
-      if (goingPayloadLooksUseful(j)) return j
-    } catch {
-      /* try next */
-    }
-  }
-
-  if (internalFirst != null) return internalFirst
-  for (const url of backendUrls) {
-    try {
-      const res = await fetch(url, { cache: "no-store" })
-      if (res.ok) return await res.json()
-    } catch {
-      /* */
-    }
-  }
-  return null
-}
-
 export interface TrendingHomePayload {
   events: TrendingHomeEvent[]
   goingBundles: Record<string, GoingBundle>
 }
 
+/**
+ * Home “trending” strip: one `/api/events` fetch + pick top N.
+ * Per-event `/leads` / “going” data is **not** fetched here — `TrendingEventsGridClient` loads it
+ * after hydration. Doing 4× many SSR fetches was blocking home for 10s+ when the API was slow.
+ */
 export async function fetchTrendingHomePayloadServer(): Promise<TrendingHomePayload> {
   noStore()
   const empty: TrendingHomePayload = { events: [], goingBundles: {} }
@@ -96,16 +44,9 @@ export async function fetchTrendingHomePayloadServer(): Promise<TrendingHomePayl
     if (picked.length === 0) return empty
 
     const goingBundles: Record<string, GoingBundle> = {}
-    await Promise.all(
-      picked.map(async (ev) => {
-        try {
-          const json = await fetchGoingJsonForEvent(ev.id)
-          goingBundles[ev.id] = mergeGoingBundleFromJson(ev, json)
-        } catch {
-          goingBundles[ev.id] = mergeGoingBundleFromJson(ev, null)
-        }
-      }),
-    )
+    for (const ev of picked) {
+      goingBundles[ev.id] = mergeGoingBundleFromJson(ev, null)
+    }
 
     return { events: picked, goingBundles }
   } catch (e) {

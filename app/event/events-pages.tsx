@@ -1079,7 +1079,7 @@ function EventsPageContent() {
                           <div className="flex gap-4">
                             <div className="relative">
                               <Image
-                                src={event.images[0]?.url || "/placeholder.svg?height=112&width=176"}
+                                src={event.images[0]?.url || "/city/c4.jpg"}
                                 alt={event.title}
                                 width={176}
                                 height={112}
@@ -1196,7 +1196,7 @@ function EventsPageContent() {
                                 <div className="relative bg-white rounded-sm shadow-md overflow-hidden hover:shadow-lg transition-shadow h-full">
                                   <div className="relative h-48 w-full">
                                     <Image
-                                      src={event.images[0]?.url || "/placeholder.svg?height=192&width=320"}
+                                      src={event.images[0]?.url || "/city/c4.jpg"}
                                       alt={event.title}
                                       fill
                                       className="object-cover"
@@ -1302,7 +1302,7 @@ function EventsPageContent() {
               <div className="overflow-hidden">
                 <div className="relative">
                   <Image
-                    src={featuredEvents[0].images[0]?.url || "/placeholder.svg?height=240&width=320"}
+                    src={featuredEvents[0].images[0]?.url || "/city/c4.jpg"}
                     alt={featuredEvents[0].title}
                     width={320}
                     height={240}
@@ -1319,7 +1319,7 @@ function EventsPageContent() {
                   <CardContent className="p-4">
                     <div className="flex gap-3">
                       <Image
-                        src={event.images[0]?.url || "/placeholder.svg?height=48&width=48"}
+                        src={event.images[0]?.url || "/city/c4.jpg"}
                         alt={event.title}
                         width={48}
                         height={48}

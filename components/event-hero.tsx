@@ -249,7 +249,7 @@ export default function EventHero({ event }: EventHeroProps) {
                     className="block w-full h-full"
                   >
                     <Image
-                      src={banner.imageUrl || "/placeholder.svg"}
+                      src={banner.imageUrl || "/city/c4.jpg"}
                       alt={banner.title}
                       fill
                       className="h-full w-full object-cover"
@@ -290,7 +290,7 @@ export default function EventHero({ event }: EventHeroProps) {
                   img.trim() !== "" &&
                   img !== "null" &&
                   img !== "undefined"
-              )[0] || "/placeholder.svg"
+              )[0] || "/city/c4.jpg"
             }
             alt={event.title}
             fill
@@ -318,7 +318,7 @@ export default function EventHero({ event }: EventHeroProps) {
                 {images.map((img, index) => (
                   <div key={`image-${index}`} className="keen-slider__slide relative h-full w-full">
                     <Image
-                      src={img || "/placeholder.svg"}
+                      src={img || "/city/c4.jpg"}
                       alt={`${event.title} Image ${index + 1}`}
                       fill
                       className="object-cover"

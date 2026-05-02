@@ -305,7 +305,7 @@ export default function SpeakerPage({ params: _params }: SpeakerPageProps) {
             className="block w-full h-full"
           >
             <Image
-              src={banner.imageUrl || "/placeholder.svg"}
+              src={banner.imageUrl || "/city/c4.jpg"}
               alt={banner.title}
               fill
               className="object-cover"

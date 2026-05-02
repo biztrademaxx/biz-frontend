@@ -499,7 +499,7 @@ export default function OrganizersPage() {
                   >
                     <div className="relative aspect-[16/10] w-full overflow-hidden bg-muted">
                       <img
-                        src={organizer.image || "/placeholder.svg"}
+                        src={organizer.image || "/city/c4.jpg"}
                         alt={organizer.company || organizer.name}
                         className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
                       />

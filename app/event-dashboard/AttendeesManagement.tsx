@@ -372,7 +372,7 @@ export default function AttendeesManagement({ eventId }: AttendeesManagementProp
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <Avatar className="w-8 h-8">
-                        <AvatarImage src={attendee.avatar || "/placeholder.svg"} />
+                        <AvatarImage src={attendee.avatar || "/city/c4.jpg"} />
                         <AvatarFallback>
                           {attendee.firstName[0]}
                           {attendee.lastName[0]}

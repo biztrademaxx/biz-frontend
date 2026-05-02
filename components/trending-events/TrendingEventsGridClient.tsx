@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { UserRound } from "lucide-react"
 import { BookmarkButton } from "@/components/bookmark-button"
@@ -11,7 +11,6 @@ import { TRENDING_AVATAR_COUNT } from "@/lib/home-trending/types"
 import {
   eventGoingCount,
   fallbackGoingProfilesFromEvent,
-  mergeGoingBundleFromJson,
 } from "@/lib/home-trending/followers-bundle"
 import { absolutizeMediaUrl } from "@/lib/home-trending/media-absolute"
 
@@ -124,44 +123,9 @@ export interface TrendingEventsGridClientProps {
   goingBundles: Record<string, GoingBundle>
 }
 
-export default function TrendingEventsGridClient({ events, goingBundles: initialGoingBundles }: TrendingEventsGridClientProps) {
+export default function TrendingEventsGridClient({ events, goingBundles }: TrendingEventsGridClientProps) {
   const router = useRouter()
   const displayEvents = events
-  const [goingBundles, setGoingBundles] = useState(initialGoingBundles)
-
-  const eventIdsKey = useMemo(() => displayEvents.map((e) => e.id).join("|"), [displayEvents])
-
-  useEffect(() => {
-    setGoingBundles(initialGoingBundles)
-  }, [eventIdsKey, initialGoingBundles])
-
-  useEffect(() => {
-    if (displayEvents.length === 0) return
-    let cancelled = false
-    ;(async () => {
-      const updates: Record<string, GoingBundle> = {}
-      await Promise.all(
-        displayEvents.map(async (ev) => {
-          try {
-            const res = await fetch(`/api/events/${encodeURIComponent(ev.id)}/leads`, {
-              cache: "no-store",
-            })
-            if (!res.ok) return
-            const json: unknown = await res.json()
-            if (cancelled) return
-            updates[ev.id] = mergeGoingBundleFromJson(ev, json)
-          } catch {
-            /* keep server bundle */
-          }
-        }),
-      )
-      if (cancelled || Object.keys(updates).length === 0) return
-      setGoingBundles((prev) => ({ ...prev, ...updates }))
-    })()
-    return () => {
-      cancelled = true
-    }
-  }, [eventIdsKey])
 
   const handleCardClick = (event: TrendingHomeEvent) => {
     router.push(eventPublicPath(event))

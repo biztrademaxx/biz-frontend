@@ -75,7 +75,7 @@ export function PageBannerClient({
         onClick={() => currentBanner.link && handleBannerClick(currentBanner)}
       >
         <Image
-          src={currentBanner.imageUrl || "/placeholder.svg"}
+          src={currentBanner.imageUrl || "/city/c4.jpg"}
           alt={currentBanner.title}
           fill
           className="object-cover"

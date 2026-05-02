@@ -48,7 +48,7 @@ export default function EventImageGallery({ images }: EventImageGalleryProps) {
           {allImages.slice(currentImageIndex, currentImageIndex + 3).map((image, index) => (
             <div key={image?.id || index} className="relative group overflow-hidden rounded-lg">
               <Image
-                src={image?.url || "/placeholder.svg?height=200&width=300&text=Event+Image"}
+                src={image?.url || "/city/c4.jpg"}
                 alt={image?.alt || "Event image"}
                 width={300}
                 height={200}

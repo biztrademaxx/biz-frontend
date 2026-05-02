@@ -183,7 +183,7 @@ export default function ExhibitorsTab({ eventId }: ExhibitorsTabProps) {
               <div className="flex gap-4 items-start mb-4">
                 <div className="w-16 h-16 flex-shrink-0">
                   <Image
-                    src={exhibitor.logo || "/placeholder.svg?height=96&width=96&text=Logo"}
+                    src={exhibitor.logo || "/city/c4.jpg"}
                     alt={`${exhibitor.company} logo`}
                     width={64}
                     height={64}

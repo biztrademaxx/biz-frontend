@@ -87,7 +87,7 @@ export default function UserManagement({ users }: UserManagementProps) {
       location: "Mumbai, Maharashtra",
       totalSpent: 15000,
       eventsAttended: 8,
-      avatar: "/placeholder.svg?height=40&width=40&text=RS",
+      avatar: "/city/c4.jpg",
     },
     {
       id: 2,
@@ -102,7 +102,7 @@ export default function UserManagement({ users }: UserManagementProps) {
       location: "Delhi, India",
       totalSpent: 125000,
       eventsAttended: 0,
-      avatar: "/placeholder.svg?height=40&width=40&text=EC",
+      avatar: "/city/c4.jpg",
     },
     {
       id: 3,
@@ -117,7 +117,7 @@ export default function UserManagement({ users }: UserManagementProps) {
       location: "Bangalore, Karnataka",
       totalSpent: 8500,
       eventsAttended: 5,
-      avatar: "/placeholder.svg?height=40&width=40&text=PP",
+      avatar: "/city/c4.jpg",
     },
     {
       id: 4,
@@ -132,7 +132,7 @@ export default function UserManagement({ users }: UserManagementProps) {
       location: "Pune, Maharashtra",
       totalSpent: 89000,
       eventsAttended: 0,
-      avatar: "/placeholder.svg?height=40&width=40&text=TE",
+      avatar: "/city/c4.jpg",
     },
     {
       id: 5,
@@ -147,7 +147,7 @@ export default function UserManagement({ users }: UserManagementProps) {
       location: "Chennai, Tamil Nadu",
       totalSpent: 4200,
       eventsAttended: 4,
-      avatar: "/placeholder.svg?height=40&width=40&text=AS",
+      avatar: "/city/c4.jpg",
     },
   ]
 
@@ -291,7 +291,7 @@ export default function UserManagement({ users }: UserManagementProps) {
                   <td className="p-4">
                     <div className="flex items-center gap-3">
                       <Avatar className="w-10 h-10">
-                        <AvatarImage src={user.avatar || "/placeholder.svg"} />
+                        <AvatarImage src={user.avatar || "/city/c4.jpg"} />
                         <AvatarFallback>
                           {user.name
                             .split(" ")
@@ -505,7 +505,7 @@ export default function UserManagement({ users }: UserManagementProps) {
             <div className="space-y-6">
               <div className="flex items-center gap-4">
                 <Avatar className="w-16 h-16">
-                  <AvatarImage src={selectedUser.avatar || "/placeholder.svg"} />
+                  <AvatarImage src={selectedUser.avatar || "/city/c4.jpg"} />
                   <AvatarFallback>
                     {selectedUser.name
                       .split(" ")

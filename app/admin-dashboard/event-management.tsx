@@ -1377,7 +1377,7 @@ function EventList({
                   <div className="flex items-start justify-between">
                     <div className="flex gap-4 flex-1">
                       <img
-                        src={event.thumbnailImage || event.bannerImage || event.image || "/placeholder.svg"}
+                        src={event.thumbnailImage || event.bannerImage || event.image || "/city/c4.jpg"}
                         alt={event.title}
                         className="w-20 h-20 rounded-lg object-cover"
                       />

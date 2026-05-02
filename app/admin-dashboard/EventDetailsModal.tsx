@@ -355,7 +355,7 @@ export default function EventDetailsPanel({
                           >
                             {/* Using img tag instead of Next.js Image for dynamic images */}
                             <img
-                              src={image || "/placeholder.svg"}
+                              src={image || "/city/c4.jpg"}
                               alt={`Event image ${index + 1}`}
                               className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-200"
                             />
