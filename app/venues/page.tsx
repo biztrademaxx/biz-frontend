@@ -416,10 +416,13 @@ export default function VenuesPage() {
                   {/* Image */}
                   <div className="relative">
                     <img
-                      src={venue.venueImages?.[0] || "/city/c2.jpg"}
+                      src={venue.venueImages?.[0] || "/placeholder.svg"}
                       alt={venue.venueName || "Venue"}
                       className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
-                      onError={(e) => (e.currentTarget.src = "/city/c2.jpg")}
+                      onError={(e) => {
+                        if (e.currentTarget.src.endsWith("/placeholder.svg")) return
+                        e.currentTarget.src = "/placeholder.svg"
+                      }}
                     />
 
                     {/* {venue.isVerified && (
