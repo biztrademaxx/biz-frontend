@@ -13,6 +13,7 @@ export default function ConditionalLayout({
 
   // Hide Navbar/Footer on dashboard routes
   const hideLayout =
+    pathname.startsWith("/") ||
     pathname.startsWith("/organizer-dashboard") ||
     pathname.startsWith("/event-dashboard") ||
     pathname.startsWith("/dashboard")||
@@ -26,9 +27,9 @@ export default function ConditionalLayout({
 
   return (
     <>
-      {/* {!hideLayout && <Navbar />} */}
+      {!hideLayout && <Navbar />}
       {children}
-      {/* {!hideLayout && <Footer />} */}
+      {!hideLayout && <Footer />}
     </>
   )
 }
