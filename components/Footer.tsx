@@ -1,3 +1,4 @@
+import Image from "next/image"
 import type React from "react"
 import Link from "next/link"
 import {
@@ -7,6 +8,7 @@ import {
   FaLinkedin,
 } from "react-icons/fa"
 import FooterChatBot from "@/components/footer-chat-bot"
+import { getBrandLogoSrc, isBrandLogoRemoteUrl } from "@/lib/brand-logo"
 
 const linkClass =
   "text-sm text-black transition-colors duration-200 hover:text-blue-800"
@@ -14,6 +16,9 @@ const linkClass =
 const colTitleClass = "mb-4 font-bold text-gray-500"
 
 const Footer: React.FC = () => {
+  const brandLogoSrc = getBrandLogoSrc()
+  const brandLogoUnoptimized = isBrandLogoRemoteUrl(brandLogoSrc)
+
   return (
     <footer className="relative bg-gray-100 px-4 py-12 md:px-8 lg:px-16">
       <div className="mx-auto max-w-7xl">
@@ -23,12 +28,14 @@ const Footer: React.FC = () => {
               href="/"
               className="mb-4 flex max-w-[300px] items-center sm:max-w-[360px] lg:max-w-[420px]"
             >
-              <img
-                src="/images/biztradefairs.svg"
+              <Image
+                src={brandLogoSrc}
                 alt="BizTradeFairs.com"
                 width={440}
                 height={120}
-                className="h-14 w-full max-h-14 object-contain object-left sm:h-16 sm:max-h-16 lg:h-[72px] lg:max-h-[72px]"
+                sizes="(min-width: 1024px) 420px, (min-width: 640px) 360px, 300px"
+                unoptimized={brandLogoUnoptimized ? true : undefined}
+                className="block h-14 w-auto max-h-14 max-w-[min(100%,440px)] shrink-0 object-contain object-left sm:h-16 sm:max-h-16 lg:h-[72px] lg:max-h-[72px]"
               />
             </Link>
             <p className="mb-4 text-sm text-gray-600">Follow us on</p>

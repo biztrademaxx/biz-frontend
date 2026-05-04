@@ -1,3 +1,5 @@
+import { getBrandLogoSrc } from "@/lib/brand-logo"
+
 /** Public site origin for canonical URLs, OG tags, and JSON-LD. Set in production, e.g. `NEXT_PUBLIC_SITE_URL=https://www.yoursite.com` */
 export const SITE_NAME = "Biz Trade Fairs"
 
@@ -20,8 +22,13 @@ export function absoluteUrl(path: string): string {
 /** Logo URL for Organization / publisher (absolute). Override with `NEXT_PUBLIC_ORG_LOGO_URL`. */
 export function getOrgLogoAbsoluteUrl(): string {
   const fromEnv = process.env.NEXT_PUBLIC_ORG_LOGO_URL?.trim()
-  if (fromEnv) return fromEnv
-  return absoluteUrl("/logo/biztradefairsLOGO.svg")
+  if (fromEnv) {
+    if (fromEnv.startsWith("http://") || fromEnv.startsWith("https://")) return fromEnv
+    return absoluteUrl(fromEnv.startsWith("/") ? fromEnv : `/${fromEnv}`)
+  }
+  const src = getBrandLogoSrc()
+  if (src.startsWith("http://") || src.startsWith("https://")) return src
+  return absoluteUrl(src.startsWith("/") ? src : `/${src}`)
 }
 
 /** Comma-separated profile URLs (Wikipedia, social) for Knowledge Graph-style `sameAs`. */

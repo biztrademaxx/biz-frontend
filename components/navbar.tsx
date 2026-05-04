@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect, useCallback, useMemo } from "react"
+import Image from "next/image"
 import Link from "next/link"
 import { Calendar, ChevronDown, MapPin, Menu, Search, User, X } from "lucide-react"
 import { usePathname, useRouter } from "next/navigation"
@@ -12,6 +13,7 @@ import {
   getCurrentUserRole,
   isAuthenticated,
 } from "@/lib/api"
+import { getBrandLogoSrc, isBrandLogoRemoteUrl } from "@/lib/brand-logo"
 import { eventPublicPath } from "@/lib/event-path"
 import ExploreMegaMenu from "./ExploreMegaMenu"
 
@@ -74,6 +76,9 @@ export default function Navbar() {
   const mobileAccountRef = useRef<HTMLDivElement>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const abortRef = useRef<AbortController | null>(null)
+
+  const brandLogoSrc = getBrandLogoSrc()
+  const brandLogoUnoptimized = isBrandLogoRemoteUrl(brandLogoSrc)
 
   const closeSearchUi = useCallback(() => {
     setShowSearchResults(false)
@@ -354,14 +359,15 @@ export default function Navbar() {
               href="/"
               className="flex min-w-0 max-w-[300px] shrink-0 items-center sm:max-w-[360px] lg:max-w-[440px]"
             >
-              {/* SVG shipped in public/images — avoids 404 on missing PNG */}
-              <img
-                src="/images/biztradefairs.svg"
+              <Image
+                src={brandLogoSrc}
                 alt="BizTradeFairs.com"
                 width={440}
                 height={120}
-                className="h-[52px] w-full max-h-[52px] object-contain object-left sm:h-[60px] sm:max-h-[60px] lg:h-[72px] lg:max-h-[72px]"
-                fetchPriority="high"
+                sizes="(min-width: 1024px) 440px, (min-width: 640px) 360px, 300px"
+                priority
+                unoptimized={brandLogoUnoptimized ? true : undefined}
+                className="block h-[52px] w-auto max-h-[52px] max-w-[min(100%,440px)] shrink-0 object-contain object-left sm:h-[60px] sm:max-h-[60px] lg:h-[72px] lg:max-h-[72px]"
               />
             </Link>
             <div className="relative ml-3 shrink-0 sm:ml-4 lg:ml-5" ref={exploreRef}>
