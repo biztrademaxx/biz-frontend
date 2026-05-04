@@ -85,6 +85,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 
         bannerImage: event.bannerImage || "",
         thumbnailImage: event.thumbnailImage || "",
+        currency: event.currency,
 
         // expectedExhibitors: event.expectedExhibitors || 0,
         maxAttendees: event.maxAttendees || 0,

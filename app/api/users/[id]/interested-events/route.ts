@@ -64,6 +64,7 @@ const eventLeads = await prisma.eventLead.findMany({
           category: e.category,
 
           ticketTypes: e.ticketTypes,
+          currency: e.currency,
           organizer: e.organizer,
           venue: e.venue,
 

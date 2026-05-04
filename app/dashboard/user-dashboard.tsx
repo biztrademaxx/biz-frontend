@@ -280,7 +280,7 @@ export function UserDashboard({ userId }: UserDashboardProps) {
                     Past Events
                   </li>
                   <li onClick={() => setActiveSection("wishlist")} className={menuItemClass(activeSection, "wishlist")}>
-                    Wishlist
+                    Saved Events
                   </li>
                 </ul>
               )}
