@@ -304,48 +304,6 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
         minArea: 20,
         isFixed: false,
       },
-      {
-        type: "2 Side Open Space",
-        description: "Space with two sides open for better visibility and accessibility",
-        pricePerSqm: 3500,
-        minArea: 12,
-        isFixed: true,
-      },
-      {
-        type: "3 Side Open Space",
-        description: "Premium corner space with three sides open for maximum exposure",
-        pricePerSqm: 4200,
-        minArea: 15,
-        isFixed: true,
-      },
-      {
-        type: "4 Side Open Space",
-        description: "Island space with all four sides open for 360-degree visibility",
-        pricePerSqm: 5500,
-        minArea: 25,
-        isFixed: true,
-      },
-      {
-        type: "Mezzanine Charges",
-        description: "Additional upper level space for storage or display purposes",
-        pricePerSqm: 1500,
-        minArea: 10,
-        isFixed: true,
-      },
-      {
-        type: "Additional Power",
-        description: "Extra electrical power supply for high-consumption equipment",
-        pricePerUnit: 800,
-        unit: "KW",
-        isFixed: true,
-      },
-      {
-        type: "Compressed Air",
-        description: "Compressed air supply for machinery demonstration (6 bar pressure)",
-        pricePerUnit: 1200,
-        unit: "HP",
-        isFixed: true,
-      },
     ],
     images: [],
     brochure: "",
@@ -944,48 +902,6 @@ const handlePublishEvent = async () => {
           minArea: 20,
           isFixed: false,
         },
-        {
-          type: "2 Side Open Space",
-          description: "Space with two sides open for better visibility and accessibility",
-          pricePerSqm: 3500,
-          minArea: 12,
-          isFixed: true,
-        },
-        {
-          type: "3 Side Open Space",
-          description: "Premium corner space with three sides open for maximum exposure",
-          pricePerSqm: 4200,
-          minArea: 15,
-          isFixed: true,
-        },
-        {
-          type: "4 Side Open Space",
-          description: "Island space with all four sides open for 360-degree visibility",
-          pricePerSqm: 5500,
-          minArea: 25,
-          isFixed: true,
-        },
-        {
-          type: "Mezzanine Charges",
-          description: "Additional upper level space for storage or display purposes",
-          pricePerSqm: 1500,
-          minArea: 10,
-          isFixed: true,
-        },
-        {
-          type: "Additional Power",
-          description: "Extra electrical power supply for high-consumption equipment",
-          pricePerUnit: 800,
-          unit: "KW",
-          isFixed: true,
-        },
-        {
-          type: "Compressed Air",
-          description: "Compressed air supply for machinery demonstration (6 bar pressure)",
-          pricePerUnit: 1200,
-          unit: "HP",
-          isFixed: true,
-        },
       ],
       images: [],
       brochure: "",
@@ -1343,19 +1259,21 @@ const handlePublishEvent = async () => {
                   )}
                 </div>
                 <div className="md:col-span-2">
-  <Label htmlFor="subTitle">Event Subtitle</Label>
-  <Input
-    id="subTitle"
-    value={formData.subTitle || ""}
-    onChange={(e) =>
-      setFormData((prev) => ({ ...prev, subTitle: e.target.value }))
-    }
-    placeholder="Enter short subtitle (optional)"
-  />
-  <p className="text-xs text-muted-foreground mt-1">
-    Optional: short catchy line for your event
-  </p>
-</div>
+                  <Label htmlFor="eventSubtitle">Event subtitle</Label>
+                  <Input
+                    id="eventSubtitle"
+                    name="eventSubtitle"
+                    autoComplete="off"
+                    value={formData.subTitle ?? ""}
+                    onChange={(e) =>
+                      setFormData((prev) => ({ ...prev, subTitle: e.target.value }))
+                    }
+                    placeholder="Optional tagline under the title"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Separate from the full description below. Leave blank if you do not need a tagline.
+                  </p>
+                </div>
 
                 <div className="md:col-span-2">
                   <Label htmlFor="slug">Event Slug *</Label>
