@@ -13,6 +13,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Building2, Star, Users, Camera, Plus, Edit, Trash2, CheckCircle, Upload, Save } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { getCityOptions, getCountryOptions, getStateOptions } from "@/lib/location-data"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { getIanaTimeZoneOptions } from "@/lib/iana-timezones"
 
 interface VenueData {
   id: string
@@ -44,6 +47,8 @@ interface VenueData {
   longitude: number
   basePrice: number
   currency: string
+  /** IANA time zone for events held at this venue (e.g. Asia/Kolkata). */
+  timezone: string
 }
 
 interface VenueProfileProps {
@@ -83,6 +88,7 @@ const mapBackendToVenueData = (data: any): VenueData => ({
   longitude: data.location?.coordinates?.lng || 0,
   basePrice: data.pricing?.basePrice || 0,
   currency: data.pricing?.currency || "₹",
+  timezone: data.location?.timezone ?? "",
 })
 
 export default function VenueProfile({ venueData }: VenueProfileProps) {
@@ -108,6 +114,14 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
   const [countryPick, setCountryPick] = useState<string>(LOCATION_NONE)
   const [statePick, setStatePick] = useState<string>(LOCATION_NONE)
   const [cityPick, setCityPick] = useState<string>(LOCATION_NONE)
+  const ianaZones = useMemo(() => getIanaTimeZoneOptions(), [])
+  const [tzPickerOpen, setTzPickerOpen] = useState(false)
+  const [tzFilter, setTzFilter] = useState("")
+  const filteredIanaZones = useMemo(() => {
+    const q = tzFilter.trim().toLowerCase()
+    if (!q) return ianaZones
+    return ianaZones.filter((z) => z.toLowerCase().includes(q))
+  }, [ianaZones, tzFilter])
 
   useEffect(() => {
     const fetchVenue = async () => {
@@ -710,6 +724,69 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
                             />
                           ) : (
                             <div className="p-2 bg-muted rounded">{profileData?.zipCode || "Not specified"}</div>
+                          )}
+                        </div>
+
+                        <div className="space-y-2 md:col-span-2">
+                          <Label>Venue time zone</Label>
+                          {isEditing ? (
+                            <Popover open={tzPickerOpen} onOpenChange={setTzPickerOpen}>
+                              <PopoverTrigger asChild>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  className="w-full justify-between font-normal"
+                                >
+                                  {profileData?.timezone?.trim()
+                                    ? profileData.timezone
+                                    : "Select IANA time zone"}
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-[min(100vw-2rem,22rem)] p-2" align="start">
+                                <Input
+                                  placeholder="Search zones..."
+                                  value={tzFilter}
+                                  onChange={(e) => setTzFilter(e.target.value)}
+                                  className="mb-2"
+                                />
+                                <ScrollArea className="h-64 pr-2">
+                                  <div className="flex flex-col gap-0.5">
+                                    <button
+                                      type="button"
+                                      className="rounded px-2 py-1.5 text-left text-sm hover:bg-muted"
+                                      onClick={() => {
+                                        setProfileData((prev) =>
+                                          prev ? { ...prev, timezone: "" } : prev,
+                                        )
+                                        setTzPickerOpen(false)
+                                      }}
+                                    >
+                                      Clear selection
+                                    </button>
+                                    {filteredIanaZones.map((z) => (
+                                      <button
+                                        key={z}
+                                        type="button"
+                                        className="rounded px-2 py-1.5 text-left text-sm hover:bg-muted"
+                                        onClick={() => {
+                                          setProfileData((prev) =>
+                                            prev ? { ...prev, timezone: z } : prev,
+                                          )
+                                          setTzPickerOpen(false)
+                                          setTzFilter("")
+                                        }}
+                                      >
+                                        {z}
+                                      </button>
+                                    ))}
+                                  </div>
+                                </ScrollArea>
+                              </PopoverContent>
+                            </Popover>
+                          ) : (
+                            <div className="p-2 bg-muted rounded">
+                              {profileData?.timezone?.trim() || "Not specified"}
+                            </div>
                           )}
                         </div>
                       </div>

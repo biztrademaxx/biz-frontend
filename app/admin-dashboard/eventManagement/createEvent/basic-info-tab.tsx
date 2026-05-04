@@ -23,6 +23,7 @@ interface BasicInfoTabProps {
     city: string
     state?: string
     country?: string
+    timezone?: string
   }) => void
 }
 

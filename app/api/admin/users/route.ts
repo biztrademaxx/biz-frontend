@@ -47,6 +47,7 @@ export async function GET(request: NextRequest) {
         venueCountry: true,
         maxCapacity: true,
         amenities: true,
+        venueTimezone: true,
       },
       skip,
       take: limit,
@@ -101,6 +102,7 @@ export async function POST(request: NextRequest) {
       venueCountry,
       maxCapacity,
       amenities = [],
+      venueTimezone,
       // Speaker fields
       speakingExperience,
       bio
@@ -149,6 +151,8 @@ export async function POST(request: NextRequest) {
       userData.venueCountry = venueCountry
       userData.maxCapacity = maxCapacity ? parseInt(maxCapacity) : 0
       userData.amenities = amenities
+      const tz = typeof venueTimezone === "string" ? venueTimezone.trim() : ""
+      if (tz) userData.venueTimezone = tz
     }
 
     if (role === 'SPEAKER') {
@@ -178,6 +182,7 @@ export async function POST(request: NextRequest) {
         venueCountry: true,
         maxCapacity: true,
         amenities: true,
+        venueTimezone: true,
         speakingExperience: true,
         bio: true,
         createdAt: true

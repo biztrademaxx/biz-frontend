@@ -385,9 +385,13 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
     city: string
     state?: string
     country?: string
+    timezone?: string
   }) => {
     const id = venueData.venueId || ""
     setSelectedVenueId(id)
+    const tzFromVenue = venueData.timezone?.trim()
+    const tzFromCountry =
+      venueData.country ? getCountryTimezoneByName(venueData.country) || "" : ""
     setFormData((prev) => ({
       ...prev,
       venueId: id,
@@ -396,7 +400,7 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
       city: venueData.city,
       state: venueData.state || "",
       country: venueData.country || "",
-      timezone: venueData.country ? getCountryTimezoneByName(venueData.country) || "" : "",
+      timezone: tzFromVenue || tzFromCountry || "",
     }))
   }
 
