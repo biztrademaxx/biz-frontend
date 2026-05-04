@@ -23,7 +23,7 @@ export const metadata: Metadata = {
   },
   description: SITE_DESCRIPTION,
   icons: {
-    icon: [{ url: "/images/biztradefairs.svg", type: "image/svg+xml" }],
+    icon: [{ url: "/images/biztradefairs.png", type: "image/png" }],
   },
   robots: {
     index: true,
