@@ -233,7 +233,7 @@ export function BasicInfoTab({
                 value={
                   formData.startDate && formData.startDate.includes("T")
                     ? formData.startDate.split("T")[1].slice(0, 5)
-                    : "09:00"
+                    : "10:00"
                 }
                 onChange={(e) => {
                   const timeValue = e.target.value
@@ -283,21 +283,6 @@ export function BasicInfoTab({
                   onFormChange({ endDate: newEndDate })
                 }}
               />
-            </div>
-
-            <div>
-              <Label htmlFor="timezone">Timezone</Label>
-              <Select value={formData.timezone} onValueChange={(value) => onFormChange({ timezone: value })}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Asia/Kolkata">Asia/Kolkata (IST)</SelectItem>
-                  <SelectItem value="America/New_York">America/New_York (EST)</SelectItem>
-                  <SelectItem value="Europe/London">Europe/London (GMT)</SelectItem>
-                  <SelectItem value="Asia/Tokyo">Asia/Tokyo (JST)</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
           </div>
         </CardContent>

@@ -34,5 +34,5 @@ export function UserNameBanner({ userId, designation }: UserNameBannerProps) {
     }
   }, [userId])
 
-  return <NameBanner name={name} designation={designation} />
+  return <NameBanner name={name} designation={designation} alignRight />
 }

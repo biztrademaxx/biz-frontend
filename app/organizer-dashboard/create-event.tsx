@@ -233,7 +233,18 @@ const slugifyTitle = (value: string): string =>
     .replace(/[^a-z0-9\s-]/g, "")
     .replace(/\s+/g, "-")
     .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "");
+    .replace(/^-|-$/g, "")
+
+function getEffectiveEventCreationTimezone(formData: Pick<EventFormData, "timezone" | "country">): string {
+  const manual = formData.timezone?.trim()
+  if (manual) return manual
+  const country = formData.country?.trim()
+  if (country) {
+    const tz = getCountryTimezoneByName(country)
+    if (tz) return tz
+  }
+  return "UTC"
+}
 
 export default function CreateEvent({ organizerId }: { organizerId: string }) {
   const [activeTab, setActiveTab] = useState("basic")
@@ -257,8 +268,8 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
     edition: 0,
     startDate: "",
     endDate: "",
-    dailyStart: "08:30",
-    dailyEnd: "18:30",
+    dailyStart: "10:00",
+    dailyEnd: "18:00",
     timezone: "",
     venueId: "",
     venue: "",
@@ -571,7 +582,6 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
       formData.categories.length > 0,
       formData.highlights.length > 0,
       formData.tags.length > 0,
-      formData.generalPrice > 0,
       formData.images.length > 0,
     ]
 
@@ -714,17 +724,6 @@ const handlePublishEvent = async () => {
     return
   }
 
-  // Check if at least one ticket type has price > 0
-  const hasValidTickets = formData.generalPrice > 0 || formData.studentPrice > 0 || formData.vipPrice > 0
-  if (!hasValidTickets) {
-    toast({
-      title: "Pricing Required",
-      description: "At least one ticket type must have a price greater than 0",
-      variant: "destructive",
-    })
-    return
-  }
-
   setIsPublishing(true)
   
   try {
@@ -782,17 +781,13 @@ const handlePublishEvent = async () => {
     devLog("📊 Exhibition spaces prepared:", exhibitionSpaces.length)
 
     // Convert local times to UTC for backend
-    const startDateWithTime = convertLocalToUTC(
-      formData.dailyStart,
-      getDatePart(formData.startDate),
-      formData.timezone
-    ) || formData.startDate
+    const tz = getEffectiveEventCreationTimezone(formData)
 
-    const endDateWithTime = convertLocalToUTC(
-      formData.dailyEnd,
-      getDatePart(formData.endDate),
-      formData.timezone
-    ) || formData.endDate
+    const startDateWithTime =
+      convertLocalToUTC(formData.dailyStart, getDatePart(formData.startDate), tz) || formData.startDate
+
+    const endDateWithTime =
+      convertLocalToUTC(formData.dailyEnd, getDatePart(formData.endDate), tz) || formData.endDate
 
     devLog("⏰ Time conversion complete:")
     devLog("Daily start:", formData.dailyStart, "-> UTC:", startDateWithTime)
@@ -839,7 +834,7 @@ const handlePublishEvent = async () => {
       endDate: endDateWithTime,
       registrationStart: startDateWithTime,
       registrationEnd: endDateWithTime,
-      timezone: formData.timezone,
+      timezone: tz,
       isVirtual: false,
       venueId: formData.venueId || null,
       city: formData.city || null,
@@ -913,8 +908,8 @@ const handlePublishEvent = async () => {
       edition: 0,
       startDate: "",
       endDate: "",
-      dailyStart: "08:30",
-      dailyEnd: "18:30",
+      dailyStart: "10:00",
+      dailyEnd: "18:00",
       timezone: "",
       venueId: "",
       venue: "",
@@ -1508,20 +1503,17 @@ const handlePublishEvent = async () => {
                     value={formData.dailyStart}
                     onChange={(e) => {
                       const timeValue = e.target.value
-                      setFormData((prevData) => ({
-                        ...prevData,
-                        dailyStart: timeValue
-                      }))
-
-                      // Update the startDate with UTC time
-                      const dateValue = getDatePart(formData.startDate) || new Date().toISOString().split('T')[0]
-                      const utcTime = convertLocalToUTC(timeValue, dateValue, formData.timezone)
-                      if (utcTime) {
-                        setFormData(prevData => ({
+                      setFormData((prevData) => {
+                        const dateValue =
+                          getDatePart(prevData.startDate) || new Date().toISOString().split("T")[0]
+                        const tz = getEffectiveEventCreationTimezone(prevData)
+                        const utcTime = convertLocalToUTC(timeValue, dateValue, tz)
+                        return {
                           ...prevData,
-                          startDate: utcTime
-                        }))
-                      }
+                          dailyStart: timeValue,
+                          ...(utcTime ? { startDate: utcTime } : {}),
+                        }
+                      })
                     }}
                   />
                   <p className="text-xs text-muted-foreground mt-1">
@@ -1555,45 +1547,21 @@ const handlePublishEvent = async () => {
                     value={formData.dailyEnd}
                     onChange={(e) => {
                       const timeValue = e.target.value
-                      setFormData((prevData) => ({
-                        ...prevData,
-                        dailyEnd: timeValue
-                      }))
-
-                      // Update the endDate with UTC time
-                      const dateValue = getDatePart(formData.endDate) || new Date().toISOString().split('T')[0]
-                      const utcTime = convertLocalToUTC(timeValue, dateValue, formData.timezone)
-                      if (utcTime) {
-                        setFormData(prevData => ({
+                      setFormData((prevData) => {
+                        const dateValue =
+                          getDatePart(prevData.endDate) || new Date().toISOString().split("T")[0]
+                        const tz = getEffectiveEventCreationTimezone(prevData)
+                        const utcTime = convertLocalToUTC(timeValue, dateValue, tz)
+                        return {
                           ...prevData,
-                          endDate: utcTime
-                        }))
-                      }
+                          dailyEnd: timeValue,
+                          ...(utcTime ? { endDate: utcTime } : {}),
+                        }
+                      })
                     }}
                   />
                   <p className="text-xs text-muted-foreground mt-1">
                     Time when the event ends each day - Display: {formatTimeTo12Hour(formData.dailyEnd)}
-                  </p>
-                </div>
-
-                <div>
-                  <Label htmlFor="timezone">Timezone</Label>
-                  <Select
-                    value={formData.timezone || undefined}
-                    onValueChange={(value) => setFormData((prevData) => ({ ...prevData, timezone: value }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Asia/Kolkata">Asia/Kolkata (IST) UTC+5:30</SelectItem>
-                      <SelectItem value="America/New_York">America/New_York (EST) UTC-5</SelectItem>
-                      <SelectItem value="Europe/London">Europe/London (GMT) UTC+0</SelectItem>
-                      <SelectItem value="Asia/Tokyo">Asia/Tokyo (JST) UTC+9</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Times will be converted to this timezone
                   </p>
                 </div>
               </div>
@@ -1823,7 +1791,7 @@ const handlePublishEvent = async () => {
                   <Input
                     type="number"
                     placeholder="0"
-                    value={formData.generalPrice === 0 ? "" : formData.generalPrice}
+                    value={formData.generalPrice}
                     onChange={(e) =>
                       setFormData((prev) => ({
                         ...prev,
@@ -1838,7 +1806,7 @@ const handlePublishEvent = async () => {
                   <Input
                     type="number"
                     placeholder="0"
-                    value={formData.studentPrice === 0 ? "" : formData.studentPrice}
+                    value={formData.studentPrice}
                     onChange={(e) =>
                       setFormData((prev) => ({
                         ...prev,
@@ -1853,7 +1821,7 @@ const handlePublishEvent = async () => {
                   <Input
                     type="number"
                     placeholder="0"
-                    value={formData.vipPrice === 0 ? "" : formData.vipPrice}
+                    value={formData.vipPrice}
                     onChange={(e) =>
                       setFormData((prev) => ({
                         ...prev,
@@ -2219,7 +2187,8 @@ const handlePublishEvent = async () => {
                       <div className="flex items-center gap-1">
                         <Clock className="w-4 h-4" />
                         <span>
-                          Daily: {formatTimeTo12Hour(formData.dailyStart)} - {formatTimeTo12Hour(formData.dailyEnd)} ({formData.timezone})
+                          Daily: {formatTimeTo12Hour(formData.dailyStart)} -{" "}
+                          {formatTimeTo12Hour(formData.dailyEnd)} ({getEffectiveEventCreationTimezone(formData)})
                         </span>
                       </div>
                       <div className="flex items-center gap-1">
@@ -2256,35 +2225,42 @@ const handlePublishEvent = async () => {
                     </div>
                   )}
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-                    <div className="bg-white p-4 rounded-lg border">
-                      <h4 className="font-semibold mb-2">General Entry</h4>
-                      <p className="text-2xl font-bold text-blue-600">
-                        {formData.currency}
-                        {formData.generalPrice || 0}
-                      </p>
+                  {!formData.generalPrice && !formData.studentPrice && !formData.vipPrice ? (
+                    <div className="bg-white p-4 rounded-lg border mt-6 md:max-w-md">
+                      <h4 className="font-semibold mb-2">Tickets</h4>
+                      <p className="text-2xl font-bold text-blue-600">Free</p>
                     </div>
-
-                    {formData.studentPrice > 0 && (
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
                       <div className="bg-white p-4 rounded-lg border">
-                        <h4 className="font-semibold mb-2">Student Price</h4>
-                        <p className="text-2xl font-bold text-green-600">
+                        <h4 className="font-semibold mb-2">General Entry</h4>
+                        <p className="text-2xl font-bold text-blue-600">
                           {formData.currency}
-                          {formData.studentPrice}
+                          {formData.generalPrice || 0}
                         </p>
                       </div>
-                    )}
 
-                    {formData.vipPrice > 0 && (
-                      <div className="bg-white p-4 rounded-lg border">
-                        <h4 className="font-semibold mb-2">VIP Price</h4>
-                        <p className="text-2xl font-bold text-purple-600">
-                          {formData.currency}
-                          {formData.vipPrice}
-                        </p>
-                      </div>
-                    )}
-                  </div>
+                      {formData.studentPrice > 0 && (
+                        <div className="bg-white p-4 rounded-lg border">
+                          <h4 className="font-semibold mb-2">Student Price</h4>
+                          <p className="text-2xl font-bold text-green-600">
+                            {formData.currency}
+                            {formData.studentPrice}
+                          </p>
+                        </div>
+                      )}
+
+                      {formData.vipPrice > 0 && (
+                        <div className="bg-white p-4 rounded-lg border">
+                          <h4 className="font-semibold mb-2">VIP Price</h4>
+                          <p className="text-2xl font-bold text-purple-600">
+                            {formData.currency}
+                            {formData.vipPrice}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {/* Space Costs Preview */}
                   <div className="mt-6">

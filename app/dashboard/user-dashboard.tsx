@@ -41,6 +41,7 @@ import RecommendedEvents from "./recommended-events"
 import Schedule from "./Schedule"
 import { HelpSupport } from "@/components/HelpSupport"
 import { useDashboard } from "@/contexts/dashboard-context"
+import { DashboardManagedBanner } from "@/components/dashboard-managed-banner"
 
 interface UserDashboardProps {
   userId: string
@@ -442,29 +443,25 @@ export function UserDashboard({ userId }: UserDashboardProps) {
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex min-h-screen w-full bg-gray-50">
       {/* Sidebar */}
       {renderSidebar()}
 
-      {/* Main content */}
-      <div className="flex-1 flex flex-col min-w-0"> {/* min-w-0 prevents flex overflow */}
-        {/* Mobile header */}
-        <header className="md:hidden bg-white border-b p-4 flex items-center justify-between sticky top-0 z-30">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setIsMobileSidebarOpen(true)}
-          >
-            <Menu size={20} />
+      {/* Main content area — matches organizer-dashboard OrganizerDashboardPage */}
+      <div className="flex min-h-screen flex-1 flex-col min-w-0">
+        {/* Mobile top bar */}
+        <div className="flex items-center justify-between border-b border-gray-200 bg-white p-4 shadow-sm md:hidden">
+          <Button variant="ghost" size="sm" onClick={() => setIsMobileSidebarOpen(true)}>
+            <Menu className="h-5 w-5" />
           </Button>
-          <h1 className="text-lg font-semibold capitalize">
-            {activeSection.replace('-', ' ')}
-          </h1>
-          <div className="w-10"></div> {/* Spacer for balance */}
-        </header>
+          <div className="w-9" />
+        </div>
 
-        <main className="flex-1 p-4 md:p-6 overflow-auto">
-          {renderContent()}
+        <main className="flex-1 overflow-auto p-6">
+          <DashboardManagedBanner page="visitor-dashboard" />
+          <div className="mx-auto max-w-7xl">
+            <div className="">{renderContent()}</div>
+          </div>
         </main>
       </div>
     </div>

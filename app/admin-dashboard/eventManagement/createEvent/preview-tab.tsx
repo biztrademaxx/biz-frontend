@@ -65,35 +65,42 @@ export function PreviewTab({ formData }: PreviewTabProps) {
                 </div>
               )}
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-                <div className="bg-white p-4 rounded-lg border">
-                  <h4 className="font-semibold mb-2">General Entry</h4>
-                  <p className="text-2xl font-bold text-blue-600">
-                    {formData.currency}
-                    {formData.generalPrice || 0}
-                  </p>
+              {!formData.generalPrice && !formData.studentPrice && !formData.vipPrice ? (
+                <div className="bg-white p-4 rounded-lg border md:max-w-md mt-6">
+                  <h4 className="font-semibold mb-2">Tickets</h4>
+                  <p className="text-2xl font-bold text-blue-600">Free</p>
                 </div>
-
-                {formData.studentPrice > 0 && (
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
                   <div className="bg-white p-4 rounded-lg border">
-                    <h4 className="font-semibold mb-2">Student Price</h4>
-                    <p className="text-2xl font-bold text-green-600">
+                    <h4 className="font-semibold mb-2">General Entry</h4>
+                    <p className="text-2xl font-bold text-blue-600">
                       {formData.currency}
-                      {formData.studentPrice}
+                      {formData.generalPrice || 0}
                     </p>
                   </div>
-                )}
 
-                {formData.vipPrice > 0 && (
-                  <div className="bg-white p-4 rounded-lg border">
-                    <h4 className="font-semibold mb-2">VIP Price</h4>
-                    <p className="text-2xl font-bold text-purple-600">
-                      {formData.currency}
-                      {formData.vipPrice}
-                    </p>
-                  </div>
-                )}
-              </div>
+                  {formData.studentPrice > 0 && (
+                    <div className="bg-white p-4 rounded-lg border">
+                      <h4 className="font-semibold mb-2">Student Price</h4>
+                      <p className="text-2xl font-bold text-green-600">
+                        {formData.currency}
+                        {formData.studentPrice}
+                      </p>
+                    </div>
+                  )}
+
+                  {formData.vipPrice > 0 && (
+                    <div className="bg-white p-4 rounded-lg border">
+                      <h4 className="font-semibold mb-2">VIP Price</h4>
+                      <p className="text-2xl font-bold text-purple-600">
+                        {formData.currency}
+                        {formData.vipPrice}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Space Costs Preview */}
               {formData.spaceCosts.length > 0 && (

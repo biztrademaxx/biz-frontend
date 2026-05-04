@@ -59,7 +59,7 @@ export function PricingTab({
               <Input
                 type="number"
                 placeholder="0"
-                value={formData.generalPrice === 0 ? "" : formData.generalPrice}
+                value={formData.generalPrice}
                 onChange={(e) =>
                   onFormChange({
                     generalPrice: e.target.value === "" ? 0 : Number(e.target.value),
@@ -73,7 +73,7 @@ export function PricingTab({
               <Input
                 type="number"
                 placeholder="0"
-                value={formData.studentPrice === 0 ? "" : formData.studentPrice}
+                value={formData.studentPrice}
                 onChange={(e) =>
                   onFormChange({
                     studentPrice: e.target.value === "" ? 0 : Number(e.target.value),
@@ -87,7 +87,7 @@ export function PricingTab({
               <Input
                 type="number"
                 placeholder="0"
-                value={formData.vipPrice === 0 ? "" : formData.vipPrice}
+                value={formData.vipPrice}
                 onChange={(e) =>
                   onFormChange({
                     vipPrice: e.target.value === "" ? 0 : Number(e.target.value),

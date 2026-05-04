@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { X } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 type PublicBanner = {
   id: string
@@ -15,14 +16,62 @@ type PublicBanner = {
 }
 
 type DashboardManagedBannerProps = {
-  page: "exhibitor-dashboard" | "organizer-dashboard" | "venue-dashboard" | "speaker-dashboard"
+  page:
+    | "exhibitor-dashboard"
+    | "organizer-dashboard"
+    | "venue-dashboard"
+    | "speaker-dashboard"
+    | "visitor-dashboard"
+  /** Applied only while the banner is visible (hidden → `null`, no layout gap). */
+  className?: string
 }
 
-const DEFAULT_BANNER = "/dashboard_image.png"
+/** After × close only: banner comes back (in-memory; reload always shows banner again). */
+const SHOW_BANNER_AFTER_DISMISS_MS = 90 * 1000
 
-export function DashboardManagedBanner({ page }: DashboardManagedBannerProps) {
+/** Hero: admin image when present; otherwise solid gradient default (no missing `/dashboard_image.png` 404). */
+function DashboardBannerBackdrop({
+  remoteUrl,
+  alt,
+}: {
+  remoteUrl: string | null
+  alt: string
+}) {
+  const [imgFailed, setImgFailed] = useState(false)
+
+  useEffect(() => {
+    setImgFailed(false)
+  }, [remoteUrl])
+
+  if (!remoteUrl || imgFailed) {
+    return (
+      <div
+        className="h-full min-h-[8rem] w-full bg-gradient-to-br from-slate-800 via-slate-700 to-slate-900"
+        aria-hidden
+      />
+    )
+  }
+
+  return (
+    <img
+      src={remoteUrl}
+      alt={alt}
+      className="h-full w-full object-cover"
+      onError={() => setImgFailed(true)}
+    />
+  )
+}
+
+export function DashboardManagedBanner({ page, className }: DashboardManagedBannerProps) {
   const [banner, setBanner] = useState<PublicBanner | null>(null)
   const [isHidden, setIsHidden] = useState(false)
+
+  /** After user clicks × only — no sessionStorage (that caused “banner gone every visit”). */
+  useEffect(() => {
+    if (!isHidden) return
+    const id = window.setTimeout(() => setIsHidden(false), SHOW_BANNER_AFTER_DISMISS_MS)
+    return () => window.clearTimeout(id)
+  }, [isHidden, page])
 
   useEffect(() => {
     let cancelled = false
@@ -49,15 +98,19 @@ export function DashboardManagedBanner({ page }: DashboardManagedBannerProps) {
   }, [page])
 
   const href = useMemo(() => banner?.link?.trim() || "", [banner?.link])
-  const src = banner?.imageUrl || DEFAULT_BANNER
-  const alt = banner?.title || "Dashboard banner"
+  /** Empty string from API must not fall through to a missing static file. */
+  const imageUrl = useMemo(() => {
+    const u = banner?.imageUrl?.trim()
+    return u && u.length > 0 ? u : null
+  }, [banner?.imageUrl])
+  const alt = banner?.title?.trim() || "Dashboard banner"
   const title = banner?.title?.trim() || "Grow your events with BizTradeFairs.com"
   const description =
     banner?.description?.trim() || "Promote your events to a global audience and connect with the right people."
 
   const imageNode = (
     <div className="relative h-full w-full overflow-hidden rounded-sm">
-      <img src={src || "/city/c4.jpg"} alt={alt} className="h-full w-full object-cover" />
+      <DashboardBannerBackdrop remoteUrl={imageUrl} alt={alt} />
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-slate-950/60 via-slate-900/35 to-transparent" />
       <div className="absolute inset-0 flex items-center px-5 md:px-8">
         <div className="max-w-md">
@@ -90,18 +143,10 @@ export function DashboardManagedBanner({ page }: DashboardManagedBannerProps) {
     </div>
   )
 
-  useEffect(() => {
-    if (!isHidden) return
-    const timer = window.setTimeout(() => {
-      setIsHidden(false)
-    }, 60 * 1000)
-    return () => window.clearTimeout(timer)
-  }, [isHidden])
-
   if (isHidden) return null
 
   return (
-    <div className="relative h-32 w-full md:h-40 lg:h-44">
+    <div className={cn("relative h-32 w-full md:h-40 lg:h-44", className)}>
       {imageNode}
     </div>
   )

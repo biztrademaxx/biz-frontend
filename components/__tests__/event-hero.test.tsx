@@ -87,7 +87,18 @@ describe("EventHero", () => {
     expect(screen.getByRole("heading", { level: 2, name: /big show/i })).toBeInTheDocument()
     expect(screen.getByText(/date to be announced/i)).toBeInTheDocument()
     expect(screen.getByText(/time to be announced/i)).toBeInTheDocument()
-    expect(screen.getByText(/free entry/i)).toBeInTheDocument()
+    expect(screen.getByText(/^free$/i)).toBeInTheDocument()
+  })
+
+  it("shows Free when ticket rows exist but all prices are zero", () => {
+    renderWithProviders(
+      <EventHero
+        event={baseEvent({
+          ticketTypes: [{ name: "General Admission", price: 0, currency: "₹" }],
+        })}
+      />,
+    )
+    expect(screen.getByText(/^free$/i)).toBeInTheDocument()
   })
 
   it("renders ticket price line when ticket types exist", () => {

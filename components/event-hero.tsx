@@ -8,6 +8,7 @@ import Image from "next/image"
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { apiFetch } from "@/lib/api"
+import { formatPublicTicketPriceLine } from "@/lib/ticket-price-display"
 
 interface Event {
   id: string
@@ -131,16 +132,7 @@ export default function EventHero({ event }: EventHeroProps) {
   }, [event.images])
 
   // Get ticket price display
-  const getTicketPriceDisplay = () => {
-    if (!event.ticketTypes || event.ticketTypes.length === 0) {
-      return "Free Entry"
-    }
-    
-    const ticketTypes = event.ticketTypes
-    return ticketTypes.map(ticket => 
-      `${ticket.name}: ${ticket.currency || '₹'}${ticket.price}`
-    ).join(" | ")
-  }
+  const getTicketPriceDisplay = () => formatPublicTicketPriceLine(event.ticketTypes)
 
   // Get followers count - REMOVED the fallback to 0
   const getFollowersCount = () => {

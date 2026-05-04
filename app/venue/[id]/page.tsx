@@ -36,6 +36,7 @@ import { AddVenueReview } from "./AddVenueReview"
 import { ShareButton } from "@/components/share-button"
 import { apiFetch } from "@/lib/api"
 import { eventPublicPath } from "@/lib/event-path"
+import { formatPublicTicketPriceLine } from "@/lib/ticket-price-display"
 
 interface Venue {
   venueName: string
@@ -948,8 +949,8 @@ export default function VenueDetailPage() {
                                 {/* Price */}
                                 <div className="text-blue-700 font-semibold text-sm">
                                   {Array.isArray(event.ticketTypes)
-                                    ? event.ticketTypes.map((ticket) => `${ticket.name}: ₹${ticket.price}`).join(" | ")
-                                    : "Free Entry"}
+                                    ? formatPublicTicketPriceLine(event.ticketTypes)
+                                    : "Free"}
                                 </div>
                               </div>
                             </div>

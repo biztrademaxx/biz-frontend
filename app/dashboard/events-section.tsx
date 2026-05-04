@@ -93,7 +93,11 @@ const formatDate = (dateString: string) =>
 const formatTicketPrice = (ticketTypes: TicketType[]) => {
   if (!ticketTypes || ticketTypes.length === 0) return "Free"
 
-  // Find the cheapest active ticket
+  const allPricesZero = ticketTypes.every(
+    (t) => !Number.isFinite(Number(t.price)) || Number(t.price) <= 0,
+  )
+  if (allPricesZero) return "Free"
+
   const activeTickets = ticketTypes.filter((ticket) => ticket.isActive)
   if (activeTickets.length === 0) return "N/A"
 

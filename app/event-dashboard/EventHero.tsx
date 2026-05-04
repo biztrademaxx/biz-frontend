@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
 import { apiFetch } from "@/lib/api"
+import { formatPublicTicketPriceLine } from "@/lib/ticket-price-display"
 
 interface Event {
   id: string
@@ -388,7 +389,11 @@ export default function EventHero({ event, onImagesUpdate }: EventHeroProps) {
             </div>
             <div className="flex items-center gap-2 sm:gap-3">
               <Ticket className="w-4 h-4 sm:w-5 sm:h-5 text-black" />
-              <span>{event.ticketTypes?.map((ticket: any) => `${ticket.name}: ₹${ticket.price}`).join(" | ")}</span>
+              <span>
+                {formatPublicTicketPriceLine(
+                  Array.isArray(event.ticketTypes) ? event.ticketTypes : [],
+                )}
+              </span>
             </div>
 
             <div className="flex items-center gap-2 sm:gap-3">

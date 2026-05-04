@@ -25,6 +25,7 @@ import {
 import { apiFetch, getCurrentUserEmail, getCurrentUserId, isAuthenticated, getCurrentUserRole } from "@/lib/api"
 import { getPublicProfilePath } from "@/lib/profile-path"
 import { brochureFriendlyFilename, downloadUrlAsFile, getGoogleDocsViewerUrl, resolveBrochureUrl } from "@/lib/utils"
+import { formatPublicTicketPriceLine } from "@/lib/ticket-price-display"
 
 interface TicketType {
   name: string
@@ -594,16 +595,8 @@ export default function EventPageContent({ event, session: _session, router, toa
   }
 
   // Get ticket price display
-  const getTicketPriceDisplay = () => {
-    if (!event.ticketTypes || event.ticketTypes.length === 0) {
-      return "Free Entry"
-    }
-
-    const ticketTypes = event.ticketTypes as TicketType[]
-    return ticketTypes.map(ticket =>
-      `${ticket.name}: ${ticket.currency || '₹'}${ticket.price}`
-    ).join(" | ")
-  }
+  const getTicketPriceDisplay = () =>
+    formatPublicTicketPriceLine(event.ticketTypes as TicketType[])
 
   // Don't show Visit and Exhibit buttons if the user is the organizer
   const showActionButtons = !isOrganizer
