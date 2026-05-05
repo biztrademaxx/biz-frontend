@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Star, Mail, MapPin, Clock, IndianRupee, Tag, Trash2, Calendar, Users, Edit2, Plus, Share2, Bookmark, ExternalLink, Download } from "lucide-react"
 import EventHero from "@/components/event-hero"
 import EventImageGallery from "@/components/event-image-gallery"
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import ExhibitorsTab from "./[id]/exhibitors-tab"
 import SpeakersTab from "./[id]/speakers-tab"
 import AddReviewCard from "@/components/AddReviewCard"
@@ -26,6 +26,7 @@ import { apiFetch, getCurrentUserEmail, getCurrentUserId, isAuthenticated, getCu
 import { getPublicProfilePath } from "@/lib/profile-path"
 import { brochureFriendlyFilename, downloadUrlAsFile, getGoogleDocsViewerUrl, resolveBrochureUrl } from "@/lib/utils"
 import { formatPublicTicketPriceLine } from "@/lib/ticket-price-display"
+import { formatEventSidebarTimeRange } from "@/lib/event-sidebar-time-range"
 
 interface TicketType {
   name: string
@@ -135,6 +136,65 @@ const getCompanyInitials = (companyName?: string): string => {
   return (words[0].charAt(0) + words[1].charAt(0)).toUpperCase();
 };
 
+function normalizeListedStrings(raw: unknown): string[] {
+  if (raw == null) return []
+  if (Array.isArray(raw)) {
+    return raw.map((x) => String(x).trim()).filter(Boolean)
+  }
+  const one = String(raw).trim()
+  return one ? [one] : []
+}
+
+/** First two browse categories, then hashtag-style tags; counts extras for "+N more types". */
+function buildListedInDisplay(event: any): {
+  categoryChips: string[]
+  hashtagLabels: string[]
+  moreCount: number
+} {
+  const fromCategories = normalizeListedStrings(event?.categories)
+  const legacySingle = normalizeListedStrings(event?.category)
+  const allCategories =
+    fromCategories.length > 0 ? fromCategories : legacySingle
+
+  const tagsRaw = normalizeListedStrings(event?.tags)
+  const categoryKeys = new Set(allCategories.map((c) => c.toLowerCase()))
+
+  const tagsDeduped = tagsRaw.filter((t) => {
+    const core = t.replace(/^#+\s*/, "").trim().toLowerCase()
+    return core && !categoryKeys.has(core)
+  })
+
+  const primaryCats = allCategories.slice(0, 2)
+  const extraCats = Math.max(0, allCategories.length - 2)
+
+  const MAX_TAGS_VISIBLE = 14
+  const sliceTags = tagsDeduped.slice(0, MAX_TAGS_VISIBLE)
+  const hiddenTags = Math.max(0, tagsDeduped.length - sliceTags.length)
+
+  const hashtagLabels = sliceTags.map((t) => {
+    const s = t.trim()
+    return s.startsWith("#") ? s : `#${s}`
+  })
+
+  let categoryChips = [...primaryCats]
+  if (categoryChips.length === 0 && hashtagLabels.length === 0 && legacySingle.length > 0) {
+    categoryChips = [legacySingle[0]]
+  }
+
+  return {
+    categoryChips,
+    hashtagLabels,
+    moreCount: extraCats + hiddenTags,
+  }
+}
+
+/** Same clock times as EventHero sidebar, plus " (General)" for the About details card. */
+function formatGeneralTimingsLine(event: any): string {
+  const line = formatEventSidebarTimeRange(event)
+  if (line === "Time to be announced") return "To be announced (General)"
+  return `${line} (General)`
+}
+
 export default function EventPageContent({ event, session: _session, router, toast }: EventPageContentProps) {
   // JWT auth: use token-based auth so "express interest" / save work when logged in with JWT
   const userId = getCurrentUserId()
@@ -164,6 +224,12 @@ export default function EventPageContent({ event, session: _session, router, toa
     (layoutPlanUrl.includes("/raw/upload/") && !isLayoutImage)
   const useGoogleLayoutViewer =
     isLayoutPdf && /^https:\/\//i.test(layoutPlanUrl) && !/localhost|127\.0\.0\.1/i.test(layoutPlanUrl)
+
+  const listedIn = useMemo(() => buildListedInDisplay(event), [
+    event?.categories,
+    event?.tags,
+    event?.category,
+  ])
 
   useEffect(() => {
     setAverageRating(event.averageRating || 0)
@@ -833,25 +899,39 @@ export default function EventPageContent({ event, session: _session, router, toa
                       </ul>
                     </div>
 
-                    {/* Listed In Section */}
+                    {/* Listed In: first two categories, then hashtag tags */}
                     <div>
                       <h3 className="font-semibold text-[#004A96] mb-2">Listed In</h3>
                       <div className="flex flex-wrap gap-2">
-                        {event.tags?.map((tag: string) => (
+                        {listedIn.categoryChips.map((cat) => (
                           <span
-                            key={tag}
+                            key={`listed-cat-${cat}`}
+                            className="inline-flex items-center px-3 py-1 text-sm font-medium text-[#004A96] bg-blue-50 border border-blue-200 rounded-full"
+                          >
+                            {cat}
+                          </span>
+                        ))}
+                        {listedIn.hashtagLabels.map((label, idx) => (
+                          <span
+                            key={`listed-tag-${idx}-${label}`}
                             className="inline-flex items-center px-3 py-1 text-sm font-medium text-[#004A96] bg-red-50 border border-red-200 rounded-full hover:bg-red-100 transition-colors duration-200"
                           >
-                            #{tag}
+                            {label}
                           </span>
-                        )) || (
-                          <>
+                        ))}
+                        {listedIn.categoryChips.length === 0 &&
+                          listedIn.hashtagLabels.length === 0 && (
                             <span className="inline-flex items-center px-3 py-1 text-sm font-medium text-[#004A96] bg-red-50 border border-red-200 rounded-full">
                               #{event.category || "Event"}
                             </span>
-                          </>
-                        )}
+                          )}
                       </div>
+                      {listedIn.moreCount > 0 && (
+                        <p className="text-sm text-gray-600 mt-2">
+                          +{listedIn.moreCount} more{" "}
+                          {listedIn.moreCount === 1 ? "type" : "types"}
+                        </p>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -860,16 +940,9 @@ export default function EventPageContent({ event, session: _session, router, toa
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm bg-white border border-gray-200 rounded-lg p-5 hover:shadow-md transition-shadow">
                   {/* Timings / Schedule Section */}
                   <div>
-                    {event.registrationStart && event.registrationEnd && (
-                      <div>
-                        <p className="font-medium text-gray-900">Category:</p>
-                        <p className="text-gray-700">{event.category}</p>
-                      </div>
-                    )}
-
                     <div>
-                      <p className="font-medium text-gray-900">Timezone:</p>
-                      <p className="text-[#004A96] font-medium">{event.timezone || "Asia/Kolkata"}</p>
+                      <p className="font-medium text-gray-900">Timings</p>
+                      <p className="text-[#004A96] font-medium">{formatGeneralTimingsLine(event)}</p>
                     </div>
 
                     <div className="mt-4">

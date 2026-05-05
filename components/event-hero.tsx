@@ -9,6 +9,7 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { apiFetch } from "@/lib/api"
 import { formatPublicTicketPriceLine } from "@/lib/ticket-price-display"
+import { formatEventSidebarTimeRange } from "@/lib/event-sidebar-time-range"
 
 interface Event {
   id: string
@@ -372,7 +373,7 @@ export default function EventHero({ event }: EventHeroProps) {
             {/* Time */}
             <div className="flex items-center gap-2 sm:gap-3">
               <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-black flex-shrink-0" />
-              <span className="leading-tight">{formatTimeRange()}</span>
+              <span className="leading-tight">{formatEventSidebarTimeRange(event)}</span>
             </div>
 
             {/* Ticket Price */}
