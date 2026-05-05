@@ -1,11 +1,14 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { apiFetch } from "@/lib/api"
+import { eventPublicPath } from "@/lib/event-path"
 
 interface Event {
   id: string
+  slug?: string | null
   title: string
   date: string // ISO format
   category: "personal" | "work" | "travel"
@@ -25,6 +28,7 @@ export default function Schedule({ userId }: ScheduleProps) {
         const list = data.events ?? data.data ?? []
         const mappedEvents = list.map((e: any) => ({
           id: e.id,
+          slug: e.slug ?? null,
           title: e.title,
           date: e.startDate,
           category: "work" as const,
@@ -85,12 +89,14 @@ export default function Schedule({ userId }: ScheduleProps) {
               <span className="text-xs font-bold">{day}</span>
               <div className="flex flex-col gap-1 w-full mt-1">
                 {dayEvents.map((e) => (
-                  <span
+                  <Link
                     key={e.id}
-                    className={`text-xs rounded px-1 truncate ${categoryColors[e.category]}`}
+                    href={eventPublicPath(e)}
+                    title={`Open ${e.title}`}
+                    className={`text-xs rounded px-1 truncate w-full block text-left ${categoryColors[e.category]} hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1`}
                   >
                     {e.title}
-                  </span>
+                  </Link>
                 ))}
               </div>
             </div>

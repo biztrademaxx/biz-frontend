@@ -52,6 +52,7 @@ const eventLeads = await prisma.eventLead.findMany({
 
         return {
           id: e.id,
+          slug: e.slug,
           title: e.title,
           description: e.description,
           shortDescription: e.shortDescription,
