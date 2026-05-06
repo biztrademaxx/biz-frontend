@@ -12,6 +12,9 @@ export interface EventOrganizer {
 }
 
 export interface Event {
+  country: import("react/jsx-runtime").JSX.Element
+  // subHeading: string | undefined
+  subTitle: string | undefined
   id: string
   title: string
   /** Normalized to string for display; backend may return object */

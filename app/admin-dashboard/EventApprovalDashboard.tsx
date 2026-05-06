@@ -1,18 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { 
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -23,44 +12,20 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Textarea } from "@/components/ui/textarea"
-import { Input } from "@/components/ui/input"
-import { 
-  Eye, 
-  Check, 
-  X, 
-  Calendar, 
-  User, 
-  MapPin, 
-  Search, 
-  Loader2, 
-  Filter,
+import {
+  Eye,
+  Check,
+  X,
+  Loader2,
+  ChevronLeft,
+  ChevronRight,
   Clock,
-  IndianRupee,
-  Users,
-  Building2,
-  AlertTriangle,
-  RefreshCw
+  CheckCircle,
+  XCircle,
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { apiFetch } from "@/lib/api"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination"
-import { EventStatusBadge } from "../organizer-dashboard/EventStatusBadge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import EventDetailsPanel from "./EventDetailsModal" // Changed from EventDetailsModal
+import EventDetailsPanel from "./EventDetailsModal"
 
 interface Event {
   id: string
@@ -109,7 +74,31 @@ interface Event {
   }
 }
 
-type TabType = "pending" | "rejected" | "approved"
+type TabType = "pending" | "approved" | "rejected"
+
+const categoryStyles: Record<string, { bg: string; text: string }> = {
+  Expo: { bg: "#e3f2fd", text: "#1565c0" },
+  Summit: { bg: "#f3e5f5", text: "#6a1b9a" },
+  Workshop: { bg: "#fce4ec", text: "#880e4f" },
+  Conference: { bg: "#e8f5e9", text: "#1b5e20" },
+  Virtual: { bg: "#fff3e0", text: "#e65100" },
+  "Expo + Conference": { bg: "#e8eaf6", text: "#283593" },
+}
+
+const priorityStyles: Record<string, { bg: string; text: string }> = {
+  High: { bg: "#fce4ec", text: "#c62828" },
+  Medium: { bg: "#fff8e1", text: "#e65100" },
+  Low: { bg: "#e8f5e9", text: "#2e7d32" },
+}
+
+const orgColors = [
+  { bg: "#e3f2fd", text: "#1565c0" },
+  { bg: "#f3e5f5", text: "#6a1b9a" },
+  { bg: "#fce4ec", text: "#880e4f" },
+  { bg: "#e8f5e9", text: "#1b5e20" },
+  { bg: "#fff3e0", text: "#e65100" },
+  { bg: "#e8eaf6", text: "#283593" },
+]
 
 export default function EventApprovalDashboard() {
   const [events, setEvents] = useState<Event[]>([])
@@ -117,22 +106,22 @@ export default function EventApprovalDashboard() {
   const [search, setSearch] = useState("")
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
+  const [totalItems, setTotalItems] = useState(0)
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null)
   const [selectedEventForView, setSelectedEventForView] = useState<string | null>(null)
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false)
   const [rejectReason, setRejectReason] = useState("")
   const [approving, setApproving] = useState<string | null>(null)
   const [rejecting, setRejecting] = useState<string | null>(null)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [stats, setStats] = useState({
-    total: 0,
+    pending: 0,
     approved: 0,
     rejected: 0,
-    pending: 0
+    avgReviewTime: "2.4h",
   })
   const [activeTab, setActiveTab] = useState<TabType>("pending")
   const { toast } = useToast()
-
-  // Add panel state
   const [isViewPanelOpen, setIsViewPanelOpen] = useState(false)
 
   useEffect(() => {
@@ -166,15 +155,18 @@ export default function EventApprovalDashboard() {
       const data = await apiFetch<{
         success?: boolean
         events?: Event[]
-        data?: { events?: Event[] }
-        pagination?: { totalPages: number }
+        data?: { events?: Event[]; total?: number }
+        pagination?: { totalPages: number; total: number }
         error?: string
       }>(`/api/admin/events?${params.toString()}`, { auth: true })
 
       const eventsList = data.events ?? (data as any).data?.events
+      const total = data.pagination?.total ?? (data as any).data?.total ?? 0
+
       if (data.success !== false) {
         setEvents(Array.isArray(eventsList) ? eventsList : [])
         setTotalPages(data.pagination?.totalPages ?? 1)
+        setTotalItems(total)
       } else {
         toast({
           title: "Error",
@@ -183,11 +175,7 @@ export default function EventApprovalDashboard() {
         })
       }
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to fetch events",
-        variant: "destructive",
-      })
+      toast({ title: "Error", description: "Failed to fetch events", variant: "destructive" })
     } finally {
       setLoading(false)
     }
@@ -195,54 +183,87 @@ export default function EventApprovalDashboard() {
 
   const fetchStats = async () => {
     try {
-      const data = await apiFetch<{ success?: boolean; stats?: { total: number; approved: number; rejected: number; pending: number } }>(
-        "/api/admin/events/stats",
-        { auth: true }
-      )
+      const data = await apiFetch<{
+        success?: boolean
+        stats?: { total: number; approved: number; rejected: number; pending: number }
+      }>("/api/admin/events/stats", { auth: true })
       if (data.success !== false && data.stats) {
-        setStats(data.stats)
+        setStats({
+          pending: data.stats.pending,
+          approved: data.stats.approved,
+          rejected: data.stats.rejected,
+          avgReviewTime: "2.4h",
+        })
       }
     } catch (error) {
       console.error("Failed to fetch stats:", error)
     }
   }
 
-  // Add view event function
   const handleViewEvent = (eventId: string) => {
     setSelectedEventForView(eventId)
     setIsViewPanelOpen(true)
   }
 
-  const handleApprove = async (eventId: string) => {
+  const handleBulkApprove = async () => {
+    const ids = Array.from(selectedIds)
+    if (ids.length === 0) return
     try {
-      setApproving(eventId)
-      const data = await apiFetch<{ success?: boolean; error?: string }>("/api/admin/events/approve", {
-        method: "POST",
-        body: { eventId, action: "approve" },
-        auth: true,
-      })
+      const data = await apiFetch<{ success?: boolean; error?: string }>(
+        "/api/admin/events/bulk-approve",
+        { method: "POST", body: { eventIds: ids }, auth: true }
+      )
       if (data.success !== false) {
-        toast({
-          title: "Success",
-          description: "Event approved successfully",
-          variant: "default",
-        })
-        // Refresh the list and stats
+        toast({ title: "Success", description: `${ids.length} events approved successfully` })
+        setSelectedIds(new Set())
         fetchEvents()
         fetchStats()
       } else {
-        toast({
-          title: "Error",
-          description: data.error || "Failed to approve event",
-          variant: "destructive",
-        })
+        toast({ title: "Error", description: data.error || "Failed to approve events", variant: "destructive" })
       }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to approve event",
-        variant: "destructive",
-      })
+    } catch {
+      toast({ title: "Error", description: "Failed to approve events", variant: "destructive" })
+    }
+  }
+
+  const handleBulkReject = async () => {
+    const ids = Array.from(selectedIds)
+    if (ids.length === 0) return
+    try {
+      const data = await apiFetch<{ success?: boolean; error?: string }>(
+        "/api/admin/events/bulk-reject",
+        { method: "POST", body: { eventIds: ids, reason: "Bulk rejection by admin" }, auth: true }
+      )
+      if (data.success !== false) {
+        toast({ title: "Success", description: `${ids.length} events rejected successfully` })
+        setSelectedIds(new Set())
+        fetchEvents()
+        fetchStats()
+      } else {
+        toast({ title: "Error", description: data.error || "Failed to reject events", variant: "destructive" })
+      }
+    } catch {
+      toast({ title: "Error", description: "Failed to reject events", variant: "destructive" })
+    }
+  }
+
+  const handleApprove = async (eventId: string) => {
+    try {
+      setApproving(eventId)
+      const data = await apiFetch<{ success?: boolean; error?: string }>(
+        "/api/admin/events/approve",
+        { method: "POST", body: { eventId, action: "approve" }, auth: true }
+      )
+      if (data.success !== false) {
+        toast({ title: "Success", description: "Event approved successfully" })
+        setSelectedIds(prev => { const next = new Set(prev); next.delete(eventId); return next })
+        fetchEvents()
+        fetchStats()
+      } else {
+        toast({ title: "Error", description: data.error || "Failed to approve event", variant: "destructive" })
+      }
+    } catch {
+      toast({ title: "Error", description: "Failed to approve event", variant: "destructive" })
     } finally {
       setApproving(null)
     }
@@ -252,36 +273,23 @@ export default function EventApprovalDashboard() {
     if (!selectedEvent) return
     try {
       setRejecting(selectedEvent.id)
-      const data = await apiFetch<{ success?: boolean; error?: string }>("/api/admin/events/reject", {
-        method: "POST",
-        body: { eventId: selectedEvent.id, reason: rejectReason },
-        auth: true,
-      })
+      const data = await apiFetch<{ success?: boolean; error?: string }>(
+        "/api/admin/events/reject",
+        { method: "POST", body: { eventId: selectedEvent.id, reason: rejectReason }, auth: true }
+      )
       if (data.success !== false) {
-        toast({
-          title: "Success",
-          description: "Event rejected successfully",
-          variant: "default",
-        })
-        // Refresh the list and stats
+        toast({ title: "Success", description: "Event rejected successfully" })
+        setSelectedIds(prev => { const next = new Set(prev); next.delete(selectedEvent.id); return next })
         fetchEvents()
         fetchStats()
         setRejectDialogOpen(false)
         setRejectReason("")
         setSelectedEvent(null)
       } else {
-        toast({
-          title: "Error",
-          description: data.error || "Failed to reject event",
-          variant: "destructive",
-        })
+        toast({ title: "Error", description: data.error || "Failed to reject event", variant: "destructive" })
       }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to reject event",
-        variant: "destructive",
-      })
+    } catch {
+      toast({ title: "Error", description: "Failed to reject event", variant: "destructive" })
     } finally {
       setRejecting(null)
     }
@@ -290,32 +298,17 @@ export default function EventApprovalDashboard() {
   const handleReapprove = async (eventId: string) => {
     try {
       setApproving(eventId)
-      const data = await apiFetch<{ success?: boolean; error?: string }>("/api/admin/events/approve", {
-        method: "POST",
-        body: { eventId, action: "approve" },
-        auth: true,
-      })
+      const data = await apiFetch<{ success?: boolean; error?: string }>(
+        "/api/admin/events/approve",
+        { method: "POST", body: { eventId, action: "approve" }, auth: true }
+      )
       if (data.success !== false) {
-        toast({
-          title: "Success",
-          description: "Event re-approved successfully",
-          variant: "default",
-        })
+        toast({ title: "Success", description: "Event re-approved successfully" })
         fetchEvents()
         fetchStats()
       } else {
-        toast({
-          title: "Error",
-          description: data.error || "Failed to re-approve event",
-          variant: "destructive",
-        })
+        toast({ title: "Error", description: data.error || "Failed to re-approve event", variant: "destructive" })
       }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to re-approve event",
-        variant: "destructive",
-      })
     } finally {
       setApproving(null)
     }
@@ -326,373 +319,449 @@ export default function EventApprovalDashboard() {
     setRejectDialogOpen(true)
   }
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
+  const toggleSelect = (eventId: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      next.has(eventId) ? next.delete(eventId) : next.add(eventId)
+      return next
     })
   }
 
-  const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
+  const toggleSelectAll = () => {
+    if (selectedIds.size === events.length) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(events.map(e => e.id)))
+    }
   }
 
-  const formatCurrency = (amount: number, currency: string = "USD") => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: currency || 'INR',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount)
+  const formatDateRange = (startDate: string, endDate: string) => {
+    const start = new Date(startDate)
+    const end = new Date(endDate)
+    const startMonth = start.toLocaleDateString("en-US", { month: "short" })
+    const startDay = start.getDate()
+    const endMonth = end.toLocaleDateString("en-US", { month: "short" })
+    const endDay = end.getDate()
+    if (startMonth === endMonth) return `${startMonth} ${startDay}–${endDay}`
+    return `${startMonth} ${startDay} – ${endMonth} ${endDay}`
   }
 
-  const getTicketPriceRange = (tickets: any[]) => {
-    if (tickets.length === 0) return "Free"
-    const prices = tickets.map(t => t.price).filter(p => p > 0)
-    if (prices.length === 0) return "Free"
-    const min = Math.min(...prices)
-    const max = Math.max(...prices)
-    return min === max ? formatCurrency(min) : `${formatCurrency(min)} - ${formatCurrency(max)}`
+  const getTimeAgo = (dateString: string) => {
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60))
+    if (diffHours < 1) return "Just now"
+    if (diffHours === 1) return "1 hour ago"
+    if (diffHours < 24) return `${diffHours} hours ago`
+    const diffDays = Math.floor(diffHours / 24)
+    if (diffDays === 1) return "Yesterday"
+    return `${diffDays} days ago`
   }
 
-  const getSpacePriceRange = (spaces: any[]) => {
-    if (spaces.length === 0) return "N/A"
-    const prices = spaces.map(s => s.basePrice).filter(p => p > 0)
-    if (prices.length === 0) return "N/A"
-    const min = Math.min(...prices)
-    const max = Math.max(...prices)
-    return min === max ? formatCurrency(min) : `${formatCurrency(min)} - ${formatCurrency(max)}`
+  const getPriority = (createdAt: string) => {
+    const hours = (Date.now() - new Date(createdAt).getTime()) / (1000 * 60 * 60)
+    if (hours < 24) return "High"
+    if (hours < 72) return "Medium"
+    return "Low"
+  }
+
+  const getCategory = (event: Event) => {
+    if (event.isVirtual) return "Virtual"
+    if (event.exhibitionSpaces?.length > 0 && event.ticketTypes?.length > 0) return "Expo + Conference"
+    if (event.exhibitionSpaces?.length > 0) return "Expo"
+    if (event.ticketTypes?.length > 0) return "Conference"
+    return "Workshop"
+  }
+
+  const getOrganizerInitials = (event: Event) => {
+    const name = event.organizer.company || event.organizer.name
+    return name.split(" ").slice(0, 2).map((w: string) => w[0]).join("").toUpperCase()
+  }
+
+  const getOrganizerName = (event: Event) => event.organizer.company || event.organizer.name
+
+  const getOrgColor = (event: Event) => {
+    const name = event.organizer.company || event.organizer.name
+    return orgColors[name.charCodeAt(0) % orgColors.length]
   }
 
   if (loading && events.length === 0) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
-        <span className="ml-2 text-gray-500">Loading events...</span>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "256px" }}>
+        <Loader2 style={{ width: "32px", height: "32px", color: "#aaa", animation: "spin 1s linear infinite" }} />
+        <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
       </div>
     )
   }
 
   return (
-    <div className="space-y-6 relative">
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Total Pending</p>
-                <p className="text-2xl font-bold text-yellow-600">{stats.pending}</p>
-              </div>
-              <div className="p-3 bg-yellow-100 rounded-full">
-                <Clock className="w-6 h-6 text-yellow-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+    <div style={{ minHeight: "100vh", background: "#f0ede8", padding: "24px", fontFamily: "system-ui, sans-serif" }}>
 
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Total Approved</p>
-                <p className="text-2xl font-bold text-green-600">{stats.approved}</p>
-              </div>
-              <div className="p-3 bg-green-100 rounded-full">
-                <Check className="w-6 h-6 text-green-600" />
-              </div>
+      {/* Stats Row */}
+      <div style={{ display: "flex", gap: "12px", marginBottom: "24px" }}>
+        {[
+          { icon: <Clock size={16} />, value: stats.pending, label: "Pending", iconBg: "#fff3e0", iconColor: "#f57c00" },
+          { icon: <CheckCircle size={16} />, value: stats.approved, label: "Approved this month", iconBg: "#e8f5e9", iconColor: "#2e7d32" },
+          { icon: <XCircle size={16} />, value: stats.rejected, label: "Rejected", iconBg: "#fce4ec", iconColor: "#c62828" },
+          { icon: <Clock size={16} />, value: stats.avgReviewTime, label: "Avg. review time", iconBg: "#e3f2fd", iconColor: "#1565c0" },
+        ].map((s, i) => (
+          <div key={i} style={{
+            background: "#fff", border: "0.5px solid #e5e3dc", borderRadius: "12px",
+            padding: "12px 18px", display: "flex", alignItems: "center", gap: "12px",
+          }}>
+            <div style={{
+              width: "32px", height: "32px", borderRadius: "8px",
+              background: s.iconBg, color: s.iconColor,
+              display: "flex", alignItems: "center", justifyContent: "center",
+            }}>
+              {s.icon}
             </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Total Rejected</p>
-                <p className="text-2xl font-bold text-red-600">{stats.rejected}</p>
-              </div>
-              <div className="p-3 bg-red-100 rounded-full">
-                <X className="w-6 h-6 text-red-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Total Events</p>
-                <p className="text-2xl font-bold text-blue-600">{stats.total}</p>
-              </div>
-              <div className="p-3 bg-blue-100 rounded-full">
-                <Calendar className="w-6 h-6 text-blue-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <CardTitle>Event Approval Dashboard</CardTitle>
-              <CardDescription>
-                Review and manage events submitted by organizers
-              </CardDescription>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <Input
-                  placeholder="Search events..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="pl-9 w-full md:w-64"
-                />
-              </div>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => {
-                  fetchEvents()
-                  fetchStats()
-                }}
-                disabled={loading}
-              >
-                <Filter className="w-4 h-4" />
-              </Button>
+              <div style={{ fontSize: "22px", fontWeight: 600, color: "#111" }}>{s.value}</div>
+              <div style={{ fontSize: "12px", color: "#888" }}>{s.label}</div>
             </div>
           </div>
-        </CardHeader>
-        
-        <CardContent>
-          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as TabType)} className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="pending" className="flex items-center gap-2">
-                <Clock className="w-4 h-4" />
-                Pending Approval
-                {stats.pending > 0 && (
-                  <Badge variant="secondary" className="ml-1">
-                    {stats.pending}
-                  </Badge>
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="approved" className="flex items-center gap-2">
-                <Check className="w-4 h-4" />
-                Approved
-                {stats.approved > 0 && (
-                  <Badge variant="secondary" className="ml-1">
-                    {stats.approved}
-                  </Badge>
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="rejected" className="flex items-center gap-2">
-                <X className="w-4 h-4" />
-                Rejected
-                {stats.rejected > 0 && (
-                  <Badge variant="secondary" className="ml-1">
-                    {stats.rejected}
-                  </Badge>
-                )}
-              </TabsTrigger>
-            </TabsList>
+        ))}
+      </div>
 
-            {/* Pending Tab Content */}
-            <TabsContent value="pending" className="space-y-4">
-              {events.length === 0 ? (
-                <div className="text-center py-12">
-                  <div className="mx-auto w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                    <Check className="w-6 h-6 text-gray-400" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    No pending events
-                  </h3>
-                  <p className="text-gray-500">
-                    All events have been reviewed. Check back later for new submissions.
-                  </p>
-                </div>
-              ) : (
-                <EventTable
-                  events={events}
-                  activeTab={activeTab}
-                  formatDate={formatDate}
-                  formatDateTime={formatDateTime}
-                  formatCurrency={formatCurrency}
-                  getTicketPriceRange={getTicketPriceRange}
-                  getSpacePriceRange={getSpacePriceRange}
-                  handleApprove={handleApprove}
-                  openRejectDialog={openRejectDialog}
-                  approving={approving}
-                  handleViewEvent={handleViewEvent}
-                />
-              )}
-            </TabsContent>
+      {/* Main Card */}
+      <div style={{ background: "#fff", border: "0.5px solid #e5e3dc", borderRadius: "14px", overflow: "hidden" }}>
 
-            {/* Rejected Tab Content */}
-            <TabsContent value="rejected" className="space-y-4">
-              {events.length === 0 ? (
-                <div className="text-center py-12">
-                  <div className="mx-auto w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                    <Check className="w-6 h-6 text-gray-400" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    No rejected events
-                  </h3>
-                  <p className="text-gray-500">
-                    No events have been rejected yet.
-                  </p>
-                </div>
-              ) : (
-                <EventTable
-                  events={events}
-                  activeTab={activeTab}
-                  formatDate={formatDate}
-                  formatDateTime={formatDateTime}
-                  formatCurrency={formatCurrency}
-                  getTicketPriceRange={getTicketPriceRange}
-                  getSpacePriceRange={getSpacePriceRange}
-                  handleReapprove={handleReapprove}
-                  approving={approving}
-                  handleViewEvent={handleViewEvent}
-                />
-              )}
-            </TabsContent>
+        {/* Card Header */}
+        <div style={{ padding: "16px 20px 0", borderBottom: "0.5px solid #f0ede8" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingBottom: "14px" }}>
+            <span style={{ fontSize: "15px", fontWeight: 500 }}>Pending Submissions</span>
+            {selectedIds.size > 0 && activeTab === "pending" && (
+              <div style={{ display: "flex", gap: "8px" }}>
+                <button
+                  onClick={handleBulkApprove}
+                  style={{
+                    background: "#2e7d32", color: "#fff", border: "none",
+                    borderRadius: "8px", padding: "7px 16px", fontSize: "13px", cursor: "pointer",
+                  }}
+                >
+                  Approve Selected
+                </button>
+                <button
+                  onClick={handleBulkReject}
+                  style={{
+                    background: "#fff", color: "#c62828", border: "1px solid #ffcdd2",
+                    borderRadius: "8px", padding: "7px 16px", fontSize: "13px", cursor: "pointer",
+                  }}
+                >
+                  Reject Selected
+                </button>
+              </div>
+            )}
+          </div>
 
-            {/* Approved Tab Content */}
-            <TabsContent value="approved" className="space-y-4">
-              {events.length === 0 ? (
-                <div className="text-center py-12">
-                  <div className="mx-auto w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                    <Check className="w-6 h-6 text-gray-400" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    No approved events
-                  </h3>
-                  <p className="text-gray-500">
-                    No events have been approved yet.
-                  </p>
-                </div>
-              ) : (
-                <EventTable
-                  events={events}
-                  activeTab={activeTab}
-                  formatDate={formatDate}
-                  formatDateTime={formatDateTime}
-                  formatCurrency={formatCurrency}
-                  getTicketPriceRange={getTicketPriceRange}
-                  getSpacePriceRange={getSpacePriceRange}
-                  handleViewEvent={handleViewEvent}
-                />
-              )}
-            </TabsContent>
-          </Tabs>
+          {/* Tabs */}
+          <div style={{ display: "flex", gap: "24px" }}>
+            {(["pending", "approved", "rejected"] as TabType[]).map(tab => (
+              <button
+                key={tab}
+                onClick={() => { setActiveTab(tab); setSelectedIds(new Set()); setPage(1) }}
+                style={{
+                  paddingBottom: "10px", fontSize: "13px", fontWeight: 500,
+                  background: "none", border: "none",
+                  borderBottom: activeTab === tab ? "2px solid #2e7d32" : "2px solid transparent",
+                  color: activeTab === tab ? "#2e7d32" : "#888",
+                  cursor: "pointer", textTransform: "capitalize",
+                }}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+        </div>
 
-          {totalPages > 1 && (
-            <div className="mt-6">
-              <Pagination>
-                <PaginationContent>
-                  <PaginationItem>
-                    <PaginationPrevious
-                      onClick={() => setPage(Math.max(1, page - 1))}
-                      className={page === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+        {/* Table */}
+        <div style={{ overflowX: "auto" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <thead>
+              <tr style={{ borderBottom: "0.5px solid #f0ede8" }}>
+                <th style={{ padding: "12px 0 12px 20px", width: "40px", textAlign: "left" }}>
+                  {activeTab === "pending" && events.length > 0 && (
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.size === events.length && events.length > 0}
+                      onChange={toggleSelectAll}
+                      style={{ width: "15px", height: "15px", accentColor: "#2e7d32", cursor: "pointer" }}
                     />
-                  </PaginationItem>
-                  
-                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                    let pageNum
-                    if (totalPages <= 5) {
-                      pageNum = i + 1
-                    } else if (page <= 3) {
-                      pageNum = i + 1
-                    } else if (page >= totalPages - 2) {
-                      pageNum = totalPages - 4 + i
-                    } else {
-                      pageNum = page - 2 + i
-                    }
-                    
-                    return (
-                      <PaginationItem key={pageNum}>
-                        <PaginationLink
-                          onClick={() => setPage(pageNum)}
-                          isActive={pageNum === page}
-                          className="cursor-pointer"
-                        >
-                          {pageNum}
-                        </PaginationLink>
-                      </PaginationItem>
-                    )
-                  })}
-                  
-                  <PaginationItem>
-                    <PaginationNext
-                      onClick={() => setPage(Math.min(totalPages, page + 1))}
-                      className={page === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                    />
-                  </PaginationItem>
-                </PaginationContent>
-              </Pagination>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                  )}
+                </th>
+                {["Event Name", "Category", "Organizer", "Submitted", "Priority", "Actions"].map((h, i) => (
+                  <th
+                    key={h}
+                    style={{
+                      padding: "12px 0",
+                      textAlign: i === 5 ? "right" : "left",
+                      paddingRight: i === 5 ? "20px" : "0",
+                      fontSize: "11px", fontWeight: 500, color: "#aaa",
+                      letterSpacing: "0.06em", textTransform: "uppercase",
+                    }}
+                  >
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {events.length === 0 ? (
+                <tr>
+                  <td colSpan={7} style={{ textAlign: "center", padding: "48px 0", color: "#aaa", fontSize: "14px" }}>
+                    No {activeTab} submissions
+                  </td>
+                </tr>
+              ) : (
+                events.map(event => {
+                  const priority = getPriority(event.createdAt)
+                  const category = getCategory(event)
+                  const cat = categoryStyles[category] ?? categoryStyles["Expo"]
+                  const pri = priorityStyles[priority]
+                  const orgColor = getOrgColor(event)
 
-      {/* Event Details Panel (inline, not modal) */}
+                  return (
+                    <tr
+                      key={event.id}
+                      style={{ borderBottom: "0.5px solid #f8f7f5", transition: "background 0.1s" }}
+                      onMouseEnter={e => (e.currentTarget.style.background = "#faf9f7")}
+                      onMouseLeave={e => (e.currentTarget.style.background = "")}
+                    >
+                      <td style={{ paddingLeft: "20px", paddingTop: "14px", paddingBottom: "14px" }}>
+                        {activeTab === "pending" && (
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.has(event.id)}
+                            onChange={() => toggleSelect(event.id)}
+                            style={{ width: "15px", height: "15px", accentColor: "#2e7d32", cursor: "pointer" }}
+                          />
+                        )}
+                      </td>
+
+                      <td style={{ paddingTop: "14px", paddingBottom: "14px" }}>
+                        <div style={{ fontWeight: 500, fontSize: "13px", color: "#111" }}>{event.title}</div>
+                        <div style={{ fontSize: "12px", color: "#888", marginTop: "2px" }}>
+                          {event.city}, {event.country}&nbsp;·&nbsp;{formatDateRange(event.startDate, event.endDate)}
+                        </div>
+                      </td>
+
+                      <td style={{ paddingTop: "14px", paddingBottom: "14px" }}>
+                        <span style={{
+                          display: "inline-flex", alignItems: "center",
+                          padding: "3px 10px", borderRadius: "20px",
+                          fontSize: "12px", fontWeight: 500,
+                          background: cat.bg, color: cat.text,
+                        }}>
+                          {category}
+                        </span>
+                      </td>
+
+                      <td style={{ paddingTop: "14px", paddingBottom: "14px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                          <div style={{
+                            width: "28px", height: "28px", borderRadius: "50%",
+                            background: orgColor.bg, color: orgColor.text,
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            fontSize: "11px", fontWeight: 600, flexShrink: 0,
+                          }}>
+                            {getOrganizerInitials(event)}
+                          </div>
+                          <span style={{ fontSize: "13px" }}>{getOrganizerName(event)}</span>
+                        </div>
+                      </td>
+
+                      <td style={{ paddingTop: "14px", paddingBottom: "14px", fontSize: "13px", color: "#888" }}>
+                        {getTimeAgo(event.createdAt)}
+                      </td>
+
+                      <td style={{ paddingTop: "14px", paddingBottom: "14px" }}>
+                        <span style={{
+                          display: "inline-flex", alignItems: "center",
+                          padding: "3px 10px", borderRadius: "20px",
+                          fontSize: "12px", fontWeight: 500,
+                          background: pri.bg, color: pri.text,
+                        }}>
+                          {priority}
+                        </span>
+                      </td>
+
+                      <td style={{ paddingTop: "14px", paddingBottom: "14px", paddingRight: "20px", textAlign: "right" }}>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "6px" }}>
+                          <button
+                            onClick={() => handleViewEvent(event.id)}
+                            title="View Details"
+                            style={{
+                              padding: "6px", borderRadius: "7px",
+                              border: "1px solid #e0e0e0", background: "#fff",
+                              color: "#888", cursor: "pointer", display: "flex", alignItems: "center",
+                            }}
+                          >
+                            <Eye size={14} />
+                          </button>
+
+                          {activeTab === "pending" && (
+                            <>
+                              <button
+                                onClick={() => handleApprove(event.id)}
+                                disabled={approving === event.id}
+                                style={{
+                                  padding: "6px 14px", borderRadius: "7px",
+                                  fontSize: "12px", fontWeight: 500,
+                                  border: "1px solid #a5d6a7", background: "#fff", color: "#2e7d32",
+                                  cursor: "pointer", display: "flex", alignItems: "center", gap: "4px",
+                                  opacity: approving === event.id ? 0.6 : 1,
+                                }}
+                              >
+                                {approving === event.id
+                                  ? <Loader2 size={12} style={{ animation: "spin 1s linear infinite" }} />
+                                  : <Check size={12} />
+                                }
+                                Approve
+                              </button>
+
+                              <button
+                                onClick={() => handleViewEvent(event.id)}
+                                style={{
+                                  padding: "6px 14px", borderRadius: "7px",
+                                  fontSize: "12px", fontWeight: 500,
+                                  border: "1px solid #e0e0e0", background: "#fff", color: "#555",
+                                  cursor: "pointer",
+                                }}
+                              >
+                                Review
+                              </button>
+
+                              <button
+                                onClick={() => openRejectDialog(event)}
+                                style={{
+                                  padding: "6px 14px", borderRadius: "7px",
+                                  fontSize: "12px", fontWeight: 500,
+                                  border: "1px solid #ffcdd2", background: "#fff", color: "#c62828",
+                                  cursor: "pointer", display: "flex", alignItems: "center", gap: "4px",
+                                }}
+                              >
+                                <X size={12} />
+                                Reject
+                              </button>
+                            </>
+                          )}
+
+                          {activeTab === "rejected" && (
+                            <button
+                              onClick={() => handleReapprove(event.id)}
+                              disabled={approving === event.id}
+                              style={{
+                                padding: "6px 14px", borderRadius: "7px",
+                                fontSize: "12px", fontWeight: 500,
+                                border: "1px solid #bbdefb", background: "#fff", color: "#1565c0",
+                                cursor: "pointer", display: "flex", alignItems: "center", gap: "4px",
+                                opacity: approving === event.id ? 0.6 : 1,
+                              }}
+                            >
+                              {approving === event.id
+                                ? <Loader2 size={12} style={{ animation: "spin 1s linear infinite" }} />
+                                : <Check size={12} />
+                              }
+                              Re-approve
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Pagination Footer */}
+        <div style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          padding: "14px 20px", borderTop: "0.5px solid #f0ede8",
+        }}>
+          <span style={{ fontSize: "13px", color: "#888" }}>
+            Showing {(page - 1) * 10 + 1}–{Math.min(page * 10, totalItems)} of {totalItems} submissions
+          </span>
+          <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+            <button
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={page === 1}
+              style={{
+                width: "32px", height: "32px", borderRadius: "8px",
+                border: "0.5px solid #e5e3dc", background: "#fff", color: "#aaa",
+                cursor: page === 1 ? "not-allowed" : "pointer", opacity: page === 1 ? 0.4 : 1,
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}
+            >
+              <ChevronLeft size={14} />
+            </button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+              <button
+                key={p}
+                onClick={() => setPage(p)}
+                style={{
+                  width: "32px", height: "32px", borderRadius: "8px",
+                  border: page === p ? "none" : "0.5px solid #e5e3dc",
+                  background: page === p ? "#2e7d32" : "#fff",
+                  color: page === p ? "#fff" : "#555",
+                  fontSize: "13px", cursor: "pointer",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}
+              >
+                {p}
+              </button>
+            ))}
+            <button
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+              style={{
+                width: "32px", height: "32px", borderRadius: "8px",
+                border: "0.5px solid #e5e3dc", background: "#fff", color: "#aaa",
+                cursor: page === totalPages ? "not-allowed" : "pointer", opacity: page === totalPages ? 0.4 : 1,
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}
+            >
+              <ChevronRight size={14} />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Event Details Panel */}
       <EventDetailsPanel
         eventId={selectedEventForView}
         isOpen={isViewPanelOpen}
-        onClose={() => {
-          setIsViewPanelOpen(false)
-          setSelectedEventForView(null)
-        }}
-        onActionComplete={() => {
-          fetchEvents()
-          fetchStats()
-        }}
+        onClose={() => { setIsViewPanelOpen(false); setSelectedEventForView(null) }}
+        onActionComplete={() => { fetchEvents(); fetchStats() }}
       />
 
-      {/* Reject Confirmation Dialog */}
+      {/* Reject Dialog */}
       <AlertDialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirm Rejection</AlertDialogTitle>
+            <AlertDialogTitle>Reject Event</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to reject <span className="font-semibold">"{selectedEvent?.title}"</span>?
-              This will mark the event as rejected and notify the organizer.
+              Are you sure you want to reject{" "}
+              <span style={{ fontWeight: 500 }}>"{selectedEvent?.title}"</span>?
+              The organizer will be notified with your reason.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          
-          <div className="space-y-4">
-            <div className="p-3 bg-gray-50 rounded-md">
-              <h4 className="font-medium mb-1">Rejection Reason (Required):</h4>
-              <Textarea
-                placeholder="Please provide a reason for rejection. This will be sent to the organizer..."
-                value={rejectReason}
-                onChange={(e) => setRejectReason(e.target.value)}
-                rows={4}
-                className="mt-2"
-              />
-              <p className="text-xs text-gray-500 mt-2">
-                The organizer will receive this reason via email and notification.
-              </p>
-            </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px", margin: "8px 0" }}>
+            <label style={{ fontSize: "14px", fontWeight: 500, color: "#374151" }}>Rejection Reason</label>
+            <Textarea
+              placeholder="Please provide a reason for rejection..."
+              value={rejectReason}
+              onChange={e => setRejectReason(e.target.value)}
+              rows={4}
+              className="resize-none"
+            />
+            <p style={{ fontSize: "12px", color: "#888" }}>This reason will be shared with the organizer.</p>
           </div>
-
           <AlertDialogFooter>
-            <AlertDialogCancel 
-              onClick={() => {
-                setRejectReason("")
-                setSelectedEvent(null)
-              }}
+            <AlertDialogCancel
+              onClick={() => { setRejectReason(""); setSelectedEvent(null) }}
               disabled={rejecting === selectedEvent?.id}
             >
               Cancel
@@ -700,13 +769,13 @@ export default function EventApprovalDashboard() {
             <AlertDialogAction
               onClick={handleReject}
               disabled={rejecting === selectedEvent?.id || !rejectReason.trim()}
-              className="bg-red-600 hover:bg-red-700"
+              style={{ background: "#c62828" }}
             >
               {rejecting === selectedEvent?.id ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} />
                   Rejecting...
-                </>
+                </span>
               ) : (
                 "Confirm Rejection"
               )}
@@ -714,221 +783,8 @@ export default function EventApprovalDashboard() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
-  )
-}
 
-// Helper component for the event table
-function EventTable({
-  events,
-  activeTab,
-  formatDate,
-  formatDateTime,
-  formatCurrency,
-  getTicketPriceRange,
-  getSpacePriceRange,
-  handleApprove,
-  handleReapprove,
-  openRejectDialog,
-  approving,
-  handleViewEvent,
-}: any) {
-  return (
-    <div className="rounded-md border">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Event Details</TableHead>
-            <TableHead>Organizer</TableHead>
-            <TableHead>Dates & Location</TableHead>
-            <TableHead>Pricing</TableHead>
-            <TableHead>Submitted</TableHead>
-            {activeTab === "rejected" && <TableHead>Rejection Reason</TableHead>}
-            <TableHead className="text-right">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {events.map((event: Event) => (
-            <TableRow key={event.id}>
-              <TableCell>
-                <div className="space-y-1">
-                  <div className="font-semibold text-gray-900">
-                    {event.title}
-                  </div>
-                  <div className="text-sm text-gray-500 line-clamp-2">
-                    {event.shortDescription || event.description.substring(0, 100)}
-                    {event.description.length > 100 && "..."}
-                  </div>
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    <EventStatusBadge status={event.status} />
-                    {event.isVirtual && (
-                      <Badge variant="outline" className="text-xs">
-                        Virtual
-                      </Badge>
-                    )}
-                    {event.leadsCount > 0 && (
-                      <Badge variant="secondary" className="text-xs">
-                        {event.leadsCount} leads
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-              </TableCell>
-              
-              <TableCell>
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <User className="w-4 h-4 text-gray-400" />
-                    <span className="font-medium">{event.organizer.name}</span>
-                  </div>
-                  <div className="text-sm text-gray-500">
-                    {event.organizer.email}
-                  </div>
-                  {event.organizer.company && (
-                    <div className="text-sm text-gray-500">
-                      <Building2 className="w-3 h-3 inline mr-1" />
-                      {event.organizer.company}
-                    </div>
-                  )}
-                  {event.organizer.phone && (
-                    <div className="text-sm text-gray-500">
-                      📱 {event.organizer.phone}
-                    </div>
-                  )}
-                </div>
-              </TableCell>
-              
-              <TableCell>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-gray-400" />
-                    <span className="text-sm">
-                      {formatDate(event.startDate)} - {formatDate(event.endDate)}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-gray-400" />
-                    <span className="text-sm">
-                      {event.city}, {event.country}
-                    </span>
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    {event.venue}
-                  </div>
-                </div>
-              </TableCell>
-              
-              <TableCell>
-                <div className="space-y-1">
-                  <div className="text-sm">
-                    <span className="font-medium">Tickets: </span>
-                    <span className="text-gray-600">
-                      {getTicketPriceRange(event.ticketTypes)}
-                    </span>
-                  </div>
-                  {event.exhibitionSpaces.length > 0 && (
-                    <div className="text-sm">
-                      <span className="font-medium">Spaces: </span>
-                      <span className="text-gray-600">
-                        {getSpacePriceRange(event.exhibitionSpaces)}
-                      </span>
-                    </div>
-                  )}
-                  <div className="text-xs text-gray-500 mt-1">
-                    {event.exhibitionSpaces.length} space types
-                  </div>
-                </div>
-              </TableCell>
-              
-              <TableCell>
-                <div className="space-y-1">
-                  <div className="text-sm text-gray-500">
-                    {formatDateTime(event.createdAt)}
-                  </div>
-                  <div className="text-xs text-gray-400">
-                    Updated: {formatDateTime(event.updatedAt)}
-                  </div>
-                  {activeTab === "rejected" && event.rejectedAt && (
-                    <div className="text-xs text-red-400">
-                      Rejected: {formatDateTime(event.rejectedAt)}
-                    </div>
-                  )}
-                </div>
-              </TableCell>
-              
-              {activeTab === "rejected" && (
-                <TableCell>
-                  <div className="text-sm text-gray-600 line-clamp-2">
-                    {event.rejectionReason || "No reason provided"}
-                  </div>
-                </TableCell>
-              )}
-              
-              <TableCell>
-                <div className="flex flex-col sm:flex-row gap-2 justify-end">
-                  {/* View Button */}
-                  <Button 
-                    size="sm" 
-                    variant="outline"
-                    onClick={() => handleViewEvent(event.id)}
-                    className="w-full sm:w-auto"
-                  >
-                    <Eye className="w-4 h-4 mr-1" />
-                    View
-                  </Button>
-                  
-                  {activeTab === "pending" && (
-                    <>
-                      <Button 
-                        size="sm" 
-                        variant="default"
-                        onClick={() => handleApprove(event.id)}
-                        disabled={approving === event.id}
-                        className="w-full sm:w-auto bg-green-600 hover:bg-green-700"
-                      >
-                        {approving === event.id ? (
-                          <Loader2 className="w-4 h-4 mr-1 animate-spin" />
-                        ) : (
-                          <Check className="w-4 h-4 mr-1" />
-                        )}
-                        Approve
-                      </Button>
-                      
-                      <Button 
-                        size="sm" 
-                        variant="destructive"
-                        onClick={() => openRejectDialog(event)}
-                        disabled={approving === event.id}
-                        className="w-full sm:w-auto"
-                      >
-                        <X className="w-4 h-4 mr-1" />
-                        Reject
-                      </Button>
-                    </>
-                  )}
-                  
-                  {activeTab === "rejected" && (
-                    <Button 
-                      size="sm" 
-                      variant="default"
-                      onClick={() => handleReapprove(event.id)}
-                      disabled={approving === event.id}
-                      className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700"
-                    >
-                      {approving === event.id ? (
-                        <Loader2 className="w-4 h-4 mr-1 animate-spin" />
-                      ) : (
-                        <RefreshCw className="w-4 h-4 mr-1" />
-                      )}
-                      Re-approve
-                    </Button>
-                  )}
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
     </div>
   )
 }
