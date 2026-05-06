@@ -403,15 +403,15 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
                       </td>
                       <td className="px-4 py-4">
                         <div className="flex items-center gap-2">
-                          {!isVerified && (
+                          {/* {!isVerified && (
                             <button className="text-xs font-medium px-3 py-1.5 rounded-lg border border-emerald-200 text-emerald-700 hover:bg-emerald-50 transition-colors">
                               Verify
                             </button>
-                          )}
+                          )} */}
                           <Dialog>
                             <DialogTrigger asChild>
                               <button className="text-xs font-medium px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors">
-                                Edit
+                                View
                               </button>
                             </DialogTrigger>
                             <DialogContent className="max-w-2xl">
@@ -468,12 +468,12 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
                               </div>
                             </DialogContent>
                           </Dialog>
-                          <button
+                          {/* <button
                             onClick={() => handleSendMessage(organizer)}
                             className="text-xs font-medium px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
                           >
                             Events
-                          </button>
+                          </button> */}
                         </div>
                       </td>
                     </tr>
