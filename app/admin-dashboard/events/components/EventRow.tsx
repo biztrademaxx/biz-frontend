@@ -48,8 +48,13 @@ function formatDateRange(startDate: string, endDate: string): string {
   return `${startMonth} ${startDay} – ${endMonth} ${endDay}, ${year}`
 }
 
-function getOrganizerInitials(name: string): string {
-  return name.split(" ").slice(0, 2).map((w) => w[0]?.toUpperCase() ?? "").join("")
+function getOrganizerInitials(companyName: string): string {
+  // Get initials from company name (first letters of each word, max 2 letters)
+  const words = companyName.split(" ").filter(w => w.length > 0)
+  if (words.length === 1) {
+    return words[0].substring(0, 2).toUpperCase()
+  }
+  return words.slice(0, 2).map((w) => w[0]?.toUpperCase() ?? "").join("")
 }
 
 const ORGANIZER_COLORS = [
@@ -85,7 +90,7 @@ function OrganizerAvatar({ name }: { name: string }) {
   )
 }
 
-// Category pill colors — matches screenshot
+// Category pill colors
 const CATEGORY_STYLES: Record<string, { bg: string; text: string }> = {
   "Summit": { bg: "#dcfce7", text: "#166534" },
   "Expo": { bg: "#ede9fe", text: "#5b21b6" },
@@ -136,10 +141,35 @@ function StatusPill({ status }: { status: "Live" | "Upcoming" | "Ended" | "Draft
   )
 }
 
+// FIXED: Strongly prioritize company over personal name
 function getOrganizerCompanyName(organizer: any): string {
-  if (typeof organizer === "string") return organizer
-  if (organizer && typeof organizer === "object")
-    return organizer.companyName || organizer.company || organizer.name || organizer.organizerName || "Unknown"
+  if (!organizer) return "Unknown"
+
+  // If organizer is string
+  if (typeof organizer === "string") {
+    return organizer
+  }
+
+  // PRIORITY 1 → company
+  if (organizer.company && organizer.company.trim() !== "") {
+    return organizer.company
+  }
+
+  // PRIORITY 2 → companyName
+  if (organizer.companyName && organizer.companyName.trim() !== "") {
+    return organizer.companyName
+  }
+
+  // PRIORITY 3 → name
+  if (organizer.name && organizer.name.trim() !== "") {
+    return organizer.name
+  }
+
+  // PRIORITY 4 → organizerName
+  if (organizer.organizerName && organizer.organizerName.trim() !== "") {
+    return organizer.organizerName
+  }
+
   return "Unknown"
 }
 
@@ -168,16 +198,42 @@ export function EventRow({
 }: EventRowProps) {
   const [isHovered, setIsHovered] = useState(false)
 
-  const organizerName = getOrganizerCompanyName(event.organizer)
+  // Debug logs
+  console.log("====================================")
+  console.log("📌 EVENT TITLE:", event.title)
+  console.log("👤 RAW ORGANIZER DATA:", JSON.stringify(event.organizer, null, 2))
+
+  // Get company name using the improved function
+  const organizerName =
+    typeof event.organizer === "object" && event.organizer !== null
+      ? event.organizer.company ||
+      "Unknown"
+      : event.organizer || "Unknown"
+
+  console.log("🏢 FINAL ORGANIZER DISPLAY NAME:", organizerName)
+  console.log("====================================")
+
+  // Use currentAttendees if attendees is not available
+  const attendees = event.attendees || event.currentAttendees || 0
+  const maxCapacity = event.maxCapacity || event.maxAttendees || 0
+  const fillPct = maxCapacity
+    ? Math.min(100, (attendees / maxCapacity) * 100)
+    : Math.min(100, attendees / 100)
+
   const categoryDisplay = getCategoryDisplay(event.category)
   const liveStatus = getEventStatusByDate(event)
-  const dateRange = formatDateRange(event.date, event.endDate || event.date)
 
-  const locationParts = event.location?.split(",").map(p => p.trim()) || []
-  const city = locationParts[0] || ""
-  const country = locationParts[locationParts.length - 1] || ""
+  // Use startDate/endDate if date is not available
+  const dateRange = formatDateRange(
+    event.startDate || event.date,
+    event.endDate || event.date
+  )
+
+  const locationParts = (event.location || `${event.city || ""}, ${event.country || ""}`).split(",").map(p => p.trim())
+  const city = locationParts[0] || event.city || ""
+  const country = locationParts[locationParts.length - 1] || event.country || ""
   const regionTag = ((): string => {
-    const loc = (event.location || "").toLowerCase()
+    const loc = (event.location || `${event.city || ""} ${event.country || ""}`).toLowerCase()
     if (loc.includes("india") || loc.includes("singapore") || loc.includes("japan") || loc.includes("china") || loc.includes("australia")) return "APAC"
     if (loc.includes("germany") || loc.includes("france") || loc.includes("uk") || loc.includes("london") || loc.includes("amsterdam")) return "EU"
     if (loc.includes("usa") || loc.includes("canada") || loc.includes("new york") || loc.includes("chicago") || loc.includes("united states")) return "NA"
@@ -187,9 +243,6 @@ export function EventRow({
 
   const eventDisplayTitle = event.subTitle || event.shortDescription || event.title
   const venueName = event.venue || ""
-  const attendees = event.attendees || 0
-  const maxCapacity = event.maxCapacity || 0
-  const fillPct = maxCapacity ? Math.min(100, (attendees / maxCapacity) * 100) : Math.min(100, attendees / 100)
 
   return (
     <tr
@@ -221,9 +274,9 @@ export function EventRow({
             display: "flex", alignItems: "center", justifyContent: "center",
             border: "1px solid #ECECEC",
           }}>
-            {event.thumbnailImage || event.bannerImage || event.image ? (
+            {event.thumbnailImage || event.bannerImage || (event.images && event.images[0]) ? (
               <img
-                src={event.thumbnailImage || event.bannerImage || event.image}
+                src={event.thumbnailImage || event.bannerImage || (event.images && event.images[0])}
                 alt={eventDisplayTitle}
                 style={{ width: "100%", height: "100%", objectFit: "cover" }}
               />
@@ -286,7 +339,7 @@ export function EventRow({
         <StatusPill status={liveStatus} />
       </td>
 
-      {/* Organizer */}
+      {/* Organizer - Shows COMPANY NAME */}
       <td style={{ padding: "14px 16px", verticalAlign: "middle" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "8px", whiteSpace: "nowrap" }}>
           <OrganizerAvatar name={organizerName} />
@@ -299,20 +352,20 @@ export function EventRow({
       {/* Featured star */}
       <td style={{ padding: "14px 16px", textAlign: "center", verticalAlign: "middle" }}>
         <button
-          onClick={() => onFeatureToggle(event.id, event.featured)}
+          onClick={() => onFeatureToggle(event.id, event.featured || event.isFeatured || false)}
           style={{ background: "none", border: "none", cursor: "pointer", padding: "4px", lineHeight: 1 }}
-          title={event.featured ? "Remove from featured" : "Mark as featured"}
+          title={event.featured || event.isFeatured ? "Remove from featured" : "Mark as featured"}
         >
           <Star style={{
             width: "16px", height: "16px",
-            fill: event.featured ? "#F59E0B" : "none",
-            color: event.featured ? "#F59E0B" : "#D4D4D8",
+            fill: (event.featured || event.isFeatured) ? "#F59E0B" : "none",
+            color: (event.featured || event.isFeatured) ? "#F59E0B" : "#D4D4D8",
             transition: "all 0.15s",
           }} />
         </button>
       </td>
 
-      {/* Actions — visible on hover */}
+      {/* Actions */}
       <td style={{ padding: "14px 16px", verticalAlign: "middle" }}>
         <div style={{
           display: "flex", alignItems: "center", gap: "2px",
