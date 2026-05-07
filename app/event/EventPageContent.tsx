@@ -27,6 +27,7 @@ import { getPublicProfilePath } from "@/lib/profile-path"
 import { brochureFriendlyFilename, downloadUrlAsFile, getGoogleDocsViewerUrl, resolveBrochureUrl } from "@/lib/utils"
 import { formatPublicTicketPriceLine } from "@/lib/ticket-price-display"
 import { formatEventSidebarTimeRange } from "@/lib/event-sidebar-time-range"
+import { EVENT_VENUE_LOCATION_PENDING } from "@/lib/event-location-copy"
 
 interface TicketType {
   name: string
@@ -554,7 +555,7 @@ export default function EventPageContent({ event, session: _session, router, toa
       return event?.virtualLink ? "Online event (link in event details)" : "Online event"
     }
 
-    return "Location TBA"
+    return EVENT_VENUE_LOCATION_PENDING
   }
 
   /** Query fragment for Google Maps (`q=` / destination=); prefers coordinates, then encoded address. */
@@ -600,9 +601,9 @@ export default function EventPageContent({ event, session: _session, router, toa
     if (parts.length > 0) return encodeURIComponent(parts.join(", "))
 
     const display = getDisplayAddress()
-    if (display && display !== "Location TBA") return encodeURIComponent(display)
+    if (display && display !== EVENT_VENUE_LOCATION_PENDING) return encodeURIComponent(display)
 
-    return encodeURIComponent(event?.title ? `${event.title} — Location TBA` : "Location TBA")
+    return encodeURIComponent(event?.title ? `${event.title} — ${EVENT_VENUE_LOCATION_PENDING}` : EVENT_VENUE_LOCATION_PENDING)
   }
 
   /** For "Get Directions", prefer full venue address text (more accurate than stale coordinates). */
@@ -625,7 +626,7 @@ export default function EventPageContent({ event, session: _session, router, toa
   /** True when the displayed address should open in an external maps app. */
   const canLinkAddressToMaps = (): boolean => {
     const d = getDisplayAddress()
-    if (d === "Location TBA") return false
+    if (d === EVENT_VENUE_LOCATION_PENDING) return false
     if (d === "Online event" || d.startsWith("Online event (")) return false
     return true
   }
