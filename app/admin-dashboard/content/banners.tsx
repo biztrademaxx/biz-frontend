@@ -45,6 +45,7 @@ const PAGE_OPTIONS = [
   { value: "exhibitor-dashboard", label: "Exhibitor Dashboard" },
   { value: "venue-dashboard", label: "Venue Dashboard" },
   { value: "speaker-dashboard", label: "Speaker Dashboard" },
+  { value: "visitor-dashboard", label: "Visitor Dashboard" },
   { value: "homepage", label: "Homepage" },
   { value: "events", label: "Events Page" },
   { value: "event-detail", label: "Event Detail Page" },

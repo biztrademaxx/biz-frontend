@@ -42,6 +42,8 @@ interface Venue {
   totalReviews?: number
   amenities: string[]
   basePrice?: number
+  venueTimezone?: string
+  timezone?: string
 }
 
 interface MeetingSpace {
@@ -61,6 +63,8 @@ interface AddVenueProps {
     city: string
     state?: string
     country?: string
+    /** IANA time zone from venue profile when set */
+    timezone?: string
   }) => void
   selectedVenueId?: string  // Add this prop
 }
@@ -237,6 +241,9 @@ export default function AddVenue({ organizerId, onVenueChange, selectedVenueId }
           city: selectedVenue.venueCity || selectedVenue.city || "City not provided",
           state: selectedVenue.venueState || selectedVenue.state,
           country: selectedVenue.venueCountry || selectedVenue.country,
+          timezone:
+            (selectedVenue.venueTimezone || selectedVenue.timezone || "").trim() ||
+            undefined,
         })
 
         toast({

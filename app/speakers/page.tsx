@@ -8,6 +8,7 @@ import { Search, ChevronDown, Heart, User, Star, MapPin, Calendar, CheckCircle }
 import { useRouter } from "next/navigation"
 import { apiFetch } from "@/lib/api"
 import { getPublicProfilePath } from "@/lib/profile-path"
+import SpeakersListingPageSkeleton from "@/components/SpeakersListingPageSkeleton"
 
 interface Speaker {
   id: string
@@ -193,11 +194,7 @@ export default function SpeakersPage() {
   }
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-blue-900 text-xl">Loading speakers...</div>
-      </div>
-    )
+    return <SpeakersListingPageSkeleton />
   }
 
   if (error) {

@@ -23,6 +23,8 @@ interface Venue {
   venueCountry?: string
   venueZipCode?: string
   venuepostalCode?: string
+  venueTimezone?: string
+  timezone?: string
   maxCapacity?: number
   amenities: string[]
 }
@@ -38,6 +40,7 @@ interface SelectVenueProps {
     city: string
     state?: string
     country?: string
+    timezone?: string
   }) => void
 }
 
@@ -138,7 +141,8 @@ export function SelectVenue({ selectedVenueId, onVenueChange }: SelectVenueProps
           venueAddress: user.venueAddress ?? "",
           city: user.venueCity ?? "",
           state: user.venueState,
-          country: user.venueCountry
+          country: user.venueCountry,
+          timezone: user.venueTimezone?.trim() || undefined,
         })
         setShowCreateForm(false)
         setCountryPick(LOCATION_NONE)
@@ -232,7 +236,10 @@ export function SelectVenue({ selectedVenueId, onVenueChange }: SelectVenueProps
                     venueAddress: venue.venueAddress || '',
                     city: venue.venueCity || '',
                     state: venue.venueState,
-                    country: venue.venueCountry
+                    country: venue.venueCountry,
+                    timezone:
+                      (venue.venueTimezone || venue.timezone || "").trim() ||
+                      undefined,
                   })
                 }
               }}

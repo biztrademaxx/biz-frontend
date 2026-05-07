@@ -8,6 +8,8 @@ import Image from "next/image"
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { apiFetch } from "@/lib/api"
+import { formatPublicTicketPriceLine } from "@/lib/ticket-price-display"
+import { formatEventSidebarTimeRange } from "@/lib/event-sidebar-time-range"
 
 interface Event {
   id: string
@@ -131,16 +133,7 @@ export default function EventHero({ event }: EventHeroProps) {
   }, [event.images])
 
   // Get ticket price display
-  const getTicketPriceDisplay = () => {
-    if (!event.ticketTypes || event.ticketTypes.length === 0) {
-      return "Free Entry"
-    }
-    
-    const ticketTypes = event.ticketTypes
-    return ticketTypes.map(ticket => 
-      `${ticket.name}: ${ticket.currency || '₹'}${ticket.price}`
-    ).join(" | ")
-  }
+  const getTicketPriceDisplay = () => formatPublicTicketPriceLine(event.ticketTypes)
 
   // Get followers count - REMOVED the fallback to 0
   const getFollowersCount = () => {
@@ -295,13 +288,14 @@ export default function EventHero({ event }: EventHeroProps) {
             alt={event.title}
             fill
             className="h-full w-full object-cover"
+            sizes="100vw"
             priority
           />
           
-           {/* 🔥 Blur Layer */}
-           <div className="absolute inset-0 backdrop-blur-[6px]" />
+           {/* Frosted layer over banner — stronger blur for readability */}
+           <div className="absolute inset-0 backdrop-blur-md" />
           
-          {/* 🔥 Gradient Overlay */}
+          {/* Gradient overlay */}
            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
           </div>
           
@@ -380,7 +374,7 @@ export default function EventHero({ event }: EventHeroProps) {
             {/* Time */}
             <div className="flex items-center gap-2 sm:gap-3">
               <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-black flex-shrink-0" />
-              <span className="leading-tight">{formatTimeRange()}</span>
+              <span className="leading-tight">{formatEventSidebarTimeRange(event)}</span>
             </div>
 
             {/* Ticket Price */}

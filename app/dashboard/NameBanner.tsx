@@ -3,9 +3,11 @@ import Image from "next/image"
 interface NameBannerProps {
   name: string
   designation: string
+  /** When true, name and role align to the right (visitor dashboard). */
+  alignRight?: boolean
 }
 
-export function NameBanner({ name, designation }: NameBannerProps) {
+export function NameBanner({ name, designation, alignRight }: NameBannerProps) {
   return (
     <div className="relative w-full h-48 md:h-60 lg:h-72">
       {/* Background banner */}
@@ -18,7 +20,13 @@ export function NameBanner({ name, designation }: NameBannerProps) {
       />
 
       {/* Overlay content */}
-      <div className="absolute inset-0 bg-black/20 flex flex-col justify-center px-8 md:px-16">
+      <div
+        className={
+          alignRight
+            ? "absolute inset-0 bg-black/20 flex flex-col justify-center items-end text-right px-8 md:px-16"
+            : "absolute inset-0 bg-black/20 flex flex-col justify-center px-8 md:px-16"
+        }
+      >
         <h1 className="text-2xl md:text-3xl font-bold text-white drop-shadow-lg">
           {name}
         </h1>

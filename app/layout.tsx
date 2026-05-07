@@ -22,6 +22,9 @@ export const metadata: Metadata = {
     template: `%s | ${SITE_NAME}`,
   },
   description: SITE_DESCRIPTION,
+  icons: {
+    icon: [{ url: "/favicon.ico", type: "image/x-icon" }],
+  },
   robots: {
     index: true,
     follow: true,
