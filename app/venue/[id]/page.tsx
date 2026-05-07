@@ -37,6 +37,7 @@ import { ShareButton } from "@/components/share-button"
 import { apiFetch } from "@/lib/api"
 import { eventPublicPath } from "@/lib/event-path"
 import { formatPublicTicketPriceLine } from "@/lib/ticket-price-display"
+import VenuePageSkeleton from "@/components/VenuePageSkeleton"
 
 interface Venue {
   venueName: string
@@ -612,14 +613,7 @@ export default function VenueDetailPage() {
   }
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
-          <p className="text-gray-600">Loading venue details...</p>
-        </div>
-      </div>
-    )
+    return <VenuePageSkeleton />
   }
 
   if (error || !venue) {

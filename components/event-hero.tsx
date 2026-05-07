@@ -288,13 +288,14 @@ export default function EventHero({ event }: EventHeroProps) {
             alt={event.title}
             fill
             className="h-full w-full object-cover"
+            sizes="100vw"
             priority
           />
           
-           {/* 🔥 Blur Layer */}
-           <div className="absolute inset-0 backdrop-blur-[6px]" />
+           {/* Frosted layer over banner — stronger blur for readability */}
+           <div className="absolute inset-0 backdrop-blur-md" />
           
-          {/* 🔥 Gradient Overlay */}
+          {/* Gradient overlay */}
            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
           </div>
           

@@ -16,9 +16,7 @@ import HomeScrollSignupRedirect from "@/components/home-scroll-signup-redirect";
 import EventReviews from "@/components/EventReviews";
 import {
   CategoryBrowseSkeleton,
-  ExploreVenuesSkeleton,
   FeaturedEventsSkeleton,
-  FeaturedOrganizersSkeleton,
   FeaturedSpeakersSkeleton,
   TrendingEventsSkeleton,
 } from "@/components/home-skeletons";
@@ -71,12 +69,8 @@ export default function Home() {
       <Suspense fallback={<BrowseByCountrySkeleton />}>
         <BrowseByCountry />
       </Suspense>
-      <Suspense fallback={<ExploreVenuesSkeleton />}>
-        <ExploreVenues />
-      </Suspense>
-      <Suspense fallback={<FeaturedOrganizersSkeleton />}>
-        <FeaturedOrganizers />
-      </Suspense>
+      <ExploreVenues />
+      <FeaturedOrganizers />
       <Suspense fallback={<TrendingEventsSkeleton />}>
         <EventReviews />
       </Suspense>
