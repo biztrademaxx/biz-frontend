@@ -32,6 +32,7 @@ import { useToast } from "@/components/ui/use-toast"
 import EntityBulkImport from "./entity-bulk-import"
 
 interface Organizer {
+  company: string
   id: string
   firstName: string
   lastName: string
@@ -105,18 +106,27 @@ const avatarColors = [
   "bg-cyan-100 text-cyan-700",
 ]
 
-function getAvatarColor(name: string) {
-  const idx = name.charCodeAt(0) % avatarColors.length
+function getAvatarColor(company?: string) {
+  if (!company) {
+    return avatarColors[0]
+  }
+
+  const idx = company.length % avatarColors.length
   return avatarColors[idx]
 }
 
-function getInitials(name: string) {
-  return name
+function getInitials(company?: string) {
+  if (!company) {
+    return "UN"
+  }
+
+  return company
     .split(" ")
-    .map((n) => n[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((word) => word[0])
     .join("")
     .toUpperCase()
-    .slice(0, 2)
 }
 
 export default function OrganizerManagement({ initialTab = "all" }: { initialTab?: "all" | "bulk-import" }) {
@@ -163,7 +173,9 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
 
     return {
       id: organizer.id,
-      name: organizer.organizationName || `${organizer.firstName} ${organizer.lastName}`,
+      name:
+        organizer.organizationName?.trim() ||
+        "Unknown Organizer",
       email: organizer.email,
       phone: organizer.phone || organizer.businessPhone || "Not provided",
       location,

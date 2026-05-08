@@ -792,7 +792,8 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Content Area */}
-        <main className="flex-1 overflow-auto bg-gray-50 p-6">{renderContent()}</main>
+        <main className="flex-1 overflow-auto p-6" style={{ background: "#F5F4F0" }}>
+{renderContent()}</main>
       </div>
     </div>
   )
