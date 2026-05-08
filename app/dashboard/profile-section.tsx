@@ -1,6 +1,5 @@
 "use client"
 
-
 import { devLog } from "@/lib/dev-log"
 
 import type React from "react"
@@ -367,7 +366,7 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
   }, [fetchConnectionsCount, fetchInterestedEventsCount])
 
   return (
-    <div className="space-y-6 p-6 bg-gray-50 min-h-screen">
+    <div className="space-y-6 bg-[#F5F4F0] min-h-screen p-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-gray-900">Profile</h1>
         {!isEditing ? (
@@ -697,27 +696,27 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
 
         <div className="lg:col-span-2 flex flex-col gap-6">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 min-w-0">
-            <Card className="bg-yellow-200 h-32 flex items-center justify-center overflow-hidden">
+            <div className="bg-yellow-200 h-32 flex items-center justify-center overflow-hidden rounded-lg">
               <div className="text-center p-4 min-w-0 overflow-hidden">
                 <Calendar className="w-8 h-8 mx-auto mb-2" />
                 <h3 className="font-semibold truncate">Upcoming Events</h3>
                 <p className="text-sm truncate">{interestedEventsCount} events</p>
               </div>
-            </Card>
-            <Card className="bg-blue-200 h-32 flex items-center justify-center overflow-hidden">
+            </div>
+            <div className="bg-blue-200 h-32 flex items-center justify-center overflow-hidden rounded-lg">
               <div className="text-center p-4 min-w-0 overflow-hidden">
                 <CalendarDays className="w-8 h-8 mx-auto mb-2" />
                 <h3 className="font-semibold truncate">Events</h3>
                 <p className="text-sm truncate">{localUserData._count?.eventsAttended ?? events.length} events</p>
               </div>
-            </Card>
-            <Card className="bg-red-300 h-32 flex items-center justify-center overflow-hidden">
+            </div>
+            <div className="bg-red-300 h-32 flex items-center justify-center overflow-hidden rounded-lg">
               <div className="text-center p-4 min-w-0 overflow-hidden">
                 <UserIcon className="w-8 h-8 mx-auto mb-2" />
                 <h3 className="font-semibold truncate">Connections</h3>
                 <p className="text-sm truncate">{connectionsCount} total</p>
               </div>
-            </Card>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

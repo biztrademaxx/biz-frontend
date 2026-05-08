@@ -459,11 +459,11 @@ export function UserDashboard({ userId }: UserDashboardProps) {
 
         <main className="flex-1 overflow-auto p-6">
           <DashboardManagedBanner page="visitor-dashboard" />
-          <div className="mx-auto max-w-7xl">
-            <div className="bg-[#F5F4F0] min-h-screen w-full ">
+         
+            <div className="bg-[#F5F4F0] min-h-screen w-full">
               {renderContent()}
             </div>
-          </div>
+          
         </main>
       </div>
     </div>

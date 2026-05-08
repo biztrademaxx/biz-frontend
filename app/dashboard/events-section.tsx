@@ -274,7 +274,7 @@ export function EventsSection({ userId }: EventsSectionProps) {
       )} */}
 
       {/* Calendar Filter Section */}
-      <div className="flex flex-col gap-4 p-4 border rounded-lg bg-gray-50">
+      <div className="flex flex-col gap-4 p-4 border rounded-lg bg-[#fff]">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-medium">Filter by Date</h3>
           <Button
