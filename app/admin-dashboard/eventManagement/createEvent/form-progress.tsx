@@ -13,18 +13,25 @@ export function FormProgress({ completionPercentage }: FormProgressProps) {
         <span className="text-sm font-medium">Form Completion</span>
         <span className="text-sm text-muted-foreground">{completionPercentage}%</span>
       </div>
-      <div style={{ backgroundColor: "#dcfce7", borderRadius: "8px", overflow: "hidden" }}>
-        <Progress
-          value={completionPercentage}
-          className="h-2"
-          style={{
-            backgroundColor: "transparent",
-            '--progress-background': '#22c55e',
-          } as React.CSSProperties}
-        />
-      </div>
-      <style jsx>{`
-        :global(.progress-indicator) {
+      <Progress
+        value={completionPercentage}
+        className="h-2"
+        style={{
+          backgroundColor: "#dcfce7",
+        }}
+      />
+      <style jsx global>{`
+        /* Target the progress bar indicator */
+        [role="progressbar"] > div {
+          background-color: #22c55e !important;
+        }
+        
+        /* Alternative selector for shadcn Progress component */
+        .relative.h-2.w-full.overflow-hidden.rounded-full.bg-secondary {
+          background-color: #dcfce7 !important;
+        }
+        
+        .relative.h-2.w-full.overflow-hidden.rounded-full.bg-secondary > div {
           background-color: #22c55e !important;
         }
       `}</style>
