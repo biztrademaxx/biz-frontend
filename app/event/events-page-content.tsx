@@ -33,6 +33,7 @@ import { useToast } from "@/hooks/use-toast"
 import { ShareButton } from "@/components/share-button"
 import { isAuthenticated, getCurrentUserId, apiFetch } from "@/lib/api"
 import { eventPublicPath } from "@/lib/event-path"
+import { EVENT_VENUE_LOCATION_PENDING } from "@/lib/event-location-copy"
 import { avatarUrlFromRecord } from "@/lib/user-avatar-url"
 import { EventCardFollowStrip, type ListingFollowerFace } from "@/components/event-listing/EventCardFollowStrip"
 import EventsListingPageSkeleton from "@/components/EventsListingPageSkeleton"
@@ -206,7 +207,7 @@ function trendingLocationLine(event: Event): string {
   if (loc?.venue && loc.venue !== "Venue not specified") return loc.venue
   if (loc?.address && loc.address !== "Address not available") return loc.address
   if (loc?.country && loc.country !== "Country not specified") return loc.country
-  return "Location TBD"
+  return EVENT_VENUE_LOCATION_PENDING
 }
 
 function normalizeEventFormatName(event: Pick<Event, "eventType" | "categories">): string {
@@ -2124,7 +2125,7 @@ export default function EventsPageContent({
                             </div>
                             <div className="flex items-center text-base text-gray-700 mb-2 font-bold">
                               <MapPin className="w-5 h-5 mr-2 text-blue-600 flex-shrink-0" />
-                              <span className="truncate">{event.location?.city || "Location TBD"}</span>
+                              <span className="truncate">{event.location?.city || EVENT_VENUE_LOCATION_PENDING}</span>
                             </div>
                             <div className="flex items-center text-base text-gray-700 mb-4 font-bold">
                               <Calendar className="w-5 h-5 mr-2 text-blue-600 flex-shrink-0" />

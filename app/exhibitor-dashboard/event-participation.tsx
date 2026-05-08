@@ -5,6 +5,7 @@ import { devLog } from "@/lib/dev-log"
 
 import { useState, useEffect } from "react"
 import { apiFetch } from "@/lib/api"
+import { EVENT_VENUE_LOCATION_PENDING } from "@/lib/event-location-copy"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -93,8 +94,8 @@ interface EventVenueInfo {
 }
 
 function formatEventVenue(venue: string | EventVenueInfo | null | undefined): string {
-  if (venue == null) return "Venue TBA"
-  if (typeof venue === "string") return venue.trim() || "Venue TBA"
+  if (venue == null) return EVENT_VENUE_LOCATION_PENDING
+  if (typeof venue === "string") return venue.trim() || EVENT_VENUE_LOCATION_PENDING
   const parts = [
     venue.venueName,
     venue.venueAddress,
@@ -104,7 +105,7 @@ function formatEventVenue(venue: string | EventVenueInfo | null | undefined): st
   ]
     .map((p) => (typeof p === "string" ? p.trim() : ""))
     .filter(Boolean)
-  return parts.length ? parts.join(" · ") : "Venue TBA"
+  return parts.length ? parts.join(" · ") : EVENT_VENUE_LOCATION_PENDING
 }
 
 interface Event {

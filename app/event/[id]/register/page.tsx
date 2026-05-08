@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar, MapPin, Clock, Users, ArrowLeft, IndianRupee } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { apiFetch } from "@/lib/api"
+import { EVENT_VENUE_LOCATION_PENDING } from "@/lib/event-location-copy"
 
 interface RegisterPageProps {
   params: Promise<{
@@ -148,7 +149,7 @@ export default function RegisterPage({ params }: RegisterPageProps) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex items-center gap-2">
                 <MapPin className="w-4 h-4 text-gray-500" />
-                <span>{event.location || "Location TBA"}</span>
+                <span>{event.location || EVENT_VENUE_LOCATION_PENDING}</span>
               </div>
               <div className="flex items-center gap-2">
                 <Clock className="w-4 h-4 text-gray-500" />
