@@ -667,7 +667,7 @@ export default function EventPage({ params }: EventPageProps) {
   }
 
   return (
-    <div className="max-w-7xl bg-gray-50 py-0 mx-10">
+    <div className="max-w-7xl bg-[#F5F4F0] py-0 mx-10">
       <div className="max-w-7xl mx-auto">
         {/* Hero Section */}
         <div className="mb-10">
