@@ -1,11 +1,11 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useState } from "react"
 import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
-import { ShieldCheck } from "lucide-react"
-import { EventFilters } from "./EventFilters"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Trash2, Filter, Download, ChevronDown, Search } from "lucide-react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { EventRow } from "./EventRow"
 import type { Event, Category } from "../types/event.types"
 import { getOrganizerDisplay, getCategoryDisplay } from "../types/event.types"
@@ -24,23 +24,13 @@ interface EventTableProps {
   onVipToggle: (eventId: string, current: boolean) => void
   onPublicToggle: (eventId: string, current: boolean) => void
   onDelete: (eventId: string) => void
+  onBulkDelete?: (eventIds: string[]) => void
   onPromote: (event: Event) => void
   onVerify: (event: Event) => void
   onSearchChange: (value: string) => void
   onStatusFilterChange: (value: string) => void
   onCategoryFilterChange: (value: string) => void
   onTabChange: (value: string) => void
-  mailCandidates: Array<{
-    source: "SUB_ADMIN" | "BULK_UPLOAD"
-    eventTitle: string
-    organizerEmail: string
-    organizerName: string
-    createdAt: string
-  }>
-  sendingMail: boolean
-  sendingMailFor?: string | null
-  onSendListingEmail: (organizerEmail: string, eventTitles: string[]) => Promise<void>
-  onSendListingEmailBulk: (items: Array<{ organizerEmail: string; eventTitles: string[] }>) => Promise<void>
 }
 
 function getStatusColor(status: Event["status"]): "default" | "secondary" | "destructive" | "outline" {
@@ -54,35 +44,88 @@ function getStatusColor(status: Event["status"]): "default" | "secondary" | "des
   }
 }
 
-function filterEventsByTab(
+function getEventDateStatus(event: Event): "Live" | "Upcoming" | "Ended" | "Draft" {
+  if (event.status === "Draft") return "Draft"
+  const today = new Date(); today.setHours(0, 0, 0, 0)
+  const startDate = new Date(event.date); startDate.setHours(0, 0, 0, 0)
+  const endDate = event.endDate ? new Date(event.endDate) : new Date(event.date)
+  endDate.setHours(23, 59, 59, 999)
+  if (today >= startDate && today <= endDate) return "Live"
+  if (today < startDate) return "Upcoming"
+  if (today > endDate) return "Ended"
+  return "Upcoming"
+}
+
+function filterEvents(
   events: Event[],
   tab: string,
   searchTerm: string,
   selectedStatus: string,
-  selectedCategory: string
+  categoryFilter: string,
+  regionFilter: string,
+  industryFilter: string,
+  sortBy: string
 ): Event[] {
-  const filtered = events.filter((event) => {
+  let filtered = events.filter((event) => {
     const organizerStr = getOrganizerDisplay(event.organizer)
     const matchesSearch =
+      searchTerm === "" ||
       event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       organizerStr.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesStatus =
-      selectedStatus === "all" ||
-      event.status.toLowerCase().replace(" ", "") === selectedStatus
+
+    let matchesStatusFilter = true
+    if (selectedStatus !== "all") {
+      const dateStatus = getEventDateStatus(event)
+      if (selectedStatus === "live") matchesStatusFilter = dateStatus === "Live"
+      else if (selectedStatus === "upcoming") matchesStatusFilter = dateStatus === "Upcoming"
+      else if (selectedStatus === "ended") matchesStatusFilter = dateStatus === "Ended"
+      else if (selectedStatus === "draft") matchesStatusFilter = dateStatus === "Draft"
+      else if (selectedStatus === "pendingreview") matchesStatusFilter = event.status === "Pending Review"
+      else if (selectedStatus === "approved") matchesStatusFilter = event.status === "Approved"
+    }
+
     const categoryStr = getCategoryDisplay(event.category).toLowerCase()
-    const matchesCategory =
-      selectedCategory === "all" || categoryStr === selectedCategory
-    return matchesSearch && matchesStatus && matchesCategory
+    const matchesCategory = categoryFilter === "all" || categoryStr === categoryFilter
+
+    // Region filter — derived from location string
+    const locationStr = (event.location || "").toLowerCase()
+    const matchesRegion =
+      regionFilter === "all" ||
+      (regionFilter === "apac" && (locationStr.includes("india") || locationStr.includes("singapore") || locationStr.includes("japan") || locationStr.includes("china") || locationStr.includes("australia") || locationStr.includes("apac"))) ||
+      (regionFilter === "eu" && (locationStr.includes("germany") || locationStr.includes("france") || locationStr.includes("uk") || locationStr.includes("london") || locationStr.includes("europe") || locationStr.includes("eu"))) ||
+      (regionFilter === "na" && (locationStr.includes("usa") || locationStr.includes("canada") || locationStr.includes("new york") || locationStr.includes("chicago") || locationStr.includes("los angeles") || locationStr.includes("united states"))) ||
+      (regionFilter === "me" && (locationStr.includes("dubai") || locationStr.includes("uae") || locationStr.includes("saudi") || locationStr.includes("middle east") || locationStr.includes("qatar")))
+
+    // Industry filter — derived from category
+    const matchesIndustry =
+      industryFilter === "all" ||
+      (industryFilter === "tech" && (categoryStr.includes("tech") || categoryStr.includes("summit") || categoryStr.includes("conference"))) ||
+      (industryFilter === "health" && (categoryStr.includes("health") || categoryStr.includes("med") || categoryStr.includes("pharma"))) ||
+      (industryFilter === "finance" && (categoryStr.includes("finance") || categoryStr.includes("fintech") || categoryStr.includes("banking"))) ||
+      (industryFilter === "manufacturing" && (categoryStr.includes("manuf") || categoryStr.includes("expo") || categoryStr.includes("industrial")))
+
+    // Tab filter
+    let matchesTab = true
+    if (tab === "live") matchesTab = getEventDateStatus(event) === "Live"
+    else if (tab === "upcoming") matchesTab = getEventDateStatus(event) === "Upcoming"
+    else if (tab === "ended") matchesTab = getEventDateStatus(event) === "Ended"
+    else if (tab === "draft") matchesTab = event.status === "Draft"
+    else if (tab === "pending") matchesTab = event.status === "Pending Review"
+    else if (tab === "approved") matchesTab = event.status === "Approved"
+    else if (tab === "flagged") matchesTab = event.status === "Flagged"
+    else if (tab === "featured") matchesTab = event.featured === true
+    else if (tab === "vip") matchesTab = event.vip === true
+    else if (tab === "verified") matchesTab = event.isVerified === true
+
+    return matchesSearch && matchesStatusFilter && matchesCategory && matchesRegion && matchesIndustry && matchesTab
   })
-  switch (tab) {
-    case "pending": return filtered.filter((e) => e.status === "Pending Review")
-    case "approved": return filtered.filter((e) => e.status === "Approved")
-    case "flagged": return filtered.filter((e) => e.status === "Flagged")
-    case "featured": return filtered.filter((e) => e.featured)
-    case "vip": return filtered.filter((e) => e.vip)
-    case "verified": return filtered.filter((e) => e.isVerified)
-    default: return filtered
-  }
+
+  // Sort
+  if (sortBy === "name") filtered = [...filtered].sort((a, b) => a.title.localeCompare(b.title))
+  else if (sortBy === "attendance") filtered = [...filtered].sort((a, b) => (b.attendees || 0) - (a.attendees || 0))
+  else filtered = [...filtered].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+
+  return filtered
 }
 
 export function EventTable({
@@ -99,173 +142,305 @@ export function EventTable({
   onVipToggle,
   onPublicToggle,
   onDelete,
+  onBulkDelete,
   onPromote,
   onVerify,
   onSearchChange,
   onStatusFilterChange,
   onCategoryFilterChange,
   onTabChange,
-  mailCandidates,
-  sendingMail,
-  sendingMailFor,
-  onSendListingEmail,
-  onSendListingEmailBulk,
 }: EventTableProps) {
-  const tabs = ["all", "pending", "approved", "flagged", "featured", "vip", "verified", "mail"]
-  const [selectedEmails, setSelectedEmails] = useState<Set<string>>(new Set())
-  const groupedMail = mailCandidates.reduce(
-    (acc, row) => {
-      const key = row.organizerEmail.toLowerCase()
-      if (!acc[key]) acc[key] = { organizerEmail: row.organizerEmail, organizerName: row.organizerName, rows: [] as typeof mailCandidates }
-      acc[key].rows.push(row)
-      return acc
-    },
-    {} as Record<string, { organizerEmail: string; organizerName: string; rows: typeof mailCandidates }>,
-  )
-  const groupedMailRows = Object.values(groupedMail)
-  const groupedByEmail = useMemo(
-    () =>
-      groupedMailRows.map((group) => {
-        const titles = Array.from(new Set(group.rows.map((r) => r.eventTitle).filter(Boolean)))
-        return { organizerEmail: group.organizerEmail, titles }
-      }),
-    [groupedMailRows]
-  )
-  const allSelected = groupedByEmail.length > 0 && groupedByEmail.every((g) => selectedEmails.has(g.organizerEmail.toLowerCase()))
-  const selectedCount = groupedByEmail.filter((g) => selectedEmails.has(g.organizerEmail.toLowerCase())).length
+  const [selectedEvents, setSelectedEvents] = useState<Set<string>>(new Set())
+  const [localCategoryFilter, setLocalCategoryFilter] = useState("all")
+  const [localRegionFilter, setLocalRegionFilter] = useState("all")
+  const [localIndustryFilter, setLocalIndustryFilter] = useState("all")
+  const [localSort, setLocalSort] = useState("date")
+  const [localSearch, setLocalSearch] = useState(searchTerm)
 
-  const toggleOne = (email: string, checked: boolean) => {
-    const key = email.toLowerCase()
-    setSelectedEmails((prev) => {
-      const next = new Set(prev)
-      if (checked) next.add(key)
-      else next.delete(key)
-      return next
-    })
+  const filteredEvents = filterEvents(
+    events,
+    activeTab,
+    localSearch,
+    selectedStatus,
+    localCategoryFilter,
+    localRegionFilter,
+    localIndustryFilter,
+    localSort
+  )
+
+  const allSelected = filteredEvents.length > 0 && filteredEvents.every(e => selectedEvents.has(e.id))
+  const selectedCount = selectedEvents.size
+
+  const handleSelectEvent = (eventId: string, checked: boolean) => {
+    const newSelected = new Set(selectedEvents)
+    if (checked) newSelected.add(eventId)
+    else newSelected.delete(eventId)
+    setSelectedEvents(newSelected)
   }
 
-  const toggleAll = (checked: boolean) => {
-    if (!checked) {
-      setSelectedEmails(new Set())
-      return
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) setSelectedEvents(new Set(filteredEvents.map(e => e.id)))
+    else setSelectedEvents(new Set())
+  }
+
+  const handleBulkDelete = () => {
+    if (selectedCount === 0) return
+    if (confirm(`Are you sure you want to delete ${selectedCount} event(s)?`)) {
+      selectedEvents.forEach(eventId => onDelete(eventId))
+      setSelectedEvents(new Set())
+      if (onBulkDelete) onBulkDelete(Array.from(selectedEvents))
     }
-    setSelectedEmails(new Set(groupedByEmail.map((g) => g.organizerEmail.toLowerCase())))
   }
 
-  const handleSendSelected = async () => {
-    const items = groupedByEmail
-      .filter((g) => selectedEmails.has(g.organizerEmail.toLowerCase()) && g.titles.length > 0)
-      .map((g) => ({ organizerEmail: g.organizerEmail, eventTitles: g.titles }))
-    if (items.length === 0) return
-    await onSendListingEmailBulk(items)
-    setSelectedEmails(new Set())
-  }
+  const liveCount = events.filter(e => getEventDateStatus(e) === "Live").length
+  const upcomingCount = events.filter(e => getEventDateStatus(e) === "Upcoming").length
+  const endedCount = events.filter(e => getEventDateStatus(e) === "Ended").length
+  const draftCount = events.filter(e => e.status === "Draft").length
+  const featuredCount = events.filter(e => e.featured).length
+
+  const tabs = [
+    { id: "all", label: "All", count: events.length, dot: null, star: false },
+    { id: "live", label: "Live", count: liveCount, dot: "#22C55E", star: false },
+    { id: "upcoming", label: "Upcoming", count: upcomingCount, dot: "#3B82F6", star: false },
+    { id: "ended", label: "Ended", count: endedCount, dot: "#71717A", star: false },
+    { id: "draft", label: "Draft", count: draftCount, dot: "#EAB308", star: false },
+    { id: "featured", label: "Featured", count: featuredCount, dot: null, star: true },
+  ]
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-900">Event Management</h1>
-        <Badge className="bg-green-100 text-green-800">
-          <ShieldCheck className="w-4 h-4 mr-1" />
-          {eventCounts.verified} Verified
-        </Badge>
+    <div style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');`}</style>
+
+      {/* ── Search bar ── */}
+      <div style={{ marginBottom: "16px" }}>
+        <div style={{ position: "relative", maxWidth: "360px" }}>
+          <Search style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", width: "15px", height: "15px", color: "#a1a1aa" }} />
+          <input
+            placeholder="Search events or organizers…"
+            value={localSearch}
+            onChange={(e) => { setLocalSearch(e.target.value); onSearchChange(e.target.value) }}
+            style={{
+              width: "100%", paddingLeft: "38px", paddingRight: "14px", paddingTop: "9px", paddingBottom: "9px",
+              fontSize: "13px", border: "1px solid #E5E5E5", borderRadius: "10px",
+              background: "#fff", outline: "none", color: "#18181B",
+              fontFamily: "inherit",
+            }}
+          />
+        </div>
       </div>
-      <EventFilters
-        searchTerm={searchTerm}
-        onSearchChange={onSearchChange}
-        selectedStatus={selectedStatus}
-        onStatusFilterChange={onStatusFilterChange}
-        selectedCategory={selectedCategory}
-        onCategoryFilterChange={onCategoryFilterChange}
-        categories={categories}
-      />
-      <Tabs value={activeTab} onValueChange={onTabChange} className="w-full">
-        <TabsList className="grid w-full grid-cols-8">
-          <TabsTrigger value="all">All ({eventCounts.all})</TabsTrigger>
-          <TabsTrigger value="pending">Pending ({eventCounts.pending})</TabsTrigger>
-          <TabsTrigger value="approved">Approved ({eventCounts.approved})</TabsTrigger>
-          <TabsTrigger value="flagged">Flagged ({eventCounts.flagged})</TabsTrigger>
-          <TabsTrigger value="featured">Featured ({eventCounts.featured})</TabsTrigger>
-          <TabsTrigger value="vip">VIP ({eventCounts.vip})</TabsTrigger>
-          <TabsTrigger value="verified">
-            <ShieldCheck className="w-4 h-4 mr-1" />
-            Verified ({eventCounts.verified})
-          </TabsTrigger>
-          <TabsTrigger value="mail">Mail ({eventCounts.mail ?? 0})</TabsTrigger>
-        </TabsList>
-        {tabs.map((tab) => (
-          <TabsContent key={tab} value={tab} className="space-y-4">
-            {tab !== "mail" ? (
-              filterEventsByTab(events, tab, searchTerm, selectedStatus, selectedCategory).map((event) => (
-                <EventRow
-                  key={event.id}
-                  event={event}
-                  onEdit={onEdit}
-                  onStatusChange={onStatusChange}
-                  onFeatureToggle={onFeatureToggle}
-                  onVipToggle={onVipToggle}
-                  onPublicToggle={onPublicToggle}
-                  onDelete={onDelete}
-                  onPromote={onPromote}
-                  onVerify={onVerify}
-                  getStatusColor={getStatusColor}
-                />
-              ))
-            ) : groupedMailRows.length === 0 ? (
-              <div className="rounded-lg border p-4 text-sm text-muted-foreground">No sub-admin or bulk-upload event listings found.</div>
-            ) : (
-              <>
-                <div className="rounded-lg border p-3 bg-white flex items-center justify-between gap-3">
-                  <label className="flex items-center gap-2 text-sm text-gray-700">
-                    <input
-                      type="checkbox"
-                      checked={allSelected}
-                      onChange={(e) => toggleAll(e.target.checked)}
-                      className="h-4 w-4"
-                    />
-                    Select All
-                  </label>
-                  <Button size="sm" disabled={sendingMail || selectedCount === 0} onClick={handleSendSelected}>
-                    {sendingMail ? "Sending..." : `Send Selected (${selectedCount})`}
-                  </Button>
-                </div>
-                {groupedMailRows.map((group) => {
-                  const titles = Array.from(new Set(group.rows.map((r) => r.eventTitle).filter(Boolean)))
-                const isCurrentRowSending = sendingMail && sendingMailFor === group.organizerEmail.toLowerCase()
-                return (
-                  <div key={group.organizerEmail} className="rounded-lg border p-4 bg-white space-y-3">
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex items-start gap-3">
-                        <input
-                          type="checkbox"
-                          checked={selectedEmails.has(group.organizerEmail.toLowerCase())}
-                          onChange={(e) => toggleOne(group.organizerEmail, e.target.checked)}
-                          className="h-4 w-4 mt-1"
-                        />
-                        <div>
-                        <p className="font-medium text-gray-900">{group.organizerName || "Organizer"}</p>
-                        <p className="text-sm text-gray-600">{group.organizerEmail}</p>
-                        </div>
-                      </div>
-                      <Button
-                        size="sm"
-                        disabled={isCurrentRowSending || titles.length === 0}
-                        onClick={() => onSendListingEmail(group.organizerEmail, titles)}
-                      >
-                        {isCurrentRowSending ? "Sending..." : "Send Mail"}
-                      </Button>
-                    </div>
-                    <div className="text-sm text-gray-600">
-                      <span className="font-medium text-gray-900">{titles.length}</span> event(s): {titles.join(", ")}
-                    </div>
-                  </div>
-                )
-                })}
-              </>
+
+      {/* ── Tab pills + Dropdown filters row ── */}
+      <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", marginBottom: "16px" }}>
+        {tabs.map((tab) => {
+          const isActive = activeTab === tab.id
+          return (
+            <button
+              key={tab.id}
+              onClick={() => onTabChange(tab.id)}
+              style={{
+                display: "inline-flex", alignItems: "center", gap: "6px",
+                padding: "7px 16px", borderRadius: "999px", fontSize: "13px", fontWeight: 500,
+                border: isActive ? "none" : "1.5px solid #E5E5E5",
+                background: isActive ? "#22C55E" : "#fff",
+                color: isActive ? "#fff" : "#374151",
+                cursor: "pointer", whiteSpace: "nowrap",
+                transition: "all 0.15s",
+                boxShadow: isActive ? "0 1px 4px rgba(34,197,94,0.25)" : "none",
+              }}
+            >
+              {tab.dot && (
+                <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: isActive ? "#fff" : tab.dot, flexShrink: 0 }} />
+              )}
+              {tab.star && <span style={{ fontSize: "13px" }}>⭐</span>}
+              {tab.label}
+              {tab.count > 0 && (
+                <span style={{
+                  fontSize: "11px", fontWeight: 600, padding: "1px 6px",
+                  borderRadius: "999px",
+                  background: isActive ? "rgba(255,255,255,0.25)" : "#F4F4F5",
+                  color: isActive ? "#fff" : "#71717A",
+                }}>
+                  {tab.count}
+                </span>
+              )}
+            </button>
+          )
+        })}
+
+        <div style={{ flex: 1 }} />
+
+        {/* Category dropdown */}
+        <select
+          value={localCategoryFilter}
+          onChange={(e) => { setLocalCategoryFilter(e.target.value); onCategoryFilterChange(e.target.value) }}
+          style={{ height: "36px", padding: "0 12px", fontSize: "13px", border: "1.5px solid #E5E5E5", borderRadius: "8px", background: "#fff", color: "#374151", cursor: "pointer", fontFamily: "inherit" }}
+        >
+          <option value="all">All Categories</option>
+          {categories.filter(c => c.isActive).map((cat) => (
+            <option key={cat.id} value={cat.name.toLowerCase()}>{cat.name}</option>
+          ))}
+        </select>
+
+        {/* Region dropdown */}
+        <select
+          value={localRegionFilter}
+          onChange={(e) => setLocalRegionFilter(e.target.value)}
+          style={{ height: "36px", padding: "0 12px", fontSize: "13px", border: "1.5px solid #E5E5E5", borderRadius: "8px", background: "#fff", color: "#374151", cursor: "pointer", fontFamily: "inherit" }}
+        >
+          <option value="all">All Regions</option>
+          <option value="apac">APAC</option>
+          <option value="eu">EU</option>
+          <option value="na">NA</option>
+          <option value="me">ME</option>
+        </select>
+
+        {/* Industry dropdown */}
+        <select
+          value={localIndustryFilter}
+          onChange={(e) => setLocalIndustryFilter(e.target.value)}
+          style={{ height: "36px", padding: "0 12px", fontSize: "13px", border: "1.5px solid #E5E5E5", borderRadius: "8px", background: "#fff", color: "#374151", cursor: "pointer", fontFamily: "inherit" }}
+        >
+          <option value="all">All Industries</option>
+          <option value="tech">Technology</option>
+          <option value="health">Healthcare</option>
+          <option value="finance">Finance</option>
+          <option value="manufacturing">Manufacturing</option>
+        </select>
+
+        {/* Sort dropdown */}
+        <select
+          value={localSort}
+          onChange={(e) => setLocalSort(e.target.value)}
+          style={{ height: "36px", padding: "0 12px", fontSize: "13px", border: "1.5px solid #E5E5E5", borderRadius: "8px", background: "#fff", color: "#374151", cursor: "pointer", fontFamily: "inherit" }}
+        >
+          <option value="date">Sort: Date ↓</option>
+          <option value="name">Sort: Name</option>
+          <option value="attendance">Sort: Attendance</option>
+        </select>
+      </div>
+
+      {/* ── Main Table Card ── */}
+      <div style={{ background: "#fff", border: "1px solid #ECECEC", borderRadius: "16px", overflow: "hidden" }}>
+
+        {/* Table toolbar */}
+        <div style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          padding: "16px 22px", borderBottom: "1px solid #F0F0F0",
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <span style={{ fontSize: "15px", fontWeight: 600, color: "#18181B" }}>Event Listings</span>
+            <span style={{ fontSize: "13px", color: "#A1A1AA" }}>{filteredEvents.length.toLocaleString()} events found</span>
+            {selectedCount > 0 && (
+              <span style={{
+                fontSize: "11px", fontWeight: 600, padding: "2px 8px", borderRadius: "999px",
+                background: "#DBEAFE", color: "#2563EB",
+              }}>
+                {selectedCount} selected
+              </span>
             )}
-          </TabsContent>
-        ))}
-      </Tabs>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            {selectedCount > 0 && (
+              <button
+                onClick={handleBulkDelete}
+                style={{
+                  display: "inline-flex", alignItems: "center", gap: "6px",
+                  padding: "6px 14px", borderRadius: "8px", fontSize: "13px", fontWeight: 500,
+                  border: "1px solid #FEE2E2", background: "#FFF5F5", color: "#EF4444", cursor: "pointer",
+                }}
+              >
+                <Trash2 style={{ width: "13px", height: "13px" }} />
+                Delete Selected
+              </button>
+            )}
+            <button style={{
+              display: "inline-flex", alignItems: "center", gap: "6px",
+              padding: "6px 14px", borderRadius: "8px", fontSize: "13px", fontWeight: 500,
+              border: "1.5px solid #E5E5E5", background: "#fff", color: "#374151", cursor: "pointer",
+            }}>
+              <Filter style={{ width: "13px", height: "13px" }} /> Filter
+            </button>
+            <button style={{
+              display: "inline-flex", alignItems: "center", gap: "6px",
+              padding: "6px 14px", borderRadius: "8px", fontSize: "13px", fontWeight: 500,
+              border: "1.5px solid #E5E5E5", background: "#fff", color: "#374151", cursor: "pointer",
+            }}>
+              <Download style={{ width: "13px", height: "13px" }} /> Export CSV
+            </button>
+            <button style={{
+              display: "inline-flex", alignItems: "center", gap: "6px",
+              padding: "6px 14px", borderRadius: "8px", fontSize: "13px", fontWeight: 500,
+              border: "1.5px solid #E5E5E5", background: "#fff", color: "#374151", cursor: "pointer",
+            }}>
+              Bulk Actions <ChevronDown style={{ width: "12px", height: "12px" }} />
+            </button>
+          </div>
+        </div>
+
+        {/* Table */}
+        <div style={{ overflowX: "auto" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "1100px" }}>
+            <thead>
+              <tr style={{ borderBottom: "1px solid #F0F0F0", background: "#FAFAFA" }}>
+                <th style={{ padding: "11px 0 11px 22px", width: "48px" }}>
+                  <Checkbox checked={allSelected} onCheckedChange={handleSelectAll} />
+                </th>
+                {[
+                  { label: "EVENT", align: "left" },
+                  { label: "CATEGORY", align: "left" },
+                  { label: "DATE", align: "left" },
+                  { label: "LOCATION", align: "left" },
+                  { label: "ATTENDANCE", align: "left" },
+                  { label: "STATUS", align: "left" },
+                  { label: "ORGANIZER", align: "left" },
+                  { label: "FEATURED", align: "center" },
+                  { label: "", align: "left" },
+                ].map((h, i) => (
+                  <th
+                    key={i}
+                    style={{
+                      padding: "11px 16px",
+                      textAlign: h.align as any,
+                      fontSize: "11px", fontWeight: 600,
+                      color: "#A1A1AA", letterSpacing: "0.07em",
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    {h.label}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {filteredEvents.length === 0 ? (
+                <tr>
+                  <td colSpan={10} style={{ textAlign: "center", padding: "56px", color: "#A1A1AA", fontSize: "14px" }}>
+                    No events found
+                  </td>
+                </tr>
+              ) : (
+                filteredEvents.map((event) => (
+                  <EventRow
+                    key={event.id}
+                    event={event}
+                    selected={selectedEvents.has(event.id)}
+                    onSelect={handleSelectEvent}
+                    onEdit={onEdit}
+                    onStatusChange={onStatusChange}
+                    onFeatureToggle={onFeatureToggle}
+                    onVipToggle={onVipToggle}
+                    onPublicToggle={onPublicToggle}
+                    onDelete={onDelete}
+                    onPromote={onPromote}
+                    onVerify={onVerify}
+                    getStatusColor={getStatusColor}
+                  />
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   )
 }

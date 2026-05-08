@@ -1,4 +1,6 @@
 import type { ReactNode } from "react"
+import { Suspense } from "react"
+import { FeaturedOrganizersSkeleton } from "@/components/home-skeletons"
 import { fetchFeaturedOrganizersForHomeServer } from "@/lib/organizers/fetch-public-organizers-server"
 import { FeaturedOrganizersSectionHeading } from "./FeaturedOrganizersSectionHeading"
 import { FeaturedOrganizersRefreshButton } from "./FeaturedOrganizersRefreshButton"
@@ -13,7 +15,7 @@ function Shell({ children }: { children: ReactNode }) {
   )
 }
 
-export default async function FeaturedOrganizersSection() {
+async function FeaturedOrganizersContent() {
   const { organizers, fetchFailed } = await fetchFeaturedOrganizersForHomeServer()
 
   if (fetchFailed && organizers.length === 0) {
@@ -40,5 +42,13 @@ export default async function FeaturedOrganizersSection() {
     <Shell>
       <FeaturedOrganizersStripClient organizers={organizers} />
     </Shell>
+  )
+}
+
+export default function FeaturedOrganizersSection() {
+  return (
+    <Suspense fallback={<FeaturedOrganizersSkeleton />}>
+      <FeaturedOrganizersContent />
+    </Suspense>
   )
 }

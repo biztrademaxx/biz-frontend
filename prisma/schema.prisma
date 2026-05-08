@@ -283,6 +283,7 @@ model User {
   venueCurrency    String   @default("USD")
   latitude         Float?
   longitude        Float?
+  venueTimezone    String?
 
   // Speaker fields
   speakingExperience String?

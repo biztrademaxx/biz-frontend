@@ -1212,8 +1212,8 @@ export function EditEventForm({
     </div>
   )
 }
+// Updated EventList component with CARD design (like the reference image)
 
-// Event List Component
 function EventList({
   events,
   searchTerm,
@@ -1253,8 +1253,8 @@ function EventList({
   onCategoryFilterChange: (value: string) => void
   onTabChange: (value: string) => void
 }) {
-  const getFilteredEventsByTab = (tab: string) => {
-    const filteredEvents = events.filter((event) => {
+  const getFilteredEvents = () => {
+    return events.filter((event) => {
       const organizerStr = typeof event.organizer === "string" ? event.organizer : (event.organizer?.name ?? event.organizer?.email ?? "")
       const matchesSearch =
         event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -1268,238 +1268,340 @@ function EventList({
         categoryStr.toLowerCase() === selectedCategory
       return matchesSearch && matchesStatus && matchesCategory
     })
+  }
 
-    switch (tab) {
+  const getFilteredByTab = () => {
+    const baseFiltered = getFilteredEvents()
+    switch (activeTab) {
       case "pending":
-        return filteredEvents.filter((e) => e.status === "Pending Review")
+        return baseFiltered.filter((e) => e.status === "Pending Review")
       case "approved":
-        return filteredEvents.filter((e) => e.status === "Approved")
+        return baseFiltered.filter((e) => e.status === "Approved")
       case "flagged":
-        return filteredEvents.filter((e) => e.status === "Flagged")
+        return baseFiltered.filter((e) => e.status === "Flagged")
       case "featured":
-        return filteredEvents.filter((e) => e.featured)
+        return baseFiltered.filter((e) => e.featured)
       case "vip":
-        return filteredEvents.filter((e) => e.vip)
+        return baseFiltered.filter((e) => e.vip)
       case "verified":
-        return filteredEvents.filter((e) => e.isVerified)
+        return baseFiltered.filter((e) => e.isVerified)
       default:
-        return filteredEvents
+        return baseFiltered
     }
   }
 
-  const getStatusColor = (status: Event["status"]) => {
+  const getStatusBadgeStyle = (status: Event["status"]) => {
     switch (status) {
       case "Approved":
-        return "default"
+        return { bg: "bg-green-50", text: "text-green-700", dot: "bg-green-500", label: "Live" }
       case "Pending Review":
-        return "secondary"
+        return { bg: "bg-blue-50", text: "text-blue-700", dot: "bg-blue-500", label: "Upcoming" }
       case "Flagged":
-        return "destructive"
+        return { bg: "bg-red-50", text: "text-red-700", dot: "bg-red-500", label: "Flagged" }
       case "Rejected":
-        return "destructive"
+        return { bg: "bg-gray-50", text: "text-gray-700", dot: "bg-gray-500", label: "Rejected" }
       case "Draft":
-        return "outline"
+        return { bg: "bg-gray-50", text: "text-gray-600", dot: "bg-gray-400", label: "Draft" }
       default:
-        return "secondary"
+        return { bg: "bg-gray-50", text: "text-gray-600", dot: "bg-gray-400", label: status }
     }
   }
+
+  const filteredEvents = getFilteredByTab()
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-900">Event Management</h1>
+      {/* Header with stats - like image */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Add Event</h1>
+          <p className="text-gray-500 mt-1">Submit a new event listing</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <Button className="bg-blue-600 hover:bg-blue-700">
+            <Plus className="w-4 h-4 mr-2" /> Add Event
+          </Button>
+        </div>
+      </div>
+
+      {/* Filter Tabs - Live, Upcoming, Ended, Draft, Featured */}
+      <div className="flex flex-wrap items-center gap-2 border-b border-gray-200 pb-4">
+        {[
+          { id: "live", label: "Live", count: events.filter(e => e.status === "Approved").length },
+          { id: "upcoming", label: "Upcoming", count: events.filter(e => e.status === "Pending Review").length },
+          { id: "ended", label: "Ended", count: events.filter(e => e.status === "Flagged").length },
+          { id: "draft", label: "Draft", count: events.filter(e => e.status === "Draft").length },
+          { id: "featured", label: "Featured", count: events.filter(e => e.featured).length },
+        ].map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => {
+              if (tab.id === "live") onStatusFilterChange("approved")
+              else if (tab.id === "upcoming") onStatusFilterChange("pendingreview")
+              else if (tab.id === "ended") onStatusFilterChange("flagged")
+              else if (tab.id === "draft") onStatusFilterChange("draft")
+              else if (tab.id === "featured") onTabChange("featured")
+            }}
+            className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${(tab.id === "live" && selectedStatus === "approved") ||
+                (tab.id === "upcoming" && selectedStatus === "pendingreview") ||
+                (tab.id === "ended" && selectedStatus === "flagged") ||
+                (tab.id === "draft" && selectedStatus === "draft") ||
+                (tab.id === "featured" && activeTab === "featured")
+                ? "bg-blue-600 text-white shadow-md"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+          >
+            {tab.label} <span className="ml-1 text-xs opacity-80">({tab.count})</span>
+          </button>
+        ))}
+      </div>
+
+      {/* Stats Row */}
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium text-gray-700">Event Listings</span>
+          <Badge className="bg-gray-100 text-gray-800">{filteredEvents.length} events found</Badge>
+        </div>
         <div className="flex items-center gap-2">
           <Badge className="bg-green-100 text-green-800">
-            <ShieldCheck className="w-4 h-4 mr-1" />
+            <ShieldCheck className="w-3 h-3 mr-1" />
             {events.filter(e => e.isVerified).length} Verified
           </Badge>
         </div>
       </div>
 
-      <div className="flex flex-col md:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-          <Input
-            placeholder="Search events or organizers..."
-            value={searchTerm}
-            onChange={(e) => onSearchChange(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-        <Select value={selectedStatus} onValueChange={onStatusFilterChange}>
-          <SelectTrigger className="w-full md:w-48">
-            <SelectValue placeholder="Filter by status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="approved">Approved</SelectItem>
-            <SelectItem value="pendingreview">Pending Review</SelectItem>
-            <SelectItem value="flagged">Flagged</SelectItem>
-            <SelectItem value="rejected">Rejected</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={selectedCategory} onValueChange={onCategoryFilterChange}>
-          <SelectTrigger className="w-full md:w-48">
-            <SelectValue placeholder="Filter by category" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Categories</SelectItem>
-            {categories
-              .filter(category => category.isActive)
-              .map((category) => (
-                <SelectItem key={category.id} value={category.name.toLowerCase()}>
-                  {category.name}
-                </SelectItem>
+      {/* Categories Sidebar + Cards Grid Layout */}
+      <div className="flex flex-col lg:flex-row gap-6">
+        {/* Left Sidebar - Categories */}
+        <div className="lg:w-72 flex-shrink-0">
+          <div className="bg-white rounded-xl border border-gray-200 p-5 sticky top-6 shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold text-gray-900">Categories</h3>
+              <span className="text-xs text-gray-400">{categories.filter(c => c.isActive).length} total</span>
+            </div>
+            <div className="space-y-1">
+              <button
+                onClick={() => onCategoryFilterChange("all")}
+                className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex justify-between items-center ${selectedCategory === "all" ? "bg-blue-50 text-blue-700 font-medium" : "text-gray-700 hover:bg-gray-50"
+                  }`}
+              >
+                <span>All Categories</span>
+                <span className="text-xs text-gray-400">{events.length}</span>
+              </button>
+              {categories.filter(c => c.isActive).slice(0, 10).map((cat) => (
+                <button
+                  key={cat.id}
+                  onClick={() => onCategoryFilterChange(cat.name.toLowerCase())}
+                  className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex justify-between items-center ${selectedCategory === cat.name.toLowerCase() ? "bg-blue-50 text-blue-700 font-medium" : "text-gray-700 hover:bg-gray-50"
+                    }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: cat.color || "#3b82f6" }}></div>
+                    <span>{cat.name}</span>
+                  </div>
+                  <span className="text-xs text-gray-400">{events.filter(e => {
+                    const catStr = Array.isArray(e.category) ? e.category[0] : e.category
+                    return catStr?.toLowerCase() === cat.name.toLowerCase()
+                  }).length}</span>
+                </button>
               ))}
-          </SelectContent>
-        </Select>
-      </div>
+            </div>
 
-      <Tabs value={activeTab} onValueChange={onTabChange} className="w-full">
-        <TabsList className="grid w-full grid-cols-7">
-          <TabsTrigger value="all">All ({eventCounts.all})</TabsTrigger>
-          <TabsTrigger value="pending">Pending ({eventCounts.pending})</TabsTrigger>
-          <TabsTrigger value="approved">Approved ({eventCounts.approved})</TabsTrigger>
-          <TabsTrigger value="flagged">Flagged ({eventCounts.flagged})</TabsTrigger>
-          <TabsTrigger value="featured">Featured ({eventCounts.featured})</TabsTrigger>
-          <TabsTrigger value="vip">VIP ({eventCounts.vip})</TabsTrigger>
-          <TabsTrigger value="verified">
-            <ShieldCheck className="w-4 h-4 mr-1" />
-            Verified ({eventCounts.verified})
-          </TabsTrigger>
-        </TabsList>
+            {/* Action Buttons */}
+            <div className="mt-6 pt-4 border-t border-gray-100 space-y-2">
+              <button className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
+                <Upload className="w-4 h-4 text-gray-500" />
+                Import CSV
+                <span className="text-xs text-gray-400 ml-auto">Bulk upload</span>
+              </button>
+              <button className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
+                <Download className="w-4 h-4 text-gray-500" />
+                Export Report
+                <span className="text-xs text-gray-400 ml-auto">Download events data</span>
+              </button>
+              <button className="w-full flex items-center gap-2 px-3 py-2 text-sm text-amber-700 bg-amber-50 rounded-lg hover:bg-amber-100 transition">
+                <MessageSquare className="w-4 h-4 text-amber-500" />
+                Pending (86)
+                <span className="text-xs text-amber-600 ml-auto">Review submissions</span>
+              </button>
+            </div>
+          </div>
+        </div>
 
-        {["all", "pending", "approved", "flagged", "featured", "vip", "verified"].map((tab) => (
-          <TabsContent key={tab} value={tab} className="space-y-4">
-            {getFilteredEventsByTab(tab).map((event) => (
-              <div key={event.id} className="hover:shadow-md transition-shadow border-2 rounded-2xl">
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between">
-                    <div className="flex gap-4 flex-1">
-                      <img
-                        src={event.thumbnailImage || event.bannerImage || event.image || "/city/c4.jpg"}
-                        alt={event.title}
-                        className="w-20 h-20 rounded-lg object-cover"
-                      />
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <h3 className="text-lg font-semibold">{event.title}</h3>
-                          <Badge variant={getStatusColor(event.status)}>{event.status}</Badge>
-                          {event.featured && (
-                            <Badge className="bg-purple-100 text-purple-800">
-                              <Star className="w-3 h-3 mr-1" /> Featured
-                            </Badge>
-                          )}
-                          {event.vip && (
-                            <Badge className="bg-yellow-100 text-yellow-800">
-                              <Crown className="w-3 h-3 mr-1" /> VIP
-                            </Badge>
-                          )}
-                          {event.isVerified && <VerifiedBadge event={event} />}
+        {/* Right Side - Event Cards Grid */}
+        <div className="flex-1">
+          {/* Search and Filter Bar */}
+          <div className="flex flex-col sm:flex-row gap-3 mb-5">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Input
+                placeholder="Search events or organizers..."
+                value={searchTerm}
+                onChange={(e) => onSearchChange(e.target.value)}
+                className="pl-10 bg-white border-gray-200 rounded-lg"
+              />
+            </div>
+            <Select value={selectedStatus} onValueChange={onStatusFilterChange}>
+              <SelectTrigger className="w-full sm:w-40 bg-white border-gray-200">
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="approved">Approved / Live</SelectItem>
+                <SelectItem value="pendingreview">Pending Review</SelectItem>
+                <SelectItem value="flagged">Flagged</SelectItem>
+                <SelectItem value="draft">Draft</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={selectedCategory} onValueChange={onCategoryFilterChange}>
+              <SelectTrigger className="w-full sm:w-40 bg-white border-gray-200">
+                <SelectValue placeholder="Filter by category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Categories</SelectItem>
+                {categories.filter(c => c.isActive).map((cat) => (
+                  <SelectItem key={cat.id} value={cat.name.toLowerCase()}>
+                    {cat.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Event Cards Grid - Beautiful card design like reference image */}
+          {filteredEvents.length === 0 ? (
+            <div className="text-center py-16 bg-white rounded-xl border border-gray-200">
+              <p className="text-gray-400">No events found</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {filteredEvents.map((event) => {
+                const statusStyle = getStatusBadgeStyle(event.status)
+                return (
+                  <div
+                    key={event.id}
+                    className="bg-white rounded-xl border border-gray-200 hover:border-gray-300 hover:shadow-lg transition-all duration-200 overflow-hidden"
+                  >
+                    <div className="p-5">
+                      <div className="flex flex-col md:flex-row gap-5">
+                        {/* Event Image */}
+                        <div className="md:w-32 lg:w-36 flex-shrink-0">
+                          <img
+                            src={event.thumbnailImage || event.bannerImage || event.image || "https://placehold.co/400x300?text=Event"}
+                            alt={event.title}
+                            className="w-full h-24 md:h-28 rounded-lg object-cover"
+                          />
                         </div>
 
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600 mb-3">
-                          <div className="flex items-center gap-1">
-                            <Building2 className="w-4 h-4" />
-                            {typeof event.organizer === "string" ? event.organizer : (event.organizer?.name ?? event.organizer?.email ?? "—")}
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Calendar className="w-4 h-4" />
-                            {event.date}
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <MapPin className="w-4 h-4" />
-                            {event.location}
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Users className="w-4 h-4" />
-                            {event.attendees}/{event.maxCapacity}
-                          </div>
-                        </div>
+                        {/* Event Details */}
+                        <div className="flex-1">
+                          <div className="flex flex-wrap items-start justify-between gap-2">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 flex-wrap mb-2">
+                                <h3 className="text-lg font-bold text-gray-900">{event.title}</h3>
+                                {event.featured && (
+                                  <Badge className="bg-purple-100 text-purple-800 border-0">
+                                    <Star className="w-3 h-3 mr-1 fill-purple-500" /> Featured
+                                  </Badge>
+                                )}
+                                {event.vip && (
+                                  <Badge className="bg-yellow-100 text-yellow-800 border-0">
+                                    <Crown className="w-3 h-3 mr-1" /> VIP
+                                  </Badge>
+                                )}
+                                {event.isVerified && (
+                                  <Badge className="bg-green-100 text-green-800 border-0">
+                                    <ShieldCheck className="w-3 h-3 mr-1" /> Verified
+                                  </Badge>
+                                )}
+                              </div>
+                              <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${statusStyle.bg} ${statusStyle.text} mb-3`}>
+                                <span className={`w-1.5 h-1.5 rounded-full ${statusStyle.dot}`}></span>
+                                {statusStyle.label}
+                              </div>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-sm">
+                                <div className="flex items-center gap-2 text-gray-600">
+                                  <Calendar className="w-4 h-4 text-gray-400" />
+                                  <span>{event.date} {event.endDate ? `- ${event.endDate}` : ""}</span>
+                                </div>
+                                <div className="flex items-center gap-2 text-gray-600">
+                                  <MapPin className="w-4 h-4 text-gray-400" />
+                                  <span className="truncate">{event.location}</span>
+                                </div>
+                                <div className="flex items-center gap-2 text-gray-600">
+                                  <Users className="w-4 h-4 text-gray-400" />
+                                  <span>{event.attendees.toLocaleString()} / {event.maxCapacity.toLocaleString()} attendees</span>
+                                </div>
+                                <div className="flex items-center gap-2 text-gray-600">
+                                  <Building2 className="w-4 h-4 text-gray-400" />
+                                  <span className="truncate">{typeof event.organizer === "string" ? event.organizer : event.organizer?.name || "Organizer"}</span>
+                                </div>
+                              </div>
+                              <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-gray-400">
+                                <span className="capitalize">Type: {event.eventType || "In-Person"}</span>
+                                <span>Category: {Array.isArray(event.category) ? event.category[0] : event.category || "—"}</span>
+                                {event.edition && <span>Edition: {event.edition}</span>}
+                              </div>
+                            </div>
 
-                        <div className="flex items-center gap-4 text-xs text-gray-500">
-                          <span>Type: {event.eventType || "In-Person"}</span>
-                          <span>Category: {Array.isArray(event.category) ? (event.category[0] ?? "—") : (event.category ?? "—")}</span>
-                          {event.edition && <span>Edition: {event.edition}</span>}
-                          {event.isVerified && (
-                            <span className="text-green-600 font-semibold">
-                              Verified: {event.verifiedAt ? new Date(event.verifiedAt).toLocaleDateString() : "Recently"}
-                            </span>
-                          )}
+                            {/* Action Buttons */}
+                            <div className="flex items-center gap-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => onEdit(event)}
+                                className="h-9 w-9 text-gray-500 hover:text-blue-600"
+                                title="Edit"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="h-9 w-9">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-48">
+                                  <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem onClick={() => onStatusChange(event.id, event.status === "Approved" ? "Pending Review" : "Approved")}>
+                                    <i className="fas fa-exchange-alt w-4 mr-2 text-xs"></i>
+                                    Change Status
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => onFeatureToggle(event.id, event.featured)}>
+                                    <Star className="w-4 h-4 mr-2" />
+                                    {event.featured ? "Remove Featured" : "Make Featured"}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => onVerify(event)}>
+                                    <ShieldCheck className="w-4 h-4 mr-2" />
+                                    {event.isVerified ? "Remove Verification" : "Verify Event"}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => onPromote(event)}>
+                                    <TrendingUp className="w-4 h-4 mr-2" />
+                                    Promote Event
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem className="text-red-600" onClick={() => onDelete(event.id)}>
+                                    <Trash2 className="w-4 h-4 mr-2" />
+                                    Delete Event
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
-
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => onEdit(event)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <MoreHorizontal className="w-4 h-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => onStatusChange(event.id, event.status === "Approved" ? "Pending Review" : "Approved")}>
-                            <Edit className="w-4 h-4 mr-2" />
-                            Change Status
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => onFeatureToggle(event.id, event.featured)}>
-                            <Star className="w-4 h-4 mr-2" />
-                            {event.featured ? "Remove Featured" : "Make Featured"}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => onVipToggle(event.id, event.vip)}>
-                            <Crown className="w-4 h-4 mr-2" />
-                            {event.vip ? "Remove VIP" : "Make VIP"}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => onVerify(event)}>
-                            {event.isVerified ? (
-                              <>
-                                <ShieldOff className="w-4 h-4 mr-2" />
-                                Remove Verification
-                              </>
-                            ) : (
-                              <>
-                                <ShieldCheck className="w-4 h-4 mr-2" />
-                                Verify Event
-                              </>
-                            )}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => onPromote(event)}>
-                            <TrendingUp className="w-4 h-4 mr-2" />
-                            Promote Event
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <MessageSquare className="w-4 h-4 mr-2" />
-                            Contact Organizer
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem className="text-red-600" onClick={() => onDelete(event.id)}>
-                            <Trash2 className="w-4 h-4 mr-2" />
-                            Delete Event
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
                   </div>
-                </CardContent>
-              </div>
-            ))}
-          </TabsContent>
-        ))}
-      </Tabs>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   )
 }
-
 // Main Component
 export default function EventManagement() {
   const [events, setEvents] = useState<Event[]>([])

@@ -71,6 +71,8 @@ export async function GET(request: NextRequest) {
         venueCountry: v.venueCountry ?? "",
         venueZipCode: v.venueZipCode ?? "",
         venuepostalCode: v.venueZipCode ?? "",
+        venueTimezone: v.venueTimezone ?? v.location?.timezone ?? "",
+        timezone: v.venueTimezone ?? v.location?.timezone ?? "",
         website: v.venueWebsite ?? v.website ?? "",
         venueDescription: v.venueDescription ?? v.description ?? v.bio ?? "",
         description: v.venueDescription ?? v.description ?? v.bio ?? "",
@@ -81,10 +83,12 @@ export async function GET(request: NextRequest) {
         averageRating: v.averageRating ?? 0,
         totalReviews: v.totalReviews ?? 0,
         amenities: v.amenities ?? [],
-        meetingSpaces: [], // not modeled yet
-        isVerified: v.isVerified ?? false,
-        venueImages: v.venueImages ?? [],
-      };
+      meetingSpaces: [], // not modeled yet
+      isVerified: v.isVerified ?? false,
+      venueImages: v.venueImages ?? [],
+      firstName: v.firstName ?? "",
+      lastName: v.lastName ?? "",
+    };
     });
 
     return NextResponse.json(

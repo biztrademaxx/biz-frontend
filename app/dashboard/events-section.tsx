@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label"
 import { format } from "date-fns"
 import { apiFetch, getCurrentUserId } from "@/lib/api"
 import { eventPublicPath } from "@/lib/event-path"
+import { formatEventEntryFeeDisplay, type TicketPriceRow } from "@/lib/ticket-price-display"
 
 /**
  * Full EventsSection component
@@ -89,30 +90,6 @@ const formatDate = (dateString: string) =>
     month: "short",
     day: "numeric",
   })
-
-const formatTicketPrice = (ticketTypes: TicketType[]) => {
-  if (!ticketTypes || ticketTypes.length === 0) return "Free"
-
-  // Find the cheapest active ticket
-  const activeTickets = ticketTypes.filter((ticket) => ticket.isActive)
-  if (activeTickets.length === 0) return "N/A"
-
-  const cheapestTicket = activeTickets.reduce((min, ticket) => {
-    const price =
-      ticket.earlyBirdPrice && new Date() < new Date(ticket.earlyBirdEnd || "") ? ticket.earlyBirdPrice : ticket.price
-    const minPrice =
-      min.earlyBirdPrice && new Date() < new Date(min.earlyBirdEnd || "") ? min.earlyBirdPrice : min.price
-    return price < minPrice ? ticket : min
-  })
-
-  const currentPrice =
-    cheapestTicket.earlyBirdPrice && new Date() < new Date(cheapestTicket.earlyBirdEnd || "")
-      ? cheapestTicket.earlyBirdPrice
-      : cheapestTicket.price
-
-  if (currentPrice === 0) return "Free"
-  return `$${currentPrice.toFixed(2)}`
-}
 
 // Choose dot color based on leadType (visitor / exhibitor / unknown)
 const timelineDotClass = (leadType?: string) => {
@@ -479,7 +456,7 @@ export function EventsSection({ userId }: EventsSectionProps) {
                             {/* Entry Fee */}
                             <div className="grid text-center mt-5 min-w-[80px]">
                               <span className="text-xl font-bold text-pink-500 whitespace-nowrap">
-                                {formatTicketPrice(event.ticketTypes as unknown as TicketType[])}
+                                {formatEventEntryFeeDisplay(event.ticketTypes as TicketPriceRow[], event.currency)}
                               </span>
                               <span className="text-gray-500 text-sm">Entry Fee</span>
                             </div>

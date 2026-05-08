@@ -28,6 +28,7 @@ import Link from "next/link"
 import { apiFetch } from "@/lib/api"
 import { eventPublicPath } from "@/lib/event-path"
 import { getPublicProfilePath } from "@/lib/profile-path"
+import OrganizerPageSkeleton from "@/components/OrganizerPageSkeleton"
 
 interface Organizer {
   id: string
@@ -375,14 +376,7 @@ export default function OrganizerPage() {
   }
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Loading Organizer...</h1>
-          <p className="text-gray-600">Please wait while we fetch the organizer details.</p>
-        </div>
-      </div>
-    )
+    return <OrganizerPageSkeleton />
   }
 
   if (error || !organizer) {

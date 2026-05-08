@@ -1,4 +1,5 @@
 import type { FeaturedEventPayload } from "@/lib/events/types"
+import { EVENT_VENUE_LOCATION_PENDING } from "@/lib/event-location-copy"
 
 export function formatFeaturedDateRange(start: Date, end: Date): string {
   const sameCalendarDay =
@@ -48,8 +49,8 @@ export function featuredEventLocationLine(event: FeaturedEventPayload): string {
   if (name && city) return `${name}, ${city}`
   if (name) return name
   if (event.isVirtual) return "Online"
-  if (!v) return "Venue TBA"
-  return "Venue TBA"
+  if (!v) return EVENT_VENUE_LOCATION_PENDING
+  return EVENT_VENUE_LOCATION_PENDING
 }
 
 export function featuredEventCategoryLabels(event: FeaturedEventPayload): string[] {

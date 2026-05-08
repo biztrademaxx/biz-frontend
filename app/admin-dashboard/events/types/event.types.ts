@@ -4,6 +4,10 @@
  */
 
 export interface EventOrganizer {
+  _id: any
+  companyName: any
+  logo: any
+  website: any
   id?: string
   name?: string
   email?: string
@@ -12,6 +16,14 @@ export interface EventOrganizer {
 }
 
 export interface Event {
+  currentAttendees: number
+  maxAttendees: number
+  startDate: string
+  city: string
+  isFeatured: boolean
+  country: import("react/jsx-runtime").JSX.Element
+  // subHeading: string | undefined
+  subTitle: string | undefined
   id: string
   title: string
   /** Normalized to string for display; backend may return object */
@@ -74,7 +86,7 @@ export interface Category {
 export function getOrganizerDisplay(organizer: Event["organizer"]): string {
   if (typeof organizer === "string") return organizer
   if (organizer && typeof organizer === "object")
-    return (organizer as EventOrganizer).name ?? (organizer as EventOrganizer).email ?? ""
+    return (organizer as EventOrganizer).company ?? (organizer as EventOrganizer).email ?? ""
   return "—"
 }
 

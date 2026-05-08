@@ -30,11 +30,20 @@ export async function GET(request: NextRequest) {
     const page = searchParams.get("page") || "event-detail"
     const position = searchParams.get("position")
 
-    if (!prisma?.banner) {
-      return NextResponse.json([])
+    if (!prisma) {
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"
+      const qs = new URLSearchParams()
+      qs.set("page", page)
+      if (position) qs.set("position", position)
+      const res = await fetch(`${API_BASE_URL}/api/content/banners?${qs.toString()}`, {
+        cache: "no-store",
+      })
+      const data = await res.json().catch(() => [])
+      const list = Array.isArray(data) ? data : []
+      return NextResponse.json(list, { status: res.ok ? 200 : res.status })
     }
 
-    // Build query filter
+    // Build query filter (legacy Mongo Prisma banners when DATABASE_URL is set on this app)
     const where: any = {
       page,
       isActive: true
