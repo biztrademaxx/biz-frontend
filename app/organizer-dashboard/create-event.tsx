@@ -1198,7 +1198,8 @@ const handlePublishEvent = async () => {
           <span className="text-sm font-medium">Form Completion</span>
           <span className="text-sm text-muted-foreground">{completionPercentage}%</span>
         </div>
-        <Progress value={completionPercentage} className="h-2" />
+        <Progress value={completionPercentage} className="h-2 bg-gray-200 [&>div]:bg-green-600"
+ />
         <p className="text-xs text-muted-foreground mt-1">
           {completionPercentage < 80 ? "Complete required fields to publish your event" : "Ready to publish!"}
         </p>
@@ -1231,9 +1232,21 @@ const handlePublishEvent = async () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-5 bg-gray-100 p-1 rounded-xl">
           {tabs.map((tab) => (
-            <TabsTrigger key={tab.id} value={tab.id}>
+            <TabsTrigger
+              key={tab.id}
+              value={tab.id}
+              className="
+        rounded-lg
+        text-gray-600
+        data-[state=active]:bg-green-600
+        data-[state=active]:text-white
+        data-[state=active]:shadow-md
+        transition-all
+        duration-200
+      "
+            >
               {tab.label}
             </TabsTrigger>
           ))}
