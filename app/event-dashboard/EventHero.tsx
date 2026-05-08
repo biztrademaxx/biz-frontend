@@ -271,22 +271,21 @@ export default function EventHero({ event, onImagesUpdate }: EventHeroProps) {
   return (
     <div>
       {/* Background Image - First event image with blur effect and reduced height */}
-      <div className="relative h-[150px] md:h-[200px] lg:h-[250px] overflow-hidden">
+      {/* <div className="relative h-[150px] md:h-[200px] lg:h-[250px] overflow-hidden">
         <div className="absolute inset-0">
           <img
             src={getFirstImage()}
             alt={event.title}
             className="w-full h-full object-cover filter blur-md scale-105"
           />
-          {/* Dark overlay for better text contrast if needed */}
           <div className="absolute inset-0 bg-black/20"></div>
         </div>
-      </div>
+      </div> */}
 
       {/* Content */}
-      <div className="relative w-full max-w-6xl mx-auto rounded-lg overflow-hidden shadow-md flex flex-col md:flex-row mt-[-80px] sm:mt-[-100px] md:mt-[-120px] z-10 left-1/2 -translate-x-1/2">
+      <div className="relative w-full max-w-6xl mx-auto rounded-lg overflow-hidden shadow-md flex flex-col md:flex-row mt-[-80px] sm:mt-[-100px] md:mt-[-120px] z-10 left-1/2 -translate-x-1/2 mt-5">
         {/* Slider */}
-        <div className="md:w-2/3 w-full h-[220px] sm:h-[280px] md:h-[320px] lg:h-[400px] relative">
+        <div className="md:w-2/3 w-full h-[220px] sm:h-[280px] md:h-[320px] lg:h-[400px] relative bg-white mt-20">
           <div ref={sliderRef} className="keen-slider h-full w-full">
             {images.length > 0 ? (
               <>

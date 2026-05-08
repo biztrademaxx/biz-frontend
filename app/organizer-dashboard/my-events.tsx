@@ -295,7 +295,7 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
               <Card
                 key={event.id}
                 onClick={() => router.push(`/event-dashboard/${event.id}`)}
-                className="overflow-hidden bg-white border border-gray-200 rounded-2xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer group"
+                className="overflow-hidden p-0 bg-white border border-gray-200 rounded-2xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer group"
               >
                 <div className="flex flex-col h-full">
                   {/* Image Section - Smaller and Full Width */}
