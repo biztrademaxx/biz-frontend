@@ -198,7 +198,7 @@ export function SpeakerDashboard({ userId }: UserDashboardProps) {
   }
 
   return (
-    <div className="flex min-h-screen w-full bg-gray-50">
+    <div className="flex min-h-screen w-full bg-[#F5F4F0]">
       {/* Mobile Overlay */}
       {sidebarOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden" onClick={() => setSidebarOpen(false)} />
@@ -314,7 +314,7 @@ export function SpeakerDashboard({ userId }: UserDashboardProps) {
         <main className="flex-1 p-6 overflow-auto">
           <DashboardManagedBanner page="speaker-dashboard" />
           <div className="max-w-7xl mx-auto">
-            <div className="">
+            <div className="bg-[#F5F4F0] min-h-screen w-full ">
               {renderContent()}
             </div>
           </div>

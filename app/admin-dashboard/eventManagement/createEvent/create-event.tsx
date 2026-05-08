@@ -384,16 +384,107 @@ export function CreateEventForm() {
           <FormProgress completionPercentage={calculateProgress()} />
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
-            <TabsList className="grid w-full grid-cols-9">
-              <TabsTrigger value="basic">Basic Info</TabsTrigger>
-              <TabsTrigger value="organizer">Organizer</TabsTrigger>
-              <TabsTrigger value="venue">Venue</TabsTrigger>
-              <TabsTrigger value="speakers">Speakers</TabsTrigger>
-              <TabsTrigger value="exhibitors">Exhibitors</TabsTrigger>
-              <TabsTrigger value="details">Event Details</TabsTrigger>
-              <TabsTrigger value="pricing">Pricing</TabsTrigger>
-              <TabsTrigger value="media">Media</TabsTrigger>
-              <TabsTrigger value="preview">Preview</TabsTrigger>
+
+            <TabsList className="grid w-full grid-cols-9" style={{ backgroundColor: "#f0fdf4" }}>
+              <TabsTrigger
+                value="basic"
+                className="
+      bg-white text-gray-700 font-medium transition-all duration-150
+      data-[state=active]:bg-green-600
+      data-[state=active]:text-white
+      data-[state=active]:shadow-none
+    "
+              >
+                Basic Info
+              </TabsTrigger>
+              <TabsTrigger
+                value="organizer"
+                className="
+      bg-white text-gray-700 font-medium transition-all duration-150
+      data-[state=active]:bg-green-600
+      data-[state=active]:text-white
+      data-[state=active]:shadow-none
+    "
+              >
+                Organizer
+              </TabsTrigger>
+              <TabsTrigger
+                value="venue"
+                className="
+      bg-white text-gray-700 font-medium transition-all duration-150
+      data-[state=active]:bg-green-600
+      data-[state=active]:text-white
+      data-[state=active]:shadow-none
+    "
+              >
+                Venue
+              </TabsTrigger>
+              <TabsTrigger
+                value="speakers"
+                className="
+      bg-white text-gray-700 font-medium transition-all duration-150
+      data-[state=active]:bg-green-600
+      data-[state=active]:text-white
+      data-[state=active]:shadow-none
+    "
+              >
+                Speakers
+              </TabsTrigger>
+              <TabsTrigger
+                value="exhibitors"
+                className="
+      bg-white text-gray-700 font-medium transition-all duration-150
+      data-[state=active]:bg-green-600
+      data-[state=active]:text-white
+      data-[state=active]:shadow-none
+    "
+              >
+                Exhibitors
+              </TabsTrigger>
+              <TabsTrigger
+                value="details"
+                className="
+      bg-white text-gray-700 font-medium transition-all duration-150
+      data-[state=active]:bg-green-600
+      data-[state=active]:text-white
+      data-[state=active]:shadow-none
+    "
+              >
+                Event Details
+              </TabsTrigger>
+              <TabsTrigger
+                value="pricing"
+                className="
+      bg-white text-gray-700 font-medium transition-all duration-150
+      data-[state=active]:bg-green-600
+      data-[state=active]:text-white
+      data-[state=active]:shadow-none
+    "
+              >
+                Pricing
+              </TabsTrigger>
+              <TabsTrigger
+                value="media"
+                className="
+      bg-white text-gray-700 font-medium transition-all duration-150
+      data-[state=active]:bg-green-600
+      data-[state=active]:text-white
+      data-[state=active]:shadow-none
+    "
+              >
+                Media
+              </TabsTrigger>
+              <TabsTrigger
+                value="preview"
+                className="
+      bg-white text-gray-700 font-medium transition-all duration-150
+      data-[state=active]:bg-green-600
+      data-[state=active]:text-white
+      data-[state=active]:shadow-none
+    "
+              >
+                Preview
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="basic" className="space-y-6 mt-6">

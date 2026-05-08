@@ -87,7 +87,6 @@ function filterEvents(
     const categoryStr = getCategoryDisplay(event.category).toLowerCase()
     const matchesCategory = categoryFilter === "all" || categoryStr === categoryFilter
 
-    // Region filter — derived from location string
     const locationStr = (event.location || "").toLowerCase()
     const matchesRegion =
       regionFilter === "all" ||
@@ -96,7 +95,6 @@ function filterEvents(
       (regionFilter === "na" && (locationStr.includes("usa") || locationStr.includes("canada") || locationStr.includes("new york") || locationStr.includes("chicago") || locationStr.includes("los angeles") || locationStr.includes("united states"))) ||
       (regionFilter === "me" && (locationStr.includes("dubai") || locationStr.includes("uae") || locationStr.includes("saudi") || locationStr.includes("middle east") || locationStr.includes("qatar")))
 
-    // Industry filter — derived from category
     const matchesIndustry =
       industryFilter === "all" ||
       (industryFilter === "tech" && (categoryStr.includes("tech") || categoryStr.includes("summit") || categoryStr.includes("conference"))) ||
@@ -104,7 +102,6 @@ function filterEvents(
       (industryFilter === "finance" && (categoryStr.includes("finance") || categoryStr.includes("fintech") || categoryStr.includes("banking"))) ||
       (industryFilter === "manufacturing" && (categoryStr.includes("manuf") || categoryStr.includes("expo") || categoryStr.includes("industrial")))
 
-    // Tab filter
     let matchesTab = true
     if (tab === "live") matchesTab = getEventDateStatus(event) === "Live"
     else if (tab === "upcoming") matchesTab = getEventDateStatus(event) === "Upcoming"
@@ -120,7 +117,6 @@ function filterEvents(
     return matchesSearch && matchesStatusFilter && matchesCategory && matchesRegion && matchesIndustry && matchesTab
   })
 
-  // Sort
   if (sortBy === "name") filtered = [...filtered].sort((a, b) => a.title.localeCompare(b.title))
   else if (sortBy === "attendance") filtered = [...filtered].sort((a, b) => (b.attendees || 0) - (a.attendees || 0))
   else filtered = [...filtered].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
@@ -128,6 +124,81 @@ function filterEvents(
   return filtered
 }
 
+// Helper function to export data to CSV
+// Helper function to export data to CSV
+function exportToCSV(events: Event[]) {
+  // Helper to safely get string value
+  const safeString = (value: any): string => {
+    if (!value) return ""
+    if (typeof value === "string") return value.replace(/"/g, '""')
+    if (typeof value === "number") return value.toString()
+    if (typeof value === "object") {
+      // Handle React elements or objects
+      if (value.props?.children) return String(value.props.children).replace(/"/g, '""')
+      return JSON.stringify(value).replace(/"/g, '""')
+    }
+    return String(value).replace(/"/g, '""')
+  }
+
+  // Define CSV headers
+  const headers = [
+    "Event Title",
+    "Category",
+    "Start Date",
+    "End Date",
+    "Location",
+    "City",
+    "Country",
+    "Venue",
+    "Attendees",
+    "Capacity",
+    "Status",
+    "Organizer",
+    "Featured",
+    "VIP",
+    "Verified",
+    "Created At"
+  ]
+
+  // Map events to CSV rows
+  const rows = events.map(event => [
+    `"${safeString(event.title)}"`,
+    `"${safeString(getCategoryDisplay(event.category))}"`,
+    safeString(event.startDate || event.date || ""),
+    safeString(event.endDate || event.date || ""),
+    `"${safeString(event.location)}"`,
+    `"${safeString(event.city)}"`,
+    `"${safeString(event.country)}"`,  // Fixed: now safely handles any type
+    `"${safeString(event.venue)}"`,
+    event.attendees || event.currentAttendees || 0,
+    event.maxCapacity || event.maxAttendees || 0,
+    getEventDateStatus(event),
+    `"${safeString(typeof event.organizer === "object" ? event.organizer?.company || event.organizer?.name || "" : event.organizer || "")}"`,
+    event.featured || event.isFeatured ? "Yes" : "No",
+    event.vip ? "Yes" : "No",
+    event.isVerified ? "Yes" : "No",
+    new Date(event.createdAt || event.date || "").toLocaleDateString()
+  ])
+
+  // Combine headers and rows
+  const csvContent = [
+    headers.join(","),
+    ...rows.map(row => row.join(","))
+  ].join("\n")
+
+  // Add BOM for UTF-8 encoding to handle special characters
+  const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" })
+
+  // Create download link
+  const link = document.createElement("a")
+  const url = URL.createObjectURL(blob)
+  link.setAttribute("href", url)
+  link.setAttribute("download", `events_export_${new Date().toISOString().split("T")[0]}.csv`)
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
+}
 export function EventTable({
   events,
   searchTerm,
@@ -192,6 +263,11 @@ export function EventTable({
     }
   }
 
+  const handleExportCSV = () => {
+    // Export currently filtered events
+    exportToCSV(filteredEvents)
+  }
+
   const liveCount = events.filter(e => getEventDateStatus(e) === "Live").length
   const upcomingCount = events.filter(e => getEventDateStatus(e) === "Upcoming").length
   const endedCount = events.filter(e => getEventDateStatus(e) === "Ended").length
@@ -208,237 +284,228 @@ export function EventTable({
   ]
 
   return (
-    <div style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}>
+    <div style={{
+      fontFamily: "'DM Sans', system-ui, sans-serif",
+      background: "#F5F4F0",
+      minHeight: "100vh",
+      padding: "24px"
+    }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');`}</style>
 
-      {/* ── Search bar ── */}
-      <div style={{ marginBottom: "16px" }}>
-        <div style={{ position: "relative", maxWidth: "360px" }}>
-          <Search style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", width: "15px", height: "15px", color: "#a1a1aa" }} />
-          <input
-            placeholder="Search events or organizers…"
-            value={localSearch}
-            onChange={(e) => { setLocalSearch(e.target.value); onSearchChange(e.target.value) }}
-            style={{
-              width: "100%", paddingLeft: "38px", paddingRight: "14px", paddingTop: "9px", paddingBottom: "9px",
-              fontSize: "13px", border: "1px solid #E5E5E5", borderRadius: "10px",
-              background: "#fff", outline: "none", color: "#18181B",
-              fontFamily: "inherit",
-            }}
-          />
-        </div>
-      </div>
-
-      {/* ── Tab pills + Dropdown filters row ── */}
-      <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", marginBottom: "16px" }}>
-        {tabs.map((tab) => {
-          const isActive = activeTab === tab.id
-          return (
-            <button
-              key={tab.id}
-              onClick={() => onTabChange(tab.id)}
+      <div style={{ maxWidth: "1400px", margin: "0 auto" }}>
+        {/* ── Search bar ── */}
+        <div style={{ marginBottom: "16px" }}>
+          <div style={{ position: "relative", maxWidth: "360px" }}>
+            <Search style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", width: "15px", height: "15px", color: "#a1a1aa" }} />
+            <input
+              placeholder="Search events or organizers…"
+              value={localSearch}
+              onChange={(e) => { setLocalSearch(e.target.value); onSearchChange(e.target.value) }}
               style={{
-                display: "inline-flex", alignItems: "center", gap: "6px",
-                padding: "7px 16px", borderRadius: "999px", fontSize: "13px", fontWeight: 500,
-                border: isActive ? "none" : "1.5px solid #E5E5E5",
-                background: isActive ? "#22C55E" : "#fff",
-                color: isActive ? "#fff" : "#374151",
-                cursor: "pointer", whiteSpace: "nowrap",
-                transition: "all 0.15s",
-                boxShadow: isActive ? "0 1px 4px rgba(34,197,94,0.25)" : "none",
+                width: "100%", paddingLeft: "38px", paddingRight: "14px", paddingTop: "9px", paddingBottom: "9px",
+                fontSize: "13px", border: "1px solid #E5E5E5", borderRadius: "10px",
+                background: "#fff", outline: "none", color: "#18181B",
+                fontFamily: "inherit",
               }}
-            >
-              {tab.dot && (
-                <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: isActive ? "#fff" : tab.dot, flexShrink: 0 }} />
-              )}
-              {tab.star && <span style={{ fontSize: "13px" }}>⭐</span>}
-              {tab.label}
-              {tab.count > 0 && (
+            />
+          </div>
+        </div>
+
+        {/* ── Tab pills + Dropdown filters row ── */}
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", marginBottom: "16px" }}>
+          {tabs.map((tab) => {
+            const isActive = activeTab === tab.id
+            return (
+              <button
+                key={tab.id}
+                onClick={() => onTabChange(tab.id)}
+                style={{
+                  display: "inline-flex", alignItems: "center", gap: "6px",
+                  padding: "7px 16px", borderRadius: "999px", fontSize: "13px", fontWeight: 500,
+                  border: isActive ? "none" : "1.5px solid #E5E5E5",
+                  background: isActive ? "#22C55E" : "#fff",
+                  color: isActive ? "#fff" : "#374151",
+                  cursor: "pointer", whiteSpace: "nowrap",
+                  transition: "all 0.15s",
+                  boxShadow: isActive ? "0 1px 4px rgba(34,197,94,0.25)" : "none",
+                }}
+              >
+                {tab.dot && (
+                  <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: isActive ? "#fff" : tab.dot, flexShrink: 0 }} />
+                )}
+                {tab.star && <span style={{ fontSize: "13px" }}>⭐</span>}
+                {tab.label}
+                {tab.count > 0 && (
+                  <span style={{
+                    fontSize: "11px", fontWeight: 600, padding: "1px 6px",
+                    borderRadius: "999px",
+                    background: isActive ? "rgba(255,255,255,0.25)" : "#F4F4F5",
+                    color: isActive ? "#fff" : "#71717A",
+                  }}>
+                    {tab.count}
+                  </span>
+                )}
+              </button>
+            )
+          })}
+
+          <div style={{ flex: 1 }} />
+
+          <select
+            value={localCategoryFilter}
+            onChange={(e) => { setLocalCategoryFilter(e.target.value); onCategoryFilterChange(e.target.value) }}
+            style={{ height: "36px", padding: "0 12px", fontSize: "13px", border: "1.5px solid #E5E5E5", borderRadius: "8px", background: "#fff", color: "#374151", cursor: "pointer", fontFamily: "inherit" }}
+          >
+            <option value="all">All Categories</option>
+            {categories.filter(c => c.isActive).map((cat) => (
+              <option key={cat.id} value={cat.name.toLowerCase()}>{cat.name}</option>
+            ))}
+          </select>
+
+          <select
+            value={localRegionFilter}
+            onChange={(e) => setLocalRegionFilter(e.target.value)}
+            style={{ height: "36px", padding: "0 12px", fontSize: "13px", border: "1.5px solid #E5E5E5", borderRadius: "8px", background: "#fff", color: "#374151", cursor: "pointer", fontFamily: "inherit" }}
+          >
+            <option value="all">All Regions</option>
+            <option value="apac">APAC</option>
+            <option value="eu">EU</option>
+            <option value="na">NA</option>
+            <option value="me">ME</option>
+          </select>
+
+          <select
+            value={localIndustryFilter}
+            onChange={(e) => setLocalIndustryFilter(e.target.value)}
+            style={{ height: "36px", padding: "0 12px", fontSize: "13px", border: "1.5px solid #E5E5E5", borderRadius: "8px", background: "#fff", color: "#374151", cursor: "pointer", fontFamily: "inherit" }}
+          >
+            <option value="all">All Industries</option>
+            <option value="tech">Technology</option>
+            <option value="health">Healthcare</option>
+            <option value="finance">Finance</option>
+            <option value="manufacturing">Manufacturing</option>
+          </select>
+
+          <select
+            value={localSort}
+            onChange={(e) => setLocalSort(e.target.value)}
+            style={{ height: "36px", padding: "0 12px", fontSize: "13px", border: "1.5px solid #E5E5E5", borderRadius: "8px", background: "#fff", color: "#374151", cursor: "pointer", fontFamily: "inherit" }}
+          >
+            <option value="date">Sort: Date ↓</option>
+            <option value="name">Sort: Name</option>
+            <option value="attendance">Sort: Attendance</option>
+          </select>
+        </div>
+
+        {/* ── Main Table Card ── */}
+        <div style={{ background: "#fff", border: "1px solid #ECECEC", borderRadius: "16px", overflow: "hidden" }}>
+          <div style={{
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            padding: "16px 22px", borderBottom: "1px solid #F0F0F0",
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <span style={{ fontSize: "15px", fontWeight: 600, color: "#18181B" }}>Event Listings</span>
+              <span style={{ fontSize: "13px", color: "#A1A1AA" }}>{filteredEvents.length.toLocaleString()} events found</span>
+              {selectedCount > 0 && (
                 <span style={{
-                  fontSize: "11px", fontWeight: 600, padding: "1px 6px",
-                  borderRadius: "999px",
-                  background: isActive ? "rgba(255,255,255,0.25)" : "#F4F4F5",
-                  color: isActive ? "#fff" : "#71717A",
+                  fontSize: "11px", fontWeight: 600, padding: "2px 8px", borderRadius: "999px",
+                  background: "#DBEAFE", color: "#2563EB",
                 }}>
-                  {tab.count}
+                  {selectedCount} selected
                 </span>
               )}
-            </button>
-          )
-        })}
-
-        <div style={{ flex: 1 }} />
-
-        {/* Category dropdown */}
-        <select
-          value={localCategoryFilter}
-          onChange={(e) => { setLocalCategoryFilter(e.target.value); onCategoryFilterChange(e.target.value) }}
-          style={{ height: "36px", padding: "0 12px", fontSize: "13px", border: "1.5px solid #E5E5E5", borderRadius: "8px", background: "#fff", color: "#374151", cursor: "pointer", fontFamily: "inherit" }}
-        >
-          <option value="all">All Categories</option>
-          {categories.filter(c => c.isActive).map((cat) => (
-            <option key={cat.id} value={cat.name.toLowerCase()}>{cat.name}</option>
-          ))}
-        </select>
-
-        {/* Region dropdown */}
-        <select
-          value={localRegionFilter}
-          onChange={(e) => setLocalRegionFilter(e.target.value)}
-          style={{ height: "36px", padding: "0 12px", fontSize: "13px", border: "1.5px solid #E5E5E5", borderRadius: "8px", background: "#fff", color: "#374151", cursor: "pointer", fontFamily: "inherit" }}
-        >
-          <option value="all">All Regions</option>
-          <option value="apac">APAC</option>
-          <option value="eu">EU</option>
-          <option value="na">NA</option>
-          <option value="me">ME</option>
-        </select>
-
-        {/* Industry dropdown */}
-        <select
-          value={localIndustryFilter}
-          onChange={(e) => setLocalIndustryFilter(e.target.value)}
-          style={{ height: "36px", padding: "0 12px", fontSize: "13px", border: "1.5px solid #E5E5E5", borderRadius: "8px", background: "#fff", color: "#374151", cursor: "pointer", fontFamily: "inherit" }}
-        >
-          <option value="all">All Industries</option>
-          <option value="tech">Technology</option>
-          <option value="health">Healthcare</option>
-          <option value="finance">Finance</option>
-          <option value="manufacturing">Manufacturing</option>
-        </select>
-
-        {/* Sort dropdown */}
-        <select
-          value={localSort}
-          onChange={(e) => setLocalSort(e.target.value)}
-          style={{ height: "36px", padding: "0 12px", fontSize: "13px", border: "1.5px solid #E5E5E5", borderRadius: "8px", background: "#fff", color: "#374151", cursor: "pointer", fontFamily: "inherit" }}
-        >
-          <option value="date">Sort: Date ↓</option>
-          <option value="name">Sort: Name</option>
-          <option value="attendance">Sort: Attendance</option>
-        </select>
-      </div>
-
-      {/* ── Main Table Card ── */}
-      <div style={{ background: "#fff", border: "1px solid #ECECEC", borderRadius: "16px", overflow: "hidden" }}>
-
-        {/* Table toolbar */}
-        <div style={{
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-          padding: "16px 22px", borderBottom: "1px solid #F0F0F0",
-        }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <span style={{ fontSize: "15px", fontWeight: 600, color: "#18181B" }}>Event Listings</span>
-            <span style={{ fontSize: "13px", color: "#A1A1AA" }}>{filteredEvents.length.toLocaleString()} events found</span>
-            {selectedCount > 0 && (
-              <span style={{
-                fontSize: "11px", fontWeight: 600, padding: "2px 8px", borderRadius: "999px",
-                background: "#DBEAFE", color: "#2563EB",
-              }}>
-                {selectedCount} selected
-              </span>
-            )}
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            {selectedCount > 0 && (
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              {selectedCount > 0 && (
+                <button
+                  onClick={handleBulkDelete}
+                  style={{
+                    display: "inline-flex", alignItems: "center", gap: "6px",
+                    padding: "6px 14px", borderRadius: "8px", fontSize: "13px", fontWeight: 500,
+                    border: "1px solid #FEE2E2", background: "#FFF5F5", color: "#EF4444", cursor: "pointer",
+                  }}
+                >
+                  <Trash2 style={{ width: "13px", height: "13px" }} />
+                  Delete Selected
+                </button>
+              )}
+              {/* Export CSV Button - Working */}
               <button
-                onClick={handleBulkDelete}
+                onClick={handleExportCSV}
                 style={{
                   display: "inline-flex", alignItems: "center", gap: "6px",
                   padding: "6px 14px", borderRadius: "8px", fontSize: "13px", fontWeight: 500,
-                  border: "1px solid #FEE2E2", background: "#FFF5F5", color: "#EF4444", cursor: "pointer",
+                  border: "1.5px solid #E5E5E5", background: "#fff", color: "#374151", cursor: "pointer",
                 }}
               >
-                <Trash2 style={{ width: "13px", height: "13px" }} />
-                Delete Selected
+                <Download style={{ width: "13px", height: "13px" }} /> Export CSV
               </button>
-            )}
-            <button style={{
-              display: "inline-flex", alignItems: "center", gap: "6px",
-              padding: "6px 14px", borderRadius: "8px", fontSize: "13px", fontWeight: 500,
-              border: "1.5px solid #E5E5E5", background: "#fff", color: "#374151", cursor: "pointer",
-            }}>
-              <Filter style={{ width: "13px", height: "13px" }} /> Filter
-            </button>
-            <button style={{
-              display: "inline-flex", alignItems: "center", gap: "6px",
-              padding: "6px 14px", borderRadius: "8px", fontSize: "13px", fontWeight: 500,
-              border: "1.5px solid #E5E5E5", background: "#fff", color: "#374151", cursor: "pointer",
-            }}>
-              <Download style={{ width: "13px", height: "13px" }} /> Export CSV
-            </button>
-            <button style={{
-              display: "inline-flex", alignItems: "center", gap: "6px",
-              padding: "6px 14px", borderRadius: "8px", fontSize: "13px", fontWeight: 500,
-              border: "1.5px solid #E5E5E5", background: "#fff", color: "#374151", cursor: "pointer",
-            }}>
-              Bulk Actions <ChevronDown style={{ width: "12px", height: "12px" }} />
-            </button>
+              {/* Filter and Bulk Actions buttons removed */}
+            </div>
           </div>
-        </div>
 
-        {/* Table */}
-        <div style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "1100px" }}>
-            <thead>
-              <tr style={{ borderBottom: "1px solid #F0F0F0", background: "#FAFAFA" }}>
-                <th style={{ padding: "11px 0 11px 22px", width: "48px" }}>
-                  <Checkbox checked={allSelected} onCheckedChange={handleSelectAll} />
-                </th>
-                {[
-                  { label: "EVENT", align: "left" },
-                  { label: "CATEGORY", align: "left" },
-                  { label: "DATE", align: "left" },
-                  { label: "LOCATION", align: "left" },
-                  { label: "ATTENDANCE", align: "left" },
-                  { label: "STATUS", align: "left" },
-                  { label: "ORGANIZER", align: "left" },
-                  { label: "FEATURED", align: "center" },
-                  { label: "", align: "left" },
-                ].map((h, i) => (
-                  <th
-                    key={i}
-                    style={{
-                      padding: "11px 16px",
-                      textAlign: h.align as any,
-                      fontSize: "11px", fontWeight: 600,
-                      color: "#A1A1AA", letterSpacing: "0.07em",
-                      textTransform: "uppercase",
-                    }}
-                  >
-                    {h.label}
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "1100px" }}>
+              <thead>
+                <tr style={{ borderBottom: "1px solid #F0F0F0", background: "#FAFAFA" }}>
+                  <th style={{ padding: "11px 0 11px 22px", width: "48px" }}>
+                    <Checkbox checked={allSelected} onCheckedChange={handleSelectAll} />
                   </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {filteredEvents.length === 0 ? (
-                <tr>
-                  <td colSpan={10} style={{ textAlign: "center", padding: "56px", color: "#A1A1AA", fontSize: "14px" }}>
-                    No events found
-                  </td>
+                  {[
+                    { label: "EVENT", align: "left" },
+                    { label: "CATEGORY", align: "left" },
+                    { label: "DATE", align: "left" },
+                    { label: "LOCATION", align: "left" },
+                    { label: "ATTENDANCE", align: "left" },
+                    { label: "STATUS", align: "left" },
+                    { label: "ORGANIZER", align: "left" },
+                    { label: "FEATURED", align: "center" },
+                    { label: "", align: "left" },
+                  ].map((h, i) => (
+                    <th
+                      key={i}
+                      style={{
+                        padding: "11px 16px",
+                        textAlign: h.align as any,
+                        fontSize: "11px", fontWeight: 600,
+                        color: "#A1A1AA", letterSpacing: "0.07em",
+                        textTransform: "uppercase",
+                      }}
+                    >
+                      {h.label}
+                    </th>
+                  ))}
                 </tr>
-              ) : (
-                filteredEvents.map((event) => (
-                  <EventRow
-                    key={event.id}
-                    event={event}
-                    selected={selectedEvents.has(event.id)}
-                    onSelect={handleSelectEvent}
-                    onEdit={onEdit}
-                    onStatusChange={onStatusChange}
-                    onFeatureToggle={onFeatureToggle}
-                    onVipToggle={onVipToggle}
-                    onPublicToggle={onPublicToggle}
-                    onDelete={onDelete}
-                    onPromote={onPromote}
-                    onVerify={onVerify}
-                    getStatusColor={getStatusColor}
-                  />
-                ))
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {filteredEvents.length === 0 ? (
+                  <tr>
+                    <td colSpan={10} style={{ textAlign: "center", padding: "56px", color: "#A1A1AA", fontSize: "14px" }}>
+                      No events found
+                    </td>
+                  </tr>
+                ) : (
+                  filteredEvents.map((event) => (
+                    <EventRow
+                      key={event.id}
+                      event={event}
+                      selected={selectedEvents.has(event.id)}
+                      onSelect={handleSelectEvent}
+                      onEdit={onEdit}
+                      onStatusChange={onStatusChange}
+                      onFeatureToggle={onFeatureToggle}
+                      onVipToggle={onVipToggle}
+                      onPublicToggle={onPublicToggle}
+                      onDelete={onDelete}
+                      onPromote={onPromote}
+                      onVerify={onVerify}
+                      getStatusColor={getStatusColor}
+                    />
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
