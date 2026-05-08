@@ -209,7 +209,7 @@ export default function EventSidebar({ eventId }: EventLayoutProps) {
   return (
     <div>
 
-      <div className="flex min-h-screen w-full bg-background">
+      <div className="flex min-h-screen w-full bg-[#F5F4F0]">
         {/* Mobile Overlay */}
         {sidebarOpen && (
           <div
