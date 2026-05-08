@@ -11,7 +11,6 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
 import { apiFetch } from "@/lib/api"
-import { formatPublicTicketPriceLine } from "@/lib/ticket-price-display"
 
 interface Event {
   id: string
@@ -26,7 +25,7 @@ interface Event {
   description: string
   shortDescription: string
   leads: string[]
-  ticketTypes: string[]
+  ticketTypes: any[] // Changed from string[] to any[] to handle different formats
   location: {
     city: string
     venue: string
@@ -44,6 +43,35 @@ interface EventHeroProps {
   onImagesUpdate?: (images: string[]) => void
 }
 
+// Helper function to format ticket price display without relying on external function
+const formatTicketPriceLine = (ticketTypes: any[]): string => {
+  if (!ticketTypes || ticketTypes.length === 0) {
+    return "Free Entry"
+  }
+
+  // If ticketTypes are strings (old format)
+  if (typeof ticketTypes[0] === "string") {
+    return "Contact for Pricing"
+  }
+
+  // If ticketTypes are objects (new format with pricing)
+  const prices = ticketTypes
+    .filter(ticket => ticket.price !== undefined && ticket.price !== null)
+    .map(ticket => ticket.price)
+
+  if (prices.length === 0) {
+    return "Free Entry"
+  }
+
+  const minPrice = Math.min(...prices)
+  const maxPrice = Math.max(...prices)
+
+  if (minPrice === maxPrice) {
+    return `AED ${minPrice}`
+  }
+  return `AED ${minPrice} - ${maxPrice}`
+}
+
 export default function EventHero({ event, onImagesUpdate }: EventHeroProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [title, setTitle] = useState(event.title)
@@ -53,6 +81,7 @@ export default function EventHero({ event, onImagesUpdate }: EventHeroProps) {
   const [currentSlide, setCurrentSlide] = useState(0)
   const { toast } = useToast()
   const [newImageUrl, setNewImageUrl] = useState("")
+
   const normalizeTimezone = (tz?: string, countryHint?: string) => {
     const country = String(countryHint || "").trim().toLowerCase()
     if (country.includes("india")) return "Asia/Kolkata"
@@ -60,6 +89,7 @@ export default function EventHero({ event, onImagesUpdate }: EventHeroProps) {
     if (tz === "Indian/Chagos" && country.includes("india")) return "Asia/Kolkata"
     return tz
   }
+
   const displayTimezone = normalizeTimezone(
     event.timezone,
     (event as any)?.country || event.location?.country || (event as any)?.venue?.venueCountry,
@@ -133,7 +163,6 @@ export default function EventHero({ event, onImagesUpdate }: EventHeroProps) {
     const file = e.target.files?.[0]
     if (!file) return
 
-    // Validate file type
     if (!file.type.startsWith("image/")) {
       toast({
         title: "Error",
@@ -143,7 +172,6 @@ export default function EventHero({ event, onImagesUpdate }: EventHeroProps) {
       return
     }
 
-    // Backend image limit 10MB
     if (file.size > 10 * 1024 * 1024) {
       toast({
         title: "Error",
@@ -159,7 +187,6 @@ export default function EventHero({ event, onImagesUpdate }: EventHeroProps) {
       const formData = new FormData()
       formData.append("file", file)
 
-      // Backend `POST /api/upload/cloudinary` (Bearer JWT) — not Next.js :3000 route (NextAuth session)
       const uploadData = await apiFetch<{ url?: string }>("/api/upload/cloudinary", {
         method: "POST",
         body: formData,
@@ -192,7 +219,6 @@ export default function EventHero({ event, onImagesUpdate }: EventHeroProps) {
       })
     } finally {
       setIsUploading(false)
-      // Reset file input
       e.target.value = ""
     }
   }
@@ -234,15 +260,31 @@ export default function EventHero({ event, onImagesUpdate }: EventHeroProps) {
     }
   }
 
+  // Get the first image for the background banner
+  const getFirstImage = () => {
+    if (event.images && event.images.length > 0) {
+      return event.images[0]
+    }
+    return "/herosection-images/test.jpeg"
+  }
+
   return (
     <div>
-      {/* Background Image */}
-      <div className="relative h-[200px] md:h-[300px] lg:h-[400px]">
-        <img src={"/banners/banner1.jpg"} alt={event.title} className="w-full h-full object-cover" />
+      {/* Background Image - First event image with blur effect and reduced height */}
+      <div className="relative h-[150px] md:h-[200px] lg:h-[250px] overflow-hidden">
+        <div className="absolute inset-0">
+          <img
+            src={getFirstImage()}
+            alt={event.title}
+            className="w-full h-full object-cover filter blur-md scale-105"
+          />
+          {/* Dark overlay for better text contrast if needed */}
+          <div className="absolute inset-0 bg-black/20"></div>
+        </div>
       </div>
 
       {/* Content */}
-      <div className="relative w-full max-w-6xl mx-auto  rounded-lg overflow-hidden shadow-md flex flex-col md:flex-row mt-[-100px] sm:mt-[-120px] md:mt-[-150px] z-10 left-1/2 -translate-x-1/2">
+      <div className="relative w-full max-w-6xl mx-auto rounded-lg overflow-hidden shadow-md flex flex-col md:flex-row mt-[-80px] sm:mt-[-100px] md:mt-[-120px] z-10 left-1/2 -translate-x-1/2">
         {/* Slider */}
         <div className="md:w-2/3 w-full h-[220px] sm:h-[280px] md:h-[320px] lg:h-[400px] relative">
           <div ref={sliderRef} className="keen-slider h-full w-full">
@@ -254,7 +296,7 @@ export default function EventHero({ event, onImagesUpdate }: EventHeroProps) {
                       src={img || "/city/c4.jpg"}
                       alt={`${event.title} Image ${index + 1}`}
                       fill
-                      className=""
+                      className="object-cover"
                     />
                   </div>
                 ))}
@@ -335,7 +377,7 @@ export default function EventHero({ event, onImagesUpdate }: EventHeroProps) {
         </div>
 
         {/* Info */}
-        <div className="md:w-1/3 w-full bg-blue-50 p-4 sm:p-6  flex flex-col justify-center space-y-3">
+        <div className="md:w-1/3 w-full bg-blue-50 p-4 sm:p-6 flex flex-col justify-center space-y-3">
           {/* Title with edit option */}
           <div className="flex items-center justify-between">
             {isEditing ? (
@@ -385,14 +427,12 @@ export default function EventHero({ event, onImagesUpdate }: EventHeroProps) {
                   timeZone: displayTimezone,
                 })}
               </span>
-
             </div>
+
             <div className="flex items-center gap-2 sm:gap-3">
               <Ticket className="w-4 h-4 sm:w-5 sm:h-5 text-black" />
               <span>
-                {formatPublicTicketPriceLine(
-                  Array.isArray(event.ticketTypes) ? event.ticketTypes : [],
-                )}
+                {formatTicketPriceLine(event.ticketTypes)}
               </span>
             </div>
 
