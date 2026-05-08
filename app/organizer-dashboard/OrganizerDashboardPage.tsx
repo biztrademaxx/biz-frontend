@@ -364,7 +364,7 @@ export default function OrganizerDashboardSimplified({ organizerId }: OrganizerD
   // }
 
   return (
-    <div className="flex min-h-screen w-full bg-gray-50">
+    <div className="flex min-h-screen w-full bg-[#F5F4F0]">
       {/* Mobile Overlay */}
       {sidebarOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden" onClick={() => setSidebarOpen(false)} />
@@ -483,7 +483,7 @@ export default function OrganizerDashboardSimplified({ organizerId }: OrganizerD
           <DashboardManagedBanner page="organizer-dashboard" />
           <div className="max-w-7xl mx-auto">
             {/* Dynamic Content */}
-            <div className="">
+            <div className="bg-[#F5F4F0] min-h-screen w-full ">
               {renderContent()}
             </div>
           </div>

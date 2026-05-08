@@ -124,6 +124,81 @@ function filterEvents(
   return filtered
 }
 
+// Helper function to export data to CSV
+// Helper function to export data to CSV
+function exportToCSV(events: Event[]) {
+  // Helper to safely get string value
+  const safeString = (value: any): string => {
+    if (!value) return ""
+    if (typeof value === "string") return value.replace(/"/g, '""')
+    if (typeof value === "number") return value.toString()
+    if (typeof value === "object") {
+      // Handle React elements or objects
+      if (value.props?.children) return String(value.props.children).replace(/"/g, '""')
+      return JSON.stringify(value).replace(/"/g, '""')
+    }
+    return String(value).replace(/"/g, '""')
+  }
+
+  // Define CSV headers
+  const headers = [
+    "Event Title",
+    "Category",
+    "Start Date",
+    "End Date",
+    "Location",
+    "City",
+    "Country",
+    "Venue",
+    "Attendees",
+    "Capacity",
+    "Status",
+    "Organizer",
+    "Featured",
+    "VIP",
+    "Verified",
+    "Created At"
+  ]
+
+  // Map events to CSV rows
+  const rows = events.map(event => [
+    `"${safeString(event.title)}"`,
+    `"${safeString(getCategoryDisplay(event.category))}"`,
+    safeString(event.startDate || event.date || ""),
+    safeString(event.endDate || event.date || ""),
+    `"${safeString(event.location)}"`,
+    `"${safeString(event.city)}"`,
+    `"${safeString(event.country)}"`,  // Fixed: now safely handles any type
+    `"${safeString(event.venue)}"`,
+    event.attendees || event.currentAttendees || 0,
+    event.maxCapacity || event.maxAttendees || 0,
+    getEventDateStatus(event),
+    `"${safeString(typeof event.organizer === "object" ? event.organizer?.company || event.organizer?.name || "" : event.organizer || "")}"`,
+    event.featured || event.isFeatured ? "Yes" : "No",
+    event.vip ? "Yes" : "No",
+    event.isVerified ? "Yes" : "No",
+    new Date(event.createdAt || event.date || "").toLocaleDateString()
+  ])
+
+  // Combine headers and rows
+  const csvContent = [
+    headers.join(","),
+    ...rows.map(row => row.join(","))
+  ].join("\n")
+
+  // Add BOM for UTF-8 encoding to handle special characters
+  const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" })
+
+  // Create download link
+  const link = document.createElement("a")
+  const url = URL.createObjectURL(blob)
+  link.setAttribute("href", url)
+  link.setAttribute("download", `events_export_${new Date().toISOString().split("T")[0]}.csv`)
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
+}
 export function EventTable({
   events,
   searchTerm,
@@ -188,6 +263,11 @@ export function EventTable({
     }
   }
 
+  const handleExportCSV = () => {
+    // Export currently filtered events
+    exportToCSV(filteredEvents)
+  }
+
   const liveCount = events.filter(e => getEventDateStatus(e) === "Live").length
   const upcomingCount = events.filter(e => getEventDateStatus(e) === "Upcoming").length
   const endedCount = events.filter(e => getEventDateStatus(e) === "Ended").length
@@ -206,7 +286,7 @@ export function EventTable({
   return (
     <div style={{
       fontFamily: "'DM Sans', system-ui, sans-serif",
-      background: "#F5F4F0",  // ← Applied background color here
+      background: "#F5F4F0",
       minHeight: "100vh",
       padding: "24px"
     }}>
@@ -349,27 +429,18 @@ export function EventTable({
                   Delete Selected
                 </button>
               )}
-              <button style={{
-                display: "inline-flex", alignItems: "center", gap: "6px",
-                padding: "6px 14px", borderRadius: "8px", fontSize: "13px", fontWeight: 500,
-                border: "1.5px solid #E5E5E5", background: "#fff", color: "#374151", cursor: "pointer",
-              }}>
-                <Filter style={{ width: "13px", height: "13px" }} /> Filter
-              </button>
-              <button style={{
-                display: "inline-flex", alignItems: "center", gap: "6px",
-                padding: "6px 14px", borderRadius: "8px", fontSize: "13px", fontWeight: 500,
-                border: "1.5px solid #E5E5E5", background: "#fff", color: "#374151", cursor: "pointer",
-              }}>
+              {/* Export CSV Button - Working */}
+              <button
+                onClick={handleExportCSV}
+                style={{
+                  display: "inline-flex", alignItems: "center", gap: "6px",
+                  padding: "6px 14px", borderRadius: "8px", fontSize: "13px", fontWeight: 500,
+                  border: "1.5px solid #E5E5E5", background: "#fff", color: "#374151", cursor: "pointer",
+                }}
+              >
                 <Download style={{ width: "13px", height: "13px" }} /> Export CSV
               </button>
-              <button style={{
-                display: "inline-flex", alignItems: "center", gap: "6px",
-                padding: "6px 14px", borderRadius: "8px", fontSize: "13px", fontWeight: 500,
-                border: "1.5px solid #E5E5E5", background: "#fff", color: "#374151", cursor: "pointer",
-              }}>
-                Bulk Actions <ChevronDown style={{ width: "12px", height: "12px" }} />
-              </button>
+              {/* Filter and Bulk Actions buttons removed */}
             </div>
           </div>
 
