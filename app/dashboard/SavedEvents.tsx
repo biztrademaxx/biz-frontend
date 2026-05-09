@@ -3,11 +3,15 @@
 import { useEffect, useState } from "react"
 import type { Event } from "./events-section"
 import { Skeleton } from "@/components/ui/skeleton"
-import { CalendarIcon, MapPin } from "lucide-react"
+import { CalendarIcon, MapPin, Heart } from "lucide-react"
 import { apiFetch, getCurrentUserId, isAuthenticated } from "@/lib/api"
 import { formatEventEntryFeeDisplay, type TicketPriceRow } from "@/lib/ticket-price-display"
+import { useRouter } from "next/navigation"
+import { eventPublicPath } from "@/lib/event-path"
+import { Card, CardContent } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
 
-/* ---------- Helpers (same as EventsSection) ---------- */
+/* ---------- Helpers ---------- */
 const DEFAULT_IMAGE = "/image/download2.jpg"
 const DEFAULT_ADDRESS = "Address not specified"
 
@@ -19,6 +23,7 @@ const formatDate = (dateString: string) =>
   })
 
 export function SavedEvents({ userId }: { userId?: string }) {
+  const router = useRouter()
   const [events, setEvents] = useState<Event[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -67,21 +72,38 @@ export function SavedEvents({ userId }: { userId?: string }) {
   }
 
   if (!events.length) {
-    return <p className="text-gray-500">No saved events found.</p>
+    return (
+      <Card>
+        <CardContent className="p-6 text-center">
+          <Heart className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+          <p className="text-gray-600 mb-4">No saved events found.</p>
+          <Button variant="outline" onClick={() => router.push("/event")}>
+            Find Events
+          </Button>
+        </CardContent>
+      </Card>
+    )
   }
 
   return (
-    <div className="relative border-l-2 border-gray-200 ml-6">
+    <div className="relative border-l-2 border-gray-200 ml-6 min-w-0">
       {events.map((event) => (
         <div key={event.id} className="mb-10 ml-6 relative">
-          <span className="absolute -left-[35px] flex items-center justify-center w-5 h-5 rounded-full ring-4 ring-white bg-gray-600" />
+          {/* Timeline Dot */}
+          <span className="absolute -left-[35px] top-0 flex items-center justify-center w-6 h-6 rounded-full bg-gray-600" />
 
+          {/* Date Heading */}
           <p className="text-sm font-semibold text-gray-700 mb-3">
             {formatDate(event.startDate)} – {formatDate(event.endDate || event.startDate)}
           </p>
 
-          <div className="flex flex-col sm:flex-row w-full border border-gray-200 bg-white rounded-lg hover:shadow-md transition-shadow overflow-hidden">
-            <div className="w-full sm:w-40 h-36 sm:h-32 shrink-0 flex justify-center sm:block px-3 pt-3 sm:px-0 sm:pt-0">
+          {/* Event Card - Matching EventsSection styling */}
+          <div
+            onClick={() => router.push(eventPublicPath(event))}
+            className="flex w-full min-w-0 border border-gray-200 bg-white rounded-lg hover:shadow-md transition-shadow overflow-hidden cursor-pointer"
+          >
+            {/* Left Image Section */}
+            <div className="w-40 h-32 flex-shrink-0">
               <img
                 src={
                   event.thumbnailImage ||
@@ -89,7 +111,7 @@ export function SavedEvents({ userId }: { userId?: string }) {
                   "https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=400&h=300&fit=crop"
                 }
                 alt={event.title}
-                className="w-full max-w-[220px] sm:max-w-none h-full max-h-[9rem] sm:max-h-none object-cover rounded-2xl sm:mt-3 sm:mx-3"
+                className="w-full h-full object-cover rounded-2xl mt-3 mx-3"
                 onError={(e) => {
                   const target = e.currentTarget as HTMLImageElement
                   target.src = "https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=400&h=300&fit=crop"
@@ -97,69 +119,79 @@ export function SavedEvents({ userId }: { userId?: string }) {
               />
             </div>
 
-            <div className="flex-1 p-4 sm:p-6 min-w-0">
-              <div className="flex flex-col xl:flex-row xl:justify-between xl:items-start gap-4 xl:gap-6">
-                <div className="flex-1 min-w-0 space-y-3">
-                  <div className="mb-0">
+            {/* Main Content Section */}
+            <div className="flex-1 p-6 min-w-0">
+              <div className="flex justify-between items-start min-w-0">
+                {/* Left Content */}
+                <div className="flex-1 min-w-0">
+                  {/* Category Badge */}
+                  <div className="mb-2">
                     <span className="text-xs text-purple-600 bg-purple-50 px-2 py-1 rounded">
                       {event.category || "Event"}
                     </span>
                   </div>
 
-                  <div className="flex flex-col lg:flex-row lg:items-start gap-4 min-w-0">
-                    <div className="flex-1 min-w-0 order-2 lg:order-1">
-                      <h2 className="text-xl font-bold text-gray-900 mb-2 line-clamp-2 pr-1">{event.title}</h2>
-
-                      <p className="text-sm text-gray-600 mb-0 line-clamp-2">
+                  {/* Title and Content Row */}
+                  <div className="flex">
+                    {/* Text Content */}
+                    <div className="flex-1 min-w-0">
+                      <h2 className="text-xl font-bold text-gray-900 mb-3 truncate pr-4">
+                        {event.title}
+                      </h2>
+                      <p className="text-sm text-gray-600 mb-4 line-clamp-2">
                         {event.shortDescription || event.description || "No description available"}
                       </p>
                     </div>
 
-                    <div className="flex items-start gap-2 lg:ml-auto lg:pl-2 shrink-0 order-1 lg:order-2">
-                      <div className="w-12 h-12 flex items-center justify-center bg-purple-50 rounded-lg">
-                        🎟️
+                    {/* Location and Date - Fixed width with proper wrapping */}
+                    <div className="flex flex-col gap-4 text-sm text-gray-500 ml-4 min-w-[200px] max-w-[250px]">
+                      <div className="flex items-start min-w-0 overflow-hidden">
+                        <MapPin className="w-4 h-4 mr-2 flex-shrink-0 mt-0.5" />
+                        <span
+                          className="truncate block"
+                          title={getEventAddress(event)}
+                        >
+                          {getEventAddress(event)}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center">
+                        <CalendarIcon className="w-4 h-4 mr-2 flex-shrink-0" />
+                        <span className="whitespace-nowrap">
+                          {formatDate(event.startDate)} - {formatDate(event.endDate || event.startDate)}
+                        </span>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3 sm:gap-x-6 sm:gap-y-2 text-sm text-gray-600 pt-1 border-t border-gray-100">
-                    <div className="flex items-start gap-2 min-w-0 flex-1 sm:min-w-[12rem] sm:max-w-full lg:max-w-xl">
-                      <MapPin className="w-4 h-4 mt-0.5 shrink-0 text-gray-500" aria-hidden />
-                      <span
-                        className="min-w-0 break-words leading-snug line-clamp-3 sm:line-clamp-4"
-                        title={getEventAddress(event)}
-                      >
-                        {getEventAddress(event)}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0 text-gray-500">
-                      <CalendarIcon className="w-4 h-4 shrink-0" aria-hidden />
-                      <span className="whitespace-nowrap">
-                        {formatDate(event.startDate)} – {formatDate(event.endDate || event.startDate)}
-                      </span>
+                    {/* Ticket Icon */}
+                    <div className="w-15 h-15 flex items-center justify-center bg-purple-50 rounded-lg ml-8 flex-shrink-0">
+                      🎟️
                     </div>
                   </div>
                 </div>
 
-                <div className="flex flex-row xl:flex-col gap-4 xl:gap-5 items-start justify-between xl:justify-start xl:items-end shrink-0 xl:min-w-[12rem]">
-                  <div className="space-y-2 min-w-0 xl:w-full xl:text-right">
-                    <div className="flex justify-between gap-6 xl:gap-8">
-                      <span className="text-gray-500 whitespace-nowrap text-xs sm:text-sm">Expected Visitors</span>
-                      <span className="font-semibold text-gray-900 whitespace-nowrap tabular-nums text-sm">
-                        {event.expectedExhibitors || event.maxAttendees || "200"}
+                {/* Right Stats Section */}
+                <div className="ml-6 flex items-start">
+                  {/* Expected Visitors and Exhibitors */}
+                  <div className="space-y-2 mt-6 mr-20 min-w-[180px]">
+                    <div className="flex justify-between gap-10">
+                      <span className="text-gray-500 whitespace-nowrap">Expected Visitors</span>
+                      <span className="font-semibold text-gray-900 whitespace-nowrap">
+                        {event.expectedExhibitors || event.maxAttendees || "0"}
                       </span>
                     </div>
-                    <div className="flex justify-between gap-6 xl:gap-8">
-                      <span className="text-gray-500 whitespace-nowrap text-xs sm:text-sm">Exptd Exhibitors</span>
-                      <span className="font-semibold text-gray-900 whitespace-nowrap tabular-nums text-sm">
-                        {event.expectedExhibitors || "200"}
+                    <div className="flex justify-between gap-12">
+                      <span className="text-gray-500 whitespace-nowrap">Exptd Exhibitors</span>
+                      <span className="font-semibold text-gray-900 whitespace-nowrap">
+                        {event.expectedExhibitors || "0"}
                       </span>
                     </div>
                   </div>
 
-                  <div className="grid text-center xl:text-right shrink-0 min-w-[4.5rem]">
+                  {/* Entry Fee */}
+                  <div className="grid text-center mt-5 min-w-[80px]">
                     <span className="text-xl font-bold text-pink-500 whitespace-nowrap">
-                      {formatEventEntryFeeDisplay(event.ticketTypes as TicketPriceRow[], event.currency)}
+                      {formatEventEntryFeeDisplay(event.ticketTypes as TicketPriceRow[],  "₹")}
                     </span>
                     <span className="text-gray-500 text-sm">Entry Fee</span>
                   </div>

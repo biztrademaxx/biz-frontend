@@ -442,13 +442,13 @@ export function EventsSection({ userId }: EventsSectionProps) {
                               <div className="flex justify-between gap-10">
                                 <span className="text-gray-500 whitespace-nowrap">Expected Visitors</span>
                                 <span className="font-semibold text-gray-900 whitespace-nowrap">
-                                  {event.expectedExhibitors || event.maxAttendees || "200"}
+                                  {event.expectedExhibitors || event.maxAttendees || "0"}
                                 </span>
                               </div>
                               <div className="flex justify-between gap-12">
                                 <span className="text-gray-500 whitespace-nowrap">Exptd Exhibitors</span>
                                 <span className="font-semibold text-gray-900 whitespace-nowrap">
-                                  {event.expectedExhibitors || "200"}
+                                  {event.expectedExhibitors || "0"}
                                 </span>
                               </div>
                             </div>
