@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { Calendar, Clock, Ticket, Users, Trash2, Upload } from "lucide-react"
+import { Calendar, Clock, Ticket, Users, Trash2, Upload, Edit2 } from "lucide-react"
 import { useKeenSlider } from "keen-slider/react"
 import "keen-slider/keen-slider.min.css"
 import Image from "next/image"
@@ -25,7 +25,7 @@ interface Event {
   description: string
   shortDescription: string
   leads: string[]
-  ticketTypes: any[] // Changed from string[] to any[] to handle different formats
+  ticketTypes: any[]
   location: {
     city: string
     venue: string
@@ -43,18 +43,16 @@ interface EventHeroProps {
   onImagesUpdate?: (images: string[]) => void
 }
 
-// Helper function to format ticket price display without relying on external function
+// Helper function to format ticket price display
 const formatTicketPriceLine = (ticketTypes: any[]): string => {
   if (!ticketTypes || ticketTypes.length === 0) {
     return "Free Entry"
   }
 
-  // If ticketTypes are strings (old format)
   if (typeof ticketTypes[0] === "string") {
     return "Contact for Pricing"
   }
 
-  // If ticketTypes are objects (new format with pricing)
   const prices = ticketTypes
     .filter(ticket => ticket.price !== undefined && ticket.price !== null)
     .map(ticket => ticket.price)
@@ -69,8 +67,7 @@ const formatTicketPriceLine = (ticketTypes: any[]): string => {
   if (minPrice === maxPrice) {
     return `AED ${minPrice}`
   }
-  return `AED ${minPrice} - ${maxPrice}`
-}
+  return `₹${minPrice} - ₹${maxPrice}`}
 
 export default function EventHero({ event, onImagesUpdate }: EventHeroProps) {
   const [isEditing, setIsEditing] = useState(false)
@@ -94,13 +91,6 @@ export default function EventHero({ event, onImagesUpdate }: EventHeroProps) {
     event.timezone,
     (event as any)?.country || event.location?.country || (event as any)?.venue?.venueCountry,
   )
-
-  const formatDate = (dateString: string) =>
-    new Date(dateString).toLocaleDateString("en-GB", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    })
 
   const [sliderRef, instanceRef] = useKeenSlider<HTMLDivElement>({
     loop: true,
@@ -260,184 +250,217 @@ export default function EventHero({ event, onImagesUpdate }: EventHeroProps) {
     }
   }
 
-  // Get the first image for the background banner
-  const getFirstImage = () => {
-    if (event.images && event.images.length > 0) {
-      return event.images[0]
-    }
-    return "/herosection-images/test.jpeg"
-  }
-
   return (
-    <div>
-      {/* Background Image - First event image with blur effect and reduced height */}
-      {/* <div className="relative h-[150px] md:h-[200px] lg:h-[250px] overflow-hidden">
-        <div className="absolute inset-0">
-          <img
-            src={getFirstImage()}
-            alt={event.title}
-            className="w-full h-full object-cover filter blur-md scale-105"
-          />
-          <div className="absolute inset-0 bg-black/20"></div>
-        </div>
-      </div> */}
+    <div className="w-full px-4 sm:px-6 lg:px-8">
+      <div className="w-full max-w-7xl mx-auto">
+        {/* Flex container - no gap, full width */}
+        <div className="flex flex-col md:flex-row w-full rounded-xl overflow-hidden shadow-lg">
 
-      {/* Content */}
-      <div className="relative w-full max-w-6xl mx-auto rounded-lg overflow-hidden shadow-md flex flex-col md:flex-row mt-[-80px] sm:mt-[-100px] md:mt-[-120px] z-10 left-1/2 -translate-x-1/2 mt-5">
-        {/* Slider */}
-        <div className="md:w-2/3 w-full h-[220px] sm:h-[280px] md:h-[320px] lg:h-[400px] relative bg-white mt-20">
-          <div ref={sliderRef} className="keen-slider h-full w-full">
-            {images.length > 0 ? (
-              <>
-                {images.map((img, index) => (
-                  <div key={`image-${index}`} className="keen-slider__slide relative h-full w-full">
-                    <Image
-                      src={img || "/city/c4.jpg"}
-                      alt={`${event.title} Image ${index + 1}`}
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
-                ))}
+          {/* Left side - Slider (2/3 width) */}
+          <div className="w-full md:w-2/3 relative bg-gray-100">
+            <div className="relative h-[260px] md:h-[320px] w-full">
+              <div ref={sliderRef} className="keen-slider h-full w-full">
+                {images.length > 0 ? (
+                  <>
+                    {images.map((img, index) => (
+                      <div key={`image-${index}`} className="keen-slider__slide relative h-full w-full">
+                        <Image
+                          src={img || "/herosection-images/test.jpeg"}
+                          alt={`${event.title} Image ${index + 1}`}
+                          fill
+                          className="object-cover"
+                          priority={index === 0}
+                        />
+                      </div>
+                    ))}
 
-                {event.videos?.map((vid: string, index: number) => (
-                  <div key={`video-${index}`} className="keen-slider__slide relative h-full w-full">
-                    <video className="w-full h-full object-cover" autoPlay loop muted playsInline>
-                      <source src={vid} type="video/mp4" />
-                    </video>
+                    {event.videos?.map((vid: string, index: number) => (
+                      <div key={`video-${index}`} className="keen-slider__slide relative h-full w-full">
+                        <video className="w-full h-full object-cover" autoPlay loop muted playsInline>
+                          <source src={vid} type="video/mp4" />
+                        </video>
+                      </div>
+                    ))}
+                  </>
+                ) : (
+                  <div className="keen-slider__slide relative h-full w-full">
+                    <Image src="/herosection-images/test.jpeg" alt="Default Image" fill className="object-cover" />
                   </div>
-                ))}
-              </>
-            ) : (
-              <div className="keen-slider__slide relative h-full w-full">
-                <Image src="/herosection-images/test.jpeg" alt="Default Image" fill className="object-cover" />
+                )}
               </div>
-            )}
-          </div>
 
-          {/* Image editing controls overlay */}
-          {isEditingImages && (
-            <div className="absolute top-4 right-4 flex gap-2 z-20">
-              <Button size="sm" variant="destructive" onClick={handleDeleteImage} className="shadow-lg">
-                <Trash2 className="w-4 h-4 mr-2" />
-                Delete Current
-              </Button>
-            </div>
-          )}
+              {/* Image editing controls */}
+              {isEditingImages && (
+                <div className="absolute top-4 right-4 flex gap-2 z-20">
+                  <Button size="sm" variant="destructive" onClick={handleDeleteImage} className="shadow-lg">
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Delete
+                  </Button>
+                </div>
+              )}
 
-          {/* Toggle edit mode button */}
-          <div className="absolute bottom-4 right-4 z-20 pl-2">
-            <Button
-              size="sm"
-              variant={isEditingImages ? "default" : "secondary"}
-              onClick={() => setIsEditingImages(!isEditingImages)}
-              className="shadow-lg mx-4"
-            >
-              <Upload className="w-4 h-4 mr-2" />
-              {isEditingImages ? "Done" : "Edit Images"}
-            </Button>
-          </div>
-
-          {isEditingImages && (
-            <div className="absolute bottom-16 right-4 bg-white p-4 rounded-lg shadow-xl border z-20 w-80">
-              <h4 className="font-semibold mb-2 text-sm">Add New Image</h4>
-              <div className="flex flex-col gap-2">
-                <label
-                  htmlFor="image-upload"
-                  className="flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md cursor-pointer hover:bg-primary/90 transition-colors"
+              <div className="absolute bottom-4 right-4 z-20">
+                <Button
+                  size="sm"
+                  variant={isEditingImages ? "default" : "secondary"}
+                  onClick={() => setIsEditingImages(!isEditingImages)}
+                  className="shadow-lg"
                 >
-                  {isUploading ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      <span className="text-sm">Uploading...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Upload className="w-4 h-4" />
-                      <span className="text-sm">Choose Image</span>
-                    </>
-                  )}
-                </label>
-                <input
-                  id="image-upload"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileUpload}
-                  disabled={isUploading}
-                  className="hidden"
-                />
-                <p className="text-xs text-muted-foreground">Max size: 5MB</p>
+                  <Upload className="w-4 h-4 mr-2" />
+                  {isEditingImages ? "Done" : "Edit Images"}
+                </Button>
               </div>
-              <p className="text-xs text-muted-foreground mt-2">
-                Current: {currentSlide + 1} of {images.length}
-              </p>
-            </div>
-          )}
-        </div>
 
-        {/* Info */}
-        <div className="md:w-1/3 w-full bg-blue-50 p-4 sm:p-6 flex flex-col justify-center space-y-3">
-          {/* Title with edit option */}
-          <div className="flex items-center justify-between">
-            {isEditing ? (
-              <div className="flex w-full gap-2">
-                <Input value={title} onChange={(e) => setTitle(e.target.value)} className="flex-1" />
-              </div>
-            ) : (
-              <>
-                <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold text-black leading-snug">{title}</h2>
-              </>
-            )}
+              {isEditingImages && (
+                <div className="absolute bottom-16 right-4 bg-white p-4 rounded-lg shadow-xl border z-20 w-80">
+                  <h4 className="font-semibold mb-2 text-sm">Add New Image</h4>
+                  <div className="flex flex-col gap-2">
+                    <label
+                      htmlFor="image-upload"
+                      className="flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md cursor-pointer hover:bg-primary/90 transition-colors"
+                    >
+                      {isUploading ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          <span className="text-sm">Uploading...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="w-4 h-4" />
+                          <span className="text-sm">Choose Image</span>
+                        </>
+                      )}
+                    </label>
+                    <input
+                      id="image-upload"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileUpload}
+                      disabled={isUploading}
+                      className="hidden"
+                    />
+                    <p className="text-xs text-muted-foreground">Max size: 10MB</p>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Current: {currentSlide + 1} of {images.length}
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* Date info */}
-          <div className="space-y-3 text-xs sm:text-sm text-gray-800 py-2">
-            <div className="flex items-center gap-2 sm:gap-3">
-              <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-black" />
-              <p>
-                {new Date(event.startDate || "").toLocaleDateString("en-IN", {
-                  day: "2-digit",
-                  month: "short",
-                  year: "numeric",
-                })}{" "}
-                -{" "}
-                {new Date(event.endDate || "").toLocaleDateString("en-IN", {
-                  day: "2-digit",
-                  month: "short",
-                  year: "numeric",
-                })}
-              </p>
+          {/* Right side - Info with WHITE background (1/3 width) */}
+          <div className="w-full md:w-1/3 bg-white p-4 flex flex-col justify-center">            {/* Title */}
+            <div className="mb-5">
+              {isEditing ? (
+                <div className="flex w-full gap-2">
+                  <Input value={title} onChange={(e) => setTitle(e.target.value)} className="flex-1" />
+                  <Button size="sm" onClick={() => setIsEditing(false)}>Save</Button>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between group">
+                  <h2 className="text-xl sm:text-2xl font-bold text-gray-900 leading-tight">
+                    {title}
+                  </h2>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setIsEditing(true)}
+                    className="opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <Edit2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
             </div>
 
-            <div className="flex items-center gap-2 sm:gap-3">
-              <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-black" />
-              <span>
-                {new Date(event.startDate || "9:00 am").toLocaleTimeString("en-IN", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                  hour12: true,
-                  timeZone: displayTimezone,
-                })}{" "}
-                –{" "}
-                {new Date(event.endDate || "6:00 pm").toLocaleTimeString("en-IN", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                  hour12: true,
-                  timeZone: displayTimezone,
-                })}
-              </span>
-            </div>
+            {/* Event details */}
+            <div className="space-y-3">
+              {/* Date */}
+              <div className="flex items-center gap-3">
+                <div className="flex-shrink-0 w-9 h-9 bg-blue-50 rounded-lg flex items-center justify-center">
+                  <Calendar className="w-4 h-4 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 uppercase mb-0.5">Date</p>
+                  <p className="text-sm text-gray-900 font-medium">
+                    {event.startDate && event.endDate ? (
+                      <>
+                        {new Date(event.startDate).toLocaleDateString("en-IN", {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric",
+                        })}
+                        {" - "}
+                        {new Date(event.endDate).toLocaleDateString("en-IN", {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric",
+                        })}
+                      </>
+                    ) : (
+                      "Date to be announced"
+                    )}
+                  </p>
+                </div>
+              </div>
 
-            <div className="flex items-center gap-2 sm:gap-3">
-              <Ticket className="w-4 h-4 sm:w-5 sm:h-5 text-black" />
-              <span>
-                {formatTicketPriceLine(event.ticketTypes)}
-              </span>
-            </div>
+              {/* Time */}
+              <div className="flex items-center gap-3">
+                <div className="flex-shrink-0 w-9 h-9 bg-blue-50 rounded-lg flex items-center justify-center">
+                  <Clock className="w-4 h-4 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 uppercase mb-0.5">Time</p>
+                  <p className="text-sm text-gray-900 font-medium">
+                    {event.startDate && event.endDate ? (
+                      <>
+                        {new Date(event.startDate).toLocaleTimeString("en-IN", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          hour12: true,
+                          timeZone: displayTimezone,
+                        })}
+                        {" – "}
+                        {new Date(event.endDate).toLocaleTimeString("en-IN", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          hour12: true,
+                          timeZone: displayTimezone,
+                        })}
+                      </>
+                    ) : (
+                      "Time to be announced"
+                    )}
+                  </p>
+                </div>
+              </div>
 
-            <div className="flex items-center gap-2 sm:gap-3">
-              <Users className="w-4 h-4 sm:w-5 sm:h-5 text-black" />
-              <span>{event.leads?.length || 0} Leads</span>
+              {/* Ticket Price */}
+              <div className="flex items-center gap-3">
+                <div className="flex-shrink-0 w-9 h-9 bg-blue-50 rounded-lg flex items-center justify-center">
+                  <Ticket className="w-4 h-4 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 uppercase mb-0.5">Ticket Price</p>
+                  <p className="text-sm text-gray-900 font-medium">
+                    {formatTicketPriceLine(event.ticketTypes)}
+                  </p>
+                </div>
+              </div>
+
+              {/* Leads */}
+              <div className="flex items-center gap-3">
+                <div className="flex-shrink-0 w-9 h-9 bg-blue-50 rounded-lg flex items-center justify-center">
+                  <Users className="w-4 h-4 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 uppercase mb-0.5">Leads</p>
+                  <p className="text-sm text-gray-900 font-medium">
+                    {event.leads?.length || 0} {event.leads?.length === 1 ? 'Lead' : 'Leads'}
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
