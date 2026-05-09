@@ -43,6 +43,24 @@ type PortalUserPayload = {
 /** Same-request cache: signIn runs before jwt; avoids duplicate POST /oauth-sync on cold login. */
 const oauthPortalUserByEmail = new Map<string, PortalUserPayload>()
 
+function resolveOAuthEmail(params: {
+  provider?: string
+  userEmail?: string | null
+  profileEmail?: string | null
+  providerAccountId?: string
+}): string | null {
+  const direct = params.userEmail?.trim() || params.profileEmail?.trim()
+  if (direct) return direct.toLowerCase()
+
+  // LinkedIn apps can be configured without email permission.
+  // Use a deterministic synthetic address so account creation/login still works.
+  if (params.provider === "linkedin" && params.providerAccountId) {
+    return `${params.providerAccountId}@linkedin.oauth.local`
+  }
+
+  return null
+}
+
 async function syncOAuthToBackend(params: {
   email: string
   name?: string | null
@@ -169,12 +187,15 @@ export const authOptions: NextAuthOptions = {
         return true
       }
 
-      const email =
-        user.email?.trim() ||
-        (profile as { email?: string } | undefined)?.email?.trim()
+      const email = resolveOAuthEmail({
+        provider: account.provider,
+        userEmail: user.email,
+        profileEmail: (profile as { email?: string } | undefined)?.email,
+        providerAccountId: account.providerAccountId,
+      })
       if (!email) {
         console.error(
-          "OAuth sign-in rejected: missing email. Enable email scope on the provider app."
+          "OAuth sign-in rejected: missing email and providerAccountId."
         )
         return false
       }
@@ -246,9 +267,12 @@ export const authOptions: NextAuthOptions = {
         account?.provider === "google" || account?.provider === "linkedin"
 
       if (user && account && oauthProvider) {
-        const email =
-          user.email?.trim() ||
-          (profile as { email?: string } | undefined)?.email?.trim()
+        const email = resolveOAuthEmail({
+          provider: account.provider,
+          userEmail: user.email,
+          profileEmail: (profile as { email?: string } | undefined)?.email,
+          providerAccountId: account.providerAccountId,
+        })
 
         if (email) {
           const key = email.toLowerCase()
@@ -361,6 +385,9 @@ export const authOptions: NextAuthOptions = {
           session.user.firstName = token.firstName as string
           session.user.lastName = token.lastName as string
           session.user.avatar = token.avatar as string
+        }
+        if (token.email) {
+          session.user.email = token.email as string
         }
       }
       return session
