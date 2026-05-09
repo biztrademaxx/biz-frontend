@@ -456,7 +456,7 @@ export function EventsSection({ userId }: EventsSectionProps) {
                             {/* Entry Fee */}
                             <div className="grid text-center mt-5 min-w-[80px]">
                               <span className="text-xl font-bold text-pink-500 whitespace-nowrap">
-                                {formatEventEntryFeeDisplay(event.ticketTypes as TicketPriceRow[], event.currency)}
+                                {formatEventEntryFeeDisplay(event.ticketTypes as TicketPriceRow[], '₹')}
                               </span>
                               <span className="text-gray-500 text-sm">Entry Fee</span>
                             </div>
