@@ -28,11 +28,11 @@ interface Event {
   thumbnailImage?: string
   tags: string[]
   timelineStatus?: "upcoming" | "ongoing" | "past"
-  status: "draft" | "published" | "cancelled" | "archived"
+  status: "draft" | "published" | "cancelled" | "archived" | "approved" | "rejected" | "pending"
   attendees?: number
   registrations?: number
-  leads?: number // Add leads count
-  leadCounts?: { // Add lead breakdown
+  leads?: number
+  leadCounts?: {
     ATTENDEE: number
     EXHIBITOR: number
     SPEAKER: number
@@ -118,7 +118,6 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
     setFilteredEvents(filtered)
   }, [events, searchTerm, timelineStatusFilter, publicationStatusFilter, typeFilter])
 
-  // Helper functions for formatting and status labels
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
     return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
@@ -128,6 +127,7 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
     return new Intl.NumberFormat("en-US", { style: "currency", currency }).format(amount)
   }
 
+  // Timeline Status Labels and Colors
   const getTimelineStatusLabel = (status: string) => {
     const labels: Record<string, string> = {
       upcoming: "Upcoming",
@@ -137,33 +137,42 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
     return labels[status] || status
   }
 
-  const getTimelineStatusColor = (status: string): "default" | "destructive" | "outline" | "secondary" => {
-    const colors: Record<string, "default" | "destructive" | "outline" | "secondary"> = {
-      upcoming: "default",
-      ongoing: "secondary",
-      past: "outline",
+  const getTimelineStatusColor = (status: string) => {
+    const colors: Record<string, { bg: string; text: string; border: string }> = {
+      upcoming: { bg: "#EFF6FF", text: "#1D4ED8", border: "#BFDBFE" },
+      ongoing: { bg: "#F0FDF4", text: "#166534", border: "#BBF7D0" },
+      past: { bg: "#F3F4F6", text: "#6B7280", border: "#E5E7EB" },
     }
-    return colors[status] || "default"
+    const color = colors[status] || colors.past
+    return { bg: color.bg, text: color.text, border: color.border }
   }
 
+  // Publication Status Labels and Colors (Approved/Rejected/Pending etc.)
   const getPublicationStatusLabel = (status: string) => {
     const labels: Record<string, string> = {
       draft: "Draft",
       published: "Published",
       cancelled: "Cancelled",
       archived: "Archived",
+      approved: "Approved",
+      rejected: "Rejected",
+      pending: "Pending Review",
     }
     return labels[status] || status
   }
 
-  const getPublicationStatusColor = (status: string): "default" | "destructive" | "outline" | "secondary" => {
-    const colors: Record<string, "default" | "destructive" | "outline" | "secondary"> = {
-      draft: "outline",
-      published: "default",
-      cancelled: "destructive",
-      archived: "secondary",
+  const getPublicationStatusColor = (status: string) => {
+    const colors: Record<string, { bg: string; text: string; border: string }> = {
+      draft: { bg: "#FEF3C7", text: "#92400E", border: "#FDE68A" },
+      published: { bg: "#ECFDF5", text: "#065F46", border: "#A7F3D0" },
+      cancelled: { bg: "#FEF2F2", text: "#991B1B", border: "#FECACA" },
+      archived: { bg: "#F3F4F6", text: "#6B7280", border: "#E5E7EB" },
+      approved: { bg: "#ECFDF5", text: "#065F46", border: "#A7F3D0" },
+      rejected: { bg: "#FEF2F2", text: "#DC2626", border: "#FECACA" },
+      pending: { bg: "#FEF3C7", text: "#D97706", border: "#FDE68A" },
     }
-    return colors[status] || "default"
+    const color = colors[status] || colors.draft
+    return { bg: color.bg, text: color.text, border: color.border }
   }
 
   const getLeadTypeLabel = (type: string) => {
@@ -197,6 +206,14 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
     } else {
       return "past"
     }
+  }
+
+  // Get the best image to display
+  const getEventImage = (event: Event) => {
+    if (event.bannerImage && event.bannerImage !== "") return event.bannerImage
+    if (event.thumbnailImage && event.thumbnailImage !== "") return event.thumbnailImage
+    if (event.images && event.images.length > 0 && event.images[0] !== "") return event.images[0]
+    return defaultImage
   }
 
   return (
@@ -269,86 +286,119 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
       {/* Events List - two cards per row */}
       {!loading && !error && filteredEvents.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {filteredEvents.map((event: any) => (
-            <div
-              key={event.id}
-              onClick={() => router.push(`/event-dashboard/${event.id}`)}
-              className="overflow-hidden hover:shadow-lg transition-shadow w-full cursor-pointer hover:scale-[1.01] duration-200 border-2 rounded-xl"
-            >
-              <div className="flex flex-col md:flex-row">
-                {/* Image on left */}
-                <div className="relative w-full md:w-1/3 h-48">
-                  <Image
-                    src={
-                      event.bannerImage || event.thumbnailImage || "/city/c4.jpg"
-                    }
-                    alt={event.title}
-                    fill
-                    className="m-2 rounded-xl"
-                  />
-                  <div className="absolute top-4 right-4 flex flex-col gap-2">
-                    <Badge variant={getTimelineStatusColor(event.timelineStatus)}>
-                      {getTimelineStatusLabel(event.timelineStatus)}
-                    </Badge>
-                  </div>
-                </div>
+          {filteredEvents.map((event: any) => {
+            const timelineColors = getTimelineStatusColor(event.timelineStatus)
+            const publicationColors = getPublicationStatusColor(event.status)
+            const eventImage = getEventImage(event)
 
-                {/* Content on right */}
-                <CardContent className="p-6 flex-1">
-                  <div className="space-y-3">
-                    <div>
-                      <h3 className="font-semibold text-xl line-clamp-1">{event.title}</h3>
-                      <p className="text-sm text-gray-600 line-clamp-2">{event.description}</p>
+            return (
+              <Card
+                key={event.id}
+                onClick={() => router.push(`/event-dashboard/${event.id}`)}
+                className="overflow-hidden p-0 bg-white border border-gray-200 rounded-2xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer group"
+              >
+                <div className="flex flex-col h-full">
+                  {/* Image Section - Smaller and Full Width */}
+                  <div className="relative w-full h-48 bg-gray-100 overflow-hidden">
+                    <Image
+                      src={eventImage}
+                      alt={event.title}
+                      fill
+                      className="object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+
+                    {/* Overlay Gradient for better text readability */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+
+                    {/* Status Badges Positioned on Image */}
+                    <div className="absolute top-3 right-3 z-10 flex gap-2">
+                      {/* Timeline Status Badge */}
+                      <span
+                        className="px-2.5 py-1 text-xs font-medium rounded-full shadow-sm"
+                        style={{
+                          backgroundColor: timelineColors.bg,
+                          color: timelineColors.text,
+                          border: `1px solid ${timelineColors.border}`,
+                        }}
+                      >
+                        {getTimelineStatusLabel(event.timelineStatus)}
+                      </span>
                     </div>
 
-                    <div className="space-y-2 text-sm text-gray-600">
-                      <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4" />
-                        <span>
-                          {formatDate(event.startDate)} - {formatDate(event.endDate)}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <MapPin className="w-4 h-4" />
-                        <span className="line-clamp-1">
-                          {event.venueAddress || event.location}
-                          {event.city && `, ${event.city}`}
-                        </span>
-                      </div>
-                      
-                      {/* Leads Count Section - Replaced Attendees */}
-                      <div className="flex items-center gap-2">
-                        <TrendingUp className="w-4 h-4 text-green-500" />
-                        <span className="font-medium">{event.leads || 0} leads</span>
-                      </div>
-
-                      {/* Lead Type Breakdown */}
-                      {/* {event.leadCounts && (
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          {Object.entries(event.leadCounts).map(([type, count]) => (
-                            count > 0 && (
-                              <Badge key={type} variant="outline" className="text-xs">
-                                {getLeadTypeLabel(type)}: {count}
-                              </Badge>
-                            )
-                          ))}
-                        </div>
-                      )} */}
-                    </div>
-
-                    <div className="flex items-center justify-between pt-3 border-t">
-                      <Badge variant="outline">
-                        {Array.isArray(event.eventType) && event.eventType.length > 0 ? event.eventType[0] : "Event"}
-                      </Badge>
-                      <Badge variant={getPublicationStatusColor(event.status)}>
+                    {/* Publication Status Badge - Bottom Left */}
+                    <div className="absolute bottom-3 left-3 z-10">
+                      <span
+                        className="px-2.5 py-1 text-xs font-medium rounded-full shadow-sm"
+                        style={{
+                          backgroundColor: publicationColors.bg,
+                          color: publicationColors.text,
+                          border: `1px solid ${publicationColors.border}`,
+                        }}
+                      >
                         {getPublicationStatusLabel(event.status)}
-                      </Badge>
+                      </span>
                     </div>
                   </div>
-                </CardContent>
-              </div>
-            </div>
-          ))}
+
+                  {/* Content Section */}
+                  <CardContent className="flex-1 p-5 bg-white">
+                    <div className="flex flex-col justify-between h-full">
+                      <div className="space-y-3">
+                        {/* Title */}
+                        <h3 className="font-bold text-lg text-gray-900 line-clamp-1 hover:text-blue-600 transition-colors">
+                          {event.title}
+                        </h3>
+
+                        {/* Description */}
+                        <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed">
+                          {event.description}
+                        </p>
+
+                        {/* Event Details */}
+                        <div className="space-y-2 text-sm text-gray-600">
+                          <div className="flex items-center gap-2">
+                            <Calendar className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                            <span className="text-xs">
+                              {formatDate(event.startDate)} - {formatDate(event.endDate)}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <MapPin className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                            <span className="text-xs line-clamp-1">
+                              {event.venueAddress || event.location}
+                              {event.city && `, ${event.city}`}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <TrendingUp className="w-4 h-4 text-green-500 flex-shrink-0" />
+                            <span className="text-xs font-medium text-gray-800">
+                              {event.leads || 0} leads
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Bottom Badges */}
+                      <div className="flex items-center justify-between pt-4 mt-4 border-t border-gray-100">
+                        <span className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded-full">
+                          {Array.isArray(event.eventType) && event.eventType.length > 0
+                            ? event.eventType[0]
+                            : "Event"}
+                        </span>
+
+                        {/* View Details Link */}
+                        <span className="text-xs text-blue-600 hover:text-blue-700 font-medium">
+                          View Details →
+                        </span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </div>
+              </Card>
+            )
+          })}
         </div>
       )}
     </div>

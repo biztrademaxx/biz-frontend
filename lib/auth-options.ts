@@ -1,15 +1,13 @@
-// lib/auth-options.ts — OAuth only (Google, LinkedIn). API auth uses backend JWT.
+// lib/auth-options.ts — OAuth (Google, LinkedIn) via NextAuth; portal users live on Express/PostgreSQL.
 import GoogleProvider from "next-auth/providers/google"
 import LinkedInProvider from "next-auth/providers/linkedin"
 import type { NextAuthOptions } from "next-auth"
 import bcrypt from "bcryptjs"
 
-// Import Prisma (legacy Mongo client; may be null if DATABASE_URL is not set)
 import { prisma } from "@/lib/prisma"
 
 const providers: NextAuthOptions["providers"] = []
 
-// Only enable Google if env vars are present (otherwise production will 500)
 if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
   providers.push(
     GoogleProvider({
@@ -19,7 +17,6 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
   )
 }
 
-// Only enable LinkedIn if env vars are present
 if (process.env.LINKEDIN_CLIENT_ID && process.env.LINKEDIN_CLIENT_SECRET) {
   providers.push(
     LinkedInProvider({
@@ -29,7 +26,81 @@ if (process.env.LINKEDIN_CLIENT_ID && process.env.LINKEDIN_CLIENT_SECRET) {
   )
 }
 
-// Safe Prisma wrapper
+function backendApiOrigin(): string {
+  const t = process.env.NEXT_PUBLIC_API_URL?.trim().replace(/\/$/, "")
+  return t || "http://localhost:4000"
+}
+
+type PortalUserPayload = {
+  sub: string
+  email: string
+  role: string
+  firstName?: string
+  lastName?: string
+  avatar?: string
+}
+
+/** Same-request cache: signIn runs before jwt; avoids duplicate POST /oauth-sync on cold login. */
+const oauthPortalUserByEmail = new Map<string, PortalUserPayload>()
+
+function resolveOAuthEmail(params: {
+  provider?: string
+  userEmail?: string | null
+  profileEmail?: string | null
+  providerAccountId?: string
+}): string | null {
+  const direct = params.userEmail?.trim() || params.profileEmail?.trim()
+  if (direct) return direct.toLowerCase()
+
+  // LinkedIn apps can be configured without email permission.
+  // Use a deterministic synthetic address so account creation/login still works.
+  if (params.provider === "linkedin" && params.providerAccountId) {
+    return `${params.providerAccountId}@linkedin.oauth.local`
+  }
+
+  return null
+}
+
+async function syncOAuthToBackend(params: {
+  email: string
+  name?: string | null
+  image?: string | null
+  provider: string
+}): Promise<{ ok: boolean; portalUser?: PortalUserPayload }> {
+  const syncSecret = process.env.OAUTH_SYNC_SECRET
+  if (!syncSecret) {
+    return { ok: false }
+  }
+
+  try {
+    const res = await fetch(`${backendApiOrigin()}/api/auth/oauth-sync`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-OAuth-Sync-Secret": syncSecret,
+      },
+      body: JSON.stringify({
+        email: params.email,
+        name: params.name,
+        image: params.image,
+        provider: params.provider,
+      }),
+    })
+
+    if (!res.ok) {
+      const text = await res.text().catch(() => "")
+      console.error("OAuth backend sync failed:", res.status, text)
+      return { ok: false }
+    }
+
+    const data = (await res.json()) as { user: PortalUserPayload }
+    return { ok: true, portalUser: data.user }
+  } catch (err) {
+    console.error("OAuth backend sync error:", err)
+    return { ok: false }
+  }
+}
+
 const safePrisma = {
   superAdmin: {
     findUnique: async (args: any) => {
@@ -49,7 +120,7 @@ const safePrisma = {
         console.error("Error in superAdmin.update:", error)
         return null
       }
-    }
+    },
   },
   subAdmin: {
     findUnique: async (args: any) => {
@@ -69,7 +140,7 @@ const safePrisma = {
         console.error("Error in subAdmin.update:", error)
         return null
       }
-    }
+    },
   },
   user: {
     findUnique: async (args: any) => {
@@ -98,8 +169,8 @@ const safePrisma = {
         console.error("Error in user.update:", error)
         return null
       }
-    }
-  }
+    },
+  },
 }
 
 export const authOptions: NextAuthOptions = {
@@ -112,51 +183,138 @@ export const authOptions: NextAuthOptions = {
   },
   callbacks: {
     async signIn({ user, account, profile }) {
-      if (account?.provider === "google" || account?.provider === "linkedin") {
-        try {
-          const existingUser = await safePrisma.user.findUnique({
-            where: { email: user.email! },
-          });
-
-          // If user doesn't exist → create new user in DB
-          if (!existingUser) {
-            await safePrisma.user.create({
-              data: {
-                email: user.email!,
-                firstName: user.name?.split(" ")[0] || "User",
-                lastName: user.name?.split(" ")[1] || "",
-                avatar: user.image,
-                role: "ATTENDEE",
-                isVerified: true,
-                emailVerified: true,
-                password: await bcrypt.hash(Math.random().toString(36) + Date.now().toString(), 12),
-              },
-            });
-          } else {
-            // Update existing user
-            await safePrisma.user.update({
-              where: { email: user.email! },
-              data: {
-                avatar: user.image,
-                firstName: user.name?.split(" ")[0] || existingUser.firstName,
-                lastName: user.name?.split(" ")[1] || existingUser.lastName,
-              },
-            });
-          }
-        } catch (err) {
-          console.error("Error saving OAuth user:", err);
-          return false;
-        }
+      if (account?.provider !== "google" && account?.provider !== "linkedin") {
+        return true
       }
 
-      return true;
+      const email = resolveOAuthEmail({
+        provider: account.provider,
+        userEmail: user.email,
+        profileEmail: (profile as { email?: string } | undefined)?.email,
+        providerAccountId: account.providerAccountId,
+      })
+      if (!email) {
+        console.error(
+          "OAuth sign-in rejected: missing email and providerAccountId."
+        )
+        return false
+      }
+
+      const key = email.toLowerCase()
+      const synced = await syncOAuthToBackend({
+        email,
+        name: user.name,
+        image: user.image,
+        provider: account.provider ?? "oauth",
+      })
+
+      if (synced.ok && synced.portalUser) {
+        oauthPortalUserByEmail.set(key, synced.portalUser)
+        return true
+      }
+
+      if (process.env.OAUTH_SYNC_SECRET) {
+        return false
+      }
+
+      if (!prisma?.user) {
+        console.error(
+          "OAuth: set OAUTH_SYNC_SECRET on frontend + backend, or DATABASE_URL for legacy Mongo."
+        )
+        return false
+      }
+
+      try {
+        const existingUser = await safePrisma.user.findUnique({
+          where: { email },
+        })
+
+        if (!existingUser) {
+          await safePrisma.user.create({
+            data: {
+              email,
+              firstName: user.name?.split(" ")[0] || "User",
+              lastName: user.name?.split(" ")[1] || "",
+              avatar: user.image ?? undefined,
+              role: "ATTENDEE",
+              isVerified: true,
+              emailVerified: true,
+              password: await bcrypt.hash(
+                Math.random().toString(36) + Date.now().toString(),
+                12
+              ),
+            },
+          })
+        } else {
+          await safePrisma.user.update({
+            where: { email },
+            data: {
+              avatar: user.image,
+              firstName: user.name?.split(" ")[0] || existingUser.firstName,
+              lastName: user.name?.split(" ")[1] || existingUser.lastName,
+            },
+          })
+        }
+        return true
+      } catch (err) {
+        console.error("Error saving OAuth user (legacy Prisma):", err)
+        return false
+      }
     },
 
-    async jwt({ token, user, account }) {
-      // When user first signs in
-      if (user) {
+    async jwt({ token, user, account, profile }) {
+      const oauthProvider =
+        account?.provider === "google" || account?.provider === "linkedin"
+
+      if (user && account && oauthProvider) {
+        const email = resolveOAuthEmail({
+          provider: account.provider,
+          userEmail: user.email,
+          profileEmail: (profile as { email?: string } | undefined)?.email,
+          providerAccountId: account.providerAccountId,
+        })
+
+        if (email) {
+          const key = email.toLowerCase()
+          let portal = oauthPortalUserByEmail.get(key)
+          if (portal) {
+            oauthPortalUserByEmail.delete(key)
+          } else if (process.env.OAUTH_SYNC_SECRET) {
+            const again = await syncOAuthToBackend({
+              email,
+              name: user.name,
+              image: user.image,
+              provider: account.provider ?? "oauth",
+            })
+            if (again.ok && again.portalUser) {
+              portal = again.portalUser
+            }
+          }
+
+          if (portal) {
+            token.id = portal.sub
+            token.role = portal.role
+            token.email = portal.email
+            token.firstName = portal.firstName
+            token.lastName = portal.lastName
+            token.avatar = portal.avatar ?? undefined
+          } else if (prisma?.user) {
+            const row = await safePrisma.user.findUnique({
+              where: { email },
+            })
+            if (row) {
+              token.id = row.id
+              token.role = row.role
+              token.email = row.email ?? email
+              token.firstName = row.firstName
+              token.lastName = row.lastName
+              token.avatar = row.avatar ?? undefined
+            }
+          }
+        }
+      } else if (user) {
         token.id = user.id
-        token.role = user.role
+        token.role = user.role as string
 
         if ("adminType" in user && user.adminType) {
           token.adminType = user.adminType
@@ -172,11 +330,9 @@ export const authOptions: NextAuthOptions = {
         }
       }
 
-      // For existing sessions, refresh from database
       if (token.email) {
-        // Check all user types
         const superAdmin = await safePrisma.superAdmin.findUnique({
-          where: { email: token.email },
+          where: { email: token.email as string },
         })
 
         if (superAdmin) {
@@ -188,7 +344,7 @@ export const authOptions: NextAuthOptions = {
         }
 
         const subAdmin = await safePrisma.subAdmin.findUnique({
-          where: { email: token.email },
+          where: { email: token.email as string },
         })
 
         if (subAdmin) {
@@ -200,7 +356,7 @@ export const authOptions: NextAuthOptions = {
         }
 
         const regularUser = await safePrisma.user.findUnique({
-          where: { email: token.email },
+          where: { email: token.email as string },
         })
 
         if (regularUser) {
@@ -219,16 +375,19 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         session.user.id = token.id as string
         session.user.role = token.role as string
-        
+
         if (token.adminType) {
           session.user.adminType = token.adminType as "SUPER_ADMIN" | "SUB_ADMIN"
           session.user.permissions = token.permissions as string[]
         }
-        
+
         if (token.firstName) {
           session.user.firstName = token.firstName as string
           session.user.lastName = token.lastName as string
           session.user.avatar = token.avatar as string
+        }
+        if (token.email) {
+          session.user.email = token.email as string
         }
       }
       return session

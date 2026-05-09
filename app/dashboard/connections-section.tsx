@@ -240,7 +240,7 @@ export function ConnectionsSection({ userId: _userId }: ConnectionsSectionProps)
       </div>
 
       {showFindPeople ? (
-        <Card className="border border-gray-200">
+        <Card className="border border-[#F5F4F0]">
           <CardContent className="p-6">
             <h3 className="font-medium text-gray-900 mb-4">Find people to connect with</h3>
             <div className="relative max-w-md mb-6">
@@ -298,7 +298,7 @@ export function ConnectionsSection({ userId: _userId }: ConnectionsSectionProps)
         </Card>
       ) : (
         <>
-          <div className="flex border-b border-gray-200 gap-1">
+          <div className="flex border-b border-[#F0F0F0] gap-1">
             <button
               type="button"
               onClick={() => setActiveTab("connected")}
@@ -336,7 +336,7 @@ export function ConnectionsSection({ userId: _userId }: ConnectionsSectionProps)
             </button>
           </div>
 
-          <Card className="border border-gray-200 rounded-t-none">
+          <div className="bg-[#F5F4F0]">
             <CardContent className="p-6">
               {filteredList.length > 0 ? (
                 <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -435,7 +435,7 @@ export function ConnectionsSection({ userId: _userId }: ConnectionsSectionProps)
                 </div>
               )}
             </CardContent>
-          </Card>
+          </div>
         </>
       )}
     </div>

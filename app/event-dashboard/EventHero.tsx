@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { Calendar, Clock, Ticket, Users, Trash2, Upload } from "lucide-react"
+import { Calendar, Clock, Ticket, Users, Trash2, Upload, Edit2 } from "lucide-react"
 import { useKeenSlider } from "keen-slider/react"
 import "keen-slider/keen-slider.min.css"
 import Image from "next/image"
@@ -11,7 +11,6 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
 import { apiFetch } from "@/lib/api"
-import { formatPublicTicketPriceLine } from "@/lib/ticket-price-display"
 
 interface Event {
   id: string
@@ -26,7 +25,7 @@ interface Event {
   description: string
   shortDescription: string
   leads: string[]
-  ticketTypes: string[]
+  ticketTypes: any[]
   location: {
     city: string
     venue: string
@@ -44,6 +43,32 @@ interface EventHeroProps {
   onImagesUpdate?: (images: string[]) => void
 }
 
+// Helper function to format ticket price display
+const formatTicketPriceLine = (ticketTypes: any[]): string => {
+  if (!ticketTypes || ticketTypes.length === 0) {
+    return "Free Entry"
+  }
+
+  if (typeof ticketTypes[0] === "string") {
+    return "Contact for Pricing"
+  }
+
+  const prices = ticketTypes
+    .filter(ticket => ticket.price !== undefined && ticket.price !== null)
+    .map(ticket => ticket.price)
+
+  if (prices.length === 0) {
+    return "Free Entry"
+  }
+
+  const minPrice = Math.min(...prices)
+  const maxPrice = Math.max(...prices)
+
+  if (minPrice === maxPrice) {
+    return `AED ${minPrice}`
+  }
+  return `₹${minPrice} - ₹${maxPrice}`}
+
 export default function EventHero({ event, onImagesUpdate }: EventHeroProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [title, setTitle] = useState(event.title)
@@ -53,6 +78,7 @@ export default function EventHero({ event, onImagesUpdate }: EventHeroProps) {
   const [currentSlide, setCurrentSlide] = useState(0)
   const { toast } = useToast()
   const [newImageUrl, setNewImageUrl] = useState("")
+
   const normalizeTimezone = (tz?: string, countryHint?: string) => {
     const country = String(countryHint || "").trim().toLowerCase()
     if (country.includes("india")) return "Asia/Kolkata"
@@ -60,17 +86,11 @@ export default function EventHero({ event, onImagesUpdate }: EventHeroProps) {
     if (tz === "Indian/Chagos" && country.includes("india")) return "Asia/Kolkata"
     return tz
   }
+
   const displayTimezone = normalizeTimezone(
     event.timezone,
     (event as any)?.country || event.location?.country || (event as any)?.venue?.venueCountry,
   )
-
-  const formatDate = (dateString: string) =>
-    new Date(dateString).toLocaleDateString("en-GB", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    })
 
   const [sliderRef, instanceRef] = useKeenSlider<HTMLDivElement>({
     loop: true,
@@ -133,7 +153,6 @@ export default function EventHero({ event, onImagesUpdate }: EventHeroProps) {
     const file = e.target.files?.[0]
     if (!file) return
 
-    // Validate file type
     if (!file.type.startsWith("image/")) {
       toast({
         title: "Error",
@@ -143,7 +162,6 @@ export default function EventHero({ event, onImagesUpdate }: EventHeroProps) {
       return
     }
 
-    // Backend image limit 10MB
     if (file.size > 10 * 1024 * 1024) {
       toast({
         title: "Error",
@@ -159,7 +177,6 @@ export default function EventHero({ event, onImagesUpdate }: EventHeroProps) {
       const formData = new FormData()
       formData.append("file", file)
 
-      // Backend `POST /api/upload/cloudinary` (Bearer JWT) — not Next.js :3000 route (NextAuth session)
       const uploadData = await apiFetch<{ url?: string }>("/api/upload/cloudinary", {
         method: "POST",
         body: formData,
@@ -192,7 +209,6 @@ export default function EventHero({ event, onImagesUpdate }: EventHeroProps) {
       })
     } finally {
       setIsUploading(false)
-      // Reset file input
       e.target.value = ""
     }
   }
@@ -235,170 +251,216 @@ export default function EventHero({ event, onImagesUpdate }: EventHeroProps) {
   }
 
   return (
-    <div>
-      {/* Background Image */}
-      <div className="relative h-[200px] md:h-[300px] lg:h-[400px]">
-        <img src={"/banners/banner1.jpg"} alt={event.title} className="w-full h-full object-cover" />
-      </div>
+    <div className="w-full px-4 sm:px-6 lg:px-8">
+      <div className="w-full max-w-7xl mx-auto">
+        {/* Flex container - no gap, full width */}
+        <div className="flex flex-col md:flex-row w-full rounded-xl overflow-hidden shadow-lg">
 
-      {/* Content */}
-      <div className="relative w-full max-w-6xl mx-auto  rounded-lg overflow-hidden shadow-md flex flex-col md:flex-row mt-[-100px] sm:mt-[-120px] md:mt-[-150px] z-10 left-1/2 -translate-x-1/2">
-        {/* Slider */}
-        <div className="md:w-2/3 w-full h-[220px] sm:h-[280px] md:h-[320px] lg:h-[400px] relative">
-          <div ref={sliderRef} className="keen-slider h-full w-full">
-            {images.length > 0 ? (
-              <>
-                {images.map((img, index) => (
-                  <div key={`image-${index}`} className="keen-slider__slide relative h-full w-full">
-                    <Image
-                      src={img || "/city/c4.jpg"}
-                      alt={`${event.title} Image ${index + 1}`}
-                      fill
-                      className=""
-                    />
+          {/* Left side - Slider (2/3 width) */}
+          <div className="w-full md:w-2/3 relative bg-gray-100">
+            <div className="relative h-[260px] md:h-[320px] w-full">
+              <div ref={sliderRef} className="keen-slider h-full w-full">
+                {images.length > 0 ? (
+                  <>
+                    {images.map((img, index) => (
+                      <div key={`image-${index}`} className="keen-slider__slide relative h-full w-full">
+                        <Image
+                          src={img || "/herosection-images/test.jpeg"}
+                          alt={`${event.title} Image ${index + 1}`}
+                          fill
+                          className="object-cover"
+                          priority={index === 0}
+                        />
+                      </div>
+                    ))}
+
+                    {event.videos?.map((vid: string, index: number) => (
+                      <div key={`video-${index}`} className="keen-slider__slide relative h-full w-full">
+                        <video className="w-full h-full object-cover" autoPlay loop muted playsInline>
+                          <source src={vid} type="video/mp4" />
+                        </video>
+                      </div>
+                    ))}
+                  </>
+                ) : (
+                  <div className="keen-slider__slide relative h-full w-full">
+                    <Image src="/herosection-images/test.jpeg" alt="Default Image" fill className="object-cover" />
                   </div>
-                ))}
-
-                {event.videos?.map((vid: string, index: number) => (
-                  <div key={`video-${index}`} className="keen-slider__slide relative h-full w-full">
-                    <video className="w-full h-full object-cover" autoPlay loop muted playsInline>
-                      <source src={vid} type="video/mp4" />
-                    </video>
-                  </div>
-                ))}
-              </>
-            ) : (
-              <div className="keen-slider__slide relative h-full w-full">
-                <Image src="/herosection-images/test.jpeg" alt="Default Image" fill className="object-cover" />
-              </div>
-            )}
-          </div>
-
-          {/* Image editing controls overlay */}
-          {isEditingImages && (
-            <div className="absolute top-4 right-4 flex gap-2 z-20">
-              <Button size="sm" variant="destructive" onClick={handleDeleteImage} className="shadow-lg">
-                <Trash2 className="w-4 h-4 mr-2" />
-                Delete Current
-              </Button>
-            </div>
-          )}
-
-          {/* Toggle edit mode button */}
-          <div className="absolute bottom-4 right-4 z-20 pl-2">
-            <Button
-              size="sm"
-              variant={isEditingImages ? "default" : "secondary"}
-              onClick={() => setIsEditingImages(!isEditingImages)}
-              className="shadow-lg mx-4"
-            >
-              <Upload className="w-4 h-4 mr-2" />
-              {isEditingImages ? "Done" : "Edit Images"}
-            </Button>
-          </div>
-
-          {isEditingImages && (
-            <div className="absolute bottom-16 right-4 bg-white p-4 rounded-lg shadow-xl border z-20 w-80">
-              <h4 className="font-semibold mb-2 text-sm">Add New Image</h4>
-              <div className="flex flex-col gap-2">
-                <label
-                  htmlFor="image-upload"
-                  className="flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md cursor-pointer hover:bg-primary/90 transition-colors"
-                >
-                  {isUploading ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      <span className="text-sm">Uploading...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Upload className="w-4 h-4" />
-                      <span className="text-sm">Choose Image</span>
-                    </>
-                  )}
-                </label>
-                <input
-                  id="image-upload"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileUpload}
-                  disabled={isUploading}
-                  className="hidden"
-                />
-                <p className="text-xs text-muted-foreground">Max size: 5MB</p>
-              </div>
-              <p className="text-xs text-muted-foreground mt-2">
-                Current: {currentSlide + 1} of {images.length}
-              </p>
-            </div>
-          )}
-        </div>
-
-        {/* Info */}
-        <div className="md:w-1/3 w-full bg-blue-50 p-4 sm:p-6  flex flex-col justify-center space-y-3">
-          {/* Title with edit option */}
-          <div className="flex items-center justify-between">
-            {isEditing ? (
-              <div className="flex w-full gap-2">
-                <Input value={title} onChange={(e) => setTitle(e.target.value)} className="flex-1" />
-              </div>
-            ) : (
-              <>
-                <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold text-black leading-snug">{title}</h2>
-              </>
-            )}
-          </div>
-
-          {/* Date info */}
-          <div className="space-y-3 text-xs sm:text-sm text-gray-800 py-2">
-            <div className="flex items-center gap-2 sm:gap-3">
-              <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-black" />
-              <p>
-                {new Date(event.startDate || "").toLocaleDateString("en-IN", {
-                  day: "2-digit",
-                  month: "short",
-                  year: "numeric",
-                })}{" "}
-                -{" "}
-                {new Date(event.endDate || "").toLocaleDateString("en-IN", {
-                  day: "2-digit",
-                  month: "short",
-                  year: "numeric",
-                })}
-              </p>
-            </div>
-
-            <div className="flex items-center gap-2 sm:gap-3">
-              <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-black" />
-              <span>
-                {new Date(event.startDate || "9:00 am").toLocaleTimeString("en-IN", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                  hour12: true,
-                  timeZone: displayTimezone,
-                })}{" "}
-                –{" "}
-                {new Date(event.endDate || "6:00 pm").toLocaleTimeString("en-IN", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                  hour12: true,
-                  timeZone: displayTimezone,
-                })}
-              </span>
-
-            </div>
-            <div className="flex items-center gap-2 sm:gap-3">
-              <Ticket className="w-4 h-4 sm:w-5 sm:h-5 text-black" />
-              <span>
-                {formatPublicTicketPriceLine(
-                  Array.isArray(event.ticketTypes) ? event.ticketTypes : [],
                 )}
-              </span>
+              </div>
+
+              {/* Image editing controls */}
+              {isEditingImages && (
+                <div className="absolute top-4 right-4 flex gap-2 z-20">
+                  <Button size="sm" variant="destructive" onClick={handleDeleteImage} className="shadow-lg">
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Delete
+                  </Button>
+                </div>
+              )}
+
+              <div className="absolute bottom-4 right-4 z-20">
+                <Button
+                  size="sm"
+                  variant={isEditingImages ? "default" : "secondary"}
+                  onClick={() => setIsEditingImages(!isEditingImages)}
+                  className="shadow-lg"
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  {isEditingImages ? "Done" : "Edit Images"}
+                </Button>
+              </div>
+
+              {isEditingImages && (
+                <div className="absolute bottom-16 right-4 bg-white p-4 rounded-lg shadow-xl border z-20 w-80">
+                  <h4 className="font-semibold mb-2 text-sm">Add New Image</h4>
+                  <div className="flex flex-col gap-2">
+                    <label
+                      htmlFor="image-upload"
+                      className="flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md cursor-pointer hover:bg-primary/90 transition-colors"
+                    >
+                      {isUploading ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          <span className="text-sm">Uploading...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="w-4 h-4" />
+                          <span className="text-sm">Choose Image</span>
+                        </>
+                      )}
+                    </label>
+                    <input
+                      id="image-upload"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileUpload}
+                      disabled={isUploading}
+                      className="hidden"
+                    />
+                    <p className="text-xs text-muted-foreground">Max size: 10MB</p>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Current: {currentSlide + 1} of {images.length}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Right side - Info with WHITE background (1/3 width) */}
+          <div className="w-full md:w-1/3 bg-white p-4 flex flex-col justify-center">            {/* Title */}
+            <div className="mb-5">
+              {isEditing ? (
+                <div className="flex w-full gap-2">
+                  <Input value={title} onChange={(e) => setTitle(e.target.value)} className="flex-1" />
+                  <Button size="sm" onClick={() => setIsEditing(false)}>Save</Button>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between group">
+                  <h2 className="text-xl sm:text-2xl font-bold text-gray-900 leading-tight">
+                    {title}
+                  </h2>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setIsEditing(true)}
+                    className="opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <Edit2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
             </div>
 
-            <div className="flex items-center gap-2 sm:gap-3">
-              <Users className="w-4 h-4 sm:w-5 sm:h-5 text-black" />
-              <span>{event.leads?.length || 0} Leads</span>
+            {/* Event details */}
+            <div className="space-y-3">
+              {/* Date */}
+              <div className="flex items-center gap-3">
+                <div className="flex-shrink-0 w-9 h-9 bg-blue-50 rounded-lg flex items-center justify-center">
+                  <Calendar className="w-4 h-4 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 uppercase mb-0.5">Date</p>
+                  <p className="text-sm text-gray-900 font-medium">
+                    {event.startDate && event.endDate ? (
+                      <>
+                        {new Date(event.startDate).toLocaleDateString("en-IN", {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric",
+                        })}
+                        {" - "}
+                        {new Date(event.endDate).toLocaleDateString("en-IN", {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric",
+                        })}
+                      </>
+                    ) : (
+                      "Date to be announced"
+                    )}
+                  </p>
+                </div>
+              </div>
+
+              {/* Time */}
+              <div className="flex items-center gap-3">
+                <div className="flex-shrink-0 w-9 h-9 bg-blue-50 rounded-lg flex items-center justify-center">
+                  <Clock className="w-4 h-4 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 uppercase mb-0.5">Time</p>
+                  <p className="text-sm text-gray-900 font-medium">
+                    {event.startDate && event.endDate ? (
+                      <>
+                        {new Date(event.startDate).toLocaleTimeString("en-IN", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          hour12: true,
+                          timeZone: displayTimezone,
+                        })}
+                        {" – "}
+                        {new Date(event.endDate).toLocaleTimeString("en-IN", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          hour12: true,
+                          timeZone: displayTimezone,
+                        })}
+                      </>
+                    ) : (
+                      "Time to be announced"
+                    )}
+                  </p>
+                </div>
+              </div>
+
+              {/* Ticket Price */}
+              <div className="flex items-center gap-3">
+                <div className="flex-shrink-0 w-9 h-9 bg-blue-50 rounded-lg flex items-center justify-center">
+                  <Ticket className="w-4 h-4 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 uppercase mb-0.5">Ticket Price</p>
+                  <p className="text-sm text-gray-900 font-medium">
+                    {formatTicketPriceLine(event.ticketTypes)}
+                  </p>
+                </div>
+              </div>
+
+              {/* Leads */}
+              <div className="flex items-center gap-3">
+                <div className="flex-shrink-0 w-9 h-9 bg-blue-50 rounded-lg flex items-center justify-center">
+                  <Users className="w-4 h-4 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 uppercase mb-0.5">Leads</p>
+                  <p className="text-sm text-gray-900 font-medium">
+                    {event.leads?.length || 0} {event.leads?.length === 1 ? 'Lead' : 'Leads'}
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </div>

@@ -314,7 +314,7 @@ export default function EventPromotion({ eventId }: { eventId: string }) {
       </div>
 
       {/* Promotion Packages */}
-      <Card>
+      <Card className="bg-[#F5F4F0] border-none shadow-none">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Megaphone className="w-5 h-5" />
@@ -335,9 +335,10 @@ export default function EventPromotion({ eventId }: { eventId: string }) {
               {promotionPackages.map((pkg) => (
                 <div
                   key={pkg.id}
-                  className={`relative p-6 border-2 rounded-lg ${
-                    pkg.recommended ? "border-blue-500 bg-blue-50" : "border-gray-200"
-                  }`}
+                  className={`relative p-6 border-2 rounded-lg ${pkg.recommended
+                      ? "border-blue-500"
+                      : "border-gray-200"
+                    } bg-white`}
                 >
                   {pkg.recommended && (
                     <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
@@ -348,7 +349,7 @@ export default function EventPromotion({ eventId }: { eventId: string }) {
                     </div>
                   )}
 
-                  <div className="text-center mb-4">
+                  <div className="bg-white rounded-xl p-4 text-center mb-4">
                     <h3 className="text-xl font-bold">{pkg.name}</h3>
                     <p className="text-sm text-gray-600 mt-1">{pkg.description}</p>
                     <div className="mt-3">
@@ -404,14 +405,14 @@ export default function EventPromotion({ eventId }: { eventId: string }) {
               : "Select a promotion package first to see its categories."}
           </p>
         </CardHeader>
-        <CardContent>
+        <CardContent className="bg-white">
           {!selectedPackageData ? (
             <div className="text-sm text-gray-500">No package selected.</div>
           ) : displayedCategories.length === 0 ? (
             <div className="text-sm text-gray-500">No categories configured for this package.</div>
           ) : (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 bg-white">
                 {displayedCategories.map((category) => (
                   <div
                     key={category.id}
