@@ -1465,64 +1465,77 @@ export default function EventPageContent({ event, session: _session, router, toa
             <Card className="gap-0 p-0 overflow-hidden rounded-sm border border-gray-200 shadow-sm">
               {sidebarBanner?.imageUrl ? (
                 sidebarBanner.link?.trim() ? (
-                  <a
-                    href={sidebarBanner.link.trim()}
-                    target={sidebarBanner.link.startsWith("http") ? "_blank" : "_self"}
-                    rel={sidebarBanner.link.startsWith("http") ? "noopener noreferrer" : undefined}
-                  >
-                    <div className="relative h-52 w-full">
-                      <Image
-                        src={sidebarBanner.imageUrl}
-                        alt={sidebarBanner.title || "Event sidebar banner"}
-                        fill
-                        sizes="(max-width: 1024px) 100vw, 380px"
-                        className="absolute inset-0 h-full w-full object-cover"
-                      />
-                      {sidebarBanner.title?.trim() ? (
-                        <>
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                          <div className="absolute bottom-3 left-3 right-3">
-                            <p className="line-clamp-2 text-sm font-semibold text-white drop-shadow-sm">
-                              {sidebarBanner.title.trim()}
-                            </p>
-                          </div>
-                        </>
-                      ) : null}
+<a
+                  href = { sidebarBanner.link.trim() }
+        target={sidebarBanner.link.startsWith("http") ? "_blank" : "_self"}
+              rel={sidebarBanner.link.startsWith("http") ? "noopener noreferrer" : undefined}
+              className="block"
+      >
+              <div className="relative h-52 w-full overflow-hidden bg-gray-50">
+                <Image
+                  src={sidebarBanner.imageUrl}
+                  alt={sidebarBanner.title || "Event sidebar banner"}
+                  fill
+                  sizes="(max-width: 1024px) 90vw, 480px"
+                  className="object-cover p-2 rounded-lg"
+                  // onLoadingComplete={(imgEl) => {
+                  //   const ratio = imgEl.naturalWidth / imgEl.naturalHeight
+                  //   imgEl.style.objectFit = ratio > 2 ? "contain" : "cover"
+                  // }}
+                />
+                {sidebarBanner.title?.trim() ? (
+                  <>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                    <div className="absolute bottom-3 left-3 right-3">
+                      <p className="line-clamp-2 text-sm font-semibold text-white drop-shadow-sm">
+                        {sidebarBanner.title.trim()}
+                      </p>
                     </div>
-                  </a>
-                ) : (
-                  <div className="relative h-52 w-full">
-                    <Image
-                      src={sidebarBanner.imageUrl}
-                      alt={sidebarBanner.title || "Event sidebar banner"}
-                      fill
-                      sizes="(max-width: 1024px) 100vw, 380px"
-                        className="absolute inset-0 h-full w-full object-cover"
-                    />
-                    {sidebarBanner.title?.trim() ? (
-                      <>
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                        <div className="absolute bottom-3 left-3 right-3">
-                          <p className="line-clamp-2 text-sm font-semibold text-white drop-shadow-sm">
-                            {sidebarBanner.title.trim()}
-                          </p>
-                        </div>
-                      </>
-                    ) : null}
+                  </>
+                ) : null}
+              </div>
+            </a>
+            ) : (
+            <div className="relative h-52 w-full overflow-hidden bg-gray-50">
+              <Image
+                src={sidebarBanner.imageUrl}
+                alt={sidebarBanner.title || "Event sidebar banner"}
+                fill
+                sizes="(max-width: 1024px) 90vw, 480px"
+                className="object-cover p-2 rounded-lg"
+                // onLoadingComplete={(imgEl) => {
+                //   const ratio = imgEl.naturalWidth / imgEl.naturalHeight
+                //   imgEl.style.objectFit = ratio > 2 ? "contain" : "cover"
+                // }}
+              />
+              {sidebarBanner.title?.trim() ? (
+                <>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                  <div className="absolute bottom-3 left-3 right-3">
+                    <p className="line-clamp-2 text-sm font-semibold text-white drop-shadow-sm">
+                      {sidebarBanner.title.trim()}
+                    </p>
                   </div>
-                )
-              ) : (
-                <div className="relative h-52 w-full">
-                  <Image
-                    src="/banners/banner1.jpg"
-                    alt="Event sidebar banner"
-                    fill
-                    sizes="(max-width: 1024px) 100vw, 380px"
-                    className="absolute inset-0 h-full w-full object-cover"
-                  />
-                </div>
-              )}
-            </Card>
+                </>
+              ) : null}
+            </div>
+            )
+            ) : (
+            <div className="relative h-52 w-full overflow-hidden bg-gray-50">
+              <Image
+                src="/banners/banner1.jpg"
+                alt="Event sidebar banner"
+                fill
+                sizes="(max-width: 1024px) 90vw, 480px"
+                className="object-container p-2 rounded-lg"
+                // onLoadingComplete={(imgEl) => {
+                //   const ratio = imgEl.naturalWidth / imgEl.naturalHeight
+                //   imgEl.style.objectFit = ratio > 2 ? "contain" : "cover"
+                // }}
+              />
+            </div>
+  )}
+          </Card>
 
             <Card className="overflow-hidden rounded-sm border border-gray-300 bg-white shadow-sm">
               <CardHeader className="pb-2">

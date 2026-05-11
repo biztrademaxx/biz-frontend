@@ -42,7 +42,7 @@ function FeaturedEventCard({ event }: { event: FeaturedEventPayload }) {
   const thumb = event.bannerImage || "/herosection-images/food.jpg"
 
   return (
-    <div className="rounded-sm border border-gray-200 bg-white p-2 shadow-sm transition-shadow hover:shadow-md">
+    <div className="overflow-hidden rounded-sm border border-gray-200 bg-white p-2 shadow-sm transition-shadow hover:shadow-md">
       <Link href={href} className="block cursor-pointer">
         <div className="text-sm font-medium leading-snug text-gray-800">{formattedDate}</div>
         <div className="mt-1 flex w-full justify-between gap-2">
@@ -54,13 +54,22 @@ function FeaturedEventCard({ event }: { event: FeaturedEventPayload }) {
               {featuredEventLocationLine(event)}
             </div>
           </div>
-          <img
-            src={thumb}
-            alt={event.title}
-            width={128}
-            height={128}
-            className="mt-0.5 h-28 w-28 flex-shrink-0 rounded-sm border border-gray-200 object-cover sm:h-32 sm:w-32"
-          />
+          <div className="mt-0.5 h-28 w-28 flex-shrink-0 overflow-hidden rounded-sm border border-gray-200 bg-gray-50 sm:h-32 sm:w-32">
+            <img
+              src={thumb}
+              alt={event.title}
+              width={128}
+              height={128}
+              className="h-full w-full"
+              style={{ objectFit: 'cover' }}
+              onLoad={(e) => {
+                const img = e.currentTarget
+                const ratio = img.naturalWidth / img.naturalHeight
+                // only contain if width is MORE than 2x the height (very wide banners)
+                img.style.objectFit = ratio > 2 ? 'contain' : 'cover'
+              }}
+            />
+          </div>
         </div>
       </Link>
       <div className="mt-3 flex items-center justify-between gap-2">
