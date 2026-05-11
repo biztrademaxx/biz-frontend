@@ -6,6 +6,55 @@ import { prisma } from "@/lib/prisma"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 
+function normalizeVenues(raw: any[]): any[] {
+  return raw.map((v: any) => {
+    const fullName = `${v.firstName ?? ""} ${v.lastName ?? ""}`.trim();
+    return {
+      id: v.id,
+      venueName:
+        (v.venueName ?? "").trim() ||
+        (v.company ?? "").trim() ||
+        fullName ||
+        "Unnamed Venue",
+      logo: v.logo ?? v.avatar ?? "",
+      contactPerson: fullName || "Venue Manager",
+      email: v.email ?? "",
+      mobile: v.phone ?? "",
+      address: v.venueAddress ?? "",
+      city: v.venueCity ?? "",
+      state: v.venueState ?? "",
+      country: v.venueCountry ?? "",
+      venueAddress: v.venueAddress ?? "",
+      venueCity: v.venueCity ?? "",
+      venueState: v.venueState ?? "",
+      venueCountry: v.venueCountry ?? "",
+      venueZipCode: v.venueZipCode ?? "",
+      venuepostalCode: v.venueZipCode ?? "",
+      venueTimezone: v.venueTimezone ?? v.location?.timezone ?? "",
+      timezone: v.venueTimezone ?? v.location?.timezone ?? "",
+      website: v.venueWebsite ?? v.website ?? "",
+      venueDescription: v.venueDescription ?? v.description ?? v.bio ?? "",
+      description: v.venueDescription ?? v.description ?? v.bio ?? "",
+      maxCapacity: v.maxCapacity ?? 0,
+      totalHalls: v.totalHalls ?? 0,
+      totalEvents: v.totalEvents ?? v.eventCount ?? 0,
+      activeBookings: v.activeBookings ?? 0,
+      averageRating: v.averageRating ?? v.rating ?? 0,
+      totalReviews: v.totalReviews ?? v.reviewCount ?? 0,
+      amenities: v.amenities ?? [],
+      meetingSpaces: Array.isArray(v.meetingSpaces) ? v.meetingSpaces : [],
+      isVerified: v.isVerified ?? false,
+      venueImages: Array.isArray(v.venueImages)
+        ? v.venueImages
+        : Array.isArray(v.images)
+          ? v.images
+          : [],
+      firstName: v.firstName ?? "",
+      lastName: v.lastName ?? "",
+    };
+  });
+}
+
 // Validation schema (if you want to use it later)
 const createVenueSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
@@ -39,57 +88,59 @@ export async function GET(request: NextRequest) {
       headers: {
         "Content-Type": "application/json",
       },
+      cache: "no-store",
     });
 
     const backend = await res.json().catch(() => ({}));
-
     const raw = Array.isArray(backend.venues) ? backend.venues : backend.data || [];
 
-    // Normalize to the Venue shape expected by the frontend:
-    // - /venues page expects fields: venueName, address, city, state, country, description, etc.
-    // - organizer BookVenue page also expects city/country, amenities, meetingSpaces.
-    const venues = raw.map((v: any) => {
-      const fullName = `${v.firstName ?? ""} ${v.lastName ?? ""}`.trim();
-      return {
-        id: v.id,
-        venueName:
-          (v.venueName ?? "").trim() ||
-          (v.company ?? "").trim() ||
-          fullName ||
-          "Unnamed Venue",
-        logo: v.avatar ?? "",
-        contactPerson: fullName || "Venue Manager",
-        email: v.email ?? "",
-        mobile: v.phone ?? "",
-        address: v.venueAddress ?? "",
-        city: v.venueCity ?? "",
-        state: v.venueState ?? "",
-        country: v.venueCountry ?? "",
-        venueAddress: v.venueAddress ?? "",
-        venueCity: v.venueCity ?? "",
-        venueState: v.venueState ?? "",
-        venueCountry: v.venueCountry ?? "",
-        venueZipCode: v.venueZipCode ?? "",
-        venuepostalCode: v.venueZipCode ?? "",
-        venueTimezone: v.venueTimezone ?? v.location?.timezone ?? "",
-        timezone: v.venueTimezone ?? v.location?.timezone ?? "",
-        website: v.venueWebsite ?? v.website ?? "",
-        venueDescription: v.venueDescription ?? v.description ?? v.bio ?? "",
-        description: v.venueDescription ?? v.description ?? v.bio ?? "",
-        maxCapacity: v.maxCapacity ?? 0,
-        totalHalls: v.totalHalls ?? 0,
-        totalEvents: v.totalEvents ?? 0,
-        activeBookings: v.activeBookings ?? 0,
-        averageRating: v.averageRating ?? 0,
-        totalReviews: v.totalReviews ?? 0,
-        amenities: v.amenities ?? [],
-      meetingSpaces: [], // not modeled yet
-      isVerified: v.isVerified ?? false,
-      venueImages: v.venueImages ?? [],
-      firstName: v.firstName ?? "",
-      lastName: v.lastName ?? "",
-    };
-    });
+    // If backend is reachable but returns non-OK, try local Prisma fallback
+    // so public listing remains available.
+    if (!res.ok) {
+      if (prisma) {
+        const rows = await prisma.user.findMany({
+          where: { role: "VENUE_MANAGER", isActive: true },
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            phone: true,
+            avatar: true,
+            venueName: true,
+            venueDescription: true,
+            venueAddress: true,
+            venueCity: true,
+            venueState: true,
+            venueCountry: true,
+            venueZipCode: true,
+            venueWebsite: true,
+            maxCapacity: true,
+            totalHalls: true,
+            averageRating: true,
+            totalReviews: true,
+            amenities: true,
+            venueImages: true,
+            venueTimezone: true,
+          },
+          orderBy: { createdAt: "desc" },
+        });
+        const venues = normalizeVenues(rows);
+        return NextResponse.json({
+          success: true,
+          venues,
+          data: venues,
+          pagination: null,
+          source: "fallback-prisma",
+        });
+      }
+      return NextResponse.json(
+        { success: false, error: backend?.error || "Failed to fetch venues" },
+        { status: res.status || 500 },
+      );
+    }
+
+    const venues = normalizeVenues(raw);
 
     return NextResponse.json(
       {
