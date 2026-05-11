@@ -5,6 +5,7 @@ import { pickCountriesForHome } from "./pick-countries-for-home"
 import type { BrowseByCountryServerPayload } from "./types"
 
 const COUNTRIES_PATH = "/api/location/countries"
+const GEO_REVALIDATE_SEC = 120
 
 /**
  * Loads countries and geo; returns safe defaults on failure.
@@ -17,7 +18,7 @@ export async function fetchBrowseByCountryServerPayload(): Promise<BrowseByCount
   try {
     const base = getBackendUrlForServerFetch()
     const [countriesRes, geo] = await Promise.all([
-      fetch(`${base}${COUNTRIES_PATH}`, { cache: "no-store" }).catch(() => null),
+      fetch(`${base}${COUNTRIES_PATH}`, { next: { revalidate: GEO_REVALIDATE_SEC } }).catch(() => null),
       fetchGeoHintServer(),
     ])
 

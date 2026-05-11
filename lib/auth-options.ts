@@ -5,8 +5,39 @@ import type { NextAuthOptions } from "next-auth"
 import bcrypt from "bcryptjs"
 
 import { prisma } from "@/lib/prisma"
+import { readOAuthIntendedRoleServer } from "@/lib/oauth-signup-intent.server"
 
 const providers: NextAuthOptions["providers"] = []
+
+function decodeOidcJwtPayload(token: string): Record<string, unknown> | null {
+  try {
+    const part = token.split(".")[1]
+    if (!part) return null
+    const b64 = part.replace(/-/g, "+").replace(/_/g, "/")
+    const padded = b64 + "=".repeat((4 - (b64.length % 4)) % 4)
+    const json = atob(padded)
+    return JSON.parse(json) as Record<string, unknown>
+  } catch {
+    return null
+  }
+}
+
+/**
+ * LinkedIn OIDC scopes. We always include `email` — without it, userinfo / id_token
+ * often omit email and `signIn` rejects (NextAuth shows `AccessDenied`). Deployed
+ * env sometimes sets `LINKEDIN_SCOPE=openid profile` only; merging fixes that.
+ */
+function linkedInOidcScopeString(envOverride?: string | null): string {
+  const trimmed = envOverride?.trim()
+  const parts = new Set<string>()
+  for (const s of (trimmed || "openid profile email").split(/\s+/)) {
+    if (s) parts.add(s.toLowerCase())
+  }
+  parts.add("openid")
+  parts.add("profile")
+  parts.add("email")
+  return [...parts].join(" ")
+}
 
 /**
  * LinkedIn "Sign In with LinkedIn using OpenID Connect" must use OIDC discovery +
@@ -17,8 +48,7 @@ function linkedInOidcProvider(
   clientId: string,
   clientSecret: string
 ): OAuthConfig<Record<string, unknown>> {
-  const linkedInScope =
-    process.env.LINKEDIN_SCOPE?.trim() || "openid profile email"
+  const linkedInScope = linkedInOidcScopeString(process.env.LINKEDIN_SCOPE)
 
   return {
     id: "linkedin",
@@ -35,7 +65,7 @@ function linkedInOidcProvider(
     client: {
       token_endpoint_auth_method: "client_secret_post",
     },
-    profile(profile) {
+    async profile(profile, tokens) {
       const p = profile as Record<string, unknown>
       const sub = p.sub != null ? String(p.sub) : ""
       let name: string | undefined
@@ -47,7 +77,13 @@ function linkedInOidcProvider(
         const joined = `${gn} ${fn}`.trim()
         name = joined || undefined
       }
-      const email = typeof p.email === "string" ? p.email : undefined
+      let email: string | undefined =
+        typeof p.email === "string" && p.email.trim() ? p.email.trim() : undefined
+      if (!email && tokens?.id_token && typeof tokens.id_token === "string") {
+        const claims = decodeOidcJwtPayload(tokens.id_token)
+        const fromId = claims?.email
+        if (typeof fromId === "string" && fromId.trim()) email = fromId.trim()
+      }
       const image = typeof p.picture === "string" ? p.picture : undefined
 
       return {
@@ -55,6 +91,8 @@ function linkedInOidcProvider(
         name,
         email,
         image,
+        // NextAuth `User` typing expects `role`; real role comes from backend sync / JWT.
+        role: "ATTENDEE",
       }
     },
     style: {
@@ -101,20 +139,11 @@ type PortalUserPayload = {
 const oauthPortalUserByEmail = new Map<string, PortalUserPayload>()
 
 function resolveOAuthEmail(params: {
-  provider?: string
   userEmail?: string | null
   profileEmail?: string | null
-  providerAccountId?: string
 }): string | null {
   const direct = params.userEmail?.trim() || params.profileEmail?.trim()
   if (direct) return direct.toLowerCase()
-
-  // LinkedIn apps can be configured without email permission.
-  // Use a deterministic synthetic address so account creation/login still works.
-  if (params.provider === "linkedin" && params.providerAccountId) {
-    return `${params.providerAccountId}@linkedin.oauth.local`
-  }
-
   return null
 }
 
@@ -123,6 +152,7 @@ async function syncOAuthToBackend(params: {
   name?: string | null
   image?: string | null
   provider: string
+  intendedRole?: string
 }): Promise<{ ok: boolean; portalUser?: PortalUserPayload }> {
   const syncSecret = process.env.OAUTH_SYNC_SECRET
   if (!syncSecret) {
@@ -141,6 +171,7 @@ async function syncOAuthToBackend(params: {
         name: params.name,
         image: params.image,
         provider: params.provider,
+        ...(params.intendedRole ? { intendedRole: params.intendedRole } : {}),
       }),
     })
 
@@ -245,24 +276,24 @@ export const authOptions: NextAuthOptions = {
       }
 
       const email = resolveOAuthEmail({
-        provider: account.provider,
         userEmail: user.email,
         profileEmail: (profile as { email?: string } | undefined)?.email,
-        providerAccountId: account.providerAccountId,
       })
       if (!email) {
         console.error(
-          "OAuth sign-in rejected: missing email and providerAccountId."
+          "OAuth sign-in rejected: missing email. For LinkedIn: enable OpenID Connect in the developer app, request scope `openid profile email` (email is always merged in code), and ensure the member has a verified email visible to the app."
         )
         return false
       }
 
+      const intendedRole = await readOAuthIntendedRoleServer()
       const key = email.toLowerCase()
       const synced = await syncOAuthToBackend({
         email,
         name: user.name,
         image: user.image,
         provider: account.provider ?? "oauth",
+        intendedRole,
       })
 
       if (synced.ok && synced.portalUser) {
@@ -287,13 +318,20 @@ export const authOptions: NextAuthOptions = {
         })
 
         if (!existingUser) {
+          const legacyRole =
+            intendedRole &&
+            ["ATTENDEE", "EXHIBITOR", "SPEAKER", "VENUE_MANAGER", "ORGANIZER"].includes(
+              intendedRole
+            )
+              ? intendedRole
+              : "ATTENDEE"
           await safePrisma.user.create({
             data: {
               email,
               firstName: user.name?.split(" ")[0] || "User",
               lastName: user.name?.split(" ")[1] || "",
               avatar: user.image ?? undefined,
-              role: "ATTENDEE",
+              role: legacyRole as any,
               isVerified: true,
               emailVerified: true,
               password: await bcrypt.hash(
@@ -325,10 +363,8 @@ export const authOptions: NextAuthOptions = {
 
       if (user && account && oauthProvider) {
         const email = resolveOAuthEmail({
-          provider: account.provider,
           userEmail: user.email,
           profileEmail: (profile as { email?: string } | undefined)?.email,
-          providerAccountId: account.providerAccountId,
         })
 
         if (email) {
@@ -337,11 +373,13 @@ export const authOptions: NextAuthOptions = {
           if (portal) {
             oauthPortalUserByEmail.delete(key)
           } else if (process.env.OAUTH_SYNC_SECRET) {
+            const intendedRole = await readOAuthIntendedRoleServer()
             const again = await syncOAuthToBackend({
               email,
               name: user.name,
               image: user.image,
               provider: account.provider ?? "oauth",
+              intendedRole,
             })
             if (again.ok && again.portalUser) {
               portal = again.portalUser

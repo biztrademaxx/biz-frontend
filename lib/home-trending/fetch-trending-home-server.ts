@@ -1,4 +1,3 @@
-import { unstable_noStore as noStore } from "next/cache"
 import { mergeGoingBundleFromJson } from "./followers-bundle"
 import { normalizeTrendingHomeEvent } from "./normalize-trending-event"
 import { pickTrendingHomeEvents } from "./pick-trending-events"
@@ -28,10 +27,9 @@ export interface TrendingHomePayload {
  * after hydration. Doing 4× many SSR fetches was blocking home for 10s+ when the API was slow.
  */
 export async function fetchTrendingHomePayloadServer(): Promise<TrendingHomePayload> {
-  noStore()
   const empty: TrendingHomePayload = { events: [], goingBundles: {} }
   try {
-    const res = await fetch(`${getApiBaseUrl()}/api/events`, { cache: "no-store" })
+    const res = await fetch(`${getApiBaseUrl()}/api/events`, { next: { revalidate: 60 } })
     if (!res.ok) return empty
     const data: unknown = await res.json()
     const rawList = rawEventsFromPayload(data)

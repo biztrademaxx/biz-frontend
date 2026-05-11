@@ -9,7 +9,7 @@ function getApiBaseUrl(): string {
 
 export async function fetchExploreVenuesForHomeServer(): Promise<ExploreVenueCard[]> {
   try {
-    const res = await fetch(`${getApiBaseUrl()}${PATH}`, { cache: "no-store" })
+    const res = await fetch(`${getApiBaseUrl()}${PATH}`, { next: { revalidate: 120 } })
     if (!res.ok) return []
     const data: unknown = await res.json()
     const rawList: unknown[] =

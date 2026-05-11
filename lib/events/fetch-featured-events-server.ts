@@ -13,7 +13,7 @@ function getApiBaseUrl(): string {
 export async function fetchFeaturedEventsForHomeSection(): Promise<FeaturedEventPayload[]> {
   try {
     const res = await fetch(`${getApiBaseUrl()}${FEATURED_EVENTS_PATH}`, {
-      cache: "no-store",
+      next: { revalidate: 120 },
     })
     if (!res.ok) {
       console.error("Featured events backend error:", res.status, await res.text())
