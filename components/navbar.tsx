@@ -344,11 +344,11 @@ export default function Navbar() {
   return (
     <nav className="sticky top-0 z-50 bg-white shadow-[0_4px_12px_rgba(0,0,0,0.12)]">
       <div className="mx-auto max-w-7xl px-3 sm:px-4 lg:px-6">
-        <div className="flex h-[5.5rem] min-h-[5.5rem] items-center justify-between gap-2 sm:gap-3">
-          <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+        <div className="flex h-[5.5rem] min-h-[5.5rem] items-center justify-between gap-1.5 sm:gap-3">
+          <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-4">
             <button
               type="button"
-              className="rounded-md p-2 text-gray-700 hover:bg-gray-100 hover:text-gray-900 lg:hidden"
+              className="shrink-0 rounded-md p-2 text-gray-700 hover:bg-gray-100 hover:text-gray-900 lg:hidden"
               onClick={() => setMobileMenuOpen((v) => !v)}
               aria-expanded={mobileMenuOpen}
               aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
@@ -357,20 +357,21 @@ export default function Navbar() {
             </button>
             <Link
               href="/"
-              className="flex min-w-0 max-w-[300px] shrink-0 items-center sm:max-w-[360px] lg:max-w-[440px]"
+              className="flex min-w-0 max-w-[min(58vw,220px)] shrink items-center sm:max-w-[300px] sm:shrink-0 md:max-w-[360px] lg:max-w-[440px]"
             >
               <Image
                 src={brandLogoSrc}
                 alt="BizTradeFairs.com"
                 width={440}
                 height={120}
-                sizes="(min-width: 1024px) 440px, (min-width: 640px) 360px, 300px"
+                sizes="(min-width: 1024px) 440px, (min-width: 640px) 280px, 200px"
                 priority
                 unoptimized={brandLogoUnoptimized ? true : undefined}
-                className="block h-[52px] w-auto max-h-[52px] max-w-[min(100%,440px)] shrink-0 object-contain object-left sm:h-[60px] sm:max-h-[60px] lg:h-[72px] lg:max-h-[72px]"
+                className="block h-[44px] w-auto max-h-[44px] max-w-full shrink object-contain object-left sm:h-[52px] sm:max-h-[52px] md:h-[60px] md:max-h-[60px] lg:h-[72px] lg:max-h-[72px]"
               />
             </Link>
-            <div className="relative ml-3 shrink-0 sm:ml-4 lg:ml-5" ref={exploreRef}>
+            {/* Explore lives in the mobile drawer below lg — keeps the top bar from crowding */}
+            <div className="relative ml-3 hidden shrink-0 sm:ml-4 lg:ml-5 lg:block" ref={exploreRef}>
               <button
                 type="button"
                 className={`inline-flex items-center gap-0.5 rounded-md px-1 py-1 text-sm lg:px-0 lg:py-0 ${navLinkClass}`}
@@ -460,7 +461,7 @@ export default function Navbar() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 lg:hidden">
+          <div className="flex shrink-0 items-center gap-1 sm:gap-2 lg:hidden">
             <button
               type="button"
               onClick={() => setShowMobileSearch((v) => !v)}
@@ -469,7 +470,7 @@ export default function Navbar() {
             >
               <Search className="h-5 w-5" strokeWidth={2} />
             </button>
-            <div className="relative inline-block text-left" ref={mobileAccountRef}>
+            <div className="relative inline-block shrink-0 text-left" ref={mobileAccountRef}>
               <button
                 type="button"
                 onClick={() => setShowAccountMenu((v) => !v)}

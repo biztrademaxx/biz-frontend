@@ -442,13 +442,13 @@ export function EventsSection({ userId }: EventsSectionProps) {
                               <div className="flex justify-between gap-10">
                                 <span className="text-gray-500 whitespace-nowrap">Expected Visitors</span>
                                 <span className="font-semibold text-gray-900 whitespace-nowrap">
-                                  {event.expectedExhibitors || event.maxAttendees || "200"}
+                                  {event.expectedExhibitors || event.maxAttendees || "0"}
                                 </span>
                               </div>
                               <div className="flex justify-between gap-12">
                                 <span className="text-gray-500 whitespace-nowrap">Exptd Exhibitors</span>
                                 <span className="font-semibold text-gray-900 whitespace-nowrap">
-                                  {event.expectedExhibitors || "200"}
+                                  {event.expectedExhibitors || "0"}
                                 </span>
                               </div>
                             </div>
@@ -456,7 +456,7 @@ export function EventsSection({ userId }: EventsSectionProps) {
                             {/* Entry Fee */}
                             <div className="grid text-center mt-5 min-w-[80px]">
                               <span className="text-xl font-bold text-pink-500 whitespace-nowrap">
-                                {formatEventEntryFeeDisplay(event.ticketTypes as TicketPriceRow[], event.currency)}
+                                {formatEventEntryFeeDisplay(event.ticketTypes as TicketPriceRow[], '₹')}
                               </span>
                               <span className="text-gray-500 text-sm">Entry Fee</span>
                             </div>

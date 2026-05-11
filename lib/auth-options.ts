@@ -1,12 +1,69 @@
 // lib/auth-options.ts — OAuth (Google, LinkedIn) via NextAuth; portal users live on Express/PostgreSQL.
 import GoogleProvider from "next-auth/providers/google"
-import LinkedInProvider from "next-auth/providers/linkedin"
+import type { OAuthConfig } from "next-auth/providers/oauth"
 import type { NextAuthOptions } from "next-auth"
 import bcrypt from "bcryptjs"
 
 import { prisma } from "@/lib/prisma"
 
 const providers: NextAuthOptions["providers"] = []
+
+/**
+ * LinkedIn "Sign In with LinkedIn using OpenID Connect" must use OIDC discovery +
+ * the standard userinfo endpoint. The stock `next-auth/providers/linkedin` helper
+ * still calls legacy `/v2/me` + email APIs and often breaks OIDC tokens (`OAuthCallback`).
+ */
+function linkedInOidcProvider(
+  clientId: string,
+  clientSecret: string
+): OAuthConfig<Record<string, unknown>> {
+  const linkedInScope =
+    process.env.LINKEDIN_SCOPE?.trim() || "openid profile email"
+
+  return {
+    id: "linkedin",
+    name: "LinkedIn",
+    type: "oauth",
+    wellKnown: "https://www.linkedin.com/oauth/.well-known/openid-configuration",
+    authorization: {
+      params: {
+        scope: linkedInScope,
+      },
+    },
+    clientId,
+    clientSecret,
+    client: {
+      token_endpoint_auth_method: "client_secret_post",
+    },
+    profile(profile) {
+      const p = profile as Record<string, unknown>
+      const sub = p.sub != null ? String(p.sub) : ""
+      let name: string | undefined
+      if (typeof p.name === "string" && p.name.trim()) {
+        name = p.name.trim()
+      } else {
+        const gn = typeof p.given_name === "string" ? p.given_name : ""
+        const fn = typeof p.family_name === "string" ? p.family_name : ""
+        const joined = `${gn} ${fn}`.trim()
+        name = joined || undefined
+      }
+      const email = typeof p.email === "string" ? p.email : undefined
+      const image = typeof p.picture === "string" ? p.picture : undefined
+
+      return {
+        id: sub,
+        name,
+        email,
+        image,
+      }
+    },
+    style: {
+      logo: "/linkedin.svg",
+      bg: "#069",
+      text: "#fff",
+    },
+  }
+}
 
 if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
   providers.push(
@@ -19,10 +76,10 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
 
 if (process.env.LINKEDIN_CLIENT_ID && process.env.LINKEDIN_CLIENT_SECRET) {
   providers.push(
-    LinkedInProvider({
-      clientId: process.env.LINKEDIN_CLIENT_ID,
-      clientSecret: process.env.LINKEDIN_CLIENT_SECRET,
-    })
+    linkedInOidcProvider(
+      process.env.LINKEDIN_CLIENT_ID,
+      process.env.LINKEDIN_CLIENT_SECRET
+    )
   )
 }
 
