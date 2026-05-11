@@ -12,12 +12,16 @@ import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card"
 import { Eye, EyeOff, Mail, Lock, Loader2 } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { loginWithEmailPassword } from "@/lib/api"
-import { clearOAuthSignupIntentRole } from "@/lib/oauth-signup-intent"
+import {
+  clearOAuthSignupIntentRole,
+  clearOAuthSignupIntentRoleServer,
+} from "@/lib/oauth-signup-intent"
 
 export default function LoginPage() {
   const router = useRouter()
   useEffect(() => {
     clearOAuthSignupIntentRole()
+    void clearOAuthSignupIntentRoleServer()
   }, [])
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")

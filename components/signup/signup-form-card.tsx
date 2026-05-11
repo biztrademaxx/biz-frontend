@@ -13,8 +13,9 @@ import { Eye, EyeOff, Mail, Lock, User, Building, Phone, Check, X, Loader2 } fro
 import { useToast } from "@/hooks/use-toast"
 import {
   mapSignupTabToPrismaRole,
-  setOAuthSignupIntentRole,
+  postOAuthSignupIntentRole,
 } from "@/lib/oauth-signup-intent"
+import { isPlaceholderOrInvalidPhone } from "@/lib/phone-validation"
 
 const API_BASE = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000").replace(/\/$/, "")
 
@@ -108,6 +109,8 @@ export default function SignupFormCard({ variant, onRegistrationSuccess }: Signu
 
     if (!formData.phone.trim()) {
       newErrors.phone = "Phone number is required"
+    } else if (isPlaceholderOrInvalidPhone(formData.phone)) {
+      newErrors.phone = "Enter a valid phone number (autofill or test numbers are not accepted)"
     }
 
     if (isCompanyRequired() && !formData.companyName.trim()) {
@@ -329,13 +332,16 @@ export default function SignupFormCard({ variant, onRegistrationSuccess }: Signu
   const handleGoogleSignup = async () => {
     setIsLoading(true)
     try {
-      setOAuthSignupIntentRole(mapSignupTabToPrismaRole(userType))
+      await postOAuthSignupIntentRole(mapSignupTabToPrismaRole(userType))
       await signIn("google", { callbackUrl: "/" })
     } catch (err) {
       console.error("Error during Google signup:", err)
       toast({
         title: "Error",
-        description: "Failed to sign up with Google.",
+        description:
+          err instanceof Error
+            ? err.message
+            : "Failed to sign up with Google.",
         variant: "destructive",
       })
     } finally {
@@ -346,13 +352,16 @@ export default function SignupFormCard({ variant, onRegistrationSuccess }: Signu
   const handleLinkedInSignup = async () => {
     setIsLoading(true)
     try {
-      setOAuthSignupIntentRole(mapSignupTabToPrismaRole(userType))
+      await postOAuthSignupIntentRole(mapSignupTabToPrismaRole(userType))
       await signIn("linkedin", { callbackUrl: "/" })
     } catch (err) {
       console.error("Error during LinkedIn signup:", err)
       toast({
         title: "Error",
-        description: "Failed to sign up with LinkedIn.",
+        description:
+          err instanceof Error
+            ? err.message
+            : "Failed to sign up with LinkedIn.",
         variant: "destructive",
       })
     } finally {
@@ -581,6 +590,8 @@ export default function SignupFormCard({ variant, onRegistrationSuccess }: Signu
                         type="tel"
                         name="phone"
                         placeholder="Phone Number"
+                        autoComplete="off"
+                        inputMode="tel"
                         value={formData.phone}
                         onChange={handleInputChange}
                         className={`pl-10 ${errors.phone ? "border-red-500" : ""}`}
