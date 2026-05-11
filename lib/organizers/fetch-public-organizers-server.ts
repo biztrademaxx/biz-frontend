@@ -16,7 +16,7 @@ export interface FeaturedOrganizersServerResult {
 export async function fetchFeaturedOrganizersForHomeServer(): Promise<FeaturedOrganizersServerResult> {
   const empty: FeaturedOrganizersServerResult = { organizers: [], fetchFailed: true }
   try {
-    const res = await fetch(`${getApiBaseUrl()}${PATH}`, { cache: "no-store" })
+    const res = await fetch(`${getApiBaseUrl()}${PATH}`, { next: { revalidate: 120 } })
     if (!res.ok) {
       console.error("Featured organizers fetch failed:", res.status)
       return empty

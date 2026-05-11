@@ -1,6 +1,12 @@
-import { getInternalAppOrigin } from "@/lib/server/internal-origin"
 import type { InlineBannerRecord, PageBannerRecord } from "./types"
 import { normalizePageBanner } from "./normalize-banner"
+
+function getApiBaseUrl(): string {
+  return process.env.NEXT_PUBLIC_API_URL?.trim().replace(/\/$/, "") ?? "http://localhost:4000"
+}
+
+/** Banners are public; ISR avoids `headers()` + same-origin fetch (static gen / build friendly). */
+const BANNER_REVALIDATE_SEC = 120
 
 function normalizeInline(raw: unknown): InlineBannerRecord | null {
   const base = normalizePageBanner(raw)
@@ -17,9 +23,9 @@ function normalizeInline(raw: unknown): InlineBannerRecord | null {
 
 export async function fetchPageBannersServer(page: string): Promise<PageBannerRecord[]> {
   try {
-    const origin = await getInternalAppOrigin()
-    const res = await fetch(`${origin}/api/banners/${encodeURIComponent(page)}`, {
-      cache: "no-store",
+    const q = new URLSearchParams({ page })
+    const res = await fetch(`${getApiBaseUrl()}/api/content/banners?${q.toString()}`, {
+      next: { revalidate: BANNER_REVALIDATE_SEC },
     })
     if (!res.ok) return []
     const data: unknown = await res.json()
@@ -38,9 +44,9 @@ export async function fetchPageBannersServer(page: string): Promise<PageBannerRe
 
 export async function fetchInlineBannersServer(page: string, max: number): Promise<InlineBannerRecord[]> {
   try {
-    const origin = await getInternalAppOrigin()
-    const res = await fetch(`${origin}/api/banners/${encodeURIComponent(page)}`, {
-      cache: "no-store",
+    const q = new URLSearchParams({ page })
+    const res = await fetch(`${getApiBaseUrl()}/api/content/banners?${q.toString()}`, {
+      next: { revalidate: BANNER_REVALIDATE_SEC },
     })
     if (!res.ok) return []
     const data: unknown = await res.json()

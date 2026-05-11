@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { signIn } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
@@ -12,9 +12,13 @@ import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card"
 import { Eye, EyeOff, Mail, Lock, Loader2 } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { loginWithEmailPassword } from "@/lib/api"
+import { clearOAuthSignupIntentRole } from "@/lib/oauth-signup-intent"
 
 export default function LoginPage() {
   const router = useRouter()
+  useEffect(() => {
+    clearOAuthSignupIntentRole()
+  }, [])
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)

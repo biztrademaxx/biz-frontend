@@ -11,6 +11,10 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Eye, EyeOff, Mail, Lock, User, Building, Phone, Check, X, Loader2 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import {
+  mapSignupTabToPrismaRole,
+  setOAuthSignupIntentRole,
+} from "@/lib/oauth-signup-intent"
 
 const API_BASE = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000").replace(/\/$/, "")
 
@@ -325,6 +329,7 @@ export default function SignupFormCard({ variant, onRegistrationSuccess }: Signu
   const handleGoogleSignup = async () => {
     setIsLoading(true)
     try {
+      setOAuthSignupIntentRole(mapSignupTabToPrismaRole(userType))
       await signIn("google", { callbackUrl: "/" })
     } catch (err) {
       console.error("Error during Google signup:", err)
@@ -341,6 +346,7 @@ export default function SignupFormCard({ variant, onRegistrationSuccess }: Signu
   const handleLinkedInSignup = async () => {
     setIsLoading(true)
     try {
+      setOAuthSignupIntentRole(mapSignupTabToPrismaRole(userType))
       await signIn("linkedin", { callbackUrl: "/" })
     } catch (err) {
       console.error("Error during LinkedIn signup:", err)

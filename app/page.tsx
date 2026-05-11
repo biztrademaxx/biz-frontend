@@ -1,4 +1,7 @@
 import { Suspense } from "react";
+
+/** Home uses request-scoped geo (`headers`) and legacy `noStore()` in trending; cannot be fully static. */
+export const dynamic = "force-dynamic";
 import BrowseByCountry from "../components/browse-by-country";
 import { BrowseByCountrySkeleton } from "@/components/home-skeletons";
 import BrowseEventsByCity from "../components/BrowseEventsByCity";
