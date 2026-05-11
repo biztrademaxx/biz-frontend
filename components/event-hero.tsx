@@ -124,7 +124,7 @@ export default function EventHero({ event }: EventHeroProps) {
     if (!slider) return
     const interval = setInterval(() => {
       slider.next()
-    }, 10000) // Increased from 3000ms to 6000ms (6 seconds)
+    }, 10000)
     return () => clearInterval(interval)
   }, [instanceRef])
 
@@ -135,9 +135,8 @@ export default function EventHero({ event }: EventHeroProps) {
   // Get ticket price display
   const getTicketPriceDisplay = () => formatPublicTicketPriceLine(event.ticketTypes)
 
-  // Get followers count - REMOVED the fallback to 0
+  // Get followers count
   const getFollowersCount = () => {
-    // Priority: 1. event.followers, 2. event.leads.length, 3. event.currentAttendees
     if (event.followers && event.followers > 0) {
       return event.followers
     }
@@ -147,7 +146,7 @@ export default function EventHero({ event }: EventHeroProps) {
     if (event.currentAttendees && event.currentAttendees > 0) {
       return event.currentAttendees
     }
-    return null // Return null instead of 0
+    return null
   }
 
   // Format date range
@@ -158,9 +157,9 @@ export default function EventHero({ event }: EventHeroProps) {
 
     const startDate = new Date(event.startDate)
     const endDate = new Date(event.endDate)
-    
+
     const isSameDay = startDate.toDateString() === endDate.toDateString()
-    
+
     if (isSameDay) {
       return startDate.toLocaleDateString("en-IN", {
         day: "2-digit",
@@ -189,14 +188,14 @@ export default function EventHero({ event }: EventHeroProps) {
       hour: "2-digit",
       minute: "2-digit",
       hour12: true,
-      timeZone: "Asia/Kolkata", // Force Indian time zone
+      timeZone: "Asia/Kolkata",
     })
 
     const endTime = new Date(event.endDate).toLocaleTimeString("en-IN", {
       hour: "2-digit",
       minute: "2-digit",
       hour12: true,
-      timeZone: "Asia/Kolkata", // Force Indian time zone
+      timeZone: "Asia/Kolkata",
     })
 
     return `${startTime} – ${endTime}`
@@ -234,8 +233,8 @@ export default function EventHero({ event }: EventHeroProps) {
             {/* Banner Slider - Only images without title */}
             <div ref={bannerSliderRef} className="keen-slider h-full w-full">
               {heroBanners.map((banner, index) => (
-                <div key={banner.id} className="keen-slider__slide relative h-full w-full">
-                  <Link 
+                <div key={banner.id} className="keen-slider__slide relative h-full w-full bg-gray-50">
+                  <Link
                     href={banner.link || "#"}
                     onClick={() => handleBannerClick(banner.id)}
                     target={banner.link?.startsWith('http') ? '_blank' : '_self'}
@@ -245,11 +244,14 @@ export default function EventHero({ event }: EventHeroProps) {
                       src={banner.imageUrl || "/city/c4.jpg"}
                       alt={banner.title}
                       fill
-                      className="h-full w-full object-cover"
+                      className="object-cover"
                       priority={index === 0}
                       sizes="100vw"
+                      onLoadingComplete={(imgEl) => {
+                        const ratio = imgEl.naturalWidth / imgEl.naturalHeight
+                        imgEl.style.objectFit = ratio > 2 ? "contain" : "cover"
+                      }}
                     />
-                    {/* REMOVED title overlay */}
                   </Link>
                 </div>
               ))}
@@ -261,44 +263,40 @@ export default function EventHero({ event }: EventHeroProps) {
                 {heroBanners.map((_, idx) => (
                   <button
                     key={idx}
-                    className={`w-2 h-2 rounded-full transition-colors ${
-                      idx === currentBannerIndex ? "bg-white" : "bg-white/50"
-                    }`}
+                    className={`w-2 h-2 rounded-full transition-colors ${idx === currentBannerIndex ? "bg-white" : "bg-white/50"
+                      }`}
                     onClick={() => bannerInstanceRef.current?.moveToIdx(idx)}
                   />
                 ))}
               </div>
             )}
-            
-            {/* REMOVED Sponsored badge */}
           </>
         ) : (
           // Fallback to default banner if no banners found
           <div className="relative w-full h-full">
             <Image
-            src={
-              event.images?.filter(
-                (img) =>
-                  typeof img === "string" &&
-                  img.trim() !== "" &&
-                  img !== "null" &&
-                  img !== "undefined"
-              )[0] || "/city/c4.jpg"
-            }
-            alt={event.title}
-            fill
-            className="h-full w-full object-cover"
-            sizes="100vw"
-            priority
-          />
-          
-           {/* Frosted layer over banner — stronger blur for readability */}
-           <div className="absolute inset-0 backdrop-blur-md" />
-          
-          {/* Gradient overlay */}
-           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+              src={
+                event.images?.filter(
+                  (img) =>
+                    typeof img === "string" &&
+                    img.trim() !== "" &&
+                    img !== "null" &&
+                    img !== "undefined"
+                )[0] || "/city/c4.jpg"
+              }
+              alt={event.title}
+              fill
+              className="h-full w-full object-cover"
+              sizes="100vw"
+              priority
+            />
+
+            {/* Frosted layer over banner */}
+            <div className="absolute inset-0 backdrop-blur-md" />
+
+            {/* Gradient overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
           </div>
-          
         )}
       </div>
 
@@ -309,14 +307,18 @@ export default function EventHero({ event }: EventHeroProps) {
           <div ref={sliderRef} className="keen-slider h-full w-full">
             {images.length > 0 ? (
               <>
-                {images.map((img, index) => (
-                  <div key={`image-${index}`} className="keen-slider__slide relative h-full w-full">
+                {images.map((imgSrc, index) => (
+                  <div key={`image-${index}`} className="keen-slider__slide relative h-full w-full bg-gray-50">
                     <Image
-                      src={img || "/city/c4.jpg"}
+                      src={imgSrc || "/city/c4.jpg"}
                       alt={`${event.title} Image ${index + 1}`}
                       fill
                       className="object-cover"
                       priority={index === 0}
+                      onLoadingComplete={(imgEl) => {
+                        const ratio = imgEl.naturalWidth / imgEl.naturalHeight
+                        imgEl.style.objectFit = ratio > 2 ? "contain" : "cover"
+                      }}
                     />
                   </div>
                 ))}
@@ -330,13 +332,17 @@ export default function EventHero({ event }: EventHeroProps) {
                 ))}
               </>
             ) : (
-              <div className="keen-slider__slide relative h-full w-full">
-                <Image 
-                  src="/herosection-images/test.jpeg" 
-                  alt="Default Image" 
-                  fill 
-                  className="object-cover" 
+              <div className="keen-slider__slide relative h-full w-full bg-gray-50">
+                <Image
+                  src="/herosection-images/test.jpeg"
+                  alt="Default Image"
+                  fill
+                  className="object-cover"
                   priority
+                  onLoadingComplete={(imgEl) => {
+                    const ratio = imgEl.naturalWidth / imgEl.naturalHeight
+                    imgEl.style.objectFit = ratio > 2 ? "contain" : "cover"
+                  }}
                 />
               </div>
             )}
@@ -348,9 +354,8 @@ export default function EventHero({ event }: EventHeroProps) {
               {images.map((_, idx) => (
                 <button
                   key={idx}
-                  className={`w-2 h-2 rounded-full transition-colors ${
-                    idx === currentSlide ? "bg-white" : "bg-white/50"
-                  }`}
+                  className={`w-2 h-2 rounded-full transition-colors ${idx === currentSlide ? "bg-white" : "bg-white/50"
+                    }`}
                   onClick={() => instanceRef.current?.moveToIdx(idx)}
                 />
               ))}
