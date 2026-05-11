@@ -20,6 +20,7 @@ import {
   FeaturedSpeakersSkeleton,
   TrendingEventsSkeleton,
 } from "@/components/home-skeletons";
+import ComingSoonBanner from "@/components/ComingSoonBanner";
 
 export default function Home() {
   return (
