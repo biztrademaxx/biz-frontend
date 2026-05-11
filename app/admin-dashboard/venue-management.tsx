@@ -198,9 +198,8 @@ export default function VenueManagement({
       if (v.status === "pending" || v.status === "active" || v.status === "suspended") {
         return v.status
       }
-      if (v.isVerified && v.isActive) return "active"
-      if (v.isActive === false) return "suspended"
-      return "pending"
+      if (v.isVerified) return "active"
+      return "suspended"
     })(),
     createdAt: v.createdAt,
     updatedAt: v.updatedAt,
@@ -233,7 +232,7 @@ export default function VenueManagement({
       const raw = Array.isArray(list) ? list : []
       const mapped = raw.map((v: any) => mapVenueFromApi(v))
       setVenues(mapped)
-      setPendingVenues(mapped.filter((v) => !(v.isVerified && v.isActive)))
+      setPendingVenues(mapped.filter((v) => !v.isVerified))
     } catch (error) {
       console.error("Error fetching venues:", error)
       toast.error("Failed to load venues")
@@ -280,10 +279,10 @@ export default function VenueManagement({
     try {
       const body: Record<string, unknown> =
         newStatus === "active"
-          ? { isActive: true, isVerified: true }
+          ? { isVerified: true, isActive: true }
           : newStatus === "pending"
-            ? { isActive: true, isVerified: false }
-            : { isActive: false }
+            ? { isVerified: false, isActive: true }
+            : { isVerified: false, isActive: true }
       await adminApi(`/venues/${venueId}`, {
         method: "PATCH",
         body,
@@ -293,18 +292,13 @@ export default function VenueManagement({
           ? {
               ...venue,
               status: newStatus,
-              isActive: newStatus !== "suspended",
-              isVerified:
-                newStatus === "active"
-                  ? true
-                  : newStatus === "pending"
-                    ? false
-                    : venue.isVerified,
+              isActive: true,
+              isVerified: newStatus === "active",
             }
           : venue
       )
       setVenues(next)
-      setPendingVenues(next.filter((v) => !(v.isVerified && v.isActive)))
+      setPendingVenues(next.filter((v) => !v.isVerified))
       toast.success(`Venue status updated to ${newStatus}`)
     } catch (error) {
       console.error("Error updating venue status:", error)
@@ -357,7 +351,7 @@ export default function VenueManagement({
     try {
       await adminApi(`/venues/${venueId}`, {
         method: "PATCH",
-        body: { isVerified: false, isActive: false },
+        body: { isVerified: false, isActive: true },
       })
       setPendingVenues(pendingVenues.filter((v) => v.id !== venueId))
       setIsRejectDialogOpen(false)
@@ -428,7 +422,7 @@ export default function VenueManagement({
           venueCountry: formData.country,
           venueAddress: formData.address,
           maxCapacity: formData.maxCapacity,
-          isActive: formData.status === "active" || formData.status === "pending",
+          isActive: true,
           isVerified: formData.status === "active",
         },
       })

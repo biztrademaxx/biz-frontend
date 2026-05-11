@@ -6,18 +6,20 @@ import { clearTokens } from "@/lib/api"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import {
-  Building2, 
-  MessageSquare, 
-  Star, 
-  HelpCircle, 
-  ChevronDown, 
+  Building2,
+  MessageSquare,
+  Star,
+  HelpCircle,
+  ChevronDown,
   ChevronRight,
   Settings,
-  X
+  X,
+  AlertCircle,
 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/hooks/use-auth"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 // Import all section components
 import VenueProfile from "./venue-profile"
@@ -32,6 +34,20 @@ import { HelpSupport } from "@/components/HelpSupport"
 import VenueFeedbackManagement from "./ratings-reviews"
 import { useDashboard } from "@/contexts/dashboard-context"
 import { DashboardManagedBanner } from "@/components/dashboard-managed-banner"
+
+/** True when venue is not yet approved for the public /venues directory (manager.isVerified). */
+function venuePayloadUnderReview(payload: unknown): boolean {
+  if (!payload || typeof payload !== "object") return false
+  const o = payload as Record<string, unknown>
+  const m = o.manager
+  if (m && typeof m === "object" && "isVerified" in m) {
+    return (m as { isVerified?: boolean }).isVerified !== true
+  }
+  if (typeof o.isVerified === "boolean") {
+    return !o.isVerified
+  }
+  return false
+}
 
 type VenueData = {
   id: string
@@ -63,6 +79,9 @@ type VenueData = {
   totalReviews: number
   amenities: string[]
   meetingSpaces: MeetingSpace[]
+  /** Present on API payload via `location.timezone`; optional for legacy shapes. */
+  timezone?: string
+  manager?: { isVerified?: boolean; [key: string]: unknown }
 }
 
 interface UserDashboardProps {
@@ -72,6 +91,7 @@ interface UserDashboardProps {
 export default function VenueDashboardPage({ userId }: UserDashboardProps) {
   const { activeSection, setActiveSection } = useDashboard()
   const [venueData, setVenueData] = useState<VenueData | null>(null)
+  const [accountUnderReview, setAccountUnderReview] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [openMenus, setOpenMenus] = useState<string[]>(["venue-management", "communication", "reviews-legal"])
@@ -107,6 +127,7 @@ export default function VenueDashboardPage({ userId }: UserDashboardProps) {
     try {
       setLoading(true)
       setError(null)
+      setAccountUnderReview(false)
 
       const response = await fetch(`/api/venue-manager/${userId}`, {
         method: "GET",
@@ -121,15 +142,16 @@ export default function VenueDashboardPage({ userId }: UserDashboardProps) {
 
       const data = await response.json()
 
-      if (data.data) setVenueData(data.data)
-      else if (data.user?.venue) setVenueData(data.user.venue)
-      else if (data.venue) setVenueData(data.venue)
-      else if (data.user) setVenueData(data.user)
-      else throw new Error("Invalid data structure in response")
+      const payload =
+        data.data ?? data.user?.venue ?? data.venue ?? data.user ?? null
+      if (!payload) throw new Error("Invalid data structure in response")
+      setVenueData(payload as VenueData)
+      setAccountUnderReview(venuePayloadUnderReview(payload))
 
     } catch (err) {
       console.error("Error fetching user data:", err)
       setError(err instanceof Error ? err.message : "An error occurred")
+      setAccountUnderReview(false)
 
       if (err instanceof Error && (err.message === "Access denied" || err.message === "User not found")) {
         toast({
@@ -362,6 +384,20 @@ export default function VenueDashboardPage({ userId }: UserDashboardProps) {
         <main className="flex-1 p-6 overflow-auto">
           <DashboardManagedBanner page="venue-dashboard" />
           <div className="max-w-7xl mx-auto">
+            {accountUnderReview && (
+              <Alert
+                className="mb-4 border-amber-200 bg-amber-50 text-amber-950 [&>svg]:text-amber-700"
+                role="status"
+              >
+                <AlertCircle className="h-4 w-4" aria-hidden />
+                <AlertTitle>Your account is under review</AlertTitle>
+                <AlertDescription className="text-amber-900/90">
+                  Our team is reviewing your venue before it can appear on the public venues directory. You can
+                  continue using this dashboard to complete your profile and settings. We will notify you when your
+                  listing is live.
+                </AlertDescription>
+              </Alert>
+            )}
             <div className="bg-[#F5F4F0] min-h-screen w-full ">
               {renderContent()}
             </div>

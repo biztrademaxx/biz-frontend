@@ -48,7 +48,7 @@ interface VenueData {
   basePrice: number
   currency: string
   /** IANA time zone for events held at this venue (e.g. Asia/Kolkata). */
-  timezone: string
+  timezone?: string
 }
 
 interface VenueProfileProps {

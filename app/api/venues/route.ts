@@ -101,9 +101,9 @@ export async function GET(request: NextRequest) {
         const rows = await prisma.user.findMany({
           where: {
             role: "VENUE_MANAGER",
-            isActive: true,
             isVerified: true,
-          },
+            NOT: { profileVisibility: "private" },
+          } as import("@prisma/client").Prisma.UserWhereInput,
           select: {
             id: true,
             firstName: true,
