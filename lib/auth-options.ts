@@ -23,6 +23,23 @@ function decodeOidcJwtPayload(token: string): Record<string, unknown> | null {
 }
 
 /**
+ * LinkedIn OIDC scopes. We always include `email` — without it, userinfo / id_token
+ * often omit email and `signIn` rejects (NextAuth shows `AccessDenied`). Deployed
+ * env sometimes sets `LINKEDIN_SCOPE=openid profile` only; merging fixes that.
+ */
+function linkedInOidcScopeString(envOverride?: string | null): string {
+  const trimmed = envOverride?.trim()
+  const parts = new Set<string>()
+  for (const s of (trimmed || "openid profile email").split(/\s+/)) {
+    if (s) parts.add(s.toLowerCase())
+  }
+  parts.add("openid")
+  parts.add("profile")
+  parts.add("email")
+  return [...parts].join(" ")
+}
+
+/**
  * LinkedIn "Sign In with LinkedIn using OpenID Connect" must use OIDC discovery +
  * the standard userinfo endpoint. The stock `next-auth/providers/linkedin` helper
  * still calls legacy `/v2/me` + email APIs and often breaks OIDC tokens (`OAuthCallback`).
@@ -31,8 +48,7 @@ function linkedInOidcProvider(
   clientId: string,
   clientSecret: string
 ): OAuthConfig<Record<string, unknown>> {
-  const linkedInScope =
-    process.env.LINKEDIN_SCOPE?.trim() || "openid profile email"
+  const linkedInScope = linkedInOidcScopeString(process.env.LINKEDIN_SCOPE)
 
   return {
     id: "linkedin",
@@ -265,7 +281,7 @@ export const authOptions: NextAuthOptions = {
       })
       if (!email) {
         console.error(
-          "OAuth sign-in rejected: missing email. For LinkedIn, enable OpenID Connect + email scope (LINKEDIN_SCOPE=openid profile email)."
+          "OAuth sign-in rejected: missing email. For LinkedIn: enable OpenID Connect in the developer app, request scope `openid profile email` (email is always merged in code), and ensure the member has a verified email visible to the app."
         )
         return false
       }
