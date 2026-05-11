@@ -99,7 +99,11 @@ export async function GET(request: NextRequest) {
     if (!res.ok) {
       if (prisma) {
         const rows = await prisma.user.findMany({
-          where: { role: "VENUE_MANAGER", isActive: true },
+          where: {
+            role: "VENUE_MANAGER",
+            isActive: true,
+            isVerified: true,
+          },
           select: {
             id: true,
             firstName: true,

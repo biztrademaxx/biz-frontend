@@ -141,7 +141,6 @@ export default function VenueManagement({
   const [venues, setVenues] = useState<Venue[]>([])
   const [pendingVenues, setPendingVenues] = useState<Venue[]>([])
   const [loading, setLoading] = useState(true)
-  const [pendingLoading, setPendingLoading] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [selectedVenue, setSelectedVenue] = useState<Venue | null>(null)
@@ -195,7 +194,14 @@ export default function VenueManagement({
     isVerified: Boolean(v.isVerified),
     isActive: v.isActive ?? true,
     venueImages: Array.isArray(v.venueImages) ? v.venueImages : [],
-    status: v.status ?? (v.isActive ? "active" : "suspended"),
+    status: (() => {
+      if (v.status === "pending" || v.status === "active" || v.status === "suspended") {
+        return v.status
+      }
+      if (v.isVerified && v.isActive) return "active"
+      if (v.isActive === false) return "suspended"
+      return "pending"
+    })(),
     createdAt: v.createdAt,
     updatedAt: v.updatedAt,
     rejectionReason: v.rejectionReason,
@@ -225,7 +231,9 @@ export default function VenueManagement({
       const result = await adminApi<{ success?: boolean; data?: any[]; venues?: any[] }>("/venues")
       const list = result?.data ?? (result as any)?.venues ?? []
       const raw = Array.isArray(list) ? list : []
-      setVenues(raw.map((v: any) => mapVenueFromApi(v)))
+      const mapped = raw.map((v: any) => mapVenueFromApi(v))
+      setVenues(mapped)
+      setPendingVenues(mapped.filter((v) => !(v.isVerified && v.isActive)))
     } catch (error) {
       console.error("Error fetching venues:", error)
       toast.error("Failed to load venues")
@@ -234,20 +242,8 @@ export default function VenueManagement({
     }
   }
 
-  const fetchPendingVenues = async () => {
-    try {
-      setPendingLoading(true)
-      setPendingVenues([])
-    } catch (error) {
-      console.error("Error fetching pending venues:", error)
-    } finally {
-      setPendingLoading(false)
-    }
-  }
-
   useEffect(() => {
     fetchVenues()
-    fetchPendingVenues()
   }, [])
 
   useEffect(() => {
@@ -282,14 +278,33 @@ export default function VenueManagement({
     newStatus: "active" | "pending" | "suspended"
   ) => {
     try {
+      const body: Record<string, unknown> =
+        newStatus === "active"
+          ? { isActive: true, isVerified: true }
+          : newStatus === "pending"
+            ? { isActive: true, isVerified: false }
+            : { isActive: false }
       await adminApi(`/venues/${venueId}`, {
         method: "PATCH",
-        body: { isActive: newStatus === "active" },
+        body,
       })
-      setVenues(venues.map((venue) =>
-        venue.id === venueId ? { ...venue, status: newStatus } : venue
-      ))
-      setPendingVenues(pendingVenues.filter((venue) => venue.id !== venueId))
+      const next = venues.map((venue) =>
+        venue.id === venueId
+          ? {
+              ...venue,
+              status: newStatus,
+              isActive: newStatus !== "suspended",
+              isVerified:
+                newStatus === "active"
+                  ? true
+                  : newStatus === "pending"
+                    ? false
+                    : venue.isVerified,
+            }
+          : venue
+      )
+      setVenues(next)
+      setPendingVenues(next.filter((v) => !(v.isVerified && v.isActive)))
       toast.success(`Venue status updated to ${newStatus}`)
     } catch (error) {
       console.error("Error updating venue status:", error)
@@ -301,9 +316,18 @@ export default function VenueManagement({
     try {
       const venue = venues.find((v) => v.id === venueId)
       if (!venue) return
-      await adminApi(`/venues/${venueId}`, { method: "PATCH", body: { isActive: !venue.isVerified } })
-      setVenues(venues.map((v) => (v.id === venueId ? { ...v, isVerified: !v.isVerified } : v)))
-      setPendingVenues(pendingVenues.filter((v) => v.id !== venueId))
+      const nextVerified = !venue.isVerified
+      await adminApi(`/venues/${venueId}`, {
+        method: "PATCH",
+        body: { isVerified: nextVerified, isActive: nextVerified },
+      })
+      const updated = venues.map((v) =>
+        v.id === venueId
+          ? { ...v, isVerified: nextVerified, isActive: nextVerified, status: nextVerified ? "active" : "suspended" }
+          : v
+      )
+      setVenues(updated)
+      setPendingVenues(updated.filter((v) => !(v.isVerified && v.isActive)))
       toast.success(`Venue verification ${!venue.isVerified ? "added" : "removed"}`)
     } catch (error) {
       console.error("Error updating verification:", error)
@@ -314,10 +338,13 @@ export default function VenueManagement({
   const handleApproveVenue = async (venueId: string) => {
     try {
       await import("@/lib/admin-api").then((m) =>
-        m.adminApi(`/venues/${venueId}`, { method: "PATCH", body: { isActive: true } })
+        m.adminApi(`/venues/${venueId}`, {
+          method: "PATCH",
+          body: { isVerified: true, isActive: true },
+        })
       )
       setPendingVenues(pendingVenues.filter((v) => v.id !== venueId))
-      fetchVenues()
+      await fetchVenues()
       setIsApproveDialogOpen(false)
       toast.success("Venue approved successfully")
     } catch (error) {
@@ -328,9 +355,13 @@ export default function VenueManagement({
 
   const handleRejectVenue = async (venueId: string, _reason: string) => {
     try {
-      await adminApi(`/venues/${venueId}`, { method: "PATCH", body: { isActive: false } })
+      await adminApi(`/venues/${venueId}`, {
+        method: "PATCH",
+        body: { isVerified: false, isActive: false },
+      })
       setPendingVenues(pendingVenues.filter((v) => v.id !== venueId))
       setIsRejectDialogOpen(false)
+      await fetchVenues()
       toast.success("Venue rejected successfully")
     } catch (error) {
       console.error("Error rejecting venue:", error)
@@ -374,8 +405,7 @@ export default function VenueManagement({
       const result = await adminApi<{ success?: boolean; error?: string }>("/venues", { method: "POST", body: formData })
       if ((result as any)?.error) throw new Error((result as any).error)
       setIsAddDialogOpen(false)
-      fetchVenues()
-      fetchPendingVenues()
+      await fetchVenues()
       toast.success("Venue created successfully")
     } catch (error) {
       console.error("Error creating venue:", error)
@@ -398,12 +428,12 @@ export default function VenueManagement({
           venueCountry: formData.country,
           venueAddress: formData.address,
           maxCapacity: formData.maxCapacity,
-          isActive: formData.status === "active",
+          isActive: formData.status === "active" || formData.status === "pending",
+          isVerified: formData.status === "active",
         },
       })
       setIsEditDialogOpen(false)
-      fetchVenues()
-      fetchPendingVenues()
+      await fetchVenues()
       toast.success("Venue updated successfully")
     } catch (error) {
       console.error("Error updating venue:", error)
@@ -445,8 +475,7 @@ export default function VenueManagement({
   const verifiedVenues = venues.filter((v) => v.isVerified).length
 
   const refreshAll = () => {
-    fetchVenues()
-    fetchPendingVenues()
+    void fetchVenues()
   }
 
   if (loading) {
@@ -647,7 +676,7 @@ export default function VenueManagement({
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {pendingLoading ? (
+              {loading ? (
                 <div className="flex items-center justify-center py-8">
                   <RefreshCw className="w-6 h-6 animate-spin text-yellow-600" />
                 </div>
