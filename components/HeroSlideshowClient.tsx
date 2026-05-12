@@ -24,12 +24,25 @@ function cardImageUrl(event: Event): string {
 }
 
 /** Day, month, and year from event start only (end date is not shown). */
-function heroCardDateParts(startIso: string): { line1: string; line2: string; yearLine: string } {
+function heroCardDateParts(
+  startIso: string,
+  endIso?: string | null,
+): { line1: string; line2: string; yearLine: string } {
   const start = new Date(startIso)
-  if (Number.isNaN(start.getTime())) return { line1: "—", line2: "", yearLine: "" }
-  const monUpper = (x: Date) => x.toLocaleString("en-GB", { month: "short" }).toUpperCase()
+  const end = endIso ? new Date(endIso) : null
+
+  if (Number.isNaN(start.getTime())) {
+    return { line1: "—", line2: "", yearLine: "" }
+  }
+
+  const monUpper = (x: Date) =>
+    x.toLocaleString("en-GB", { month: "short" }).toUpperCase()
+
+  const startDay = start.getDate()
+  const endDay = end && !Number.isNaN(end.getTime()) ? end.getDate() : null
+
   return {
-    line1: String(start.getDate()),
+    line1: endDay ? `${startDay}-${endDay}` : `${startDay}`,
     line2: monUpper(start),
     yearLine: String(start.getFullYear()),
   }
@@ -54,7 +67,8 @@ function formatLocationLine(event: Event): string {
 }
 
 function EventCard({ event }: { event: Event }) {
-  const { line1: dateLine1, line2: dateLine2, yearLine: dateYear } = heroCardDateParts(event.startDate)
+  const { line1: dateLine1, line2: dateLine2, yearLine: dateYear } =
+    heroCardDateParts(event.startDate, event.endDate)
   const location = formatLocationLine(event)
   const locationDisplay = location || "Venue coming soon"
 
@@ -97,7 +111,7 @@ function EventCard({ event }: { event: Event }) {
                 aria-hidden
               />
               <div className="relative z-10 flex w-full flex-col items-center justify-center text-center">
-                <div className="text-2xl font-black leading-[0.92] tracking-tight text-white [text-shadow:0_2px_6px_rgba(0,0,0,0.45)] md:text-3xl md:leading-[0.9] lg:text-[2rem]">
+                <div className="text-lg font-black leading-[0.92] tracking-tight text-white [text-shadow:0_2px_6px_rgba(0,0,0,0.45)] md:text-xl md:leading-[0.9] lg:text-2xl">
                   {dateLine1}
                 </div>
                 {dateLine2 ? (
@@ -106,7 +120,7 @@ function EventCard({ event }: { event: Event }) {
                   </div>
                 ) : null}
                 {dateYear ? (
-                  <div className="mt-0.5 text-[9px] font-semibold tabular-nums tracking-[0.1em] text-white [text-shadow:0_1px_4px_rgba(0,0,0,0.5)] md:mt-0.5 md:text-[10px] lg:text-xs">
+                  <div className="mt-0.5 text-[8px] font-semibold tabular-nums tracking-[0.08em] text-white [text-shadow:0_1px_4px_rgba(0,0,0,0.5)] md:text-[9px] lg:text-[10px]">
                     {dateYear}
                   </div>
                 ) : null}
