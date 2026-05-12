@@ -15,6 +15,7 @@ import {
 } from "@/lib/api"
 import { getBrandLogoSrc, isBrandLogoRemoteUrl } from "@/lib/brand-logo"
 import { eventPublicPath } from "@/lib/event-path"
+import { getVenuePublicPath } from "@/lib/venue-dashboard-path"
 import ExploreMegaMenu from "./ExploreMegaMenu"
 
 type SearchEventRow = {
@@ -97,8 +98,8 @@ export default function Navbar() {
   )
 
   const handleVenueClick = useCallback(
-    (venueId: string) => {
-      router.push(`/venue/${venueId}`)
+    (venue: { id: string; venueName?: string | null }) => {
+      router.push(getVenuePublicPath(venue.id, venue.venueName ?? null))
       setSearchQuery("")
       closeSearchUi()
       setMobileMenuOpen(false)
@@ -189,7 +190,7 @@ export default function Navbar() {
     } else if (roleUpper === "ATTENDEE") {
       router.push(userId ? `/dashboard/${userId}` : "/login")
     } else if (roleUpper === "VENUE_MANAGER") {
-      router.push(userId ? `/venue-dashboard/${userId}` : "/venue-dashboard")
+      router.push("/venue-dashboard")
     } else {
       router.push("/login")
     }
@@ -259,7 +260,7 @@ export default function Navbar() {
             <button
               key={`v-${item.v.id}`}
               type="button"
-              onClick={() => handleVenueClick(item.v.id)}
+              onClick={() => handleVenueClick(item.v)}
               className="flex w-full items-start gap-3 border-b border-gray-100 p-3 text-left hover:bg-gray-50"
             >
               <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-green-600" />

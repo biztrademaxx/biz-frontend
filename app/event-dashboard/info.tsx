@@ -14,6 +14,7 @@ import ExhibitorsTab from "./exhibitors-tab"
 import EventHero from "./EventHero"
 import { apiFetch } from "@/lib/api"
 import { getPublicProfilePath } from "@/lib/profile-path"
+import { getVenuePublicPath } from "@/lib/venue-dashboard-path"
 import {
   brochureFriendlyFilename,
   downloadUrlAsFile,
@@ -1232,7 +1233,13 @@ export default function EventPage({ params }: EventPageProps) {
                   </CardHeader>
                   <CardContent
                     className="p-6 bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 cursor-pointer"
-                    onClick={() => router.push(`/venue/${event.venue?.id}`)}
+                    onClick={() => {
+                      const id = event.venue?.id
+                      if (!id) return
+                      router.push(
+                        getVenuePublicPath(id, event.venue?.venueName ?? event.venue?.company ?? null),
+                      )
+                    }}
                   >
                     <div className="space-y-4">
                       {/* Venue Header */}

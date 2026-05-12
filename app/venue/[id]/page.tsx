@@ -4,7 +4,7 @@
 import { devLog } from "@/lib/dev-log"
 
 import { useState, useEffect } from "react"
-import { useParams, useRouter } from "next/navigation"
+import { useParams, usePathname, useRouter } from "next/navigation"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -38,6 +38,7 @@ import { apiFetch } from "@/lib/api"
 import { eventPublicPath } from "@/lib/event-path"
 import { formatPublicTicketPriceLine } from "@/lib/ticket-price-display"
 import VenuePageSkeleton from "@/components/VenuePageSkeleton"
+import { getVenuePublicPath } from "@/lib/venue-dashboard-path"
 
 interface Venue {
   venueName: string
@@ -218,7 +219,9 @@ interface EventsResponse {
 export default function VenueDetailPage() {
   const params = useParams()
   const router = useRouter()
-  const venueId = params.id as string
+  const pathname = usePathname()
+  /** URL segment: UUID or slug from venue name (e.g. `tripura-vasini`). */
+  const segment = params.id as string
 
   const [venue, setVenue] = useState<Venue | null>(null)
   const [reviews, setReviews] = useState<Review[]>([])
@@ -235,17 +238,34 @@ export default function VenueDetailPage() {
   const showScheduleMeeting = isAuthenticated()
 
   useEffect(() => {
-    if (venueId) {
+    if (segment) {
       fetchVenue()
-      fetchReviews()
-      fetchEvents()
     }
-  }, [venueId])
+  }, [segment])
+
+  useEffect(() => {
+    const resolvedId = venue?.id
+    if (!resolvedId) return
+    fetchReviews(resolvedId)
+    fetchEvents(resolvedId)
+  }, [venue?.id])
+
+  useEffect(() => {
+    if (!venue?.id) return
+    const displayName =
+      venue.manager?.venueName?.trim() ||
+      (typeof venue.venueName === "string" ? venue.venueName.trim() : "") ||
+      (typeof venue.name === "string" ? venue.name.trim() : "")
+    const canonical = getVenuePublicPath(venue.id, displayName || null)
+    if (pathname && canonical !== pathname) {
+      router.replace(canonical)
+    }
+  }, [venue?.id, venue?.name, venue?.venueName, venue?.manager?.venueName, pathname, router])
 
   const fetchVenue = async () => {
     try {
       setLoading(true)
-      const response = await fetch(`/api/venue-manager/${venueId}`)
+      const response = await fetch(`/api/venue-manager/${encodeURIComponent(segment)}`)
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
@@ -267,13 +287,13 @@ export default function VenueDetailPage() {
     }
   }
 
-  const fetchReviews = async () => {
-    if (!venueId) return
+  const fetchReviews = async (resolvedVenueId: string) => {
+    if (!resolvedVenueId) return
 
     setReviewsLoading(true)
     try {
       const data = await apiFetch<{ success?: boolean; reviews?: Review[] }>(
-        `/api/venues/${venueId}/reviews?includeReplies=true`,
+        `/api/venues/${resolvedVenueId}/reviews?includeReplies=true`,
         { auth: false }
       )
       const safeReviews = Array.isArray(data?.reviews)
@@ -287,12 +307,12 @@ export default function VenueDetailPage() {
     }
   }
 
-  const fetchEvents = async () => {
-    if (!venueId) return
+  const fetchEvents = async (resolvedVenueId: string) => {
+    if (!resolvedVenueId) return
 
     setEventsLoading(true)
     try {
-      const data = await apiFetch<EventsResponse>(`/api/venues/${venueId}/events`, {
+      const data = await apiFetch<EventsResponse>(`/api/venues/${resolvedVenueId}/events`, {
         auth: false,
       })
       devLog("Fetched events data:", data) // Debug log
@@ -707,7 +727,7 @@ export default function VenueDetailPage() {
               </div>
               <div className="flex items-center gap-3">
                 <ShareButton
-                  id={venueId}
+                  id={venue.id}
                   title={venue.name || venue.venueName}
                   type="venue"
                 />
@@ -1172,7 +1192,7 @@ export default function VenueDetailPage() {
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Review Form and All Reviews */}
                 <div className="lg:col-span-3 space-y-6">
-                  <AddVenueReview venueId={venueId} onReviewAdded={handleReviewAdded} />
+                  <AddVenueReview venueId={venue.id} onReviewAdded={handleReviewAdded} />
 
                   {/* All Reviews Section */}
                   <Card>

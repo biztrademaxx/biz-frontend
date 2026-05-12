@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useToast } from "@/hooks/use-toast"
-import { clearTokens } from "@/lib/api"
+import { apiFetch, clearTokens, getCurrentUserId } from "@/lib/api"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import {
@@ -16,7 +16,7 @@ import {
   X,
   AlertCircle,
 } from "lucide-react"
-import { useRouter } from "next/navigation"
+import { useRouter, usePathname } from "next/navigation"
 import { useAuth } from "@/hooks/use-auth"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
@@ -34,6 +34,8 @@ import { HelpSupport } from "@/components/HelpSupport"
 import VenueFeedbackManagement from "./ratings-reviews"
 import { useDashboard } from "@/contexts/dashboard-context"
 import { DashboardManagedBanner } from "@/components/dashboard-managed-banner"
+import { getVenueDashboardPath } from "@/lib/venue-dashboard-path"
+import { VenueDashboardVenueIdProvider } from "@/contexts/venue-dashboard-venue-id"
 
 /** True when venue is not yet approved for the public /venues directory (manager.isVerified). */
 function venuePayloadUnderReview(payload: unknown): boolean {
@@ -51,6 +53,7 @@ function venuePayloadUnderReview(payload: unknown): boolean {
 
 type VenueData = {
   id: string
+  /** Resolved venue display name (for canonical dashboard URL slug). */
   venueName: string
   logo: string
   contactPerson: string
@@ -85,10 +88,11 @@ type VenueData = {
 }
 
 interface UserDashboardProps {
-  userId: string
+  /** UUID or slug from `/venue-dashboard/[segment]`. */
+  routeSegment: string
 }
 
-export default function VenueDashboardPage({ userId }: UserDashboardProps) {
+export default function VenueDashboardPage({ routeSegment }: UserDashboardProps) {
   const { activeSection, setActiveSection } = useDashboard()
   const [venueData, setVenueData] = useState<VenueData | null>(null)
   const [accountUnderReview, setAccountUnderReview] = useState(false)
@@ -98,6 +102,7 @@ export default function VenueDashboardPage({ userId }: UserDashboardProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const { role, loading: authLoading, logout } = useAuth({ requireAuth: true, allowedRoles: ["VENUE_MANAGER"] })
   const router = useRouter()
+  const pathname = usePathname()
   const { toast } = useToast()
 
   // 👇 Set Venue Profile as default tab when dashboard loads
@@ -121,7 +126,29 @@ export default function VenueDashboardPage({ userId }: UserDashboardProps) {
     }
 
     fetchVenueData()
-  }, [userId, authLoading, role, router, toast])
+  }, [routeSegment, authLoading, role, router, toast])
+
+  useEffect(() => {
+    if (!venueData?.id || authLoading) return
+    const sessionUser = getCurrentUserId()
+    if (sessionUser && sessionUser !== venueData.id) {
+      toast({
+        title: "Access denied",
+        description: "You can only open your own venue dashboard.",
+        variant: "destructive",
+      })
+      router.replace("/login")
+    }
+  }, [venueData?.id, authLoading, router, toast])
+
+  useEffect(() => {
+    if (!venueData?.id) return
+    const name = venueData.venueName?.trim() ? venueData.venueName : null
+    const canonical = getVenueDashboardPath(venueData.id, name)
+    if (pathname && canonical !== pathname) {
+      router.replace(canonical)
+    }
+  }, [venueData?.id, venueData?.venueName, pathname, router])
 
   const fetchVenueData = async () => {
     try {
@@ -129,34 +156,43 @@ export default function VenueDashboardPage({ userId }: UserDashboardProps) {
       setError(null)
       setAccountUnderReview(false)
 
-      const response = await fetch(`/api/venue-manager/${userId}`, {
-        method: "GET",
-        headers: { "Content-Type": "application/json" },
-      })
-
-      if (!response.ok) {
-        if (response.status === 404) throw new Error("User not found")
-        if (response.status === 403) throw new Error("Access denied")
-        throw new Error("Failed to fetch user data")
-      }
-
-      const data = await response.json()
+      const data = await apiFetch<{
+        data?: unknown
+        user?: { venue?: unknown }
+        venue?: unknown
+      }>(`/api/venue-manager/${encodeURIComponent(routeSegment)}`)
 
       const payload =
         data.data ?? data.user?.venue ?? data.venue ?? data.user ?? null
       if (!payload) throw new Error("Invalid data structure in response")
-      setVenueData(payload as VenueData)
+      const raw = payload as Record<string, unknown>
+      const mgr = raw.manager as { venueName?: string } | undefined
+      const merged = {
+        ...raw,
+        venueName: (mgr?.venueName ?? (typeof raw.name === "string" ? raw.name : "")) || "",
+      } as VenueData
+      setVenueData(merged)
       setAccountUnderReview(venuePayloadUnderReview(payload))
 
-    } catch (err) {
+    } catch (err: unknown) {
       console.error("Error fetching user data:", err)
-      setError(err instanceof Error ? err.message : "An error occurred")
       setAccountUnderReview(false)
 
-      if (err instanceof Error && (err.message === "Access denied" || err.message === "User not found")) {
+      const status =
+        typeof err === "object" && err !== null && "status" in err
+          ? Number((err as { status?: number }).status)
+          : undefined
+      const is404 = status === 404
+      const is403 = status === 403
+
+      const message =
+        is404 ? "User not found" : is403 ? "Access denied" : err instanceof Error ? err.message : "An error occurred"
+      setError(message)
+
+      if (is404 || is403) {
         toast({
           title: "Error",
-          description: err.message,
+          description: message,
           variant: "destructive",
         })
         router.push("/login")
@@ -227,7 +263,7 @@ export default function VenueDashboardPage({ userId }: UserDashboardProps) {
       case "booking-system":
         return <BookingSystem venueId={venueData.id} />
       case "communication":
-        return <CommunicationCenter params={{ id: userId }} />
+        return <CommunicationCenter params={{ id: venueData.id }} />
       case "connection":
         return <ConnectionsSection userId={venueData.id} />
       case "ratings-reviews":
@@ -248,6 +284,7 @@ export default function VenueDashboardPage({ userId }: UserDashboardProps) {
   }
 
   return (
+    <VenueDashboardVenueIdProvider venueUserId={venueData.id}>
     <div className="flex min-h-screen w-full bg-[#F5F4F0]">
       {sidebarOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden" onClick={() => setSidebarOpen(false)} />
@@ -405,5 +442,6 @@ export default function VenueDashboardPage({ userId }: UserDashboardProps) {
         </main>
       </div>
     </div>
+    </VenueDashboardVenueIdProvider>
   )
 }

@@ -30,6 +30,7 @@ import { brochureFriendlyFilename, downloadUrlAsFile, getGoogleDocsViewerUrl, re
 import { formatPublicTicketPriceLine } from "@/lib/ticket-price-display"
 import { formatEventSidebarTimeRange } from "@/lib/event-sidebar-time-range"
 import { EVENT_VENUE_LOCATION_PENDING } from "@/lib/event-location-copy"
+import { getVenuePublicPath } from "@/lib/venue-dashboard-path"
 import { BRAND_IMAGE_BOTTOM_FADE } from "@/lib/brand-image-gradients"
 
 interface TicketType {
@@ -1124,7 +1125,16 @@ export default function EventPageContent({ event, session: _session, router, toa
                       <div className="w-full md:w-1/3 flex flex-col justify-between space-y-4">
                         {/* Venue Info */}
                         <div>
-                          <Link href={`/venue/${event?.venue?.id}`}>
+                          <Link
+                            href={
+                              event?.venue?.id
+                                ? getVenuePublicPath(
+                                    event.venue.id,
+                                    event.venue.venueName || event.venue.organizationName || null,
+                                  )
+                                : "/venues"
+                            }
+                          >
                             <h3 className="font-semibold text-[#004A96] text-base hover:underline cursor-pointer">
                               {event?.venue?.venueName || event?.venue?.organizationName || "Venue"}
                             </h3>
@@ -1349,7 +1359,16 @@ export default function EventPageContent({ event, session: _session, router, toa
                       <div className="w-full md:w-1/3 flex flex-col justify-between space-y-4">
                         {/* Venue Info */}
                         <div>
-                          <Link href={`/venue/${event?.venue?.id}`}>
+                          <Link
+                            href={
+                              event?.venue?.id
+                                ? getVenuePublicPath(
+                                    event.venue.id,
+                                    event.venue.venueName || event.venue.organizationName || null,
+                                  )
+                                : "/venues"
+                            }
+                          >
                             <h3 className="font-semibold text-[#FF131C] text-base hover:underline cursor-pointer">
                               {event?.venue?.venueName || event?.venue?.organizationName || "Venue"}
                             </h3>

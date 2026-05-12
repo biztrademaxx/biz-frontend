@@ -3,6 +3,7 @@
 
 import { devLog } from "@/lib/dev-log"
 import VenuesListingPageSkeleton from "@/components/VenuesListingPageSkeleton"
+import { getVenuePublicPath } from "@/lib/venue-dashboard-path"
 
 import { useState, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
@@ -229,8 +230,8 @@ export default function VenuesPage() {
       })
     : []
 
-  const handleVenueClick = (venueId: string) => {
-    router.push(`/venue/${venueId}`)
+  const handleVenueClick = (venue: Venue) => {
+    router.push(getVenuePublicPath(venue.id, venue.venueName))
   }
 
   if (loading) {
@@ -404,7 +405,7 @@ export default function VenuesPage() {
                 <div
                   key={venue.id || index}
                   className="overflow-hidden hover:shadow-lg transition-shadow duration-300 group rounded-sm border cursor-pointer bg-white"
-                  onClick={() => handleVenueClick(venue.id)}
+                  onClick={() => handleVenueClick(venue)}
                 >
                   {/* Image */}
                   <div className="relative">

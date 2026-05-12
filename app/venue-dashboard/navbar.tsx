@@ -34,11 +34,7 @@ export default function Navbar() {
     const role = getCurrentUserRole();
     const id = getCurrentUserId();
     if (role === "VENUE_MANAGER" || role === "venue_manager") {
-      if (id) {
-        router.push(`/venue-dashboard/${id}`);
-      } else {
-        router.push("/venue-dashboard");
-      }
+      router.push("/venue-dashboard")
     } else {
       const confirmed = window.confirm(
         `You are logged in as '${role ?? "user"}'.\n\nPlease login as an organizer to access this page.\n\nClick OK to logout and login as an organizer, or Cancel to stay logged in.`

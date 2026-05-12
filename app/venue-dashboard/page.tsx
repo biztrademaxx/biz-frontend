@@ -2,9 +2,10 @@
 
 import { useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { getCurrentUserId, getCurrentUserRole } from "@/lib/api"
+import { apiFetch, getCurrentUserId, getCurrentUserRole } from "@/lib/api"
+import { getVenueDashboardPath } from "@/lib/venue-dashboard-path"
 
-// No server session; redirect to dashboard by user id or login. Client enforces JWT auth.
+// No server session; redirect to `/venue-dashboard/{slug|uuid}`. Client enforces JWT auth.
 export default function VenueDashboardRoot() {
   const router = useRouter()
 
@@ -15,7 +16,18 @@ export default function VenueDashboardRoot() {
       router.replace("/login")
       return
     }
-    router.replace(`/venue-dashboard/${userId}`)
+    ;(async () => {
+      try {
+        const json = await apiFetch<{ data?: { manager?: { venueName?: string }; name?: string } }>(
+          `/api/venue-manager/${encodeURIComponent(userId)}`,
+        )
+        const payload = json.data
+        const name = payload?.manager?.venueName ?? payload?.name ?? ""
+        router.replace(getVenueDashboardPath(userId, name))
+      } catch {
+        router.replace(`/venue-dashboard/${userId}`)
+      }
+    })()
   }, [router])
 
   return (

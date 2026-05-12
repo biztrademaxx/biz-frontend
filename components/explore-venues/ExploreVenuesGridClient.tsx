@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Calendar, MapPin, Star } from "lucide-react"
 import type { ExploreVenueCard } from "@/lib/venues/types"
+import { getVenuePublicPath } from "@/lib/venue-dashboard-path"
 
 function VenueCard({ venue, onNavigate }: { venue: ExploreVenueCard; onNavigate: () => void }) {
   const showRating = venue.averageRating > 0 || venue.totalReviews > 0
@@ -98,7 +99,7 @@ export default function ExploreVenuesGridClient({ venues }: ExploreVenuesGridCli
                 <VenueCard
                   key={venue.id}
                   venue={venue}
-                  onNavigate={() => router.push(`/venue/${venue.id}`)}
+                  onNavigate={() => router.push(getVenuePublicPath(venue.id, venue.name))}
                 />
               ))}
             </div>
@@ -108,7 +109,7 @@ export default function ExploreVenuesGridClient({ venues }: ExploreVenuesGridCli
                   <VenueCard
                     key={venue.id}
                     venue={venue}
-                    onNavigate={() => router.push(`/venue/${venue.id}`)}
+                    onNavigate={() => router.push(getVenuePublicPath(venue.id, venue.name))}
                   />
                 ))}
               </div>

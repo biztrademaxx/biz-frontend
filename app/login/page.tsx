@@ -63,7 +63,7 @@ export default function LoginPage() {
       } else if (role === "SPEAKER") {
         router.push(`/speaker-dashboard/${userId}`)
       } else if (role === "VENUE_MANAGER") {
-        router.push(`/venue-dashboard/${userId}`)
+        router.push("/venue-dashboard")
       } else {
         router.push("/")
       }

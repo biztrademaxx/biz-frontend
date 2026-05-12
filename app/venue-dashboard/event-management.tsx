@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useParams } from "next/navigation"
+import { useVenueDashboardVenueUserId } from "@/contexts/venue-dashboard-venue-id"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -21,7 +21,7 @@ import {
 import { apiFetch } from "@/lib/api"
 
 export default function EventManagement() {
-  const { id: venueId } = useParams() // 👈 get venueId from the URL (like /venue-dashboard/[id])
+  const resolvedVenueUserId = useVenueDashboardVenueUserId()
   const [activeTab, setActiveTab] = useState("upcoming")
   const [searchTerm, setSearchTerm] = useState("")
   const [filterStatus, setFilterStatus] = useState("all")
@@ -29,15 +29,15 @@ export default function EventManagement() {
   const [events, setEvents] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
-  // Fetch events from API
+  // Fetch events from API (venue user id UUID — not URL slug)
   useEffect(() => {
-    if (!venueId) return
+    if (!resolvedVenueUserId) return
 
     const fetchEvents = async () => {
       try {
         setLoading(true)
         const data = await apiFetch<{ success: boolean; data?: any[]; events?: any[] }>(
-          `/api/venues/${venueId}/events`,
+          `/api/venues/${resolvedVenueUserId}/events`,
           { auth: true },
         )
 
@@ -55,7 +55,7 @@ export default function EventManagement() {
     }
 
     fetchEvents()
-  }, [venueId])
+  }, [resolvedVenueUserId])
 
   // Filter upcoming (includes ongoing) & past events
   const now = new Date()
