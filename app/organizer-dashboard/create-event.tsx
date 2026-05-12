@@ -148,6 +148,33 @@ interface ValidationErrors {
   venue?: string
   venueId?: string
   tags?: string
+  spaceCosts?: string
+}
+
+/** Organizer publish: every exhibitor space row needs a name and valid pricing (per-unit services vs sq.m + min area). */
+function validateOrganizerExhibitorSpaceCosts(spaceCosts: SpaceCost[]): string | undefined {
+  if (!spaceCosts.length) {
+    return "Add at least one exhibitor space type with pricing."
+  }
+  for (const cost of spaceCosts) {
+    const label = cost.type?.trim() ?? ""
+    if (!label) {
+      return "Each exhibitor space row must have a space type name."
+    }
+    if (cost.unit) {
+      if ((cost.pricePerUnit ?? 0) <= 0) {
+        return `Set a price greater than zero for "${label}".`
+      }
+    } else {
+      if ((cost.pricePerSqm ?? 0) <= 0) {
+        return `Set a price per sq.m greater than zero for "${label}".`
+      }
+      if ((cost.minArea ?? 0) <= 0) {
+        return `Set a minimum area greater than zero for "${label}".`
+      }
+    }
+  }
+  return undefined
 }
 
 // Helper function to convert UTC time to local time string
@@ -476,6 +503,7 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
 
 
   const addCustomSpaceCost = () => {
+    setValidationErrors((prev) => ({ ...prev, spaceCosts: undefined }))
     setFormData((prev) => ({
       ...prev,
       spaceCosts: [
@@ -492,6 +520,7 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
   }
 
   const updateSpaceCost = (index: number, field: string, value: any) => {
+    setValidationErrors((prev) => ({ ...prev, spaceCosts: undefined }))
     setFormData((prev) => ({
       ...prev,
       spaceCosts: prev.spaceCosts.map((cost, i) => (i === index ? { ...cost, [field]: value } : cost)),
@@ -499,6 +528,7 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
   }
 
   const removeSpaceCost = (index: number) => {
+    setValidationErrors((prev) => ({ ...prev, spaceCosts: undefined }))
     setFormData((prev) => ({
       ...prev,
       spaceCosts: prev.spaceCosts.filter((_, i) => i !== index),
@@ -528,6 +558,7 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
   };
 
   const calculateCompletionPercentage = () => {
+    const spaceCostsValid = validateOrganizerExhibitorSpaceCosts(formData.spaceCosts) === undefined
     const requiredFields = [
       formData.title,
       formData.slug,
@@ -538,6 +569,7 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
       formData.venue,
       formData.city,
       formData.address,
+      spaceCostsValid,
     ]
 
     const optionalFields = [
@@ -635,6 +667,9 @@ const handlePublishEvent = async () => {
   if (!formData.venueId.trim()) newValidationErrors.venueId = "Please select a venue before creating the event"
   if (formData.tags.length === 0) newValidationErrors.tags = "Add at least one tag for better discoverability"
 
+  const spaceCostsErr = validateOrganizerExhibitorSpaceCosts(formData.spaceCosts)
+  if (spaceCostsErr) newValidationErrors.spaceCosts = spaceCostsErr
+
   // Date validation
   if (formData.startDate && formData.endDate) {
     const start = new Date(formData.startDate)
@@ -676,12 +711,21 @@ const handlePublishEvent = async () => {
       description: "Please fill in all required fields correctly.",
       variant: "destructive",
     })
-    
-    // Scroll to first error
-    const firstErrorField = Object.keys(newValidationErrors)[0]
-    const element = document.getElementById(firstErrorField)
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+
+    if (newValidationErrors.spaceCosts) {
+      setActiveTab("pricing")
+      requestAnimationFrame(() => {
+        document.getElementById("exhibitor-space-costs-section")?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        })
+      })
+    } else {
+      const firstErrorField = Object.keys(newValidationErrors)[0]
+      const element = document.getElementById(firstErrorField)
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth", block: "center" })
+      }
     }
     return
   }
@@ -786,7 +830,7 @@ const handlePublishEvent = async () => {
     const eventData = {
       title: formData.title,
       slug: formData.slug,
-      subTitle: formData.subTitle,
+      subTitle: (formData.subTitle ?? "").slice(0, 10),
       description: formData.description,
       shortDescription: formData.description.substring(0, 200),
       category: formData.categories,
@@ -1281,14 +1325,19 @@ const handlePublishEvent = async () => {
                     id="eventSubtitle"
                     name="eventSubtitle"
                     autoComplete="off"
+                    maxLength={10}
                     value={formData.subTitle ?? ""}
                     onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, subTitle: e.target.value }))
+                      setFormData((prev) => ({
+                        ...prev,
+                        subTitle: e.target.value.slice(0, 10),
+                      }))
                     }
-                    placeholder="Optional tagline under the title"
+                    placeholder="tagline (max 10 characters)"
                   />
                   <p className="text-xs text-muted-foreground mt-1">
-                    Separate from the full description below. Leave blank if you do not need a tagline.
+                    Up to 10 characters. Separate from the full description below. Leave blank if you do not need a
+                    tagline.
                   </p>
                 </div>
 
@@ -1769,14 +1818,20 @@ const handlePublishEvent = async () => {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card id="exhibitor-space-costs-section">
             <CardHeader>
-              <CardTitle>Exhibitor Space Costs</CardTitle>
+              <CardTitle>Exhibitor Space Costs *</CardTitle>
               <p className="text-sm text-gray-600">
-                Configure pricing for different types of exhibition spaces and services
+                Configure pricing for different types of exhibition spaces and services. This section is required
+                before you can submit the event for approval.
               </p>
             </CardHeader>
             <CardContent className="space-y-6">
+              {validationErrors.spaceCosts && (
+                <p className="text-sm text-red-600" role="alert">
+                  {validationErrors.spaceCosts}
+                </p>
+              )}
               <div className="grid gap-6">
                 {formData.spaceCosts.map((cost, index) => (
                   <div key={index} className="p-6 border rounded-lg bg-gray-50">
