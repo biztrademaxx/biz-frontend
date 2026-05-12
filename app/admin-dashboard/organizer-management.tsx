@@ -161,6 +161,23 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
     }
   }
 
+  const handleApproveOrganizer = async (organizerId: string) => {
+    try {
+      await adminApi(`/organizers/${organizerId}`, {
+        method: "PATCH",
+        body: { isVerified: true, isActive: true },
+      })
+      toast({ title: "Approved", description: "Organizer can now sign in and use the platform." })
+      await fetchOrganizers()
+    } catch (e: any) {
+      toast({
+        title: "Approval failed",
+        description: e?.message || "Could not approve organizer",
+        variant: "destructive",
+      })
+    }
+  }
+
   const transformOrganizerData = (organizer: Organizer): TransformedOrganizer => {
     const location = organizer.headquarters || organizer.businessAddress || "Location not specified"
     const eventCount = organizer._count?.organizedEvents ?? organizer.totalEvents ?? 0
@@ -415,11 +432,15 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
                       </td>
                       <td className="px-4 py-4">
                         <div className="flex items-center gap-2">
-                          {/* {!isVerified && (
-                            <button className="text-xs font-medium px-3 py-1.5 rounded-lg border border-emerald-200 text-emerald-700 hover:bg-emerald-50 transition-colors">
-                              Verify
+                          {!isVerified && (
+                            <button
+                              type="button"
+                              onClick={() => handleApproveOrganizer(organizer.id)}
+                              className="text-xs font-medium px-3 py-1.5 rounded-lg border border-emerald-200 text-emerald-700 hover:bg-emerald-50 transition-colors"
+                            >
+                              Approve
                             </button>
-                          )} */}
+                          )}
                           <Dialog>
                             <DialogTrigger asChild>
                               <button className="text-xs font-medium px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors">

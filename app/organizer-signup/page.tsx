@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import { Eye, EyeOff, User, Mail, CheckCircle, ChevronLeft } from 'lucide-react';
-import { signIn } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { apiFetch } from "@/lib/api"
 
@@ -289,25 +288,10 @@ const OrganizerSignup = () => {
       const data = await res.json();
 
       if (res.ok) {
-        const loginRes = await signIn("credentials", {
-          redirect: false,
-          email: formData.email,
-          password: formData.password,
-        });
-
-        if (!loginRes?.error) {
-          if (data.user?.role === "ORGANIZER") {
-            router.push(`/organizer-dashboard/${data.user.id}`);
-          } else {
-            router.push(`/dashboard/${data.user.id}`);
-          }
-        } else {
-          alert("Account created, but auto-login failed. Please log in manually.");
-          router.push("/login");
-        }
-      } else {
-        alert(data.error || data.details || "Registration failed. Please try again.");
+        router.push("/login?registered=organizer")
+        return
       }
+      alert(data.error || data.details || "Registration failed. Please try again.")
     } catch (err) {
       console.error("Registration error:", err);
       alert("An error occurred during registration. Please try again.");

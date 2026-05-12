@@ -27,12 +27,24 @@ export default function LoginPage() {
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState("")
+  const [infoMessage, setInfoMessage] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    const q = new URLSearchParams(window.location.search)
+    if (q.get("registered") === "organizer") {
+      setInfoMessage(
+        "Your organizer account was created. An administrator must approve it before you can sign in. You will receive access once approved.",
+      )
+    }
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
     setError("")
+    setInfoMessage("")
 
     try {
       const result = await loginWithEmailPassword(email, password)
@@ -200,6 +212,12 @@ export default function LoginPage() {
                 Forgot password?
               </Link>
             </div>
+
+            {infoMessage && (
+              <Alert className="border-blue-200 bg-blue-50 text-blue-900">
+                <AlertDescription>{infoMessage}</AlertDescription>
+              </Alert>
+            )}
 
             {error && (
               <Alert variant="destructive">
