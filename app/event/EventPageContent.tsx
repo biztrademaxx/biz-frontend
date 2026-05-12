@@ -1,6 +1,8 @@
 "use client"
 
 import Image from "next/image"
+import { useKeenSlider } from "keen-slider/react"
+import "keen-slider/keen-slider.min.css"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -9,7 +11,7 @@ import { Badge } from "@/components/ui/badge"
 import { Star, Mail, MapPin, Clock, IndianRupee, Tag, Trash2, Calendar, Users, Edit2, Plus, Share2, Bookmark, ExternalLink, Download } from "lucide-react"
 import EventHero from "@/components/event-hero"
 import EventImageGallery from "@/components/event-image-gallery"
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useState, useRef } from "react"
 import ExhibitorsTab from "./[id]/exhibitors-tab"
 import SpeakersTab from "./[id]/speakers-tab"
 import AddReviewCard from "@/components/AddReviewCard"
@@ -28,6 +30,7 @@ import { brochureFriendlyFilename, downloadUrlAsFile, getGoogleDocsViewerUrl, re
 import { formatPublicTicketPriceLine } from "@/lib/ticket-price-display"
 import { formatEventSidebarTimeRange } from "@/lib/event-sidebar-time-range"
 import { EVENT_VENUE_LOCATION_PENDING } from "@/lib/event-location-copy"
+import { BRAND_IMAGE_BOTTOM_FADE } from "@/lib/brand-image-gradients"
 
 interface TicketType {
   name: string
@@ -212,7 +215,17 @@ export default function EventPageContent({ event, session: _session, router, toa
   const [interestExhibit, setInterestExhibit] = useState(false)
   const [interestSubmitting, setInterestSubmitting] = useState<"visit" | "exhibit" | null>(null)
   const [brochureDownloading, setBrochureDownloading] = useState(false)
-  const [sidebarBanner, setSidebarBanner] = useState<ContentBanner | null>(null)
+  const [sidebarBanners, setSidebarBanners] = useState<ContentBanner[]>([])
+  const [sidebarBannerSlide, setSidebarBannerSlide] = useState(0)
+  const sidebarAutoplayRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined)
+
+  const [sidebarBannerSliderRef, sidebarBannerSliderInstanceRef] = useKeenSlider<HTMLDivElement>({
+    loop: true,
+    slides: { perView: 1 },
+    slideChanged(slider) {
+      setSidebarBannerSlide(slider.track.details.rel)
+    },
+  })
   const brochureUrl = event?.brochure ? resolveBrochureUrl(event.brochure) : ""
   const useGoogleViewer = /^https:\/\//i.test(brochureUrl) && !/localhost|127\.0\.0\.1/i.test(brochureUrl)
   const layoutPlanUrl = event?.layoutPlan ? resolveBrochureUrl(event.layoutPlan) : ""
@@ -279,12 +292,12 @@ export default function EventPageContent({ event, session: _session, router, toa
         })
         if (cancelled) return
         const list = Array.isArray(data) ? data : []
-        const active = list.find((b) => b?.isActive !== false && b?.imageUrl)
-        setSidebarBanner(active ?? null)
+        const banners = list.filter((b) => b?.isActive !== false && b?.imageUrl)
+        setSidebarBanners(banners)
       } catch (error) {
         if (!cancelled) {
           console.error("Failed to fetch sidebar banner:", error)
-          setSidebarBanner(null)
+          setSidebarBanners([])
         }
       }
     })()
@@ -292,6 +305,20 @@ export default function EventPageContent({ event, session: _session, router, toa
       cancelled = true
     }
   }, [])
+
+  useEffect(() => {
+    if (sidebarAutoplayRef.current) {
+      clearInterval(sidebarAutoplayRef.current)
+      sidebarAutoplayRef.current = undefined
+    }
+    if (sidebarBanners.length <= 1) return
+    sidebarAutoplayRef.current = setInterval(() => {
+      sidebarBannerSliderInstanceRef.current?.next()
+    }, 7000)
+    return () => {
+      if (sidebarAutoplayRef.current) clearInterval(sidebarAutoplayRef.current)
+    }
+  }, [sidebarBanners.length])
 
   const fetchSpaceCosts = async (eventId: string) => {
     try {
@@ -1463,79 +1490,94 @@ export default function EventPageContent({ event, session: _session, router, toa
           {/* Sidebar - Right Side */}
           <div className="w-full lg:w-80 xl:w-96 space-y-6 flex-shrink-0">
             <Card className="gap-0 p-0 overflow-hidden rounded-sm border border-gray-200 shadow-sm">
-              {sidebarBanner?.imageUrl ? (
-                sidebarBanner.link?.trim() ? (
-<a
-                  href = { sidebarBanner.link.trim() }
-        target={sidebarBanner.link.startsWith("http") ? "_blank" : "_self"}
-              rel={sidebarBanner.link.startsWith("http") ? "noopener noreferrer" : undefined}
-              className="block"
-      >
-              <div className="relative h-52 w-full overflow-hidden bg-gray-50">
-                <Image
-                  src={sidebarBanner.imageUrl}
-                  alt={sidebarBanner.title || "Event sidebar banner"}
-                  fill
-                  sizes="(max-width: 1024px) 90vw, 480px"
-                  className="object-cover p-2 rounded-lg"
-                  // onLoadingComplete={(imgEl) => {
-                  //   const ratio = imgEl.naturalWidth / imgEl.naturalHeight
-                  //   imgEl.style.objectFit = ratio > 2 ? "contain" : "cover"
-                  // }}
-                />
-                {sidebarBanner.title?.trim() ? (
-                  <>
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                    <div className="absolute bottom-3 left-3 right-3">
-                      <p className="line-clamp-2 text-sm font-semibold text-white drop-shadow-sm">
-                        {sidebarBanner.title.trim()}
-                      </p>
-                    </div>
-                  </>
-                ) : null}
-              </div>
-            </a>
-            ) : (
-            <div className="relative h-52 w-full overflow-hidden bg-gray-50">
-              <Image
-                src={sidebarBanner.imageUrl}
-                alt={sidebarBanner.title || "Event sidebar banner"}
-                fill
-                sizes="(max-width: 1024px) 90vw, 480px"
-                className="object-cover p-2 rounded-lg"
-                // onLoadingComplete={(imgEl) => {
-                //   const ratio = imgEl.naturalWidth / imgEl.naturalHeight
-                //   imgEl.style.objectFit = ratio > 2 ? "contain" : "cover"
-                // }}
-              />
-              {sidebarBanner.title?.trim() ? (
-                <>
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                  <div className="absolute bottom-3 left-3 right-3">
-                    <p className="line-clamp-2 text-sm font-semibold text-white drop-shadow-sm">
-                      {sidebarBanner.title.trim()}
-                    </p>
+              {sidebarBanners.length > 0 ? (
+                <div className="relative h-52 w-full">
+                  <div ref={sidebarBannerSliderRef} className="keen-slider h-full w-full">
+                    {sidebarBanners.map((banner, index) => {
+                      const href = banner.link?.trim()
+                      const titleBottom =
+                        sidebarBanners.length > 1 ? "bottom-9" : "bottom-3"
+                      const imageBlock = (
+                        <>
+                          <Image
+                            src={banner.imageUrl!}
+                            alt={banner.title || "Event sidebar banner"}
+                            fill
+                            sizes="(max-width: 1024px) 90vw, 480px"
+                            className="object-cover p-2 rounded-lg"
+                            priority={index === 0}
+                          />
+                          {banner.title?.trim() ? (
+                            <>
+                              <div
+                                className="pointer-events-none absolute inset-x-0 bottom-0 top-[28%]"
+                                style={{ backgroundImage: BRAND_IMAGE_BOTTOM_FADE }}
+                                aria-hidden
+                              />
+                              <div className={`absolute left-3 right-3 ${titleBottom}`}>
+                                <p
+                                  className="line-clamp-2 text-sm font-semibold leading-snug text-white"
+                                  style={{
+                                    textShadow:
+                                      "0 1px 2px rgba(0,0,0,0.75), 0 2px 12px rgba(0,26,72,0.6), 0 0 1px rgba(0,0,0,0.9)",
+                                  }}
+                                >
+                                  {banner.title.trim()}
+                                </p>
+                              </div>
+                            </>
+                          ) : null}
+                        </>
+                      )
+                      return (
+                        <div
+                          key={banner.id ?? `banner-${index}`}
+                          className="keen-slider__slide relative h-52 w-full overflow-hidden bg-white"
+                        >
+                          {href ? (
+                            <a
+                              href={href}
+                              target={href.startsWith("http") ? "_blank" : "_self"}
+                              rel={href.startsWith("http") ? "noopener noreferrer" : undefined}
+                              className="relative block h-full w-full"
+                            >
+                              {imageBlock}
+                            </a>
+                          ) : (
+                            <div className="relative h-full w-full">{imageBlock}</div>
+                          )}
+                        </div>
+                      )
+                    })}
                   </div>
-                </>
-              ) : null}
-            </div>
-            )
-            ) : (
-            <div className="relative h-52 w-full overflow-hidden bg-gray-50">
-              <Image
-                src="/banners/banner1.jpg"
-                alt="Event sidebar banner"
-                fill
-                sizes="(max-width: 1024px) 90vw, 480px"
-                className="object-container p-2 rounded-lg"
-                // onLoadingComplete={(imgEl) => {
-                //   const ratio = imgEl.naturalWidth / imgEl.naturalHeight
-                //   imgEl.style.objectFit = ratio > 2 ? "contain" : "cover"
-                // }}
-              />
-            </div>
-  )}
-          </Card>
+                  {sidebarBanners.length > 1 ? (
+                    <div className="absolute bottom-2 left-1/2 z-10 flex -translate-x-1/2 gap-2">
+                      {sidebarBanners.map((_, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          aria-label={`Go to promo ${idx + 1} of ${sidebarBanners.length}`}
+                          className={`h-2 w-2 rounded-full transition-colors ${
+                            idx === sidebarBannerSlide ? "bg-white" : "bg-white/50"
+                          }`}
+                          onClick={() => sidebarBannerSliderInstanceRef.current?.moveToIdx(idx)}
+                        />
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+              ) : (
+                <div className="relative h-52 w-full overflow-hidden bg-white">
+                  <Image
+                    src="/banners/banner1.jpg"
+                    alt="Event sidebar banner"
+                    fill
+                    sizes="(max-width: 1024px) 90vw, 480px"
+                    className="object-container p-2 rounded-lg"
+                  />
+                </div>
+              )}
+            </Card>
 
             <Card className="overflow-hidden rounded-sm border border-gray-300 bg-white shadow-sm">
               <CardHeader className="pb-2">

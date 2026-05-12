@@ -10,6 +10,7 @@ import Link from "next/link"
 import { apiFetch } from "@/lib/api"
 import { formatPublicTicketPriceLine } from "@/lib/ticket-price-display"
 import { formatEventSidebarTimeRange } from "@/lib/event-sidebar-time-range"
+import { BRAND_IMAGE_BOTTOM_FADE } from "@/lib/brand-image-gradients"
 
 interface Event {
   id: string
@@ -235,7 +236,7 @@ export default function EventHero({ event }: EventHeroProps) {
             {/* Banner Slider - Only images without title */}
             <div ref={bannerSliderRef} className="keen-slider h-full w-full">
               {heroBanners.map((banner, index) => (
-                <div key={banner.id} className="keen-slider__slide relative h-full w-full bg-gray-50">
+                <div key={banner.id} className="keen-slider__slide relative h-full w-full bg-white">
                   <Link
                     href={banner.link || "#"}
                     onClick={() => handleBannerClick(banner.id)}
@@ -293,11 +294,11 @@ export default function EventHero({ event }: EventHeroProps) {
               priority
             />
 
-            {/* Frosted layer over banner */}
-            <div className="absolute inset-0 backdrop-blur-md" />
-
-            {/* Gradient overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+            <div
+              className="pointer-events-none absolute inset-x-0 bottom-0 top-1/4"
+              style={{ backgroundImage: BRAND_IMAGE_BOTTOM_FADE }}
+              aria-hidden
+            />
           </div>
         )}
       </div>
@@ -310,7 +311,7 @@ export default function EventHero({ event }: EventHeroProps) {
             {images.length > 0 ? (
               <>
                 {images.map((imgSrc, index) => (
-                  <div key={`image-${index}`} className="keen-slider__slide relative h-full w-full bg-gray-50">
+                  <div key={`image-${index}`} className="keen-slider__slide relative h-full w-full bg-white">
                     <Image
                       src={imgSrc || "/city/c4.jpg"}
                       alt={`${event.title} Image ${index + 1}`}
@@ -334,7 +335,7 @@ export default function EventHero({ event }: EventHeroProps) {
                 ))}
               </>
             ) : (
-              <div className="keen-slider__slide relative h-full w-full bg-gray-50">
+              <div className="keen-slider__slide relative h-full w-full bg-white">
                 <Image
                   src="/herosection-images/test.jpeg"
                   alt="Default Image"

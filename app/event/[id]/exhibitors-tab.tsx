@@ -104,11 +104,6 @@ export default function ExhibitorsTab({ eventId }: ExhibitorsTabProps) {
     }
   }, [eventId])
 
-  // Sample exhibitors with isSample flag
-  const fallbackExhibitors: Exhibitor[] = [
-    // Your sample exhibitors here...
-  ]
-
   if (loading) {
     return (
       <div className="py-12 flex justify-center">
@@ -133,8 +128,8 @@ export default function ExhibitorsTab({ eventId }: ExhibitorsTabProps) {
     )
   }
 
-  const displayExhibitors = exhibitors.length > 0 ? exhibitors : fallbackExhibitors
-  const hasRealExhibitors = exhibitors.length > 0
+  const realExhibitors = exhibitors.filter((e) => !e.isSample)
+  const hasRealExhibitors = realExhibitors.length > 0
   const getDisplayCompanyName = (exhibitor: Exhibitor) => {
     const company = (exhibitor.company || "").trim()
     if (company) return company
@@ -149,22 +144,21 @@ export default function ExhibitorsTab({ eventId }: ExhibitorsTabProps) {
         <h2 className="text-xl font-semibold text-gray-800 mb-1">Exhibitor List</h2>
         <p className="text-sm text-gray-500">
           {hasRealExhibitors
-            ? `${exhibitors.length} Exhibitors of Current Edition`
-            : "Sample exhibitors (No registrations yet)"}
+            ? `${realExhibitors.length} Exhibitors of Current Edition`
+            : "Participating exhibitors for this edition"}
         </p>
       </div>
 
-      {!hasRealExhibitors && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-          <p className="text-blue-800 text-sm">
-            <strong>Demo Mode:</strong> No exhibitors have registered for this event yet. Showing sample exhibitors for
-            demonstration. The "Schedule Meeting" button will be disabled for sample data.
+      {!hasRealExhibitors ? (
+        <div className="rounded-lg border border-gray-200 bg-muted/40 px-6 py-14 text-center">
+          <p className="text-base font-medium text-foreground">Exhibitor list will be updated shortly.</p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Check back later for confirmed exhibitors and booth details.
           </p>
         </div>
-      )}
-
+      ) : (
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mt-6">
-        {displayExhibitors?.map((exhibitor) => (
+        {realExhibitors.map((exhibitor) => (
           <Card
             key={exhibitor.exhibitorId}
             className="relative border border-gray-200 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 p-4 flex flex-col items-center text-center group cursor-pointer hover:border-blue-300"
@@ -255,8 +249,12 @@ export default function ExhibitorsTab({ eventId }: ExhibitorsTabProps) {
 
               {/* Schedule Meeting Button - positioned above the link */}
               <div className="mt-4 relative z-20" onClick={(e) => e.stopPropagation()}>
-                <ScheduleMeetingButton 
-                  exhibitor={{ id: exhibitor.exhibitorId, companyName: exhibitor.company, isSample: false }} 
+                <ScheduleMeetingButton
+                  exhibitor={{
+                    id: exhibitor.exhibitorId,
+                    companyName: exhibitor.company,
+                    isSample: Boolean(exhibitor.isSample),
+                  }}
                   eventId={eventId}
                 />
               </div>
@@ -264,8 +262,9 @@ export default function ExhibitorsTab({ eventId }: ExhibitorsTabProps) {
           </Card>
         ))}
       </div>
+      )}
 
-      {exhibitors.length > 6 && (
+      {hasRealExhibitors && realExhibitors.length > 6 && (
         <div className="mt-6 text-center">
           <Button variant="outline" className="px-6 bg-transparent">
             Load More Exhibitors
