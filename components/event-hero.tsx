@@ -202,7 +202,9 @@ export default function EventHero({ event }: EventHeroProps) {
   }
 
   const followersCount = getFollowersCount()
-  const eventSubtitle = (event.subTitle || event.subtitle || "").trim() || event.title
+  const rawHeroLabel =
+    (event.subTitle || event.subtitle || "").trim() || (event.title || "").trim()
+  const eventSubtitle = rawHeroLabel.slice(0, 10)
 
   // Handle banner click tracking
   const handleBannerClick = async (bannerId: string) => {

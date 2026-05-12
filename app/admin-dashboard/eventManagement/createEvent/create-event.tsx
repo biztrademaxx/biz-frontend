@@ -35,6 +35,7 @@ export function CreateEventForm() {
   const [activeTab, setActiveTab] = useState("basic")
   const [formData, setFormData] = useState<EventFormData>({
     title: "",
+    subTitle: "",
     slug: "",
     description: "",
     eventType: "CONFERENCE",
@@ -304,6 +305,7 @@ export function CreateEventForm() {
     try {
       const eventData = {
         ...formData,
+        subTitle: (formData.subTitle ?? "").slice(0, 10),
         organizerId: organizerId,
         speakerSessions: speakerSessions,
         exhibitorBooths: exhibitorBooths,

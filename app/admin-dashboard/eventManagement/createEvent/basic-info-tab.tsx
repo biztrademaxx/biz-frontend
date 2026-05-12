@@ -58,6 +58,23 @@ export function BasicInfoTab({
             </div>
 
             <div className="md:col-span-2">
+              <Label htmlFor="eventSubtitle">Event subtitle</Label>
+              <Input
+                id="eventSubtitle"
+                value={formData.subTitle ?? ""}
+                maxLength={10}
+                onChange={(e) =>
+                  onFormChange({ subTitle: e.target.value.slice(0, 10) })
+                }
+                placeholder="tagline (max 10 characters)"
+                autoComplete="off"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Up to 10 characters. Optional tagline separate from the full description.
+              </p>
+            </div>
+
+            <div className="md:col-span-2">
               <Label htmlFor="slug">Event Slug *</Label>
               <Input
                 id="slug"
