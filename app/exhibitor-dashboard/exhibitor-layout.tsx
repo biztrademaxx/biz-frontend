@@ -28,10 +28,11 @@ import {
   Menu,
   X
 } from "lucide-react"
-import { useRouter } from "next/navigation"
+import { useRouter, usePathname } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
 import { useDashboard } from "@/contexts/dashboard-context"
-import { apiFetch } from "@/lib/api"
+import { apiFetch, getCurrentUserId } from "@/lib/api"
+import { getExhibitorDashboardPath } from "@/lib/profile-path"
 
 import CompanyInfo from "./company-info"
 import EventParticipation from "./event-participation"
@@ -57,6 +58,8 @@ interface ExhibitorData {
   firstName: string
   lastName: string
   displayName?: string
+  publicSlug?: string | null
+  organizationName?: string | null
   email: string
   phone?: string
   avatar?: string
@@ -65,6 +68,7 @@ interface ExhibitorData {
   twitter?: string
   location?: string
   jobTitle?: string
+  company?: string | null
   totalEvents: number
   activeEvents: number
   totalProducts: number
@@ -75,10 +79,11 @@ interface ExhibitorData {
 }
 
 interface UserDashboardProps {
-  userId: string
+  /** UUID or public profile slug from `/exhibitor-dashboard/[id]`. */
+  routeSegment: string
 }
 
-export function ExhibitorLayout({ userId }: UserDashboardProps) {
+export function ExhibitorLayout({ routeSegment }: UserDashboardProps) {
   const [exhibitor, setExhibitor] = useState<ExhibitorData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -90,16 +95,18 @@ export function ExhibitorLayout({ userId }: UserDashboardProps) {
 
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
-  const { userId: authUserId, role, loading: authLoading, logout } = useAuth({
+  const { role, loading: authLoading, logout } = useAuth({
     requireAuth: true,
     allowedRoles: ["EXHIBITOR"],
   })
   const router = useRouter()
+  const pathname = usePathname()
   const { toast } = useToast()
 
   useEffect(() => {
     if (authLoading) return
-    if (authUserId && userId !== authUserId) {
+    const roleUpper = (role || "").toString().toUpperCase()
+    if (roleUpper !== "EXHIBITOR") {
       toast({
         title: "Access Denied",
         description: "You don't have permission to view this dashboard.",
@@ -109,7 +116,43 @@ export function ExhibitorLayout({ userId }: UserDashboardProps) {
       return
     }
     fetchExhibitorData()
-  }, [userId, authUserId, authLoading, router, toast])
+  }, [routeSegment, authLoading, role, router, toast])
+
+  useEffect(() => {
+    if (!exhibitor?.id || authLoading) return
+    const sessionUser = getCurrentUserId()
+    if (sessionUser && sessionUser !== exhibitor.id) {
+      toast({
+        title: "Access denied",
+        description: "You can only open your own exhibitor dashboard.",
+        variant: "destructive",
+      })
+      router.replace("/login")
+    }
+  }, [exhibitor?.id, authLoading, router, toast])
+
+  useEffect(() => {
+    if (!exhibitor?.id) return
+    const canonical = getExhibitorDashboardPath(exhibitor.id, {
+      publicSlug: exhibitor.publicSlug,
+      organizationName: exhibitor.organizationName,
+      company: exhibitor.company,
+      firstName: exhibitor.firstName,
+      lastName: exhibitor.lastName,
+    })
+    if (pathname && canonical !== pathname) {
+      router.replace(canonical)
+    }
+  }, [
+    exhibitor?.id,
+    exhibitor?.publicSlug,
+    exhibitor?.organizationName,
+    exhibitor?.company,
+    exhibitor?.firstName,
+    exhibitor?.lastName,
+    pathname,
+    router,
+  ])
 
   useEffect(() => {
     // Set company info as default active section when component mounts
@@ -121,10 +164,13 @@ export function ExhibitorLayout({ userId }: UserDashboardProps) {
   // Fetch product count from backend only
   const fetchProductCount = async (exhibitorId: string): Promise<number> => {
     try {
-      const data = await apiFetch<{ products?: unknown[] }>(`/api/exhibitors/${exhibitorId}/products`, {
-        method: "GET",
-        auth: true,
-      })
+      const data = await apiFetch<{ products?: unknown[] }>(
+        `/api/exhibitors/${encodeURIComponent(exhibitorId)}/products`,
+        {
+          method: "GET",
+          auth: true,
+        },
+      )
       return data.products?.length ?? 0
     } catch (error) {
       console.error("Error fetching product count:", error)
@@ -138,6 +184,8 @@ export function ExhibitorLayout({ userId }: UserDashboardProps) {
     firstName: e?.firstName ?? "",
     lastName: e?.lastName ?? "",
     displayName: e?.displayName?.trim?.() || undefined,
+    publicSlug: e?.publicSlug ?? null,
+    organizationName: e?.organizationName ?? e?.companyName ?? null,
     email: e?.email ?? "",
     phone: e?.phone,
     avatar: e?.avatar,
@@ -163,11 +211,14 @@ export function ExhibitorLayout({ userId }: UserDashboardProps) {
       setError(null)
 
       const [exhibitorRes, productCount] = await Promise.all([
-        apiFetch<{ success: boolean; exhibitor: any }>(`/api/exhibitors/${userId}`, {
-          method: "GET",
-          auth: true,
-        }),
-        fetchProductCount(userId),
+        apiFetch<{ success: boolean; exhibitor: any }>(
+          `/api/exhibitors/${encodeURIComponent(routeSegment)}`,
+          {
+            method: "GET",
+            auth: true,
+          },
+        ),
+        fetchProductCount(routeSegment),
       ])
 
       if (!exhibitorRes.success || !exhibitorRes.exhibitor) {
@@ -198,14 +249,18 @@ export function ExhibitorLayout({ userId }: UserDashboardProps) {
   }
 
   const handleUpdate = async (updates: Partial<any>) => {
+    const apiSegment = exhibitor?.id ?? routeSegment
     try {
-      const data = await apiFetch<{ success: boolean; exhibitor: any }>(`/api/exhibitors/${userId}`, {
-        method: "PUT",
-        body: updates,
-        auth: true,
-      })
+      const data = await apiFetch<{ success: boolean; exhibitor: any }>(
+        `/api/exhibitors/${encodeURIComponent(apiSegment)}`,
+        {
+          method: "PUT",
+          body: updates,
+          auth: true,
+        },
+      )
       if (data.success && data.exhibitor) {
-        const productCount = await fetchProductCount(userId)
+        const productCount = await fetchProductCount(apiSegment)
         setExhibitor((prev: any) => ({ ...prev, ...mapBackendExhibitor(data.exhibitor, productCount) }))
       }
     } catch (error) {

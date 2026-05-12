@@ -9,7 +9,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ id: 
     <DashboardProvider>
       <div>
         <Navbar />
-        <SpeakerDashboard userId={id} />
+        <SpeakerDashboard routeSegment={id} />
       </div>
     </DashboardProvider>
   )

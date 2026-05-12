@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useAuth } from "@/hooks/use-auth"
-import { useRouter } from "next/navigation"
+import { useRouter, usePathname } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -27,7 +27,8 @@ import { SpeakerSettings } from "./speaker-settings"
 import { HelpSupport } from "@/components/HelpSupport"
 import { useDashboard } from "@/contexts/dashboard-context"
 import { SpeakerHelpSupport } from "./help-support"
-import { apiFetch } from "@/lib/api"
+import { apiFetch, getCurrentUserId } from "@/lib/api"
+import { getSpeakerDashboardPath } from "@/lib/profile-path"
 import { DashboardManagedBanner } from "@/components/dashboard-managed-banner"
 
 interface SpeakerData {
@@ -35,6 +36,7 @@ interface SpeakerData {
   firstName: string
   lastName: string
   displayName?: string
+  publicSlug?: string | null
   email: string
   phone?: string
   avatar?: string
@@ -50,10 +52,11 @@ interface SpeakerData {
 }
 
 interface UserDashboardProps {
-  userId: string
+  /** UUID or public name slug from `/speaker-dashboard/[id]`. */
+  routeSegment: string
 }
 
-export function SpeakerDashboard({ userId }: UserDashboardProps) {
+export function SpeakerDashboard({ routeSegment }: UserDashboardProps) {
   const [speaker, setSpeaker] = useState<SpeakerData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -66,6 +69,7 @@ export function SpeakerDashboard({ userId }: UserDashboardProps) {
     allowedRoles: ["SPEAKER"],
   })
   const router = useRouter()
+  const pathname = usePathname()
   const { toast } = useToast()
 
   // ✅ Set MyProfile as default section when dashboard loads
@@ -80,14 +84,39 @@ export function SpeakerDashboard({ userId }: UserDashboardProps) {
     const roleUpper = (role || "").toUpperCase()
     if (roleUpper !== "SPEAKER") return
     fetchSpeakerData()
-  }, [userId, role, authLoading, router, toast])
+  }, [routeSegment, role, authLoading, router, toast])
+
+  useEffect(() => {
+    if (!speaker?.id || authLoading) return
+    const sessionUser = getCurrentUserId()
+    if (sessionUser && sessionUser !== speaker.id) {
+      toast({
+        title: "Access denied",
+        description: "You can only open your own speaker dashboard.",
+        variant: "destructive",
+      })
+      router.replace("/login")
+    }
+  }, [speaker?.id, authLoading, router, toast])
+
+  useEffect(() => {
+    if (!speaker?.id) return
+    const canonical = getSpeakerDashboardPath(speaker.id, {
+      publicSlug: speaker.publicSlug,
+      firstName: speaker.firstName,
+      lastName: speaker.lastName,
+    })
+    if (pathname && canonical !== pathname) {
+      router.replace(canonical)
+    }
+  }, [speaker?.id, speaker?.publicSlug, speaker?.firstName, speaker?.lastName, pathname, router])
 
   const fetchSpeakerData = async () => {
     try {
       setLoading(true)
       setError(null)
 
-      const data = await apiFetch<{ user?: SpeakerData }>(`/api/users/${userId}`, {
+      const data = await apiFetch<{ user?: SpeakerData }>(`/api/users/${encodeURIComponent(routeSegment)}`, {
         method: "GET",
         auth: true,
       })

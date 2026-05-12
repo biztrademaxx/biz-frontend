@@ -27,7 +27,7 @@ import {
   MessageSquare,
   Reply,
 } from "lucide-react"
-import { useParams, useRouter } from "next/navigation"
+import { useParams, useRouter, usePathname } from "next/navigation"
 import { format } from "date-fns"
 import ScheduleMeetingButton from "@/components/ScheduleMeetingButton"
 import { FollowButton } from "@/components/follow-button"
@@ -41,6 +41,8 @@ interface Exhibitor {
   publicSlug?: string
   firstName?: string
   lastName?: string
+  organizationName?: string
+  company?: string
   email: string
   phone?: string
   avatar?: string
@@ -180,7 +182,7 @@ function ReviewCard({ review, exhibitorId, onReplyAdded }: {
 
     setIsSubmittingReply(true)
     try {
-      await apiFetch(`/api/exhibitors/${exhibitorId}/reviews/${review.id}/replies`, {
+      await apiFetch(`/api/exhibitors/${encodeURIComponent(exhibitorId)}/reviews/${review.id}/replies`, {
         method: "POST",
         body: { content: replyContent },
         auth: true,
@@ -362,7 +364,7 @@ function AddReview({ exhibitorId, onReviewAdded }: { exhibitorId: string; onRevi
 
     setIsSubmitting(true)
     try {
-      const newReview = await apiFetch<Review>(`/api/exhibitors/${exhibitorId}/reviews`, {
+      const newReview = await apiFetch<Review>(`/api/exhibitors/${encodeURIComponent(exhibitorId)}/reviews`, {
         method: "POST",
         body: { rating, title, comment },
         auth: true,
@@ -493,6 +495,7 @@ const getLocationString = (venue: any): string => {
 export default function ExhibitorPage() {
   const params = useParams()
   const router = useRouter()
+  const pathname = usePathname()
   const exhibitorId = (params.slug ?? params.id) as string
 
   const userId = getCurrentUserId()
@@ -513,22 +516,23 @@ export default function ExhibitorPage() {
     async function fetchExhibitor() {
       try {
         const data = await apiFetch<{ success: boolean; exhibitor: Exhibitor }>(
-          `/api/exhibitors/${exhibitorId}`,
+          `/api/exhibitors/${encodeURIComponent(exhibitorId)}`,
           { auth: false },
         )
 
         if (data.success) {
           setExhibitor(data.exhibitor)
-          if (data.exhibitor?.publicSlug) {
-            const canonical = getPublicProfilePath("exhibitor", {
-              id: data.exhibitor.id,
-              publicSlug: data.exhibitor.publicSlug,
-              organizationName: data.exhibitor.organizationName,
-              company: data.exhibitor.companyName || data.exhibitor.company,
-            })
-            if (typeof window !== "undefined" && window.location.pathname !== canonical) {
-              router.replace(canonical)
-            }
+          const ex = data.exhibitor
+          const canonical = getPublicProfilePath("exhibitor", {
+            id: ex.id,
+            publicSlug: ex.publicSlug,
+            organizationName: ex.organizationName,
+            company: ex.companyName || ex.company,
+            firstName: ex.firstName,
+            lastName: ex.lastName,
+          })
+          if (pathname && canonical !== pathname) {
+            router.replace(canonical)
           }
         } else {
           console.error("Failed to fetch exhibitor")
@@ -543,7 +547,7 @@ export default function ExhibitorPage() {
     if (exhibitorId) {
       fetchExhibitor()
     }
-  }, [exhibitorId])
+  }, [exhibitorId, pathname, router])
 
   // Fetch exhibitor booths (events) from backend
   useEffect(() => {
@@ -579,7 +583,7 @@ export default function ExhibitorPage() {
           currency?: string
           invoiceAmount?: number
           status?: string
-        }> }>(`/api/exhibitors/${exhibitorId}/events`);
+        }> }>(`/api/exhibitors/${encodeURIComponent(exhibitorId)}/events`);
 
         if (data?.events && Array.isArray(data.events)) {
           const mapped: Booth[] = data.events.map((e) => ({
@@ -685,7 +689,7 @@ export default function ExhibitorPage() {
 
       setReviewsLoading(true);
       try {
-        const data = await apiFetch<{ reviews?: Review[] }>(`/api/exhibitors/${exhibitorId}/reviews`);
+        const data = await apiFetch<{ reviews?: Review[] }>(`/api/exhibitors/${encodeURIComponent(exhibitorId)}/reviews`);
         setReviews(data?.reviews ?? []);
       } catch (error) {
         console.error("Error fetching reviews:", error);

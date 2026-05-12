@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useState, useEffect } from "react"
-import { useParams, useRouter } from "next/navigation"
+import { useRouter, usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
 import {
@@ -34,10 +34,12 @@ import { MyAppointments } from "./my-appointments"
 import { useDashboard } from "@/contexts/dashboard-context"
 import { FeedbackSection } from "./FeedbackSection"
 import { OrganizerHelpSupport } from "./help-support"
-import { apiFetch } from "@/lib/api"
+import { apiFetch, getCurrentUserId } from "@/lib/api"
+import { getOrganizerDashboardPath } from "@/lib/profile-path"
 import { DashboardManagedBanner } from "@/components/dashboard-managed-banner"
 
 interface OrganizerDashboardPageProps {
+  /** UUID or public company slug from `/organizer-dashboard/[id]`. */
   organizerId: string
 }
 
@@ -45,8 +47,10 @@ interface OrganizerData {
   id: string
   name: string
   displayName?: string
+  publicSlug?: string | null
   firstName: string
   lastName: string
+  organizationName?: string
   email: string
   phone: string
   location: string
@@ -99,8 +103,8 @@ interface SidebarItem {
 }
 
 export default function OrganizerDashboardSimplified({ organizerId }: OrganizerDashboardPageProps) {
-  const params = useParams()
   const router = useRouter()
+  const pathname = usePathname()
   const { toast } = useToast()
   const { activeSection, setActiveSection } = useDashboard()
   const [expandedGroups, setExpandedGroups] = useState<string[]>(["main", "event-management", "network"])
@@ -114,9 +118,12 @@ export default function OrganizerDashboardSimplified({ organizerId }: OrganizerD
     const fetchOrganizerData = async () => {
       try {
         setLoading(true)
-        const data = await apiFetch<{ organizer: OrganizerData }>(`/api/organizers/${organizerId}`, {
-          auth: true,
-        })
+        const data = await apiFetch<{ organizer: OrganizerData }>(
+          `/api/organizers/${encodeURIComponent(organizerId)}`,
+          {
+            auth: true,
+          },
+        )
 
         setOrganizerData(data.organizer)
 
@@ -148,7 +155,7 @@ export default function OrganizerDashboardSimplified({ organizerId }: OrganizerD
     const fetchEvents = async () => {
       try {
         const data = await apiFetch<{ success?: boolean; events: Event[] }>(
-          `/api/organizers/${organizerId}/events`,
+          `/api/organizers/${encodeURIComponent(organizerId)}/events`,
           { auth: true }
         )
         setEvents(data.events ?? [])
@@ -161,6 +168,42 @@ export default function OrganizerDashboardSimplified({ organizerId }: OrganizerD
       fetchEvents()
     }
   }, [organizerId])
+
+  useEffect(() => {
+    if (!organizerData?.id) return
+    const sessionUser = getCurrentUserId()
+    if (sessionUser && sessionUser !== organizerData.id) {
+      toast({
+        title: "Access denied",
+        description: "You can only open your own organizer dashboard.",
+        variant: "destructive",
+      })
+      router.replace("/login")
+    }
+  }, [organizerData?.id, router, toast])
+
+  useEffect(() => {
+    if (!organizerData?.id) return
+    const canonical = getOrganizerDashboardPath(organizerData.id, {
+      publicSlug: organizerData.publicSlug,
+      organizationName: organizerData.organizationName,
+      company: organizerData.company,
+      firstName: organizerData.firstName,
+      lastName: organizerData.lastName,
+    })
+    if (pathname && canonical !== pathname) {
+      router.replace(canonical)
+    }
+  }, [
+    organizerData?.id,
+    organizerData?.publicSlug,
+    organizerData?.organizationName,
+    organizerData?.company,
+    organizerData?.firstName,
+    organizerData?.lastName,
+    pathname,
+    router,
+  ])
 
   const toggleGroup = (groupId: string) => {
     setExpandedGroups((prev) => (prev.includes(groupId) ? prev.filter((id) => id !== groupId) : [...prev, groupId]))
@@ -309,16 +352,16 @@ export default function OrganizerDashboardSimplified({ organizerId }: OrganizerD
             organizerName={organizerData.displayName ?? organizerData.name}
             dashboardStats={dashboardStats}
             recentEvents={events}
-            organizerId={organizerId}
+            organizerId={organizerData.id}
             onCreateEventClick={() => setActiveSection("create-event")}
             onManageAttendeesClick={() => {
-              window.location.href = `/organizers/${organizerId}/total-attendees`
+              window.location.href = `/organizers/${organizerData.id}/total-attendees`
             }}
             onViewAnalyticsClick={() => {
-              window.location.href = `/event-dashboard/${organizerId}?section=analytics`
+              window.location.href = `/event-dashboard/${organizerData.id}?section=analytics`
             }}
             onSendMessageClick={() => {
-              window.location.href = `/event-dashboard/${organizerId}?section=messages`
+              window.location.href = `/event-dashboard/${organizerData.id}?section=messages`
             }}
           />
         )
@@ -332,11 +375,11 @@ export default function OrganizerDashboardSimplified({ organizerId }: OrganizerD
           />
         )
       case "venue-booking":
-        return <MyAppointments userId={organizerId} />
+        return <MyAppointments userId={organizerData.id} />
       case "events":
-        return <MyEvents organizerId={organizerId} />
+        return <MyEvents organizerId={organizerData.id} />
       case "create-event":
-        return <CreateEvent organizerId={organizerId} />
+        return <CreateEvent organizerId={organizerData.id} />
       case "settings":
         return <OrganizerSettings/>
       case "help-support":
@@ -344,9 +387,9 @@ export default function OrganizerDashboardSimplified({ organizerId }: OrganizerD
       case "connect":
         return <ConnectionsSection userId={organizerData.id} />
       case "messages":
-        return <MessagesCenter organizerId={organizerId} />
+        return <MessagesCenter organizerId={organizerData.id} />
       case "feed-back":
-        return <FeedbackSection organizerId={organizerId} />
+        return <FeedbackSection organizerId={organizerData.id} />
       default:
         return <div>Select a section from the sidebar</div>
     }
