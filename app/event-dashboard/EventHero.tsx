@@ -11,6 +11,8 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
 import { apiFetch } from "@/lib/api"
+import { formatPublicTicketPriceLine } from "@/lib/ticket-price-display"
+import { formatEventSidebarTimeRange } from "@/lib/event-sidebar-time-range"
 
 interface Event {
   id: string
@@ -43,32 +45,6 @@ interface EventHeroProps {
   onImagesUpdate?: (images: string[]) => void
 }
 
-// Helper function to format ticket price display
-const formatTicketPriceLine = (ticketTypes: any[]): string => {
-  if (!ticketTypes || ticketTypes.length === 0) {
-    return "Free Entry"
-  }
-
-  if (typeof ticketTypes[0] === "string") {
-    return "Contact for Pricing"
-  }
-
-  const prices = ticketTypes
-    .filter(ticket => ticket.price !== undefined && ticket.price !== null)
-    .map(ticket => ticket.price)
-
-  if (prices.length === 0) {
-    return "Free Entry"
-  }
-
-  const minPrice = Math.min(...prices)
-  const maxPrice = Math.max(...prices)
-
-  if (minPrice === maxPrice) {
-    return `AED ${minPrice}`
-  }
-  return `₹${minPrice} - ₹${maxPrice}`}
-
 export default function EventHero({ event, onImagesUpdate }: EventHeroProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [title, setTitle] = useState(event.title)
@@ -78,19 +54,6 @@ export default function EventHero({ event, onImagesUpdate }: EventHeroProps) {
   const [currentSlide, setCurrentSlide] = useState(0)
   const { toast } = useToast()
   const [newImageUrl, setNewImageUrl] = useState("")
-
-  const normalizeTimezone = (tz?: string, countryHint?: string) => {
-    const country = String(countryHint || "").trim().toLowerCase()
-    if (country.includes("india")) return "Asia/Kolkata"
-    if (!tz) return "Asia/Kolkata"
-    if (tz === "Indian/Chagos" && country.includes("india")) return "Asia/Kolkata"
-    return tz
-  }
-
-  const displayTimezone = normalizeTimezone(
-    event.timezone,
-    (event as any)?.country || event.location?.country || (event as any)?.venue?.venueCountry,
-  )
 
   const [sliderRef, instanceRef] = useKeenSlider<HTMLDivElement>({
     loop: true,
@@ -413,25 +376,7 @@ export default function EventHero({ event, onImagesUpdate }: EventHeroProps) {
                 <div>
                   <p className="text-xs text-gray-500 uppercase mb-0.5">Time</p>
                   <p className="text-sm text-gray-900 font-medium">
-                    {event.startDate && event.endDate ? (
-                      <>
-                        {new Date(event.startDate).toLocaleTimeString("en-IN", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                          hour12: true,
-                          timeZone: displayTimezone,
-                        })}
-                        {" – "}
-                        {new Date(event.endDate).toLocaleTimeString("en-IN", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                          hour12: true,
-                          timeZone: displayTimezone,
-                        })}
-                      </>
-                    ) : (
-                      "Time to be announced"
-                    )}
+                    {formatEventSidebarTimeRange(event)}
                   </p>
                 </div>
               </div>
@@ -444,7 +389,7 @@ export default function EventHero({ event, onImagesUpdate }: EventHeroProps) {
                 <div>
                   <p className="text-xs text-gray-500 uppercase mb-0.5">Ticket Price</p>
                   <p className="text-sm text-gray-900 font-medium">
-                    {formatTicketPriceLine(event.ticketTypes)}
+                    {formatPublicTicketPriceLine(event.ticketTypes)}
                   </p>
                 </div>
               </div>
