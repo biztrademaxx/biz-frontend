@@ -26,7 +26,7 @@ import {
 } from "@/lib/event-leads-client"
 import { apiFetch, getCurrentUserEmail, getCurrentUserId, isAuthenticated, getCurrentUserRole } from "@/lib/api"
 import { getPublicProfilePath } from "@/lib/profile-path"
-import { formatOrganizerLocationLine } from "@/lib/organizer-location-display"
+import { formatOrganizerCityCountryLine } from "@/lib/organizer-location-display"
 import { brochureFriendlyFilename, downloadUrlAsFile, getGoogleDocsViewerUrl, resolveBrochureUrl } from "@/lib/utils"
 import { formatPublicTicketPriceLine } from "@/lib/ticket-price-display"
 import { formatEventSidebarTimeRange } from "@/lib/event-sidebar-time-range"
@@ -587,6 +587,46 @@ export default function EventPageContent({ event, session: _session, router, toa
     return EVENT_VENUE_LOCATION_PENDING
   }
 
+  /** Public label under the title: venue city + country only (full address stays on map links). */
+  const getPublicVenueCityCountry = (): string => {
+    if (event?.isVirtual) return getDisplayAddress()
+
+    const v = event?.venue
+    let city = ""
+    let country = ""
+
+    if (v) {
+      city = String(v.venueCity || v.city || v.area || "").trim()
+      country = String(v.venueCountry || v.country || "").trim()
+    }
+
+    if (!city || !country) {
+      const loc = event?.location
+      if (loc && typeof loc === "object") {
+        const o = loc as Record<string, string | undefined>
+        if (!city) city = String(o.city || o.area || "").trim()
+        if (!country) country = String(o.country || "").trim()
+      }
+    }
+
+    if (!city) city = String(event?.city || event?.eventCity || "").trim()
+    if (!country) country = String(event?.country || event?.eventCountry || "").trim()
+
+    const parts = [city, country].filter(Boolean)
+    if (parts.length > 0) return parts.join(", ")
+
+    return getDisplayAddress()
+  }
+
+  /** Encoded maps query from full display address (what users navigate to when tapping the short city/country line). */
+  const getEncodedFullAddressForMaps = (): string => {
+    const display = getDisplayAddress()
+    if (display !== EVENT_VENUE_LOCATION_PENDING && !display.startsWith("Online event")) {
+      return encodeURIComponent(display)
+    }
+    return getDirectionsDestination()
+  }
+
   /** Query fragment for Google Maps (`q=` / destination=); prefers coordinates, then encoded address. */
   const getMapAddress = (): string => {
     const v = event?.venue
@@ -716,15 +756,15 @@ export default function EventPageContent({ event, session: _session, router, toa
                 <MapPin className="w-4 h-4 shrink-0" />
                 {canLinkAddressToMaps() ? (
                   <a
-                    href={`https://www.google.com/maps/search/?api=1&query=${getDirectionsDestination()}`}
+                    href={`https://www.google.com/maps/search/?api=1&query=${getEncodedFullAddressForMaps()}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="hover:text-[#004A96] hover:underline"
                   >
-                    {getDisplayAddress()}
+                    {getPublicVenueCityCountry()}
                   </a>
                 ) : (
-                  <span>{getDisplayAddress()}</span>
+                  <span>{getPublicVenueCityCountry()}</span>
                 )}
               </div>
 
@@ -734,7 +774,7 @@ export default function EventPageContent({ event, session: _session, router, toa
                   size="sm"
                   className="flex items-center gap-2 text-[#004A96] hover:text-[#003a75]"
                   onClick={() => {
-                    const address = getDirectionsDestination()
+                    const address = getEncodedFullAddressForMaps()
                     window.open(
                       `https://www.google.com/maps/dir/?api=1&destination=${address}`,
                       "_blank",
@@ -1076,7 +1116,7 @@ export default function EventPageContent({ event, session: _session, router, toa
                           </div>
 
                           {(() => {
-                            const line = formatOrganizerLocationLine(event.organizer)
+                            const line = formatOrganizerCityCountryLine(event.organizer)
                             return line ? (
                               <p className="text-sm text-gray-600 mt-0.5">{line}</p>
                             ) : null
@@ -1149,15 +1189,15 @@ export default function EventPageContent({ event, session: _session, router, toa
                           </Link>
                           {canLinkAddressToMaps() ? (
                             <a
-                              href={`https://www.google.com/maps/search/?api=1&query=${getDirectionsDestination()}`}
+                              href={`https://www.google.com/maps/search/?api=1&query=${getEncodedFullAddressForMaps()}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="text-gray-600 text-sm mt-1 whitespace-pre-wrap block hover:text-[#004A96] hover:underline"
                             >
-                              {getDisplayAddress()}
+                              {getPublicVenueCityCountry()}
                             </a>
                           ) : (
-                            <p className="text-gray-600 text-sm mt-1 whitespace-pre-wrap">{getDisplayAddress()}</p>
+                            <p className="text-gray-600 text-sm mt-1 whitespace-pre-wrap">{getPublicVenueCityCountry()}</p>
                           )}
                         </div>
 
@@ -1166,7 +1206,7 @@ export default function EventPageContent({ event, session: _session, router, toa
                           <Button
                             className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-md transition-colors"
                             onClick={() => {
-                              const address = getDirectionsDestination()
+                              const address = getEncodedFullAddressForMaps()
                               window.open(
                                 `https://www.google.com/maps/dir/?api=1&destination=${address}`,
                                 "_blank",
@@ -1179,7 +1219,7 @@ export default function EventPageContent({ event, session: _session, router, toa
                             variant="outline"
                             className="w-full"
                             onClick={() => {
-                              const address = getDirectionsDestination()
+                              const address = getEncodedFullAddressForMaps()
                               window.open(
                                 `https://www.google.com/maps/search/?api=1&query=${address}`,
                                 "_blank",
@@ -1383,15 +1423,15 @@ export default function EventPageContent({ event, session: _session, router, toa
                           </Link>
                           {canLinkAddressToMaps() ? (
                             <a
-                              href={`https://www.google.com/maps/search/?api=1&query=${getMapAddress()}`}
+                              href={`https://www.google.com/maps/search/?api=1&query=${getEncodedFullAddressForMaps()}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="text-gray-600 text-sm mt-1 whitespace-pre-wrap block hover:text-[#004A96] hover:underline"
                             >
-                              {getDisplayAddress()}
+                              {getPublicVenueCityCountry()}
                             </a>
                           ) : (
-                            <p className="text-gray-600 text-sm mt-1 whitespace-pre-wrap">{getDisplayAddress()}</p>
+                            <p className="text-gray-600 text-sm mt-1 whitespace-pre-wrap">{getPublicVenueCityCountry()}</p>
                           )}
 
                           {/* Additional venue details if available */}
@@ -1412,7 +1452,7 @@ export default function EventPageContent({ event, session: _session, router, toa
                           <Button
                             className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-md transition-colors"
                             onClick={() => {
-                              const address = getMapAddress()
+                              const address = getEncodedFullAddressForMaps()
                               window.open(
                                 `https://www.google.com/maps/dir/?api=1&destination=${address}`,
                                 "_blank",
@@ -1425,7 +1465,7 @@ export default function EventPageContent({ event, session: _session, router, toa
                             variant="outline"
                             className="w-full"
                             onClick={() => {
-                              const address = getMapAddress()
+                              const address = getEncodedFullAddressForMaps()
                               window.open(
                                 `https://www.google.com/maps/search/?api=1&query=${address}`,
                                 "_blank",
@@ -1476,7 +1516,7 @@ export default function EventPageContent({ event, session: _session, router, toa
                             {event.organizer?.company || "Event Organizer"}
                           </h4>
                           {(() => {
-                            const line = formatOrganizerLocationLine(event.organizer)
+                            const line = formatOrganizerCityCountryLine(event.organizer)
                             return line ? (
                               <p className="text-gray-600 mb-3 text-sm">{line}</p>
                             ) : null

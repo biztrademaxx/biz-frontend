@@ -20,3 +20,24 @@ export function formatOrganizerLocationLine(
   }
   return String(organizer.headquarters ?? "").trim() || String(organizer.location ?? "").trim()
 }
+
+/** Public cards: city + country only (no state). Same legacy fallbacks when structured fields are empty. */
+export function formatOrganizerCityCountryLine(
+  organizer:
+    | {
+        organizerCity?: string | null
+        organizerCountry?: string | null
+        headquarters?: string | null
+        location?: string | null
+      }
+    | null
+    | undefined,
+): string {
+  if (!organizer) return ""
+  const city = String(organizer.organizerCity ?? "").trim()
+  const country = String(organizer.organizerCountry ?? "").trim()
+  if (city || country) {
+    return [city, country].filter(Boolean).join(", ")
+  }
+  return String(organizer.headquarters ?? "").trim() || String(organizer.location ?? "").trim()
+}
