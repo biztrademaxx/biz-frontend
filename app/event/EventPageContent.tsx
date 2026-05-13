@@ -33,6 +33,7 @@ import { formatEventSidebarTimeRange } from "@/lib/event-sidebar-time-range"
 import { EVENT_VENUE_LOCATION_PENDING } from "@/lib/event-location-copy"
 import { getVenuePublicPath } from "@/lib/venue-dashboard-path"
 import { BRAND_IMAGE_BOTTOM_FADE } from "@/lib/brand-image-gradients"
+import { exhibitionSpaceTypeLabel, formatEventMoney } from "@/lib/format-event-money"
 
 interface TicketType {
   name: string
@@ -41,13 +42,17 @@ interface TicketType {
 }
 
 interface SpaceCost {
-  type: string
+  id?: string
+  spaceType?: string
+  hallName?: string
+  type?: string
   price: number
+  pricePerSqm?: number
+  minArea?: number | null
+  totalMinAmount?: number
   currency: string
   description?: string
-  minArea?: number
   unit?: string
-  pricePerSqm?: number
 }
 
 interface EventPageContentProps {
@@ -329,21 +334,11 @@ export default function EventPageContent({ event, session: _session, router, toa
       if (data.success !== false && Array.isArray(costs)) {
         setSpaceCosts(costs)
       } else {
-        // Set default space costs if none available
-        setSpaceCosts([
-          { type: "Standard Booth", price: 5000, currency: "₹", description: "3x3 meter space" },
-          { type: "Premium Booth", price: 8000, currency: "₹", description: "3x3 meter space with premium location" },
-          { type: "VIP Booth", price: 12000, currency: "₹", description: "3x3 meter space with prime location" }
-        ])
+        setSpaceCosts([])
       }
     } catch (error) {
       console.error("Error fetching space costs:", error)
-      // Set default space costs on error
-      setSpaceCosts([
-        { type: "Standard Booth", price: 5000, currency: "₹", description: "3x3 meter space" },
-        { type: "Premium Booth", price: 8000, currency: "₹", description: "3x3 meter space with premium location" },
-        { type: "VIP Booth", price: 12000, currency: "₹", description: "3x3 meter space with prime location" }
-      ])
+      setSpaceCosts([])
     }
   }
 
@@ -1253,31 +1248,45 @@ export default function EventPageContent({ event, session: _session, router, toa
                   </CardHeader>
                   <CardContent className="space-y-4">
                     {spaceCosts.length > 0 ? (
-                      spaceCosts.map((space, index) => (
-                        <div key={index} className="p-4 bg-gradient-to-r from-gray-50 to-red-50 rounded-lg border">
-                          <div className="flex justify-between items-center">
-                            <div>
-                              <span className="font-medium">{space.type}</span>
-                              <p className="text-sm text-gray-600">{space.description}</p>
-                              <p className="text-xs text-gray-500">
-                                Minimum area: {space.minArea || "Not specified"} {space.unit || "sqm"}
-                              </p>
-                            </div>
-                            <div className="text-right">
-                              <span className="font-bold text-lg text-[#004A96]">
-                                {space.currency ?? "USD"} {(Number(space.price) || 0).toLocaleString()}
-                              </span>
-                              {space.pricePerSqm != null && Number(space.pricePerSqm) > 0 && (
-                                <p className="text-sm text-gray-600">
-                                  + {space.currency ?? "USD"} {Number(space.pricePerSqm)}/{space.unit || "sqm"}
+                      spaceCosts.map((space, index) => {
+                        const pps = Number(space.pricePerSqm ?? 0)
+                        const minA = Number(space.minArea ?? 0)
+                        const total =
+                          space.totalMinAmount != null
+                            ? Number(space.totalMinAmount)
+                            : pps > 0 && minA > 0
+                              ? pps * minA
+                              : Number(space.price ?? 0)
+                        const cur = space.currency || event.currency || "USD"
+                        const label =
+                          space.hallName ||
+                          (typeof space.type === "string" && space.type !== space.spaceType ? space.type : null)
+                        return (
+                          <div key={space.id || index} className="p-4 bg-gradient-to-r from-gray-50 to-red-50 rounded-lg border">
+                            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
+                              <div>
+                                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                                  {space.spaceType ? exhibitionSpaceTypeLabel(String(space.spaceType)) : "Space"}
                                 </p>
-                              )}
+                                {label ? <h4 className="font-semibold text-gray-900">{label}</h4> : null}
+                                {space.description ? (
+                                  <p className="text-sm text-gray-600 mt-1">{space.description}</p>
+                                ) : null}
+                                <p className="text-sm text-gray-700 mt-2">
+                                  {formatEventMoney(pps, cur)} / sq.m
+                                  {minA > 0 ? ` · Minimum ${minA} sq.m` : null}
+                                </p>
+                              </div>
+                              <div className="text-left sm:text-right shrink-0">
+                                <p className="text-xs text-gray-500">Total from</p>
+                                <p className="font-bold text-lg text-[#004A96]">{formatEventMoney(total, cur)}</p>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      ))
+                        )
+                      })
                     ) : (
-                      <p className="text-gray-600">No exhibition space information available.</p>
+                      <p className="text-gray-600">No exhibition space pricing published yet.</p>
                     )}
                   </CardContent>
                 </Card>

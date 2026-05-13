@@ -23,6 +23,7 @@ import {
   getBrochurePreviewUrl,
   resolveBrochureUrl,
 } from "@/lib/utils"
+import { exhibitionSpaceTypeLabel, formatEventMoney } from "@/lib/format-event-money"
 
 interface EventPageProps {
   params: { id: string }
@@ -142,14 +143,11 @@ export default function EventPage({ params }: EventPageProps) {
   const [addingSpace, setAddingSpace] = useState(false)
   const [newSpaceForm, setNewSpaceForm] = useState({
     name: "",
-    spaceType: "RAW_SPACE",
+    spaceType: "SHELL_SPACE" as "SHELL_SPACE" | "RAW_SPACE",
     description: "",
-    dimensions: "",
-    area: 100,
-    basePrice: 0,
-    minArea: 50,
-    unit: "sqm",
     pricePerSqm: 0,
+    minArea: 9,
+    unit: "sqm",
   })
 
   const userId = getCurrentUserId()
@@ -189,7 +187,7 @@ export default function EventPage({ params }: EventPageProps) {
           category: data.category || "General",
           tags: data.tags || [],
           venue: data.venue || {},
-          currency: "₹",
+          currency: data.currency ?? "₹",
         })
 
         setAverageRating(data.averageRating || 0)
@@ -508,7 +506,10 @@ export default function EventPage({ params }: EventPageProps) {
     try {
       const updatedSpace = await apiFetch<any>(`/api/events/${event.id}/exhibition-spaces/${spaceId}`, {
         method: "PUT",
-        body: editingSpaceData,
+        body: {
+          ...editingSpaceData,
+          currency: event?.currency,
+        },
       })
       setEvent((prev: any) => ({
         ...prev,
@@ -541,13 +542,13 @@ export default function EventPage({ params }: EventPageProps) {
         body: {
           name: newSpaceForm.name.trim(),
           spaceType: newSpaceForm.spaceType,
-          description: newSpaceForm.description || newSpaceForm.name,
-          dimensions: newSpaceForm.dimensions || undefined,
-          area: Number(newSpaceForm.area) || 100,
-          basePrice: Number(newSpaceForm.basePrice) || 0,
+          description: newSpaceForm.description || newSpaceForm.name.trim(),
+          area: Number(newSpaceForm.minArea) || 9,
+          basePrice: Number(newSpaceForm.pricePerSqm || 0) * Number(newSpaceForm.minArea || 0),
           minArea: Number(newSpaceForm.minArea) || undefined,
           unit: newSpaceForm.unit || "sqm",
           pricePerSqm: Number(newSpaceForm.pricePerSqm) || 0,
+          currency: event?.currency,
         },
       })
       setEvent((prev: any) => ({
@@ -557,14 +558,11 @@ export default function EventPage({ params }: EventPageProps) {
       setAddingSpace(false)
       setNewSpaceForm({
         name: "",
-        spaceType: "RAW_SPACE",
+        spaceType: "SHELL_SPACE",
         description: "",
-        dimensions: "",
-        area: 100,
-        basePrice: 0,
-        minArea: 50,
-        unit: "sqm",
         pricePerSqm: 0,
+        minArea: 9,
+        unit: "sqm",
       })
       toast({ title: "Success", description: "Exhibition space created. You can now assign it when adding exhibitors." })
     } catch (error) {
@@ -628,6 +626,15 @@ export default function EventPage({ params }: EventPageProps) {
     }
   }
 
+  const shellRawSpaces = useMemo(() => {
+    const list = event?.exhibitionSpaces
+    if (!Array.isArray(list)) return []
+    return list.filter((s: any) => s.spaceType === "SHELL_SPACE" || s.spaceType === "RAW_SPACE")
+  }, [event?.exhibitionSpaces])
+
+  const hasShellSpace = shellRawSpaces.some((s: any) => s.spaceType === "SHELL_SPACE")
+  const hasRawSpace = shellRawSpaces.some((s: any) => s.spaceType === "RAW_SPACE")
+  const canAddShellOrRaw = !hasShellSpace || !hasRawSpace
 
   if (loading) {
     return (
@@ -869,191 +876,253 @@ export default function EventPage({ params }: EventPageProps) {
               <TabsContent value="space-cost">
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0">
-                    <CardTitle>Exhibition Space Pricing</CardTitle>
+                    <div>
+                      <CardTitle>Exhibitor Space Costs</CardTitle>
+                      <p className="text-sm text-gray-600 mt-1">
+                        Shell space and raw space only. Pricing uses the event currency from{" "}
+                        <strong>Pricing</strong> ({event.currency}). Minimum booth total = price per sq.m × minimum
+                        area.
+                      </p>
+                    </div>
                     <Button
                       variant={addingSpace ? "outline" : "default"}
                       size="sm"
-                      onClick={() => setAddingSpace((prev) => !prev)}
+                      disabled={!canAddShellOrRaw && !addingSpace}
+                      onClick={() => {
+                        setAddingSpace((prev) => {
+                          const next = !prev
+                          if (next) {
+                            setNewSpaceForm((p) => ({
+                              ...p,
+                              spaceType: !hasShellSpace ? "SHELL_SPACE" : "RAW_SPACE",
+                              minArea: !hasShellSpace ? 9 : 20,
+                              name: "",
+                              description: "",
+                              pricePerSqm: 0,
+                            }))
+                          }
+                          return next
+                        })
+                      }}
                     >
                       <Plus className="w-4 h-4 mr-2" />
-                      {addingSpace ? "Cancel" : "Add exhibition space"}
+                      {addingSpace ? "Cancel" : !hasShellSpace ? "Add shell space" : !hasRawSpace ? "Add raw space" : "Add space"}
                     </Button>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    {addingSpace && (
-                      <div className="p-4 rounded-lg border border-dashed border-gray-300 dark:border-gray-600 space-y-4 bg-gray-50 dark:bg-gray-900/50">
-                        <h4 className="font-medium">New exhibition space</h4>
+                    {addingSpace && canAddShellOrRaw && (
+                      <div className="p-4 rounded-lg border border-dashed border-gray-300 space-y-4 bg-gray-50">
+                        <h4 className="font-medium">New {newSpaceForm.spaceType === "SHELL_SPACE" ? "shell" : "raw"} space</h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <label className="text-sm font-medium">Name *</label>
+                          <div className="md:col-span-2">
+                            <label className="text-sm font-medium">Hall name *</label>
                             <Input
-                              placeholder="e.g. Hall A – Standard Booth"
+                              placeholder="e.g. Tripura Vasini, Hall A"
                               value={newSpaceForm.name}
                               onChange={(e) => setNewSpaceForm((p) => ({ ...p, name: e.target.value }))}
                               className="mt-1"
                             />
                           </div>
                           <div>
-                            <label className="text-sm font-medium">Type</label>
+                            <label className="text-sm font-medium">Space type</label>
                             <select
                               className="mt-1 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm"
                               value={newSpaceForm.spaceType}
-                              onChange={(e) => setNewSpaceForm((p) => ({ ...p, spaceType: e.target.value }))}
+                              onChange={(e) =>
+                                setNewSpaceForm((p) => ({
+                                  ...p,
+                                  spaceType: e.target.value as "SHELL_SPACE" | "RAW_SPACE",
+                                  minArea: e.target.value === "SHELL_SPACE" ? 9 : 20,
+                                }))
+                              }
                             >
-                              <option value="RAW_SPACE">Raw space</option>
-                              <option value="SHELL_SPACE">Shell space</option>
-                              <option value="TWO_SIDE_OPEN">Two side open</option>
-                              <option value="THREE_SIDE_OPEN">Three side open</option>
-                              <option value="FOUR_SIDE_OPEN">Four side open</option>
-                              <option value="MEZZANINE">Mezzanine</option>
-                              <option value="CUSTOM">Custom</option>
+                              {!hasShellSpace ? <option value="SHELL_SPACE">Shell space (standard booth)</option> : null}
+                              {!hasRawSpace ? <option value="RAW_SPACE">Raw space</option> : null}
                             </select>
                           </div>
                           <div>
-                            <label className="text-sm font-medium">Dimensions (optional)</label>
+                            <label className="text-sm font-medium">Price per sq.m ({event.currency})</label>
                             <Input
-                              placeholder="e.g. 3m x 3m"
-                              value={newSpaceForm.dimensions}
-                              onChange={(e) => setNewSpaceForm((p) => ({ ...p, dimensions: e.target.value }))}
+                              type="number"
+                              min={0}
+                              step={1}
+                              value={newSpaceForm.pricePerSqm || ""}
+                              onChange={(e) =>
+                                setNewSpaceForm((p) => ({ ...p, pricePerSqm: Number(e.target.value) || 0 }))
+                              }
                               className="mt-1"
                             />
                           </div>
                           <div>
-                            <label className="text-sm font-medium">Area ({newSpaceForm.unit})</label>
+                            <label className="text-sm font-medium">Minimum area (sq.m)</label>
                             <Input
                               type="number"
                               min={1}
-                              value={newSpaceForm.area}
-                              onChange={(e) => setNewSpaceForm((p) => ({ ...p, area: Number(e.target.value) || 0 }))}
+                              value={newSpaceForm.minArea || ""}
+                              onChange={(e) =>
+                                setNewSpaceForm((p) => ({ ...p, minArea: Number(e.target.value) || 0 }))
+                              }
                               className="mt-1"
                             />
                           </div>
-                          <div>
-                            <label className="text-sm font-medium">Base price *</label>
-                            <Input
-                              type="number"
-                              min={0}
-                              step={0.01}
-                              value={newSpaceForm.basePrice}
-                              onChange={(e) => setNewSpaceForm((p) => ({ ...p, basePrice: Number(e.target.value) || 0 }))}
+                          <div className="md:col-span-2">
+                            <label className="text-sm font-medium">Description</label>
+                            <Textarea
+                              placeholder="Short description for exhibitors"
+                              value={newSpaceForm.description}
+                              onChange={(e) => setNewSpaceForm((p) => ({ ...p, description: e.target.value }))}
                               className="mt-1"
+                              rows={2}
                             />
                           </div>
-                          <div>
-                            <label className="text-sm font-medium">Price per {newSpaceForm.unit} (optional)</label>
-                            <Input
-                              type="number"
-                              min={0}
-                              step={0.01}
-                              value={newSpaceForm.pricePerSqm}
-                              onChange={(e) => setNewSpaceForm((p) => ({ ...p, pricePerSqm: Number(e.target.value) || 0 }))}
-                              className="mt-1"
-                            />
+                          <div className="md:col-span-2 text-sm text-gray-700">
+                            <span className="font-medium">Total from: </span>
+                            {formatEventMoney(
+                              (Number(newSpaceForm.pricePerSqm) || 0) * (Number(newSpaceForm.minArea) || 0),
+                              event.currency,
+                            )}
                           </div>
                         </div>
-                        <div>
-                          <label className="text-sm font-medium">Description (optional)</label>
-                          <Input
-                            placeholder="Short description"
-                            value={newSpaceForm.description}
-                            onChange={(e) => setNewSpaceForm((p) => ({ ...p, description: e.target.value }))}
-                            className="mt-1"
-                          />
-                        </div>
-                        <Button onClick={handleAddExhibitionSpace}>Create exhibition space</Button>
+                        <Button onClick={handleAddExhibitionSpace}>Create space</Button>
                       </div>
                     )}
 
-                    {event.exhibitionSpaces?.length > 0 ? (
-                      event.exhibitionSpaces.map((space: any) => (
-                        <div key={space.id} className="p-4 bg-gradient-to-r from-gray-50 to-blue-50 rounded-lg border">
-                          {editingSpaceId === space.id ? (
-                            <div className="space-y-3">
+                    {shellRawSpaces.length > 0 ? (
+                      shellRawSpaces.map((space: any) => {
+                        const pps = Number(space.pricePerSqm ?? 0)
+                        const minA = Number(space.minArea ?? 0)
+                        const total =
+                          pps > 0 && minA > 0 ? pps * minA : Number(space.basePrice ?? 0)
+                        const cur = space.currency || event.currency
+                        return (
+                          <div key={space.id} className="p-4 bg-gradient-to-r from-gray-50 to-blue-50 rounded-lg border">
+                            <div className="flex items-start justify-between gap-2 mb-2">
                               <div>
-                                <label className="text-sm font-medium">Base Price</label>
-                                <Input
-                                  type="number"
-                                  value={editingSpaceData.basePrice ?? space.basePrice}
-                                  onChange={(e) =>
-                                    setEditingSpaceData({
-                                      ...editingSpaceData,
-                                      basePrice: Number.parseFloat(e.target.value),
-                                    })
-                                  }
-                                />
-                              </div>
-                              <div>
-                                <label className="text-sm font-medium">Price per {space.unit}</label>
-                                <Input
-                                  type="number"
-                                  value={editingSpaceData.pricePerSqm ?? space.pricePerSqm}
-                                  onChange={(e) =>
-                                    setEditingSpaceData({
-                                      ...editingSpaceData,
-                                      pricePerSqm: Number.parseFloat(e.target.value),
-                                    })
-                                  }
-                                />
-                              </div>
-                              <div className="flex gap-2">
-                                <Button size="sm" onClick={() => handleUpdateSpaceCost(space.id)}>
-                                  <Save className="w-4 h-4 mr-2" />
-                                  Save
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => {
-                                    setEditingSpaceId(null)
-                                    setEditingSpaceData({})
-                                  }}
-                                >
-                                  <X className="w-4 h-4 mr-2" />
-                                  Cancel
-                                </Button>
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="flex justify-between items-center">
-                              <div>
-                                <span className="font-medium">{space.name}</span>
-                                <p className="text-sm text-gray-600">{space.description}</p>
-                                <p className="text-xs text-gray-500">
-                                  Minimum area: {space.minArea} {space.unit}
+                                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                                  {exhibitionSpaceTypeLabel(space.spaceType)}
                                 </p>
+                                <h4 className="font-semibold text-lg">{space.name}</h4>
                               </div>
-                              <div className="flex items-center gap-4">
-                                <div className="text-right">
-                                  <span className="font-bold text-lg text-blue-600">
-                                    {event.currency} {space.basePrice.toLocaleString()}
-                                  </span>
-                                  {space.pricePerSqm > 0 && (
-                                    <p className="text-sm text-gray-600">
-                                      + {event.currency} {space.pricePerSqm}/{space.unit}
-                                    </p>
-                                  )}
-                                </div>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => {
-                                    setEditingSpaceId(space.id)
-                                    setEditingSpaceData({
-                                      basePrice: space.basePrice,
-                                      pricePerSqm: space.pricePerSqm,
-                                    })
-                                  }}
-                                >
-                                  <Edit2 className="w-4 h-4" />
-                                </Button>
-                              </div>
+                              {space.spaceType === "SHELL_SPACE" ? (
+                                <span className="text-xs bg-gray-200 text-gray-800 px-2 py-0.5 rounded">Standard</span>
+                              ) : null}
                             </div>
-                          )}
-                        </div>
-                      ))
+                            {editingSpaceId === space.id ? (
+                              <div className="space-y-3">
+                                <div>
+                                  <label className="text-sm font-medium">Hall name</label>
+                                  <Input
+                                    value={editingSpaceData.name ?? space.name}
+                                    onChange={(e) =>
+                                      setEditingSpaceData({ ...editingSpaceData, name: e.target.value })
+                                    }
+                                  />
+                                </div>
+                                <div>
+                                  <label className="text-sm font-medium">Description</label>
+                                  <Textarea
+                                    value={editingSpaceData.description ?? space.description ?? ""}
+                                    onChange={(e) =>
+                                      setEditingSpaceData({ ...editingSpaceData, description: e.target.value })
+                                    }
+                                    rows={2}
+                                  />
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                  <div>
+                                    <label className="text-sm font-medium">Price per sq.m ({cur})</label>
+                                    <Input
+                                      type="number"
+                                      value={editingSpaceData.pricePerSqm ?? space.pricePerSqm ?? ""}
+                                      onChange={(e) =>
+                                        setEditingSpaceData({
+                                          ...editingSpaceData,
+                                          pricePerSqm: Number.parseFloat(e.target.value),
+                                        })
+                                      }
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="text-sm font-medium">Minimum area (sq.m)</label>
+                                    <Input
+                                      type="number"
+                                      value={editingSpaceData.minArea ?? space.minArea ?? ""}
+                                      onChange={(e) =>
+                                        setEditingSpaceData({
+                                          ...editingSpaceData,
+                                          minArea: Number.parseFloat(e.target.value),
+                                        })
+                                      }
+                                    />
+                                  </div>
+                                </div>
+                                <p className="text-sm text-gray-700">
+                                  Total from:{" "}
+                                  <span className="font-semibold">
+                                    {formatEventMoney(
+                                      (Number(editingSpaceData.pricePerSqm ?? space.pricePerSqm) || 0) *
+                                        (Number(editingSpaceData.minArea ?? space.minArea) || 0),
+                                      cur,
+                                    )}
+                                  </span>
+                                </p>
+                                <div className="flex gap-2">
+                                  <Button size="sm" onClick={() => handleUpdateSpaceCost(space.id)}>
+                                    <Save className="w-4 h-4 mr-2" />
+                                    Save
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      setEditingSpaceId(null)
+                                      setEditingSpaceData({})
+                                    }}
+                                  >
+                                    <X className="w-4 h-4 mr-2" />
+                                    Cancel
+                                  </Button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-3">
+                                <div>
+                                  <p className="text-sm text-gray-600">{space.description}</p>
+                                  <p className="text-sm text-gray-700 mt-2">
+                                    {formatEventMoney(pps, cur)} / sq.m · Min {minA || "—"} sq.m
+                                  </p>
+                                </div>
+                                <div className="flex items-center gap-4 shrink-0">
+                                  <div className="text-right">
+                                    <p className="text-xs text-gray-500">Total from</p>
+                                    <p className="font-bold text-lg text-blue-600">{formatEventMoney(total, cur)}</p>
+                                  </div>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => {
+                                      setEditingSpaceId(space.id)
+                                      setEditingSpaceData({
+                                        name: space.name,
+                                        description: space.description,
+                                        basePrice: space.basePrice,
+                                        pricePerSqm: space.pricePerSqm,
+                                        minArea: space.minArea,
+                                      })
+                                    }}
+                                  >
+                                    <Edit2 className="w-4 h-4" />
+                                  </Button>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )
+                      })
                     ) : (
                       <p className="text-gray-600">
-                        No exhibition spaces yet. Click <strong>Add exhibition space</strong> above to create one; then you can assign spaces when adding exhibitors to this event.
+                        No shell or raw exhibition space yet. Use <strong>Add shell space</strong> or{" "}
+                        <strong>Add raw space</strong> to match your event pricing. Other space types are hidden here.
                       </p>
                     )}
                   </CardContent>

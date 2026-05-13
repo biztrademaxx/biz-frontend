@@ -39,6 +39,7 @@ import { getCountryTimezoneByName } from "@/lib/location-data"
 
 interface SpaceCost {
   type: string
+  hallName?: string
   description: string
   pricePerSqm?: number
   minArea?: number
@@ -319,6 +320,7 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
     spaceCosts: [
       {
         type: "Shell Space (Standard Booth)",
+        hallName: "",
         description: "Fully constructed booth with walls, flooring, basic lighting, and standard amenities",
         pricePerSqm: 5000,
         minArea: 9,
@@ -326,10 +328,11 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
       },
       {
         type: "Raw Space",
+        hallName: "",
         description: "Open floor space without any construction or amenities",
         pricePerSqm: 2500,
         minArea: 20,
-        isFixed: false,
+        isFixed: true,
       },
     ],
     images: [],
@@ -502,36 +505,11 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
   }
 
 
-  const addCustomSpaceCost = () => {
-    setValidationErrors((prev) => ({ ...prev, spaceCosts: undefined }))
-    setFormData((prev) => ({
-      ...prev,
-      spaceCosts: [
-        ...prev.spaceCosts,
-        {
-          type: "",
-          description: "",
-          pricePerSqm: 0,
-          minArea: 0,
-          isFixed: false,
-        },
-      ],
-    }))
-  }
-
   const updateSpaceCost = (index: number, field: string, value: any) => {
     setValidationErrors((prev) => ({ ...prev, spaceCosts: undefined }))
     setFormData((prev) => ({
       ...prev,
       spaceCosts: prev.spaceCosts.map((cost, i) => (i === index ? { ...cost, [field]: value } : cost)),
-    }))
-  }
-
-  const removeSpaceCost = (index: number) => {
-    setValidationErrors((prev) => ({ ...prev, spaceCosts: undefined }))
-    setFormData((prev) => ({
-      ...prev,
-      spaceCosts: prev.spaceCosts.filter((_, i) => i !== index),
     }))
   }
 
@@ -762,12 +740,12 @@ const handlePublishEvent = async () => {
 
         return {
           spaceType: spaceType,
-          name: cost.type,
+          name: (cost.hallName && String(cost.hallName).trim()) || cost.type,
           description: cost.description || "",
           area: cost.minArea || 0,
           dimensions: cost.minArea ? `${cost.minArea} sq.m` : "",
           location: null,
-          basePrice: cost.pricePerSqm || cost.pricePerUnit || 0,
+          basePrice: (Number(cost.pricePerSqm) || 0) * (Number(cost.minArea) || 0),
           pricePerSqm: cost.pricePerSqm || null,
           minArea: cost.minArea || null,
           pricePerUnit: cost.pricePerUnit || null,
@@ -938,6 +916,7 @@ const handlePublishEvent = async () => {
       spaceCosts: [
         {
           type: "Shell Space (Standard Booth)",
+          hallName: "",
           description: "Fully constructed booth with walls, flooring, basic lighting, and standard amenities",
           pricePerSqm: 5000,
           minArea: 9,
@@ -945,10 +924,11 @@ const handlePublishEvent = async () => {
         },
         {
           type: "Raw Space",
+          hallName: "",
           description: "Open floor space without any construction or amenities",
           pricePerSqm: 2500,
           minArea: 20,
-          isFixed: false,
+          isFixed: true,
         },
       ],
       images: [],
@@ -1835,169 +1815,71 @@ const handlePublishEvent = async () => {
               <div className="grid gap-6">
                 {formData.spaceCosts.map((cost, index) => (
                   <div key={index} className="p-6 border rounded-lg bg-gray-50">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-3">
-                        <h4 className="font-semibold text-lg">{cost.type}</h4>
-                        {cost.isFixed && (
-                          <Badge variant="secondary" className="text-xs">
-                            Standard
-                          </Badge>
-                        )}
-                      </div>
-                      {!cost.isFixed && (
-                        <Button variant="outline" size="sm" onClick={() => removeSpaceCost(index)}>
-                          <X className="w-4 h-4" />
-                        </Button>
-                      )}
+                    <div className="flex items-center gap-3 mb-4">
+                      <h4 className="font-semibold text-lg">{cost.type}</h4>
+                      {cost.type.includes("Shell") ? (
+                        <Badge variant="secondary" className="text-xs">
+                          Standard
+                        </Badge>
+                      ) : null}
                     </div>
 
                     <div className="space-y-4">
                       <div>
+                        <Label className="text-sm font-medium text-gray-700">Hall name</Label>
+                        <Input
+                          className="mt-1"
+                          value={cost.hallName ?? ""}
+                          onChange={(e) => updateSpaceCost(index, "hallName", e.target.value)}
+                          placeholder="e.g. Tripura Vasini, Hall A"
+                        />
+                      </div>
+                      <div>
                         <Label className="text-sm font-medium text-gray-700">Description</Label>
-                        <p className="text-sm text-gray-600 mt-1 p-3 bg-white rounded border">{cost.description}</p>
+                        <Textarea
+                          className="mt-1"
+                          value={cost.description}
+                          onChange={(e) => updateSpaceCost(index, "description", e.target.value)}
+                          rows={3}
+                        />
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        {cost.isFixed && cost.type !== "Shell Space (Standard Booth)" ? (
-                          <>
-                            <div>
-                              <Label className="text-sm font-medium">Space Type</Label>
-                              <Input
-                                value={cost.type}
-                                onChange={(e) => updateSpaceCost(index, "type", e.target.value)}
-                                placeholder="Enter space type"
-                                disabled={cost.isFixed}
-                                className="bg-gray-100"
-                              />
-                            </div>
-                            <div>
-                              <Label className="text-sm font-medium">
-                                {cost.unit ? `Price per ${cost.unit}` : "Price per sq.m"}
-                              </Label>
-                              <div className="flex items-center gap-2">
-                                <span className="text-sm text-gray-500">{formData.currency}</span>
-                                <Input
-                                  type="number"
-                                  value={cost.pricePerSqm || cost.pricePerUnit || 0}
-                                  onChange={(e) =>
-                                    updateSpaceCost(
-                                      index,
-                                      cost.unit ? "pricePerUnit" : "pricePerSqm",
-                                      Number(e.target.value),
-                                    )
-                                  }
-                                  placeholder="0"
-                                />
-                              </div>
-                            </div>
-                            {!cost.unit && (
-                              <div>
-                                <Label className="text-sm font-medium">Minimum Area (sq.m)</Label>
-                                <Input
-                                  type="number"
-                                  value={cost.minArea || 0}
-                                  onChange={(e) => updateSpaceCost(index, "minArea", Number(e.target.value))}
-                                  placeholder="0"
-                                />
-                              </div>
-                            )}
-                          </>
-                        ) : cost.isFixed ? (
-                          <>
-                            <div>
-                              <Label className="text-sm font-medium">Price per sq.m</Label>
-                              <div className="flex items-center gap-2">
-                                <span className="text-sm text-gray-500">{formData.currency}</span>
-                                <Input
-                                  type="number"
-                                  value={cost.pricePerSqm || 0}
-                                  onChange={(e) => updateSpaceCost(index, "pricePerSqm", Number(e.target.value))}
-                                  placeholder="0"
-                                />
-                              </div>
-                            </div>
-                            <div>
-                              <Label className="text-sm font-medium">Minimum Area (sq.m)</Label>
-                              <Input
-                                type="number"
-                                value={cost.minArea || 0}
-                                onChange={(e) => updateSpaceCost(index, "minArea", Number(e.target.value))}
-                                placeholder="0"
-                              />
-                            </div>
-                            <div className="flex items-end">
-                              <div className="text-sm">
-                                <span className="text-gray-600">Total from: </span>
-                                <span className="font-semibold text-lg">
-                                  {formData.currency}
-                                  {((cost.pricePerSqm || 0) * (cost.minArea || 0)).toLocaleString()}
-                                </span>
-                              </div>
-                            </div>
-                          </>
-                        ) : (
-                          <>
-                            <div>
-                              <Label className="text-sm font-medium">Space Type</Label>
-                              <Input
-                                value={cost.type}
-                                onChange={(e) => updateSpaceCost(index, "type", e.target.value)}
-                                placeholder="Enter space type"
-                              />
-                            </div>
-                            <div>
-                              <Label className="text-sm font-medium">Price per sq.m</Label>
-                              <div className="flex items-center gap-2">
-                                <span className="text-sm text-gray-500">{formData.currency}</span>
-                                <Input
-                                  type="number"
-                                  value={cost.pricePerSqm === 0 ? "" : cost.pricePerSqm}
-                                  onChange={(e) => updateSpaceCost(index, "pricePerSqm", Number(e.target.value) || 0)}
-                                  placeholder="0"
-                                />
-                              </div>
-                            </div>
-                            <div>
-                              <Label className="text-sm font-medium">Minimum Area (sq.m)</Label>
-                              <Input
-                                type="number"
-                                value={cost.minArea === 0 ? "" : cost.minArea}
-                                onChange={(e) => updateSpaceCost(index, "minArea", Number(e.target.value) || 0)}
-                                placeholder="0"
-                              />
-                            </div>
-                            <div className="md:col-span-3">
-                              <Label className="text-sm font-medium">Description</Label>
-                              <Textarea
-                                value={cost.description}
-                                onChange={(e) => updateSpaceCost(index, "description", e.target.value)}
-                                placeholder="Describe this space type"
-                                rows={2}
-                              />
-                            </div>
-                          </>
-                        )}
-                      </div>
-
-                      {cost.unit && (
-                        <div className="flex items-center justify-between p-3 bg-blue-50 rounded border border-blue-200">
-                          <span className="text-sm text-blue-800">Service pricing per {cost.unit}</span>
-                          <span className="font-semibold text-blue-900">
-                            {formData.currency}
-                            {(cost.pricePerUnit || 0).toLocaleString()} per {cost.unit}
-                          </span>
+                        <div>
+                          <Label className="text-sm font-medium">Price per sq.m</Label>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-sm text-gray-500">{formData.currency}</span>
+                            <Input
+                              type="number"
+                              value={cost.pricePerSqm || 0}
+                              onChange={(e) => updateSpaceCost(index, "pricePerSqm", Number(e.target.value))}
+                              placeholder="0"
+                            />
+                          </div>
                         </div>
-                      )}
+                        <div>
+                          <Label className="text-sm font-medium">Minimum Area (sq.m)</Label>
+                          <Input
+                            className="mt-1"
+                            type="number"
+                            value={cost.minArea || 0}
+                            onChange={(e) => updateSpaceCost(index, "minArea", Number(e.target.value))}
+                            placeholder="0"
+                          />
+                        </div>
+                        <div className="flex items-end">
+                          <div className="text-sm pb-2">
+                            <span className="text-gray-600">Total from: </span>
+                            <span className="font-semibold text-lg">
+                              {formData.currency}
+                              {((cost.pricePerSqm || 0) * (cost.minArea || 0)).toLocaleString()}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ))}
-              </div>
-
-              <div className="pt-4 border-t">
-                <Button variant="outline" onClick={addCustomSpaceCost} className="w-full bg-transparent">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Custom Space Type
-                </Button>
               </div>
             </CardContent>
           </Card>
@@ -2257,26 +2139,24 @@ const handlePublishEvent = async () => {
                     <h4 className="font-semibold mb-4">Exhibition Space Pricing</h4>
                     <div className="grid gap-3">
                       {formData.spaceCosts.map((cost, index) => (
-                        <div key={index} className="bg-white p-4 rounded-lg border flex justify-between items-center">
+                        <div key={index} className="bg-white p-4 rounded-lg border flex justify-between items-center gap-4">
                           <div>
                             <h5 className="font-medium">{cost.type}</h5>
+                            {cost.hallName ? (
+                              <p className="text-sm text-gray-700 font-medium">Hall: {cost.hallName}</p>
+                            ) : null}
                             <p className="text-sm text-gray-600">{cost.description}</p>
                           </div>
-                          <div className="text-right">
-                            {cost.unit ? (
-                              <p className="font-semibold text-blue-600">
-                                {formData.currency}
-                                {(cost.pricePerUnit || 0).toLocaleString()} per {cost.unit}
-                              </p>
-                            ) : (
-                              <>
-                                <p className="font-semibold text-blue-600">
-                                  {formData.currency}
-                                  {(cost.pricePerSqm || 0).toLocaleString()} per sq.m
-                                </p>
-                                <p className="text-sm text-gray-500">Min: {cost.minArea || 0} sq.m</p>
-                              </>
-                            )}
+                          <div className="text-right shrink-0">
+                            <p className="font-semibold text-blue-600">
+                              {formData.currency}
+                              {(cost.pricePerSqm || 0).toLocaleString()} / sq.m
+                            </p>
+                            <p className="text-sm text-gray-500">Min: {cost.minArea || 0} sq.m</p>
+                            <p className="text-sm font-medium text-gray-800 mt-1">
+                              From: {formData.currency}
+                              {((cost.pricePerSqm || 0) * (cost.minArea || 0)).toLocaleString()}
+                            </p>
                           </div>
                         </div>
                       ))}
