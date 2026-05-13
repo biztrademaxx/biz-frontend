@@ -26,7 +26,7 @@ export async function updateEvent(id: string, body: Record<string, unknown>) {
   })
 }
 
-/** Verify / un-verify; optional `badgeFile` uploads to Cloudinary and stores URL in `verifiedBadgeImage` (no dummy default). */
+/** Verify / un-verify; optional `badgeFile` uploads to Cloudinary and stores URL in `verifiedBadgeImage`. Listing uses `/images/VerifiedBadge.png` when verified with no file. */
 export async function verifyEvent(id: string, verify: boolean, badgeFile?: File) {
   const fd = new FormData()
   fd.append("isVerified", verify ? "true" : "false")

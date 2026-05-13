@@ -20,6 +20,12 @@ type AdCardProps = {
   position?: string
 }
 
+/** Shown when no CMS banner is configured — on-brand editorial, not third‑party demo copy. */
+const DEFAULT_PROMO_TITLE = "Biz Trade Fairs"
+const DEFAULT_PROMO_SUBTITLE =
+  "Discover global trade fairs, connect with opportunities, and grow your business network."
+const DEFAULT_PROMO_FOOTER = "BizTradeFairs.com"
+
 /** Normalize admin-entered URLs so clicks work (add https://, allow internal paths). */
 function resolveClickTarget(raw: string): { href: string; external: boolean } | null {
   const t = raw.trim()
@@ -113,9 +119,9 @@ export default function AdCard({ page = "events", position = "sidebar" }: AdCard
     return <AdCardSkeleton />
   }
 
-  const alt = (banner?.title || "Sponsored").trim() || "Sponsored"
-  const title = banner?.title?.trim() || "Demo Units Available"
-  const subtitle = banner ? "Sponsored" : "Ultra-low phase fluctuation (0.002π rad)"
+  const alt = (banner?.title || DEFAULT_PROMO_TITLE).trim()
+  const title = banner?.title?.trim() || DEFAULT_PROMO_TITLE
+  const subtitle = banner ? "Sponsored" : DEFAULT_PROMO_SUBTITLE
   const click = resolveClickTarget(banner?.link ?? "")
 
   const body = (
@@ -138,7 +144,7 @@ export default function AdCard({ page = "events", position = "sidebar" }: AdCard
 
         <div className="mt-3 flex items-center justify-between">
           <span className="text-xs text-gray-500">
-            {click ? "Tap to open sponsor site" : banner ? "Advertisement" : "santec.com"}
+            {click ? "Tap to open sponsor site" : banner ? "Advertisement" : DEFAULT_PROMO_FOOTER}
           </span>
           <span
             aria-hidden

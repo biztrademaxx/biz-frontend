@@ -44,6 +44,7 @@ import {
   formatNameFromExploreKey,
 } from "@/lib/explore-event-types"
 import { normalizeBrowseCategory } from "@/lib/categories/normalize-browse-category"
+import { resolvedVerifiedBadgeImageUrl } from "@/lib/verified-event-badge"
 
 // Use Next.js API (same-origin) to avoid CORS; API route proxies to backend when needed
 const EVENTS_API = "/api/events"
@@ -413,13 +414,10 @@ function coerceEventVerified(raw: unknown): boolean {
 }
 
 function verifiedBadgeSrc(event: Event): string | null {
-  const raw = event.verifiedBadgeImage
-  if (typeof raw !== "string") return null
-  const t = raw.trim()
-  return t.length > 0 ? t : null
+  return resolvedVerifiedBadgeImageUrl(event.isVerified, event.verifiedBadgeImage)
 }
 
-/** Verified listing mark: uses uploaded badge image only; text fallback if no URL or image fails. */
+/** Verified listing mark: custom badge URL or default `/images/VerifiedBadge.png`; text fallback if image fails. */
 function EventListingVerifiedBadge({
   event,
   className = "",
@@ -2091,7 +2089,12 @@ export default function EventsPageContent({
                     {featuredEvents
                       .sort((a, b) => (b.isVerified ? 1 : 0) - (a.isVerified ? 1 : 0))
                       .slice(currentSlide * 3, currentSlide * 3 + 3)
-                      .map((event) => (
+                      .map((event) => {
+                        const badgeImgUrl = resolvedVerifiedBadgeImageUrl(
+                          event.isVerified,
+                          event.verifiedBadgeImage,
+                        )
+                        return (
                         <Card
                           key={event.id}
                           className="hover:shadow-xl transition-all duration-300 border border-gray-300 rounded-sm overflow-hidden group"
@@ -2115,13 +2118,13 @@ export default function EventsPageContent({
                           <CardContent className="p-5">
                             <div className="flex items-start justify-between mb-2">
                               <h3 className="text-2xl font-black text-gray-900 line-clamp-2 flex-1">{event.title}</h3>
-                              {event.isVerified && event.verifiedBadgeImage && (
+                              {badgeImgUrl ? (
                                 <img
-                                  src={event.verifiedBadgeImage}
+                                  src={badgeImgUrl}
                                   alt="Verified"
                                   className="ml-1 h-10 w-10 object-contain"
                                 />
-                              )}
+                              ) : null}
                             </div>
                             <div className="flex items-center text-base text-gray-700 mb-2 font-bold">
                               <MapPin className="w-5 h-5 mr-2 text-blue-600 flex-shrink-0" />
@@ -2151,7 +2154,8 @@ export default function EventsPageContent({
                             </button>
                           </CardContent>
                         </Card>
-                      ))}
+                        )
+                      })}
                   </div>
 
                   <div className="flex justify-center mt-6 space-x-2">
@@ -2239,13 +2243,15 @@ export default function EventsPageContent({
                     <CardContent className="p-5">
                       <div className="flex items-start justify-between mb-3">
                         <h3 className="text-xl font-black text-gray-900 flex-1">{featuredEvents[0].title}</h3>
-                        {featuredEvents[0].isVerified && featuredEvents[0].verifiedBadgeImage && (
-                          <img
-                            src={featuredEvents[0].verifiedBadgeImage}
-                            alt="Verified"
-                            className="w-6 h-6 ml-2"
-                          />
-                        )}
+                        {(() => {
+                          const url = resolvedVerifiedBadgeImageUrl(
+                            featuredEvents[0].isVerified,
+                            featuredEvents[0].verifiedBadgeImage,
+                          )
+                          return url ? (
+                            <img src={url} alt="Verified" className="w-6 h-6 ml-2 object-contain" />
+                          ) : null
+                        })()}
                       </div>
                       <button
                         className="w-full flex items-center justify-center bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white py-3 px-4 rounded-sm text-base font-bold shadow-lg hover:shadow-xl transition-all duration-300"
