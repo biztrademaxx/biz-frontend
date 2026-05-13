@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useState, useEffect } from "react"
-import { usePathname, useRouter, useSearchParams } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import {
   LayoutDashboard,   // Dashboard
@@ -40,14 +40,20 @@ import AddSpeaker from "./AddSpeaker"
 import SpeakerSessionsTable from "./SpeakerSessionsTable"
 import { CreateConferenceAgenda } from "./CreateConferenceAgenda"
 import { ConferenceList } from "./ConferenceAgenda"
-import { getCurrentUserId } from "@/lib/api"
+import { getCurrentUserId, apiFetch } from "@/lib/api"
+import { isEventIdUuid } from "@/lib/event-ref"
 import AnalyticsDashboard from "./analytics"
 // import Analytics from "./analytics"
 // ...create/import other components as needed
 
 interface EventLayoutProps {
   children?: React.ReactNode
-  eventId: string
+  /** Segment from the URL (slug or UUID). Used to resolve the event when the server cannot (no auth on RSC). */
+  dashboardRef: string
+  /** When the server could fetch the event (e.g. public listing), the real event UUID. */
+  eventId?: string | null
+  /** From server when available; client may refresh if missing. */
+  initialEventTitle?: string | null
 }
 
 interface SidebarGroup {
@@ -62,7 +68,11 @@ interface SidebarItem {
   id: string
 }
 
-export default function EventSidebar({ eventId }: EventLayoutProps) {
+export default function EventSidebar({
+  dashboardRef,
+  eventId: serverEventId = null,
+  initialEventTitle = null,
+}: EventLayoutProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const tabParam = searchParams.get("tab")
@@ -71,9 +81,78 @@ export default function EventSidebar({ eventId }: EventLayoutProps) {
   const [activeSection, setActiveSection] = useState("dashboard")
   const [params, setParams] = useState<{ id: string } | null>(null)
   const userId = getCurrentUserId()
+  const [displayEventTitle, setDisplayEventTitle] = useState(() => initialEventTitle?.trim() || "")
+  const [resolvedEventId, setResolvedEventId] = useState<string | null>(() => serverEventId ?? null)
+  const [resolveError, setResolveError] = useState<string | null>(null)
+  const [resolving, setResolving] = useState(() => !serverEventId)
 
   const [refreshKey, setRefreshKey] = useState(0)
   const [activeTab, setActiveTab] = useState("list")
+
+  useEffect(() => {
+    setDisplayEventTitle(initialEventTitle?.trim() || "")
+  }, [initialEventTitle, serverEventId])
+
+  useEffect(() => {
+    setResolvedEventId(serverEventId ?? null)
+    setResolveError(null)
+    setResolving(!(serverEventId ?? null))
+  }, [dashboardRef, serverEventId])
+
+  useEffect(() => {
+    if (resolvedEventId) return
+    let cancelled = false
+    ;(async () => {
+      try {
+        setResolving(true)
+        const data = await apiFetch<{ id: string; title?: string; slug?: string | null }>(
+          `/api/events/${encodeURIComponent(dashboardRef.trim())}`,
+          { auth: true },
+        )
+        if (cancelled) return
+        setResolvedEventId(data.id)
+        const t = typeof data.title === "string" ? data.title.trim() : ""
+        if (t) setDisplayEventTitle(t)
+        const refTrim = dashboardRef.trim()
+        if (isEventIdUuid(refTrim) && data.slug?.trim()) {
+          router.replace(`/event-dashboard/${encodeURIComponent(data.slug.trim())}`)
+        }
+      } catch (e: unknown) {
+        if (!cancelled) {
+          const status = typeof e === "object" && e !== null && "status" in e ? (e as { status?: number }).status : undefined
+          setResolveError(status === 404 ? "Event not found" : "Could not load this event")
+        }
+      } finally {
+        if (!cancelled) setResolving(false)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [resolvedEventId, dashboardRef, router])
+
+  useEffect(() => {
+    if (displayEventTitle) return
+    if (!resolvedEventId) return
+    let cancelled = false
+    ;(async () => {
+      try {
+        const data = await apiFetch<{ title?: string }>(`/api/events/${resolvedEventId}`, { auth: true })
+        const t = typeof data?.title === "string" ? data.title.trim() : ""
+        if (!cancelled && t) setDisplayEventTitle(t)
+      } catch {
+        // keep empty; organizer may lack token on edge cases
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [resolvedEventId, displayEventTitle])
+
+  useEffect(() => {
+    if (!displayEventTitle) return
+    document.title = `${displayEventTitle} · Event dashboard`
+  }, [displayEventTitle])
 
   const handleSuccess = () => {
     setActiveTab("list")
@@ -87,13 +166,12 @@ export default function EventSidebar({ eventId }: EventLayoutProps) {
   }, [tabParam])
 
   useEffect(() => {
-    // Simulate async params resolution
-    const resolveParams = async () => {
-      const resolvedParams = await Promise.resolve({ id: eventId })
-      setParams(resolvedParams)
+    if (!resolvedEventId) {
+      setParams(null)
+      return
     }
-    resolveParams()
-  }, [eventId])
+    setParams({ id: resolvedEventId })
+  }, [resolvedEventId])
 
   const toggleGroup = (groupId: string) => {
     setExpandedGroups((prev) =>
@@ -158,9 +236,25 @@ export default function EventSidebar({ eventId }: EventLayoutProps) {
 
 
   const renderContent = () => {
-    if (!params) {
-      return <div>Loading...</div>
+    if (resolveError) {
+      return (
+        <div className="p-8 text-center max-w-md mx-auto">
+          <p className="text-destructive font-medium">{resolveError}</p>
+          <p className="text-sm text-muted-foreground mt-2">
+            If you are the organizer, sign in and open this dashboard from My Events.
+          </p>
+        </div>
+      )
     }
+    if (resolving || !resolvedEventId || !params) {
+      return (
+        <div className="flex items-center justify-center h-64 text-muted-foreground">
+          Loading event…
+        </div>
+      )
+    }
+
+    const eventId = resolvedEventId
 
     switch (activeSection) {
       case "dashboard":
@@ -296,12 +390,25 @@ export default function EventSidebar({ eventId }: EventLayoutProps) {
         {/* Content */}
         <div className="flex-1 flex flex-col min-h-screen">
           {/* Mobile Top Bar */}
-          <div className="md:hidden flex items-center justify-between p-4 bg-card border-b">
+          <div className="md:hidden flex items-center justify-between p-4 bg-card border-b gap-2">
             <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(true)}>
               <Menu className="h-4 w-4" />
             </Button>
-            <h1 className="text-lg font-semibold truncate">{getCurrentSectionTitle()}</h1>
+            <div className="min-w-0 flex-1 text-center">
+              {displayEventTitle ? (
+                <p className="text-xs text-muted-foreground truncate">{displayEventTitle}</p>
+              ) : null}
+              <h1 className="text-lg font-semibold truncate">{getCurrentSectionTitle()}</h1>
+            </div>
             <div className="w-8" />
+          </div>
+
+          {/* Desktop: event name + section */}
+          <div className="hidden md:block px-4 sm:px-6 pt-6 pb-2 border-b border-border/80 bg-[#F5F4F0]">
+            <h1 className="text-2xl font-bold text-gray-900 truncate">
+              {displayEventTitle || "Event dashboard"}
+            </h1>
+            <p className="text-sm text-muted-foreground mt-0.5">{getCurrentSectionTitle()}</p>
           </div>
 
           {/* Main Content */}

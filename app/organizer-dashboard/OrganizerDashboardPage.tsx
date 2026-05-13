@@ -361,10 +361,16 @@ export default function OrganizerDashboardSimplified({ organizerId }: OrganizerD
               window.location.href = `/organizers/${organizerData.id}/total-attendees`
             }}
             onViewAnalyticsClick={() => {
-              window.location.href = `/event-dashboard/${organizerData.id}?section=analytics`
+              const ev = events?.[0]
+              if (!ev) return
+              const ref = ev.slug || ev.id
+              window.location.href = `/event-dashboard/${ref}?section=analytics`
             }}
             onSendMessageClick={() => {
-              window.location.href = `/event-dashboard/${organizerData.id}?section=messages`
+              const ev = events?.[0]
+              if (!ev) return
+              const ref = ev.slug || ev.id
+              window.location.href = `/event-dashboard/${ref}?section=messages`
             }}
           />
         )

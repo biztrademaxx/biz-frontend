@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useParams } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -70,6 +70,10 @@ export default function AddExhibitor({ eventId }: AddExhibitorProps) {
   const [registeredExhibitors, setRegisteredExhibitors] = useState<Set<string>>(new Set())
   const { toast } = useToast()
   const router = useRouter()
+  const routeParams = useParams()
+  /** URL segment (slug preferred); keeps links on pretty path when APIs use UUID. */
+  const dashboardPathSegment =
+    typeof routeParams?.slug === "string" && routeParams.slug.trim() ? routeParams.slug : eventId
 
   const [newExhibitor, setNewExhibitor] = useState<Exhibitor>({
     id: "",
@@ -621,7 +625,7 @@ export default function AddExhibitor({ eventId }: AddExhibitorProps) {
                             type="button"
                             variant="outline"
                             className="w-full"
-                            onClick={() => router.push(`/event-dashboard/${eventId}?tab=space-cost`)}
+                            onClick={() => router.push(`/event-dashboard/${dashboardPathSegment}?tab=space-cost`)}
                           >
                             Go to Event Info → Space Cost
                             <ArrowRight className="ml-2 h-4 w-4" />
@@ -653,7 +657,7 @@ export default function AddExhibitor({ eventId }: AddExhibitorProps) {
                         type="button"
                         variant="outline"
                         size="sm"
-                        onClick={() => router.push(`/event-dashboard/${eventId}?tab=space-cost`)}
+                        onClick={() => router.push(`/event-dashboard/${dashboardPathSegment}?tab=space-cost`)}
                       >
                         Go to Event Info → Space Cost
                         <ArrowRight className="ml-2 h-4 w-4" />
