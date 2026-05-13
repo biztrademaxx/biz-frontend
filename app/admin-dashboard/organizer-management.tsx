@@ -527,18 +527,27 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
         <TabsContent value="bulk-import">
           <EntityBulkImport
             title="Organizer Bulk Import"
-            description="Import organizers using all core add-organizer fields."
+            description="Import organizers with organization contact and location. Use the template column names in row 1 (required: email)."
             endpoint="/organizers/import"
             templateHeaders={[
-              "firstName", "lastName", "email", "phone", "organizationName", "description",
-              "city", "state", "country", "founded", "teamSize", "specialties",
-              "businessEmail", "businessPhone", "businessAddress", "taxId", "isActive",
+              "Organization Name",
+              "email",
+              "phone number",
+              "website",
+              "country",
+              "state",
+              "city",
+              "company headquarters address",
             ]}
             sampleRow={[
-              "John", "Doe", "john@eventco.com", "+1 555 000 1000", "EventCo",
-              "Corporate event specialists", "San Francisco", "California", "United States",
-              "2018", "11-50", "Corporate Events|Conferences", "contact@eventco.com",
-              "+1 555 000 1010", "Market Street, SF", "GST-1099", "true",
+              "Acme Trade Fairs",
+              "contact@acmetradefairs.com",
+              "+1 555 010 0200",
+              "https://acmetradefairs.com",
+              "United States",
+              "California",
+              "San Francisco",
+              "123 Market Street, Suite 400, San Francisco, CA 94105",
             ]}
           />
         </TabsContent>
