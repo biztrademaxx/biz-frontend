@@ -28,6 +28,7 @@ import Link from "next/link"
 import { apiFetch } from "@/lib/api"
 import { eventPublicPath } from "@/lib/event-path"
 import { getPublicProfilePath } from "@/lib/profile-path"
+import { formatOrganizerLocationLine } from "@/lib/organizer-location-display"
 import OrganizerPageSkeleton from "@/components/OrganizerPageSkeleton"
 
 interface Organizer {
@@ -48,6 +49,9 @@ interface Organizer {
   founded: string
   teamSize: string
   headquarters: string
+  organizerCountry?: string | null
+  organizerState?: string | null
+  organizerCity?: string | null
   specialties: string[]
   achievements: string[]
   certifications: string[]
@@ -446,7 +450,7 @@ export default function OrganizerPage() {
               <div className="flex flex-wrap gap-6 text-blue-100">
                 <div className="flex items-center gap-2">
                   <MapPin className="w-4 h-4" />
-                  <span>{organizer.headquarters}</span>
+                  <span>{formatOrganizerLocationLine(organizer) || "—"}</span>
                 </div>
                  <Button
                 variant="outline"
@@ -712,8 +716,8 @@ export default function OrganizerPage() {
                       <p className="text-gray-900">{organizer.founded}</p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-500">Headquarters</label>
-                      <p className="text-gray-900">{organizer.headquarters}</p>
+                      <label className="text-sm font-medium text-gray-500">Location</label>
+                      <p className="text-gray-900">{formatOrganizerLocationLine(organizer) || "—"}</p>
                     </div>
                     {organizer.website && (
                       <div>

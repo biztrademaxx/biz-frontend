@@ -64,7 +64,10 @@ interface OrganizerData {
   founded: string
   company: string
   teamSize: string
-  headquarters: string
+  headquarters?: string
+  organizerCountry: string
+  organizerState: string
+  organizerCity: string
   specialties: string[]
   achievements: string[]
   certifications: string[]

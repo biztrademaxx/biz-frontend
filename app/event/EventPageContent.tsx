@@ -26,6 +26,7 @@ import {
 } from "@/lib/event-leads-client"
 import { apiFetch, getCurrentUserEmail, getCurrentUserId, isAuthenticated, getCurrentUserRole } from "@/lib/api"
 import { getPublicProfilePath } from "@/lib/profile-path"
+import { formatOrganizerLocationLine } from "@/lib/organizer-location-display"
 import { brochureFriendlyFilename, downloadUrlAsFile, getGoogleDocsViewerUrl, resolveBrochureUrl } from "@/lib/utils"
 import { formatPublicTicketPriceLine } from "@/lib/ticket-price-display"
 import { formatEventSidebarTimeRange } from "@/lib/event-sidebar-time-range"
@@ -1074,6 +1075,13 @@ export default function EventPageContent({ event, session: _session, router, toa
                             </span>
                           </div>
 
+                          {(() => {
+                            const line = formatOrganizerLocationLine(event.organizer)
+                            return line ? (
+                              <p className="text-sm text-gray-600 mt-0.5">{line}</p>
+                            ) : null
+                          })()}
+
                           <p className="text-xs text-gray-500 mt-1">
                             {event.organizer?.upcomingEvents
                               ? `${event.organizer.upcomingEvents} Upcoming Events`
@@ -1467,9 +1475,12 @@ export default function EventPageContent({ event, session: _session, router, toa
                           <h4 className="font-semibold text-lg text-gray-900">
                             {event.organizer?.company || "Event Organizer"}
                           </h4>
-                          <p className="text-gray-600 mb-3">
-                            Professional event organizer
-                          </p>
+                          {(() => {
+                            const line = formatOrganizerLocationLine(event.organizer)
+                            return line ? (
+                              <p className="text-gray-600 mb-3 text-sm">{line}</p>
+                            ) : null
+                          })()}
 
                           {/* Organizer Stats — use nullish coalescing; 0 is valid (|| 7 was a stale placeholder) */}
                           <div className="mt-3 flex gap-4 text-sm text-gray-500">

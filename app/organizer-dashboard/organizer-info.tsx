@@ -2,11 +2,12 @@
 
 import type React from "react"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
@@ -31,6 +32,9 @@ import {
 } from "lucide-react"
 import Image from "next/image"
 import { apiFetch } from "@/lib/api"
+import { getCityOptions, getCountryOptions, getStateOptions } from "@/lib/location-data"
+
+const LOCATION_NONE = "__none__"
 
 interface OrganizerData {
   id: string
@@ -39,7 +43,11 @@ interface OrganizerData {
   email: string
   phone: string
   website: string
-  headquarters: string
+  /** Legacy single-line HQ; prefer organizerCity / State / Country for display. */
+  headquarters?: string
+  organizerCountry: string
+  organizerState: string
+  organizerCity: string
   founded: string
   company: string
   teamSize: string
@@ -65,12 +73,69 @@ export default function OrganizerInfo({ organizerData: initialData, onOrganizerU
   const [newAchievement, setNewAchievement] = useState("")
   const [newCertification, setNewCertification] = useState("")
 
-  const [organizerData, setOrganizerData] = useState<OrganizerData>(initialData)
+  const [organizerData, setOrganizerData] = useState<OrganizerData>(() => ({
+    ...initialData,
+    organizerCountry: initialData.organizerCountry ?? "",
+    organizerState: initialData.organizerState ?? "",
+    organizerCity: initialData.organizerCity ?? "",
+  }))
 
   // Keep local state in sync if parent data changes (e.g. after refetch)
   useEffect(() => {
-    setOrganizerData(initialData)
+    setOrganizerData({
+      ...initialData,
+      organizerCountry: initialData.organizerCountry ?? "",
+      organizerState: initialData.organizerState ?? "",
+      organizerCity: initialData.organizerCity ?? "",
+    })
   }, [initialData])
+
+  const countryOptions = useMemo(() => getCountryOptions(), [])
+  const [countryPick, setCountryPick] = useState<string>(LOCATION_NONE)
+  const [statePick, setStatePick] = useState<string>(LOCATION_NONE)
+  const [cityPick, setCityPick] = useState<string>(LOCATION_NONE)
+
+  useEffect(() => {
+    if (isEditing !== "contact") return
+    const countryName = (organizerData.organizerCountry || "").trim().toLowerCase()
+    const countryCode = countryOptions.find((c) => c.name.trim().toLowerCase() === countryName)?.code
+    setCountryPick(countryCode || LOCATION_NONE)
+    const statesForCountry = getStateOptions(countryCode || "")
+    const stateName = (organizerData.organizerState || "").trim().toLowerCase()
+    const stateCode = statesForCountry.find((s) => s.name.trim().toLowerCase() === stateName)?.code
+    setStatePick(stateCode || LOCATION_NONE)
+    const citiesForState = getCityOptions(countryCode || "", stateCode || "")
+    const cityName = (organizerData.organizerCity || "").trim().toLowerCase()
+    const cityValue = citiesForState.find((c) => c.name.trim().toLowerCase() === cityName)?.name
+    setCityPick(cityValue || LOCATION_NONE)
+  }, [
+    isEditing,
+    organizerData.organizerCountry,
+    organizerData.organizerState,
+    organizerData.organizerCity,
+    countryOptions,
+  ])
+
+  const resolvedCountryCode = useMemo(() => {
+    if (countryPick !== LOCATION_NONE) return countryPick
+    const typed = (organizerData.organizerCountry || "").trim().toLowerCase()
+    if (!typed) return ""
+    return countryOptions.find((c) => c.name.trim().toLowerCase() === typed)?.code ?? ""
+  }, [countryPick, organizerData.organizerCountry, countryOptions])
+
+  const stateOptions = useMemo(() => getStateOptions(resolvedCountryCode), [resolvedCountryCode])
+
+  const resolvedStateCode = useMemo(() => {
+    if (statePick !== LOCATION_NONE) return statePick
+    const typed = (organizerData.organizerState || "").trim().toLowerCase()
+    if (!typed) return ""
+    return stateOptions.find((s) => s.name.trim().toLowerCase() === typed)?.code ?? ""
+  }, [statePick, organizerData.organizerState, stateOptions])
+
+  const cityOptions = useMemo(
+    () => getCityOptions(resolvedCountryCode, resolvedStateCode),
+    [resolvedCountryCode, resolvedStateCode],
+  )
 
   type Section = "basic" | "contact" | "company" | "specialties" | "achievements" | "certifications"
 
@@ -87,7 +152,9 @@ export default function OrganizerInfo({ organizerData: initialData, onOrganizerU
         email: organizerData.email,
         phone: organizerData.phone,
         website: organizerData.website,
-        headquarters: organizerData.headquarters,
+        organizerCountry: organizerData.organizerCountry || null,
+        organizerState: organizerData.organizerState || null,
+        organizerCity: organizerData.organizerCity || null,
       }
     } else if (section === "company") {
       payload = {
@@ -407,23 +474,6 @@ export default function OrganizerInfo({ organizerData: initialData, onOrganizerU
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  {/* <Label htmlFor="email">Email Address</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={organizerData.email}
-                    onChange={(e) => setOrganizerData((prev) => ({ ...prev, email: e.target.value }))}
-                  /> */}
-                </div>
-                <div>
-                  {/* <Label htmlFor="phone">Phone Number</Label>
-                  <Input
-                    id="phone"
-                    value={organizerData.phone}
-                    onChange={(e) => setOrganizerData((prev) => ({ ...prev, phone: e.target.value }))}
-                  /> */}
-                </div>
-                <div>
                   <Label htmlFor="website">Website</Label>
                   <Input
                     id="website"
@@ -431,15 +481,139 @@ export default function OrganizerInfo({ organizerData: initialData, onOrganizerU
                     onChange={(e) => setOrganizerData((prev) => ({ ...prev, website: e.target.value }))}
                   />
                 </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <Label htmlFor="headquarters">Headquarters</Label>
-                  <Input
-                    id="headquarters"
-                    value={organizerData.headquarters}
-                    onChange={(e) => setOrganizerData((prev) => ({ ...prev, headquarters: e.target.value }))}
-                  />
+                  <Label>Country</Label>
+                  <Select
+                    value={countryPick}
+                    onValueChange={(value) => {
+                      if (value === LOCATION_NONE) {
+                        setOrganizerData((prev) => ({
+                          ...prev,
+                          organizerCountry: "",
+                          organizerState: "",
+                          organizerCity: "",
+                        }))
+                        setCountryPick(LOCATION_NONE)
+                        setStatePick(LOCATION_NONE)
+                        setCityPick(LOCATION_NONE)
+                        return
+                      }
+                      const row = countryOptions.find((c) => c.code === value)
+                      if (row) {
+                        setOrganizerData((prev) => ({
+                          ...prev,
+                          organizerCountry: row.name,
+                          organizerState: "",
+                          organizerCity: "",
+                        }))
+                        setCountryPick(value)
+                        setStatePick(LOCATION_NONE)
+                        setCityPick(LOCATION_NONE)
+                      }
+                    }}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Choose country" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={LOCATION_NONE}>— None —</SelectItem>
+                      {countryOptions.map((c) => (
+                        <SelectItem key={c.code} value={c.code}>
+                          {c.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>State / Region</Label>
+                  <Select
+                    value={statePick}
+                    onValueChange={(value) => {
+                      if (value === LOCATION_NONE) {
+                        setOrganizerData((prev) => ({
+                          ...prev,
+                          organizerState: "",
+                          organizerCity: "",
+                        }))
+                        setStatePick(LOCATION_NONE)
+                        setCityPick(LOCATION_NONE)
+                        return
+                      }
+                      const state = stateOptions.find((s) => s.code === value)
+                      if (state) {
+                        setOrganizerData((prev) => ({
+                          ...prev,
+                          organizerState: state.name,
+                          organizerCity: "",
+                        }))
+                        setStatePick(value)
+                        setCityPick(LOCATION_NONE)
+                      }
+                    }}
+                    disabled={!resolvedCountryCode}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue
+                        placeholder={
+                          !resolvedCountryCode ? "Choose country first" : "Choose state / region"
+                        }
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={LOCATION_NONE}>— None —</SelectItem>
+                      {stateOptions.map((s) => (
+                        <SelectItem key={s.code} value={s.code}>
+                          {s.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>City</Label>
+                  <Select
+                    value={cityPick}
+                    onValueChange={(value) => {
+                      if (value === LOCATION_NONE) {
+                        setOrganizerData((prev) => ({ ...prev, organizerCity: "" }))
+                        setCityPick(LOCATION_NONE)
+                        return
+                      }
+                      const city = cityOptions.find((c) => c.name === value)
+                      if (city) {
+                        setOrganizerData((prev) => ({ ...prev, organizerCity: city.name }))
+                        setCityPick(value)
+                      }
+                    }}
+                    disabled={!resolvedCountryCode || !resolvedStateCode}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue
+                        placeholder={
+                          !resolvedCountryCode
+                            ? "Choose country first"
+                            : !resolvedStateCode
+                              ? "Choose state first"
+                              : "Choose city"
+                        }
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={LOCATION_NONE}>— None —</SelectItem>
+                      {cityOptions.map((city) => (
+                        <SelectItem key={city.name} value={city.name}>
+                          {city.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
+
               <div className="flex gap-2">
                 <Button onClick={() => handleSave("contact")} disabled={loading}>
                   {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
@@ -476,8 +650,22 @@ export default function OrganizerInfo({ organizerData: initialData, onOrganizerU
               <div className="flex items-center gap-3">
                 <MapPin className="w-5 h-5 text-gray-400" />
                 <div>
-                  <p className="text-sm text-gray-600">Headquarters</p>
-                  <p className="font-medium">{organizerData.headquarters}</p>
+                  <p className="text-sm text-gray-600">Country</p>
+                  <p className="font-medium">{organizerData.organizerCountry || "—"}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <MapPin className="w-5 h-5 text-gray-400" />
+                <div>
+                  <p className="text-sm text-gray-600">State / Region</p>
+                  <p className="font-medium">{organizerData.organizerState || "—"}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <MapPin className="w-5 h-5 text-gray-400" />
+                <div>
+                  <p className="text-sm text-gray-600">City</p>
+                  <p className="font-medium">{organizerData.organizerCity || "—"}</p>
                 </div>
               </div>
             </div>

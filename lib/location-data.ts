@@ -39,3 +39,22 @@ export function getCityOptions(countryCode: string, stateCode: string): CityOpti
     .map((city) => ({ name: city.name }))
     .sort((a, b) => a.name.localeCompare(b.name))
 }
+
+/** Prefer structured organizer location; fall back to legacy headquarters / location strings. */
+export function formatOrganizerLocationLine(organizer: {
+  organizerCity?: string | null
+  organizerState?: string | null
+  organizerCountry?: string | null
+  headquarters?: string | null
+  location?: string | null
+} | null | undefined): string {
+  if (!organizer) return ""
+  const city = String(organizer.organizerCity ?? "").trim()
+  const state = String(organizer.organizerState ?? "").trim()
+  const country = String(organizer.organizerCountry ?? "").trim()
+  const fromParts = [city, state, country].filter(Boolean).join(", ")
+  if (fromParts) return fromParts
+  const hq = String(organizer.headquarters ?? "").trim()
+  const loc = String(organizer.location ?? "").trim()
+  return hq || loc
+}

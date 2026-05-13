@@ -14,6 +14,7 @@ import ExhibitorsTab from "./exhibitors-tab"
 import EventHero from "./EventHero"
 import { apiFetch } from "@/lib/api"
 import { getPublicProfilePath } from "@/lib/profile-path"
+import { formatOrganizerLocationLine } from "@/lib/organizer-location-display"
 import { getVenuePublicPath } from "@/lib/venue-dashboard-path"
 import {
   brochureFriendlyFilename,
@@ -1369,7 +1370,12 @@ export default function EventPage({ params }: EventPageProps) {
                         <h4 className="font-semibold text-lg hover:text-blue-600 transition-colors">
                           {event.organizer?.company || event.organizer?.firstName}
                         </h4>
-                        <p className="text-gray-600 mb-3">Professional event organizer and manager</p>
+                        {(() => {
+                          const line = formatOrganizerLocationLine(event.organizer)
+                          return line ? (
+                            <p className="text-gray-600 mb-3 text-sm">{line}</p>
+                          ) : null
+                        })()}
                         <div className="flex flex-wrap items-center gap-4">
                           <div className="flex items-center gap-2 text-sm">
                             <Mail className="w-4 h-4 text-green-600" />
