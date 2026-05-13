@@ -59,7 +59,9 @@ export default function Home() {
           }
         >
           <PageBanner
-            page="events"
+            page="homepage"
+            position="hero"
+            fallbackPosition="middle"
             height={150}
             fixedHeight
             autoplay={true}

@@ -21,9 +21,10 @@ function normalizeInline(raw: unknown): InlineBannerRecord | null {
   }
 }
 
-export async function fetchPageBannersServer(page: string): Promise<PageBannerRecord[]> {
+export async function fetchPageBannersServer(page: string, position?: string): Promise<PageBannerRecord[]> {
   try {
     const q = new URLSearchParams({ page })
+    if (position) q.set("position", position)
     const res = await fetch(`${getApiBaseUrl()}/api/content/banners?${q.toString()}`, {
       next: { revalidate: BANNER_REVALIDATE_SEC },
     })
