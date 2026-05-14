@@ -14,3 +14,18 @@ export const EVENTS_LISTING_BANNER_GRADIENT_OVER_IMAGE =
 export const EVENTS_API = "/api/events"
 
 export const LISTING_DEFAULT_EVENT_IMAGE = "/city/c4.jpg"
+
+/** Regular listing events shown above the inline featured ad on each page. */
+export const EVENTS_LISTING_PAGE_CHUNK_BEFORE_FEATURED_AD = 5
+
+/** Regular listing events shown below the inline featured ad on each page. */
+export const EVENTS_LISTING_PAGE_CHUNK_AFTER_FEATURED_AD = 5
+
+/** Auto-advance interval for the inline featured-events carousel (ms). */
+export const EVENTS_LISTING_INLINE_FEATURED_AUTO_MS = 5500
+
+/**
+ * When no events carry the `featured` tag, the inline carousel still shows this many
+ * curated cards (verified + rating + followers) so the promo slot is never empty.
+ */
+export const EVENTS_LISTING_INLINE_PROMO_FALLBACK_MAX = 15

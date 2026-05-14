@@ -19,6 +19,9 @@ import {
   EVENTS_LISTING_BANNER_GRADIENT,
   EVENTS_LISTING_BANNER_GRADIENT_OVER_IMAGE,
   EVENTS_API,
+  EVENTS_LISTING_PAGE_CHUNK_BEFORE_FEATURED_AD,
+  EVENTS_LISTING_PAGE_CHUNK_AFTER_FEATURED_AD,
+  EVENTS_LISTING_INLINE_PROMO_FALLBACK_MAX,
 } from "@/components/events-page/listing-constants"
 import {
   extractEventsFromResponse,
@@ -34,6 +37,7 @@ import { EventsListingActiveFilterBadges } from "@/components/events-page/Events
 import { EventsListingListBanner } from "@/components/events-page/EventsListingListBanner"
 import { EventsListingResultsHeader } from "@/components/events-page/EventsListingResultsHeader"
 import { EventsListingEventCard } from "@/components/events-page/EventsListingEventCard"
+import { EventsListingInlineFeaturedCarousel } from "@/components/events-page/EventsListingInlineFeaturedCarousel"
 import { EventsListingFeaturedSection } from "@/components/events-page/EventsListingFeaturedSection"
 import { EventsListingRightRail } from "@/components/events-page/EventsListingRightRail"
 
@@ -259,7 +263,8 @@ export default function EventsPageContent({
     }
   }
 
-  const itemsPerPage = 6
+  const itemsPerPage =
+    EVENTS_LISTING_PAGE_CHUNK_BEFORE_FEATURED_AD + EVENTS_LISTING_PAGE_CHUNK_AFTER_FEATURED_AD
 
   const categories = useMemo((): NameCount[] => {
     if (!events || events.length === 0) return []
@@ -542,10 +547,30 @@ export default function EventsPageContent({
     return `${total} Followers`
   }
 
-  const totalPages = Math.ceil(filteredEvents.length / itemsPerPage)
+  const totalPages = Math.max(1, Math.ceil(filteredEvents.length / itemsPerPage))
   const paginatedEvents = filteredEvents.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+  const eventsBeforeFeaturedAd = paginatedEvents.slice(0, EVENTS_LISTING_PAGE_CHUNK_BEFORE_FEATURED_AD)
+  const eventsAfterFeaturedAd = paginatedEvents.slice(EVENTS_LISTING_PAGE_CHUNK_BEFORE_FEATURED_AD)
 
   const featuredEvents = events.filter((event) => event.featured)
+
+  const inlinePromoEvents = useMemo(() => {
+    if (events.length === 0) return []
+    const tagged = events.filter((e) => e.featured)
+    if (tagged.length > 0) return tagged
+    return [...events]
+      .sort((a, b) => {
+        const v = (b.isVerified ? 1 : 0) - (a.isVerified ? 1 : 0)
+        if (v !== 0) return v
+        const ra = Number.isFinite(a.rating?.average) ? a.rating.average : 0
+        const rb = Number.isFinite(b.rating?.average) ? b.rating.average : 0
+        if (rb !== ra) return rb - ra
+        const fa = typeof a.followersCount === "number" ? a.followersCount : 0
+        const fb = typeof b.followersCount === "number" ? b.followersCount : 0
+        return fb - fa
+      })
+      .slice(0, EVENTS_LISTING_INLINE_PROMO_FALLBACK_MAX)
+  }, [events])
 
   const trendingSidebarEvents = useMemo(() => {
     return [...events]
@@ -791,7 +816,21 @@ export default function EventsPageContent({
                   )}
                 </div>
               ) : (
-                paginatedEvents.map((event) => <EventsListingEventCard key={event.id} event={event} />)
+                <>
+                  {eventsBeforeFeaturedAd.map((event) => (
+                    <EventsListingEventCard key={event.id} event={event} />
+                  ))}
+                  {inlinePromoEvents.length > 0 ? (
+                    <EventsListingInlineFeaturedCarousel
+                      key={`listing-inline-featured-p${currentPage}`}
+                      featuredEvents={inlinePromoEvents}
+                      promoSource={featuredEvents.length > 0 ? "featured" : "curated"}
+                    />
+                  ) : null}
+                  {eventsAfterFeaturedAd.map((event) => (
+                    <EventsListingEventCard key={event.id} event={event} />
+                  ))}
+                </>
               )}
             </div>
 
