@@ -8,6 +8,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Search, Users, UserPlus, UserCheck, UserX, Send, Inbox } from "lucide-react"
 import { apiFetch, getCurrentUserId } from "@/lib/api"
+import { cn } from "@/lib/utils"
+import { exGlassCard, exGlassInset, exBtnPrimary } from "@/app/exhibitor-dashboard/dashboard-theme"
 
 interface Connection {
   id: string
@@ -24,6 +26,8 @@ interface Connection {
 
 interface ConnectionsSectionProps {
   userId: string
+  /** Use glass panels and brand accents (exhibitor dashboard). */
+  surface?: "default" | "exhibitor"
 }
 
 function connectionName(c: Connection) {
@@ -39,7 +43,7 @@ function searchMatch(c: Connection, term: string) {
   return name.includes(q) || company.includes(q) || job.includes(q)
 }
 
-export function ConnectionsSection({ userId: _userId }: ConnectionsSectionProps) {
+export function ConnectionsSection({ userId: _userId, surface = "default" }: ConnectionsSectionProps) {
   const [connections, setConnections] = useState<Connection[]>([])
   const [connectionRequests, setConnectionRequests] = useState<Connection[]>([])
   const [searchTerm, setSearchTerm] = useState("")
@@ -189,6 +193,19 @@ export function ConnectionsSection({ userId: _userId }: ConnectionsSectionProps)
 
   const filteredList = getFilteredList()
 
+  const isExhibitorShell = surface === "exhibitor"
+  const findPeopleCard = isExhibitorShell ? exGlassCard : "border border-[#F5F4F0]"
+  const gridItemCard = isExhibitorShell ? cn(exGlassInset, "shadow-none") : "border border-gray-100"
+  const listPanelWrap = isExhibitorShell
+    ? "rounded-2xl border border-white/50 bg-white/25 p-1 backdrop-blur-sm"
+    : "bg-[#F5F4F0]"
+  const tabActive =
+    "px-4 py-2.5 text-sm font-medium rounded-t-lg transition-colors border border-b-0 -mb-px " +
+    (isExhibitorShell
+      ? "bg-white/50 border-white/60 text-[#004A96] backdrop-blur-sm"
+      : "bg-white border-gray-200 text-blue-600")
+  const tabInactive = "px-4 py-2.5 text-sm font-medium rounded-t-lg transition-colors text-gray-600 hover:text-gray-900"
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -240,7 +257,7 @@ export function ConnectionsSection({ userId: _userId }: ConnectionsSectionProps)
       </div>
 
       {showFindPeople ? (
-        <Card className="border border-[#F5F4F0]">
+        <Card className={findPeopleCard}>
           <CardContent className="p-6">
             <h3 className="font-medium text-gray-900 mb-4">Find people to connect with</h3>
             <div className="relative max-w-md mb-6">
@@ -260,7 +277,7 @@ export function ConnectionsSection({ userId: _userId }: ConnectionsSectionProps)
             ) : searchResults.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {searchResults.map((user) => (
-                  <Card key={user.id} className="border border-gray-100">
+                  <Card key={user.id} className={gridItemCard}>
                     <CardContent className="p-4 flex items-center gap-4">
                       <Avatar className="h-12 w-12 shrink-0">
                         <AvatarImage src={user.avatar} />
@@ -279,7 +296,7 @@ export function ConnectionsSection({ userId: _userId }: ConnectionsSectionProps)
                       <Button
                         size="sm"
                         onClick={() => handleConnectionAction(user.id, "connect")}
-                        className="shrink-0"
+                        className={cn("shrink-0", isExhibitorShell && exBtnPrimary)}
                       >
                         <UserPlus className="h-4 w-4 mr-1" />
                         Connect
@@ -302,22 +319,14 @@ export function ConnectionsSection({ userId: _userId }: ConnectionsSectionProps)
             <button
               type="button"
               onClick={() => setActiveTab("connected")}
-              className={`px-4 py-2.5 text-sm font-medium rounded-t-lg transition-colors ${
-                activeTab === "connected"
-                  ? "bg-white border border-b-0 border-gray-200 text-blue-600 -mb-px"
-                  : "text-gray-600 hover:text-gray-900"
-              }`}
+              className={activeTab === "connected" ? tabActive : tabInactive}
             >
               My connections ({connectedList.length})
             </button>
             <button
               type="button"
               onClick={() => setActiveTab("sent")}
-              className={`px-4 py-2.5 text-sm font-medium rounded-t-lg transition-colors ${
-                activeTab === "sent"
-                  ? "bg-white border border-b-0 border-gray-200 text-blue-600 -mb-px"
-                  : "text-gray-600 hover:text-gray-900"
-              }`}
+              className={activeTab === "sent" ? tabActive : tabInactive}
             >
               <Send className="h-4 w-4 inline-block mr-1.5 align-middle" />
               Requests sent ({sentList.length})
@@ -325,24 +334,20 @@ export function ConnectionsSection({ userId: _userId }: ConnectionsSectionProps)
             <button
               type="button"
               onClick={() => setActiveTab("received")}
-              className={`px-4 py-2.5 text-sm font-medium rounded-t-lg transition-colors ${
-                activeTab === "received"
-                  ? "bg-white border border-b-0 border-gray-200 text-blue-600 -mb-px"
-                  : "text-gray-600 hover:text-gray-900"
-              }`}
+              className={activeTab === "received" ? tabActive : tabInactive}
             >
               <Inbox className="h-4 w-4 inline-block mr-1.5 align-middle" />
               Requests received ({receivedList.length})
             </button>
           </div>
 
-          <div className="bg-[#F5F4F0]">
+          <div className={listPanelWrap}>
             <CardContent className="p-6">
               {filteredList.length > 0 ? (
                 <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {filteredList.map((c) => (
                     <li key={c.connectionId ?? c.id}>
-                      <Card className="border border-gray-100 overflow-hidden">
+                      <Card className={cn(gridItemCard, "overflow-hidden")}>
                         <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center gap-4">
                           <Avatar className="h-14 w-14 shrink-0 mx-auto sm:mx-0">
                             <AvatarImage src={c.avatar} />

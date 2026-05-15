@@ -31,6 +31,8 @@ import {
   Plus,
   CheckCircle,
 } from "lucide-react"
+import { cn } from "@/lib/utils"
+import { exGlassCard, exInput } from "./dashboard-theme"
 
 interface ExhibitorData {
   id: string
@@ -185,11 +187,13 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-900">Company Information</h1>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <h1 className="text-2xl font-bold tracking-tight text-slate-800 md:text-3xl">
+          Company Information
+        </h1>
         <Button
           onClick={() => (isEditing ? handleSave() : setIsEditing(true))}
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 bg-[#004A96] text-white hover:bg-[#003d7a]"
           disabled={loading}
         >
           {isEditing ? <Save className="w-4 h-4" /> : <Edit className="w-4 h-4" />}
@@ -197,21 +201,21 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Company Logo & Banner */}
-        <Card>
+        <Card className={exGlassCard}>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Building2 className="w-5 h-5" />
+            <CardTitle className="flex items-center gap-2 text-slate-800">
+              <Building2 className="h-5 w-5 text-[#004A96]" />
               Company Logo & Banner
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="text-center">
               <div className="relative inline-block">
-                <Avatar className="w-32 h-32 mx-auto mb-4">
+                <Avatar className="mx-auto mb-4 h-32 w-32 ring-2 ring-[#004A96]/20 ring-offset-2 ring-offset-white/50">
                   <AvatarImage src={formData.avatar || "/city/c4.jpg"} />
-                  <AvatarFallback className="text-2xl">
+                  <AvatarFallback className="bg-[#004A96]/10 text-2xl font-semibold text-[#004A96]">
                     {formData.firstName?.[0]}
                     {formData.lastName?.[0]}
                   </AvatarFallback>
@@ -219,7 +223,7 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
                 {isEditing && (
                   <label
                     htmlFor="avatar-upload"
-                    className="absolute bottom-4 right-1/2 translate-x-16 bg-blue-600 text-white p-2 rounded-full cursor-pointer hover:bg-blue-700 transition-colors"
+                    className="absolute bottom-4 right-1/2 flex translate-x-16 cursor-pointer rounded-full bg-[#004A96] p-2 text-white transition-colors hover:bg-[#003d7a]"
                   >
                     {uploading ? (
                       <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
@@ -241,11 +245,11 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
 
             <div className="space-y-2">
               <Label>Company Banner</Label>
-              <div className="h-24 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-semibold">
+              <div className="flex h-24 items-center justify-center rounded-xl bg-gradient-to-r from-[#004A96] to-[#003566] font-semibold text-white shadow-inner">
                 {formData.company || "Company Name"}
               </div>
               {isEditing && (
-                <Button variant="outline" size="sm" className="w-full flex items-center gap-2 bg-transparent">
+                <Button variant="outline" size="sm" className="w-full border-[#004A96]/30 bg-white/40 backdrop-blur-sm">
                   <Upload className="w-4 h-4" />
                   Upload Banner
                 </Button>
@@ -255,10 +259,10 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
         </Card>
 
         {/* Contact Information */}
-        <Card>
+        <Card className={exGlassCard}>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <User className="w-5 h-5" />
+            <CardTitle className="flex items-center gap-2 text-slate-800">
+              <User className="h-5 w-5 text-[#004A96]" />
               Contact Information
             </CardTitle>
           </CardHeader>
@@ -271,6 +275,7 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
                   value={formData.firstName}
                   onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
                   disabled={!isEditing}
+                  className={cn(exInput, "disabled:opacity-60")}
                 />
               </div>
               <div className="space-y-2">
@@ -280,6 +285,7 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
                   value={formData.lastName}
                   onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
                   disabled={!isEditing}
+                  className={cn(exInput, "disabled:opacity-60")}
                 />
               </div>
             </div>
@@ -291,6 +297,7 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
                 value={formData.company || ""}
                 onChange={(e) => setFormData({ ...formData, company: e.target.value })}
                 disabled={!isEditing}
+                className={cn(exInput, "disabled:opacity-60")}
               />
             </div>
 
@@ -301,6 +308,7 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
                 value={formData.jobTitle || ""}
                 onChange={(e) => setFormData({ ...formData, jobTitle: e.target.value })}
                 disabled={!isEditing}
+                className={cn(exInput, "disabled:opacity-60")}
               />
             </div>
 
@@ -308,8 +316,8 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
-                <div className="flex items-center justify-between p-2 bg-muted rounded-md border border-input">
+                <Mail className="absolute left-3 top-3 h-4 w-4 text-[#004A96]/60" />
+                <div className="flex items-center justify-between rounded-md border border-white/60 bg-white/45 p-2 backdrop-blur-sm">
                   <span className="text-sm pl-7">{formData.email}</span>
                   {!isEditing && (
                     <CheckCircle className="w-4 h-4 text-green-500" />
@@ -327,8 +335,8 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
             <div className="space-y-2">
               <Label htmlFor="phone">Phone</Label>
               <div className="relative">
-                <Phone className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
-                <div className="flex items-center justify-between p-2 bg-muted rounded-md border border-input">
+                <Phone className="absolute left-3 top-3 h-4 w-4 text-[#004A96]/60" />
+                <div className="flex items-center justify-between rounded-md border border-white/60 bg-white/45 p-2 backdrop-blur-sm">
                   <span className="text-sm pl-7">{formData.phone || "Not provided"}</span>
                   {!isEditing && formData.phone && (
                     <CheckCircle className="w-4 h-4 text-green-500" />
@@ -345,13 +353,13 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
             <div className="space-y-2">
               <Label htmlFor="website">Website</Label>
               <div className="relative">
-                <Globe className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+                <Globe className="absolute left-3 top-3 h-4 w-4 text-[#004A96]/60" />
                 <Input
                   id="website"
                   value={formData.website || ""}
                   onChange={(e) => setFormData({ ...formData, website: e.target.value })}
                   disabled={!isEditing}
-                  className="pl-10"
+                  className={cn(exInput, "pl-10 disabled:opacity-60")}
                 />
               </div>
             </div>
@@ -359,9 +367,9 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
         </Card>
 
         {/* Social Media Links */}
-        <Card>
+        <Card className={exGlassCard}>
           <CardHeader>
-            <CardTitle>Social Media Links</CardTitle>
+            <CardTitle className="text-slate-800">Social Media Links</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {socialLinks.map((social) => (
@@ -372,6 +380,7 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
                     value={social.url}
                     disabled={!isEditing}
                     placeholder={`${social.name} URL`}
+                    className={cn(exInput, "disabled:opacity-60")}
                     onChange={(e) => {
                       if (social.name === "LinkedIn") {
                         setFormData({ ...formData, linkedin: e.target.value })
@@ -389,14 +398,18 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
 
       {/* Product Categories & Description */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
+        <Card className={exGlassCard}>
           <CardHeader>
-            <CardTitle>Product Categories / Services</CardTitle>
+            <CardTitle className="text-slate-800">Product Categories / Services</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex flex-wrap gap-2">
               {categories.map((category) => (
-                <Badge key={category} variant="secondary" className="flex items-center gap-1">
+                <Badge
+                  key={category}
+                  variant="secondary"
+                  className="flex items-center gap-1 border-[#004A96]/20 bg-[#004A96]/10 text-[#004A96]"
+                >
                   {category}
                   {isEditing && (
                     <X
@@ -412,6 +425,7 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
               <div className="flex gap-2">
                 <Input
                   placeholder="Add new category"
+                  className={exInput}
                   onKeyPress={(e) => {
                     if (e.key === "Enter") {
                       handleAddCategory(e.currentTarget.value)
@@ -428,6 +442,7 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
                     }
                   }}
                   size="sm"
+                  className="bg-[#004A96] text-white hover:bg-[#003d7a]"
                 >
                   <Plus className="w-4 h-4" />
                 </Button>
@@ -436,9 +451,9 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className={exGlassCard}>
           <CardHeader>
-            <CardTitle>Company Description</CardTitle>
+            <CardTitle className="text-slate-800">Company Description</CardTitle>
           </CardHeader>
           <CardContent>
             <Textarea
@@ -447,6 +462,7 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
               disabled={!isEditing}
               rows={6}
               placeholder="Describe your company, products, and services..."
+              className={cn(exInput, "min-h-[140px] disabled:opacity-60")}
             />
           </CardContent>
         </Card>
@@ -457,6 +473,7 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
         <div className="flex justify-end gap-3">
           <Button
             variant="outline"
+            className="border-[#004A96]/35 bg-white/50 backdrop-blur-sm"
             onClick={() => {
               setIsEditing(false)
               setFormData(exhibitorData)
@@ -465,7 +482,11 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
           >
             Cancel
           </Button>
-          <Button onClick={handleSave} disabled={loading}>
+          <Button
+            onClick={handleSave}
+            disabled={loading}
+            className="bg-[#004A96] text-white hover:bg-[#003d7a]"
+          >
             {loading ? "Saving..." : "Save Changes"}
           </Button>
         </div>

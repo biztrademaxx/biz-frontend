@@ -6,6 +6,8 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Eye, MousePointer, TrendingUp, Loader2, Calendar } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { cn } from "@/lib/utils"
+import { exGlassCard } from "./dashboard-theme"
 
 interface Promotion {
   id: string
@@ -83,7 +85,7 @@ export default function ActivePromotions({ exhibitorId, refetchTrigger }: Active
   if (loading) {
     return (
       <div className="flex items-center justify-center h-40">
-        <Loader2 className="w-6 h-6 animate-spin text-gray-500" />
+        <Loader2 className="h-6 w-6 animate-spin text-[#004A96]" />
         <span className="ml-2 text-gray-500">Loading promotions...</span>
       </div>
     )
@@ -100,7 +102,7 @@ export default function ActivePromotions({ exhibitorId, refetchTrigger }: Active
   }
 
   return (
-    <Card>
+    <Card className={exGlassCard}>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <TrendingUp className="w-5 h-5" />
@@ -110,15 +112,15 @@ export default function ActivePromotions({ exhibitorId, refetchTrigger }: Active
       <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {promotions.map((promotion) => (
-            <Card 
-              key={promotion.id} 
-              className="p-4 border-2 border-blue-100 bg-blue-50 hover:border-blue-200 transition-colors"
+            <Card
+              key={promotion.id}
+              className={cn(exGlassCard, "border-[#004A96]/25 bg-[#004A96]/10 p-4 hover:border-[#004A96]/40")}
             >
               <div className="flex items-center justify-between mb-3">
                 <Badge variant={getStatusVariant(promotion.status)}>
                   {promotion.status}
                 </Badge>
-                <span className="text-sm font-medium text-gray-700 bg-white px-2 py-1 rounded border">
+                <span className="rounded border border-white/60 bg-white/50 px-2 py-1 text-sm font-medium text-slate-700 backdrop-blur-sm">
                   {promotion.packageType}
                 </span>
               </div>
@@ -151,7 +153,7 @@ export default function ActivePromotions({ exhibitorId, refetchTrigger }: Active
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-gray-600">CTR</span>
-                  <span className="font-medium text-blue-600">
+                  <span className="font-medium text-[#004A96]">
                     {calculateCTR(promotion.clicks, promotion.impressions).toFixed(2)}%
                   </span>
                 </div>
@@ -176,7 +178,7 @@ export default function ActivePromotions({ exhibitorId, refetchTrigger }: Active
                       {promotion.targetCategories.slice(0, 3).map((category, index) => (
                         <span 
                           key={index}
-                          className="text-xs bg-white px-1.5 py-0.5 rounded border"
+                          className="rounded border border-white/60 bg-white/45 px-1.5 py-0.5 text-xs backdrop-blur-sm"
                         >
                           {category}
                         </span>
