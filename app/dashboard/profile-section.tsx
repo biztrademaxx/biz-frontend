@@ -38,6 +38,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import Link from "next/link"
 import { apiFetch } from "@/lib/api"
 import { eventPublicPath } from "@/lib/event-path"
+import { cn } from "@/lib/utils"
+import { useDashboard } from "@/contexts/dashboard-context"
 
 interface ProfileSectionProps {
   userData: UserData
@@ -157,6 +159,7 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
   const [connectionsCount, setConnectionsCount] = useState<number>(0)
   const [interestedEventsCount, setInterestedEventsCount] = useState<number>(0)
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
+  const { setActiveSection } = useDashboard()
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     devLog("[v0] Avatar upload triggered")
@@ -366,48 +369,67 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
   }, [fetchConnectionsCount, fetchInterestedEventsCount])
 
   return (
-    <div className="space-y-6 bg-[#F5F4F0] min-h-screen p-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-900">Profile</h1>
+    <div className="space-y-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 md:text-3xl">Profile</h1>
+          <p className="mt-1 text-sm text-slate-500">Your details, activity, and suggested events</p>
+        </div>
         {!isEditing ? (
-          <Button variant="outline" onClick={() => setIsEditing(true)} className="flex items-center gap-2">
-            <Edit className="w-4 h-4" /> Edit Profile
+          <Button
+            variant="outline"
+            onClick={() => setIsEditing(true)}
+            className="flex items-center gap-2 border-[#004A96]/35 bg-white/55 text-[#004A96] shadow-sm backdrop-blur-sm hover:bg-[#004A96]/10"
+          >
+            <Edit className="h-4 w-4" /> Edit profile
           </Button>
         ) : (
-          <div className="flex gap-2">
-            <Button onClick={handleSave} className="flex items-center gap-2" disabled={isSaving}>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              onClick={handleSave}
+              className="flex items-center gap-2 bg-[#004A96] text-white hover:bg-[#003d7a]"
+              disabled={isSaving}
+            >
               {isSaving ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" /> Saving...
+                  <Loader2 className="h-4 w-4 animate-spin" /> Saving...
                 </>
               ) : (
                 <>
-                  <Save className="w-4 h-4" /> Save
+                  <Save className="h-4 w-4" /> Save
                 </>
               )}
             </Button>
             <Button
               variant="outline"
               onClick={handleCancel}
-              className="flex items-center gap-2 bg-transparent"
+              className="flex items-center gap-2 border-slate-200/80 bg-white/50 backdrop-blur-sm"
               disabled={isSaving}
             >
-              <X className="w-4 h-4" /> Cancel
+              <X className="h-4 w-4" /> Cancel
             </Button>
           </div>
         )}
       </div>
 
-      {saveError && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">{saveError}</div>}
+      {saveError && (
+        <div className="rounded-xl border border-[#FF131C]/35 bg-[#FF131C]/10 px-4 py-3 text-sm text-red-800">
+          {saveError}
+        </div>
+      )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-1">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <Card
+          className={cn(
+            "lg:col-span-1 rounded-2xl border border-white/70 bg-white/55 shadow-[0_4px_24px_rgba(0,74,150,0.08)] backdrop-blur-md",
+          )}
+        >
           <CardContent className="p-6">
-            <div className="flex items-center gap-4 mb-6">
+            <div className="mb-6 flex items-center gap-4">
               <div className="relative">
-                <Avatar className="w-20 h-20">
+                <Avatar className="h-24 w-24 ring-2 ring-[#004A96]/20 ring-offset-2 ring-offset-white/50">
                   <AvatarImage src={localUserData.avatar || "/image/Ellipse 72.png"} />
-                  <AvatarFallback className="text-2xl">
+                  <AvatarFallback className="bg-[#004A96]/10 text-2xl font-semibold text-[#004A96]">
                     {localUserData.firstName?.[0]}
                     {localUserData.lastName?.[0]}
                   </AvatarFallback>
@@ -424,30 +446,29 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
                     />
                     <label
                       htmlFor="avatar-upload"
-                      className="absolute bottom-0 right-0 w-7 h-7 bg-blue-600 rounded-full flex items-center justify-center cursor-pointer hover:bg-blue-700 transition-colors z-10 shadow-lg"
-                      onClick={(e) => {
+                      className="absolute bottom-0 right-0 z-10 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-[#004A96] shadow-lg transition-colors hover:bg-[#003d7a]"
+                      onClick={() => {
                         devLog("[v0] Camera button clicked")
-                        // Ensure the click propagates to trigger the file input
                       }}
                     >
                       {uploadingAvatar ? (
-                        <Loader2 className="w-4 h-4 text-white animate-spin" />
+                        <Loader2 className="h-4 w-4 animate-spin text-white" />
                       ) : (
-                        <Camera className="w-4 h-4 text-white" />
+                        <Camera className="h-4 w-4 text-white" />
                       )}
                     </label>
                   </>
                 )}
               </div>
-              <div>
-                <h2 className="text-xl font-semibold">
+              <div className="min-w-0">
+                <h2 className="text-xl font-semibold text-slate-900">
                   {localUserData.firstName} {localUserData.lastName}
                 </h2>
-                <p className="text-gray-600">
+                <p className="text-sm text-slate-600">
                   {localUserData.jobTitle || (localUserData.role === "ATTENDEE" ? "Visitor" : localUserData.role)}
                 </p>
                 {localUserData.isVerified && (
-                  <Badge variant="secondary" className="mt-1">
+                  <Badge variant="secondary" className="mt-2 border-[#004A96]/20 bg-[#004A96]/10 text-[#004A96]">
                     Verified
                   </Badge>
                 )}
@@ -455,12 +476,12 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
             </div>
 
             {!isEditing ? (
-              <div className="flex justify-center gap-3 mb-6">
+              <div className="mb-6 flex flex-wrap justify-center gap-2">
                 <a
                   href={localUserData.linkedin || "#"}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-10 h-10 rounded-full flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white"
+                  className="flex h-10 w-10 items-center justify-center rounded-full bg-[#004A96] text-white shadow-sm transition hover:bg-[#003d7a]"
                 >
                   <Linkedin size={18} />
                 </a>
@@ -468,7 +489,7 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
                   href={localUserData.twitter || "#"}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-10 h-10 rounded-full flex items-center justify-center bg-sky-400 hover:bg-sky-500 text-white"
+                  className="flex h-10 w-10 items-center justify-center rounded-full bg-sky-500 text-white shadow-sm transition hover:bg-sky-600"
                 >
                   <Twitter size={18} />
                 </a>
@@ -476,7 +497,7 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
                   href={localUserData.instagram || "#"}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-10 h-10 rounded-full flex items-center justify-center bg-gradient-to-tr from-purple-500 via-pink-500 to-yellow-500 text-white"
+                  className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-tr from-purple-500 via-pink-500 to-amber-400 text-white shadow-sm"
                 >
                   <Instagram size={18} />
                 </a>
@@ -484,18 +505,19 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
                   href={localUserData.website || "#"}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-10 h-10 rounded-full flex items-center justify-center bg-gray-600 hover:bg-gray-700 text-white"
+                  className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200/80 bg-white/60 text-slate-700 shadow-sm backdrop-blur-sm transition hover:border-[#004A96]/30 hover:text-[#004A96]"
                 >
                   <Globe size={18} />
                 </a>
               </div>
             ) : (
-              <div className="space-y-3 mb-6">
+              <div className="mb-6 space-y-3">
                 <div>
                   <Label>LinkedIn</Label>
                   <Input
                     value={formData.linkedin}
                     onChange={(e) => setFormData({ ...formData, linkedin: e.target.value })}
+                    className="border-white/60 bg-white/60 backdrop-blur-sm"
                   />
                 </div>
                 <div>
@@ -503,6 +525,7 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
                   <Input
                     value={formData.twitter}
                     onChange={(e) => setFormData({ ...formData, twitter: e.target.value })}
+                    className="border-white/60 bg-white/60 backdrop-blur-sm"
                   />
                 </div>
                 <div>
@@ -510,6 +533,7 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
                   <Input
                     value={formData.instagram}
                     onChange={(e) => setFormData({ ...formData, instagram: e.target.value })}
+                    className="border-white/60 bg-white/60 backdrop-blur-sm"
                   />
                 </div>
                 <div>
@@ -517,6 +541,7 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
                   <Input
                     value={formData.website}
                     onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+                    className="border-white/60 bg-white/60 backdrop-blur-sm"
                   />
                 </div>
               </div>
@@ -524,12 +549,13 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
 
             {isEditing ? (
               <>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div>
                     <Label>First Name</Label>
                     <Input
                       value={formData.firstName}
                       onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                      className="border-white/60 bg-white/60 backdrop-blur-sm"
                     />
                   </div>
 
@@ -538,6 +564,7 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
                     <Input
                       value={formData.lastName}
                       onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                      className="border-white/60 bg-white/60 backdrop-blur-sm"
                     />
                   </div>
 
@@ -548,6 +575,7 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
                       value={formData.email}
                       disabled
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      className="border-white/60 bg-white/40"
                     />
                   </div>
 
@@ -557,6 +585,7 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
                       value={formData.phone}
                       disabled
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      className="border-white/60 bg-white/40"
                     />
                   </div>
 
@@ -565,6 +594,7 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
                     <Input
                       value={formData.jobTitle}
                       onChange={(e) => setFormData({ ...formData, jobTitle: e.target.value })}
+                      className="border-white/60 bg-white/60 backdrop-blur-sm"
                     />
                   </div>
 
@@ -573,6 +603,7 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
                     <Input
                       value={formData.company}
                       onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+                      className="border-white/60 bg-white/60 backdrop-blur-sm"
                     />
                   </div>
 
@@ -582,6 +613,7 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
                       value={formData.companyIndustry}
                       onChange={(e) => setFormData({ ...formData, companyIndustry: e.target.value })}
                       placeholder="e.g. Fintech, Education, Healthcare"
+                      className="border-white/60 bg-white/60 backdrop-blur-sm"
                     />
                   </div>
 
@@ -597,7 +629,7 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
                         }
                       }}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className="border-white/60 bg-white/60 backdrop-blur-sm">
                         <SelectValue placeholder="Select interest" />
                       </SelectTrigger>
                       <SelectContent>
@@ -614,7 +646,7 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
                         <Badge
                           key={idx}
                           variant="secondary"
-                          className="cursor-pointer"
+                          className="cursor-pointer border-[#004A96]/20 bg-[#004A96]/10 text-[#004A96]"
                           onClick={() =>
                             setFormData({
                               ...formData,
@@ -635,55 +667,62 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
                     value={formData.bio}
                     onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
                     rows={3}
+                    className="border-white/60 bg-white/60 backdrop-blur-sm"
                   />
                 </div>
               </>
             ) : (
-              <div className="">
-                <div className="flex items-center gap-2">
-                  <Mail size={16} className="text-gray-500" />
-                  <span className="font-medium">Email Address</span>
-                  <span className="ml-auto">{localUserData.email}</span>
+              <div className="space-y-0 overflow-hidden rounded-xl border border-white/50 bg-white/35">
+                <div className="flex items-center gap-3 border-b border-white/50 px-3 py-3">
+                  <Mail size={16} className="shrink-0 text-[#004A96]" />
+                  <span className="text-sm font-medium text-slate-700">Email Address</span>
+                  <span className="ml-auto truncate text-sm text-slate-600">{localUserData.email}</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Phone size={16} className="text-gray-500" />
-                  <span className="font-medium">Contact</span>
-                  <span className="ml-auto">{localUserData.phone || "9999879543"}</span>
+                <div className="flex items-center gap-3 border-b border-white/50 px-3 py-3">
+                  <Phone size={16} className="shrink-0 text-[#004A96]" />
+                  <span className="text-sm font-medium text-slate-700">Contact</span>
+                  <span className="ml-auto truncate text-sm text-slate-600">{localUserData.phone || "9999879543"}</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Briefcase size={16} className="text-gray-500" />
-                  <span className="font-medium">Position</span>
-                  <span className="ml-auto">{localUserData.jobTitle || "CEO & Co-Founder"}</span>
+                <div className="flex items-center gap-3 border-b border-white/50 px-3 py-3">
+                  <Briefcase size={16} className="shrink-0 text-[#004A96]" />
+                  <span className="text-sm font-medium text-slate-700">Position</span>
+                  <span className="ml-auto truncate text-sm text-slate-600">
+                    {localUserData.jobTitle || "CEO & Co-Founder"}
+                  </span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Building2 size={16} className="text-gray-500" />
-                  <span className="font-medium">Company</span>
-                  <span className="ml-auto">{localUserData.company || "N/A"}</span>
+                <div className="flex items-center gap-3 border-b border-white/50 px-3 py-3">
+                  <Building2 size={16} className="shrink-0 text-[#004A96]" />
+                  <span className="text-sm font-medium text-slate-700">Company</span>
+                  <span className="ml-auto truncate text-sm text-slate-600">{localUserData.company || "N/A"}</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <BriefcaseBusiness size={16} className="text-gray-500" />
-                  <span className="font-medium">Industry</span>
-                  <span className="ml-auto">{localUserData.companyIndustry || "N/A"}</span>
+                <div className="flex items-center gap-3 border-b border-white/50 px-3 py-3">
+                  <BriefcaseBusiness size={16} className="shrink-0 text-[#004A96]" />
+                  <span className="text-sm font-medium text-slate-700">Industry</span>
+                  <span className="ml-auto truncate text-sm text-slate-600">{localUserData.companyIndustry || "N/A"}</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <UserIcon size={16} className="text-gray-500" />
-                  <span className="font-medium">Interests</span>
-                  <div className="ml-auto flex gap-2 flex-wrap">
+                <div className="flex flex-wrap items-center gap-3 px-3 py-3">
+                  <UserIcon size={16} className="shrink-0 text-[#004A96]" />
+                  <span className="text-sm font-medium text-slate-700">Interests</span>
+                  <div className="ml-auto flex flex-wrap justify-end gap-2">
                     {(localUserData.interests && localUserData.interests.length > 0
                       ? localUserData.interests
                       : ["All Interests"]
                     ).map((int, idx) => (
-                      <Badge key={idx} variant="secondary">
+                      <Badge
+                        key={idx}
+                        variant="secondary"
+                        className="border-[#004A96]/15 bg-[#004A96]/10 text-xs text-[#004A96]"
+                      >
                         {int}
                       </Badge>
                     ))}
                   </div>
                 </div>
-                <div className="flex items-start gap-2 mt-4">
-                  <UserIcon size={16} className="text-gray-500 mt-1" />
-                  <div>
-                    <span className="font-medium block mb-1">Bio</span>
-                    <p className="text-gray-700">
+                <div className="flex items-start gap-3 border-t border-white/50 bg-white/25 px-3 py-4">
+                  <UserIcon size={16} className="mt-0.5 shrink-0 text-[#004A96]" />
+                  <div className="min-w-0">
+                    <span className="mb-1 block text-sm font-medium text-slate-800">Bio</span>
+                    <p className="text-sm leading-relaxed text-slate-600">
                       {localUserData.bio ||
                         "The world's deposit sourcing has a commitment to reducing foreign prices at the Paris for Bagnette Collection Centre in Paris, France."}
                     </p>
@@ -694,44 +733,67 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
           </CardContent>
         </Card>
 
-        <div className="lg:col-span-2 flex flex-col gap-6">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 min-w-0">
-            <div className="bg-yellow-200 h-32 flex items-center justify-center overflow-hidden rounded-lg">
-              <div className="text-center p-4 min-w-0 overflow-hidden">
-                <Calendar className="w-8 h-8 mx-auto mb-2" />
-                <h3 className="font-semibold truncate">Upcoming Events</h3>
-                <p className="text-sm truncate">{interestedEventsCount} events</p>
+        <div className="flex flex-col gap-6 lg:col-span-2">
+          <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-3">
+            <button
+              type="button"
+              onClick={() => setActiveSection("upcoming-events")}
+              className="group flex min-h-[8.5rem] flex-col justify-between rounded-2xl border border-white/70 bg-white/50 p-4 text-left shadow-[0_4px_24px_rgba(0,74,150,0.06)] backdrop-blur-md transition hover:border-[#004A96]/35 hover:bg-white/65 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#004A96]/30"
+            >
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#004A96] to-[#003566] text-white shadow-md">
+                <Calendar className="h-5 w-5" />
+              </span>
+              <div>
+                <h3 className="text-sm font-semibold text-slate-800">Upcoming events</h3>
+                <p className="mt-1 text-lg font-bold text-[#004A96]">{interestedEventsCount}</p>
+                <p className="text-xs text-slate-500">Interested with future dates</p>
               </div>
-            </div>
-            <div className="bg-blue-200 h-32 flex items-center justify-center overflow-hidden rounded-lg">
-              <div className="text-center p-4 min-w-0 overflow-hidden">
-                <CalendarDays className="w-8 h-8 mx-auto mb-2" />
-                <h3 className="font-semibold truncate">Events</h3>
-                <p className="text-sm truncate">{localUserData._count?.eventsAttended ?? events.length} events</p>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveSection("events")}
+              className="group flex min-h-[8.5rem] flex-col justify-between rounded-2xl border border-white/70 bg-white/50 p-4 text-left shadow-[0_4px_24px_rgba(0,74,150,0.06)] backdrop-blur-md transition hover:border-[#004A96]/35 hover:bg-white/65 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#004A96]/30"
+            >
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl border-2 border-[#004A96]/25 bg-[#004A96]/10 text-[#004A96]">
+                <CalendarDays className="h-5 w-5" />
+              </span>
+              <div>
+                <h3 className="text-sm font-semibold text-slate-800">Events</h3>
+                <p className="mt-1 text-lg font-bold text-[#004A96]">
+                  {localUserData._count?.eventsAttended ?? events.length}
+                </p>
+                <p className="text-xs text-slate-500">Attended / catalogue</p>
               </div>
-            </div>
-            <div className="bg-red-300 h-32 flex items-center justify-center overflow-hidden rounded-lg">
-              <div className="text-center p-4 min-w-0 overflow-hidden">
-                <UserIcon className="w-8 h-8 mx-auto mb-2" />
-                <h3 className="font-semibold truncate">Connections</h3>
-                <p className="text-sm truncate">{connectionsCount} total</p>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveSection("connections")}
+              className="group flex min-h-[8.5rem] flex-col justify-between rounded-2xl border border-white/70 bg-white/50 p-4 text-left shadow-[0_4px_24px_rgba(0,74,150,0.06)] backdrop-blur-md transition hover:border-[#FF131C]/35 hover:bg-white/65 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF131C]/25"
+            >
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl border-2 border-[#FF131C]/25 bg-[#FF131C]/10 text-[#FF131C]">
+                <UserIcon className="h-5 w-5" />
+              </span>
+              <div>
+                <h3 className="text-sm font-semibold text-slate-800">Connections</h3>
+                <p className="mt-1 text-lg font-bold text-[#FF131C]">{connectionsCount}</p>
+                <p className="text-xs text-slate-500">Connected profiles</p>
               </div>
-            </div>
+            </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="h-[500px]">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+            <div className="h-[500px] overflow-hidden rounded-2xl border border-white/70 bg-white/45 shadow-md backdrop-blur-md">
               <DynamicCalendar userId={userData.id} className="h-full w-full" />
             </div>
 
-            <Card className="h-[500px] flex flex-col">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle>Suggested Events</CardTitle>
+            <Card className="flex h-[500px] flex-col rounded-2xl border border-white/70 bg-white/55 shadow-[0_4px_24px_rgba(0,74,150,0.08)] backdrop-blur-md">
+              <CardHeader className="space-y-1 border-b border-white/50 pb-3">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <CardTitle className="text-lg text-slate-900">Suggested events</CardTitle>
                   <div className="flex items-center gap-2">
-                    <Filter className="w-4 h-4 text-gray-500" />
+                    <Filter className="h-4 w-4 text-[#004A96]" />
                     <Select value={selectedEventFilter} onValueChange={setSelectedEventFilter}>
-                      <SelectTrigger className="w-[180px]">
+                      <SelectTrigger className="w-full border-white/60 bg-white/60 backdrop-blur-sm sm:w-[180px]">
                         <SelectValue placeholder="Filter by event" />
                       </SelectTrigger>
                       <SelectContent>
@@ -746,16 +808,16 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
                   </div>
                 </div>
                 {selectedEventFilter !== "all" && (
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-slate-500">
                     Showing {displayedEvents.length} events matching "{selectedEventFilter}"
                   </p>
                 )}
               </CardHeader>
-              <CardContent className="flex-1 overflow-y-auto space-y-4">
+              <CardContent className="flex-1 space-y-3 overflow-y-auto pr-1">
                 {loadingEvents ? (
-                  <p className="text-gray-500 text-sm">Loading events...</p>
+                  <p className="text-sm text-slate-500">Loading events...</p>
                 ) : displayedEvents.length === 0 ? (
-                  <p className="text-gray-500 text-sm">
+                  <p className="text-sm text-slate-500">
                     {selectedEventFilter === "all"
                       ? "No events found"
                       : `No events found matching "${selectedEventFilter}"`}
@@ -765,11 +827,11 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
                     <Link
                       key={event.id}
                       href={eventPublicPath(event)}
-                      className="block p-3 rounded-lg border border-gray-200 hover:bg-blue-50 transition-colors"
+                      className="block rounded-xl border border-white/55 bg-white/40 p-3 transition-colors hover:border-[#004A96]/35 hover:bg-white/70"
                     >
-                      <p className="font-semibold text-sm truncate">{event.title}</p>
-                      <p className="text-xs text-gray-600 line-clamp-2">{event.description}</p>
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className="truncate text-sm font-semibold text-slate-900">{event.title}</p>
+                      <p className="line-clamp-2 text-xs text-slate-600">{event.description}</p>
+                      <p className="mt-1 text-xs text-slate-500">
                         {new Date(event.date).toLocaleDateString()} {event.organizer && `• ${event.organizer}`}
                       </p>
                     </Link>

@@ -25,6 +25,8 @@ import {
   MapPin,
   MessageSquare,
 } from "lucide-react"
+import { cn } from "@/lib/utils"
+import { exGlassCard, exBtnPrimary, exPageTitle } from "./dashboard-theme"
 
 interface AppointmentSchedulingProps {
   exhibitorId: string
@@ -140,7 +142,7 @@ const fetchAppointments = async () => {
       case "CONFIRMED":
         return "bg-green-500"
       case "COMPLETED":
-        return "bg-blue-500"
+        return "bg-[#4776E6]"
       case "CANCELLED":
         return "bg-red-500"
       default:
@@ -166,7 +168,7 @@ const fetchAppointments = async () => {
   )
 
   const AppointmentCard = ({ appointment }: { appointment: Appointment }) => (
-    <Card className="hover:shadow-md transition-shadow">
+    <Card className={cn(exGlassCard, "transition-shadow hover:shadow-md")}>
       <CardContent className="p-6">
         <div className="flex items-start justify-between mb-4">
           <div className="flex-1">
@@ -287,6 +289,7 @@ const fetchAppointments = async () => {
                             setSelectedAppointment(null)
                           }
                         }}
+                        className={exBtnPrimary}
                       >
                         Save Changes
                       </Button>
@@ -304,8 +307,8 @@ const fetchAppointments = async () => {
         </div>
 
         <div className="grid grid-cols-3 gap-4 mb-4 text-sm">
-          <div className="text-center p-2 bg-blue-50 rounded">
-            <div className="font-semibold text-blue-600">{appointment.profileViews}</div>
+          <div className="rounded bg-[#4776E6]/10 p-2 text-center">
+            <div className="font-semibold text-[#4776E6]">{appointment.profileViews}</div>
             <div className="text-gray-600">Profile Views</div>
           </div>
           <div className="text-center p-2 bg-green-50 rounded">
@@ -386,7 +389,7 @@ const fetchAppointments = async () => {
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <p className="text-red-600 mb-4">{error}</p>
-          <Button onClick={fetchAppointments}>Try Again</Button>
+          <Button className={exBtnPrimary} onClick={fetchAppointments}>Try Again</Button>
         </div>
       </div>
     )
@@ -395,7 +398,7 @@ const fetchAppointments = async () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-900">Visitor Appointment Scheduling</h1>
+        <h1 className={exPageTitle}>Visitor Appointment Scheduling</h1>
         <div className="flex items-center gap-3">
           <Select value={filterStatus} onValueChange={setFilterStatus}>
             <SelectTrigger className="w-40">
@@ -418,13 +421,13 @@ const fetchAppointments = async () => {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card>
+        <Card className={exGlassCard}>
           <CardContent className="p-6 text-center">
-            <div className="text-3xl font-bold text-blue-600">{appointments.length}</div>
+            <div className="text-3xl font-bold text-[#4776E6]">{appointments.length}</div>
             <div className="text-gray-600">Total Requests</div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className={exGlassCard}>
           <CardContent className="p-6 text-center">
             <div className="text-3xl font-bold text-yellow-600">
               {appointments.filter((a) => a.status === "PENDING").length}
@@ -432,7 +435,7 @@ const fetchAppointments = async () => {
             <div className="text-gray-600">Pending</div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className={exGlassCard}>
           <CardContent className="p-6 text-center">
             <div className="text-3xl font-bold text-green-600">
               {appointments.filter((a) => a.status === "CONFIRMED").length}
@@ -452,7 +455,7 @@ const fetchAppointments = async () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Calendar View */}
-        <Card>
+        <Card className={exGlassCard}>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <CalendarIcon className="w-5 h-5" />
@@ -471,7 +474,7 @@ const fetchAppointments = async () => {
               <AppointmentCard key={appointment.id} appointment={appointment} />
             ))
           ) : (
-            <Card>
+            <Card className={exGlassCard}>
               <CardContent className="p-12 text-center">
                 <CalendarIcon className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-lg font-semibold text-gray-600 mb-2">No appointments</h3>

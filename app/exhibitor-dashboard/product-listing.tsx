@@ -13,6 +13,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Skeleton } from "@/components/ui/skeleton"
 import { useToast } from "@/hooks/use-toast"
 import { Package, Plus, Upload, FileText, Edit, Trash2, ExternalLink, Youtube } from "lucide-react"
+import { cn } from "@/lib/utils"
+import { exGlassCard, exBtnPrimary } from "./dashboard-theme"
 
 interface ProductListingProps {
   exhibitorId: string
@@ -427,7 +429,7 @@ export default function ProductListing({ exhibitorId }: ProductListingProps) {
   }
 
   const ProductCard = ({ product }: { product: Product }) => (
-    <Card>
+    <Card className={exGlassCard}>
       <CardContent className="p-6">
         <div className="flex items-start gap-4">
           <div className="relative">
@@ -549,7 +551,7 @@ export default function ProductListing({ exhibitorId }: ProductListingProps) {
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <p className="text-destructive mb-4">{error}</p>
-          <Button onClick={fetchProducts}>Try Again</Button>
+          <Button className={exBtnPrimary} onClick={fetchProducts}>Try Again</Button>
         </div>
       </div>
     )
@@ -561,7 +563,7 @@ export default function ProductListing({ exhibitorId }: ProductListingProps) {
         <h1 className="text-3xl font-bold">Product Listing & Brochures</h1>
         <Dialog open={isAddProductOpen} onOpenChange={setIsAddProductOpen}>
           <DialogTrigger asChild>
-            <Button className="flex items-center gap-2">
+            <Button className={cn("flex items-center gap-2", exBtnPrimary)}>
               <Plus className="w-4 h-4" />
               Add Product/Service
             </Button>
@@ -631,7 +633,7 @@ export default function ProductListing({ exhibitorId }: ProductListingProps) {
         {products.length > 0 ? (
           products.map((product) => <ProductCard key={product.id} product={product} />)
         ) : (
-          <Card>
+          <Card className={exGlassCard}>
             <CardContent className="p-12 text-center">
               <Package className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-muted-foreground mb-2">No products listed</h3>
@@ -641,7 +643,7 @@ export default function ProductListing({ exhibitorId }: ProductListingProps) {
         )}
       </div>
 
-      <Card>
+      <Card className={exGlassCard}>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Package className="w-5 h-5" />
@@ -651,7 +653,7 @@ export default function ProductListing({ exhibitorId }: ProductListingProps) {
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
             <div className="text-center">
-              <div className="text-3xl font-bold text-blue-600">{products.length}</div>
+              <div className="text-3xl font-bold text-[#4776E6]">{products.length}</div>
               <div className="text-muted-foreground">Total Products</div>
             </div>
             <div className="text-center">

@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { apiFetch } from "@/lib/api"
 
@@ -33,12 +32,8 @@ export function AppointmentsCountCard({ exhibitorId }: AppointmentsCountCardProp
   }, [exhibitorId])
 
   if (loading) {
-    return <Skeleton className="h-24 w-full rounded-lg" />
+    return <Skeleton className="h-8 w-14 rounded-md bg-[#4776E6]/10" />
   }
 
-  return (
-    <div>
-      <CardContent className="text-2xl font-bold text-gray-900">{count}</CardContent>
-    </div>
-  )
+  return <div className="text-2xl font-bold text-[#4776E6]">{count}</div>
 }

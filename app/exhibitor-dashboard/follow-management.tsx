@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Users, UserPlus, UserMinus } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { apiFetch } from "@/lib/api"
+import { exGlassCard, exPageTitle } from "./dashboard-theme"
 
 interface FollowUser {
   id: string
@@ -91,7 +92,7 @@ export function FollowManagement({ userId }: FollowManagementProps) {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-[#4776E6]" />
       </div>
     )
   }
@@ -99,8 +100,8 @@ export function FollowManagement({ userId }: FollowManagementProps) {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Follow Management</h1>
-        <p className="text-gray-600">Manage your followers and following</p>
+        <h1 className={exPageTitle}>Follow Management</h1>
+        <p className="text-slate-600">Manage your followers and following</p>
       </div>
 
       {/* Stats Cards */}
@@ -136,7 +137,7 @@ export function FollowManagement({ userId }: FollowManagementProps) {
         </TabsList> */}
 
         <TabsContent value="followers" className="space-y-4">
-          <Card>
+          <Card className={exGlassCard}>
             <CardHeader>
               <CardTitle>Your Followers</CardTitle>
             </CardHeader>
@@ -151,7 +152,7 @@ export function FollowManagement({ userId }: FollowManagementProps) {
                   {followers.map((follower) => (
                     <div
                       key={follower.id}
-                      className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors"
+                      className="flex items-center justify-between rounded-xl border border-white/60 bg-white/35 p-4 backdrop-blur-sm transition-colors hover:bg-white/50"
                     >
                       <div className="flex items-center space-x-4">
                         <Avatar className="h-12 w-12">
@@ -189,7 +190,7 @@ export function FollowManagement({ userId }: FollowManagementProps) {
         </TabsContent>
 
         <TabsContent value="following" className="space-y-4">
-          <Card>
+          <Card className={exGlassCard}>
             <CardHeader>
               <CardTitle>People You Follow</CardTitle>
             </CardHeader>
@@ -204,7 +205,7 @@ export function FollowManagement({ userId }: FollowManagementProps) {
                   {following.map((user) => (
                     <div
                       key={user.id}
-                      className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors"
+                      className="flex items-center justify-between rounded-xl border border-white/60 bg-white/35 p-4 backdrop-blur-sm transition-colors hover:bg-white/50"
                     >
                       <div className="flex items-center space-x-4">
                         <Avatar className="h-12 w-12">

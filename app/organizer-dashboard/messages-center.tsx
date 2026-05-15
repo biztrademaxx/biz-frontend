@@ -35,6 +35,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { cn } from "@/lib/utils"
+import { exBtnPrimary } from "@/app/exhibitor-dashboard/dashboard-theme"
 
 interface Connection {
   id: string
@@ -90,9 +92,11 @@ interface Conversation {
 
 interface MessagesCenterProps {
   organizerId: string
+  /** Glass shell + brand accents for exhibitor dashboard. */
+  surface?: "default" | "exhibitor"
 }
 
-export default function MessagesCenter({ organizerId }: MessagesCenterProps) {
+export default function MessagesCenter({ organizerId, surface = "default" }: MessagesCenterProps) {
   const { toast } = useToast()
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [selectedContact, setSelectedContact] = useState<string | null>(null)
@@ -383,7 +387,7 @@ export default function MessagesCenter({ organizerId }: MessagesCenterProps) {
   const getRoleBadgeColor = (role: string) => {
     switch (role.toLowerCase()) {
       case "organizer":
-        return "bg-blue-100 text-blue-800"
+        return surface === "exhibitor" ? "bg-[#8E54E9]/12 text-[#5b21b6]" : "bg-blue-100 text-blue-800"
       case "speaker":
         return "bg-green-100 text-green-800"
       case "attendee":
@@ -456,13 +460,19 @@ export default function MessagesCenter({ organizerId }: MessagesCenterProps) {
   )
 
   const selectedContactInfo = getSelectedContactInfo()
+  const shell = surface === "exhibitor"
 
   return (
-    <div className="h-[600px] flex border rounded-lg overflow-hidden bg-white">
+    <div
+      className={cn(
+        "h-[600px] flex rounded-lg overflow-hidden border",
+        shell ? "border-white/60 bg-white/45 backdrop-blur-md" : "border-gray-200 bg-white",
+      )}
+    >
       {/* Conversations Sidebar */}
-      <div className="w-1/3 border-r flex flex-col">
+      <div className={cn("w-1/3 flex flex-col border-r", shell ? "border-white/50" : "border-gray-200")}>
         {/* Header */}
-        <div className="p-4 border-b bg-gray-50">
+        <div className={cn("p-4 border-b", shell ? "border-white/50 bg-white/35 backdrop-blur-sm" : "border-gray-200 bg-gray-50")}>
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-semibold text-gray-900 flex items-center gap-2">
               <MessageCircle className="w-5 h-5" />
@@ -470,7 +480,7 @@ export default function MessagesCenter({ organizerId }: MessagesCenterProps) {
             </h3>
             <Dialog open={showNewChat} onOpenChange={setShowNewChat}>
               <DialogTrigger asChild>
-                <Button size="sm" className="h-8 w-8 p-0" aria-label="Start new chat">
+                <Button size="sm" className={cn("h-8 w-8 p-0", shell && exBtnPrimary)} aria-label="Start new chat">
                   <Plus className="w-4 h-4" />
                 </Button>
               </DialogTrigger>
@@ -500,7 +510,10 @@ export default function MessagesCenter({ organizerId }: MessagesCenterProps) {
                       {filteredConnections.map((connection) => (
                         <div
                           key={connection.id}
-                          className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-lg cursor-pointer"
+                          className={cn(
+                            "flex items-center gap-3 rounded-lg p-3 cursor-pointer",
+                            shell ? "hover:bg-white/40" : "hover:bg-gray-50",
+                          )}
                           onClick={() => startNewChat(connection)}
                           onKeyPress={(e) => e.key === 'Enter' && startNewChat(connection)}
                           tabIndex={0}
@@ -572,8 +585,15 @@ export default function MessagesCenter({ organizerId }: MessagesCenterProps) {
               {conversations.map((conversation) => (
                 <div
                   key={conversation.id}
-                  className={`group relative p-3 hover:bg-gray-50 cursor-pointer ${selectedContact === conversation.id ? "bg-blue-50 border-r-2 border-blue-500" : ""
-                    }`}
+                  className={cn(
+                    "group relative cursor-pointer p-3",
+                    shell ? "hover:bg-white/35" : "hover:bg-gray-50",
+                    selectedContact === conversation.id
+                      ? shell
+                        ? "border-r-2 border-[#8E54E9] bg-[#8E54E9]/10"
+                        : "border-r-2 border-blue-500 bg-blue-50"
+                      : "",
+                  )}
                 >
                   <div
                     className="flex items-start gap-3"
@@ -607,7 +627,12 @@ export default function MessagesCenter({ organizerId }: MessagesCenterProps) {
                           {conversation.lastMessage || "No messages yet"}
                         </p>
                         {conversation.unreadCount > 0 && (
-                          <Badge className="bg-blue-500 text-white text-xs h-5 w-5 rounded-full p-0 flex items-center justify-center">
+                          <Badge
+                            className={cn(
+                              "flex h-5 w-5 items-center justify-center rounded-full p-0 text-xs text-white",
+                              shell ? "bg-gradient-to-r from-[#8E54E9] to-[#4776E6]" : "bg-blue-500",
+                            )}
+                          >
                             {conversation.unreadCount}
                           </Badge>
                         )}
@@ -639,7 +664,7 @@ export default function MessagesCenter({ organizerId }: MessagesCenterProps) {
         {selectedContact && selectedContactInfo ? (
           <>
             {/* Chat Header */}
-            <div className="p-4 border-b bg-gray-50 shrink-0">
+            <div className={cn("shrink-0 border-b p-4", shell ? "border-white/50 bg-white/35 backdrop-blur-sm" : "border-gray-200 bg-gray-50")}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="relative shrink-0">
@@ -727,13 +752,25 @@ export default function MessagesCenter({ organizerId }: MessagesCenterProps) {
                     >
                       <div className={`relative max-w-[85%] sm:max-w-md ${isSent ? "order-2" : ""}`}>
                         <div
-                          className={`px-4 py-2 rounded-lg ${message.senderId === organizerId ? "bg-blue-500 text-white" : "bg-gray-100 text-gray-900"
-                            }`}
+                          className={cn(
+                            "rounded-lg px-4 py-2",
+                            message.senderId === organizerId
+                              ? shell
+                                ? "bg-gradient-to-r from-[#8E54E9] to-[#4776E6] text-white"
+                                : "bg-blue-500 text-white"
+                              : "bg-gray-100 text-gray-900",
+                          )}
                         >
                           <p className="text-sm break-words">{message.content}</p>
                           <div
-                            className={`flex items-center justify-end gap-1 mt-1 ${message.senderId === organizerId ? "text-blue-100" : "text-gray-500"
-                              }`}
+                            className={cn(
+                              "mt-1 flex items-center justify-end gap-1",
+                              message.senderId === organizerId
+                                ? shell
+                                  ? "text-white/80"
+                                  : "text-blue-100"
+                                : "text-gray-500",
+                            )}
                           >
                             <span className="text-xs">{formatTime(message.createdAt)}</span>
                             {isSent &&
@@ -763,7 +800,7 @@ export default function MessagesCenter({ organizerId }: MessagesCenterProps) {
             </ScrollArea>
 
             {/* Message Input - fixed at bottom */}
-            <div className="p-4 border-t bg-white shrink-0">
+            <div className={cn("shrink-0 border-t p-4", shell ? "border-white/50 bg-white/30 backdrop-blur-sm" : "border-gray-200 bg-white")}>
               <div className="flex items-center gap-2">
                 <Input
                   value={newMessage}
@@ -773,23 +810,19 @@ export default function MessagesCenter({ organizerId }: MessagesCenterProps) {
                   disabled={sending}
                   aria-label="Type a message"
                 />
-                <Button
-                  onClick={sendMessage}
-                  disabled={!newMessage.trim() || sending}
-                  aria-label="Send message"
-                >
+                <Button onClick={sendMessage} disabled={!newMessage.trim() || sending} className={cn(shell && exBtnPrimary)} aria-label="Send message">
                   {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                 </Button>
               </div>
             </div>
           </>
         ) : (
-          <div className="flex-1 flex items-center justify-center bg-gray-50">
+          <div className={cn("flex flex-1 items-center justify-center", shell ? "bg-white/20" : "bg-gray-50")}>
             <div className="text-center">
               <MessageCircle className="w-16 h-16 mx-auto mb-4 text-gray-300" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">Select a conversation</h3>
               <p className="text-gray-500 mb-4">Choose from your existing conversations or start a new one</p>
-              <Button onClick={() => setShowNewChat(true)} aria-label="Start new chat">
+              <Button onClick={() => setShowNewChat(true)} className={cn(shell && exBtnPrimary)} aria-label="Start new chat">
                 <Plus className="w-4 h-4 mr-2" />
                 Start New Chat
               </Button>

@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { Star } from "lucide-react"
+import { cn } from "@/lib/utils"
+import { exGlassCard, exBtnPrimary, exPageTitle, exInput } from "./dashboard-theme"
 
 interface Review {
   id: string
@@ -88,10 +90,10 @@ export default function ViewFeedback({ exhibitorId }: { exhibitorId: string }) {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-2xl font-semibold">Customer Feedback</h2>
+      <h2 className={cn(exPageTitle, "text-2xl")}>Customer Feedback</h2>
 
       {list.map((review) => (
-        <Card key={review.id}>
+        <Card key={review.id} className={exGlassCard}>
           <CardHeader>
             <div className="flex items-center space-x-3">
               <Avatar>
@@ -127,7 +129,7 @@ export default function ViewFeedback({ exhibitorId }: { exhibitorId: string }) {
             {(review.replies?.length ?? 0) > 0 && (
               <div className="mt-4 space-y-2">
                 {(review.replies ?? []).map((rep) => (
-                  <div key={rep.id} className="pl-4 border-l-2 border-gray-200">
+                  <div key={rep.id} className="border-l-2 border-[#4776E6]/35 pl-4">
                     <p className="text-sm text-gray-800">
                       <span className="font-semibold">
                         {rep.isOrganizerReply ? "You" : ([rep.user?.firstName, rep.user?.lastName].filter(Boolean).join(" ").trim() || "Anonymous")}
@@ -149,9 +151,10 @@ export default function ViewFeedback({ exhibitorId }: { exhibitorId: string }) {
                   value={replyContent}
                   onChange={(e) => setReplyContent(e.target.value)}
                   placeholder="Write a reply..."
+                  className={exInput}
                 />
                 <div className="flex gap-2">
-                  <Button size="sm" onClick={() => handleReply(review.id)}>
+                  <Button size="sm" className={exBtnPrimary} onClick={() => handleReply(review.id)}>
                     Send Reply
                   </Button>
                   <Button

@@ -38,6 +38,16 @@ import {
   Star,
   Loader2,
 } from "lucide-react"
+import { cn } from "@/lib/utils"
+import {
+  exGlassCard,
+  exTabsList,
+  exTabsTriggerActive,
+  exBtnPrimary,
+  exPageTitle,
+  exLink,
+  exInput,
+} from "./dashboard-theme"
 
 interface PromotionsMarketingProps {
   exhibitorId: string
@@ -159,7 +169,7 @@ export default function PromotionsMarketing({ exhibitorId, onPromotionCreated }:
       icon: Code,
       userCount: 12500,
       avgEngagement: 78,
-      color: "bg-blue-500",
+      color: "bg-[#4776E6]",
     },
     {
       id: "business",
@@ -369,9 +379,9 @@ export default function PromotionsMarketing({ exhibitorId, onPromotionCreated }:
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-900">Exhibitor Promotion</h1>
+        <h1 className={exPageTitle}>Exhibitor Promotion</h1>
         <div className="flex items-center gap-2">
-          <Badge variant="outline" className="bg-blue-50 text-blue-700">
+          <Badge variant="outline" className="border-[#4776E6]/25 bg-[#4776E6]/10 text-[#4776E6]">
             <Users className="w-4 h-4 mr-1" />
             {userCategories.reduce((total, cat) => total + cat.userCount, 0).toLocaleString()} Platform Users
           </Badge>
@@ -379,14 +389,18 @@ export default function PromotionsMarketing({ exhibitorId, onPromotionCreated }:
       </div>
 
       <Tabs value={selectedTab} onValueChange={setSelectedTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="platform-promotion">Platform Promotion</TabsTrigger>
-          <TabsTrigger value="external-campaigns">External Campaigns</TabsTrigger>
+        <TabsList className={cn(exTabsList, "grid w-full grid-cols-2")}>
+          <TabsTrigger value="platform-promotion" className={exTabsTriggerActive}>
+            Platform Promotion
+          </TabsTrigger>
+          <TabsTrigger value="external-campaigns" className={exTabsTriggerActive}>
+            External Campaigns
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="platform-promotion" className="space-y-6">
           {/* Event Selection */}
-          <Card>
+          <Card className={exGlassCard}>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Calendar className="w-5 h-5" />
@@ -438,7 +452,7 @@ export default function PromotionsMarketing({ exhibitorId, onPromotionCreated }:
           {selectedEvent && (
             <>
               {/* Category Selection */}
-              <Card>
+              <Card className={exGlassCard}>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Target className="w-5 h-5" />
@@ -454,10 +468,10 @@ export default function PromotionsMarketing({ exhibitorId, onPromotionCreated }:
                     {userCategories.map((category) => (
                       <div
                         key={category.id}
-                        className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                        className={`cursor-pointer rounded-lg border-2 p-4 transition-all ${
                           selectedCategories.includes(category.id)
-                            ? "border-blue-500 bg-blue-50"
-                            : "border-gray-200 hover:border-gray-300"
+                            ? "border-[#4776E6] bg-[#4776E6]/10"
+                            : "border-white/50 bg-white/25 hover:border-[#4776E6]/35"
                         }`}
                         onClick={() => handleCategoryToggle(category.id)}
                       >
@@ -488,12 +502,12 @@ export default function PromotionsMarketing({ exhibitorId, onPromotionCreated }:
                   </div>
 
                   {selectedCategories.length > 0 && (
-                    <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+                    <div className="mt-6 rounded-lg border border-[#4776E6]/20 bg-[#4776E6]/10 p-4">
                       <h3 className="font-semibold mb-2">Estimated Reach</h3>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                         <div>
                           <span className="text-gray-600">Total Users:</span>
-                          <div className="text-2xl font-bold text-blue-600">
+                          <div className="text-2xl font-bold text-[#4776E6]">
                             {calculateEstimatedReach().toLocaleString()}
                           </div>
                         </div>
@@ -517,7 +531,7 @@ export default function PromotionsMarketing({ exhibitorId, onPromotionCreated }:
 
               {/* Promotion Packages */}
               {selectedCategories.length > 0 && (
-                <Card>
+                <Card className={exGlassCard}>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <Megaphone className="w-5 h-5" />
@@ -543,15 +557,15 @@ export default function PromotionsMarketing({ exhibitorId, onPromotionCreated }:
                         {promotionPackages.map((pkg) => (
                           <div
                             key={pkg.id}
-                            className={`relative p-6 border-2 rounded-lg transition-all ${
+                            className={`relative rounded-lg border-2 p-6 transition-all ${
                               pkg.recommended
-                                ? "border-blue-500 bg-blue-50 shadow-md"
-                                : "border-gray-200 hover:border-gray-300"
+                                ? "border-[#4776E6] bg-[#4776E6]/10 shadow-md"
+                                : "border-white/50 bg-white/25 hover:border-[#4776E6]/35"
                             }`}
                           >
                             {pkg.recommended && (
                               <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                                <Badge className="bg-blue-500 text-white">
+                                <Badge className="bg-[#4776E6] text-white">
                                   <Star className="w-3 h-3 mr-1" />
                                   Recommended
                                 </Badge>
@@ -562,7 +576,7 @@ export default function PromotionsMarketing({ exhibitorId, onPromotionCreated }:
                               <h3 className="text-xl font-bold">{pkg.name}</h3>
                               <p className="text-sm text-gray-600 mt-1">{pkg.description}</p>
                               <div className="mt-3">
-                                <span className="text-3xl font-bold text-blue-600">${pkg.price.toLocaleString()}</span>
+                                <span className="text-3xl font-bold text-[#4776E6]">${pkg.price.toLocaleString()}</span>
                                 <span className="text-sm text-gray-500">/{pkg.duration}</span>
                               </div>
                             </div>
@@ -588,7 +602,7 @@ export default function PromotionsMarketing({ exhibitorId, onPromotionCreated }:
                             </div>
 
                             <Button
-                              className="w-full"
+                              className={cn("w-full", pkg.recommended && exBtnPrimary)}
                               variant={pkg.recommended ? "default" : "outline"}
                               onClick={() => handlePackageSelect(pkg.id)}
                             >
@@ -607,7 +621,7 @@ export default function PromotionsMarketing({ exhibitorId, onPromotionCreated }:
         </TabsContent>
 
         <TabsContent value="external-campaigns" className="space-y-6">
-          <Card>
+          <Card className={exGlassCard}>
             <CardHeader>
               <CardTitle>External Marketing Campaigns</CardTitle>
               <p className="text-sm text-gray-600">
@@ -641,7 +655,7 @@ export default function PromotionsMarketing({ exhibitorId, onPromotionCreated }:
           {selectedPackageData && (
             <div className="space-y-6">
               {/* Order Summary */}
-              <div className="p-4 bg-gray-50 rounded-lg">
+              <div className={cn("rounded-lg p-4", "border border-white/50 bg-white/35 backdrop-blur-sm")}>
                 <h3 className="font-semibold mb-3">Order Summary</h3>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
@@ -669,7 +683,7 @@ export default function PromotionsMarketing({ exhibitorId, onPromotionCreated }:
                   <div className="border-t pt-2 mt-2">
                     <div className="flex justify-between font-semibold">
                       <span>Total Amount:</span>
-                      <span className="text-blue-600">${selectedPackageData.price.toLocaleString()}</span>
+                      <span className="font-semibold text-[#4776E6]">${selectedPackageData.price.toLocaleString()}</span>
                     </div>
                   </div>
                 </div>
@@ -681,19 +695,19 @@ export default function PromotionsMarketing({ exhibitorId, onPromotionCreated }:
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="card-number">Card Number</Label>
-                    <Input id="card-number" placeholder="1234 5678 9012 3456" />
+                    <Input id="card-number" placeholder="1234 5678 9012 3456" className={exInput} />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="card-name">Cardholder Name</Label>
-                    <Input id="card-name" placeholder="John Doe" />
+                    <Input id="card-name" placeholder="John Doe" className={exInput} />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="expiry">Expiry Date</Label>
-                    <Input id="expiry" placeholder="MM/YY" />
+                    <Input id="expiry" placeholder="MM/YY" className={exInput} />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="cvv">CVV</Label>
-                    <Input id="cvv" placeholder="123" />
+                    <Input id="cvv" placeholder="123" className={exInput} />
                   </div>
                 </div>
               </div>
@@ -703,11 +717,11 @@ export default function PromotionsMarketing({ exhibitorId, onPromotionCreated }:
                 <Checkbox id="terms" />
                 <Label htmlFor="terms" className="text-sm">
                   I agree to the{" "}
-                  <a href="#" className="text-blue-600 hover:underline">
+                  <a href="#" className={exLink}>
                     Terms and Conditions
                   </a>{" "}
                   and{" "}
-                  <a href="#" className="text-blue-600 hover:underline">
+                  <a href="#" className={exLink}>
                     Promotion Policy
                   </a>
                 </Label>
@@ -718,11 +732,7 @@ export default function PromotionsMarketing({ exhibitorId, onPromotionCreated }:
                 <Button variant="outline" onClick={() => setIsPaymentDialogOpen(false)} disabled={isProcessingPayment}>
                   Cancel
                 </Button>
-                <Button
-                  className="bg-blue-600 hover:bg-blue-700"
-                  onClick={handlePayment}
-                  disabled={isProcessingPayment}
-                >
+                <Button className={exBtnPrimary} onClick={handlePayment} disabled={isProcessingPayment}>
                   {isProcessingPayment ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />

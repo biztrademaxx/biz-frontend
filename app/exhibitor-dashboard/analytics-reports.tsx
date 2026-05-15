@@ -22,6 +22,8 @@ import {
   Area,
 } from "recharts"
 import { Eye, Download, Users, TrendingUp, FileText } from "lucide-react"
+import { cn } from "@/lib/utils"
+import { exGlassCard, exTabsList, exTabsTriggerActive, exBtnPrimary, exPageTitle } from "./dashboard-theme"
 
 interface AnalyticsReportsProps {
   exhibitorId: string
@@ -87,7 +89,7 @@ export default function AnalyticsReports({ exhibitorId }: AnalyticsReportsProps)
     }
   }
 
-  const COLORS = ["#3B82F6", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6"]
+  const COLORS = ["#8E54E9", "#4776E6", "#10B981", "#F59E0B", "#ec4899"]
 
   if (loading) {
     return (
@@ -112,7 +114,7 @@ export default function AnalyticsReports({ exhibitorId }: AnalyticsReportsProps)
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <p className="text-red-600 mb-4">{error}</p>
-          <Button onClick={fetchAnalytics}>Try Again</Button>
+          <Button className={cn("flex items-center gap-2", exBtnPrimary)} onClick={fetchAnalytics}>Try Again</Button>
         </div>
       </div>
     )
@@ -129,7 +131,7 @@ export default function AnalyticsReports({ exhibitorId }: AnalyticsReportsProps)
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-900">Analytics & Reports</h1>
+        <h1 className={exPageTitle}>Analytics & Reports</h1>
         <div className="flex items-center gap-4">
           <Select value={timeRange} onValueChange={setTimeRange}>
             <SelectTrigger className="w-32">
@@ -141,7 +143,7 @@ export default function AnalyticsReports({ exhibitorId }: AnalyticsReportsProps)
               <SelectItem value="90d">90 Days</SelectItem>
             </SelectContent>
           </Select>
-          <Button className="flex items-center gap-2">
+          <Button className={cn("flex items-center gap-2", exBtnPrimary)}>
             <Download className="w-4 h-4" />
             Export Report
           </Button>
@@ -149,17 +151,25 @@ export default function AnalyticsReports({ exhibitorId }: AnalyticsReportsProps)
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="profile-views">Profile Views</TabsTrigger>
-          <TabsTrigger value="downloads">Downloads</TabsTrigger>
-          <TabsTrigger value="engagement">Engagement</TabsTrigger>
+        <TabsList className={cn(exTabsList, "grid w-full grid-cols-4")}>
+          <TabsTrigger value="overview" className={exTabsTriggerActive}>
+            Overview
+          </TabsTrigger>
+          <TabsTrigger value="profile-views" className={exTabsTriggerActive}>
+            Profile Views
+          </TabsTrigger>
+          <TabsTrigger value="downloads" className={exTabsTriggerActive}>
+            Downloads
+          </TabsTrigger>
+          <TabsTrigger value="engagement" className={exTabsTriggerActive}>
+            Engagement
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
           {/* Key Metrics Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card>
+            <Card className={exGlassCard}>
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
@@ -169,12 +179,12 @@ export default function AnalyticsReports({ exhibitorId }: AnalyticsReportsProps)
   : "0"}
 </p>
                   </div>
-                  <Eye className="w-8 h-8 text-blue-500" />
+                  <Eye className="h-8 w-8 text-[#4776E6]" />
                 </div>
                 <p className="text-xs text-green-600 mt-2">+15% from last month</p>
               </CardContent>
             </Card>
-            <Card>
+            <Card className={exGlassCard}>
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
@@ -186,7 +196,7 @@ export default function AnalyticsReports({ exhibitorId }: AnalyticsReportsProps)
                 <p className="text-xs text-green-600 mt-2">+22% from last month</p>
               </CardContent>
             </Card>
-            <Card>
+            <Card className={exGlassCard}>
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
@@ -198,7 +208,7 @@ export default function AnalyticsReports({ exhibitorId }: AnalyticsReportsProps)
                 <p className="text-xs text-green-600 mt-2">+18% from last month</p>
               </CardContent>
             </Card>
-            <Card>
+            <Card className={exGlassCard}>
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
@@ -214,7 +224,7 @@ export default function AnalyticsReports({ exhibitorId }: AnalyticsReportsProps)
 
           {/* Charts Row */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
+            <Card className={exGlassCard}>
               <CardHeader>
                 <CardTitle>Profile Views Trend</CardTitle>
               </CardHeader>
@@ -225,13 +235,13 @@ export default function AnalyticsReports({ exhibitorId }: AnalyticsReportsProps)
                     <XAxis dataKey="date" />
                     <YAxis />
                     <Tooltip />
-                    <Area type="monotone" dataKey="views" stroke="#3B82F6" fill="#3B82F6" fillOpacity={0.3} />
+                    <Area type="monotone" dataKey="views" stroke="#4776E6" fill="#4776E6" fillOpacity={0.3} />
                   </AreaChart>
                 </ResponsiveContainer>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className={exGlassCard}>
               <CardHeader>
                 <CardTitle>Lead Sources</CardTitle>
               </CardHeader>
@@ -261,7 +271,7 @@ export default function AnalyticsReports({ exhibitorId }: AnalyticsReportsProps)
         </TabsContent>
 
         <TabsContent value="profile-views" className="space-y-6">
-          <Card>
+          <Card className={exGlassCard}>
             <CardHeader>
               <CardTitle>Daily Profile Views</CardTitle>
             </CardHeader>
@@ -272,20 +282,20 @@ export default function AnalyticsReports({ exhibitorId }: AnalyticsReportsProps)
                   <XAxis dataKey="date" />
                   <YAxis />
                   <Tooltip />
-                  <Line type="monotone" dataKey="views" stroke="#3B82F6" strokeWidth={2} />
+                  <Line type="monotone" dataKey="views" stroke="#4776E6" strokeWidth={2} />
                 </LineChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card>
+            <Card className={exGlassCard}>
               <CardContent className="p-6 text-center">
-                <div className="text-3xl font-bold text-blue-600">{analytics.overview.totalProfileViews}</div>
+                <div className="text-3xl font-bold text-[#4776E6]">{analytics.overview.totalProfileViews}</div>
                 <div className="text-gray-600">Total Views</div>
               </CardContent>
             </Card>
-            <Card>
+            <Card className={exGlassCard}>
               <CardContent className="p-6 text-center">
                 <div className="text-3xl font-bold text-green-600">
                   {Math.round(analytics.overview.totalProfileViews / 30)}
@@ -293,7 +303,7 @@ export default function AnalyticsReports({ exhibitorId }: AnalyticsReportsProps)
                 <div className="text-gray-600">Daily Average</div>
               </CardContent>
             </Card>
-            <Card>
+            <Card className={exGlassCard}>
               <CardContent className="p-6 text-center">
                 <div className="text-3xl font-bold text-purple-600">
                   {Math.max(...analytics.profileViewsData.map((d) => d.views))}
@@ -305,24 +315,24 @@ export default function AnalyticsReports({ exhibitorId }: AnalyticsReportsProps)
         </TabsContent>
 
         <TabsContent value="downloads" className="space-y-6">
-          <Card>
+          <Card className={exGlassCard}>
             <CardHeader>
               <CardTitle>Brochure Download Performance</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 {analytics.brochureDownloadsData.map((item, index) => (
-                  <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div key={index} className="flex items-center justify-between rounded-lg border border-white/50 bg-white/30 p-4 backdrop-blur-sm">
                     <div className="flex items-center gap-3">
-                      <FileText className="w-5 h-5 text-blue-500" />
+                      <FileText className="h-5 w-5 text-[#4776E6]" />
                       <div>
                         <div className="font-medium">{item.name}</div>
                         <div className="text-sm text-gray-600">{item.downloads} downloads</div>
                       </div>
                     </div>
                     <div className="flex items-center gap-4">
-                      <div className="w-32 bg-gray-200 rounded-full h-2">
-                        <div className="bg-blue-500 h-2 rounded-full" style={{ width: `${item.percentage}%` }} />
+                      <div className="h-2 w-32 rounded-full bg-white/60">
+                        <div className="h-2 rounded-full bg-[#4776E6]" style={{ width: `${item.percentage}%` }} />
                       </div>
                       <div className="text-sm font-medium">{item.percentage.toFixed(1)}%</div>
                     </div>
@@ -333,19 +343,19 @@ export default function AnalyticsReports({ exhibitorId }: AnalyticsReportsProps)
           </Card>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card>
+            <Card className={exGlassCard}>
               <CardContent className="p-6 text-center">
                 <div className="text-3xl font-bold text-green-600">{analytics.overview.brochureDownloads}</div>
                 <div className="text-gray-600">Total Downloads</div>
               </CardContent>
             </Card>
-            <Card>
+            <Card className={exGlassCard}>
               <CardContent className="p-6 text-center">
-                <div className="text-3xl font-bold text-blue-600">{analytics.brochureDownloadsData.length}</div>
+                <div className="text-3xl font-bold text-[#4776E6]">{analytics.brochureDownloadsData.length}</div>
                 <div className="text-gray-600">Active Brochures</div>
               </CardContent>
             </Card>
-            <Card>
+            <Card className={exGlassCard}>
               <CardContent className="p-6 text-center">
                 <div className="text-3xl font-bold text-purple-600">
                   {Math.round(
@@ -360,14 +370,14 @@ export default function AnalyticsReports({ exhibitorId }: AnalyticsReportsProps)
         </TabsContent>
 
         <TabsContent value="engagement" className="space-y-6">
-          <Card>
+          <Card className={exGlassCard}>
             <CardHeader>
               <CardTitle>Engagement Metrics Comparison</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 {analytics.engagementData.map((item, index) => (
-                  <div key={index} className="p-4 border rounded-lg">
+                  <div key={index} className="rounded-lg border border-white/50 bg-white/30 p-4 backdrop-blur-sm">
                     <div className="flex items-center justify-between mb-2">
                       <div className="font-medium">{item.metric}</div>
                       <div className={`text-sm font-medium ${item.change > 0 ? "text-green-600" : "text-red-600"}`}>
@@ -378,7 +388,7 @@ export default function AnalyticsReports({ exhibitorId }: AnalyticsReportsProps)
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div>
                         <div className="text-gray-600">Current Period</div>
-                        <div className="text-2xl font-bold text-blue-600">{item.current.toLocaleString()}</div>
+                        <div className="text-2xl font-bold text-[#4776E6]">{item.current.toLocaleString()}</div>
                       </div>
                       <div>
                         <div className="text-gray-600">Previous Period</div>

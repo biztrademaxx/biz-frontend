@@ -69,7 +69,7 @@ export default function Navbar() {
   }
 
   return (
-    <nav className="bg-white shadow-sm">
+    <nav className="border-b border-white/50 bg-white/45 shadow-[0_4px_24px_rgba(71,118,230,0.06)] backdrop-blur-md">
       <div className="max-w-1xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
         <div className="flex justify-between h-20 items-center">
           {/* Left: Logo + Explore */}
@@ -81,28 +81,28 @@ export default function Navbar() {
             <div className="relative">
               <button
                 onClick={toggleExplore}
-                className="flex items-center text-gray-700 hover:text-gray-900 focus:outline-none"
+                className="flex items-center text-slate-700 hover:text-[#4776E6] focus:outline-none"
               >
                 <span>Explore</span>
                 <ChevronDown className="w-4 h-4 ml-1" />
               </button>
 
               {exploreOpen && (
-                <div className="absolute left-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-10">
+                <div className="absolute left-0 z-10 mt-2 w-48 rounded-md border border-white/60 bg-white/80 shadow-lg backdrop-blur-md">
                   <ul className="py-1">
                     <li>
                       <Link href="/trade-fairs">
-                        <p className="block px-4 py-2 hover:bg-gray-100">Trade Fairs</p>
+                        <p className="block px-4 py-2 hover:bg-[#4776E6]/10">Trade Fairs</p>
                       </Link>
                     </li>
                     <li>
                       <Link href="/conferences">
-                        <p className="block px-4 py-2 hover:bg-gray-100">Conferences</p>
+                        <p className="block px-4 py-2 hover:bg-[#4776E6]/10">Conferences</p>
                       </Link>
                     </li>
                     <li>
                       <Link href="/webinars">
-                        <p className="block px-4 py-2 hover:bg-gray-100">Webinars</p>
+                        <p className="block px-4 py-2 hover:bg-[#4776E6]/10">Webinars</p>
                       </Link>
                     </li>
                   </ul>
@@ -114,12 +114,12 @@ export default function Navbar() {
           {/* Right: Links + Profile */}
           <div className="flex items-center space-x-6">
             <Link href="/event">
-              <p className="text-gray-700 hover:text-gray-900">Top 10 Must Visit</p>
+              <p className="text-slate-700 hover:text-[#4776E6]">Top 10 Must Visit</p>
             </Link>
             <Link href="/speakers">
-              <p className="text-gray-700 hover:text-gray-900">Speakers</p>
+              <p className="text-slate-700 hover:text-[#4776E6]">Speakers</p>
             </Link>
-            <p onClick={handleAddevent} className="text-gray-700 hover:text-gray-900 cursor-pointer">
+            <p onClick={handleAddevent} className="cursor-pointer text-slate-700 hover:text-[#4776E6]">
               Add Event
             </p>
 
@@ -129,7 +129,7 @@ export default function Navbar() {
             {/* Profile Menu */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-2 p-2 rounded-full bg-[#002C71] text-white hover:bg-blue-800 focus:outline-none transition-colors">
+                <button className="flex items-center gap-2 rounded-full bg-[#4776E6] p-2 text-white transition-colors hover:bg-[#3556b8] focus:outline-none">
                   <User className="w-4 h-4" />
                   <ChevronDown className="w-3 h-3" />
                 </button>

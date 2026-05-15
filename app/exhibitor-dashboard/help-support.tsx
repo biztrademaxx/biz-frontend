@@ -3,7 +3,7 @@
 
 import { devLog } from "@/lib/dev-log"
 
-import { useState } from "react"
+import { useState, type ChangeEvent, type FormEvent } from "react"
 import { HelpSupportTicketsSection } from "@/components/support/HelpSupportTicketsSection"
 import {
     Phone,
@@ -24,6 +24,8 @@ import {
     Package,
     Mailbox
 } from "lucide-react"
+import { cn } from "@/lib/utils"
+import { exGlassCard, exPageTitle, exLink } from "./dashboard-theme"
 
 interface FAQ {
     question: string
@@ -89,12 +91,12 @@ export function ExhibitorHelpSupport() {
         setOpenFAQIndex(openFAQIndex === index ? null : index)
     }
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target
         setFormData((prev) => ({ ...prev, [name]: value }))
     }
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = (e: FormEvent) => {
         e.preventDefault()
         devLog("Contact Form Submitted", formData)
         // Add API call here
@@ -106,36 +108,36 @@ export function ExhibitorHelpSupport() {
         <div className="max-w-6xl mx-auto py-12 px-4 sm:px-6 space-y-12">
             {/* Header Section */}
             <div className="text-center">
-                <h1 className="text-4xl font-bold text-gray-900 mb-4">Help & Support</h1>
+                <h1 className={cn(exPageTitle, "mb-4 text-center")}>Help & Support</h1>
                 <p className="text-xl text-gray-600 max-w-3xl mx-auto">
                     This FAQ section is designed to address common exhibitor questions and provide quick, clear answers to help you manage your participation effectively on Biztradefairs.com.
                 </p>
             </div>
 
             {/* FAQs Section */}
-            <section className="bg-white p-8 rounded-xl shadow-lg border border-gray-100">
-                <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-                    <HelpCircle className="text-blue-600" size={28} />
+            <section className={cn(exGlassCard, "p-8")}>
+                <h2 className="mb-6 flex items-center gap-2 text-2xl font-bold text-slate-800">
+                    <HelpCircle className="text-[#4776E6]" size={28} />
                     Frequently Asked Questions
                 </h2>
                 <div className="space-y-4">
                     {faqList.map((faq, index) => (
                         <div
                             key={index}
-                            className="border border-gray-200 rounded-lg overflow-hidden transition-all hover:shadow-sm"
+                            className="overflow-hidden rounded-lg border border-white/60 transition-all hover:shadow-sm"
                         >
                             <button
-                                className="w-full flex items-center gap-4 p-6 font-medium text-left bg-gray-50 hover:bg-gray-100 transition"
+                                className="flex w-full items-center gap-4 bg-white/40 p-6 text-left font-medium transition hover:bg-white/55"
                                 onClick={() => toggleFAQ(index)}
                             >
-                                <span className="text-2xl font-bold text-gray-600 w-6 flex-shrink-0">
+                                <span className="flex w-6 flex-shrink-0 items-center justify-center text-2xl font-bold text-slate-600">
                                     {openFAQIndex === index ? "−" : "+"}
                                 </span>
-                                <span className="text-gray-900 text-lg">{faq.question}</span>
+                                <span className="text-lg text-slate-900">{faq.question}</span>
                             </button>
 
                             {openFAQIndex === index && (
-                                <div className="p-6 text-gray-700 bg-white whitespace-pre-line border-t border-gray-200">
+                                <div className="whitespace-pre-line border-t border-white/50 bg-white/35 p-6 text-slate-700 backdrop-blur-sm">
                                     {faq.answer}
                                 </div>
                             )}
@@ -147,24 +149,24 @@ export function ExhibitorHelpSupport() {
             <HelpSupportTicketsSection />
 
             {/* Contact Support Section */}
-            <div className="bg-white p-8 rounded-xl shadow-lg space-y-6 border border-gray-100">
-                <h2 className="text-2xl font-bold flex items-center gap-2">
-                    <MessageCircle className="text-blue-600" size={28} />
+            <div className={cn(exGlassCard, "space-y-6 p-8")}>
+                <h2 className="flex items-center gap-2 text-2xl font-bold text-slate-800">
+                    <MessageCircle className="text-[#4776E6]" size={28} />
                     Contact Support
                 </h2>
-                <p className="text-gray-700">
-                    Welcome to the Exhibitor Support Center of <span className="font-semibold text-blue-600">BizTradeFairs.com</span>.
+                <p className="text-slate-700">
+                    Welcome to the Exhibitor Support Center of <span className={cn(exLink, "font-semibold")}>BizTradeFairs.com</span>.
                     We're here to make your exhibition journey successful, efficient, and productive.
                 </p>
 
                 <div className="space-y-4">
-                    <div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
+                    <div className="rounded-lg border border-[#4776E6]/20 bg-[#4776E6]/10 p-4">
                         <div className="flex items-start gap-3">
-                            <Mail className="text-blue-600 mt-1 flex-shrink-0" size={20} />
+                            <Mail className="mt-1 flex-shrink-0 text-[#4776E6]" size={20} />
                             <div>
-                                <h3 className="font-semibold text-gray-900">Email Support</h3>
-                                <p className="text-gray-700 text-sm mt-1">For exhibitor queries, booth management, and documentation support:</p>
-                                <p className="text-blue-600 font-medium mt-2">exhibitor-support@biztradefairs.com</p>
+                                <h3 className="font-semibold text-slate-900">Email Support</h3>
+                                <p className="mt-1 text-sm text-slate-700">For exhibitor queries, booth management, and documentation support:</p>
+                                <p className={cn(exLink, "mt-2 font-medium")}>exhibitor-support@biztradefairs.com</p>
                             </div>
                         </div>
                     </div>
@@ -173,8 +175,8 @@ export function ExhibitorHelpSupport() {
                         <div className="flex items-start gap-3">
                             <Phone className="text-green-600 mt-1 flex-shrink-0" size={20} />
                             <div>
-                                <h3 className="font-semibold text-gray-900">Phone Support</h3>
-                                <p className="text-gray-700 text-sm mt-1">Dedicated helpline for exhibitors during business hours:</p>
+                                <h3 className="font-semibold text-slate-900">Phone Support</h3>
+                                <p className="mt-1 text-sm text-slate-700">Dedicated helpline for exhibitors during business hours:</p>
                                 <p className="text-green-600 font-medium mt-2">+91-9148319993</p>
                                 <div className="flex items-center gap-1 text-sm text-gray-600 mt-2">
                                     <Clock size={16} />
@@ -188,10 +190,10 @@ export function ExhibitorHelpSupport() {
                         <div className="flex items-start gap-3">
                             <Building className="text-purple-600 mt-1 flex-shrink-0" size={20} />
                             <div>
-                                <h3 className="font-semibold text-gray-900">Corporate Office</h3>
-                                <p className="text-gray-700 text-sm mt-1">BizTradeFairs.com</p>
-                                <p className="text-gray-700 text-sm">Maxx Business Media Pvt. Ltd.</p>
-                                <p className="text-gray-700 text-sm mt-1">
+                                <h3 className="font-semibold text-slate-900">Corporate Office</h3>
+                                <p className="text-sm text-slate-700">BizTradeFairs.com</p>
+                                <p className="text-sm text-slate-700">Maxx Business Media Pvt. Ltd.</p>
+                                <p className="mt-1 text-sm text-slate-700">
                                     T9, 3rd Floor, Swastik Manandi Arcade, SC Road, Seshadripuram, Bengaluru – 560020, INDIA
                                 </p>
                             </div>
@@ -202,8 +204,8 @@ export function ExhibitorHelpSupport() {
                         <div className="flex items-start gap-3">
                             <Clock className="text-amber-600 mt-1 flex-shrink-0" size={20} />
                             <div>
-                                <h3 className="font-semibold text-gray-900">Live Chat</h3>
-                                <p className="text-gray-700 text-sm mt-1">
+                                <h3 className="font-semibold text-slate-900">Live Chat</h3>
+                                <p className="mt-1 text-sm text-slate-700">
                                     Click on the Chat Now button at the bottom of your screen to connect with our exhibitor support team instantly.
                                 </p>
                                 <div className="flex items-center gap-1 text-sm text-gray-600 mt-2">

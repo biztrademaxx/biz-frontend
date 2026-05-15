@@ -11,6 +11,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Skeleton } from "@/components/ui/skeleton"
 import { useToast } from "@/hooks/use-toast"
 import { Users, Download, Search, Phone, Mail, MessageSquare, Calendar, Eye, Edit } from "lucide-react"
+import { cn } from "@/lib/utils"
+import { exGlassCard, exInput, exBtnPrimary, exPageTitle } from "./dashboard-theme"
 
 interface LeadManagementProps {
   exhibitorId: string
@@ -126,7 +128,7 @@ export default function LeadManagement({ exhibitorId }: LeadManagementProps) {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "NEW":
-        return "bg-blue-500"
+        return "bg-[#4776E6]"
       case "CONTACTED":
         return "bg-yellow-500"
       case "QUALIFIED":
@@ -152,7 +154,7 @@ export default function LeadManagement({ exhibitorId }: LeadManagementProps) {
   }
 
   const LeadCard = ({ lead }: { lead: Lead }) => (
-    <Card className="hover:shadow-md transition-shadow">
+    <Card className={cn(exGlassCard, "transition-shadow hover:shadow-md")}>
       <CardContent className="p-6">
         <div className="flex items-start justify-between mb-4">
           <div className="flex-1">
@@ -255,6 +257,7 @@ export default function LeadManagement({ exhibitorId }: LeadManagementProps) {
                             })
                           }
                         }}
+                        className={exBtnPrimary}
                       >
                         Save Changes
                       </Button>
@@ -283,7 +286,7 @@ export default function LeadManagement({ exhibitorId }: LeadManagementProps) {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             {lead.followUpDate && (
-              <Badge variant="outline" className="text-blue-600">
+              <Badge variant="outline" className="border-[#4776E6]/30 text-[#4776E6]">
                 Follow-up: {new Date(lead.followUpDate).toLocaleDateString()}
               </Badge>
             )}
@@ -324,7 +327,7 @@ export default function LeadManagement({ exhibitorId }: LeadManagementProps) {
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <p className="text-red-600 mb-4">{error}</p>
-          <Button onClick={fetchLeads}>Try Again</Button>
+          <Button className={exBtnPrimary} onClick={fetchLeads}>Try Again</Button>
         </div>
       </div>
     )
@@ -333,8 +336,8 @@ export default function LeadManagement({ exhibitorId }: LeadManagementProps) {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-900">Lead Management</h1>
-        <Button className="flex items-center gap-2">
+        <h1 className={exPageTitle}>Lead Management</h1>
+        <Button className={cn("flex items-center gap-2", exBtnPrimary)}>
           <Download className="w-4 h-4" />
           Export to Excel
         </Button>
@@ -342,13 +345,13 @@ export default function LeadManagement({ exhibitorId }: LeadManagementProps) {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card>
+        <Card className={exGlassCard}>
           <CardContent className="p-6 text-center">
-            <div className="text-3xl font-bold text-blue-600">{leads.length}</div>
+            <div className="text-3xl font-bold text-[#4776E6]">{leads.length}</div>
             <div className="text-gray-600">Total Leads</div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className={exGlassCard}>
           <CardContent className="p-6 text-center">
             <div className="text-3xl font-bold text-green-600">
               {leads.filter((l) => l.status === "QUALIFIED").length}
@@ -356,7 +359,7 @@ export default function LeadManagement({ exhibitorId }: LeadManagementProps) {
             <div className="text-gray-600">Qualified</div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className={exGlassCard}>
           <CardContent className="p-6 text-center">
             <div className="text-3xl font-bold text-yellow-600">
               {leads.filter((l) => l.status === "CONTACTED").length}
@@ -364,7 +367,7 @@ export default function LeadManagement({ exhibitorId }: LeadManagementProps) {
             <div className="text-gray-600">In Progress</div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className={exGlassCard}>
           <CardContent className="p-6 text-center">
             <div className="text-3xl font-bold text-purple-600">
               {leads.length > 0
@@ -378,7 +381,7 @@ export default function LeadManagement({ exhibitorId }: LeadManagementProps) {
       </div>
 
       {/* Filters and Search */}
-      <Card>
+      <Card className={exGlassCard}>
         <CardContent className="p-6">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1">
@@ -388,7 +391,7 @@ export default function LeadManagement({ exhibitorId }: LeadManagementProps) {
                   placeholder="Search leads by name, company, or email..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
+                  className={cn("pl-10", exInput)}
                 />
               </div>
             </div>
@@ -413,7 +416,7 @@ export default function LeadManagement({ exhibitorId }: LeadManagementProps) {
         {filteredLeads.length > 0 ? (
           filteredLeads.map((lead) => <LeadCard key={lead.id} lead={lead} />)
         ) : (
-          <Card>
+          <Card className={exGlassCard}>
             <CardContent className="p-12 text-center">
               <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-gray-600 mb-2">No leads found</h3>
