@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { Users, UserPlus, UserCheck, User } from "lucide-react"
+import { UserPlus, UserCheck, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { apiFetch, getCurrentUserId, isAuthenticated } from "@/lib/api"
 import { readInterestLocalStorage } from "@/lib/event-leads-client"
@@ -131,7 +131,6 @@ export function EventCardFollowStrip({
   return (
     <div className="flex flex-wrap items-center gap-3">
       <div className="flex items-center gap-2 min-w-0">
-        <Users className="w-4 h-4 text-gray-500 shrink-0" aria-hidden />
         <div className="flex items-center -space-x-2">
           {faces.map((f, i) => {
             const src = faceUrl(f)

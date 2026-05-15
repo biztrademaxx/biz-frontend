@@ -1,7 +1,9 @@
 "use client"
 
 import Link from "next/link"
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
+import { useKeenSlider } from "keen-slider/react"
+import "keen-slider/keen-slider.min.css"
 
 const FALLBACK_IMAGE = "/images/gpex.jpg"
 
@@ -22,9 +24,6 @@ type AdCardProps = {
 
 /** Shown when no CMS banner is configured — on-brand editorial, not third‑party demo copy. */
 const DEFAULT_PROMO_TITLE = "Biz Trade Fairs"
-const DEFAULT_PROMO_SUBTITLE =
-  "Discover global trade fairs, connect with opportunities, and grow your business network."
-const DEFAULT_PROMO_FOOTER = "BizTradeFairs.com"
 
 /** Normalize admin-entered URLs so clicks work (add https://, allow internal paths). */
 function resolveClickTarget(raw: string): { href: string; external: boolean } | null {
@@ -60,110 +59,143 @@ function AdCardSkeleton() {
       aria-busy="true"
       aria-label="Loading advertisement"
     >
-      <div className="hero-card-shimmer h-44 w-full sm:h-52" />
-      <div className="border-t border-gray-200 px-4 py-3 space-y-2">
-        <div className="home-shimmer h-5 w-3/4 max-w-[200px] rounded-md" />
-        <div className="home-shimmer h-4 w-full rounded-md" />
-        <div className="mt-3 flex items-center justify-between">
-          <div className="home-shimmer h-3 w-28 rounded-md" />
-          <div className="home-shimmer h-10 w-10 shrink-0 rounded-full" />
+      <div className="p-[3px]">
+        <div className="hero-card-shimmer h-[186px] w-full sm:h-[218px]" />
+      </div>
+    </div>
+  )
+}
+
+function EditorialAdBody() {
+  const title = DEFAULT_PROMO_TITLE
+  const click = resolveClickTarget("")
+  const body = (
+    <div className="bg-gray-100 p-[3px]">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={FALLBACK_IMAGE}
+        alt={title}
+        className="block h-[186px] w-full object-cover object-center sm:h-[218px]"
+        loading="lazy"
+        decoding="async"
+      />
+    </div>
+  )
+
+  if (click?.external === true) {
+    return (
+      <a
+        href={click.href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={shellInteractiveClass}
+        aria-label={`${title} — opens in a new tab`}
+      >
+        {body}
+      </a>
+    )
+  }
+  if (click?.external === false) {
+    return (
+      <Link href={click.href} className={shellInteractiveClass} aria-label={title}>
+        {body}
+      </Link>
+    )
+  }
+  return <div className={shellClass}>{body}</div>
+}
+
+/** Inside `p-[3px]` wrapper; fixed image band height (above previous 170/202). */
+const SLIDE_MIN_H = "min-h-[186px] sm:min-h-[218px]"
+
+function CmsAdCarousel({ banners }: { banners: PublicBannerAd[] }) {
+  const [imgFallback, setImgFallback] = useState<Record<string, boolean>>({})
+  const hasMultiple = banners.length > 1
+
+  const [sliderRef, instanceRef] = useKeenSlider<HTMLDivElement>({
+    loop: hasMultiple,
+    slides: { perView: 1, spacing: 0 },
+  })
+
+  useEffect(() => {
+    instanceRef.current?.update()
+  }, [banners])
+
+  useEffect(() => {
+    if (!hasMultiple) return
+    const id = window.setInterval(() => {
+      instanceRef.current?.next()
+    }, 5000)
+    return () => window.clearInterval(id)
+  }, [hasMultiple, banners.length])
+
+  const slideImage = useCallback((b: PublicBannerAd) => {
+    const src = imgFallback[b.id] ? FALLBACK_IMAGE : (b.imageUrl?.trim() || FALLBACK_IMAGE)
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={src}
+        alt={b.title || "Advertisement"}
+        className="h-full w-full object-cover object-center"
+        loading="lazy"
+        decoding="async"
+        onError={() => setImgFallback((prev) => ({ ...prev, [b.id]: true }))}
+      />
+    )
+  }, [imgFallback])
+
+  return (
+    <div className={shellClass} role="region" aria-roledescription="carousel" aria-label="Sponsored banners">
+      <div className="bg-gray-100 p-[3px]">
+        <div ref={sliderRef} className={`keen-slider w-full bg-gray-100 ${SLIDE_MIN_H}`}>
+          {banners.map((b) => {
+            const c = resolveClickTarget(b.link ?? "")
+            const inner = slideImage(b)
+            return (
+              <div key={b.id} className={`keen-slider__slide ${SLIDE_MIN_H} relative overflow-hidden`}>
+                {c?.external === true ? (
+                  <a
+                    href={c.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="absolute inset-0 block h-full w-full"
+                    aria-label={`${b.title} — opens in a new tab`}
+                  >
+                    {inner}
+                  </a>
+                ) : c?.external === false ? (
+                  <Link href={c.href} className="absolute inset-0 block h-full w-full" aria-label={b.title}>
+                    {inner}
+                  </Link>
+                ) : (
+                  <div className="absolute inset-0 h-full w-full">{inner}</div>
+                )}
+              </div>
+            )
+          })}
         </div>
       </div>
     </div>
   )
 }
 
-/**
- * Sidebar ad from `/api/public/content-banners`. Image is full width of the card; when the
- * admin sets a destination URL, the whole ad (image + text block) is one clickable target.
- */
-export default function AdCard({ page = "events", position = "sidebar" }: AdCardProps) {
-  const [banner, setBanner] = useState<PublicBannerAd | null>(null)
-  const [imageSrc, setImageSrc] = useState(FALLBACK_IMAGE)
-  /** False until the first fetch for this page/position finishes — prevents dummy content flash. */
-  const [fetchSettled, setFetchSettled] = useState(false)
-
-  useEffect(() => {
-    let cancelled = false
-    setFetchSettled(false)
-    const q = new URLSearchParams({ page, position })
-    ;(async () => {
-      try {
-        const res = await fetch(`/api/public/content-banners?${q.toString()}`, {
-          cache: "no-store",
-        })
-        const data = res.ok ? await res.json() : []
-        const list = Array.isArray(data)
-          ? data.filter((b: PublicBannerAd) => b.isActive !== false && b.imageUrl && String(b.imageUrl).trim())
-          : []
-        if (!cancelled) {
-          const first = list[0] as PublicBannerAd | undefined
-          setBanner(first ?? null)
-          setImageSrc(first?.imageUrl?.trim() || FALLBACK_IMAGE)
-        }
-      } catch {
-        if (!cancelled) {
-          setBanner(null)
-          setImageSrc(FALLBACK_IMAGE)
-        }
-      } finally {
-        if (!cancelled) setFetchSettled(true)
-      }
-    })()
-    return () => {
-      cancelled = true
-    }
-  }, [page, position])
-
-  if (!fetchSettled) {
-    return <AdCardSkeleton />
-  }
-
-  const alt = (banner?.title || DEFAULT_PROMO_TITLE).trim()
-  const title = banner?.title?.trim() || DEFAULT_PROMO_TITLE
-  const subtitle = banner ? "Sponsored" : DEFAULT_PROMO_SUBTITLE
-  const click = resolveClickTarget(banner?.link ?? "")
+function SingleCmsAdCard({ banner }: { banner: PublicBannerAd }) {
+  const [imageSrc, setImageSrc] = useState(banner.imageUrl?.trim() || FALLBACK_IMAGE)
+  const alt = (banner.title || "Sponsored").trim() || "Sponsored"
+  const click = resolveClickTarget(banner.link ?? "")
 
   const body = (
-    <>
-      <div className="relative w-full h-44 sm:h-52 bg-gray-100 overflow-hidden">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={imageSrc}
-          alt={alt}
-          className="absolute inset-0 h-full w-full object-cover object-center"
-          loading="lazy"
-          decoding="async"
-          onError={() => setImageSrc(FALLBACK_IMAGE)}
-        />
-      </div>
-
-      <div className="border-t border-gray-200 px-4 py-3">
-        <h3 className="text-lg font-semibold text-gray-800 leading-tight">{title}</h3>
-        <p className="text-sm text-gray-600 mt-1 leading-6">{subtitle}</p>
-
-        <div className="mt-3 flex items-center justify-between">
-          <span className="text-xs text-gray-500">
-            {click ? "Tap to open sponsor site" : banner ? "Advertisement" : DEFAULT_PROMO_FOOTER}
-          </span>
-          <span
-            aria-hidden
-            className="w-10 h-10 rounded-full shadow-md bg-white border border-gray-200 flex items-center justify-center shrink-0"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="w-5 h-5 text-gray-800"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-            </svg>
-          </span>
-        </div>
-      </div>
-    </>
+    <div className="bg-gray-100 p-[3px]">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={imageSrc}
+        alt={alt}
+        className="block h-[186px] w-full object-cover object-center sm:h-[218px]"
+        loading="lazy"
+        decoding="async"
+        onError={() => setImageSrc(FALLBACK_IMAGE)}
+      />
+    </div>
   )
 
   if (click?.external === true) {
@@ -189,4 +221,56 @@ export default function AdCard({ page = "events", position = "sidebar" }: AdCard
   }
 
   return <div className={shellClass}>{body}</div>
+}
+
+/**
+ * Sidebar ad from `/api/public/content-banners`. One or more images: multiple banners auto-slide every 5s;
+ * a single banner keeps the whole card as one link when a URL is set.
+ */
+export default function AdCard({ page = "events", position = "sidebar" }: AdCardProps) {
+  const [cmsBanners, setCmsBanners] = useState<PublicBannerAd[]>([])
+  const [fetchSettled, setFetchSettled] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    setFetchSettled(false)
+    const q = new URLSearchParams({ page, position })
+    ;(async () => {
+      try {
+        const res = await fetch(`/api/public/content-banners?${q.toString()}`, {
+          cache: "no-store",
+        })
+        const data = res.ok ? await res.json() : []
+        const list = Array.isArray(data)
+          ? data.filter((b: PublicBannerAd) => b.isActive !== false && b.imageUrl && String(b.imageUrl).trim())
+          : []
+        if (!cancelled) {
+          setCmsBanners(list)
+        }
+      } catch {
+        if (!cancelled) {
+          setCmsBanners([])
+        }
+      } finally {
+        if (!cancelled) setFetchSettled(true)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [page, position])
+
+  if (!fetchSettled) {
+    return <AdCardSkeleton />
+  }
+
+  if (cmsBanners.length === 0) {
+    return <EditorialAdBody />
+  }
+
+  if (cmsBanners.length === 1) {
+    return <SingleCmsAdCard banner={cmsBanners[0]} />
+  }
+
+  return <CmsAdCarousel banners={cmsBanners} />
 }
