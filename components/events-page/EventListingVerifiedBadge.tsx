@@ -34,12 +34,15 @@ export function EventListingVerifiedBadge({
     >
       {showImg ? (
         // eslint-disable-next-line @next/next/no-img-element
+        <>
         <img
           src={src}
           alt="Verified"
           className="h-6 max-h-6 w-auto max-w-[80px] object-contain object-left"
           onError={onImgError}
         />
+        <span className="text-sm font-semibold text emerald-700">verified</span>
+        </>
       ) : (
         <span className="text-[11px] font-bold leading-none text-emerald-800 sm:text-xs">Verified</span>
       )}
