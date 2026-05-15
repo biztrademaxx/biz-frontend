@@ -6,11 +6,11 @@ import { useKeenSlider } from "keen-slider/react"
 import "keen-slider/keen-slider.min.css"
 import Image from "next/image"
 import { useEffect, useState } from "react"
-import Link from "next/link"
-import { apiFetch } from "@/lib/api"
 import { formatPublicTicketPriceLine } from "@/lib/ticket-price-display"
 import { formatEventSidebarTimeRange } from "@/lib/event-sidebar-time-range"
 import { BRAND_IMAGE_BOTTOM_FADE } from "@/lib/brand-image-gradients"
+
+const DEFAULT_EVENT_HERO_IMAGE = "/herosection-images/eventbanner.jpeg"
 
 interface Event {
   id: string
@@ -46,21 +46,6 @@ interface Event {
   maxAttendees?: number
 }
 
-interface Banner {
-  id: string
-  title: string
-  imageUrl: string
-  publicId: string
-  page: string
-  position: string
-  isActive: boolean
-  link?: string
-  width: number
-  height: number
-  createdAt: string
-  updatedAt: string
-}
-
 interface EventHeroProps {
   event: Event
 }
@@ -68,9 +53,6 @@ interface EventHeroProps {
 export default function EventHero({ event }: EventHeroProps) {
   const [currentSlide, setCurrentSlide] = useState(0)
   const [images, setImages] = useState<string[]>(event.images || [])
-  const [heroBanners, setHeroBanners] = useState<Banner[]>([])
-  const [heroBannersLoading, setHeroBannersLoading] = useState(false)
-  const [currentBannerIndex, setCurrentBannerIndex] = useState(0)
 
   const [sliderRef, instanceRef] = useKeenSlider<HTMLDivElement>({
     loop: true,
@@ -79,46 +61,6 @@ export default function EventHero({ event }: EventHeroProps) {
       setCurrentSlide(slider.track.details.rel)
     },
   })
-
-  const [bannerSliderRef, bannerInstanceRef] = useKeenSlider<HTMLDivElement>({
-    loop: true,
-    slides: { perView: 1 },
-    slideChanged(slider) {
-      setCurrentBannerIndex(slider.track.details.rel)
-    },
-  })
-
-  // Fetch hero banners from backend (no Next.js app/api)
-  useEffect(() => {
-    let cancelled = false
-    let intervalId: ReturnType<typeof setInterval> | undefined
-
-    async function fetchHeroBanners() {
-      try {
-        setHeroBannersLoading(true)
-        const data = await apiFetch<Banner[]>(`/api/content/banners?page=event-detail&position=hero`, { auth: false })
-        if (cancelled) return
-        const list = Array.isArray(data) ? data : []
-        const activeHeroBanners = list.filter((banner: Banner) => banner.isActive !== false)
-        setHeroBanners(activeHeroBanners)
-        if (activeHeroBanners.length > 1) {
-          intervalId = setInterval(() => {
-            bannerInstanceRef.current?.next()
-          }, 8000)
-        }
-      } catch (error) {
-        if (!cancelled) console.error("Error fetching hero banners:", error)
-      } finally {
-        if (!cancelled) setHeroBannersLoading(false)
-      }
-    }
-
-    fetchHeroBanners()
-    return () => {
-      cancelled = true
-      if (intervalId) clearInterval(intervalId)
-    }
-  }, [bannerInstanceRef])
 
   useEffect(() => {
     const slider = instanceRef.current
@@ -203,104 +145,47 @@ export default function EventHero({ event }: EventHeroProps) {
   }
 
   const followersCount = getFollowersCount()
+
+  const slideImages = images.filter(
+    (img) =>
+      typeof img === "string" && img.trim() !== "" && img !== "null" && img !== "undefined"
+  )
+  const videoSlides = event.videos ?? []
+  const hasMainSliderMedia = slideImages.length > 0 || videoSlides.length > 0
+
   const rawHeroLabel =
     (event.subTitle || event.subtitle || "").trim() || (event.title || "").trim()
   const eventSubtitle = rawHeroLabel.slice(0, 10)
 
-  // Handle banner click tracking
-  const handleBannerClick = async (bannerId: string) => {
-    try {
-      await apiFetch(`/api/analytics/banner-click`, {
-        method: "POST",
-        auth: false,
-        body: {
-          bannerId,
-          eventId: event.id,
-          timestamp: new Date().toISOString(),
-          path: typeof window !== "undefined" ? window.location.pathname : "",
-        },
-      })
-    } catch {
-      /* Backend may not implement this route yet */
-    }
-  }
-
   return (
     <div>
-      {/* SIMPLIFIED Dynamic Hero Banner Section - Only image */}
+      {/* Top hero strip: fixed branding image (event photos only in card slider below) */}
       <div className="relative h-[200px] md:h-[300px] lg:h-[200px] overflow-hidden">
-        {heroBannersLoading ? (
-          <div className="hero-card-shimmer h-full w-full" aria-busy="true" aria-label="Loading banner" />
-        ) : heroBanners.length > 0 ? (
-          <>
-            {/* Banner Slider - Only images without title */}
-            <div ref={bannerSliderRef} className="keen-slider h-full w-full">
-              {heroBanners.map((banner, index) => (
-                <div key={banner.id} className="keen-slider__slide relative h-full w-full bg-white">
-                  <Link
-                    href={banner.link || "#"}
-                    onClick={() => handleBannerClick(banner.id)}
-                    target={banner.link?.startsWith('http') ? '_blank' : '_self'}
-                    className="block w-full h-full"
-                  >
-                    <Image
-                      src={banner.imageUrl || "/city/c4.jpg"}
-                      alt={banner.title}
-                      fill
-                      className="object-cover"
-                      priority={index === 0}
-                      sizes="100vw"
-                      onLoadingComplete={(imgEl) => {
-                        const ratio = imgEl.naturalWidth / imgEl.naturalHeight
-                        imgEl.style.objectFit = ratio > 2 ? "contain" : "cover"
-                      }}
-                    />
-                  </Link>
-                </div>
-              ))}
-            </div>
-
-            {/* Banner indicators if multiple banners */}
-            {heroBanners.length > 1 && (
-              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
-                {heroBanners.map((_, idx) => (
-                  <button
-                    key={idx}
-                    className={`w-2 h-2 rounded-full transition-colors ${idx === currentBannerIndex ? "bg-white" : "bg-white/50"
-                      }`}
-                    onClick={() => bannerInstanceRef.current?.moveToIdx(idx)}
-                  />
-                ))}
-              </div>
-            )}
-          </>
-        ) : (
-          // Fallback to default banner if no banners found
-          <div className="relative w-full h-full">
-            <Image
-              src={
-                event.images?.filter(
-                  (img) =>
-                    typeof img === "string" &&
-                    img.trim() !== "" &&
-                    img !== "null" &&
-                    img !== "undefined"
-                )[0] || "/city/c4.jpg"
-              }
-              alt={event.title}
-              fill
-              className="h-full w-full object-cover"
-              sizes="100vw"
-              priority
-            />
-
-            <div
-              className="pointer-events-none absolute inset-x-0 bottom-0 top-1/4"
-              style={{ backgroundImage: BRAND_IMAGE_BOTTOM_FADE }}
-              aria-hidden
-            />
-          </div>
-        )}
+        <div className="relative h-full w-full">
+          {/* Slight scale + light blur avoids soft edges clipping inside overflow-hidden */}
+          <Image
+            src={DEFAULT_EVENT_HERO_IMAGE}
+            alt={event.title}
+            fill
+            className="object-cover scale-105 blur-sm brightness-[0.82] saturate-[0.92]"
+            sizes="100vw"
+            priority
+          />
+          {/* Smoky / mist veil */}
+          <div
+            className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_120%_80%_at_50%_40%,rgba(15,23,42,0.14)_0%,rgba(15,23,42,0.38)_45%,rgba(2,6,23,0.52)_100%)]"
+            aria-hidden
+          />
+          <div
+            className="pointer-events-none absolute inset-0 bg-gradient-to-b from-slate-950/35 via-slate-900/14 to-transparent"
+            aria-hidden
+          />
+          <div
+            className="pointer-events-none absolute inset-x-0 bottom-0 top-1/4"
+            style={{ backgroundImage: BRAND_IMAGE_BOTTOM_FADE }}
+            aria-hidden
+          />
+        </div>
       </div>
 
       {/* Main Card */}
@@ -308,12 +193,12 @@ export default function EventHero({ event }: EventHeroProps) {
         {/* Slider Section */}
         <div className="md:w-2/3 w-full min-h-[280px] md:min-h-[320px] relative">
           <div ref={sliderRef} className="keen-slider h-full w-full">
-            {images.length > 0 ? (
+            {hasMainSliderMedia ? (
               <>
-                {images.map((imgSrc, index) => (
+                {slideImages.map((imgSrc, index) => (
                   <div key={`image-${index}`} className="keen-slider__slide relative h-full w-full bg-white">
                     <Image
-                      src={imgSrc || "/city/c4.jpg"}
+                      src={imgSrc}
                       alt={`${event.title} Image ${index + 1}`}
                       fill
                       className="object-cover"
@@ -326,7 +211,7 @@ export default function EventHero({ event }: EventHeroProps) {
                   </div>
                 ))}
 
-                {event.videos?.map((vid: string, index: number) => (
+                {videoSlides.map((vid: string, index: number) => (
                   <div key={`video-${index}`} className="keen-slider__slide relative h-full w-full">
                     <video className="w-full h-full object-cover" autoPlay loop muted playsInline>
                       <source src={vid} type="video/mp4" />
@@ -335,26 +220,17 @@ export default function EventHero({ event }: EventHeroProps) {
                 ))}
               </>
             ) : (
-              <div className="keen-slider__slide relative h-full w-full bg-white">
-                <Image
-                  src="/herosection-images/test.jpeg"
-                  alt="Default Image"
-                  fill
-                  className="object-cover"
-                  priority
-                  onLoadingComplete={(imgEl) => {
-                    const ratio = imgEl.naturalWidth / imgEl.naturalHeight
-                    imgEl.style.objectFit = ratio > 2 ? "contain" : "cover"
-                  }}
-                />
-              </div>
+              <div
+                className="keen-slider__slide relative h-full min-h-[280px] w-full bg-neutral-100"
+                aria-hidden
+              />
             )}
           </div>
 
           {/* Slide Indicators */}
-          {images.length > 1 && (
+          {slideImages.length > 1 && (
             <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
-              {images.map((_, idx) => (
+              {slideImages.map((_, idx) => (
                 <button
                   key={idx}
                   className={`w-2 h-2 rounded-full transition-colors ${idx === currentSlide ? "bg-white" : "bg-white/50"
