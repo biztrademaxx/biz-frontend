@@ -169,7 +169,7 @@ export default function PromotionsMarketing({ exhibitorId, onPromotionCreated }:
       icon: Code,
       userCount: 12500,
       avgEngagement: 78,
-      color: "bg-[#004A96]",
+      color: "bg-[#4776E6]",
     },
     {
       id: "business",
@@ -381,7 +381,7 @@ export default function PromotionsMarketing({ exhibitorId, onPromotionCreated }:
       <div className="flex items-center justify-between">
         <h1 className={exPageTitle}>Exhibitor Promotion</h1>
         <div className="flex items-center gap-2">
-          <Badge variant="outline" className="border-[#004A96]/25 bg-[#004A96]/10 text-[#004A96]">
+          <Badge variant="outline" className="border-[#4776E6]/25 bg-[#4776E6]/10 text-[#4776E6]">
             <Users className="w-4 h-4 mr-1" />
             {userCategories.reduce((total, cat) => total + cat.userCount, 0).toLocaleString()} Platform Users
           </Badge>
@@ -470,8 +470,8 @@ export default function PromotionsMarketing({ exhibitorId, onPromotionCreated }:
                         key={category.id}
                         className={`cursor-pointer rounded-lg border-2 p-4 transition-all ${
                           selectedCategories.includes(category.id)
-                            ? "border-[#004A96] bg-[#004A96]/10"
-                            : "border-white/50 bg-white/25 hover:border-[#004A96]/35"
+                            ? "border-[#4776E6] bg-[#4776E6]/10"
+                            : "border-white/50 bg-white/25 hover:border-[#4776E6]/35"
                         }`}
                         onClick={() => handleCategoryToggle(category.id)}
                       >
@@ -502,12 +502,12 @@ export default function PromotionsMarketing({ exhibitorId, onPromotionCreated }:
                   </div>
 
                   {selectedCategories.length > 0 && (
-                    <div className="mt-6 rounded-lg border border-[#004A96]/20 bg-[#004A96]/10 p-4">
+                    <div className="mt-6 rounded-lg border border-[#4776E6]/20 bg-[#4776E6]/10 p-4">
                       <h3 className="font-semibold mb-2">Estimated Reach</h3>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                         <div>
                           <span className="text-gray-600">Total Users:</span>
-                          <div className="text-2xl font-bold text-[#004A96]">
+                          <div className="text-2xl font-bold text-[#4776E6]">
                             {calculateEstimatedReach().toLocaleString()}
                           </div>
                         </div>
@@ -559,13 +559,13 @@ export default function PromotionsMarketing({ exhibitorId, onPromotionCreated }:
                             key={pkg.id}
                             className={`relative rounded-lg border-2 p-6 transition-all ${
                               pkg.recommended
-                                ? "border-[#004A96] bg-[#004A96]/10 shadow-md"
-                                : "border-white/50 bg-white/25 hover:border-[#004A96]/35"
+                                ? "border-[#4776E6] bg-[#4776E6]/10 shadow-md"
+                                : "border-white/50 bg-white/25 hover:border-[#4776E6]/35"
                             }`}
                           >
                             {pkg.recommended && (
                               <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                                <Badge className="bg-[#004A96] text-white">
+                                <Badge className="bg-[#4776E6] text-white">
                                   <Star className="w-3 h-3 mr-1" />
                                   Recommended
                                 </Badge>
@@ -576,7 +576,7 @@ export default function PromotionsMarketing({ exhibitorId, onPromotionCreated }:
                               <h3 className="text-xl font-bold">{pkg.name}</h3>
                               <p className="text-sm text-gray-600 mt-1">{pkg.description}</p>
                               <div className="mt-3">
-                                <span className="text-3xl font-bold text-[#004A96]">${pkg.price.toLocaleString()}</span>
+                                <span className="text-3xl font-bold text-[#4776E6]">${pkg.price.toLocaleString()}</span>
                                 <span className="text-sm text-gray-500">/{pkg.duration}</span>
                               </div>
                             </div>
@@ -683,7 +683,7 @@ export default function PromotionsMarketing({ exhibitorId, onPromotionCreated }:
                   <div className="border-t pt-2 mt-2">
                     <div className="flex justify-between font-semibold">
                       <span>Total Amount:</span>
-                      <span className="font-semibold text-[#004A96]">${selectedPackageData.price.toLocaleString()}</span>
+                      <span className="font-semibold text-[#4776E6]">${selectedPackageData.price.toLocaleString()}</span>
                     </div>
                   </div>
                 </div>

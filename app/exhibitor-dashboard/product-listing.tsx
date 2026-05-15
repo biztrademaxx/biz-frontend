@@ -653,7 +653,7 @@ export default function ProductListing({ exhibitorId }: ProductListingProps) {
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
             <div className="text-center">
-              <div className="text-3xl font-bold text-[#004A96]">{products.length}</div>
+              <div className="text-3xl font-bold text-[#4776E6]">{products.length}</div>
               <div className="text-muted-foreground">Total Products</div>
             </div>
             <div className="text-center">

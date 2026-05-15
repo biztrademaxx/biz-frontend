@@ -33,8 +33,8 @@ export function FollowersCountCard({ exhibitorId }: FollowersCountCardProps) {
   }, [exhibitorId])
 
   if (loading) {
-    return <Skeleton className="h-8 w-14 rounded-md bg-[#004A96]/10" />
+    return <Skeleton className="h-8 w-14 rounded-md bg-[#4776E6]/10" />
   }
 
-  return <div className="text-2xl font-bold text-[#FF131C]">{count}</div>
+  return <div className="text-2xl font-bold text-[#8E54E9]">{count}</div>
 }

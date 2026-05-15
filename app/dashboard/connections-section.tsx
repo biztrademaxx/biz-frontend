@@ -202,7 +202,7 @@ export function ConnectionsSection({ userId: _userId, surface = "default" }: Con
   const tabActive =
     "px-4 py-2.5 text-sm font-medium rounded-t-lg transition-colors border border-b-0 -mb-px " +
     (isExhibitorShell
-      ? "bg-white/50 border-white/60 text-[#004A96] backdrop-blur-sm"
+      ? "bg-white/50 border-white/60 text-[#5b21b6] backdrop-blur-sm"
       : "bg-white border-gray-200 text-blue-600")
   const tabInactive = "px-4 py-2.5 text-sm font-medium rounded-t-lg transition-colors text-gray-600 hover:text-gray-900"
 

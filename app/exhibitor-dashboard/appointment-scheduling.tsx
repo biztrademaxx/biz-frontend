@@ -142,7 +142,7 @@ const fetchAppointments = async () => {
       case "CONFIRMED":
         return "bg-green-500"
       case "COMPLETED":
-        return "bg-[#004A96]"
+        return "bg-[#4776E6]"
       case "CANCELLED":
         return "bg-red-500"
       default:
@@ -307,8 +307,8 @@ const fetchAppointments = async () => {
         </div>
 
         <div className="grid grid-cols-3 gap-4 mb-4 text-sm">
-          <div className="rounded bg-[#004A96]/10 p-2 text-center">
-            <div className="font-semibold text-[#004A96]">{appointment.profileViews}</div>
+          <div className="rounded bg-[#4776E6]/10 p-2 text-center">
+            <div className="font-semibold text-[#4776E6]">{appointment.profileViews}</div>
             <div className="text-gray-600">Profile Views</div>
           </div>
           <div className="text-center p-2 bg-green-50 rounded">
@@ -423,7 +423,7 @@ const fetchAppointments = async () => {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card className={exGlassCard}>
           <CardContent className="p-6 text-center">
-            <div className="text-3xl font-bold text-[#004A96]">{appointments.length}</div>
+            <div className="text-3xl font-bold text-[#4776E6]">{appointments.length}</div>
             <div className="text-gray-600">Total Requests</div>
           </CardContent>
         </Card>

@@ -387,7 +387,7 @@ export default function MessagesCenter({ organizerId, surface = "default" }: Mes
   const getRoleBadgeColor = (role: string) => {
     switch (role.toLowerCase()) {
       case "organizer":
-        return surface === "exhibitor" ? "bg-[#004A96]/15 text-[#004A96]" : "bg-blue-100 text-blue-800"
+        return surface === "exhibitor" ? "bg-[#8E54E9]/12 text-[#5b21b6]" : "bg-blue-100 text-blue-800"
       case "speaker":
         return "bg-green-100 text-green-800"
       case "attendee":
@@ -590,7 +590,7 @@ export default function MessagesCenter({ organizerId, surface = "default" }: Mes
                     shell ? "hover:bg-white/35" : "hover:bg-gray-50",
                     selectedContact === conversation.id
                       ? shell
-                        ? "border-r-2 border-[#004A96] bg-[#004A96]/10"
+                        ? "border-r-2 border-[#8E54E9] bg-[#8E54E9]/10"
                         : "border-r-2 border-blue-500 bg-blue-50"
                       : "",
                   )}
@@ -630,7 +630,7 @@ export default function MessagesCenter({ organizerId, surface = "default" }: Mes
                           <Badge
                             className={cn(
                               "flex h-5 w-5 items-center justify-center rounded-full p-0 text-xs text-white",
-                              shell ? "bg-[#004A96]" : "bg-blue-500",
+                              shell ? "bg-gradient-to-r from-[#8E54E9] to-[#4776E6]" : "bg-blue-500",
                             )}
                           >
                             {conversation.unreadCount}
@@ -756,7 +756,7 @@ export default function MessagesCenter({ organizerId, surface = "default" }: Mes
                             "rounded-lg px-4 py-2",
                             message.senderId === organizerId
                               ? shell
-                                ? "bg-[#004A96] text-white"
+                                ? "bg-gradient-to-r from-[#8E54E9] to-[#4776E6] text-white"
                                 : "bg-blue-500 text-white"
                               : "bg-gray-100 text-gray-900",
                           )}

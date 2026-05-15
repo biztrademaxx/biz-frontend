@@ -32,7 +32,13 @@ import {
   CheckCircle,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { exGlassCard, exInput } from "./dashboard-theme"
+import {
+  exGlassCardPremium,
+  exGlassNested,
+  exCompanyGlowLayer,
+  exInput,
+  exCtaGradient,
+} from "./dashboard-theme"
 
 interface ExhibitorData {
   id: string
@@ -40,7 +46,7 @@ interface ExhibitorData {
   lastName: string
   email: string
   phone?: string
-  company?: string
+  company?: string | null
   jobTitle?: string
   bio?: string
   website?: string
@@ -166,10 +172,10 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
   }
 
   const socialLinks = [
-    { name: "Facebook", icon: Facebook, url: "https://facebook.com/company", color: "text-blue-600" },
-    { name: "LinkedIn", icon: Linkedin, url: formData.linkedin || "", color: "text-blue-700" },
-    { name: "Twitter", icon: Twitter, url: formData.twitter || "", color: "text-blue-400" },
-    { name: "Instagram", icon: Instagram, url: "https://instagram.com/company", color: "text-pink-600" },
+    { name: "Facebook", icon: Facebook, url: "https://facebook.com/company", color: "text-[#4776E6]" },
+    { name: "LinkedIn", icon: Linkedin, url: formData.linkedin || "", color: "text-[#4776E6]" },
+    { name: "Twitter", icon: Twitter, url: formData.twitter || "", color: "text-sky-500" },
+    { name: "Instagram", icon: Instagram, url: "https://instagram.com/company", color: "text-pink-500" },
   ]
 
   if (loading && !formData) {
@@ -186,70 +192,72 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-2xl font-bold tracking-tight text-slate-800 md:text-3xl">
-          Company Information
-        </h1>
-        <Button
-          onClick={() => (isEditing ? handleSave() : setIsEditing(true))}
-          className="flex items-center gap-2 bg-[#004A96] text-white hover:bg-[#003d7a]"
-          disabled={loading}
-        >
-          {isEditing ? <Save className="w-4 h-4" /> : <Edit className="w-4 h-4" />}
-          {loading ? "Saving..." : isEditing ? "Save Changes" : "Edit Profile"}
-        </Button>
-      </div>
+    <div className="relative">
+      <div className={exCompanyGlowLayer} aria-hidden />
+      <div className="relative z-10 space-y-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-800 md:text-3xl">
+            Company Information
+          </h1>
+          <Button
+            onClick={() => (isEditing ? handleSave() : setIsEditing(true))}
+            className={cn("flex items-center gap-2 shadow-md", exCtaGradient)}
+            disabled={loading}
+          >
+            {isEditing ? <Save className="w-4 h-4" /> : <Edit className="w-4 h-4" />}
+            {loading ? "Saving..." : isEditing ? "Save Changes" : "Edit Profile"}
+          </Button>
+        </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Company Logo & Banner */}
-        <Card className={exGlassCard}>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-slate-800">
-              <Building2 className="h-5 w-5 text-[#004A96]" />
-              Company Logo & Banner
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="text-center">
-              <div className="relative inline-block">
-                <Avatar className="mx-auto mb-4 h-32 w-32 ring-2 ring-[#004A96]/20 ring-offset-2 ring-offset-white/50">
-                  <AvatarImage src={formData.avatar || "/city/c4.jpg"} />
-                  <AvatarFallback className="bg-[#004A96]/10 text-2xl font-semibold text-[#004A96]">
-                    {formData.firstName?.[0]}
-                    {formData.lastName?.[0]}
-                  </AvatarFallback>
-                </Avatar>
-                {isEditing && (
-                  <label
-                    htmlFor="avatar-upload"
-                    className="absolute bottom-4 right-1/2 flex translate-x-16 cursor-pointer rounded-full bg-[#004A96] p-2 text-white transition-colors hover:bg-[#003d7a]"
-                  >
-                    {uploading ? (
-                      <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
-                    ) : (
-                      <Camera className="w-4 h-4" />
-                    )}
-                  </label>
-                )}
-                <input
-                  id="avatar-upload"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleAvatarUpload}
-                  className="hidden"
-                  disabled={uploading}
-                />
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          {/* Company Logo & Banner */}
+          <Card className={exGlassCardPremium}>
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-slate-800">
+                <Building2 className="h-5 w-5 text-[#4776E6]" />
+                Company Logo & Banner
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className={cn(exGlassNested, "p-4 text-center")}>
+                <div className="relative inline-block">
+                  <Avatar className="mx-auto mb-4 h-32 w-32 ring-2 ring-[#4776E6]/20 ring-offset-2 ring-offset-white/50">
+                    <AvatarImage src={formData.avatar || "/city/c4.jpg"} />
+                    <AvatarFallback className="bg-[#4776E6]/10 text-2xl font-semibold text-[#4776E6]">
+                      {formData.firstName?.[0]}
+                      {formData.lastName?.[0]}
+                    </AvatarFallback>
+                  </Avatar>
+                  {isEditing && (
+                    <label
+                      htmlFor="avatar-upload"
+                      className="absolute bottom-4 right-1/2 flex translate-x-16 cursor-pointer rounded-full bg-[#4776E6] p-2 text-white transition-colors hover:bg-[#3556b8]"
+                    >
+                      {uploading ? (
+                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                      ) : (
+                        <Camera className="h-4 w-4" />
+                      )}
+                    </label>
+                  )}
+                  <input
+                    id="avatar-upload"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarUpload}
+                    className="hidden"
+                    disabled={uploading}
+                  />
+                </div>
               </div>
-            </div>
 
-            <div className="space-y-2">
+              <div className="space-y-2">
               <Label>Company Banner</Label>
-              <div className="flex h-24 items-center justify-center rounded-xl bg-gradient-to-r from-[#004A96] to-[#003566] font-semibold text-white shadow-inner">
-                {formData.company || "Company Name"}
+              <div className="flex min-h-[5.5rem] items-center justify-center rounded-2xl bg-gradient-to-br from-[#8E54E9] via-[#7c3aed] to-[#4776E6] px-4 text-center font-semibold text-white shadow-[0_12px_40px_rgba(142,84,233,0.35)]">
+                <span className="drop-shadow-sm">{formData.company || "Company Name"}</span>
               </div>
               {isEditing && (
-                <Button variant="outline" size="sm" className="w-full border-[#004A96]/30 bg-white/40 backdrop-blur-sm">
+                <Button variant="outline" size="sm" className="w-full border-[#4776E6]/30 bg-white/40 backdrop-blur-sm">
                   <Upload className="w-4 h-4" />
                   Upload Banner
                 </Button>
@@ -259,14 +267,15 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
         </Card>
 
         {/* Contact Information */}
-        <Card className={exGlassCard}>
-          <CardHeader>
+        <Card className={exGlassCardPremium}>
+          <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-slate-800">
-              <User className="h-5 w-5 text-[#004A96]" />
+              <User className="h-5 w-5 text-[#4776E6]" />
               Contact Information
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent>
+            <div className={cn(exGlassNested, "space-y-4 p-5")}>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="first-name">First Name</Label>
@@ -316,7 +325,7 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-3 h-4 w-4 text-[#004A96]/60" />
+                <Mail className="absolute left-3 top-3 h-4 w-4 text-[#4776E6]/60" />
                 <div className="flex items-center justify-between rounded-md border border-white/60 bg-white/45 p-2 backdrop-blur-sm">
                   <span className="text-sm pl-7">{formData.email}</span>
                   {!isEditing && (
@@ -335,7 +344,7 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
             <div className="space-y-2">
               <Label htmlFor="phone">Phone</Label>
               <div className="relative">
-                <Phone className="absolute left-3 top-3 h-4 w-4 text-[#004A96]/60" />
+                <Phone className="absolute left-3 top-3 h-4 w-4 text-[#4776E6]/60" />
                 <div className="flex items-center justify-between rounded-md border border-white/60 bg-white/45 p-2 backdrop-blur-sm">
                   <span className="text-sm pl-7">{formData.phone || "Not provided"}</span>
                   {!isEditing && formData.phone && (
@@ -353,7 +362,7 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
             <div className="space-y-2">
               <Label htmlFor="website">Website</Label>
               <div className="relative">
-                <Globe className="absolute left-3 top-3 h-4 w-4 text-[#004A96]/60" />
+                <Globe className="absolute left-3 top-3 h-4 w-4 text-[#4776E6]/60" />
                 <Input
                   id="website"
                   value={formData.website || ""}
@@ -363,15 +372,17 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
                 />
               </div>
             </div>
+            </div>
           </CardContent>
         </Card>
 
         {/* Social Media Links */}
-        <Card className={exGlassCard}>
-          <CardHeader>
+        <Card className={exGlassCardPremium}>
+          <CardHeader className="pb-3">
             <CardTitle className="text-slate-800">Social Media Links</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent>
+            <div className={cn(exGlassNested, "space-y-4 p-5")}>
             {socialLinks.map((social) => (
               <div key={social.name} className="flex items-center gap-3">
                 <social.icon className={`w-5 h-5 ${social.color}`} />
@@ -392,28 +403,30 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
                 </div>
               </div>
             ))}
+            </div>
           </CardContent>
         </Card>
       </div>
 
       {/* Product Categories & Description */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className={exGlassCard}>
-          <CardHeader>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <Card className={exGlassCardPremium}>
+          <CardHeader className="pb-3">
             <CardTitle className="text-slate-800">Product Categories / Services</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent>
+            <div className={cn(exGlassNested, "space-y-4 p-5")}>
             <div className="flex flex-wrap gap-2">
               {categories.map((category) => (
                 <Badge
                   key={category}
                   variant="secondary"
-                  className="flex items-center gap-1 border-[#004A96]/20 bg-[#004A96]/10 text-[#004A96]"
+                  className="flex items-center gap-1 border-[#4776E6]/20 bg-[#4776E6]/10 text-[#4776E6]"
                 >
                   {category}
                   {isEditing && (
                     <X
-                      className="w-3 h-3 cursor-pointer hover:text-red-500"
+                      className="h-3 w-3 cursor-pointer hover:text-[#8E54E9]"
                       onClick={() => handleRemoveCategory(category)}
                     />
                   )}
@@ -442,28 +455,31 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
                     }
                   }}
                   size="sm"
-                  className="bg-[#004A96] text-white hover:bg-[#003d7a]"
+                  className={cn("shadow-md", exCtaGradient)}
                 >
-                  <Plus className="w-4 h-4" />
+                  <Plus className="h-4 w-4" />
                 </Button>
               </div>
             )}
+            </div>
           </CardContent>
         </Card>
 
-        <Card className={exGlassCard}>
-          <CardHeader>
+        <Card className={exGlassCardPremium}>
+          <CardHeader className="pb-3">
             <CardTitle className="text-slate-800">Company Description</CardTitle>
           </CardHeader>
           <CardContent>
-            <Textarea
-              value={formData.bio || ""}
-              onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-              disabled={!isEditing}
-              rows={6}
-              placeholder="Describe your company, products, and services..."
-              className={cn(exInput, "min-h-[140px] disabled:opacity-60")}
-            />
+            <div className={cn(exGlassNested, "p-5")}>
+              <Textarea
+                value={formData.bio || ""}
+                onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+                disabled={!isEditing}
+                rows={6}
+                placeholder="Describe your company, products, and services..."
+                className={cn(exInput, "min-h-[140px] disabled:opacity-60")}
+              />
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -473,7 +489,7 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
         <div className="flex justify-end gap-3">
           <Button
             variant="outline"
-            className="border-[#004A96]/35 bg-white/50 backdrop-blur-sm"
+            className="rounded-2xl border-[#4776E6]/35 bg-white/50 backdrop-blur-sm"
             onClick={() => {
               setIsEditing(false)
               setFormData(exhibitorData)
@@ -485,12 +501,13 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
           <Button
             onClick={handleSave}
             disabled={loading}
-            className="bg-[#004A96] text-white hover:bg-[#003d7a]"
+            className={cn("rounded-2xl shadow-md", exCtaGradient)}
           >
             {loading ? "Saving..." : "Save Changes"}
           </Button>
         </div>
       )}
+      </div>
     </div>
   )
 }  
