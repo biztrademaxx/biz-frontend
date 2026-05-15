@@ -28,6 +28,10 @@ import {
   Star,
   Sparkles,
   Zap,
+  ChevronLeft,
+  PanelLeftClose,
+  PanelLeftOpen,
+  BarChart3,
 } from "lucide-react"
 
 import MyProfile from "./my-profile"
@@ -40,6 +44,7 @@ import { SpeakerHelpSupport } from "./help-support"
 import { apiFetch, getCurrentUserId } from "@/lib/api"
 import { getSpeakerDashboardPath } from "@/lib/profile-path"
 import { DashboardManagedBanner } from "@/components/dashboard-managed-banner"
+import SpeakerOverview from "./overview"
 
 interface SpeakerData {
   id: string
@@ -72,6 +77,7 @@ export function SpeakerDashboard({ routeSegment }: UserDashboardProps) {
   const { activeSection, setActiveSection } = useDashboard()
   const [openMenus, setOpenMenus] = useState<string[]>(["speaker-management", "communication"])
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false) // New state for collapsed sidebar
 
   const { userId: authUserId, role, loading: authLoading, logout } = useAuth({
     requireAuth: true,
@@ -83,7 +89,7 @@ export function SpeakerDashboard({ routeSegment }: UserDashboardProps) {
 
   useEffect(() => {
     if (!activeSection) {
-      setActiveSection("myprofile")
+      setActiveSection("overview")
     }
   }, [activeSection, setActiveSection])
 
@@ -157,6 +163,10 @@ export function SpeakerDashboard({ routeSegment }: UserDashboardProps) {
     setOpenMenus((prev) => (prev.includes(menu) ? prev.filter((m) => m !== menu) : [...prev, menu]))
   }
 
+  const toggleSidebar = () => {
+    setSidebarCollapsed(!sidebarCollapsed)
+  }
+
   const sectionLabel: Record<string, string> = {
     myprofile: "My Profile",
     mysessions: "My Sessions",
@@ -221,6 +231,7 @@ export function SpeakerDashboard({ routeSegment }: UserDashboardProps) {
     switch (activeSection) {
       case "myprofile": return <MyProfile speakerId={speaker.id} />
       case "mysessions": return <MySessions speakerId={speaker.id} />
+      case "overview": return <SpeakerOverview speakerId={speaker.id} />
       case "materials": return <PresentationMaterials speakerId={speaker.id} />
       case "message": return <MessagesCenter organizerId={speaker.id} />
       case "connection": return <ConnectionsSection userId={speaker.id} />
@@ -239,16 +250,16 @@ export function SpeakerDashboard({ routeSegment }: UserDashboardProps) {
         ${activeSection === id
           ? "text-white shadow-md"
           : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"}
+        ${sidebarCollapsed ? "justify-center px-2" : ""}
       `}
       style={activeSection === id ? { background: "linear-gradient(135deg, #2563eb, #7c3aed)" } : {}}
+      title={sidebarCollapsed ? label : ""}
     >
       <span className="flex-shrink-0">{icon}</span>
-      <span>{label}</span>
-      {activeSection === id && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-white/70" />}
+      {!sidebarCollapsed && <span>{label}</span>}
+      {activeSection === id && !sidebarCollapsed && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-white/70" />}
     </button>
   )
-
-
 
   return (
     <div className="flex min-h-screen w-full font-sans" style={{ background: "linear-gradient(135deg, #f0f4ff 0%, #faf8ff 50%, #f0fdf4 100%)" }}>
@@ -264,9 +275,10 @@ export function SpeakerDashboard({ routeSegment }: UserDashboardProps) {
       {/* ══════════════ SIDEBAR ══════════════ */}
       <aside
         className={`
-          fixed md:relative w-[260px] h-screen z-50 mt-5 rounded-xl flex flex-col
-          transform transition-transform duration-300 ease-in-out
+          fixed md:relative h-screen z-50 mt-5 rounded-xl flex flex-col
+          transform transition-all duration-300 ease-in-out
           ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0
+          ${sidebarCollapsed ? "w-[72px]" : "w-[260px]"}
         `}
         style={{
           background: "rgba(255,255,255,0.85)",
@@ -276,42 +288,61 @@ export function SpeakerDashboard({ routeSegment }: UserDashboardProps) {
         }}
       >
         {/* Logo / Brand */}
-        <div className="flex items-center gap-3 px-4 py-4" style={{ borderBottom: "1px solid rgba(148,163,184,0.12)" }}>
+        <div className={`flex items-center gap-3 px-4 py-4 ${sidebarCollapsed ? "justify-center" : ""}`} style={{ borderBottom: "1px solid rgba(148,163,184,0.12)" }}>
           <div
             className="w-10 h-10 rounded-2xl flex items-center justify-center shadow-lg flex-shrink-0"
             style={{ background: "linear-gradient(135deg, #2563eb, #7c3aed)" }}
           >
             <Mic className="w-4 h-4 text-white" />
           </div>
-          <div>
-            <p className="text-sm font-bold text-slate-800 leading-tight tracking-tight">Speaker</p>
-            <p className="text-xs text-slate-400 font-medium">Dashboard</p>
-          </div>
-          <button className="ml-auto md:hidden p-1.5 rounded-lg hover:bg-slate-100 transition" onClick={() => setSidebarOpen(false)}>
-            <X className="w-4 h-4 text-slate-400" />
-          </button>
+          {!sidebarCollapsed && (
+            <>
+              <div>
+                <p className="text-sm font-bold text-slate-800 leading-tight tracking-tight">Speaker</p>
+                <p className="text-xs text-slate-400 font-medium">Dashboard</p>
+              </div>
+              <button className="ml-auto md:hidden p-1.5 rounded-lg hover:bg-slate-100 transition" onClick={() => setSidebarOpen(false)}>
+                <X className="w-4 h-4 text-slate-400" />
+              </button>
+            </>
+          )}
         </div>
+
+        {/* Collapse Toggle Button */}
+        <button
+          onClick={toggleSidebar}
+          className="absolute -right-3 top-20 w-6 h-6 rounded-full bg-white shadow-md border border-slate-200 flex items-center justify-center hover:bg-slate-50 transition-all z-10"
+          style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}
+        >
+          {sidebarCollapsed ? (
+            <PanelLeftOpen className="w-3.5 h-3.5 text-slate-600" />
+          ) : (
+            <PanelLeftClose className="w-3.5 h-3.5 text-slate-600" />
+          )}
+        </button>
 
         {/* Nav */}
         <div className="flex-1 overflow-y-auto px-3 py-5 space-y-1">
-
           {/* Speaker Management group */}
           <div>
-            <button
-              onClick={() => toggleMenu("speaker-management")}
-              className="w-full flex items-center justify-between px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 hover:text-slate-600 transition rounded-lg hover:bg-slate-50"
-            >
-              <span className="flex items-center gap-2">
-                <User className="w-3 h-3" />
-                Speaker
-              </span>
-              {openMenus.includes("speaker-management")
-                ? <ChevronDown className="w-3 h-3" />
-                : <ChevronRight className="w-3 h-3" />}
-            </button>
+            {!sidebarCollapsed && (
+              <button
+                onClick={() => toggleMenu("speaker-management")}
+                className="w-full flex items-center justify-between px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 hover:text-slate-600 transition rounded-lg hover:bg-slate-50"
+              >
+                <span className="flex items-center gap-2">
+                  <User className="w-3 h-3" />
+                  Speaker
+                </span>
+                {openMenus.includes("speaker-management")
+                  ? <ChevronDown className="w-3 h-3" />
+                  : <ChevronRight className="w-3 h-3" />}
+              </button>
+            )}
 
-            {openMenus.includes("speaker-management") && (
-              <div className="mt-1 space-y-0.5 pl-1">
+            {(openMenus.includes("speaker-management") || sidebarCollapsed) && (
+              <div className={`mt-1 space-y-0.5 ${sidebarCollapsed ? "pl-0" : "pl-1"}`}>
+                {navItem("overview", "Overview", <BarChart3 className="w-4 h-4" />)}
                 {navItem("myprofile", "My Profile", <User className="w-4 h-4" />)}
                 {navItem("mysessions", "My Sessions", <CalendarDays className="w-4 h-4" />)}
                 {navItem("materials", "Presentations", <Presentation className="w-4 h-4" />)}
@@ -321,21 +352,23 @@ export function SpeakerDashboard({ routeSegment }: UserDashboardProps) {
 
           {/* Communication group */}
           <div className="pt-2">
-            <button
-              onClick={() => toggleMenu("communication")}
-              className="w-full flex items-center justify-between px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 hover:text-slate-600 transition rounded-lg hover:bg-slate-50"
-            >
-              <span className="flex items-center gap-2">
-                <MessageSquare className="w-3 h-3" />
-                Communication
-              </span>
-              {openMenus.includes("communication")
-                ? <ChevronDown className="w-3 h-3" />
-                : <ChevronRight className="w-3 h-3" />}
-            </button>
+            {!sidebarCollapsed && (
+              <button
+                onClick={() => toggleMenu("communication")}
+                className="w-full flex items-center justify-between px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 hover:text-slate-600 transition rounded-lg hover:bg-slate-50"
+              >
+                <span className="flex items-center gap-2">
+                  <MessageSquare className="w-3 h-3" />
+                  Communication
+                </span>
+                {openMenus.includes("communication")
+                  ? <ChevronDown className="w-3 h-3" />
+                  : <ChevronRight className="w-3 h-3" />}
+              </button>
+            )}
 
-            {openMenus.includes("communication") && (
-              <div className="mt-1 space-y-0.5 pl-1">
+            {(openMenus.includes("communication") || sidebarCollapsed) && (
+              <div className={`mt-1 space-y-0.5 ${sidebarCollapsed ? "pl-0" : "pl-1"}`}>
                 {navItem("message", "Messages", <MessageSquare className="w-4 h-4" />)}
                 {navItem("connection", "Connections", <User className="w-4 h-4" />)}
               </div>
@@ -343,53 +376,69 @@ export function SpeakerDashboard({ routeSegment }: UserDashboardProps) {
           </div>
 
           {/* Standalone items */}
-          <div className="pt-3 space-y-0.5" style={{ borderTop: "1px solid rgba(148,163,184,0.12)", marginTop: "12px", paddingTop: "16px" }}>
+          <div className={`pt-3 space-y-0.5 ${!sidebarCollapsed ? "pt-3" : "pt-2"}`} style={{ borderTop: !sidebarCollapsed ? "1px solid rgba(148,163,184,0.12)" : "none", marginTop: "12px", paddingTop: "16px" }}>
             {navItem("help", "Help & Support", <HelpCircle className="w-4 h-4" />)}
             {navItem("settings", "Settings", <Settings className="w-4 h-4" />)}
           </div>
         </div>
 
-        {/* Speaker mini-card + logout */}
-        <div className="px-3 pb-5 pt-4 space-y-3" style={{ borderTop: "1px solid rgba(148,163,184,0.12)" }}>
-          <div
-            className="flex items-center gap-3 p-3 rounded-2xl"
-            style={{ background: "linear-gradient(135deg, #f0f4ff, #faf5ff)" }}
-          >
-            <Avatar className="w-9 h-9 ring-2 ring-white shadow-sm">
-              <AvatarImage src={speaker.avatar || ""} alt={speaker.firstName} />
-              <AvatarFallback
-                className="text-xs font-bold"
-                style={{ background: "linear-gradient(135deg, #dbeafe, #ede9fe)", color: "#2563eb" }}
-              >
-                {speaker.firstName?.[0]}{speaker.lastName?.[0]}
-              </AvatarFallback>
-            </Avatar>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-slate-800 truncate">{speaker.firstName} {speaker.lastName}</p>
-              <p className="text-[10px] text-slate-400 truncate font-medium">{speaker.email}</p>
+        {/* Speaker mini-card + logout - only show when expanded */}
+        {!sidebarCollapsed && (
+          <div className="px-3 pb-5 pt-4 space-y-3" style={{ borderTop: "1px solid rgba(148,163,184,0.12)" }}>
+            <div
+              className="flex items-center gap-3 p-3 rounded-2xl"
+              style={{ background: "linear-gradient(135deg, #f0f4ff, #faf5ff)" }}
+            >
+              <Avatar className="w-9 h-9 ring-2 ring-white shadow-sm">
+                <AvatarImage src={speaker.avatar || ""} alt={speaker.firstName} />
+                <AvatarFallback
+                  className="text-xs font-bold"
+                  style={{ background: "linear-gradient(135deg, #dbeafe, #ede9fe)", color: "#2563eb" }}
+                >
+                  {speaker.firstName?.[0]}{speaker.lastName?.[0]}
+                </AvatarFallback>
+              </Avatar>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold text-slate-800 truncate">{speaker.firstName} {speaker.lastName}</p>
+                <p className="text-[10px] text-slate-400 truncate font-medium">{speaker.email}</p>
+              </div>
             </div>
+            <button
+              onClick={() => logout()}
+              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium text-red-500 hover:bg-red-50 transition-all duration-200"
+            >
+              <LogOut className="w-4 h-4" />
+              Log out
+            </button>
           </div>
-          <button
-            onClick={() => logout()}
-            className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium text-red-500 hover:bg-red-50 transition-all duration-200"
-          >
-            <LogOut className="w-4 h-4" />
-            Log out
-          </button>
-        </div>
+        )}
+
+        {/* Collapsed logout button */}
+        {sidebarCollapsed && (
+          <div className="px-2 pb-5 pt-4">
+            <button
+              onClick={() => logout()}
+              className="w-full flex items-center justify-center p-2.5 rounded-xl text-red-500 hover:bg-red-50 transition-all duration-200"
+              title="Log out"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          </div>
+        )}
       </aside>
 
       {/* ══════════════ MAIN ══════════════ */}
-      <div className="flex-1 flex flex-col min-h-screen overflow-hidden">
+      <div className={`flex-1 flex flex-col min-h-screen overflow-hidden transition-all duration-300 ${sidebarCollapsed ? "ml-0" : ""}`}>
+        {/* Top bar */}
+     
+
         {/* ── Page content ── */}
-        <main className="flex-1 overflow-auto p-4">
-          <div className="max-w-7xl mx-auto space-y-3">
+        <main className="flex-1 overflow-auto p-6">
+          <div className="max-w-7xl mx-auto space-y-5">
 
             <DashboardManagedBanner page="speaker-dashboard" />
-
-            {/* Header row */}
-            <div className="flex items-center justify-between">
-              {/* Section breadcrumb pill */}
+            {/* Header row with section breadcrumb */}
+            <div className="flex items-center justify-between mt-4">
               <div className="flex items-center gap-3">
                 <div
                   className="flex items-center gap-2 px-4 py-2 rounded-2xl text-xs font-bold"
@@ -410,14 +459,11 @@ export function SpeakerDashboard({ routeSegment }: UserDashboardProps) {
                   Active
                 </div>
               </div>
-
-              {/* Stat chips — only on profile screens */}
-              
             </div>
 
-            {/* ── Content card ── */}
+            {/* ── Content card with left gap ── */}
             <div
-              className="rounded-3xl min-h-[calc(100vh-220px)] p-6 md:p-8"
+              className="rounded-3xl min-h-[calc(100vh-220px)] p-6 md:p-8 ml-0 md:ml-2"
               style={{
                 background: "rgba(255,255,255,0.80)",
                 backdropFilter: "blur(20px)",
