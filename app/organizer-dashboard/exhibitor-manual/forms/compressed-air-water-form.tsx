@@ -71,13 +71,13 @@ export function CompressedAirWaterForm({ eventId, organizerId }: CompressedAirWa
 
   return (
     <Card className="w-full max-w-4xl mx-auto">
-      <CardHeader className="bg-blue-600 text-white">
+      <CardHeader className="bg-gradient-to-r from-[#4776E6] to-[#8E54E9] text-white">
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="text-xl font-bold">FORM 10 - COMPRESSED AIR & WATER</CardTitle>
-            <p className="text-blue-100 mt-1">(OPTIONAL)</p>
+            <p className="text-white/85 mt-1">(OPTIONAL)</p>
           </div>
-          <Badge variant="secondary" className="bg-blue-800">
+          <Badge variant="secondary" className="bg-[#5b21b6]">
             Deadline: 7 November 2025
           </Badge>
         </div>
@@ -225,8 +225,8 @@ export function CompressedAirWaterForm({ eventId, organizerId }: CompressedAirWa
             </div>
 
             {grandTotal > 0 && (
-              <div className="border-2 border-blue-200 rounded-lg p-4 bg-blue-50">
-                <div className="flex justify-between text-lg font-bold text-blue-800">
+              <div className="border-2 border-[#c4b5fd] rounded-lg p-4 bg-[#8E54E9]/10">
+                <div className="flex justify-between text-lg font-bold text-[#4c1d95]">
                   <span>Grand Total:</span>
                   <span>₹{grandTotal.toLocaleString()}</span>
                 </div>
@@ -235,7 +235,7 @@ export function CompressedAirWaterForm({ eventId, organizerId }: CompressedAirWa
           </div>
 
           <div className="flex gap-4 pt-4">
-            <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
+            <Button type="submit" className="bg-[#4776E6] hover:bg-[#3556b8]">
               <Send className="w-4 h-4 mr-2" />
               Submit Form
             </Button>

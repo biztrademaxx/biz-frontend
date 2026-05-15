@@ -371,7 +371,7 @@ export default function AddSpeaker({ organizerId }: AddSpeakerProps) {
                   <Card
                     key={speaker.id}
                     className={`cursor-pointer transition-colors ${
-                      selectedSpeaker?.id === speaker.id ? "ring-2 ring-blue-500 bg-blue-50" : "hover:bg-gray-50"
+                      selectedSpeaker?.id === speaker.id ? "ring-2 ring-[#8E54E9] bg-[#8E54E9]/10" : "hover:bg-gray-50"
                     }`}
                     onClick={() => setSelectedSpeaker(speaker)}
                   >
@@ -679,7 +679,7 @@ export default function AddSpeaker({ organizerId }: AddSpeakerProps) {
 
           {/* Session Details Form */}
           {selectedSpeaker && (
-            <Card className="border-blue-200 bg-blue-50 mt-6">
+            <Card className="border-[#c4b5fd] bg-[#8E54E9]/10 mt-6">
               <CardHeader>
                 <CardTitle className="text-lg">
                   Session Details for {selectedSpeaker.firstName} {selectedSpeaker.lastName}

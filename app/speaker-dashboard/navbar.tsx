@@ -5,7 +5,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { ChevronDown, User, LogOut, Settings, HelpCircle, LayoutDashboard } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { isAuthenticated, getCurrentUserRole, getCurrentUserId, clearTokens } from "@/lib/api"
+import { isAuthenticated, getCurrentUserRole, getCurrentUserId, clearTokens, markLogoutSuccessBanner } from "@/lib/api"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -141,6 +141,7 @@ export default function Navbar() {
         `You are logged in as '${role}'.\n\nPlease login as an organizer to access this page.\n\nClick OK to logout and login as an organizer, or Cancel to stay logged in.`,
       )
       if (confirmed) {
+        markLogoutSuccessBanner()
         clearTokens()
         router.push("/login")
       }
@@ -276,12 +277,8 @@ export default function Navbar() {
                 </DropdownMenuItem>
 
                 <DropdownMenuSeparator />
-
-                <DropdownMenuItem
-                  onClick={() => { clearTokens(); router.push("/login"); }}
-                  className="cursor-pointer py-2.5 text-red-600 focus:text-red-600"
-                >
-                  <LogOut className="mr-3 h-4 w-4" />
+                <DropdownMenuItem onClick={() => { clearTokens(); router.push("/login"); }}>
+                  <LogOut className="mr-2 h-4 w-4" />
                   <span>Logout</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>

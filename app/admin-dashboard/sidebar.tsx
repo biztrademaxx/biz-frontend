@@ -35,7 +35,7 @@ import VenueManagement from "./venues/page"
 import SystemSettings from "./system-settings"
 import CustomRolesManagement from "./custom-roles-management"
 import { CreateEventForm } from "./eventManagement/createEvent/create-event"
-import { clearTokens } from "@/lib/api"
+import { clearTokens, markLogoutSuccessBanner } from "@/lib/api"
 import CountriesManagement from "./countries-management"
 import VisitorManagement from "./visitors/page"
 import EventCategories from "./event-categories"
@@ -227,6 +227,7 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
   }
 
   const handleLogout = () => {
+    markLogoutSuccessBanner()
     clearTokens()
     router.push("/login")
   }

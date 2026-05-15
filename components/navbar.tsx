@@ -7,6 +7,7 @@ import { Calendar, ChevronDown, MapPin, Menu, Search, User, X } from "lucide-rea
 import { usePathname, useRouter } from "next/navigation"
 import {
   clearTokens,
+  markLogoutSuccessBanner,
   getCurrentUserDisplayName,
   getCurrentUserEmail,
   getCurrentUserId,
@@ -199,6 +200,7 @@ export default function Navbar() {
   }, [router, role, userId])
 
   const handleLogout = useCallback(() => {
+    markLogoutSuccessBanner()
     clearTokens()
     router.push("/login")
     setShowAccountMenu(false)

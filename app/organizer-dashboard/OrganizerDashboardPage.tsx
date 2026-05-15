@@ -21,7 +21,7 @@ import {
   Users,
   Star
 } from "lucide-react"
-import { clearTokens } from "@/lib/api"
+import { clearTokens, markLogoutSuccessBanner } from "@/lib/api"
 import DashboardOverview from "./dashboard-overview"
 import MyEvents from "./my-events"
 import CreateEvent from "./create-event"
@@ -37,6 +37,14 @@ import { OrganizerHelpSupport } from "./help-support"
 import { apiFetch, getCurrentUserId } from "@/lib/api"
 import { getOrganizerDashboardPath } from "@/lib/profile-path"
 import { DashboardManagedBanner } from "@/components/dashboard-managed-banner"
+import { cn } from "@/lib/utils"
+import {
+  orgBlobLayer,
+  orgNavActive,
+  orgNavInactive,
+  orgPrimaryBtn,
+  orgSidebarSurface,
+} from "./organizer-dashboard-theme"
 
 interface OrganizerDashboardPageProps {
   /** UUID or public company slug from `/organizer-dashboard/[id]`. */
@@ -74,7 +82,7 @@ interface OrganizerData {
 }
 
 interface Event {
-  id: number
+  id: string | number
   title: string
   description: string
   date: string
@@ -91,6 +99,9 @@ interface Event {
   bannerImage?: string
   thumbnailImage?: string
   isPublic: boolean
+  slug?: string
+  images?: string[]
+  currency?: string
 }
 
 interface SidebarGroup {
@@ -331,8 +342,8 @@ export default function OrganizerDashboardSimplified({ organizerId }: OrganizerD
     if (loading) {
       return (
         <div className="flex items-center justify-center h-64">
-          <Loader2 className="w-8 h-8 animate-spin" />
-          <span className="ml-2">Loading...</span>
+          <Loader2 className="h-8 w-8 animate-spin text-[#8E54E9]" />
+          <span className="ml-2 text-gray-600">Loading...</span>
         </div>
       )
     }
@@ -357,6 +368,7 @@ export default function OrganizerDashboardSimplified({ organizerId }: OrganizerD
             recentEvents={events}
             organizerId={organizerData.id}
             onCreateEventClick={() => setActiveSection("create-event")}
+            onViewAllEventsClick={() => setActiveSection("events")}
             onManageAttendeesClick={() => {
               window.location.href = `/organizers/${organizerData.id}/total-attendees`
             }}
@@ -416,27 +428,30 @@ export default function OrganizerDashboardSimplified({ organizerId }: OrganizerD
   // }
 
   return (
-    <div className="flex min-h-screen w-full bg-[#F5F4F0]">
+    <div className={cn("relative flex min-h-screen w-full overflow-x-hidden", "bg-[#f5f3f9]")}>
+      <div className={orgBlobLayer} aria-hidden />
+
       {/* Mobile Overlay */}
       {sidebarOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden" onClick={() => setSidebarOpen(false)} />
+        <div
+          className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm md:hidden"
+          onClick={() => setSidebarOpen(false)}
+          aria-hidden
+        />
       )}
 
       {/* Sidebar */}
       <div
-        className={`
-          fixed md:relative
-          w-64 min-h-screen bg-white border-r border-gray-200 z-50
-          transform transition-transform duration-300 ease-in-out
-          ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
-          md:translate-x-0
-          flex flex-col
-        `}
+        className={cn(
+          "fixed z-50 flex min-h-screen w-64 flex-col transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0",
+          orgSidebarSurface,
+          sidebarOpen ? "translate-x-0" : "-translate-x-full",
+        )}
       >
         {/* Mobile Header */}
-        <div className="md:hidden flex items-center justify-between p-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold">Menu</h2>
-          <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(false)}>
+        <div className="flex items-center justify-between border-b border-[#e8e4f0] p-4 md:hidden">
+          <h2 className="text-lg font-semibold text-gray-900">Menu</h2>
+          <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(false)} className="text-gray-600">
             <X className="h-4 w-4" />
           </Button>
         </div>
@@ -446,14 +461,22 @@ export default function OrganizerDashboardSimplified({ organizerId }: OrganizerD
           {sidebarGroups.map((group) => (
             <div key={group.id} className="mb-6">
               <div
-                className="flex items-center justify-between cursor-pointer hover:bg-gray-100 px-2 py-2 rounded text-sm font-medium text-gray-700"
+                className="flex cursor-pointer items-center justify-between rounded-lg px-2 py-2 text-sm font-medium text-gray-700 transition hover:bg-[#8E54E9]/8"
                 onClick={() => toggleGroup(group.id)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault()
+                    toggleGroup(group.id)
+                  }
+                }}
+                role="button"
+                tabIndex={0}
               >
                 <span>{group.label}</span>
                 {expandedGroups.includes(group.id) ? (
-                  <ChevronDown className="w-4 h-4" />
+                  <ChevronDown className="h-4 w-4 text-[#8E54E9]/70" />
                 ) : (
-                  <ChevronRight className="w-4 h-4" />
+                  <ChevronRight className="h-4 w-4 text-[#8E54E9]/70" />
                 )}
               </div>
               {expandedGroups.includes(group.id) && (
@@ -461,20 +484,17 @@ export default function OrganizerDashboardSimplified({ organizerId }: OrganizerD
                   {group.items.map((item) => (
                     <button
                       key={item.id}
+                      type="button"
                       onClick={() => {
                         setActiveSection(item.id)
                         setSidebarOpen(false)
                       }}
-                      className={`
-                        w-full flex items-center gap-3 px-3 py-2 text-sm rounded-sm transition-colors
-                        ${
-                          activeSection === item.id
-                            ? "bg-blue-50 text-blue-700 border-l-4 border-blue-700"
-                            : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-                        }
-                      `}
+                      className={cn(
+                        "flex w-full items-center gap-3 px-3 py-2.5 text-sm transition-colors",
+                        activeSection === item.id ? orgNavActive : orgNavInactive,
+                      )}
                     >
-                      <item.icon className="w-4 h-4 flex-shrink-0" />
+                      <item.icon className="h-4 w-4 shrink-0" />
                       <span className="truncate">{item.title}</span>
                     </button>
                   ))}
@@ -488,20 +508,17 @@ export default function OrganizerDashboardSimplified({ organizerId }: OrganizerD
             {individualSidebarItems.map((item) => (
               <button
                 key={item.id}
+                type="button"
                 onClick={() => {
                   setActiveSection(item.id)
                   setSidebarOpen(false)
                 }}
-                className={`
-                  w-full flex items-center gap-3 px-3 py-2 text-sm rounded-sm transition-colors
-                  ${
-                    activeSection === item.id
-                      ? "bg-blue-50 text-blue-700 border-l-4 border-blue-700"
-                      : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-                  }
-                `}
+                className={cn(
+                  "flex w-full items-center gap-3 px-3 py-2.5 text-sm transition-colors",
+                  activeSection === item.id ? orgNavActive : orgNavInactive,
+                )}
               >
-                <item.icon className="w-4 h-4 flex-shrink-0" />
+                <item.icon className="h-4 w-4 shrink-0" />
                 <span className="truncate">{item.title}</span>
               </button>
             ))}
@@ -509,11 +526,8 @@ export default function OrganizerDashboardSimplified({ organizerId }: OrganizerD
         </div>
 
         {/* Footer with Logout */}
-        <div className="border-t border-gray-200 p-4 flex-shrink-0">
-          <Button
-            onClick={() => { clearTokens(); router.push("/login"); }}
-            className="w-full bg-red-600 hover:bg-red-700 text-white"
-          >
+        <div className="flex-shrink-0 border-t border-[#e8e4f0] p-4">
+          <Button onClick={() => { markLogoutSuccessBanner(); clearTokens(); router.push("/login"); }} className={cn("w-full", orgPrimaryBtn)}>
             <User className="mr-2 h-4 w-4" />
             <span>Logout</span>
           </Button>
@@ -521,23 +535,23 @@ export default function OrganizerDashboardSimplified({ organizerId }: OrganizerD
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-h-screen">
+      <div className="flex min-h-screen min-w-0 flex-1 flex-col">
         {/* Mobile Top Bar */}
-        <div className="md:hidden flex items-center justify-between p-4 bg-white border-b border-gray-200 shadow-sm">
-          <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(true)}>
+        <div className="flex items-center justify-between border-b border-white/60 bg-white/70 p-4 shadow-sm backdrop-blur-md md:hidden">
+          <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(true)} className="text-[#5b21b6]">
             <Menu className="h-5 w-5" />
           </Button>
+          <span className="text-sm font-semibold bg-gradient-to-r from-[#8E54E9] to-[#4776E6] bg-clip-text text-transparent">
+            Organizer
+          </span>
           <div className="w-9" />
         </div>
 
         {/* Main Content */}
-        <main className="flex-1 p-6 overflow-auto">
+        <main className="flex-1 overflow-auto p-4 sm:p-6">
           <DashboardManagedBanner page="organizer-dashboard" />
-          <div className="max-w-7xl mx-auto">
-            {/* Dynamic Content */}
-            <div className="bg-[#F5F4F0] min-h-screen w-full ">
-              {renderContent()}
-            </div>
+          <div className="mx-auto max-w-7xl">
+            <div className="min-h-0 w-full">{renderContent()}</div>
           </div>
         </main>
       </div>

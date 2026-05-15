@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ChevronDown, User, LogOut, Settings } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { isAuthenticated, getCurrentUserRole, clearTokens } from "@/lib/api";
+import { isAuthenticated, getCurrentUserRole, clearTokens, markLogoutSuccessBanner } from "@/lib/api";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -38,6 +38,7 @@ export default function Navbar() {
         `You are logged in as '${role ?? "user"}'.\n\nPlease login as an organizer to access this page.\n\nClick OK to logout and login as an organizer, or Cancel to stay logged in.`
       );
       if (confirmed) {
+        markLogoutSuccessBanner();
         clearTokens();
         router.push("/login");
       }
@@ -45,6 +46,7 @@ export default function Navbar() {
   };
 
   const handleLogout = () => {
+    markLogoutSuccessBanner();
     clearTokens();
     router.push("/login");
   };
@@ -136,7 +138,10 @@ export default function Navbar() {
             {/* Profile Menu */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-2 p-2 rounded-full bg-[#002C71] text-white hover:bg-blue-800 focus:outline-none transition-colors">
+                <button
+                  type="button"
+                  className="flex items-center gap-2 rounded-full bg-gradient-to-r from-[#4776E6] to-[#8E54E9] p-2 text-white transition-colors hover:opacity-95 focus:outline-none"
+                >
                   <User className="w-4 h-4" />
                   <ChevronDown className="w-3 h-3" />
                 </button>

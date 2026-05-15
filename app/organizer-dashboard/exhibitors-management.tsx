@@ -161,7 +161,7 @@ export default function ExhibitorsManagement({ organizerId }: ExhibitorsManageme
       case "CONFIRMED":
         return "bg-green-100 text-green-800"
       case "BOOKED":
-        return "bg-blue-100 text-blue-800"
+        return "bg-[#8E54E9]/15 text-[#4c1d95]"
       case "SETUP":
         return "bg-yellow-100 text-yellow-800"
       case "ACTIVE":
@@ -205,7 +205,7 @@ export default function ExhibitorsManagement({ organizerId }: ExhibitorsManageme
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#4776E6]"></div>
         <span className="ml-2">Loading exhibitors...</span>
       </div>
     )
@@ -230,7 +230,7 @@ export default function ExhibitorsManagement({ organizerId }: ExhibitorsManageme
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
-              <Building className="w-5 h-5 text-blue-600" />
+              <Building className="w-5 h-5 text-[#5b21b6]" />
               <div>
                 <p className="text-sm text-gray-600">Total Exhibitors</p>
                 <p className="text-2xl font-bold">{totalExhibitors}</p>

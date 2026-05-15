@@ -1,6 +1,7 @@
 "use client"
 
-import { clearTokens } from "@/lib/api"
+import { useRouter } from "next/navigation"
+import { clearTokens, markLogoutSuccessBanner } from "@/lib/api"
 import {
   Sidebar,
   SidebarContent,
@@ -85,7 +86,7 @@ export function DashboardSidebar({ activeSection, setActiveSection, userData }: 
               ))}
               <SidebarMenuItem>
                 <Button
-                  onClick={() => { clearTokens(); router.push("/login"); }}
+                  onClick={() => { markLogoutSuccessBanner(); clearTokens(); router.push("/login"); }}
                   className="w-full bg-red-500 hover:bg-red-600 text-white mt-20 "
                 >
                   Logout

@@ -52,7 +52,7 @@ export function EventStatusBadge({ status, className = "" }: EventStatusBadgePro
           label: "Completed",
           variant: "default" as const,
           icon: <CheckCircle className="w-3 h-3 mr-1" />,
-          color: "text-blue-600"
+          color: "text-[#5b21b6]"
         }
       default:
         return {

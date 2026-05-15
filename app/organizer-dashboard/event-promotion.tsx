@@ -178,7 +178,7 @@ export default function EventPromotion({ organizerId }: EventPromotionProps) {
       icon: Code,
       userCount: 12500,
       avgEngagement: 78,
-      color: "bg-blue-500",
+      color: "bg-[#8E54E9]",
     },
     {
       id: "business",
@@ -382,7 +382,7 @@ export default function EventPromotion({ organizerId }: EventPromotionProps) {
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-gray-900">Event Promotion</h1>
         <div className="flex items-center gap-2">
-          <Badge variant="outline" className="bg-blue-50 text-blue-700">
+          <Badge variant="outline" className="bg-[#8E54E9]/10 text-[#5b21b6]">
             <Users className="w-4 h-4 mr-1" />
             {userCategories.reduce((total, cat) => total + cat.userCount, 0).toLocaleString()} Platform Users
           </Badge>
@@ -493,7 +493,7 @@ export default function EventPromotion({ organizerId }: EventPromotionProps) {
                         key={category.id}
                         className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
                           selectedCategories.includes(category.id)
-                            ? "border-blue-500 bg-blue-50"
+                            ? "border-[#8E54E9] bg-[#8E54E9]/10"
                             : "border-gray-200 hover:border-gray-300"
                         }`}
                         onClick={() => handleCategoryToggle(category.id)}
@@ -525,12 +525,12 @@ export default function EventPromotion({ organizerId }: EventPromotionProps) {
                   </div>
 
                   {selectedCategories.length > 0 && (
-                    <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+                    <div className="mt-6 p-4 bg-[#8E54E9]/10 rounded-lg">
                       <h3 className="font-semibold mb-2">Estimated Reach</h3>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                         <div>
                           <span className="text-gray-600">Total Users:</span>
-                          <div className="text-2xl font-bold text-blue-600">
+                          <div className="text-2xl font-bold text-[#5b21b6]">
                             {calculateEstimatedReach().toLocaleString()}
                           </div>
                         </div>
@@ -568,12 +568,12 @@ export default function EventPromotion({ organizerId }: EventPromotionProps) {
                         <div
                           key={pkg.id}
                           className={`relative p-6 border-2 rounded-lg ${
-                            pkg.recommended ? "border-blue-500 bg-blue-50" : "border-gray-200"
+                            pkg.recommended ? "border-[#8E54E9] bg-[#8E54E9]/10" : "border-gray-200"
                           }`}
                         >
                           {pkg.recommended && (
                             <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                              <Badge className="bg-blue-500 text-white">
+                              <Badge className="bg-[#8E54E9] text-white">
                                 <Star className="w-3 h-3 mr-1" />
                                 Recommended
                               </Badge>
@@ -584,7 +584,7 @@ export default function EventPromotion({ organizerId }: EventPromotionProps) {
                             <h3 className="text-xl font-bold">{pkg.name}</h3>
                             <p className="text-sm text-gray-600 mt-1">{pkg.description}</p>
                             <div className="mt-3">
-                              <span className="text-3xl font-bold text-blue-600">₹{pkg.price.toLocaleString()}</span>
+                              <span className="text-3xl font-bold text-[#5b21b6]">₹{pkg.price.toLocaleString()}</span>
                               <span className="text-sm text-gray-500">/{pkg.duration}</span>
                             </div>
                           </div>
@@ -667,7 +667,7 @@ export default function EventPromotion({ organizerId }: EventPromotionProps) {
                   <div className="border-t pt-2 mt-2">
                     <div className="flex justify-between font-semibold">
                       <span>Total Amount:</span>
-                      <span className="text-blue-600">₹{selectedPackageData.price.toLocaleString()}</span>
+                      <span className="text-[#5b21b6]">₹{selectedPackageData.price.toLocaleString()}</span>
                     </div>
                   </div>
                 </div>
@@ -701,11 +701,11 @@ export default function EventPromotion({ organizerId }: EventPromotionProps) {
                 <Checkbox id="terms" />
                 <Label htmlFor="terms" className="text-sm">
                   I agree to the{" "}
-                  <a href="#" className="text-blue-600 hover:underline">
+                  <a href="#" className="text-[#5b21b6] hover:underline">
                     Terms and Conditions
                   </a>{" "}
                   and{" "}
-                  <a href="#" className="text-blue-600 hover:underline">
+                  <a href="#" className="text-[#5b21b6] hover:underline">
                     Promotion Policy
                   </a>
                 </Label>

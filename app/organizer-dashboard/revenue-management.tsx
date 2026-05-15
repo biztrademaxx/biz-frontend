@@ -54,8 +54,8 @@ export default function RevenueManagement({ revenueData }: RevenueManagementProp
                 <p className="text-2xl font-bold">{monthlyRevenue}</p>
                 <p className="text-sm text-green-600">+15% from last month</p>
               </div>
-              <div className="p-3 bg-blue-100 rounded-full">
-                <TrendingUp className="w-6 h-6 text-blue-600" />
+              <div className="p-3 bg-[#8E54E9]/15 rounded-full">
+                <TrendingUp className="w-6 h-6 text-[#5b21b6]" />
               </div>
             </div>
           </CardContent>
