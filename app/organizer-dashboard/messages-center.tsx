@@ -387,7 +387,7 @@ export default function MessagesCenter({ organizerId, surface = "default" }: Mes
   const getRoleBadgeColor = (role: string) => {
     switch (role.toLowerCase()) {
       case "organizer":
-        return surface === "exhibitor" ? "bg-[#8E54E9]/12 text-[#5b21b6]" : "bg-blue-100 text-blue-800"
+        return surface === "exhibitor" ? "bg-[#8E54E9]/12 text-[#5b21b6]" : "bg-[#8E54E9]/15 text-[#4c1d95]"
       case "speaker":
         return "bg-green-100 text-green-800"
       case "attendee":
@@ -591,7 +591,7 @@ export default function MessagesCenter({ organizerId, surface = "default" }: Mes
                     selectedContact === conversation.id
                       ? shell
                         ? "border-r-2 border-[#8E54E9] bg-[#8E54E9]/10"
-                        : "border-r-2 border-blue-500 bg-blue-50"
+                        : "border-r-2 border-[#8E54E9] bg-[#8E54E9]/10"
                       : "",
                   )}
                 >
@@ -630,7 +630,7 @@ export default function MessagesCenter({ organizerId, surface = "default" }: Mes
                           <Badge
                             className={cn(
                               "flex h-5 w-5 items-center justify-center rounded-full p-0 text-xs text-white",
-                              shell ? "bg-gradient-to-r from-[#8E54E9] to-[#4776E6]" : "bg-blue-500",
+                              shell ? "bg-gradient-to-r from-[#8E54E9] to-[#4776E6]" : "bg-[#8E54E9]",
                             )}
                           >
                             {conversation.unreadCount}
@@ -757,7 +757,7 @@ export default function MessagesCenter({ organizerId, surface = "default" }: Mes
                             message.senderId === organizerId
                               ? shell
                                 ? "bg-gradient-to-r from-[#8E54E9] to-[#4776E6] text-white"
-                                : "bg-blue-500 text-white"
+                                : "bg-[#8E54E9] text-white"
                               : "bg-gray-100 text-gray-900",
                           )}
                         >
@@ -768,7 +768,7 @@ export default function MessagesCenter({ organizerId, surface = "default" }: Mes
                               message.senderId === organizerId
                                 ? shell
                                   ? "text-white/80"
-                                  : "text-blue-100"
+                                  : "text-white/85"
                                 : "text-gray-500",
                             )}
                           >

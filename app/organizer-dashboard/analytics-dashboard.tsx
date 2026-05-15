@@ -313,7 +313,7 @@ export default function AnalyticsDashboard({
                     <p className="text-sm font-medium text-gray-600">Total Leads</p>
                     <p className="text-2xl font-bold">{leadData.totalLeads.toLocaleString()}</p>
                   </div>
-                  <Users className="w-8 h-8 text-blue-500" />
+                  <Users className="w-8 h-8 text-[#7c3aed]" />
                 </div>
                 <p className="text-xs text-green-600 mt-2">+{leadData.conversionRate}% conversion rate</p>
               </CardContent>
@@ -409,7 +409,7 @@ export default function AnalyticsDashboard({
             <Card>
               <CardContent className="p-6">
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-blue-600">{leadData.totalLeads}</div>
+                  <div className="text-3xl font-bold text-[#5b21b6]">{leadData.totalLeads}</div>
                   <div className="text-sm text-gray-600">Total Leads</div>
                 </div>
               </CardContent>
@@ -489,7 +489,7 @@ export default function AnalyticsDashboard({
                     <p className="text-sm font-medium text-gray-600">Total Visitors</p>
                     <p className="text-2xl font-bold">{visitorData.totalVisitors.toLocaleString()}</p>
                   </div>
-                  <Users className="w-8 h-8 text-blue-500" />
+                  <Users className="w-8 h-8 text-[#7c3aed]" />
                 </div>
               </CardContent>
             </Card>
@@ -584,7 +584,7 @@ export default function AnalyticsDashboard({
             <Card>
               <CardContent className="p-6">
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-blue-600">{exhibitorData.totalExhibitors}</div>
+                  <div className="text-3xl font-bold text-[#5b21b6]">{exhibitorData.totalExhibitors}</div>
                   <div className="text-sm text-gray-600">Total Exhibitors</div>
                 </div>
               </CardContent>
@@ -684,7 +684,7 @@ export default function AnalyticsDashboard({
                   className="h-20 flex flex-col gap-2 bg-transparent"
                   onClick={() => downloadReport("lead-generation")}
                 >
-                  <Users className="w-6 h-6 text-blue-600" />
+                  <Users className="w-6 h-6 text-[#5b21b6]" />
                   <span>Lead Generation Report</span>
                   <span className="text-xs text-gray-500">CSV Format</span>
                 </Button>
@@ -747,7 +747,7 @@ export default function AnalyticsDashboard({
                   <h3 className="font-semibold">Available Data</h3>
                   <ul className="space-y-2 text-sm">
                     <li className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-blue-500 rounded-full" />
+                      <div className="w-2 h-2 bg-[#8E54E9] rounded-full" />
                       Lead contact information and qualification status
                     </li>
                     <li className="flex items-center gap-2">
@@ -768,7 +768,7 @@ export default function AnalyticsDashboard({
                   <h3 className="font-semibold">Export Options</h3>
                   <ul className="space-y-2 text-sm">
                     <li className="flex items-center gap-2">
-                      <FileText className="w-4 h-4 text-blue-500" />
+                      <FileText className="w-4 h-4 text-[#7c3aed]" />
                       CSV files for data analysis
                     </li>
                     <li className="flex items-center gap-2">

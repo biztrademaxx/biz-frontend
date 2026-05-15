@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useAuth } from "@/hooks/use-auth"
-import { apiFetch, clearTokens } from "@/lib/api"
+import { apiFetch, clearTokens, markLogoutSuccessBanner } from "@/lib/api"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import {
@@ -164,6 +164,7 @@ export function UserDashboard({ userId }: UserDashboardProps) {
   }
 
   const handleSignOut = () => {
+    markLogoutSuccessBanner()
     clearTokens()
     router.push("/login")
   }

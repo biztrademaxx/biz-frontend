@@ -76,6 +76,31 @@ export function clearTokens() {
   window.localStorage.removeItem(REFRESH_TOKEN_KEY);
 }
 
+const LOGOUT_SUCCESS_BANNER_KEY = "biz_logout_success_banner_v1";
+
+/** Call right before `clearTokens()` when the user logs out and you send them to `/login`. */
+export function markLogoutSuccessBanner() {
+  if (typeof window === "undefined") return;
+  try {
+    sessionStorage.setItem(LOGOUT_SUCCESS_BANNER_KEY, "1");
+  } catch {
+    /* quota / private mode */
+  }
+}
+
+/** One-shot: login page reads this after logout to show the confirmation popup. */
+export function consumeLogoutSuccessBanner(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    const v = sessionStorage.getItem(LOGOUT_SUCCESS_BANNER_KEY);
+    if (v !== "1") return false;
+    sessionStorage.removeItem(LOGOUT_SUCCESS_BANNER_KEY);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 /** Decode JWT payload without verification (client-side only; for reading sub/role/permissions). */
 function decodeJwtPayload(token: string): {
   sub?: string;

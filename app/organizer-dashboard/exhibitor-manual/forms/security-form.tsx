@@ -53,13 +53,13 @@ export function SecurityForm({ eventId, organizerId }: SecurityFormProps) {
 
   return (
     <Card className="w-full max-w-4xl mx-auto">
-      <CardHeader className="bg-blue-600 text-white">
+      <CardHeader className="bg-gradient-to-r from-[#4776E6] to-[#8E54E9] text-white">
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="text-xl font-bold">FORM 11 - SECURITY FOR YOUR STALL</CardTitle>
-            <p className="text-blue-100 mt-1">(OPTIONAL)</p>
+            <p className="text-white/85 mt-1">(OPTIONAL)</p>
           </div>
-          <Badge variant="secondary" className="bg-blue-800">
+          <Badge variant="secondary" className="bg-[#5b21b6]">
             Deadline: 7 November 2025
           </Badge>
         </div>
@@ -155,7 +155,7 @@ export function SecurityForm({ eventId, organizerId }: SecurityFormProps) {
           </div>
 
           <div className="flex gap-4 pt-4">
-            <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
+            <Button type="submit" className="bg-[#4776E6] hover:bg-[#3556b8]">
               <Send className="w-4 h-4 mr-2" />
               Submit Form
             </Button>

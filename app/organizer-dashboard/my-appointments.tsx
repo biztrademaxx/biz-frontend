@@ -312,7 +312,7 @@ const cancelAppointment = async (appointmentId: string) => {
           {
             label: "Total Requests",
             value: stats.total,
-            color: "border-blue-300 hover:border-blue-500",
+            color: "border-[#c4b5fd] hover:border-[#8E54E9]",
           },
           {
             label: "Pending",
@@ -389,8 +389,8 @@ const cancelAppointment = async (appointmentId: string) => {
             <div className="flex flex-col md:flex-row">
               {/* Avatar Section - Fixed to prevent image errors */}
               <div className="relative w-full md:w-1/3 h-48 bg-gray-100 flex items-center justify-center">
-                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center">
-                  <div className="text-2xl font-bold text-blue-600">
+                <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-[#8E54E9]/20 to-[#c4b5fd]/50">
+                  <div className="text-2xl font-bold text-[#5b21b6]">
                     {appointment.venue.firstName[0]?.toUpperCase() || "V"}
                   </div>
                 </div>
@@ -505,8 +505,8 @@ const cancelAppointment = async (appointmentId: string) => {
             return (
             <div className="space-y-4">
               <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center">
-                  <div className="text-xl font-bold text-blue-600">
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-[#8E54E9]/20 to-[#c4b5fd]/50">
+                  <div className="text-xl font-bold text-[#5b21b6]">
                     {selectedAppointment.venue.firstName[0]?.toUpperCase() || "V"}
                   </div>
                 </div>

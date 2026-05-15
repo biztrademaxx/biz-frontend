@@ -9,9 +9,18 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card"
-import { Eye, EyeOff, Mail, Lock, Loader2 } from "lucide-react"
+import { Check, Eye, EyeOff, Loader2, Lock, Mail } from "lucide-react"
+import { motion } from "framer-motion"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { loginWithEmailPassword } from "@/lib/api"
+import { loginWithEmailPassword, consumeLogoutSuccessBanner } from "@/lib/api"
 import {
   clearOAuthSignupIntentRole,
   clearOAuthSignupIntentRoleServer,
@@ -29,6 +38,14 @@ export default function LoginPage() {
   const [error, setError] = useState("")
   const [infoMessage, setInfoMessage] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [logoutDialogOpen, setLogoutDialogOpen] = useState(false)
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    if (consumeLogoutSuccessBanner()) {
+      setLogoutDialogOpen(true)
+    }
+  }, [])
 
   useEffect(() => {
     if (typeof window === "undefined") return
@@ -99,6 +116,7 @@ export default function LoginPage() {
   }
 
   return (
+    <>
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader className="text-center pb-4">
@@ -252,5 +270,46 @@ export default function LoginPage() {
         </CardFooter>
       </Card>
     </div>
+
+    <Dialog open={logoutDialogOpen} onOpenChange={setLogoutDialogOpen}>
+      <DialogContent className="overflow-hidden border-[#e8e4f0] bg-white shadow-[0_20px_50px_rgba(142,84,233,0.18)] sm:max-w-md">
+        <DialogHeader className="items-center space-y-0 text-center sm:text-center">
+          <motion.div
+            initial={{ scale: 0, rotate: -25 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ type: "spring", stiffness: 260, damping: 18 }}
+            className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-[#8E54E9]/20 to-[#4776E6]/15 text-[#5b21b6] ring-2 ring-[#8E54E9]/20"
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.5 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.35, delay: 0.12, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <Check className="h-8 w-8" strokeWidth={2.5} aria-hidden />
+            </motion.div>
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35, delay: 0.2, ease: "easeOut" }}
+          >
+          <DialogTitle className="text-xl font-semibold text-gray-900">Account logged out</DialogTitle>
+          <DialogDescription className="pt-3 text-base leading-relaxed text-gray-600">
+            Stay logged in for more latest updates.
+          </DialogDescription>
+          </motion.div>
+        </DialogHeader>
+        <DialogFooter className="mt-2 sm:justify-center">
+          <Button
+            type="button"
+            className="w-full bg-gradient-to-r from-[#8E54E9] to-[#4776E6] text-white hover:opacity-[0.96] sm:w-auto sm:min-w-[140px]"
+            onClick={() => setLogoutDialogOpen(false)}
+          >
+            Got it
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    </>
   )
 }

@@ -132,7 +132,7 @@ export function ContractorSecurityDepositForm({ eventId, organizerId }: Contract
           <CardTitle className="text-lg">Security Deposit Amount</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="bg-blue-50 p-4 rounded-lg mb-4">
+          <div className="bg-[#8E54E9]/10 p-4 rounded-lg mb-4">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b">

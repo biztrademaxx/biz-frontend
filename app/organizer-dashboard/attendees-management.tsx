@@ -141,7 +141,7 @@ export default function AttendeesManagement({ organizerId }: AttendeesManagement
       case "CANCELLED":
         return "bg-red-100 text-red-800"
       case "WAITLISTED":
-        return "bg-blue-100 text-blue-800"
+        return "bg-[#8E54E9]/15 text-[#4c1d95]"
       default:
         return "bg-gray-100 text-gray-800"
     }
@@ -177,7 +177,7 @@ export default function AttendeesManagement({ organizerId }: AttendeesManagement
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#4776E6]"></div>
         <span className="ml-2">Loading attendees...</span>
       </div>
     )
@@ -202,7 +202,7 @@ export default function AttendeesManagement({ organizerId }: AttendeesManagement
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
-              <Users className="w-5 h-5 text-blue-600" />
+              <Users className="w-5 h-5 text-[#5b21b6]" />
               <div>
                 <p className="text-sm text-gray-600">Total Attendees</p>
                 <p className="text-2xl font-bold">{totalAttendees}</p>

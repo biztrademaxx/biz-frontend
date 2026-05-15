@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { AdminNotificationsDropdown } from "@/components/AdminNotificationsDropdown";
-import { clearTokens } from "@/lib/api";
+import { clearTokens, markLogoutSuccessBanner } from "@/lib/api";
 
 type NavbarProps = { onLogout?: () => void };
 
@@ -27,6 +27,7 @@ export default function Navbar({ onLogout }: NavbarProps) {
   const toggleExplore = () => setExploreOpen((prev) => !prev);
 
   const handleLogout = () => {
+    markLogoutSuccessBanner();
     clearTokens();
     localStorage.removeItem("superAdminToken");
     localStorage.removeItem("superAdmin");

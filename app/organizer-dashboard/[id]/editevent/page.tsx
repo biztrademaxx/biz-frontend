@@ -443,7 +443,7 @@ const handleSave = async () => {
                 <X className="w-4 h-4 mr-2" />
                 Cancel
               </Button>
-              <Button onClick={handleSave} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
+              <Button onClick={handleSave} disabled={saving} className="bg-[#4776E6] hover:bg-[#3556b8]">
                 {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
                 Save Changes
               </Button>
@@ -501,7 +501,7 @@ const handleSave = async () => {
                                   type="checkbox"
                                   checked={selectedCategories.includes(category.name)}
                                   onChange={() => handleCategoryToggle(category.name)}
-                                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                  className="w-4 h-4 text-[#5b21b6] border-gray-300 rounded focus:ring-[#8E54E9]"
                                 />
                                 <span className="text-sm text-gray-700">{category.name}</span>
                               </div>
@@ -534,7 +534,7 @@ const handleSave = async () => {
                                   type="checkbox"
                                   checked={selectedStatus.includes(status)}
                                   onChange={() => handleStatusToggle(status)}
-                                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                  className="w-4 h-4 text-[#5b21b6] border-gray-300 rounded focus:ring-[#8E54E9]"
                                 />
                                 <span className="text-sm text-gray-700 capitalize">{status}</span>
                               </div>
@@ -569,7 +569,7 @@ const handleSave = async () => {
                                   type="checkbox"
                                   checked={selectedFeatured.includes(type)}
                                   onChange={() => handleFeaturedToggle(type)}
-                                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                  className="w-4 h-4 text-[#5b21b6] border-gray-300 rounded focus:ring-[#8E54E9]"
                                 />
                                 <span className="text-sm text-gray-700 capitalize">{type}</span>
                               </div>
@@ -631,7 +631,7 @@ const handleSave = async () => {
                             value={editingEvent.description}
                             onChange={(e) => handleInputChange("description", e.target.value)}
                             placeholder="Enter event description"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[100px]"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#8E54E9] focus:border-transparent min-h-[100px]"
                           />
                         </div>
 
@@ -773,7 +773,7 @@ const handleSave = async () => {
                           <select
                             value={editingEvent.status}
                             onChange={(e) => handleInputChange("status", e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#8E54E9] focus:border-transparent"
                           >
                             <option value="draft">Draft</option>
                             <option value="published">Published</option>
@@ -788,7 +788,7 @@ const handleSave = async () => {
                             id="featured"
                             checked={editingEvent.featured || false}
                             onChange={(e) => handleInputChange("featured", e.target.checked)}
-                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                            className="w-4 h-4 text-[#5b21b6] border-gray-300 rounded focus:ring-[#8E54E9]"
                           />
                           <label htmlFor="featured" className="text-sm font-medium text-gray-700">
                             Featured Event
@@ -908,7 +908,7 @@ const handleSave = async () => {
                                       variant="ghost"
                                       size="sm"
                                       onClick={() => handleEdit(event)}
-                                      className="text-blue-600 hover:text-blue-800"
+                                      className="text-[#5b21b6] hover:text-[#4c1d95]"
                                     >
                                       <Edit className="w-4 h-4 mr-1" />
                                       Edit

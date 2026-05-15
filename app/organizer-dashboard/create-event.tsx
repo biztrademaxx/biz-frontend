@@ -460,7 +460,7 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
           <span className="text-sm font-medium">Form Completion</span>
           <span className="text-sm text-muted-foreground">{completionPercentage}%</span>
         </div>
-        <Progress value={completionPercentage} className="h-2 bg-gray-200 [&>div]:bg-green-600" />
+        <Progress value={completionPercentage} className="h-2 bg-gray-200 [&>div]:bg-gradient-to-r [&>div]:from-[#8E54E9] [&>div]:to-[#4776E6]" />
         <p className="text-xs text-muted-foreground mt-1">
           {completionPercentage < 80 ? "Complete required fields to publish your event" : "Ready to publish!"}
         </p>
@@ -476,7 +476,7 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
             type="button"
             onClick={() => void handlePublishEvent()}
             disabled={isPublishing || completionPercentage < 80}
-            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white"
+            className="flex items-center gap-2 bg-[#4776E6] hover:bg-[#3556b8] text-white"
           >
             {isPublishing ? (
               <>
@@ -494,12 +494,12 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-5 bg-gray-100 p-1 rounded-xl">
+        <TabsList className="grid w-full grid-cols-5 rounded-xl bg-gray-100 p-1">
           {tabs.map((tab) => (
             <TabsTrigger
               key={tab.id}
               value={tab.id}
-              className="rounded-lg text-gray-600 data-[state=active]:bg-green-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-200"
+              className="rounded-lg text-gray-600 transition-all duration-200 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#8E54E9] data-[state=active]:to-[#4776E6] data-[state=active]:text-white data-[state=active]:shadow-md"
             >
               {tab.label}
             </TabsTrigger>
