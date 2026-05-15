@@ -210,21 +210,38 @@ export function ExhibitorLayout({ routeSegment }: UserDashboardProps) {
       setLoading(true)
       setError(null)
 
-      const [exhibitorRes, productCount] = await Promise.all([
-        apiFetch<{ success: boolean; exhibitor: any }>(
+      let exhibitorRes: { success: boolean; exhibitor: any }
+      try {
+        exhibitorRes = await apiFetch<{ success: boolean; exhibitor: any }>(
           `/api/exhibitors/${encodeURIComponent(routeSegment)}`,
           {
             method: "GET",
             auth: true,
           },
-        ),
-        fetchProductCount(routeSegment),
-      ])
+        )
+      } catch (firstErr) {
+        const msg = firstErr instanceof Error ? firstErr.message : ""
+        const fallbackId = getCurrentUserId()
+        if (msg.includes("Invalid exhibitor ID") && fallbackId && fallbackId !== routeSegment) {
+          exhibitorRes = await apiFetch<{ success: boolean; exhibitor: any }>(
+            `/api/exhibitors/${encodeURIComponent(fallbackId)}`,
+            {
+              method: "GET",
+              auth: true,
+            },
+          )
+        } else {
+          throw firstErr
+        }
+      }
 
       if (!exhibitorRes.success || !exhibitorRes.exhibitor) {
         setError("Exhibitor not found")
         return
       }
+
+      const resolvedId = exhibitorRes.exhibitor.id as string
+      const productCount = await fetchProductCount(resolvedId)
 
       setExhibitor(mapBackendExhibitor(exhibitorRes.exhibitor, productCount))
       setAppointmentCount(Number((exhibitorRes.exhibitor as any)?.upcomingAppointments) || 0)
