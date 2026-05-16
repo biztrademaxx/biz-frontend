@@ -757,7 +757,7 @@ function VenueDashboardHome({ venueData, setActiveSection }: { venueData: VenueD
                             </p>
                           </div>
                         </div>
-                        <ChevronRight className={cn("w-4 h-4 text-[#94A3B8] transition-transform shrink-0", isExpanded && "rotate-90")} />
+                        {/* <ChevronRight className={cn("w-4 h-4 text-[#94A3B8] transition-transform shrink-0", isExpanded && "rotate-90")} /> */}
                       </div>
 
                       {isExpanded && (
