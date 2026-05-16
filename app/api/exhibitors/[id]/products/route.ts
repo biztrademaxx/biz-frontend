@@ -12,9 +12,15 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     devLog("[v0] Fetching products for exhibitorId:", exhibitorId)
 
-    if (!exhibitorId) {
+    if (!exhibitorId || exhibitorId === "undefined") {
       devLog("[v0] Error: Exhibitor ID is missing")
       return NextResponse.json({ error: "Exhibitor ID is required" }, { status: 400 })
+    }
+
+    // Product.exhibitorId is Mongo ObjectId; slugs from the dashboard URL would crash Prisma.
+    if (!/^[a-f\d]{24}$/i.test(exhibitorId)) {
+      devLog("[v0] Non-ObjectId exhibitor segment — returning empty products")
+      return NextResponse.json({ products: [] }, { status: 200 })
     }
 
     const products = await prisma.product.findMany({

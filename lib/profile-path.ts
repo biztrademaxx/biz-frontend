@@ -71,3 +71,15 @@ export function getExhibitorDashboardPath(userId: string, data: ProfilePathInput
   }
   return `/exhibitor-dashboard/${userId}`;
 }
+
+/** Resolves `/exhibitor-dashboard/[segment]` when segment is a slug (not the user id). */
+export function exhibitorDashboardSegmentForUser(data: ProfilePathInput): string {
+  const full = `${data.firstName ?? ""} ${data.lastName ?? ""}`.trim();
+  return (
+    slugifyPublicProfile(data.organizationName) ||
+    slugifyPublicProfile(data.company) ||
+    slugifyPublicProfile(full) ||
+    slugifyPublicProfile(data.firstName) ||
+    ""
+  );
+}

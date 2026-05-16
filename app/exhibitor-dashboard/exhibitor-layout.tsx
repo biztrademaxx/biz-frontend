@@ -83,8 +83,8 @@ interface ExhibitorData {
 }
 
 interface UserDashboardProps {
-  /** UUID or public profile slug from `/exhibitor-dashboard/[id]`. */
-  routeSegment: string
+  /** UUID, slug from `/exhibitor-dashboard/[id]`, or empty (we fall back to JWT `sub`). */
+  routeSegment: string | undefined
 }
 
 export function ExhibitorLayout({ routeSegment }: UserDashboardProps) {
@@ -211,15 +211,28 @@ export function ExhibitorLayout({ routeSegment }: UserDashboardProps) {
     upcomingAppointments: (e as any)?.upcomingAppointments ?? 0,
   })
 
+  // Valid URL segment or JWT user id (never call API with undefined → encodeURIComponent("undefined"))
+  const resolveExhibitorSegment = (): string | null => {
+    const t = routeSegment?.trim()
+    if (t && t !== "undefined") return t
+    return getCurrentUserId()
+  }
+
   const fetchExhibitorData = async () => {
     try {
       setLoading(true)
       setError(null)
 
+      const segment = resolveExhibitorSegment()
+      if (!segment) {
+        setError("Missing exhibitor ID")
+        return
+      }
+
       let exhibitorRes: { success: boolean; exhibitor: any }
       try {
         exhibitorRes = await apiFetch<{ success: boolean; exhibitor: any }>(
-          `/api/exhibitors/${encodeURIComponent(routeSegment)}`,
+          `/api/exhibitors/${encodeURIComponent(segment)}`,
           {
             method: "GET",
             auth: true,
@@ -228,7 +241,7 @@ export function ExhibitorLayout({ routeSegment }: UserDashboardProps) {
       } catch (firstErr) {
         const msg = firstErr instanceof Error ? firstErr.message : ""
         const fallbackId = getCurrentUserId()
-        if (msg.includes("Invalid exhibitor ID") && fallbackId && fallbackId !== routeSegment) {
+        if (msg.includes("Invalid exhibitor ID") && fallbackId && fallbackId !== segment) {
           exhibitorRes = await apiFetch<{ success: boolean; exhibitor: any }>(
             `/api/exhibitors/${encodeURIComponent(fallbackId)}`,
             {
@@ -240,6 +253,7 @@ export function ExhibitorLayout({ routeSegment }: UserDashboardProps) {
           throw firstErr
         }
       }
+
 
       if (!exhibitorRes.success || !exhibitorRes.exhibitor) {
         setError("Exhibitor not found")
@@ -254,7 +268,7 @@ export function ExhibitorLayout({ routeSegment }: UserDashboardProps) {
     } catch (err) {
       console.error("Error fetching exhibitor data:", err)
       setError(err instanceof Error ? err.message : "An error occurred")
-      if (err instanceof Error && (err.message === "Access denied" || err.message === "User not found" || err.message.includes("Exhibitor not found"))) {
+      if (err instanceof Error && (err.message === "Access denied" || err.message === "User not found" || err.message.includes("Exhibitor not found") || err.message.includes("Invalid exhibitor ID"))) {
         toast({
           title: "Error",
           description: err.message,
@@ -272,7 +286,10 @@ export function ExhibitorLayout({ routeSegment }: UserDashboardProps) {
   }
 
   const handleUpdate = async (updates: Partial<any>) => {
-    const apiSegment = exhibitor?.id ?? routeSegment
+    const apiSegment = exhibitor?.id ?? resolveExhibitorSegment()
+    if (!apiSegment) {
+      throw new Error("No exhibitor id")
+    }
     try {
       const data = await apiFetch<{ success: boolean; exhibitor: any }>(
         `/api/exhibitors/${encodeURIComponent(apiSegment)}`,
@@ -283,7 +300,7 @@ export function ExhibitorLayout({ routeSegment }: UserDashboardProps) {
         },
       )
       if (data.success && data.exhibitor) {
-        const productCount = await fetchProductCount(apiSegment)
+        const productCount = await fetchProductCount(data.exhibitor.id as string)
         setExhibitor((prev: any) => ({ ...prev, ...mapBackendExhibitor(data.exhibitor, productCount) }))
       }
     } catch (error) {

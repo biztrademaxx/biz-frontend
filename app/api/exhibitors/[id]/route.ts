@@ -2,37 +2,70 @@ import { devLog } from "@/lib/dev-log"
 
 import { type NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-// import { ObjectId } from "bson"   // <-- Add this for MongoDB ObjectId validation
+import { exhibitorDashboardSegmentForUser } from "@/lib/profile-path"
+import { getAuthPayload } from "@/lib/auth-jwt"
+
+const EXHIBITOR_SELECT = {
+  id: true,
+  email: true,
+  firstName: true,
+  lastName: true,
+  phone: true,
+  avatar: true,
+  role: true,
+  bio: true,
+  website: true,
+  isVerified: true,
+  createdAt: true,
+  organizationName: true,
+  company: true,
+  jobTitle: true,
+  twitter: true,
+  totalEvents: true,
+  activeEvents: true,
+} as const
+
+function isMongoObjectId(s: string): boolean {
+  return /^[a-f\d]{24}$/i.test(s)
+}
+
+async function findExhibitorByRouteSegment(raw: string) {
+  const segment = decodeURIComponent(String(raw ?? "").trim())
+  if (!segment || segment === "undefined") {
+    return null
+  }
+
+  if (isMongoObjectId(segment)) {
+    return prisma.user.findFirst({
+      where: { id: segment, role: "EXHIBITOR" },
+      select: EXHIBITOR_SELECT,
+    })
+  }
+
+  const rows = await prisma.user.findMany({
+    where: { role: "EXHIBITOR" },
+    select: EXHIBITOR_SELECT,
+  })
+
+  return rows.find((u) => exhibitorDashboardSegmentForUser(u) === segment) ?? null
+}
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
- try {
-    const { id } =await params
+  try {
+    const { id: paramId } = await params
+    const authSub = getAuthPayload(request)?.sub
+    const id =
+      paramId?.trim() && paramId.trim() !== "undefined"
+        ? paramId.trim()
+        : authSub?.trim() && authSub.trim() !== "undefined"
+          ? authSub.trim()
+          : ""
 
-    // Validate ObjectId
-    if (!id || id === "undefined") {
+    if (!id) {
       return NextResponse.json({ success: false, error: "Invalid exhibitor ID" }, { status: 400 })
     }
 
-    // Query database
-    const exhibitor = await prisma.user.findFirst({
-      where: {
-        id: id,
-        role: "EXHIBITOR",
-      },
-      select: {
-        id: true,
-        email: true,
-        firstName: true,
-        lastName: true,
-        phone: true,
-        avatar: true,
-        role: true,
-        bio: true,
-        website: true,
-        isVerified: true,
-        createdAt: true,
-      },
-    })
+    const exhibitor = await findExhibitorByRouteSegment(id)
 
     if (!exhibitor) {
       return NextResponse.json({ success: false, error: "Exhibitor not found" }, { status: 404 })
@@ -48,15 +81,28 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   }
 }
 
-
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = await params
+    const { id: paramId } = await params
+    const authSub = getAuthPayload(request)?.sub
+    const raw =
+      paramId?.trim() && paramId.trim() !== "undefined"
+        ? paramId.trim()
+        : authSub?.trim() && authSub.trim() !== "undefined"
+          ? authSub.trim()
+          : ""
+
     const body = await request.json()
 
-    if (!id || id === "undefined") {
+    if (!raw) {
       return NextResponse.json({ success: false, error: "Invalid exhibitor ID" }, { status: 400 })
     }
+
+    const existing = await findExhibitorByRouteSegment(raw)
+    if (!existing) {
+      return NextResponse.json({ success: false, error: "Exhibitor not found" }, { status: 404 })
+    }
+    const id = existing.id
 
     // Try to update in database
     try {
@@ -83,6 +129,10 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
           website: true,
           twitter: true,
           jobTitle: true,
+          organizationName: true,
+          company: true,
+          totalEvents: true,
+          activeEvents: true,
         },
       })
 
