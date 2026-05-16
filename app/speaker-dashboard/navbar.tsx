@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { ChevronDown, User, LogOut, Settings, HelpCircle, LayoutDashboard } from "lucide-react"
-import { useRouter } from "next/navigation"
+import { useRouter, usePathname } from "next/navigation"
 import { isAuthenticated, getCurrentUserRole, getCurrentUserId, clearTokens, markLogoutSuccessBanner } from "@/lib/api"
 import {
   DropdownMenu,
@@ -13,10 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { useDashboard } from "@/contexts/dashboard-context"
 import { NotificationsDropdown } from "@/components/notifications-dropdown"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
@@ -34,17 +31,18 @@ export default function Navbar() {
   const [exploreOpen, setExploreOpen] = useState(false)
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
-  const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [userName, setUserName] = useState("Rohan Mondal")
   const [userEmail, setUserEmail] = useState("rohan1.maxx@gmail.com")
   const [userAvatar, setUserAvatar] = useState("")
+  const [userRole, setUserRole] = useState<string | null>(null)
   const router = useRouter()
-  const { setActiveSection } = useDashboard()
+  const pathname = usePathname()
 
   useEffect(() => {
     if (isAuthenticated() && getCurrentUserId()) {
       fetchNotifications()
       fetchUserData()
+      setUserRole(getCurrentUserRole())
     }
   }, [])
 
@@ -80,53 +78,6 @@ export default function Navbar() {
     }
   }
 
-  const markAsRead = async (notificationId: string) => {
-    try {
-      const response = await fetch(`/api/notifications/${notificationId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isRead: true }),
-      })
-
-      if (response.ok) {
-        setNotifications((prev) =>
-          prev.map((notif) => (notif.id === notificationId ? { ...notif, isRead: true } : notif)),
-        )
-        setUnreadCount((prev) => Math.max(0, prev - 1))
-      }
-    } catch (error) {
-      console.error("Error marking notification as read:", error)
-    }
-  }
-
-  const markAllAsRead = async () => {
-    try {
-      const response = await fetch("/api/notifications/mark-all-read", {
-        method: "POST",
-      })
-
-      if (response.ok) {
-        setNotifications((prev) => prev.map((notif) => ({ ...notif, isRead: true })))
-        setUnreadCount(0)
-      }
-    } catch (error) {
-      console.error("Error marking all as read:", error)
-    }
-  }
-
-  const formatTimeAgo = (dateString: string) => {
-    const date = new Date(dateString)
-    const now = new Date()
-    const seconds = Math.floor((now.getTime() - date.getTime()) / 1000)
-
-    if (seconds < 60) return "Just now"
-    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`
-    if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`
-    return `${Math.floor(seconds / 86400)}d ago`
-  }
-
-  const toggleExplore = () => setExploreOpen((prev) => !prev)
-
   const handleAddevent = () => {
     if (!isAuthenticated()) {
       alert("You are not logged in. Please login as an organizer.")
@@ -148,20 +99,87 @@ export default function Navbar() {
     }
   }
 
-  // Navigation functions using dashboard context
+  // Navigation functions - check if already on dashboard page
+  const isOnDashboard = pathname?.includes('/dashboard') || pathname?.includes('/speaker-dashboard')
+  const isOnSpeakerDashboard = pathname?.includes('/speaker-dashboard')
+
   const navigateToProfile = () => {
-    setActiveSection("info")
-    router.push("/dashboard")
+    if (isOnSpeakerDashboard) {
+      // Dispatch custom event to communicate with speaker dashboard
+      window.dispatchEvent(new CustomEvent('navigateDashboard', { detail: { section: 'myprofile' } }))
+    } else if (isOnDashboard) {
+      window.dispatchEvent(new CustomEvent('navigateDashboard', { detail: { section: 'info' } }))
+    } else {
+      // Navigate to appropriate dashboard based on role
+      const role = (getCurrentUserRole() || "").toLowerCase()
+      if (role === "speaker") {
+        router.push(`/speaker-dashboard/${userName.toLowerCase().replace(' ', '-')}`)
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent('navigateDashboard', { detail: { section: 'myprofile' } }))
+        }, 100)
+      } else {
+        router.push("/dashboard?section=info")
+      }
+    }
   }
 
   const navigateToSettings = () => {
-    setActiveSection("settings")
-    router.push("/dashboard")
+    if (isOnSpeakerDashboard) {
+      window.dispatchEvent(new CustomEvent('navigateDashboard', { detail: { section: 'settings' } }))
+    } else if (isOnDashboard) {
+      window.dispatchEvent(new CustomEvent('navigateDashboard', { detail: { section: 'settings' } }))
+    } else {
+      const role = (getCurrentUserRole() || "").toLowerCase()
+      if (role === "speaker") {
+        router.push(`/speaker-dashboard/${userName.toLowerCase().replace(' ', '-')}`)
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent('navigateDashboard', { detail: { section: 'settings' } }))
+        }, 100)
+      } else {
+        router.push("/dashboard?section=settings")
+      }
+    }
   }
 
   const navigateToDashboard = () => {
-    setActiveSection("myprofile")
-    router.push("/dashboard")
+    if (isOnSpeakerDashboard) {
+      window.dispatchEvent(new CustomEvent('navigateDashboard', { detail: { section: 'overview' } }))
+    } else if (isOnDashboard) {
+      window.dispatchEvent(new CustomEvent('navigateDashboard', { detail: { section: 'myprofile' } }))
+    } else {
+      const role = (getCurrentUserRole() || "").toLowerCase()
+      if (role === "speaker") {
+        router.push(`/speaker-dashboard/${userName.toLowerCase().replace(' ', '-')}`)
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent('navigateDashboard', { detail: { section: 'overview' } }))
+        }, 100)
+      } else {
+        router.push("/dashboard?section=myprofile")
+      }
+    }
+  }
+
+  const navigateToHelp = () => {
+    if (isOnSpeakerDashboard) {
+      window.dispatchEvent(new CustomEvent('navigateDashboard', { detail: { section: 'help' } }))
+    } else if (isOnDashboard) {
+      window.dispatchEvent(new CustomEvent('navigateDashboard', { detail: { section: 'help' } }))
+    } else {
+      const role = (getCurrentUserRole() || "").toLowerCase()
+      if (role === "speaker") {
+        router.push(`/speaker-dashboard/${userName.toLowerCase().replace(' ', '-')}`)
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent('navigateDashboard', { detail: { section: 'help' } }))
+        }, 100)
+      } else {
+        router.push("/dashboard?section=help")
+      }
+    }
+  }
+
+  const handleLogout = () => {
+    clearTokens()
+    router.push("/login")
   }
 
   const getInitials = () => {
@@ -253,6 +271,11 @@ export default function Navbar() {
                   <div>
                     <p className="text-sm font-bold text-gray-800">{userName}</p>
                     <p className="text-xs text-gray-500">{userEmail}</p>
+                    {userRole && (
+                      <Badge variant="secondary" className="mt-1 text-[10px]">
+                        {userRole}
+                      </Badge>
+                    )}
                   </div>
                 </div>
 
@@ -271,15 +294,15 @@ export default function Navbar() {
                   <span>Settings</span>
                 </DropdownMenuItem>
 
-                <DropdownMenuItem onClick={() => router.push("/help")} className="cursor-pointer py-2.5">
+                <DropdownMenuItem onClick={navigateToHelp} className="cursor-pointer py-2.5">
                   <HelpCircle className="mr-3 h-4 w-4 text-gray-500" />
                   <span>Help & Support</span>
                 </DropdownMenuItem>
 
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => { clearTokens(); router.push("/login"); }}>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Logout</span>
+                <DropdownMenuItem onClick={handleLogout} className="cursor-pointer py-2.5">
+                  <LogOut className="mr-2 h-4 w-4 text-red-500" />
+                  <span className="text-red-600">Logout</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
