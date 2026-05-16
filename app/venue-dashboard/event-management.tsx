@@ -5,12 +5,8 @@ import Image from "next/image"
 import { useVenueDashboardVenueUserId } from "@/contexts/venue-dashboard-venue-id"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import {
-  CalendarIcon,
-  MapPin,
-  Users,
-  Building,
-} from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { CalendarIcon, MapPin, Users, Building, Plus, MoreHorizontal } from "lucide-react"
 import { apiFetch } from "@/lib/api"
 import { cn } from "@/lib/utils"
 
@@ -21,9 +17,7 @@ function getEventImageSrc(event: Record<string, unknown>): string {
   const banner = event.bannerImage
   const images = event.images
   if (typeof thumb === "string" && thumb.trim()) return thumb.trim()
-  if (Array.isArray(images) && images.length > 0 && typeof images[0] === "string" && images[0].trim()) {
-    return images[0].trim()
-  }
+  if (Array.isArray(images) && images.length > 0 && typeof images[0] === "string" && images[0].trim()) return images[0].trim()
   if (typeof banner === "string" && banner.trim()) return banner.trim()
   return EVENT_PLACEHOLDER
 }
@@ -42,21 +36,13 @@ function formatStatus(status: unknown): string {
   return status.replace(/_/g, " ")
 }
 
-/** “City, Country” for display; falls back to timezone when location fields are empty. */
 function formatEventLocation(event: Record<string, unknown>): string {
   const city = typeof event.city === "string" ? event.city.trim() : ""
   const country = typeof event.country === "string" ? event.country.trim() : ""
   const isVirtual = event.isVirtual === true
-
-  if (isVirtual && !city && !country) {
-    return "Online"
-  }
-
+  if (isVirtual && !city && !country) return "Online"
   const parts = [city, country].filter((p) => p.length > 0)
-  if (parts.length > 0) {
-    return parts.join(", ")
-  }
-
+  if (parts.length > 0) return parts.join(", ")
   const tz = typeof event.timezone === "string" ? event.timezone.trim() : ""
   return tz.length > 0 ? tz : "—"
 }
@@ -67,129 +53,112 @@ export default function EventManagement() {
   const [events, setEvents] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
-  // Fetch events from API (venue user id UUID — not URL slug)
   useEffect(() => {
     if (!resolvedVenueUserId) return
-
     const fetchEvents = async () => {
       try {
         setLoading(true)
         const data = await apiFetch<{ success: boolean; data?: any[]; events?: any[] }>(
           `/api/venues/${resolvedVenueUserId}/events`,
-          { auth: true },
+          { auth: true }
         )
-
-        if (data.success) {
-          setEvents(data.events ?? data.data ?? [])
-        } else {
-          console.error("Failed to load events")
-        }
+        if (data.success) setEvents(data.events ?? data.data ?? [])
       } catch (error) {
         console.error("Error fetching events:", error)
       } finally {
         setLoading(false)
       }
     }
-
     fetchEvents()
   }, [resolvedVenueUserId])
 
-  // Filter upcoming (includes ongoing) & past events
   const now = new Date()
   const upcomingEvents = events.filter((e) => new Date(e.endDate) >= now)
   const pastEvents = events.filter((e) => new Date(e.endDate) < now)
 
   const getStatusBadgeClass = (status: unknown) => {
     const s = (typeof status === "string" ? status : "").toUpperCase().replace(/-/g, "_")
-    if (["PUBLISHED", "CONFIRMED", "LIVE", "APPROVED", "ONGOING"].some((k) => s.includes(k))) {
-      return "border-transparent bg-emerald-500 text-white hover:bg-emerald-600"
-    }
-    if (["DRAFT", "PENDING", "SCHEDULED"].some((k) => s.includes(k))) {
-      return "border-transparent bg-amber-500 text-white hover:bg-amber-600"
-    }
-    if (["CANCELLED", "CANCELED", "REJECTED"].some((k) => s.includes(k))) {
-      return "border-transparent bg-red-500 text-white hover:bg-red-600"
-    }
-    if (["COMPLETED", "ENDED", "CLOSED"].some((k) => s.includes(k))) {
-      return "border-transparent bg-violet-500 text-white hover:bg-violet-600"
-    }
-    return "border-transparent bg-slate-500 text-white hover:bg-slate-600"
+    if (["PUBLISHED", "CONFIRMED", "LIVE", "APPROVED", "ONGOING"].some((k) => s.includes(k)))
+      return "bg-[#DCFCE7] text-[#16A34A] border-0"
+    if (["DRAFT", "PENDING", "SCHEDULED"].some((k) => s.includes(k)))
+      return "bg-[#FEF9C3] text-[#CA8A04] border-0"
+    if (["CANCELLED", "CANCELED", "REJECTED"].some((k) => s.includes(k)))
+      return "bg-[#FEE2E2] text-[#DC2626] border-0"
+    if (["COMPLETED", "ENDED", "CLOSED"].some((k) => s.includes(k)))
+      return "bg-[#EDE9FE] text-[#7C3AED] border-0"
+    return "bg-[#F1F5F9] text-[#64748B] border-0"
   }
 
   const shortDate = (d: string | undefined) => {
     if (!d) return "—"
-    try {
-      return new Date(d).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })
-    } catch {
-      return "—"
-    }
+    try { return new Date(d).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) }
+    catch { return "—" }
   }
 
-  const getEventKey = (event: any, index: number) => {
-    return (
-      event.id ||
-      event._id ||
-      event.eventId ||
-      `${event.title || "event"}-${event.startDate || "no-date"}-${index}`
-    )
-  }
+  const getEventKey = (event: any, index: number) =>
+    event.id || event._id || event.eventId || `${event.title || "event"}-${event.startDate || "no-date"}-${index}`
 
-  const EventCard = ({ event, isPast = false }: { event: Record<string, unknown>; isPast?: boolean }) => {
+  const EventCard = ({ event }: { event: Record<string, unknown> }) => {
     const title = typeof event.title === "string" ? event.title : "Event"
     const imgSrc = getEventImageSrc(event)
     const startDate = typeof event.startDate === "string" ? event.startDate : undefined
     const endDate = typeof event.endDate === "string" ? event.endDate : undefined
-    const locationLabel = formatEventLocation(event as Record<string, unknown>)
-    const attendees =
-      typeof event.currentAttendees === "number" ? event.currentAttendees : Number(event.currentAttendees) || 0
+    const locationLabel = formatEventLocation(event)
+    const attendees = typeof event.currentAttendees === "number" ? event.currentAttendees : Number(event.currentAttendees) || 0
+    const price = typeof event.basePrice === "number" ? event.basePrice : typeof event.price === "number" ? event.price : null
+    const currency = typeof event.currency === "string" ? event.currency : "₹"
 
     return (
-      <div
-        className={cn(
-          "flex flex-col overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-sm transition-all hover:border-violet-200/80 hover:shadow-md sm:flex-row sm:items-stretch",
-          isPast && "opacity-[0.92]",
-        )}
-      >
-        <div className="relative aspect-[16/9] max-h-36 w-full shrink-0 sm:aspect-auto sm:max-h-none sm:w-28 sm:min-w-[7rem] md:w-32">
+      <div className="bg-white rounded-2xl border border-[#E2E8F0] overflow-hidden hover:shadow-md hover:border-[#C7D2FE] transition-all duration-200 group">
+        {/* Image */}
+        <div className="relative h-40 w-full overflow-hidden">
           <Image
             src={imgSrc}
             alt={title}
             fill
-            className="object-cover"
-            sizes="(max-width: 640px) 100vw, 136px"
+            className="object-cover group-hover:scale-105 transition-transform duration-300"
+            sizes="(max-width: 640px) 100vw, 320px"
             unoptimized={imgSrc.startsWith("http")}
           />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
+          <button className="absolute top-3 right-3 bg-white/90 hover:bg-white rounded-lg p-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+            <MoreHorizontal className="w-4 h-4 text-[#64748B]" />
+          </button>
         </div>
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col justify-between gap-1.5 p-3 sm:py-2.5 sm:pr-3 sm:pl-3">
-          <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0 flex-1">
-              <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-slate-900 md:text-base">{title}</h3>
-              <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-slate-500">
-                <Building className="h-3.5 w-3.5 shrink-0 text-violet-500" />
-                <span className="truncate">{formatCategory(event.category)}</span>
-              </p>
+
+        {/* Content */}
+        <div className="p-4">
+          <p className="text-[11px] font-medium text-[#4F46E5] mb-1">{formatCategory(event.category)}</p>
+          <h3 className="text-sm font-semibold text-[#1E293B] leading-snug line-clamp-2 mb-2">{title}</h3>
+
+          <div className="space-y-1.5 mb-3">
+            <div className="flex items-center gap-1.5 text-xs text-[#64748B]">
+              <CalendarIcon className="w-3.5 h-3.5 text-[#4F46E5] shrink-0" />
+              <span>{shortDate(startDate)} – {shortDate(endDate)}</span>
             </div>
-            <Badge className={cn("shrink-0 text-[10px] font-medium uppercase tracking-wide", getStatusBadgeClass(event.status))}>
+            <div className="flex items-center gap-1.5 text-xs text-[#64748B]">
+              <MapPin className="w-3.5 h-3.5 text-[#0284C7] shrink-0" />
+              <span className="truncate">{locationLabel}</span>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="flex items-center justify-between pt-3 border-t border-[#F1F5F9]">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1 text-xs text-[#64748B]">
+                <Users className="w-3.5 h-3.5" />
+                <span>{attendees}</span>
+              </div>
+              {price !== null && (
+                <div className="flex items-center gap-1 text-xs text-[#64748B]">
+                  <span>💰</span>
+                  <span>{currency}{price.toLocaleString()}</span>
+                </div>
+              )}
+            </div>
+            <Badge className={cn("text-[10px] font-semibold px-2 py-0.5 rounded-full", getStatusBadgeClass(event.status))}>
               {formatStatus(event.status)}
             </Badge>
-          </div>
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-slate-600 sm:text-xs">
-            <span className="inline-flex items-center gap-1">
-              <CalendarIcon className="h-3.5 w-3.5 text-violet-500" />
-              <span className="font-medium text-slate-700">{shortDate(startDate)}</span>
-              <span className="text-slate-400">–</span>
-              <span className="font-medium text-slate-700">{shortDate(endDate)}</span>
-            </span>
-            <span className="inline-flex min-w-0 items-center gap-1">
-              <MapPin className="h-3.5 w-3.5 shrink-0 text-sky-500" />
-              <span className="min-w-0 truncate" title={locationLabel}>
-                {locationLabel}
-              </span>
-            </span>
-            <span className="inline-flex items-center gap-1">
-              <Users className="h-3.5 w-3.5 text-orange-500" />
-              {attendees} registered
-            </span>
           </div>
         </div>
       </div>
@@ -198,32 +167,83 @@ export default function EventManagement() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold text-gray-900">Event Management</h1>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-[#1E293B]">Event Management</h1>
+          <p className="text-sm text-[#64748B] mt-0.5">Manage and organize your venue events</p>
+        </div>
+        <Button className="rounded-xl bg-[#4F46E5] hover:bg-[#4338CA] text-white flex items-center gap-2">
+          <Plus className="w-4 h-4" />
+          Add New Event
+        </Button>
+      </div>
 
       {loading ? (
-        <div className="text-center text-gray-500">Loading events...</div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="bg-white rounded-2xl border border-[#E2E8F0] overflow-hidden animate-pulse">
+              <div className="h-40 bg-[#F1F5F9]" />
+              <div className="p-4 space-y-2">
+                <div className="h-3 bg-[#F1F5F9] rounded w-1/3" />
+                <div className="h-4 bg-[#F1F5F9] rounded w-3/4" />
+                <div className="h-3 bg-[#F1F5F9] rounded w-2/3" />
+              </div>
+            </div>
+          ))}
+        </div>
       ) : (
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="upcoming">Upcoming Events</TabsTrigger>
-            <TabsTrigger value="past">Past Events</TabsTrigger>
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="bg-[#F1F5F9] rounded-xl p-1 inline-flex mb-5">
+            <TabsTrigger
+              value="upcoming"
+              className="rounded-lg px-4 text-sm data-[state=active]:bg-white data-[state=active]:text-[#1E293B] data-[state=active]:shadow-sm text-[#64748B]"
+            >
+              Upcoming Events
+              {upcomingEvents.length > 0 && (
+                <span className="ml-1.5 bg-[#4F46E5] text-white text-[10px] px-1.5 py-0.5 rounded-full">
+                  {upcomingEvents.length}
+                </span>
+              )}
+            </TabsTrigger>
+            <TabsTrigger
+              value="past"
+              className="rounded-lg px-4 text-sm data-[state=active]:bg-white data-[state=active]:text-[#1E293B] data-[state=active]:shadow-sm text-[#64748B]"
+            >
+              Past Events
+            </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="upcoming" className="space-y-4">
+          <TabsContent value="upcoming">
             {upcomingEvents.length > 0 ? (
-              upcomingEvents.map((event, index) => <EventCard key={getEventKey(event, index)} event={event} />)
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {upcomingEvents.map((event, index) => (
+                  <EventCard key={getEventKey(event, index)} event={event} />
+                ))}
+              </div>
             ) : (
-              <p className="text-gray-500 text-center">No upcoming events found.</p>
+              <div className="text-center py-16 bg-white rounded-2xl border border-[#E2E8F0]">
+                <CalendarIcon className="w-12 h-12 text-[#CBD5E1] mx-auto mb-3" />
+                <p className="text-base font-semibold text-[#94A3B8]">No upcoming events</p>
+                <p className="text-sm text-[#CBD5E1] mt-1">Events scheduled for future dates will appear here</p>
+                <Button className="mt-4 rounded-xl bg-[#4F46E5] text-white">
+                  <Plus className="w-4 h-4 mr-1" />Add Event
+                </Button>
+              </div>
             )}
           </TabsContent>
 
-          <TabsContent value="past" className="space-y-4">
+          <TabsContent value="past">
             {pastEvents.length > 0 ? (
-              pastEvents.map((event, index) => (
-                <EventCard key={getEventKey(event, index)} event={event} isPast={true} />
-              ))
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 opacity-90">
+                {pastEvents.map((event, index) => (
+                  <EventCard key={getEventKey(event, index)} event={event} />
+                ))}
+              </div>
             ) : (
-              <p className="text-gray-500 text-center">No past events found.</p>
+              <div className="text-center py-16 bg-white rounded-2xl border border-[#E2E8F0]">
+                <CalendarIcon className="w-12 h-12 text-[#CBD5E1] mx-auto mb-3" />
+                <p className="text-base font-semibold text-[#94A3B8]">No past events</p>
+              </div>
             )}
           </TabsContent>
         </Tabs>
