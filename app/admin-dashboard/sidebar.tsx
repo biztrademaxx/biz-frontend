@@ -40,6 +40,7 @@ import CustomRolesManagement from "./custom-roles-management"
 import { CreateEventForm } from "./eventManagement/createEvent/create-event"
 import { clearTokens, markLogoutSuccessBanner } from "@/lib/api"
 import { Button } from "@/components/ui/button"
+import { AdminThemeToggle } from "@/components/admin-theme-toggle"
 import CountriesManagement from "./countries-management"
 import VisitorManagement from "./visitors/page"
 import EventCategories from "./event-categories"
@@ -715,20 +716,20 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
   const isSubActive = (id: string) => activeSubSection === id
 
   return (
-    <div className="flex min-h-0 min-w-0 flex-1 overflow-hidden bg-slate-50">
+    <div className="flex min-h-0 min-w-0 flex-1 overflow-hidden bg-background">
       {/* Sidebar */}
-      <aside className="flex w-[272px] min-w-[272px] shrink-0 flex-col border-r border-gray-100 bg-white shadow-[4px_0_24px_-12px_rgba(15,23,42,0.08)]">
-        <div className="flex items-center gap-3 border-b border-gray-50 px-4 py-4">
+      <aside className="flex w-[272px] min-w-[272px] shrink-0 flex-col border-r border-border bg-card shadow-[4px_0_24px_-12px_rgba(15,23,42,0.08)] dark:shadow-[4px_0_28px_-8px_rgba(0,0,0,0.45)]">
+        <div className="flex items-center gap-3 border-b border-border px-4 py-4">
           <button
             type="button"
-            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-gray-100 bg-slate-50 text-gray-600 transition-colors hover:bg-slate-100"
+            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-border bg-muted/50 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
             aria-label="Menu"
           >
             <Menu className="h-4 w-4" />
           </button>
           <div className="flex min-w-0 items-center gap-2">
-            <Image src="/logo/bizlogo.png" alt="" width={120} height={40} className="h-8 w-auto shrink-0 object-contain" />
-            <span className="truncate text-sm font-semibold tracking-tight text-gray-900">BizTradeFairs</span>
+            <Image src="/logo/bizlogo.png" alt="" width={120} height={40} className="h-8 w-auto shrink-0 object-contain dark:brightness-110 dark:contrast-95" />
+            <span className="truncate text-sm font-semibold tracking-tight text-foreground">BizTradeFairs</span>
           </div>
         </div>
 
@@ -743,25 +744,25 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
                       onClick={() => toggleMenu(item.id)}
                       className={`flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left transition-all ${
                         isActive(item.id)
-                          ? "bg-sky-50 font-medium text-sky-700 shadow-sm ring-1 ring-sky-100/80"
-                          : "text-gray-700 hover:bg-slate-50"
+                          ? "bg-sky-50 font-medium text-sky-700 shadow-sm ring-1 ring-sky-100/80 dark:bg-sky-950/55 dark:text-sky-200 dark:ring-sky-800/60"
+                          : "text-foreground/90 hover:bg-muted/80 dark:text-foreground/85"
                       }`}
                     >
                       <div className="flex min-w-0 items-center gap-3">
                         <item.icon
-                          className={`h-[18px] w-[18px] shrink-0 ${isActive(item.id) ? "text-sky-600" : "text-gray-500"}`}
+                          className={`h-[18px] w-[18px] shrink-0 ${isActive(item.id) ? "text-sky-600 dark:text-sky-400" : "text-muted-foreground"}`}
                         />
                         <span className="truncate text-sm">{item.title}</span>
                       </div>
                       <ChevronDown
-                        className={`h-4 w-4 shrink-0 text-gray-400 transition-transform duration-200 ${
+                        className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 ${
                           isMenuOpen(item.id) ? "rotate-180" : ""
                         }`}
                       />
                     </button>
 
                     {isMenuOpen(item.id) && (
-                      <div className="ml-2 mt-1 space-y-0.5 border-l border-slate-100 py-1 pl-3">
+                      <div className="ml-2 mt-1 space-y-0.5 border-l border-border py-1 pl-3">
                         {item.subItems.map((subItem) => (
                           <button
                             key={subItem.id}
@@ -769,8 +770,8 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
                             onClick={() => handleSubSectionClick(item.id, subItem.id)}
                             className={`block w-full rounded-lg px-2.5 py-2 text-left text-sm transition-colors ${
                               isSubActive(subItem.id)
-                                ? "bg-sky-50 font-medium text-sky-800 ring-1 ring-sky-100/60"
-                                : "text-gray-600 hover:bg-slate-50"
+                                ? "bg-sky-50 font-medium text-sky-800 ring-1 ring-sky-100/60 dark:bg-sky-950/50 dark:text-sky-100 dark:ring-sky-800/50"
+                                : "text-muted-foreground hover:bg-muted/70 hover:text-foreground"
                             }`}
                           >
                             {subItem.title}
@@ -785,11 +786,11 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
                     onClick={() => handleSectionClick(item.id)}
                     className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-all ${
                       isActive(item.id)
-                        ? "bg-sky-50 font-medium text-sky-700 shadow-sm ring-1 ring-sky-100/80"
-                        : "text-gray-700 hover:bg-slate-50"
+                        ? "bg-sky-50 font-medium text-sky-700 shadow-sm ring-1 ring-sky-100/80 dark:bg-sky-950/55 dark:text-sky-200 dark:ring-sky-800/60"
+                        : "text-foreground/90 hover:bg-muted/80 dark:text-foreground/85"
                     }`}
                   >
-                    <item.icon className={`h-[18px] w-[18px] shrink-0 ${isActive(item.id) ? "text-sky-600" : "text-gray-500"}`} />
+                    <item.icon className={`h-[18px] w-[18px] shrink-0 ${isActive(item.id) ? "text-sky-600 dark:text-sky-400" : "text-muted-foreground"}`} />
                     <span className="text-sm font-medium">{item.title}</span>
                   </button>
                 )}
@@ -798,17 +799,17 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
           </div>
         </div>
 
-        <div className="shrink-0 space-y-3 border-t border-gray-100 p-3">
-          <div className="rounded-2xl bg-gradient-to-br from-sky-50 to-indigo-50/80 p-4 ring-1 ring-sky-100/60">
+        <div className="shrink-0 space-y-3 border-t border-border p-3">
+          <div className="rounded-2xl bg-gradient-to-br from-sky-50 to-indigo-50/80 p-4 ring-1 ring-sky-100/60 dark:from-sky-950/40 dark:to-indigo-950/35 dark:ring-sky-900/50">
             <div className="flex items-start gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-sky-100/80">
-                <Star className="h-5 w-5 text-sky-600" strokeWidth={1.5} />
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-card shadow-sm ring-1 ring-sky-100/80 dark:ring-sky-800/60">
+                <Star className="h-5 w-5 text-sky-600 dark:text-sky-400" strokeWidth={1.5} />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold text-gray-900">Pro Plan</p>
+                <p className="text-sm font-semibold text-foreground">Pro Plan</p>
                 <Button
                   type="button"
-                  className="mt-2 h-8 w-full rounded-xl bg-sky-600 text-xs font-semibold text-white shadow-sm hover:bg-sky-700"
+                  className="mt-2 h-8 w-full rounded-xl bg-sky-600 text-xs font-semibold text-white shadow-sm hover:bg-sky-700 dark:bg-sky-500 dark:hover:bg-sky-400"
                   variant="default"
                 >
                   Manage Plan
@@ -817,19 +818,22 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
-          >
-            <LogOut className="h-4 w-4" />
-            Logout
-          </button>
+          <div className="flex items-center gap-2">
+            <AdminThemeToggle className="h-10 w-full flex-1 rounded-xl border border-border bg-muted/30 justify-center" />
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="flex min-h-10 flex-1 items-center justify-center gap-2 rounded-xl border border-border px-3 py-2.5 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10"
+            >
+              <LogOut className="h-4 w-4 shrink-0" />
+              Logout
+            </button>
+          </div>
         </div>
       </aside>
 
       {/* Main Content */}
-      <main className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden bg-slate-50 p-5 sm:p-6 lg:p-8">
+      <main className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden bg-muted/30 p-5 sm:p-6 lg:p-8 dark:bg-background">
         {renderContent()}
       </main>
     </div>

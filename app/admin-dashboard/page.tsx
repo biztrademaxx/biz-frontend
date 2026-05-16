@@ -22,10 +22,10 @@ export default function AdminDashboardPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50">
+      <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="text-center">
-          <div className="mx-auto mb-4 h-16 w-16 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
-          <p className="text-gray-600">Loading admin dashboard...</p>
+          <div className="mx-auto mb-4 h-16 w-16 animate-spin rounded-full border-4 border-sky-600 border-t-transparent dark:border-sky-400" />
+          <p className="text-muted-foreground">Loading admin dashboard...</p>
         </div>
       </div>
     )
@@ -37,11 +37,11 @@ export default function AdminDashboardPage() {
   const isSuperAdmin = userRole === "SUPER_ADMIN"
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-50">
-      <Navbar onLogout={logout} />
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-        <AdminDashboard userRole={userRole} userPermissions={userPermissions} />
+      <div className="flex min-h-screen flex-col bg-background">
+        <Navbar onLogout={logout} />
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+          <AdminDashboard userRole={userRole} userPermissions={userPermissions} />
+        </div>
       </div>
-    </div>
   )
 }

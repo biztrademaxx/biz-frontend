@@ -11,7 +11,6 @@ import {
   LogOut,
   Settings,
   Search,
-  Sun,
   MessageSquare,
 } from "lucide-react"
 import { useRouter } from "next/navigation"
@@ -29,6 +28,7 @@ import { AdminNotificationsDropdown } from "@/components/AdminNotificationsDropd
 import { clearTokens, markLogoutSuccessBanner } from "@/lib/api"
 import { useAuth } from "@/hooks/use-auth"
 import { cn } from "@/lib/utils"
+import { AdminThemeToggle } from "@/components/admin-theme-toggle"
 
 type NavbarProps = { onLogout?: () => void }
 
@@ -69,31 +69,31 @@ export default function Navbar({ onLogout }: NavbarProps) {
     return (
       <header
         className={cn(
-          "sticky top-0 z-40 shrink-0 border-b border-gray-100",
-          "bg-white/90 backdrop-blur-md supports-[backdrop-filter]:bg-white/75",
+          "sticky top-0 z-40 shrink-0 border-b border-border",
+          "bg-background/90 backdrop-blur-md supports-[backdrop-filter]:bg-background/75",
         )}
       >
         <div className="flex h-16 items-center gap-3 px-4 sm:px-6 lg:gap-4 lg:px-8">
           <div className="min-w-0 flex-1 md:flex md:justify-center">
             <div className="relative mx-auto w-full max-w-xl">
               <div className="relative hidden md:block">
-                <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   readOnly
                   placeholder="Search events, users, venues…"
-                  className="h-10 rounded-full border-gray-100 bg-slate-50 pl-10 pr-14 text-sm text-gray-700 shadow-inner"
+                  className="h-10 rounded-full border-border bg-muted/60 pl-10 pr-14 text-sm text-foreground shadow-inner"
                   aria-label="Search (shortcut)"
                 />
-                <kbd className="pointer-events-none absolute right-3 top-1/2 hidden -translate-y-1/2 select-none rounded-md border border-gray-200 bg-white px-1.5 py-0.5 font-mono text-[10px] font-medium text-gray-500 sm:inline-block">
+                <kbd className="pointer-events-none absolute right-3 top-1/2 hidden -translate-y-1/2 select-none rounded-md border border-border bg-muted px-1.5 py-0.5 font-mono text-[10px] font-medium text-muted-foreground sm:inline-block">
                   ⌘ K
                 </kbd>
               </div>
               <div className="relative md:hidden">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   readOnly
                   placeholder="Search…"
-                  className="h-10 w-full rounded-full border-gray-100 bg-slate-50 pl-9 text-sm"
+                  className="h-10 w-full rounded-full border-border bg-muted/60 pl-9 text-sm text-foreground"
                   aria-label="Search"
                 />
               </div>
@@ -101,21 +101,13 @@ export default function Navbar({ onLogout }: NavbarProps) {
           </div>
 
           <div className="ml-auto flex shrink-0 items-center gap-0.5 sm:gap-1">
+            <AdminThemeToggle />
+            <AdminNotificationsDropdown triggerButtonClassName="hover:bg-accent text-muted-foreground hover:text-foreground" />
             <Button
               type="button"
               variant="ghost"
               size="icon"
-              className="h-10 w-10 rounded-full text-gray-600 hover:bg-slate-100"
-              aria-label="Theme"
-            >
-              <Sun className="h-5 w-5" />
-            </Button>
-            <AdminNotificationsDropdown triggerButtonClassName="hover:bg-slate-100" />
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="h-10 w-10 rounded-full text-gray-600 hover:bg-slate-100"
+              className="h-10 w-10 rounded-full text-muted-foreground hover:bg-accent hover:text-foreground"
               aria-label="Messages"
             >
               <MessageSquare className="h-5 w-5" />
@@ -124,18 +116,18 @@ export default function Navbar({ onLogout }: NavbarProps) {
               <DropdownMenuTrigger asChild>
                 <button
                   type="button"
-                  className="ml-1 flex items-center gap-2 rounded-2xl py-1 pl-1 pr-2 transition-colors hover:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30"
+                  className="ml-1 flex items-center gap-2 rounded-2xl py-1 pl-1 pr-2 transition-colors hover:bg-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
-                  <Avatar className="h-9 w-9 border border-gray-100 shadow-sm">
+                  <Avatar className="h-9 w-9 border border-border shadow-sm">
                     <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-600 text-xs font-semibold text-white">
                       A
                     </AvatarFallback>
                   </Avatar>
                   <div className="hidden text-left leading-tight lg:block">
-                    <p className="text-sm font-semibold text-gray-900">Admin</p>
-                    <p className="text-xs text-gray-500">{roleLabel}</p>
+                    <p className="text-sm font-semibold text-foreground">Admin</p>
+                    <p className="text-xs text-muted-foreground">{roleLabel}</p>
                   </div>
-                  <ChevronDown className="hidden h-4 w-4 text-gray-500 lg:block" />
+                  <ChevronDown className="hidden h-4 w-4 text-muted-foreground lg:block" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56" align="end" forceMount>
