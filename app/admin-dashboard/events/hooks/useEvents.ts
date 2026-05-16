@@ -41,6 +41,10 @@ function normalizeEvent(raw: any): Event {
     endDate: raw.endDate ?? "",
     location: raw.city ?? raw.location ?? raw.venue ?? "",
     venue: typeof raw.venue === "string" ? raw.venue : (raw.venue?.venueName ?? raw.venue?.name ?? ""),
+    organizerEmail:
+      raw.organizer && typeof raw.organizer === "object"
+        ? ((raw.organizer as { email?: string }).email ?? null)
+        : null,
     status: normalizeStatusLabel(raw.status),
     attendees: raw.currentAttendees ?? raw.attendees ?? 0,
     maxCapacity: raw.maxAttendees ?? raw.maxCapacity ?? 0,

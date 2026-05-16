@@ -36,7 +36,14 @@ interface Notification {
   status?: string;
 }
 
-export function AdminNotificationsDropdown() {
+type AdminNotificationsDropdownProps = {
+  /** Merged onto the bell trigger button (e.g. admin dashboard header). */
+  triggerButtonClassName?: string;
+};
+
+export function AdminNotificationsDropdown({
+  triggerButtonClassName,
+}: AdminNotificationsDropdownProps = {}) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -150,7 +157,11 @@ export function AdminNotificationsDropdown() {
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative h-10 w-10 rounded-full">
+        <Button
+          variant="ghost"
+          size="icon"
+          className={cn("relative h-10 w-10 rounded-full", triggerButtonClassName)}
+        >
           <Bell className="h-5 w-5" />
           {unreadCount > 0 && (
             <Badge

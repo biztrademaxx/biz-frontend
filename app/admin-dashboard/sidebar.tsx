@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Image from "next/image"
 import { useRouter } from "next/navigation"
 import SuperAdminManagement from "./superadminmanagement"
 import {
@@ -22,6 +23,8 @@ import {
   LogOut,
   ChevronDown,
   ArrowLeft,
+  Menu,
+  Star,
 } from "lucide-react"
 
 // Import all section components
@@ -36,6 +39,7 @@ import SystemSettings from "./system-settings"
 import CustomRolesManagement from "./custom-roles-management"
 import { CreateEventForm } from "./eventManagement/createEvent/create-event"
 import { clearTokens, markLogoutSuccessBanner } from "@/lib/api"
+import { Button } from "@/components/ui/button"
 import CountriesManagement from "./countries-management"
 import VisitorManagement from "./visitors/page"
 import EventCategories from "./event-categories"
@@ -711,91 +715,123 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
   const isSubActive = (id: string) => activeSubSection === id
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex min-h-0 min-w-0 flex-1 overflow-hidden bg-slate-50">
       {/* Sidebar */}
-      <div className="w-80 bg-white border-r border-gray-200 text-sm flex flex-col">
-        {/* Sidebar Content */}
-        <div className="flex-1 overflow-y-auto">
-          <div className="p-4">
-            <div className="space-y-1">
-              {filteredSidebarItems.map((item) => (
-                <div key={item.id} className="mb-1">
-                  {item.subItems ? (
-                    <div className="rounded-lg">
-                      <button
-                        onClick={() => toggleMenu(item.id)}
-                        className={`w-full flex items-center justify-between p-3 rounded-lg transition-colors ${
-                          isActive(item.id)
-                            ? "bg-blue-50 text-blue-700 border border-blue-200"
-                            : "text-gray-700 hover:bg-gray-100"
-                        }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <item.icon className="w-4 h-4" />
-                          <span className="font-medium">{item.title}</span>
-                        </div>
-                        <ChevronDown
-                          className={`w-4 h-4 transition-transform duration-200 ${
-                            isMenuOpen(item.id) ? "rotate-180" : ""
-                          }`}
-                        />
-                      </button>
+      <aside className="flex w-[272px] min-w-[272px] shrink-0 flex-col border-r border-gray-100 bg-white shadow-[4px_0_24px_-12px_rgba(15,23,42,0.08)]">
+        <div className="flex items-center gap-3 border-b border-gray-50 px-4 py-4">
+          <button
+            type="button"
+            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-gray-100 bg-slate-50 text-gray-600 transition-colors hover:bg-slate-100"
+            aria-label="Menu"
+          >
+            <Menu className="h-4 w-4" />
+          </button>
+          <div className="flex min-w-0 items-center gap-2">
+            <Image src="/logo/bizlogo.png" alt="" width={120} height={40} className="h-8 w-auto shrink-0 object-contain" />
+            <span className="truncate text-sm font-semibold tracking-tight text-gray-900">BizTradeFairs</span>
+          </div>
+        </div>
 
-                      {isMenuOpen(item.id) && (
-                        <div className="mt-1 ml-4 space-y-1 border-l border-gray-200 pl-2">
-                          {item.subItems.map((subItem) => (
-                            <button
-                              key={subItem.id}
-                              onClick={() => handleSubSectionClick(item.id, subItem.id)}
-                              className={`w-full text-left p-2 rounded-lg transition-colors ${
-                                isSubActive(subItem.id)
-                                  ? "bg-blue-50 text-blue-700 border border-blue-200"
-                                  : "text-gray-600 hover:bg-gray-100"
-                              }`}
-                            >
-                              <span className="text-sm">{subItem.title}</span>
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ) : (
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <div className="space-y-0.5 p-3">
+            {filteredSidebarItems.map((item) => (
+              <div key={item.id} className="mb-0.5">
+                {item.subItems ? (
+                  <div className="rounded-2xl">
                     <button
-                      onClick={() => handleSectionClick(item.id)}
-                      className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors ${
+                      type="button"
+                      onClick={() => toggleMenu(item.id)}
+                      className={`flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left transition-all ${
                         isActive(item.id)
-                          ? "bg-blue-50 text-blue-700 border border-blue-200"
-                          : "text-gray-700 hover:bg-gray-100"
+                          ? "bg-sky-50 font-medium text-sky-700 shadow-sm ring-1 ring-sky-100/80"
+                          : "text-gray-700 hover:bg-slate-50"
                       }`}
                     >
-                      <item.icon className="w-4 h-4" />
-                      <span className="font-medium">{item.title}</span>
+                      <div className="flex min-w-0 items-center gap-3">
+                        <item.icon
+                          className={`h-[18px] w-[18px] shrink-0 ${isActive(item.id) ? "text-sky-600" : "text-gray-500"}`}
+                        />
+                        <span className="truncate text-sm">{item.title}</span>
+                      </div>
+                      <ChevronDown
+                        className={`h-4 w-4 shrink-0 text-gray-400 transition-transform duration-200 ${
+                          isMenuOpen(item.id) ? "rotate-180" : ""
+                        }`}
+                      />
                     </button>
-                  )}
-                </div>
-              ))}
 
-              {/* Logout Button */}
-              <div className="mt-4 pt-4 border-t border-gray-200">
-                <button
-                  onClick={handleLogout}
-                  className="w-full flex items-center gap-3 p-3 rounded-lg text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors"
+                    {isMenuOpen(item.id) && (
+                      <div className="ml-2 mt-1 space-y-0.5 border-l border-slate-100 py-1 pl-3">
+                        {item.subItems.map((subItem) => (
+                          <button
+                            key={subItem.id}
+                            type="button"
+                            onClick={() => handleSubSectionClick(item.id, subItem.id)}
+                            className={`block w-full rounded-lg px-2.5 py-2 text-left text-sm transition-colors ${
+                              isSubActive(subItem.id)
+                                ? "bg-sky-50 font-medium text-sky-800 ring-1 ring-sky-100/60"
+                                : "text-gray-600 hover:bg-slate-50"
+                            }`}
+                          >
+                            {subItem.title}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => handleSectionClick(item.id)}
+                    className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-all ${
+                      isActive(item.id)
+                        ? "bg-sky-50 font-medium text-sky-700 shadow-sm ring-1 ring-sky-100/80"
+                        : "text-gray-700 hover:bg-slate-50"
+                    }`}
+                  >
+                    <item.icon className={`h-[18px] w-[18px] shrink-0 ${isActive(item.id) ? "text-sky-600" : "text-gray-500"}`} />
+                    <span className="text-sm font-medium">{item.title}</span>
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="shrink-0 space-y-3 border-t border-gray-100 p-3">
+          <div className="rounded-2xl bg-gradient-to-br from-sky-50 to-indigo-50/80 p-4 ring-1 ring-sky-100/60">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-sky-100/80">
+                <Star className="h-5 w-5 text-sky-600" strokeWidth={1.5} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold text-gray-900">Pro Plan</p>
+                <Button
+                  type="button"
+                  className="mt-2 h-8 w-full rounded-xl bg-sky-600 text-xs font-semibold text-white shadow-sm hover:bg-sky-700"
+                  variant="default"
                 >
-                  <LogOut className="w-4 h-4" />
-                  <span className="font-medium">Logout</span>
-                </button>
+                  Manage Plan
+                </Button>
               </div>
             </div>
           </div>
+
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
+          >
+            <LogOut className="h-4 w-4" />
+            Logout
+          </button>
         </div>
-      </div>
+      </aside>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Content Area */}
-        <main className="flex-1 overflow-auto p-6" style={{ background: "#F5F4F0" }}>
-{renderContent()}</main>
-      </div>
+      <main className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden bg-slate-50 p-5 sm:p-6 lg:p-8">
+        {renderContent()}
+      </main>
     </div>
   )
 }

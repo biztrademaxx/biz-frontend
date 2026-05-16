@@ -71,6 +71,8 @@ export interface Event {
   verifiedBadgeImage: string | null
   /** Whether event is visible on public listings; from DB isPublic */
   isPublic?: boolean
+  /** Email for listing mail; preserved from API organizer object */
+  organizerEmail?: string | null
 }
 
 export interface Category {
