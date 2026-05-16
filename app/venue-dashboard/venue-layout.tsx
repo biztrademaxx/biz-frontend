@@ -5,32 +5,29 @@ import { useToast } from "@/hooks/use-toast"
 import { apiFetch, getCurrentUserId } from "@/lib/api"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import {
   Building2,
   MessageSquare,
   Star,
   HelpCircle,
-  ChevronDown,
-  ChevronRight,
   Settings,
   X,
   AlertCircle,
-  ChevronsLeft,
-  ChevronsRight,
   CalendarDays,
   BookmarkCheck,
   Users,
   LogOut,
-  Menu,
-  type LucideIcon,
+  LayoutDashboard,
+  MapPin,
+  Clock,
+  ChevronRight,
+  CheckCircle,
 } from "lucide-react"
 import { useRouter, usePathname } from "next/navigation"
 import { useAuth } from "@/hooks/use-auth"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
-// Import all section components
 import VenueProfile from "./venue-profile"
 import EventManagement from "./event-management"
 import BookingSystem from "./booking-system"
@@ -46,7 +43,74 @@ import { DashboardManagedBanner } from "@/components/dashboard-managed-banner"
 import { getVenueDashboardPath } from "@/lib/venue-dashboard-path"
 import { VenueDashboardVenueIdProvider } from "@/contexts/venue-dashboard-venue-id"
 
-/** True when venue is not yet approved for the public /venues directory (manager.isVerified). */
+// Type definitions for nested objects
+interface CapacityObject {
+  total?: number;
+  halls?: number;
+}
+
+interface StatsObject {
+  totalEvents?: number;
+  activeBookings?: number;
+  averageRating?: number;
+  totalReviews?: number;
+}
+
+interface LocationObject {
+  timezone?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  coordinates?: { lat?: number; lng?: number };
+}
+
+interface RawVenueData {
+  id?: string;
+  name?: string;
+  logo?: string;
+  images?: string[];
+  contactPerson?: string;
+  email?: string;
+  mobile?: string;
+  address?: string;
+  website?: string;
+  description?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  zipCode?: string;
+  venueImages?: string[];
+  venueVideos?: string[];
+  floorPlans?: string[];
+  virtualTour?: string;
+  latitude?: number;
+  longitude?: number;
+  basePrice?: number;
+  currency?: string;
+  maxCapacity?: number;
+  totalHalls?: number;
+  totalEvents?: number;
+  activeBookings?: number;
+  averageRating?: number;
+  totalReviews?: number;
+  amenities?: string[];
+  meetingSpaces?: MeetingSpace[];
+  timezone?: string;
+  capacity?: CapacityObject;
+  stats?: StatsObject;
+  location?: LocationObject;
+  manager?: {
+    venueName?: string;
+    name?: string;
+    email?: string;
+    phone?: string;
+    isVerified?: boolean;
+    [key: string]: unknown;
+  };
+  [key: string]: unknown;
+}
+
 function venuePayloadUnderReview(payload: unknown): boolean {
   if (!payload || typeof payload !== "object") return false
   const o = payload as Record<string, unknown>
@@ -54,15 +118,12 @@ function venuePayloadUnderReview(payload: unknown): boolean {
   if (m && typeof m === "object" && "isVerified" in m) {
     return (m as { isVerified?: boolean }).isVerified !== true
   }
-  if (typeof o.isVerified === "boolean") {
-    return !o.isVerified
-  }
+  if (typeof o.isVerified === "boolean") return !o.isVerified
   return false
 }
 
 type VenueData = {
   id: string
-  /** Resolved venue display name (for canonical dashboard URL slug). */
   venueName: string
   logo: string
   contactPerson: string
@@ -91,28 +152,30 @@ type VenueData = {
   totalReviews: number
   amenities: string[]
   meetingSpaces: MeetingSpace[]
-  /** Present on API payload via `location.timezone`; optional for legacy shapes. */
   timezone?: string
-  manager?: { isVerified?: boolean; [key: string]: unknown }
+  manager?: { isVerified?: boolean;[key: string]: unknown }
 }
 
 interface UserDashboardProps {
-  /** UUID or slug from `/venue-dashboard/[segment]`. */
   routeSegment: string
 }
 
-const SIDEBAR_COLLAPSED_KEY = "venue-dashboard-sidebar-collapsed"
-
-const COLLAPSED_NAV: { id: string; label: string; icon: LucideIcon }[] = [
-  { id: "venue-profile", label: "Venue Profile", icon: Building2 },
-  { id: "event-management", label: "Event Management", icon: CalendarDays },
-  { id: "booking-system", label: "Booking System", icon: BookmarkCheck },
-  { id: "communication", label: "Messages", icon: MessageSquare },
-  { id: "connection", label: "Connections", icon: Users },
-  { id: "ratings-reviews", label: "Ratings & Reviews", icon: Star },
-  { id: "help-support", label: "Help & Support", icon: HelpCircle },
-  { id: "settings", label: "Settings", icon: Settings },
-]
+interface Booking {
+  id: string
+  requester: {
+    firstName: string
+    lastName: string
+    email: string
+  }
+  requesterPhone?: string
+  requesterCompany?: string
+  requestedDate: string
+  requestedTime: string
+  duration: number
+  purpose?: string
+  status: string
+  notes?: string
+}
 
 export default function VenueDashboardPage({ routeSegment }: UserDashboardProps) {
   const { activeSection, setActiveSection } = useDashboard()
@@ -120,54 +183,24 @@ export default function VenueDashboardPage({ routeSegment }: UserDashboardProps)
   const [accountUnderReview, setAccountUnderReview] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [openMenus, setOpenMenus] = useState<string[]>(["venue-management", "communication", "reviews-legal"])
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const { role, loading: authLoading, logout } = useAuth({ requireAuth: true, allowedRoles: ["VENUE_MANAGER"] })
   const router = useRouter()
   const pathname = usePathname()
   const { toast } = useToast()
 
-  // 👇 Set Venue Profile as default tab when dashboard loads
   useEffect(() => {
-    if (!activeSection) {
-      setActiveSection("venue-profile")
-    }
+    if (!activeSection) setActiveSection("dashboard")
   }, [activeSection, setActiveSection])
-
-  useEffect(() => {
-    try {
-      setSidebarCollapsed(localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "1")
-    } catch {
-      /* ignore */
-    }
-  }, [])
-
-  const toggleSidebarCollapsed = () => {
-    setSidebarCollapsed((c) => {
-      const next = !c
-      try {
-        localStorage.setItem(SIDEBAR_COLLAPSED_KEY, next ? "1" : "0")
-      } catch {
-        /* ignore */
-      }
-      return next
-    })
-  }
 
   useEffect(() => {
     if (authLoading) return
     const roleUpper = (role || "").toString().toUpperCase()
     if (roleUpper !== "VENUE_MANAGER") {
-      toast({
-        title: "Access Denied",
-        description: "You don't have permission to view this dashboard.",
-        variant: "destructive",
-      })
+      toast({ title: "Access Denied", description: "You don't have permission to view this dashboard.", variant: "destructive" })
       router.push("/")
       return
     }
-
     fetchVenueData()
   }, [routeSegment, authLoading, role, router, toast])
 
@@ -175,11 +208,7 @@ export default function VenueDashboardPage({ routeSegment }: UserDashboardProps)
     if (!venueData?.id || authLoading) return
     const sessionUser = getCurrentUserId()
     if (sessionUser && sessionUser !== venueData.id) {
-      toast({
-        title: "Access denied",
-        description: "You can only open your own venue dashboard.",
-        variant: "destructive",
-      })
+      toast({ title: "Access denied", description: "You can only open your own venue dashboard.", variant: "destructive" })
       router.replace("/login")
     }
   }, [venueData?.id, authLoading, router, toast])
@@ -188,9 +217,7 @@ export default function VenueDashboardPage({ routeSegment }: UserDashboardProps)
     if (!venueData?.id) return
     const name = venueData.venueName?.trim() ? venueData.venueName : null
     const canonical = getVenueDashboardPath(venueData.id, name)
-    if (pathname && canonical !== pathname) {
-      router.replace(canonical)
-    }
+    if (pathname && canonical !== pathname) router.replace(canonical)
   }, [venueData?.id, venueData?.venueName, pathname, router])
 
   const fetchVenueData = async () => {
@@ -198,46 +225,57 @@ export default function VenueDashboardPage({ routeSegment }: UserDashboardProps)
       setLoading(true)
       setError(null)
       setAccountUnderReview(false)
-
-      const data = await apiFetch<{
-        data?: unknown
-        user?: { venue?: unknown }
-        venue?: unknown
-      }>(`/api/venue-manager/${encodeURIComponent(routeSegment)}`)
-
-      const payload =
-        data.data ?? data.user?.venue ?? data.venue ?? data.user ?? null
+      const data = await apiFetch<{ data?: unknown; user?: { venue?: unknown }; venue?: unknown }>(
+        `/api/venue-manager/${encodeURIComponent(routeSegment)}`
+      )
+      const payload = data.data ?? data.user?.venue ?? data.venue ?? data.user ?? null
       if (!payload) throw new Error("Invalid data structure in response")
-      const raw = payload as Record<string, unknown>
-      const mgr = raw.manager as { venueName?: string } | undefined
-      const merged = {
-        ...raw,
-        venueName: (mgr?.venueName ?? (typeof raw.name === "string" ? raw.name : "")) || "",
-      } as VenueData
+      const raw = payload as RawVenueData
+      const mgr = raw.manager
+
+      const merged: VenueData = {
+        id: raw.id || "",
+        venueName: (mgr?.venueName ?? raw.name ?? "") as string,
+        logo: (raw.logo || (raw.images?.[0]) || "/city/c4.jpg") as string,
+        contactPerson: (mgr?.name ?? raw.contactPerson ?? "") as string,
+        email: (mgr?.email ?? raw.email ?? "") as string,
+        mobile: (mgr?.phone ?? raw.mobile ?? "") as string,
+        address: (raw.address ?? "") as string,
+        website: (raw.website ?? "") as string,
+        description: (raw.description ?? "") as string,
+        city: (raw.city ?? raw.location?.city ?? "") as string,
+        state: (raw.state ?? raw.location?.state ?? "") as string,
+        country: (raw.country ?? raw.location?.country ?? "") as string,
+        zipCode: (raw.zipCode ?? "") as string,
+        venueImages: (raw.venueImages ?? raw.images ?? []) as string[],
+        venueVideos: (raw.venueVideos ?? []) as string[],
+        floorPlans: (raw.floorPlans ?? []) as string[],
+        virtualTour: (raw.virtualTour ?? "") as string,
+        latitude: (raw.latitude ?? 0) as number,
+        longitude: (raw.longitude ?? 0) as number,
+        basePrice: (raw.basePrice ?? 0) as number,
+        currency: (raw.currency ?? "₹") as string,
+        maxCapacity: (raw.maxCapacity ?? raw.capacity?.total ?? 0) as number,
+        totalHalls: (raw.totalHalls ?? raw.capacity?.halls ?? 0) as number,
+        totalEvents: (raw.totalEvents ?? raw.stats?.totalEvents ?? 0) as number,
+        activeBookings: (raw.activeBookings ?? raw.stats?.activeBookings ?? 0) as number,
+        averageRating: (raw.averageRating ?? raw.stats?.averageRating ?? 0) as number,
+        totalReviews: (raw.totalReviews ?? raw.stats?.totalReviews ?? 0) as number,
+        amenities: (raw.amenities ?? []) as string[],
+        meetingSpaces: (raw.meetingSpaces ?? []) as MeetingSpace[],
+        timezone: (raw.timezone ?? raw.location?.timezone ?? "") as string,
+        manager: mgr,
+      }
       setVenueData(merged)
       setAccountUnderReview(venuePayloadUnderReview(payload))
-
     } catch (err: unknown) {
-      console.error("Error fetching user data:", err)
-      setAccountUnderReview(false)
-
-      const status =
-        typeof err === "object" && err !== null && "status" in err
-          ? Number((err as { status?: number }).status)
-          : undefined
+      const status = typeof err === "object" && err !== null && "status" in err ? Number((err as { status?: number }).status) : undefined
       const is404 = status === 404
       const is403 = status === 403
-
-      const message =
-        is404 ? "User not found" : is403 ? "Access denied" : err instanceof Error ? err.message : "An error occurred"
+      const message = is404 ? "User not found" : is403 ? "Access denied" : err instanceof Error ? err.message : "An error occurred"
       setError(message)
-
       if (is404 || is403) {
-        toast({
-          title: "Error",
-          description: message,
-          variant: "destructive",
-        })
+        toast({ title: "Error", description: message, variant: "destructive" })
         router.push("/login")
       }
     } finally {
@@ -245,49 +283,36 @@ export default function VenueDashboardPage({ routeSegment }: UserDashboardProps)
     }
   }
 
-  const toggleMenu = (menu: string) => {
-    setOpenMenus((prev) => (prev.includes(menu) ? prev.filter((m) => m !== menu) : [...prev, menu]))
-  }
-
-  const menuItemClass = (sectionId: string) =>
+  const navItemClass = (sectionId: string) =>
     cn(
-      "cursor-pointer w-full rounded-xl py-2 pl-3 pr-2 text-left text-sm transition-colors",
+      "flex items-center gap-3 w-full rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-150 text-left",
       activeSection === sectionId
-        ? "bg-slate-100/95 font-semibold text-[#8A70D6] shadow-sm shadow-violet-100/40"
-        : "text-slate-500 hover:bg-white/60 hover:text-slate-800",
+        ? "bg-[#4F46E5] text-white shadow-sm"
+        : "text-[#64748B] hover:bg-[#F1F5F9] hover:text-[#1E293B]"
     )
+
+  const navIconClass = (sectionId: string) =>
+    cn("w-4 h-4 shrink-0", activeSection === sectionId ? "text-white" : "text-[#94A3B8]")
 
   if (loading) {
     return (
-      <div className="relative flex min-h-screen w-full items-center justify-center overflow-hidden bg-[#eef1f8]">
-        <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden" aria-hidden>
-          <div className="absolute -top-24 -left-20 h-[28rem] w-[28rem] rounded-full bg-violet-400/30 blur-3xl" />
-          <div className="absolute top-1/3 -right-16 h-[24rem] w-[24rem] rounded-full bg-sky-300/40 blur-3xl" />
+      <div className="flex min-h-screen items-center justify-center bg-[#F8FAFC]">
+        <div className="text-center">
+          <div className="w-10 h-10 border-2 border-[#4F46E5] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+          <p className="text-sm text-[#64748B]">Loading dashboard…</p>
         </div>
-        <div className="relative z-10 h-14 w-14 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600" />
       </div>
     )
   }
 
   if (error) {
     return (
-      <div className="relative flex min-h-screen w-full items-center justify-center overflow-hidden bg-[#eef1f8] px-4">
-        <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden" aria-hidden>
-          <div className="absolute -top-24 -left-20 h-[28rem] w-[28rem] rounded-full bg-violet-400/30 blur-3xl" />
-          <div className="absolute top-1/3 -right-16 h-[24rem] w-[24rem] rounded-full bg-sky-300/40 blur-3xl" />
-        </div>
-        <Card className="relative z-10 w-full max-w-md rounded-3xl border border-white/90 bg-white/85 shadow-[0_20px_60px_-15px_rgba(79,70,229,0.14)] backdrop-blur-md">
-          <CardHeader>
-            <CardTitle className="text-red-600">Error</CardTitle>
-          </CardHeader>
+      <div className="flex min-h-screen items-center justify-center bg-[#F8FAFC] px-4">
+        <Card className="w-full max-w-sm">
+          <CardHeader><CardTitle className="text-red-600">Error</CardTitle></CardHeader>
           <CardContent>
             <p className="mb-4 text-slate-600">{error}</p>
-            <Button
-              onClick={fetchVenueData}
-              className="w-full rounded-2xl bg-gradient-to-r from-violet-600 to-sky-500 text-white hover:from-violet-500 hover:to-sky-400"
-            >
-              Try Again
-            </Button>
+            <Button onClick={fetchVenueData} className="w-full bg-[#4F46E5] hover:bg-[#4338CA] text-white">Try Again</Button>
           </CardContent>
         </Card>
       </div>
@@ -296,18 +321,10 @@ export default function VenueDashboardPage({ routeSegment }: UserDashboardProps)
 
   if (!venueData) {
     return (
-      <div className="relative flex min-h-screen w-full items-center justify-center overflow-hidden bg-[#eef1f8] px-4">
-        <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden" aria-hidden>
-          <div className="absolute -top-24 -left-20 h-[28rem] w-[28rem] rounded-full bg-violet-400/30 blur-3xl" />
-          <div className="absolute top-1/3 -right-16 h-[24rem] w-[24rem] rounded-full bg-sky-300/40 blur-3xl" />
-        </div>
-        <Card className="relative z-10 w-full max-w-md rounded-3xl border border-white/90 bg-white/85 shadow-[0_20px_60px_-15px_rgba(79,70,229,0.14)] backdrop-blur-md">
-          <CardHeader>
-            <CardTitle className="text-slate-800">No Data</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-slate-600">No venue data found.</p>
-          </CardContent>
+      <div className="flex min-h-screen items-center justify-center bg-[#F8FAFC] px-4">
+        <Card className="w-full max-w-sm">
+          <CardHeader><CardTitle>No Data</CardTitle></CardHeader>
+          <CardContent><p className="text-slate-600">No venue data found.</p></CardContent>
         </Card>
       </div>
     )
@@ -315,407 +332,600 @@ export default function VenueDashboardPage({ routeSegment }: UserDashboardProps)
 
   const renderContent = () => {
     switch (activeSection) {
-      case "venue-profile":
-        return <VenueProfile venueData={venueData} />
-      case "event-management":
-        return <EventManagement />
-      case "booking-system":
-        return <BookingSystem venueId={venueData.id} />
-      case "communication":
-        return <CommunicationCenter params={{ id: venueData.id }} />
-      case "connection":
-        return <ConnectionsSection userId={venueData.id} />
-      case "ratings-reviews":
-        return <VenueFeedbackManagement venueId={venueData.id} />
-      case "legal-documentation":
-        return <LegalDocumentation venueId={venueData.id} />
-      case "help-support":
-        return <HelpSupport variant="venue" />
-      case "settings":
-        return (
-          <VenueSettings
-          />
-        )
-      default:
-        // 👇 Fallback if something breaks
-        return <VenueProfile venueData={venueData} />
+      case "dashboard": return <VenueDashboardHome venueData={venueData} setActiveSection={setActiveSection} />
+      case "venue-profile": return <VenueProfile venueData={venueData} />
+      case "event-management": return <EventManagement />
+      case "booking-system": return <BookingSystem venueId={venueData.id} />
+      case "communication": return <CommunicationCenter params={{ id: venueData.id }} />
+      case "connection": return <ConnectionsSection userId={venueData.id} />
+      case "ratings-reviews": return <VenueFeedbackManagement venueId={venueData.id} />
+      case "legal-documentation": return <LegalDocumentation venueId={venueData.id} />
+      case "help-support": return <HelpSupport variant="venue" />
+      case "settings": return <VenueSettings />
+      default: return <VenueDashboardHome venueData={venueData} setActiveSection={setActiveSection} />
     }
+  }
+
+  const SidebarNav = ({ onNavigate }: { onNavigate?: () => void }) => {
+    const navigate = (section: string) => { setActiveSection(section); onNavigate?.() }
+    return (
+      <div className="flex flex-col h-full">
+        <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-0.5">
+          <button onClick={() => navigate("dashboard")} className={navItemClass("dashboard")}>
+            <LayoutDashboard className={navIconClass("dashboard")} />
+            Dashboard
+          </button>
+
+          <div className="pt-4 pb-1">
+            <p className="px-3 text-[10px] font-semibold text-[#94A3B8] uppercase tracking-widest">Venue Management</p>
+          </div>
+          <button onClick={() => navigate("venue-profile")} className={navItemClass("venue-profile")}>
+            <Building2 className={navIconClass("venue-profile")} />
+            Venue Profile
+          </button>
+          <button onClick={() => navigate("event-management")} className={navItemClass("event-management")}>
+            <CalendarDays className={navIconClass("event-management")} />
+            Event Management
+          </button>
+          <button onClick={() => navigate("booking-system")} className={navItemClass("booking-system")}>
+            <BookmarkCheck className={navIconClass("booking-system")} />
+            Booking System
+          </button>
+
+          <div className="pt-4 pb-1">
+            <p className="px-3 text-[10px] font-semibold text-[#94A3B8] uppercase tracking-widest">Communication</p>
+          </div>
+          <button onClick={() => navigate("communication")} className={navItemClass("communication")}>
+            <MessageSquare className={navIconClass("communication")} />
+            Messages
+          </button>
+          <button onClick={() => navigate("connection")} className={navItemClass("connection")}>
+            <Users className={navIconClass("connection")} />
+            Connections
+          </button>
+
+          <div className="pt-4 pb-1">
+            <p className="px-3 text-[10px] font-semibold text-[#94A3B8] uppercase tracking-widest">Reviews & Legal</p>
+          </div>
+          <button onClick={() => navigate("ratings-reviews")} className={navItemClass("ratings-reviews")}>
+            <Star className={navIconClass("ratings-reviews")} />
+            Reviews & Ratings
+          </button>
+
+          <div className="pt-4 pb-1">
+            <p className="px-3 text-[10px] font-semibold text-[#94A3B8] uppercase tracking-widest">Account</p>
+          </div>
+          <button onClick={() => navigate("help-support")} className={navItemClass("help-support")}>
+            <HelpCircle className={navIconClass("help-support")} />
+            Help & Support
+          </button>
+          <button onClick={() => navigate("settings")} className={navItemClass("settings")}>
+            <Settings className={navIconClass("settings")} />
+            Settings
+          </button>
+        </nav>
+
+        <div className="p-3 border-t border-[#E2E8F0]">
+          <button
+            onClick={() => logout()}
+            className="flex items-center gap-3 w-full rounded-xl px-3 py-2.5 text-sm font-medium text-[#EF4444] hover:bg-[#FEF2F2] transition-colors"
+          >
+            <LogOut className="w-4 h-4" />
+            Logout
+          </button>
+        </div>
+      </div>
+    )
   }
 
   return (
     <VenueDashboardVenueIdProvider venueUserId={venueData.id}>
-    <div className="relative flex min-h-screen w-full overflow-x-hidden bg-gradient-to-br from-slate-100 via-[#eef1fb] to-sky-50/40">
-      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden" aria-hidden>
-        <div className="absolute -top-32 -left-28 h-[26rem] w-[26rem] rounded-full bg-violet-400/22 blur-3xl" />
-        <div className="absolute top-[18%] -right-24 h-[22rem] w-[22rem] rounded-full bg-sky-300/30 blur-3xl" />
-        <div className="absolute bottom-10 left-[35%] h-64 w-64 rounded-full bg-indigo-300/18 blur-3xl" />
-      </div>
-
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-slate-900/35 backdrop-blur-[2px] md:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
-      <div className="relative z-10 flex min-h-screen w-full flex-1 md:items-stretch md:gap-2 md:px-3 md:pb-4 md:pt-2">
-      {/* Sidebar: frosted rail on desktop; drawer on mobile */}
-      <aside
-        className={cn(
-          "fixed z-50 flex min-h-screen w-64 shrink-0 flex-col overflow-y-auto overflow-x-hidden transition-[width,transform] duration-300 ease-out",
-          "border-r border-violet-200/35 bg-white/90 backdrop-blur-lg md:min-h-0 md:rounded-2xl md:border md:border-white/80 md:bg-white/55 md:shadow-[0_12px_40px_-12px_rgba(138,112,214,0.15)] md:backdrop-blur-xl md:ring-1 md:ring-violet-100/40",
-          "md:sticky md:top-2 md:h-[calc(100vh-1rem)] md:self-start",
-          sidebarCollapsed ? "md:w-[4.75rem]" : "md:w-[232px]",
-          sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
+      <div className="flex min-h-screen bg-[#F8FAFC]">
+        {sidebarOpen && (
+          <div className="fixed inset-0 z-40 bg-black/40 md:hidden" onClick={() => setSidebarOpen(false)} />
         )}
-      >
-        {/* Desktop: logo row + collapse */}
-        <div
+
+        <aside
           className={cn(
-            "hidden shrink-0 items-center gap-2 px-3 pb-3 pt-3 md:flex",
-            sidebarCollapsed ? "flex-col justify-center px-1 pt-3" : "justify-between",
+            "fixed z-50 top-0 left-0 h-full w-[220px] bg-white border-r border-[#E2E8F0] flex flex-col transition-transform duration-300",
+            "md:translate-x-0 md:sticky md:top-0 md:h-screen md:shrink-0",
+            sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
           )}
         >
-          {!sidebarCollapsed && (
-            <div className="min-w-0 flex-1 pt-0.5">
-              <p className="text-lg font-bold leading-tight tracking-tight text-[#8A70D6]">BizTradeFairs</p>
-              <p
-                className="mt-0.5 truncate text-[11px] font-medium text-slate-400"
-                title={venueData.venueName || undefined}
-              >
-                {venueData.venueName?.trim() ? venueData.venueName : "Venue dashboard"}
-              </p>
-            </div>
-          )}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className={cn(
-                  "h-9 w-9 shrink-0 rounded-xl text-slate-500 hover:bg-white/50 hover:text-[#8A70D6]",
-                  sidebarCollapsed && "mt-1",
-                )}
-                onClick={toggleSidebarCollapsed}
-                aria-expanded={!sidebarCollapsed}
-                aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-              >
-                {sidebarCollapsed ? <ChevronsRight className="h-5 w-5" /> : <ChevronsLeft className="h-5 w-5" />}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">{sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}</TooltipContent>
-          </Tooltip>
-        </div>
-
-        <div className="flex items-center justify-between border-b border-violet-200/20 px-3 py-3 md:hidden">
-          <h2 className="text-base font-semibold text-slate-800">Venue Menu</h2>
-          <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(false)} className="rounded-xl">
-            <X className="h-4 w-4 text-slate-600" />
-          </Button>
-        </div>
-
-        {/* Mobile: full menu */}
-        <div className="flex-1 overflow-y-auto p-3 md:hidden">
-          <div className="mb-4">
-            <button
-              type="button"
-              className="flex w-full items-center justify-between rounded-xl py-2.5 pl-2 pr-1 text-sm font-medium text-slate-600 transition-colors hover:bg-white/60"
-              onClick={() => toggleMenu("venue-management")}
-            >
-              <span className="flex items-center gap-2">
-                <Building2 size={16} className="text-slate-400" />
-                Venue Management
-              </span>
-              {openMenus.includes("venue-management") ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-            </button>
-            {openMenus.includes("venue-management") && (
-              <div className="ml-2 mt-2 space-y-1">
-                <button type="button" onClick={() => { setActiveSection("venue-profile"); setSidebarOpen(false) }} className={menuItemClass("venue-profile")}>
-                  Venue Profile
-                </button>
-                <button type="button" onClick={() => { setActiveSection("event-management"); setSidebarOpen(false) }} className={menuItemClass("event-management")}>
-                  Event Management
-                </button>
-                <button type="button" onClick={() => { setActiveSection("booking-system"); setSidebarOpen(false) }} className={menuItemClass("booking-system")}>
-                  Booking System
-                </button>
-              </div>
-            )}
-          </div>
-          <div className="mb-4">
-            <button
-              type="button"
-              className="flex w-full items-center justify-between rounded-xl py-2.5 pl-2 pr-1 text-sm font-medium text-slate-600 transition-colors hover:bg-white/60"
-              onClick={() => toggleMenu("communication")}
-            >
-              <span className="flex items-center gap-2">
-                <MessageSquare size={16} className="text-slate-400" />
-                Communication
-              </span>
-              {openMenus.includes("communication") ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-            </button>
-            {openMenus.includes("communication") && (
-              <div className="ml-2 mt-2 space-y-1">
-                <button type="button" onClick={() => { setActiveSection("communication"); setSidebarOpen(false) }} className={menuItemClass("communication")}>
-                  Messages
-                </button>
-                <button type="button" onClick={() => { setActiveSection("connection"); setSidebarOpen(false) }} className={menuItemClass("connection")}>
-                  Connections
-                </button>
-              </div>
-            )}
-          </div>
-          <div className="mb-4">
-            <button
-              type="button"
-              className="flex w-full items-center justify-between rounded-xl py-2.5 pl-2 pr-1 text-sm font-medium text-slate-600 transition-colors hover:bg-white/60"
-              onClick={() => toggleMenu("reviews-legal")}
-            >
-              <span className="flex items-center gap-2">
-                <Star size={16} className="text-slate-400" />
-                Reviews & Legal
-              </span>
-              {openMenus.includes("reviews-legal") ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-            </button>
-            {openMenus.includes("reviews-legal") && (
-              <div className="ml-2 mt-2 space-y-1">
-                <button type="button" onClick={() => { setActiveSection("ratings-reviews"); setSidebarOpen(false) }} className={menuItemClass("ratings-reviews")}>
-                  Ratings & Reviews
-                </button>
-              </div>
-            )}
-          </div>
           <button
-            type="button"
-            onClick={() => { setActiveSection("help-support"); setSidebarOpen(false) }}
-            className={cn(
-              "flex w-full items-center gap-2 rounded-xl py-2.5 pl-2 text-sm font-medium transition-colors",
-              activeSection === "help-support"
-                ? "bg-slate-100/95 font-semibold text-[#8A70D6] shadow-sm shadow-violet-100/40"
-                : "text-slate-500 hover:bg-white/60",
-            )}
+            className="absolute top-4 right-4 md:hidden text-[#64748B] hover:text-[#1E293B]"
+            onClick={() => setSidebarOpen(false)}
           >
-            <HelpCircle size={16} className={cn(activeSection === "help-support" ? "text-[#8A70D6]" : "text-slate-400")} />
-            Help & Support
+            <X className="w-5 h-5" />
           </button>
-          <button
-            type="button"
-            onClick={() => { setActiveSection("settings"); setSidebarOpen(false) }}
-            className={cn(
-              "mt-1 flex w-full items-center gap-2 rounded-xl py-2.5 pl-2 text-sm font-medium transition-colors",
-              activeSection === "settings"
-                ? "bg-slate-100/95 font-semibold text-[#8A70D6] shadow-sm shadow-violet-100/40"
-                : "text-slate-500 hover:bg-white/60",
-            )}
-          >
-            <Settings size={16} className={cn(activeSection === "settings" ? "text-[#8A70D6]" : "text-slate-400")} />
-            Settings
-          </button>
-          <Button
-            type="button"
-            onClick={() => logout()}
-            className="mt-8 w-full rounded-2xl border border-red-200/90 bg-white text-red-600 shadow-sm hover:bg-red-50"
-            variant="outline"
-          >
-            Logout
-          </Button>
-        </div>
+          <SidebarNav onNavigate={() => setSidebarOpen(false)} />
+        </aside>
 
-        {/* Desktop expanded */}
-        <div className={cn("hidden flex-1 overflow-y-auto p-3 md:block", sidebarCollapsed && "md:hidden")}>
-          <div className="mb-3">
-            <button
-              type="button"
-              className="flex w-full items-center justify-between rounded-xl py-2.5 pl-2 pr-1 text-sm font-medium text-slate-600 transition-colors hover:bg-white/60"
-              onClick={() => toggleMenu("venue-management")}
-            >
-              <span className="flex items-center gap-2">
-                <Building2 size={16} className="text-slate-400" />
-                Venue Management
-              </span>
-              {openMenus.includes("venue-management") ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-            </button>
-            {openMenus.includes("venue-management") && (
-              <div className="ml-2 mt-2 space-y-1">
-                <button type="button" onClick={() => setActiveSection("venue-profile")} className={menuItemClass("venue-profile")}>
-                  Venue Profile
-                </button>
-                <button type="button" onClick={() => setActiveSection("event-management")} className={menuItemClass("event-management")}>
-                  Event Management
-                </button>
-                <button type="button" onClick={() => setActiveSection("booking-system")} className={menuItemClass("booking-system")}>
-                  Booking System
-                </button>
-              </div>
-            )}
-          </div>
-          <div className="mb-3">
-            <button
-              type="button"
-              className="flex w-full items-center justify-between rounded-xl py-2.5 pl-2 pr-1 text-sm font-medium text-slate-600 transition-colors hover:bg-white/60"
-              onClick={() => toggleMenu("communication")}
-            >
-              <span className="flex items-center gap-2">
-                <MessageSquare size={16} className="text-slate-400" />
-                Communication
-              </span>
-              {openMenus.includes("communication") ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-            </button>
-            {openMenus.includes("communication") && (
-              <div className="ml-2 mt-2 space-y-1">
-                <button type="button" onClick={() => setActiveSection("communication")} className={menuItemClass("communication")}>
-                  Messages
-                </button>
-                <button type="button" onClick={() => setActiveSection("connection")} className={menuItemClass("connection")}>
-                  Connections
-                </button>
-              </div>
-            )}
-          </div>
-          <div className="mb-3">
-            <button
-              type="button"
-              className="flex w-full items-center justify-between rounded-xl py-2.5 pl-2 pr-1 text-sm font-medium text-slate-600 transition-colors hover:bg-white/60"
-              onClick={() => toggleMenu("reviews-legal")}
-            >
-              <span className="flex items-center gap-2">
-                <Star size={16} className="text-slate-400" />
-                Reviews & Legal
-              </span>
-              {openMenus.includes("reviews-legal") ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-            </button>
-            {openMenus.includes("reviews-legal") && (
-              <div className="ml-2 mt-2 space-y-1">
-                <button type="button" onClick={() => setActiveSection("ratings-reviews")} className={menuItemClass("ratings-reviews")}>
-                  Ratings & Reviews
-                </button>
-              </div>
-            )}
-          </div>
-          <button
-            type="button"
-            onClick={() => setActiveSection("help-support")}
-            className={cn(
-              "flex w-full items-center gap-2 rounded-xl py-2.5 pl-2 text-sm font-medium transition-colors",
-              activeSection === "help-support"
-                ? "bg-slate-100/95 font-semibold text-[#8A70D6] shadow-sm shadow-violet-100/40"
-                : "text-slate-500 hover:bg-white/60",
-            )}
-          >
-            <HelpCircle size={16} className={cn(activeSection === "help-support" ? "text-[#8A70D6]" : "text-slate-400")} />
-            Help & Support
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveSection("settings")}
-            className={cn(
-              "mt-1 flex w-full items-center gap-2 rounded-xl py-2.5 pl-2 text-sm font-medium transition-colors",
-              activeSection === "settings"
-                ? "bg-slate-100/95 font-semibold text-[#8A70D6] shadow-sm shadow-violet-100/40"
-                : "text-slate-500 hover:bg-white/60",
-            )}
-          >
-            <Settings size={16} className={cn(activeSection === "settings" ? "text-[#8A70D6]" : "text-slate-400")} />
-            Settings
-          </button>
-          <Button
-            type="button"
-            onClick={() => logout()}
-            className="mt-6 w-full rounded-2xl border border-red-200/90 bg-white text-red-600 shadow-sm hover:bg-red-50"
-            variant="outline"
-          >
-            Logout
-          </Button>
-        </div>
-
-        {/* Desktop collapsed: icon rail */}
-        <div
-          className={cn(
-            "hidden min-h-0 flex-1 flex-col gap-1 overflow-y-auto px-1.5 pb-3 pt-1",
-            sidebarCollapsed ? "md:flex" : "md:hidden",
-          )}
-        >
-          {COLLAPSED_NAV.map(({ id, label, icon: Icon }) => (
-            <Tooltip key={id}>
-              <TooltipTrigger asChild>
-                <button
-                  type="button"
-                  onClick={() => setActiveSection(id)}
-                  className={cn(
-                    "mx-auto flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition-all",
-                    activeSection === id
-                      ? "bg-gradient-to-br from-[#8A70D6] to-violet-500 text-white shadow-md shadow-[#8A70D6]/30"
-                      : "text-slate-500 hover:bg-white/40",
-                  )}
-                  aria-label={label}
-                >
-                  <Icon className="h-5 w-5 shrink-0" strokeWidth={1.75} />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="right" className="font-medium">
-                {label}
-              </TooltipContent>
-            </Tooltip>
-          ))}
-          <div className="mt-auto border-t border-violet-200/25 pt-3">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  className="mx-auto flex h-11 w-11 rounded-xl border-red-200/90 text-red-600 hover:bg-red-50"
-                  onClick={() => logout()}
-                  aria-label="Logout"
-                >
-                  <LogOut className="h-5 w-5" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="right">Logout</TooltipContent>
-            </Tooltip>
-          </div>
-        </div>
-      </aside>
-
-      {/* Main Content — full width of column (no mx-auto: that caused a huge gap next to the sidebar) */}
-      <div className="relative z-10 flex min-h-0 min-w-0 flex-1 flex-col">
-        <main className="min-h-0 w-full min-w-0 flex-1 overflow-auto md:py-0.5">
-          <div className="h-full w-full max-w-none rounded-[24px] border border-white/90 bg-white px-4 py-5 shadow-[0_20px_64px_-20px_rgba(138,112,214,0.28)] sm:px-6 md:min-h-[calc(100vh-1rem)] md:rounded-[30px] md:px-8 md:py-7">
-            <div className="mb-4 flex items-center gap-2 md:hidden">
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                className="shrink-0 rounded-xl border-slate-200/80 bg-white shadow-sm"
-                onClick={() => setSidebarOpen(true)}
-                aria-label="Open navigation"
-              >
-                <Menu className="h-5 w-5 text-slate-700" />
-              </Button>
-              <span className="truncate text-sm font-semibold text-slate-800">{venueData.venueName || "Venue"}</span>
-            </div>
+        <div className="flex-1 flex flex-col min-w-0">
+          <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-auto">
             <DashboardManagedBanner page="venue-dashboard" />
             {accountUnderReview && (
-              <Alert
-                className="mb-4 rounded-2xl border-amber-200/80 bg-amber-50/90 text-amber-950 shadow-sm backdrop-blur-sm [&>svg]:text-amber-700"
-                role="status"
-              >
-                <AlertCircle className="h-4 w-4" aria-hidden />
-                <AlertTitle>Your account is under review</AlertTitle>
-                <AlertDescription className="text-amber-900/90">
-                  Our team is reviewing your venue before it can appear on the public venues directory. You can
-                  continue using this dashboard to complete your profile and settings. We will notify you when your
-                  listing is live.
+              <Alert className="mb-5 border-amber-200 bg-amber-50" role="status">
+                <AlertCircle className="h-4 w-4 text-amber-600" />
+                <AlertTitle className="text-amber-800">Your account is under review</AlertTitle>
+                <AlertDescription className="text-amber-700">
+                  Our team is reviewing your venue before it can appear on the public venues directory. You can continue using this dashboard.
                 </AlertDescription>
               </Alert>
             )}
-            <div className="min-h-0 w-full">{renderContent()}</div>
-          </div>
-        </main>
+            {renderContent()}
+          </main>
+        </div>
       </div>
+    </VenueDashboardVenueIdProvider>
+  )
+}
+
+/* ─────────────────────────────────────────────
+   Dashboard Home - NEW DESIGN with Bar Chart & Monthly Data
+───────────────────────────────────────────── */
+function VenueDashboardHome({ venueData, setActiveSection }: { venueData: VenueData; setActiveSection: (s: string) => void }) {
+  const { toast } = useToast()
+  const [showAllBookings, setShowAllBookings] = useState(false)
+  const [expandedBookingId, setExpandedBookingId] = useState<string | null>(null)
+  const [bookingsData, setBookingsData] = useState<Booking[]>([])
+  const [loadingBookings, setLoadingBookings] = useState(false)
+  const [selectedPeriod, setSelectedPeriod] = useState<"thisMonth" | "lastMonth">("thisMonth")
+
+  // Monthly data from screenshot - values are counts, need to be scaled to percentage of max
+  const monthlyDataRaw = {
+    thisMonth: [
+      { day: "May 1", value: 75 },
+      { day: "May 5", value: 43 },
+      { day: "May 10", value: 72 },
+      { day: "May 15", value: 84 },
+      { day: "May 20", value: 33 },
+      { day: "May 25", value: 67 },
+      { day: "May 30", value: 68 },
+    ],
+    lastMonth: [
+      { day: "Apr 1", value: 95 },
+      { day: "Apr 5", value: 52 },
+      { day: "Apr 10", value: 46 },
+      { day: "Apr 15", value: 78 },
+      { day: "Apr 20", value: 46 },
+      { day: "Apr 25", value: 48 },
+      { day: "Apr 30", value: 41 },
+    ]
+  }
+
+  // Find max value to scale bars properly (max height will be 85% of container)
+  const maxValueThisMonth = Math.max(...monthlyDataRaw.thisMonth.map(d => d.value))
+  const maxValueLastMonth = Math.max(...monthlyDataRaw.lastMonth.map(d => d.value))
+  const globalMax = Math.max(maxValueThisMonth, maxValueLastMonth)
+
+  // Scale values to percentage (max bar height = 85% of container, so highest value becomes 85%)
+  const maxBarHeight = 85
+  const scaleValue = (value: number) => (value / globalMax) * maxBarHeight
+
+  const currentData = (selectedPeriod === "thisMonth" ? monthlyDataRaw.thisMonth : monthlyDataRaw.lastMonth).map(item => ({
+    ...item,
+    scaledHeight: scaleValue(item.value)
+  }))
+
+  // Calculate real stats from venueData
+  const stats = [
+    {
+      label: "Total Events",
+      value: venueData.totalEvents ?? 0,
+      change: `${venueData.totalEvents ?? 0} total events hosted`,
+      icon: CalendarDays,
+      color: "bg-[#EEF2FF] text-[#4F46E5]"
+    },
+    {
+      label: "Active Bookings",
+      value: venueData.activeBookings ?? 0,
+      change: `${venueData.activeBookings ?? 0} active ${(venueData.activeBookings ?? 0) === 1 ? 'booking' : 'bookings'}`,
+      icon: BookmarkCheck,
+      color: "bg-[#F0FDF4] text-[#16A34A]"
+    },
+    {
+      label: "Total Halls",
+      value: venueData.totalHalls ?? 0,
+      change: `${venueData.totalHalls ?? 0} ${(venueData.totalHalls ?? 0) === 1 ? 'hall' : 'halls'} available`,
+      icon: Building2,
+      color: "bg-[#FFF7ED] text-[#EA580C]"
+    },
+    {
+      label: "Max Capacity",
+      value: (venueData.maxCapacity ?? 0).toLocaleString(),
+      change: `up to ${(venueData.maxCapacity ?? 0).toLocaleString()} people`,
+      icon: Users,
+      color: "bg-[#F0F9FF] text-[#0284C7]"
+    },
+  ]
+
+  // Fetch bookings data
+  const fetchBookings = async () => {
+    if (!venueData.id) return
+    try {
+      setLoadingBookings(true)
+      const response = await apiFetch<{ success: boolean; data?: Booking[] }>(
+        `/api/venue-appointments?venueId=${venueData.id}`,
+        { auth: true }
+      )
+      if (response.success && response.data) {
+        setBookingsData(response.data)
+      }
+    } catch (error) {
+      console.error("Error fetching bookings:", error)
+    } finally {
+      setLoadingBookings(false)
+    }
+  }
+
+  useEffect(() => {
+    if (venueData.id) {
+      fetchBookings()
+    }
+  }, [venueData.id])
+
+  const updateBookingStatus = async (bookingId: string, newStatus: string) => {
+    try {
+      await apiFetch('/api/venue-appointments', {
+        method: 'PATCH',
+        body: JSON.stringify({ id: bookingId, status: newStatus })
+      })
+      toast({ title: "Success", description: `Booking ${newStatus.toLowerCase()} successfully` })
+      fetchBookings()
+    } catch (error) {
+      toast({ title: "Error", description: `Failed to ${newStatus.toLowerCase()} booking`, variant: "destructive" })
+    }
+  }
+
+  const getStatusStyles = (status: string) => {
+    switch (status.toUpperCase()) {
+      case 'PENDING':
+        return 'bg-[#FFF7ED] text-[#C2410C] border border-[#FED7AA]'
+      case 'CONFIRMED':
+        return 'bg-[#F0FDF4] text-[#15803D] border border-[#BBF7D0]'
+      case 'COMPLETED':
+        return 'bg-[#EDE9FE] text-[#6D28D9] border border-[#DDD6FE]'
+      case 'CANCELLED':
+        return 'bg-[#FEF2F2] text-[#DC2626] border border-[#FECACA]'
+      default:
+        return 'bg-[#F1F5F9] text-[#64748B] border border-[#E2E8F0]'
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold text-[#1E293B]">Dashboard</h1>
+        <p className="text-sm text-[#64748B] mt-0.5">
+          Welcome back, {venueData.contactPerson || venueData.venueName} 👋
+        </p>
+      </div>
+
+      {/* Stats Cards - Row of 4 */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {stats.map((stat) => (
+          <div key={stat.label} className="bg-white rounded-2xl border border-[#E2E8F0] p-4">
+            <div className="flex items-center justify-between mb-2">
+              <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center", stat.color.split(" ")[0])}>
+                <stat.icon className="w-5 h-5" />
+              </div>
+              <span className="text-[10px] font-medium text-[#22C55E] bg-[#F0FDF4] px-2 py-0.5 rounded-full">
+                +12%
+              </span>
+            </div>
+            <p className="text-2xl font-bold text-[#1E293B]">{stat.value}</p>
+            <p className="text-xs text-[#64748B] mt-1">{stat.label}</p>
+            <p className="text-[10px] text-[#94A3B8] mt-1">{stat.change}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Main Content Grid - 2 columns */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Event Overview - with Bar Chart */}
+        <div className="lg:col-span-2 bg-white rounded-2xl border border-[#E2E8F0] p-5">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-base font-semibold text-[#1E293B]">Event Overview</h2>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setSelectedPeriod("thisMonth")}
+                className={cn(
+                  "px-3 py-1 text-xs font-medium rounded-lg transition-colors",
+                  selectedPeriod === "thisMonth"
+                    ? "bg-[#4F46E5] text-white"
+                    : "bg-[#F1F5F9] text-[#64748B] hover:bg-[#E2E8F0]"
+                )}
+              >
+                This Month
+              </button>
+              <button
+                onClick={() => setSelectedPeriod("lastMonth")}
+                className={cn(
+                  "px-3 py-1 text-xs font-medium rounded-lg transition-colors",
+                  selectedPeriod === "lastMonth"
+                    ? "bg-[#4F46E5] text-white"
+                    : "bg-[#F1F5F9] text-[#64748B] hover:bg-[#E2E8F0]"
+                )}
+              >
+                Last Month
+              </button>
+            </div>
+          </div>
+
+          {/* Bar Chart - FIXED: using scaled heights */}
+          <div className="flex items-end justify-between gap-2 h-56 mb-2">
+            {currentData.map((item, index) => (
+              <div key={index} className="flex-1 flex flex-col items-center gap-2">
+                <div className="relative w-full flex justify-center">
+                  <div
+                    className="w-full max-w-[40px] bg-gradient-to-t from-[#4F46E5] to-[#818CF8] rounded-t-lg transition-all duration-300 hover:from-[#4338CA] hover:to-[#6366F1] cursor-pointer"
+                    style={{ height: `${item.scaledHeight}px` }}
+                  />
+                </div>
+                <span className="text-[10px] text-[#94A3B8] font-medium">
+                  {item.day}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          {/* Y-axis labels */}
+          <div className="flex justify-between px-2 mb-2">
+            <span className="text-[9px] text-[#94A3B8]">0</span>
+            <span className="text-[9px] text-[#94A3B8]">{Math.round(globalMax * 0.25)}</span>
+            <span className="text-[9px] text-[#94A3B8]">{Math.round(globalMax * 0.5)}</span>
+            <span className="text-[9px] text-[#94A3B8]">{Math.round(globalMax * 0.75)}</span>
+            <span className="text-[9px] text-[#94A3B8]">{globalMax}</span>
+          </div>
+
+          {/* Summary Stats below chart */}
+          <div className="grid grid-cols-3 gap-4 mt-6 pt-4 border-t border-[#F1F5F9]">
+            <div className="text-center">
+              <p className="text-2xl font-bold text-[#1E293B]">{venueData.totalEvents || 0}</p>
+              <p className="text-[11px] text-[#64748B]">Total Events</p>
+            </div>
+            <div className="text-center">
+              <p className="text-2xl font-bold text-[#1E293B]">{venueData.activeBookings || 0}</p>
+              <p className="text-[11px] text-[#64748B]">Active Bookings</p>
+            </div>
+            <div className="text-center">
+              <p className="text-2xl font-bold text-[#1E293B]">{(venueData.averageRating || 0).toFixed(1)}</p>
+              <p className="text-[11px] text-[#64748B]">Rating</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Booking Status - Expandable */}
+        <div className="bg-white rounded-2xl border border-[#E2E8F0] p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-base font-semibold text-[#1E293B]">Booking Status</h2>
+            <button
+              onClick={() => setActiveSection("booking-system")}
+              className="text-xs text-[#4F46E5] font-medium hover:underline"
+            >
+              View All
+            </button>
+          </div>
+
+          <div className="space-y-3">
+            {loadingBookings ? (
+              <div className="text-center py-6">
+                <div className="w-6 h-6 border-2 border-[#4F46E5] border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+                <p className="text-xs text-[#94A3B8]">Loading bookings...</p>
+              </div>
+            ) : bookingsData.length > 0 ? (
+              <>
+                {(showAllBookings ? bookingsData : bookingsData.slice(0, 2)).map((booking, idx) => {
+                  const bookingId = booking.id
+                  const isExpanded = expandedBookingId === bookingId
+                  const visitorName = `${booking.requester?.firstName || ''} ${booking.requester?.lastName || ''}`.trim() || 'Guest'
+                  const company = booking.requesterCompany || 'Individual'
+                  const date = booking.requestedDate ? new Date(booking.requestedDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Date TBD'
+                  const time = booking.requestedTime || 'Time TBD'
+                  const status = booking.status || 'PENDING'
+                  const purpose = booking.purpose || 'No purpose specified'
+                  const duration = booking.duration || 30
+                  const visitorEmail = booking.requester?.email || 'No email'
+                  const visitorPhone = booking.requesterPhone || 'No phone'
+
+                  return (
+                    <div key={bookingId} className="border border-[#E2E8F0] rounded-xl overflow-hidden transition-all">
+                      <div
+                        className="flex items-start gap-3 p-3 cursor-pointer hover:bg-[#F8FAFC] transition-colors"
+                        onClick={() => setExpandedBookingId(isExpanded ? null : bookingId)}
+                      >
+                        <div className="w-8 h-8 rounded-full bg-[#EEF2FF] flex items-center justify-center text-[#4F46E5] text-xs font-semibold shrink-0">
+                          {visitorName.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between">
+                            <p className="text-sm font-medium text-[#1E293B] truncate">{visitorName}</p>
+                            <span className={cn("text-[10px] font-medium px-2 py-0.5 rounded-full whitespace-nowrap ml-2", getStatusStyles(status))}>
+                              {status}
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-[#94A3B8] truncate">{company}</p>
+                          <div className="flex items-center gap-3 mt-1">
+                            <p className="text-[10px] text-[#64748B] flex items-center gap-1">
+                              <CalendarDays className="w-3 h-3" />
+                              {date}
+                            </p>
+                            <p className="text-[10px] text-[#64748B] flex items-center gap-1">
+                              <Clock className="w-3 h-3" />
+                              {time} ({duration} min)
+                            </p>
+                          </div>
+                        </div>
+                        <ChevronRight className={cn("w-4 h-4 text-[#94A3B8] transition-transform shrink-0", isExpanded && "rotate-90")} />
+                      </div>
+
+                      {isExpanded && (
+                        <div className="border-t border-[#F1F5F9] p-3 bg-[#F8FAFC] space-y-2">
+                          <div className="grid grid-cols-2 gap-2 text-xs">
+                            <div>
+                              <p className="text-[10px] text-[#94A3B8]">Email</p>
+                              <p className="text-[11px] text-[#1E293B] truncate">{visitorEmail}</p>
+                            </div>
+                            <div>
+                              <p className="text-[10px] text-[#94A3B8]">Phone</p>
+                              <p className="text-[11px] text-[#1E293B]">{visitorPhone}</p>
+                            </div>
+                          </div>
+                          <div>
+                            <p className="text-[10px] text-[#94A3B8]">Purpose</p>
+                            <p className="text-[11px] text-[#475569]">{purpose}</p>
+                          </div>
+                          {booking.notes && (
+                            <div>
+                              <p className="text-[10px] text-[#94A3B8]">Notes</p>
+                              <p className="text-[11px] text-[#475569]">{booking.notes}</p>
+                            </div>
+                          )}
+                          {status === 'PENDING' && (
+                            <div className="flex gap-2 pt-2">
+                              <Button
+                                size="sm"
+                                className="rounded-lg bg-[#16A34A] hover:bg-[#15803D] text-white text-xs h-7"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  updateBookingStatus(bookingId, 'CONFIRMED')
+                                }}
+                              >
+                                <CheckCircle className="w-3 h-3 mr-1" />
+                                Approve
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="rounded-lg border-[#FECACA] text-[#DC2626] hover:bg-[#FEF2F2] text-xs h-7"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  updateBookingStatus(bookingId, 'CANCELLED')
+                                }}
+                              >
+                                <X className="w-3 h-3 mr-1" />
+                                Decline
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+
+                {bookingsData.length > 2 && (
+                  <button
+                    onClick={() => setShowAllBookings(!showAllBookings)}
+                    className="w-full text-center py-2 text-xs font-medium text-[#4F46E5] hover:text-[#4338CA] hover:bg-[#EEF2FF] rounded-lg transition-colors flex items-center justify-center gap-1"
+                  >
+                    {showAllBookings ? (
+                      <>Show Less <ChevronRight className="w-3 h-3 rotate-90" /></>
+                    ) : (
+                      <>+{bookingsData.length - 2} More Bookings <ChevronRight className="w-3 h-3" /></>
+                    )}
+                  </button>
+                )}
+              </>
+            ) : (
+              <div className="text-center py-6">
+                <BookmarkCheck className="w-8 h-8 text-[#CBD5E1] mx-auto mb-2" />
+                <p className="text-sm text-[#94A3B8]">No booking requests</p>
+                <p className="text-xs text-[#CBD5E1] mt-1">Booking requests will appear here</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom Row - 3 Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Venue Details */}
+        <div className="bg-white rounded-2xl border border-[#E2E8F0] p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-base font-semibold text-[#1E293B]">Venue Details</h2>
+            <button onClick={() => setActiveSection("venue-profile")} className="text-xs text-[#4F46E5] font-medium hover:underline">Edit</button>
+          </div>
+          <div className="flex items-start gap-3 p-3 bg-[#F8FAFC] rounded-xl">
+            <div className="w-10 h-10 rounded-lg bg-[#EEF2FF] flex items-center justify-center shrink-0">
+              <Building2 className="w-5 h-5 text-[#4F46E5]" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-medium text-[#1E293B]">{venueData.venueName}</p>
+              <p className="text-xs text-[#94A3B8] mt-0.5">
+                {venueData.totalHalls || 0} {venueData.totalHalls === 1 ? 'Hall' : 'Halls'} •
+                Capacity {venueData.maxCapacity?.toLocaleString() || 0}
+              </p>
+              <p className="text-xs text-[#94A3B8] flex items-center gap-1 mt-0.5">
+                <MapPin className="w-3 h-3" />
+                {venueData.city && venueData.country
+                  ? `${venueData.city}, ${venueData.country}`
+                  : venueData.address || 'Location not set'}
+              </p>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-2 mt-3">
+            <div className="bg-[#F8FAFC] rounded-lg p-2 text-center">
+              <p className="text-xs text-[#64748B]">Amenities</p>
+              <p className="text-sm font-semibold text-[#1E293B]">{venueData.amenities?.length || 0}</p>
+            </div>
+            <div className="bg-[#F8FAFC] rounded-lg p-2 text-center">
+              <p className="text-xs text-[#64748B]">Meeting Spaces</p>
+              <p className="text-sm font-semibold text-[#1E293B]">{venueData.meetingSpaces?.length || 0}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Reviews Summary */}
+        <div className="bg-white rounded-2xl border border-[#E2E8F0] p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-base font-semibold text-[#1E293B]">Customer Reviews</h2>
+            <button onClick={() => setActiveSection("ratings-reviews")} className="text-xs text-[#4F46E5] font-medium hover:underline">View All</button>
+          </div>
+          <div className="text-center py-2">
+            <p className="text-4xl font-bold text-[#1E293B]">
+              {(venueData.averageRating || 0).toFixed(1)}
+            </p>
+            <div className="flex justify-center gap-1 my-2">
+              {[1, 2, 3, 4, 5].map((s) => (
+                <Star
+                  key={s}
+                  className={cn(
+                    "w-5 h-5",
+                    s <= Math.floor(venueData.averageRating || 0)
+                      ? "text-[#F59E0B] fill-[#F59E0B]"
+                      : "text-[#D1D5DB]"
+                  )}
+                />
+              ))}
+            </div>
+            <p className="text-sm text-[#94A3B8]">{venueData.totalReviews || 0} Total Reviews</p>
+          </div>
+        </div>
+
+        {/* Contact Info */}
+        <div className="bg-white rounded-2xl border border-[#E2E8F0] p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-base font-semibold text-[#1E293B]">Contact Information</h2>
+            <button onClick={() => setActiveSection("venue-profile")} className="text-xs text-[#4F46E5] font-medium hover:underline">Edit</button>
+          </div>
+          <div className="space-y-3">
+            <div className="flex items-center gap-3 text-sm text-[#64748B]">
+              <Building2 className="w-4 h-4 text-[#4F46E5]" />
+              <span>{venueData.contactPerson || "Not provided"}</span>
+            </div>
+            <div className="flex items-center gap-3 text-sm text-[#64748B]">
+              <MessageSquare className="w-4 h-4 text-[#4F46E5]" />
+              <span className="truncate">{venueData.email || "Not provided"}</span>
+            </div>
+            <div className="flex items-center gap-3 text-sm text-[#64748B]">
+              <BookmarkCheck className="w-4 h-4 text-[#4F46E5]" />
+              <span>{venueData.mobile || "Not provided"}</span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
-    </VenueDashboardVenueIdProvider>
   )
 }
