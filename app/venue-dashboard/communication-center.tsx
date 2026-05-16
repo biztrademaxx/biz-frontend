@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useToast } from "@/hooks/use-toast"
+import { safeResponseJson } from "@/lib/api"
 import { Send, Bell, CheckCircle, Clock, MessageSquare, Calendar, Megaphone, Loader2 } from "lucide-react"
 
 interface Conversation {
@@ -87,19 +88,15 @@ export default function CommunicationCenter({ params }: CommunicationCenterProps
     try {
       setLoadingConversations(true)
       const response = await fetch("/api/conversations")
-      const data = await response.json()
-
-      if (data.success) {
+      const data = await safeResponseJson<{ success?: boolean; conversations?: Conversation[] }>(response)
+      if (data?.success && Array.isArray(data.conversations)) {
         setConversations(data.conversations)
       } else {
-        toast({
-          title: "Error",
-          description: "Failed to load conversations",
-          variant: "destructive",
-        })
+        setConversations([])
       }
     } catch (error) {
       console.error("Error fetching conversations:", error)
+      setConversations([])
       toast({
         title: "Error",
         description: "Failed to load conversations",
@@ -115,19 +112,15 @@ export default function CommunicationCenter({ params }: CommunicationCenterProps
     try {
       setLoadingMessages(true)
       const response = await fetch(`/api/conversations/${conversationId}/messages`)
-      const data = await response.json()
-
-      if (data.success) {
+      const data = await safeResponseJson<{ success?: boolean; messages?: Message[] }>(response)
+      if (data?.success && Array.isArray(data.messages)) {
         setMessages(data.messages)
       } else {
-        toast({
-          title: "Error",
-          description: "Failed to load messages",
-          variant: "destructive",
-        })
+        setMessages([])
       }
     } catch (error) {
       console.error("Error fetching messages:", error)
+      setMessages([])
       toast({
         title: "Error",
         description: "Failed to load messages",
@@ -143,19 +136,31 @@ export default function CommunicationCenter({ params }: CommunicationCenterProps
     try {
       setLoadingNotifications(true)
       const response = await fetch("/api/notifications")
-      const data = await response.json()
-
-      if (data.success) {
-        setNotifications(data.notifications)
+      const data = await safeResponseJson<{
+        notifications?: Array<Record<string, unknown>>
+      }>(response)
+      if (data?.notifications && Array.isArray(data.notifications)) {
+        const mapped: Notification[] = data.notifications.map((notif: Record<string, unknown>) => ({
+          id: String(notif.id ?? ""),
+          type: typeof notif.type === "string" ? notif.type : "push",
+          title: typeof notif.title === "string" ? notif.title : "",
+          message: typeof notif.message === "string" ? notif.message : "",
+          timestamp:
+            typeof notif.createdAt === "string"
+              ? notif.createdAt
+              : typeof notif.timestamp === "string"
+                ? notif.timestamp
+                : new Date().toISOString(),
+          read: Boolean(notif.isRead ?? notif.read ?? false),
+          priority: typeof notif.priority === "string" ? notif.priority : "medium",
+        }))
+        setNotifications(mapped)
       } else {
-        toast({
-          title: "Error",
-          description: "Failed to load notifications",
-          variant: "destructive",
-        })
+        setNotifications([])
       }
     } catch (error) {
       console.error("Error fetching notifications:", error)
+      setNotifications([])
       toast({
         title: "Error",
         description: "Failed to load notifications",
@@ -171,19 +176,15 @@ export default function CommunicationCenter({ params }: CommunicationCenterProps
     try {
       setLoadingOrganizers(true)
       const response = await fetch("/api/organizers/list")
-      const data = await response.json()
-
-      if (data.success) {
+      const data = await safeResponseJson<{ success?: boolean; organizers?: Organizer[] }>(response)
+      if (data?.success && Array.isArray(data.organizers)) {
         setOrganizers(data.organizers)
       } else {
-        toast({
-          title: "Error",
-          description: "Failed to load organizers",
-          variant: "destructive",
-        })
+        setOrganizers([])
       }
     } catch (error) {
       console.error("Error fetching organizers:", error)
+      setOrganizers([])
       toast({
         title: "Error",
         description: "Failed to load organizers",
@@ -210,10 +211,10 @@ export default function CommunicationCenter({ params }: CommunicationCenterProps
         }),
       })
 
-      const data = await response.json()
+      const data = await safeResponseJson<{ success?: boolean; message?: Message }>(response)
 
-      if (data.success) {
-        setMessages((prev) => [...prev, data.message])
+      if (response.ok && data?.success && data.message) {
+        setMessages((prev) => [...prev, data.message!])
         setNewMessage("")
         toast({
           title: "Success",
@@ -257,19 +258,19 @@ export default function CommunicationCenter({ params }: CommunicationCenterProps
         }),
       })
 
-      const data = await response.json()
+      const data = await safeResponseJson<{ success?: boolean; message?: string; error?: string }>(response)
 
-      if (data.success) {
+      if (response.ok && data?.success) {
         setBroadcastMessage("")
         setSelectedOrganizers([])
         toast({
           title: "Success",
-          description: data.message,
+          description: data.message || "Broadcast sent",
         })
       } else {
         toast({
           title: "Error",
-          description: data.error || "Failed to send broadcast",
+          description: data?.error || "Failed to send broadcast",
           variant: "destructive",
         })
       }
@@ -318,7 +319,7 @@ export default function CommunicationCenter({ params }: CommunicationCenterProps
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case "booking":
-        return <Calendar className="h-4 w-4 text-blue-500" />
+        return <Calendar className="h-4 w-4 text-violet-500" />
       case "payment":
         return <CheckCircle className="h-4 w-4 text-green-500" />
       case "reminder":
@@ -383,7 +384,7 @@ export default function CommunicationCenter({ params }: CommunicationCenterProps
                   <div
                     key={notification.id}
                     className={`p-4 rounded-lg border ${
-                      !notification.read ? "bg-blue-50 border-blue-200" : "bg-gray-50 border-gray-200"
+                      !notification.read ? "bg-violet-50 border-violet-200" : "bg-gray-50 border-gray-200"
                     }`}
                   >
                     <div className="flex items-start space-x-3">
@@ -399,7 +400,7 @@ export default function CommunicationCenter({ params }: CommunicationCenterProps
                         <p className="text-xs text-gray-400 mt-2">{notification.timestamp}</p>
                       </div>
                       {!notification.read && (
-                        <div className="w-2 h-2 bg-blue-600 rounded-full flex-shrink-0 mt-1"></div>
+                        <div className="w-2 h-2 bg-violet-600 rounded-full flex-shrink-0 mt-1"></div>
                       )}
                     </div>
                   </div>
@@ -457,7 +458,7 @@ export default function CommunicationCenter({ params }: CommunicationCenterProps
                               <label htmlFor={organizer.id} className="text-sm flex-1">
                                 <div className="font-medium">{organizer.name}</div>
                                 <div className="text-gray-600">{organizer.company}</div>
-                                <div className="text-blue-600 text-xs">{organizer.event}</div>
+                                <div className="text-violet-600 text-xs">{organizer.event}</div>
                               </label>
                             </div>
                           ))}

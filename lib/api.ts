@@ -222,7 +222,14 @@ async function refreshAccessToken(): Promise<string | null> {
       return null;
     }
 
-    const data = await response.json();
+    const raw = await response.text();
+    let data: { accessToken?: string; refreshToken?: string };
+    try {
+      data = raw.trim() ? JSON.parse(raw) : {};
+    } catch {
+      clearTokens();
+      return null;
+    }
     const newAccessToken: string | undefined = data.accessToken;
     const newRefreshToken: string | undefined = data.refreshToken;
 
@@ -241,6 +248,25 @@ async function refreshAccessToken(): Promise<string | null> {
     console.error("Failed to refresh access token", error);
     clearTokens();
     return null;
+  }
+}
+
+/**
+ * Parse a browser `fetch` Response as JSON without throwing when the body is HTML (e.g. 404 page) or empty.
+ * Use for relative `/api/*` calls that may not exist or may return an HTML error document.
+ */
+export async function safeResponseJson<T = unknown>(response: Response): Promise<T | null> {
+  const raw = await response.text()
+  const trimmed = raw.trim()
+  if (!trimmed) return null
+  const contentType = response.headers.get("content-type") || ""
+  const looksJson =
+    /json/i.test(contentType) || trimmed.startsWith("{") || trimmed.startsWith("[")
+  if (!looksJson) return null
+  try {
+    return JSON.parse(trimmed) as T
+  } catch {
+    return null
   }
 }
 
@@ -329,11 +355,16 @@ export async function apiFetch<T = any>(path: string, options: ApiRequestOptions
   }
 
   if (!response.ok) {
+    const raw = await response.text();
     let errorBody: any = null;
     try {
-      errorBody = await response.json();
+      errorBody = raw.trim() ? JSON.parse(raw) : null;
     } catch {
-      // ignore JSON parse errors
+      errorBody = {
+        message: raw.trim()
+          ? raw.trim().slice(0, 800)
+          : `Request to ${path} failed with status ${response.status}`,
+      };
     }
 
     const primary =
@@ -356,8 +387,37 @@ export async function apiFetch<T = any>(path: string, options: ApiRequestOptions
     return null as T;
   }
 
-  const data = await response.json();
-  return data as T;
+  const raw = await response.text();
+  const trimmed = raw.trim();
+  if (!trimmed) {
+    return null as T;
+  }
+  const contentType = response.headers.get("content-type") || "";
+  const looksJson =
+    /json/i.test(contentType) ||
+    trimmed.startsWith("{") ||
+    trimmed.startsWith("[");
+  if (!looksJson) {
+    const origin = getBrowserBackendApiOrigin();
+    const err: any = new Error(
+      `Expected JSON from ${path} but got a non-JSON response (${contentType || "unknown content-type"}). ` +
+        `Preview: "${trimmed.slice(0, 100).replace(/\s+/g, " ")}"… ` +
+        `Ensure the API is running at ${origin} (biz-backend), CORS allows this origin, ` +
+        `and NEXT_PUBLIC_API_URL is not set to this Next.js URL by mistake.`,
+    );
+    err.status = response.status;
+    err.path = path;
+    throw err;
+  }
+  try {
+    return JSON.parse(trimmed) as T;
+  } catch (cause: unknown) {
+    const err: any = new Error(`Invalid JSON while parsing response from ${path}`);
+    err.status = response.status;
+    err.path = path;
+    err.cause = cause;
+    throw err;
+  }
 }
 
 export async function loginWithEmailPassword(email: string, password: string) {

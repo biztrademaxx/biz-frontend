@@ -346,7 +346,7 @@ export default function LegalDocumentation({ venueId }: LegalDocumentationProps)
       {/* <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card>
           <CardContent className="p-6 text-center">
-            <div className="text-3xl font-bold text-blue-600">{stats?.standardDocuments || 0}</div>
+            <div className="text-3xl font-bold text-violet-600">{stats?.standardDocuments || 0}</div>
             <div className="text-muted-foreground">Standard Documents</div>
           </CardContent>
         </Card>

@@ -16,6 +16,7 @@ import { getCityOptions, getCountryOptions, getStateOptions } from "@/lib/locati
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { getIanaTimeZoneOptions } from "@/lib/iana-timezones"
+import { safeResponseJson } from "@/lib/api"
 
 interface VenueData {
   id: string
@@ -128,8 +129,8 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
       try {
         setIsLoading(true)
         const res = await fetch(`/api/venue-manager/${venueData.id}`)
-        const data = await res.json()
-        if (data.success) {
+        const data = await safeResponseJson<{ success?: boolean; data?: unknown }>(res)
+        if (data?.success && data.data != null) {
           const venue = mapBackendToVenueData(data.data)
           setProfileData(venue)
           setAmenities(venue.amenities)
@@ -210,7 +211,7 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
         country: countryName,
       })
       const res = await fetch(`/api/location/postal-code?${params.toString()}`)
-      const json = (await res.json()) as { success?: boolean; data?: { postalCode?: string | null } }
+      const json = await safeResponseJson<{ success?: boolean; data?: { postalCode?: string | null } }>(res)
       const postalCode = json?.success ? (json.data?.postalCode ?? null) : null
       if (postalCode) {
         setProfileData((prev) => (prev ? { ...prev, zipCode: postalCode } : prev))
@@ -231,9 +232,13 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
         body: formData,
       })
 
-      const data = await res.json()
+      const data = await safeResponseJson<{
+        success?: boolean
+        data?: { secure_url?: string }
+        error?: string
+      }>(res)
 
-      if (data.success) {
+      if (data?.success && data.data?.secure_url) {
         const imageUrl = data.data.secure_url
 
         if (type === "venue") {
@@ -251,7 +256,7 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
 
         return imageUrl
       } else {
-        throw new Error(data.error)
+        throw new Error(data?.error || "Upload failed")
       }
     } catch (error) {
       console.error("Error uploading image:", error)
@@ -274,9 +279,9 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
         method: "DELETE",
       })
 
-      const data = await res.json()
+      const data = await safeResponseJson<{ success?: boolean; error?: string }>(res)
 
-      if (data.success) {
+      if (data?.success) {
         if (type === "venue") {
           setImages((prev) => prev.filter((img) => img !== imageUrl))
         } else if (type === "floorplan") {
@@ -288,7 +293,7 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
           description: "Image deleted successfully",
         })
       } else {
-        throw new Error(data.error)
+        throw new Error(data?.error || "Delete failed")
       }
     } catch (error) {
       console.error("Error deleting image:", error)
@@ -319,11 +324,15 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
         }),
       })
 
-      const data = await res.json()
+      const data = await safeResponseJson<{
+        success?: boolean
+        venue?: VenueData
+        error?: string
+      }>(res)
 
-      if (data.success) {
+      if (data?.success && data.venue) {
         setProfileData(data.venue)
-        if (Array.isArray(data.venue?.meetingSpaces)) {
+        if (Array.isArray(data.venue.meetingSpaces)) {
           setMeetingSpaces(data.venue.meetingSpaces)
         }
         setIsEditing(false)
@@ -332,7 +341,7 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
           description: "Venue updated successfully",
         })
       } else {
-        throw new Error(data.error)
+        throw new Error(data?.error || "Update failed")
       }
     } catch (err) {
       console.error("Error updating venue:", err)
@@ -852,7 +861,7 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
                   <CardTitle>Customer Rating</CardTitle>
                 </CardHeader>
                 <CardContent className="text-center">
-                  <div className="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-2">
+                  <div className="text-3xl font-bold text-violet-600 dark:text-violet-400 mb-2">
                     {profileData?.averageRating?.toFixed(1)}
                   </div>
                   <div className="flex items-center justify-center gap-1 mb-2">

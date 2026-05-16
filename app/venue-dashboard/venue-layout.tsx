@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from "react"
 import { useToast } from "@/hooks/use-toast"
-import { apiFetch, clearTokens, getCurrentUserId } from "@/lib/api"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { apiFetch, getCurrentUserId } from "@/lib/api"
+import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import {
   Building2,
   MessageSquare,
@@ -15,6 +16,14 @@ import {
   Settings,
   X,
   AlertCircle,
+  ChevronsLeft,
+  ChevronsRight,
+  CalendarDays,
+  BookmarkCheck,
+  Users,
+  LogOut,
+  Menu,
+  type LucideIcon,
 } from "lucide-react"
 import { useRouter, usePathname } from "next/navigation"
 import { useAuth } from "@/hooks/use-auth"
@@ -92,6 +101,19 @@ interface UserDashboardProps {
   routeSegment: string
 }
 
+const SIDEBAR_COLLAPSED_KEY = "venue-dashboard-sidebar-collapsed"
+
+const COLLAPSED_NAV: { id: string; label: string; icon: LucideIcon }[] = [
+  { id: "venue-profile", label: "Venue Profile", icon: Building2 },
+  { id: "event-management", label: "Event Management", icon: CalendarDays },
+  { id: "booking-system", label: "Booking System", icon: BookmarkCheck },
+  { id: "communication", label: "Messages", icon: MessageSquare },
+  { id: "connection", label: "Connections", icon: Users },
+  { id: "ratings-reviews", label: "Ratings & Reviews", icon: Star },
+  { id: "help-support", label: "Help & Support", icon: HelpCircle },
+  { id: "settings", label: "Settings", icon: Settings },
+]
+
 export default function VenueDashboardPage({ routeSegment }: UserDashboardProps) {
   const { activeSection, setActiveSection } = useDashboard()
   const [venueData, setVenueData] = useState<VenueData | null>(null)
@@ -100,6 +122,7 @@ export default function VenueDashboardPage({ routeSegment }: UserDashboardProps)
   const [error, setError] = useState<string | null>(null)
   const [openMenus, setOpenMenus] = useState<string[]>(["venue-management", "communication", "reviews-legal"])
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const { role, loading: authLoading, logout } = useAuth({ requireAuth: true, allowedRoles: ["VENUE_MANAGER"] })
   const router = useRouter()
   const pathname = usePathname()
@@ -111,6 +134,26 @@ export default function VenueDashboardPage({ routeSegment }: UserDashboardProps)
       setActiveSection("venue-profile")
     }
   }, [activeSection, setActiveSection])
+
+  useEffect(() => {
+    try {
+      setSidebarCollapsed(localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "1")
+    } catch {
+      /* ignore */
+    }
+  }, [])
+
+  const toggleSidebarCollapsed = () => {
+    setSidebarCollapsed((c) => {
+      const next = !c
+      try {
+        localStorage.setItem(SIDEBAR_COLLAPSED_KEY, next ? "1" : "0")
+      } catch {
+        /* ignore */
+      }
+      return next
+    })
+  }
 
   useEffect(() => {
     if (authLoading) return
@@ -207,30 +250,42 @@ export default function VenueDashboardPage({ routeSegment }: UserDashboardProps)
   }
 
   const menuItemClass = (sectionId: string) =>
-    `cursor-pointer pl-3 py-2 text-sm rounded-md transition-colors w-full text-left ${
+    cn(
+      "cursor-pointer w-full rounded-xl py-2 pl-3 pr-2 text-left text-sm transition-colors",
       activeSection === sectionId
-        ? "bg-blue-50 text-blue-700 border-l-4 border-blue-700 font-medium"
-        : "text-gray-600 hover:bg-gray-100 hover:text-gray-900 border-l-4 border-transparent"
-    }`
+        ? "bg-slate-100/95 font-semibold text-[#8A70D6] shadow-sm shadow-violet-100/40"
+        : "text-slate-500 hover:bg-white/60 hover:text-slate-800",
+    )
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      <div className="relative flex min-h-screen w-full items-center justify-center overflow-hidden bg-[#eef1f8]">
+        <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden" aria-hidden>
+          <div className="absolute -top-24 -left-20 h-[28rem] w-[28rem] rounded-full bg-violet-400/30 blur-3xl" />
+          <div className="absolute top-1/3 -right-16 h-[24rem] w-[24rem] rounded-full bg-sky-300/40 blur-3xl" />
+        </div>
+        <div className="relative z-10 h-14 w-14 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600" />
       </div>
     )
   }
 
   if (error) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Card className="w-full max-w-md">
+      <div className="relative flex min-h-screen w-full items-center justify-center overflow-hidden bg-[#eef1f8] px-4">
+        <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden" aria-hidden>
+          <div className="absolute -top-24 -left-20 h-[28rem] w-[28rem] rounded-full bg-violet-400/30 blur-3xl" />
+          <div className="absolute top-1/3 -right-16 h-[24rem] w-[24rem] rounded-full bg-sky-300/40 blur-3xl" />
+        </div>
+        <Card className="relative z-10 w-full max-w-md rounded-3xl border border-white/90 bg-white/85 shadow-[0_20px_60px_-15px_rgba(79,70,229,0.14)] backdrop-blur-md">
           <CardHeader>
             <CardTitle className="text-red-600">Error</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-gray-600 mb-4">{error}</p>
-            <Button onClick={fetchVenueData} className="w-full">
+            <p className="mb-4 text-slate-600">{error}</p>
+            <Button
+              onClick={fetchVenueData}
+              className="w-full rounded-2xl bg-gradient-to-r from-violet-600 to-sky-500 text-white hover:from-violet-500 hover:to-sky-400"
+            >
               Try Again
             </Button>
           </CardContent>
@@ -241,13 +296,17 @@ export default function VenueDashboardPage({ routeSegment }: UserDashboardProps)
 
   if (!venueData) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Card className="w-full max-w-md">
+      <div className="relative flex min-h-screen w-full items-center justify-center overflow-hidden bg-[#eef1f8] px-4">
+        <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden" aria-hidden>
+          <div className="absolute -top-24 -left-20 h-[28rem] w-[28rem] rounded-full bg-violet-400/30 blur-3xl" />
+          <div className="absolute top-1/3 -right-16 h-[24rem] w-[24rem] rounded-full bg-sky-300/40 blur-3xl" />
+        </div>
+        <Card className="relative z-10 w-full max-w-md rounded-3xl border border-white/90 bg-white/85 shadow-[0_20px_60px_-15px_rgba(79,70,229,0.14)] backdrop-blur-md">
           <CardHeader>
-            <CardTitle>No Data</CardTitle>
+            <CardTitle className="text-slate-800">No Data</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-gray-600">No venue data found.</p>
+            <p className="text-slate-600">No venue data found.</p>
           </CardContent>
         </Card>
       </div>
@@ -271,7 +330,7 @@ export default function VenueDashboardPage({ routeSegment }: UserDashboardProps)
       case "legal-documentation":
         return <LegalDocumentation venueId={venueData.id} />
       case "help-support":
-        return <HelpSupport />
+        return <HelpSupport variant="venue" />
       case "settings":
         return (
           <VenueSettings
@@ -285,145 +344,361 @@ export default function VenueDashboardPage({ routeSegment }: UserDashboardProps)
 
   return (
     <VenueDashboardVenueIdProvider venueUserId={venueData.id}>
-    <div className="flex min-h-screen w-full bg-[#F5F4F0]">
+    <div className="relative flex min-h-screen w-full overflow-x-hidden bg-gradient-to-br from-slate-100 via-[#eef1fb] to-sky-50/40">
+      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden" aria-hidden>
+        <div className="absolute -top-32 -left-28 h-[26rem] w-[26rem] rounded-full bg-violet-400/22 blur-3xl" />
+        <div className="absolute top-[18%] -right-24 h-[22rem] w-[22rem] rounded-full bg-sky-300/30 blur-3xl" />
+        <div className="absolute bottom-10 left-[35%] h-64 w-64 rounded-full bg-indigo-300/18 blur-3xl" />
+      </div>
+
       {sidebarOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden" onClick={() => setSidebarOpen(false)} />
+        <div
+          className="fixed inset-0 z-40 bg-slate-900/35 backdrop-blur-[2px] md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
       )}
 
-      {/* Sidebar */}
+      <div className="relative z-10 flex min-h-screen w-full flex-1 md:items-stretch md:gap-2 md:px-3 md:pb-4 md:pt-2">
+      {/* Sidebar: frosted rail on desktop; drawer on mobile */}
       <aside
-        className={`fixed md:relative w-64 min-h-screen bg-white border-r border-gray-200 z-50 transform transition-transform duration-300 ease-in-out ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } md:translate-x-0 flex flex-col shadow-sm`}
+        className={cn(
+          "fixed z-50 flex min-h-screen w-64 shrink-0 flex-col overflow-y-auto overflow-x-hidden transition-[width,transform] duration-300 ease-out",
+          "border-r border-violet-200/35 bg-white/90 backdrop-blur-lg md:min-h-0 md:rounded-2xl md:border md:border-white/80 md:bg-white/55 md:shadow-[0_12px_40px_-12px_rgba(138,112,214,0.15)] md:backdrop-blur-xl md:ring-1 md:ring-violet-100/40",
+          "md:sticky md:top-2 md:h-[calc(100vh-1rem)] md:self-start",
+          sidebarCollapsed ? "md:w-[4.75rem]" : "md:w-[232px]",
+          sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
+        )}
       >
-        <div className="md:hidden flex items-center justify-between p-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">Venue Menu</h2>
-          <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(false)}>
-            <X className="h-4 w-4" />
+        {/* Desktop: logo row + collapse */}
+        <div
+          className={cn(
+            "hidden shrink-0 items-center gap-2 px-3 pb-3 pt-3 md:flex",
+            sidebarCollapsed ? "flex-col justify-center px-1 pt-3" : "justify-between",
+          )}
+        >
+          {!sidebarCollapsed && (
+            <div className="min-w-0 flex-1 pt-0.5">
+              <p className="text-lg font-bold leading-tight tracking-tight text-[#8A70D6]">BizTradeFairs</p>
+              <p
+                className="mt-0.5 truncate text-[11px] font-medium text-slate-400"
+                title={venueData.venueName || undefined}
+              >
+                {venueData.venueName?.trim() ? venueData.venueName : "Venue dashboard"}
+              </p>
+            </div>
+          )}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className={cn(
+                  "h-9 w-9 shrink-0 rounded-xl text-slate-500 hover:bg-white/50 hover:text-[#8A70D6]",
+                  sidebarCollapsed && "mt-1",
+                )}
+                onClick={toggleSidebarCollapsed}
+                aria-expanded={!sidebarCollapsed}
+                aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+              >
+                {sidebarCollapsed ? <ChevronsRight className="h-5 w-5" /> : <ChevronsLeft className="h-5 w-5" />}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">{sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}</TooltipContent>
+          </Tooltip>
+        </div>
+
+        <div className="flex items-center justify-between border-b border-violet-200/20 px-3 py-3 md:hidden">
+          <h2 className="text-base font-semibold text-slate-800">Venue Menu</h2>
+          <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(false)} className="rounded-xl">
+            <X className="h-4 w-4 text-slate-600" />
           </Button>
         </div>
 
-        <div className="flex-1 p-4 overflow-y-auto">
-          {/* Venue Management Dropdown */}
+        {/* Mobile: full menu */}
+        <div className="flex-1 overflow-y-auto p-3 md:hidden">
           <div className="mb-4">
             <button
-              className="flex items-center justify-between w-full py-2 font-medium text-sm text-gray-700 hover:text-gray-900"
+              type="button"
+              className="flex w-full items-center justify-between rounded-xl py-2.5 pl-2 pr-1 text-sm font-medium text-slate-600 transition-colors hover:bg-white/60"
               onClick={() => toggleMenu("venue-management")}
             >
               <span className="flex items-center gap-2">
-                <Building2 size={16} />
+                <Building2 size={16} className="text-slate-400" />
                 Venue Management
               </span>
               {openMenus.includes("venue-management") ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
             </button>
-
             {openMenus.includes("venue-management") && (
               <div className="ml-2 mt-2 space-y-1">
-                <button onClick={() => setActiveSection("venue-profile")} className={menuItemClass("venue-profile")}>
+                <button type="button" onClick={() => { setActiveSection("venue-profile"); setSidebarOpen(false) }} className={menuItemClass("venue-profile")}>
                   Venue Profile
                 </button>
-                <button onClick={() => setActiveSection("event-management")} className={menuItemClass("event-management")}>
+                <button type="button" onClick={() => { setActiveSection("event-management"); setSidebarOpen(false) }} className={menuItemClass("event-management")}>
                   Event Management
                 </button>
-                <button onClick={() => setActiveSection("booking-system")} className={menuItemClass("booking-system")}>
+                <button type="button" onClick={() => { setActiveSection("booking-system"); setSidebarOpen(false) }} className={menuItemClass("booking-system")}>
                   Booking System
                 </button>
               </div>
             )}
           </div>
-
-          {/* Communication Dropdown */}
           <div className="mb-4">
             <button
-              className="flex items-center justify-between w-full py-2 font-medium text-sm text-gray-700 hover:text-gray-900"
+              type="button"
+              className="flex w-full items-center justify-between rounded-xl py-2.5 pl-2 pr-1 text-sm font-medium text-slate-600 transition-colors hover:bg-white/60"
               onClick={() => toggleMenu("communication")}
             >
               <span className="flex items-center gap-2">
-                <MessageSquare size={16} />
+                <MessageSquare size={16} className="text-slate-400" />
                 Communication
               </span>
               {openMenus.includes("communication") ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
             </button>
             {openMenus.includes("communication") && (
               <div className="ml-2 mt-2 space-y-1">
-                <button onClick={() => setActiveSection("communication")} className={menuItemClass("communication")}>
+                <button type="button" onClick={() => { setActiveSection("communication"); setSidebarOpen(false) }} className={menuItemClass("communication")}>
                   Messages
                 </button>
-                <button onClick={() => setActiveSection("connection")} className={menuItemClass("connection")}>
+                <button type="button" onClick={() => { setActiveSection("connection"); setSidebarOpen(false) }} className={menuItemClass("connection")}>
                   Connections
                 </button>
               </div>
             )}
           </div>
-
-          {/* Reviews & Legal Dropdown */}
           <div className="mb-4">
             <button
-              className="flex items-center justify-between w-full py-2 font-medium text-sm text-gray-700 hover:text-gray-900"
+              type="button"
+              className="flex w-full items-center justify-between rounded-xl py-2.5 pl-2 pr-1 text-sm font-medium text-slate-600 transition-colors hover:bg-white/60"
               onClick={() => toggleMenu("reviews-legal")}
             >
               <span className="flex items-center gap-2">
-                <Star size={16} />
+                <Star size={16} className="text-slate-400" />
                 Reviews & Legal
               </span>
               {openMenus.includes("reviews-legal") ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
             </button>
             {openMenus.includes("reviews-legal") && (
               <div className="ml-2 mt-2 space-y-1">
-                <button onClick={() => setActiveSection("ratings-reviews")} className={menuItemClass("ratings-reviews")}>
+                <button type="button" onClick={() => { setActiveSection("ratings-reviews"); setSidebarOpen(false) }} className={menuItemClass("ratings-reviews")}>
                   Ratings & Reviews
                 </button>
-                {/* <button
-                  onClick={() => setActiveSection("legal-documentation")}
-                  className={menuItemClass("legal-documentation")}
-                >
-                  Legal & Documentation
-                </button> */}
               </div>
             )}
           </div>
-
-          {/* Help & Support */}
           <button
-            onClick={() => setActiveSection("help-support")}
-            className={`flex items-center w-full py-2 gap-2 font-medium text-sm rounded-md transition-colors ${
+            type="button"
+            onClick={() => { setActiveSection("help-support"); setSidebarOpen(false) }}
+            className={cn(
+              "flex w-full items-center gap-2 rounded-xl py-2.5 pl-2 text-sm font-medium transition-colors",
               activeSection === "help-support"
-                ? "bg-blue-50 text-blue-700"
-                : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-            }`}
+                ? "bg-slate-100/95 font-semibold text-[#8A70D6] shadow-sm shadow-violet-100/40"
+                : "text-slate-500 hover:bg-white/60",
+            )}
           >
-            <HelpCircle size={16} />
+            <HelpCircle size={16} className={cn(activeSection === "help-support" ? "text-[#8A70D6]" : "text-slate-400")} />
             Help & Support
           </button>
-
-          {/* Settings */}
           <button
-            onClick={() => setActiveSection("settings")}
-            className={`flex items-center w-full py-2 gap-2 font-medium text-sm rounded-md transition-colors mt-1 ${
+            type="button"
+            onClick={() => { setActiveSection("settings"); setSidebarOpen(false) }}
+            className={cn(
+              "mt-1 flex w-full items-center gap-2 rounded-xl py-2.5 pl-2 text-sm font-medium transition-colors",
               activeSection === "settings"
-                ? "bg-blue-50 text-blue-700"
-                : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-            }`}
+                ? "bg-slate-100/95 font-semibold text-[#8A70D6] shadow-sm shadow-violet-100/40"
+                : "text-slate-500 hover:bg-white/60",
+            )}
           >
-            <Settings size={16} />
+            <Settings size={16} className={cn(activeSection === "settings" ? "text-[#8A70D6]" : "text-slate-400")} />
             Settings
           </button>
-
-          {/* Logout */}
-          <Button onClick={() => logout()} className="w-full bg-red-500 hover:bg-red-600 text-white mt-8">
+          <Button
+            type="button"
+            onClick={() => logout()}
+            className="mt-8 w-full rounded-2xl border border-red-200/90 bg-white text-red-600 shadow-sm hover:bg-red-50"
+            variant="outline"
+          >
             Logout
           </Button>
         </div>
+
+        {/* Desktop expanded */}
+        <div className={cn("hidden flex-1 overflow-y-auto p-3 md:block", sidebarCollapsed && "md:hidden")}>
+          <div className="mb-3">
+            <button
+              type="button"
+              className="flex w-full items-center justify-between rounded-xl py-2.5 pl-2 pr-1 text-sm font-medium text-slate-600 transition-colors hover:bg-white/60"
+              onClick={() => toggleMenu("venue-management")}
+            >
+              <span className="flex items-center gap-2">
+                <Building2 size={16} className="text-slate-400" />
+                Venue Management
+              </span>
+              {openMenus.includes("venue-management") ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+            </button>
+            {openMenus.includes("venue-management") && (
+              <div className="ml-2 mt-2 space-y-1">
+                <button type="button" onClick={() => setActiveSection("venue-profile")} className={menuItemClass("venue-profile")}>
+                  Venue Profile
+                </button>
+                <button type="button" onClick={() => setActiveSection("event-management")} className={menuItemClass("event-management")}>
+                  Event Management
+                </button>
+                <button type="button" onClick={() => setActiveSection("booking-system")} className={menuItemClass("booking-system")}>
+                  Booking System
+                </button>
+              </div>
+            )}
+          </div>
+          <div className="mb-3">
+            <button
+              type="button"
+              className="flex w-full items-center justify-between rounded-xl py-2.5 pl-2 pr-1 text-sm font-medium text-slate-600 transition-colors hover:bg-white/60"
+              onClick={() => toggleMenu("communication")}
+            >
+              <span className="flex items-center gap-2">
+                <MessageSquare size={16} className="text-slate-400" />
+                Communication
+              </span>
+              {openMenus.includes("communication") ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+            </button>
+            {openMenus.includes("communication") && (
+              <div className="ml-2 mt-2 space-y-1">
+                <button type="button" onClick={() => setActiveSection("communication")} className={menuItemClass("communication")}>
+                  Messages
+                </button>
+                <button type="button" onClick={() => setActiveSection("connection")} className={menuItemClass("connection")}>
+                  Connections
+                </button>
+              </div>
+            )}
+          </div>
+          <div className="mb-3">
+            <button
+              type="button"
+              className="flex w-full items-center justify-between rounded-xl py-2.5 pl-2 pr-1 text-sm font-medium text-slate-600 transition-colors hover:bg-white/60"
+              onClick={() => toggleMenu("reviews-legal")}
+            >
+              <span className="flex items-center gap-2">
+                <Star size={16} className="text-slate-400" />
+                Reviews & Legal
+              </span>
+              {openMenus.includes("reviews-legal") ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+            </button>
+            {openMenus.includes("reviews-legal") && (
+              <div className="ml-2 mt-2 space-y-1">
+                <button type="button" onClick={() => setActiveSection("ratings-reviews")} className={menuItemClass("ratings-reviews")}>
+                  Ratings & Reviews
+                </button>
+              </div>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={() => setActiveSection("help-support")}
+            className={cn(
+              "flex w-full items-center gap-2 rounded-xl py-2.5 pl-2 text-sm font-medium transition-colors",
+              activeSection === "help-support"
+                ? "bg-slate-100/95 font-semibold text-[#8A70D6] shadow-sm shadow-violet-100/40"
+                : "text-slate-500 hover:bg-white/60",
+            )}
+          >
+            <HelpCircle size={16} className={cn(activeSection === "help-support" ? "text-[#8A70D6]" : "text-slate-400")} />
+            Help & Support
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveSection("settings")}
+            className={cn(
+              "mt-1 flex w-full items-center gap-2 rounded-xl py-2.5 pl-2 text-sm font-medium transition-colors",
+              activeSection === "settings"
+                ? "bg-slate-100/95 font-semibold text-[#8A70D6] shadow-sm shadow-violet-100/40"
+                : "text-slate-500 hover:bg-white/60",
+            )}
+          >
+            <Settings size={16} className={cn(activeSection === "settings" ? "text-[#8A70D6]" : "text-slate-400")} />
+            Settings
+          </button>
+          <Button
+            type="button"
+            onClick={() => logout()}
+            className="mt-6 w-full rounded-2xl border border-red-200/90 bg-white text-red-600 shadow-sm hover:bg-red-50"
+            variant="outline"
+          >
+            Logout
+          </Button>
+        </div>
+
+        {/* Desktop collapsed: icon rail */}
+        <div
+          className={cn(
+            "hidden min-h-0 flex-1 flex-col gap-1 overflow-y-auto px-1.5 pb-3 pt-1",
+            sidebarCollapsed ? "md:flex" : "md:hidden",
+          )}
+        >
+          {COLLAPSED_NAV.map(({ id, label, icon: Icon }) => (
+            <Tooltip key={id}>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  onClick={() => setActiveSection(id)}
+                  className={cn(
+                    "mx-auto flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition-all",
+                    activeSection === id
+                      ? "bg-gradient-to-br from-[#8A70D6] to-violet-500 text-white shadow-md shadow-[#8A70D6]/30"
+                      : "text-slate-500 hover:bg-white/40",
+                  )}
+                  aria-label={label}
+                >
+                  <Icon className="h-5 w-5 shrink-0" strokeWidth={1.75} />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right" className="font-medium">
+                {label}
+              </TooltipContent>
+            </Tooltip>
+          ))}
+          <div className="mt-auto border-t border-violet-200/25 pt-3">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="mx-auto flex h-11 w-11 rounded-xl border-red-200/90 text-red-600 hover:bg-red-50"
+                  onClick={() => logout()}
+                  aria-label="Logout"
+                >
+                  <LogOut className="h-5 w-5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="right">Logout</TooltipContent>
+            </Tooltip>
+          </div>
+        </div>
       </aside>
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col min-h-screen">
-        <main className="flex-1 p-6 overflow-auto">
-          <DashboardManagedBanner page="venue-dashboard" />
-          <div className="max-w-7xl mx-auto">
+      {/* Main Content — full width of column (no mx-auto: that caused a huge gap next to the sidebar) */}
+      <div className="relative z-10 flex min-h-0 min-w-0 flex-1 flex-col">
+        <main className="min-h-0 w-full min-w-0 flex-1 overflow-auto md:py-0.5">
+          <div className="h-full w-full max-w-none rounded-[24px] border border-white/90 bg-white px-4 py-5 shadow-[0_20px_64px_-20px_rgba(138,112,214,0.28)] sm:px-6 md:min-h-[calc(100vh-1rem)] md:rounded-[30px] md:px-8 md:py-7">
+            <div className="mb-4 flex items-center gap-2 md:hidden">
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="shrink-0 rounded-xl border-slate-200/80 bg-white shadow-sm"
+                onClick={() => setSidebarOpen(true)}
+                aria-label="Open navigation"
+              >
+                <Menu className="h-5 w-5 text-slate-700" />
+              </Button>
+              <span className="truncate text-sm font-semibold text-slate-800">{venueData.venueName || "Venue"}</span>
+            </div>
+            <DashboardManagedBanner page="venue-dashboard" />
             {accountUnderReview && (
               <Alert
-                className="mb-4 border-amber-200 bg-amber-50 text-amber-950 [&>svg]:text-amber-700"
+                className="mb-4 rounded-2xl border-amber-200/80 bg-amber-50/90 text-amber-950 shadow-sm backdrop-blur-sm [&>svg]:text-amber-700"
                 role="status"
               >
                 <AlertCircle className="h-4 w-4" aria-hidden />
@@ -435,11 +710,10 @@ export default function VenueDashboardPage({ routeSegment }: UserDashboardProps)
                 </AlertDescription>
               </Alert>
             )}
-            <div className="bg-[#F5F4F0] min-h-screen w-full ">
-              {renderContent()}
-            </div>
+            <div className="min-h-0 w-full">{renderContent()}</div>
           </div>
         </main>
+      </div>
       </div>
     </div>
     </VenueDashboardVenueIdProvider>

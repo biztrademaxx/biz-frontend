@@ -63,8 +63,8 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="bg-white shadow-sm">
-      <div className="max-w-1xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
+    <nav className="sticky top-0 z-40 border-b border-violet-100/40 bg-white/65 shadow-[0_10px_36px_-16px_rgba(138,112,214,0.12)] backdrop-blur-xl">
+      <div className="mx-auto max-w-[1920px] px-4 sm:px-6 lg:px-8 py-2">
         <div className="flex justify-between h-20 items-center">
           {/* Left: Logo + Explore */}
           <div className="flex items-center space-x-6">
@@ -120,16 +120,16 @@ export default function Navbar() {
           {/* Right: Links + Profile */}
           <div className="flex items-center space-x-6">
             <Link href="/event">
-              <p className="text-gray-700 hover:text-gray-900">
+              <p className="text-slate-600 transition-colors hover:text-violet-700">
                 Top 10 Must Visit
               </p>
             </Link>
             <Link href="/speakers">
-              <p className="text-gray-700 hover:text-gray-900">Speakers</p>
+              <p className="text-slate-600 transition-colors hover:text-violet-700">Speakers</p>
             </Link>
             <p
               onClick={handleAddevent}
-              className="text-gray-700 hover:text-gray-900 cursor-pointer"
+              className="cursor-pointer text-slate-600 transition-colors hover:text-violet-700"
             >
               Add Event
             </p>
@@ -140,7 +140,7 @@ export default function Navbar() {
             {/* Profile Menu */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-2 p-2 rounded-full bg-[#002C71] text-white hover:bg-blue-800 focus:outline-none transition-colors">
+                <button className="flex items-center gap-2 rounded-full bg-gradient-to-r from-violet-600 to-sky-500 p-2 text-white shadow-md shadow-violet-500/25 transition-all hover:from-violet-500 hover:to-sky-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2">
                   <User className="w-4 h-4" />
                   <ChevronDown className="w-3 h-3" />
                 </button>

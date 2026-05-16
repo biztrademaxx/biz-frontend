@@ -80,7 +80,17 @@ const faqList: FAQ[] = [
     },
 ]
 
-export function HelpSupport() {
+export function HelpSupport({ variant = "default" }: { variant?: "default" | "venue" }) {
+    const venue = variant === "venue"
+    const accentIcon = venue ? "text-violet-600" : "text-blue-600"
+    const accentSoft = venue
+        ? "bg-violet-50 rounded-lg border border-violet-100"
+        : "bg-blue-50 rounded-lg border border-blue-100"
+    const sectionShell = venue
+        ? "rounded-[28px] border border-white/90 bg-white/90 p-8 shadow-[0_20px_60px_-15px_rgba(79,70,229,0.08)] backdrop-blur-sm"
+        : "rounded-xl border border-gray-100 bg-white p-8 shadow-lg"
+    const faqItemRadius = venue ? "rounded-2xl" : "rounded-lg"
+
     const [openFAQIndex, setOpenFAQIndex] = useState<number | null>(null)
     const [formData, setFormData] = useState({ name: "", email: "", subject: "", message: "" })
 
@@ -198,16 +208,16 @@ export function HelpSupport() {
             {/* </section> */}
 
             {/* FAQs Section */}
-            <section className="bg-white p-8 rounded-xl shadow-lg border border-gray-100">
+            <section className={sectionShell}>
                 <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-                    <HelpCircle className="text-blue-600" size={28} />
+                    <HelpCircle className={accentIcon} size={28} />
                     Frequently Asked Questions
                 </h2>
                 <div className="space-y-4">
                     {faqList.map((faq, index) => (
                         <div
                             key={index}
-                            className="border border-gray-200 rounded-lg overflow-hidden transition-all hover:shadow-sm"
+                            className={`border border-gray-200 ${faqItemRadius} overflow-hidden transition-all hover:shadow-sm`}
                         >
                             <button
                                 className="w-full flex items-center gap-4 p-6 font-medium text-left bg-gray-50 hover:bg-gray-100 transition"
@@ -234,26 +244,26 @@ export function HelpSupport() {
 
             </section>
 
-            <HelpSupportTicketsSection />
+            <HelpSupportTicketsSection iconAccentClass={accentIcon} />
 
-            <div className="bg-white p-8 rounded-xl shadow-lg space-y-6 border border-gray-100">
+            <div className={`${sectionShell} space-y-6`}>
                 <h2 className="text-2xl font-bold flex items-center gap-2">
-                    <MessageCircle className="text-blue-600" size={28} />
+                    <MessageCircle className={accentIcon} size={28} />
                     Contact Support
                 </h2>
                 <p className="text-gray-700">
-                    Welcome to the Support Center of <span className="font-semibold text-blue-600">BizTradeFairs.com</span>.
+                    Welcome to the Support Center of <span className={`font-semibold ${accentIcon}`}>BizTradeFairs.com</span>.
                     We're here to make your visitor journey smooth, easy, and productive.
                 </p>
 
                 <div className="space-y-4">
-                    <div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
+                    <div className={`p-4 ${accentSoft}`}>
                         <div className="flex items-start gap-3">
-                            <Mail className="text-blue-600 mt-1 flex-shrink-0" size={20} />
+                            <Mail className={`${accentIcon} mt-1 flex-shrink-0`} size={20} />
                             <div>
                                 <h3 className="font-semibold text-gray-900">Email Support</h3>
                                 <p className="text-gray-700 text-sm mt-1">For non-urgent queries, feedback, or documentation support:</p>
-                                <p className="text-blue-600 font-medium mt-2">support@biztradefairs.com</p>
+                                <p className={`${accentIcon} font-medium mt-2`}>support@biztradefairs.com</p>
                             </div>
                         </div>
                     </div>

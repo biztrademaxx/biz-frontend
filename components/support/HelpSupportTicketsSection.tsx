@@ -41,7 +41,7 @@ type TicketRow = {
   }>
 }
 
-export function HelpSupportTicketsSection() {
+export function HelpSupportTicketsSection({ iconAccentClass = "text-blue-600" }: { iconAccentClass?: string }) {
   const { toast } = useToast()
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
@@ -133,7 +133,7 @@ export function HelpSupportTicketsSection() {
       <Card className="border border-gray-100 shadow-lg">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-2xl">
-            <Ticket className="h-7 w-7 text-blue-600" />
+            <Ticket className={`h-7 w-7 ${iconAccentClass}`} />
             Raise a support ticket
           </CardTitle>
           <CardDescription>
@@ -211,7 +211,7 @@ export function HelpSupportTicketsSection() {
       <Card className="border border-gray-100 shadow-lg">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-xl">
-            <MessageSquare className="h-6 w-6 text-blue-600" />
+            <MessageSquare className={`h-6 w-6 ${iconAccentClass}`} />
             My tickets
           </CardTitle>
           <CardDescription>Tickets you have raised from this account.</CardDescription>

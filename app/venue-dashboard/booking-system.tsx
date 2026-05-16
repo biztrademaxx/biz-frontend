@@ -30,6 +30,7 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react"
+import { safeResponseJson } from "@/lib/api"
 
 const PAGE_SIZE = 8
 
@@ -107,7 +108,8 @@ export default function AppointmentScheduling({ venueId, onCountChange }: Appoin
       const response = await fetch(`/api/venue-appointments?venueId=${venueId}`)
       if (!response.ok) throw new Error("Failed to fetch appointments")
 
-      const data = await response.json()
+      const data = await safeResponseJson<{ data?: VenueAppointmentFromAPI[] }>(response)
+      if (!data) throw new Error("Invalid response from server")
       const fetchedAppointments = (data.data || []).map((apt: VenueAppointmentFromAPI) => ({
         id: apt.id,
         visitorName: `${apt.requester.firstName} ${apt.requester.lastName}`,
@@ -187,7 +189,7 @@ const updateAppointment = async (appointmentId: string, updates: Partial<Appoint
       case "CONFIRMED":
         return "bg-green-500"
       case "COMPLETED":
-        return "bg-blue-500"
+        return "bg-violet-500"
       case "CANCELLED":
         return "bg-red-500"
       default:
@@ -361,8 +363,8 @@ const updateAppointment = async (appointmentId: string, updates: Partial<Appoint
         </div>
 
         <div className="grid grid-cols-3 gap-4 mb-4 text-sm">
-          <div className="text-center p-2 bg-blue-50 rounded">
-            <div className="font-semibold text-blue-600">{appointment.profileViews}</div>
+          <div className="text-center p-2 bg-violet-50 rounded">
+            <div className="font-semibold text-violet-600">{appointment.profileViews}</div>
             <div className="text-gray-600">Profile Views</div>
           </div>
           <div className="text-center p-2 bg-green-50 rounded">
@@ -468,7 +470,7 @@ const updateAppointment = async (appointmentId: string, updates: Partial<Appoint
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <Card>
             <CardContent className="p-6 text-center">
-              <div className="text-3xl font-bold text-blue-600">{appointments.length}</div>
+              <div className="text-3xl font-bold text-violet-600">{appointments.length}</div>
               <div className="text-gray-600">Total Requests</div>
             </CardContent>
           </Card>

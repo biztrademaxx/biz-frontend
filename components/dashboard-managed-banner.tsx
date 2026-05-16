@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { X } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { safeResponseJson } from "@/lib/api"
 
 type PublicBanner = {
   id: string
@@ -82,7 +83,7 @@ export function DashboardManagedBanner({ page, className }: DashboardManagedBann
           cache: "no-store",
         })
         if (!res.ok) return
-        const rows = (await res.json()) as PublicBanner[]
+        const rows = await safeResponseJson<PublicBanner[]>(res)
         if (!cancelled && Array.isArray(rows) && rows.length > 0) {
           setBanner(rows[0])
         }
