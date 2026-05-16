@@ -77,7 +77,7 @@ export function SpeakerDashboard({ routeSegment }: UserDashboardProps) {
   const { activeSection, setActiveSection } = useDashboard()
   const [openMenus, setOpenMenus] = useState<string[]>(["speaker-management", "communication"])
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false) // New state for collapsed sidebar
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
 
   const { userId: authUserId, role, loading: authLoading, logout } = useAuth({
     requireAuth: true,
@@ -86,6 +86,19 @@ export function SpeakerDashboard({ routeSegment }: UserDashboardProps) {
   const router = useRouter()
   const pathname = usePathname()
   const { toast } = useToast()
+
+  useEffect(() => {
+    const handleNavigate = (event: CustomEvent) => {
+      const { section } = event.detail
+      if (section && ["myprofile", "mysessions", "materials", "message", "connection", "help", "settings", "overview"].includes(section)) {
+        setActiveSection(section)
+      }
+    }
+    window.addEventListener('navigateDashboard', handleNavigate as EventListener)
+    return () => {
+      window.removeEventListener('navigateDashboard', handleNavigate as EventListener)
+    }
+  }, [setActiveSection])
 
   useEffect(() => {
     if (!activeSection) {
@@ -129,12 +142,10 @@ export function SpeakerDashboard({ routeSegment }: UserDashboardProps) {
     try {
       setLoading(true)
       setError(null)
-
       const data = await apiFetch<{ user?: SpeakerData }>(`/api/users/${encodeURIComponent(routeSegment)}`, {
         method: "GET",
         auth: true,
       })
-
       const u = data.user
       if (!u) throw new Error("Speaker not found")
       setSpeaker(u)
@@ -143,7 +154,6 @@ export function SpeakerDashboard({ routeSegment }: UserDashboardProps) {
       const message = err instanceof Error ? err.message : "An error occurred"
       const status = typeof err === "object" && err !== null && "status" in err ? (err as { status?: number }).status : undefined
       setError(message)
-
       const notFound = status === 404 || /not found/i.test(message)
       const forbidden = status === 403 || /forbidden|access denied/i.test(message)
       if (notFound || forbidden) {
@@ -175,17 +185,27 @@ export function SpeakerDashboard({ routeSegment }: UserDashboardProps) {
     connection: "Connections",
     help: "Help & Support",
     settings: "Settings",
+    overview: "Overview",
   }
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen" style={{ background: "linear-gradient(135deg, #f0f4ff 0%, #faf5ff 50%, #f0fdf4 100%)" }}>
+      <div
+        className="flex items-center justify-center min-h-screen"
+        style={{ background: "linear-gradient(135deg, #f0f4ff 0%, #faf5ff 50%, #f0fdf4 100%)" }}
+      >
         <div className="flex flex-col items-center gap-5">
           <div className="relative">
-            <div className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg" style={{ background: "linear-gradient(135deg, #2563eb, #7c3aed)" }}>
+            <div
+              className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg"
+              style={{ background: "linear-gradient(135deg, #2563eb, #7c3aed)" }}
+            >
               <Mic className="w-7 h-7 text-white" />
             </div>
-            <div className="absolute -inset-1 rounded-2xl opacity-30 animate-ping" style={{ background: "linear-gradient(135deg, #2563eb, #7c3aed)" }} />
+            <div
+              className="absolute -inset-1 rounded-2xl opacity-30 animate-ping"
+              style={{ background: "linear-gradient(135deg, #2563eb, #7c3aed)" }}
+            />
           </div>
           <div className="text-center">
             <p className="text-sm font-semibold text-slate-600 tracking-wide">Loading your dashboard</p>
@@ -198,7 +218,10 @@ export function SpeakerDashboard({ routeSegment }: UserDashboardProps) {
 
   if (error) {
     return (
-      <div className="flex items-center justify-center min-h-screen" style={{ background: "linear-gradient(135deg, #f0f4ff 0%, #faf5ff 50%, #f0fdf4 100%)" }}>
+      <div
+        className="flex items-center justify-center min-h-screen"
+        style={{ background: "linear-gradient(135deg, #f0f4ff 0%, #faf5ff 50%, #f0fdf4 100%)" }}
+      >
         <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-10 shadow-xl max-w-md w-full border border-white/60">
           <div className="w-12 h-12 rounded-2xl bg-red-50 flex items-center justify-center mb-4">
             <X className="w-6 h-6 text-red-500" />
@@ -219,7 +242,10 @@ export function SpeakerDashboard({ routeSegment }: UserDashboardProps) {
 
   if (!speaker) {
     return (
-      <div className="flex items-center justify-center min-h-screen" style={{ background: "linear-gradient(135deg, #f0f4ff 0%, #faf5ff 50%, #f0fdf4 100%)" }}>
+      <div
+        className="flex items-center justify-center min-h-screen"
+        style={{ background: "linear-gradient(135deg, #f0f4ff 0%, #faf5ff 50%, #f0fdf4 100%)" }}
+      >
         <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-10 shadow-xl border border-white/60">
           <p className="text-slate-500">No speaker data found.</p>
         </div>
@@ -257,14 +283,22 @@ export function SpeakerDashboard({ routeSegment }: UserDashboardProps) {
     >
       <span className="flex-shrink-0">{icon}</span>
       {!sidebarCollapsed && <span>{label}</span>}
-      {activeSection === id && !sidebarCollapsed && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-white/70" />}
+      {activeSection === id && !sidebarCollapsed && (
+        <span className="ml-auto w-1.5 h-1.5 rounded-full bg-white/70" />
+      )}
     </button>
   )
 
   return (
-    <div className="flex min-h-screen w-full font-sans" style={{ background: "linear-gradient(135deg, #f0f4ff 0%, #faf8ff 50%, #f0fdf4 100%)" }}>
-
-      {/* ── Mobile overlay ── */}
+    /*
+     * FIX: Changed from `flex min-h-screen` (row) to `flex flex-col min-h-screen`
+     * so the topnav and the body-row stack vertically.
+     */
+    <div
+      className="flex flex-col min-h-screen w-full font-sans"
+      style={{ background: "linear-gradient(135deg, #f0f4ff 0%, #faf8ff 50%, #f0fdf4 100%)" }}
+    >
+      {/* Mobile overlay */}
       {sidebarOpen && (
         <div
           className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40 md:hidden"
@@ -272,211 +306,256 @@ export function SpeakerDashboard({ routeSegment }: UserDashboardProps) {
         />
       )}
 
-      {/* ══════════════ SIDEBAR ══════════════ */}
-      <aside
-        className={`
-          fixed md:relative h-screen z-50 mt-5 rounded-xl flex flex-col
-          transform transition-all duration-300 ease-in-out
-          ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0
-          ${sidebarCollapsed ? "w-[72px]" : "w-[260px]"}
-        `}
-        style={{
-          background: "rgba(255,255,255,0.85)",
-          backdropFilter: "blur(24px)",
-          borderRight: "1px solid rgba(255,255,255,0.6)",
-          boxShadow: "4px 0 24px rgba(99,102,241,0.06)",
-        }}
-      >
-        {/* Logo / Brand */}
-        <div className={`flex items-center gap-3 px-4 py-4 ${sidebarCollapsed ? "justify-center" : ""}`} style={{ borderBottom: "1px solid rgba(148,163,184,0.12)" }}>
-          <div
-            className="w-10 h-10 rounded-2xl flex items-center justify-center shadow-lg flex-shrink-0"
-            style={{ background: "linear-gradient(135deg, #2563eb, #7c3aed)" }}
-          >
-            <Mic className="w-4 h-4 text-white" />
-          </div>
-          {!sidebarCollapsed && (
-            <>
-              <div>
-                <p className="text-sm font-bold text-slate-800 leading-tight tracking-tight">Speaker</p>
-                <p className="text-xs text-slate-400 font-medium">Dashboard</p>
-              </div>
-              <button className="ml-auto md:hidden p-1.5 rounded-lg hover:bg-slate-100 transition" onClick={() => setSidebarOpen(false)}>
-                <X className="w-4 h-4 text-slate-400" />
-              </button>
-            </>
-          )}
-        </div>
+      {/*
+       * BODY ROW — flex row that takes all remaining vertical space.
+       * `items-stretch` makes BOTH the sidebar and the main column
+       * grow to exactly the same height automatically.
+       */}
+      <div className="flex flex-1 items-stretch min-h-0">
 
-        {/* Collapse Toggle Button */}
-        <button
-          onClick={toggleSidebar}
-          className="absolute -right-3 top-20 w-6 h-6 rounded-full bg-white shadow-md border border-slate-200 flex items-center justify-center hover:bg-slate-50 transition-all z-10"
-          style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}
+        {/* ── SIDEBAR ─────────────────────────────────────────────────────
+         *  KEY FIXES:
+         *  1. Removed `fixed` positioning — sidebar is now in normal flow.
+         *  2. Removed `h-screen` — height is driven by the parent flex row.
+         *  3. Added `self-stretch` so it always fills the full row height
+         *     even when content is short.
+         *  4. `overflow-y-auto` on the nav section handles long nav lists.
+         * ──────────────────────────────────────────────────────────────── */}
+        <aside
+          className={`
+            relative self-stretch z-50 flex flex-col
+            transform transition-all duration-300 ease-in-out
+            ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0
+            ${sidebarCollapsed ? "w-[72px]" : "w-[260px]"}
+          `}
+          style={{
+            background: "rgba(255,255,255,0.92)",
+            backdropFilter: "blur(24px)",
+            borderRight: "1px solid rgba(255,255,255,0.6)",
+            boxShadow: "4px 0 24px rgba(99,102,241,0.06)",
+          }}
         >
-          {sidebarCollapsed ? (
-            <PanelLeftOpen className="w-3.5 h-3.5 text-slate-600" />
+          {/* Logo / Brand */}
+          <div
+            className={`flex items-center gap-3 px-4 py-4 flex-shrink-0 ${sidebarCollapsed ? "justify-center" : ""}`}
+            style={{ borderBottom: "1px solid rgba(148,163,184,0.12)" }}
+          >
+            <div
+              className="w-10 h-10 rounded-2xl flex items-center justify-center shadow-lg flex-shrink-0"
+              style={{ background: "linear-gradient(135deg, #2563eb, #7c3aed)" }}
+            >
+              <Mic className="w-4 h-4 text-white" />
+            </div>
+            {!sidebarCollapsed && (
+              <>
+                <div>
+                  <p className="text-sm font-bold text-slate-800 leading-tight tracking-tight">Speaker</p>
+                  <p className="text-xs text-slate-400 font-medium">Dashboard</p>
+                </div>
+                <button
+                  className="ml-auto md:hidden p-1.5 rounded-lg hover:bg-slate-100 transition"
+                  onClick={() => setSidebarOpen(false)}
+                >
+                  <X className="w-4 h-4 text-slate-400" />
+                </button>
+              </>
+            )}
+          </div>
+
+          {/* Collapse Toggle */}
+          <button
+            onClick={toggleSidebar}
+            className="absolute -right-3 top-20 w-6 h-6 rounded-full bg-white shadow-md border border-slate-200 flex items-center justify-center hover:bg-slate-50 transition-all z-10"
+            style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}
+          >
+            {sidebarCollapsed
+              ? <PanelLeftOpen className="w-3.5 h-3.5 text-slate-600" />
+              : <PanelLeftClose className="w-3.5 h-3.5 text-slate-600" />}
+          </button>
+
+          {/* Nav — overflow-y-auto so long lists scroll inside the sidebar */}
+          <div className="flex-1 overflow-y-auto px-3 py-5 space-y-1">
+
+            {/* Speaker Management group */}
+            <div>
+              {!sidebarCollapsed && (
+                <button
+                  onClick={() => toggleMenu("speaker-management")}
+                  className="w-full flex items-center justify-between px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 hover:text-slate-600 transition rounded-lg hover:bg-slate-50"
+                >
+                  <span className="flex items-center gap-2">
+                    <User className="w-3 h-3" />
+                    Speaker
+                  </span>
+                  {openMenus.includes("speaker-management")
+                    ? <ChevronDown className="w-3 h-3" />
+                    : <ChevronRight className="w-3 h-3" />}
+                </button>
+              )}
+
+              {(openMenus.includes("speaker-management") || sidebarCollapsed) && (
+                <div className={`mt-1 space-y-0.5 ${sidebarCollapsed ? "pl-0" : "pl-1"}`}>
+                  {navItem("overview", "Overview", <BarChart3 className="w-4 h-4" />)}
+                  {navItem("myprofile", "My Profile", <User className="w-4 h-4" />)}
+                  {navItem("mysessions", "My Sessions", <CalendarDays className="w-4 h-4" />)}
+                  {navItem("materials", "Presentations", <Presentation className="w-4 h-4" />)}
+                </div>
+              )}
+            </div>
+
+            {/* Communication group */}
+            <div className="pt-2">
+              {!sidebarCollapsed && (
+                <button
+                  onClick={() => toggleMenu("communication")}
+                  className="w-full flex items-center justify-between px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 hover:text-slate-600 transition rounded-lg hover:bg-slate-50"
+                >
+                  <span className="flex items-center gap-2">
+                    <MessageSquare className="w-3 h-3" />
+                    Communication
+                  </span>
+                  {openMenus.includes("communication")
+                    ? <ChevronDown className="w-3 h-3" />
+                    : <ChevronRight className="w-3 h-3" />}
+                </button>
+              )}
+
+              {(openMenus.includes("communication") || sidebarCollapsed) && (
+                <div className={`mt-1 space-y-0.5 ${sidebarCollapsed ? "pl-0" : "pl-1"}`}>
+                  {navItem("message", "Messages", <MessageSquare className="w-4 h-4" />)}
+                  {navItem("connection", "Connections", <User className="w-4 h-4" />)}
+                </div>
+              )}
+            </div>
+
+            {/* Standalone items */}
+            <div
+              className="pt-4 space-y-0.5"
+              style={{ borderTop: "1px solid rgba(148,163,184,0.12)", marginTop: "12px" }}
+            >
+              {navItem("help", "Help & Support", <HelpCircle className="w-4 h-4" />)}
+              {navItem("settings", "Settings", <Settings className="w-4 h-4" />)}
+            </div>
+          </div>
+
+          {/* Speaker mini-card + logout */}
+          {!sidebarCollapsed ? (
+            <div
+              className="px-3 pb-5 pt-4 space-y-3 flex-shrink-0"
+              style={{ borderTop: "1px solid rgba(148,163,184,0.12)" }}
+            >
+              <div
+                className="flex items-center gap-3 p-3 rounded-2xl"
+                style={{ background: "linear-gradient(135deg, #f0f4ff, #faf5ff)" }}
+              >
+                <Avatar className="w-9 h-9 ring-2 ring-white shadow-sm">
+                  <AvatarImage src={speaker.avatar || ""} alt={speaker.firstName} />
+                  <AvatarFallback
+                    className="text-xs font-bold"
+                    style={{ background: "linear-gradient(135deg, #dbeafe, #ede9fe)", color: "#2563eb" }}
+                  >
+                    {speaker.firstName?.[0]}{speaker.lastName?.[0]}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-slate-800 truncate">
+                    {speaker.firstName} {speaker.lastName}
+                  </p>
+                  <p className="text-[10px] text-slate-400 truncate font-medium">{speaker.email}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => logout()}
+                className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium text-red-500 hover:bg-red-50 transition-all duration-200"
+              >
+                <LogOut className="w-4 h-4" />
+                Log out
+              </button>
+            </div>
           ) : (
-            <PanelLeftClose className="w-3.5 h-3.5 text-slate-600" />
+            <div className="px-2 pb-5 pt-4 flex-shrink-0">
+              <button
+                onClick={() => logout()}
+                className="w-full flex items-center justify-center p-2.5 rounded-xl text-red-500 hover:bg-red-50 transition-all duration-200"
+                title="Log out"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            </div>
           )}
-        </button>
+        </aside>
 
-        {/* Nav */}
-        <div className="flex-1 overflow-y-auto px-3 py-5 space-y-1">
-          {/* Speaker Management group */}
-          <div>
-            {!sidebarCollapsed && (
-              <button
-                onClick={() => toggleMenu("speaker-management")}
-                className="w-full flex items-center justify-between px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 hover:text-slate-600 transition rounded-lg hover:bg-slate-50"
-              >
-                <span className="flex items-center gap-2">
-                  <User className="w-3 h-3" />
-                  Speaker
-                </span>
-                {openMenus.includes("speaker-management")
-                  ? <ChevronDown className="w-3 h-3" />
-                  : <ChevronRight className="w-3 h-3" />}
-              </button>
-            )}
+        {/* ── MAIN CONTENT ────────────────────────────────────────────────
+         *  `flex-1` makes it take all remaining horizontal space.
+         *  `flex flex-col` stacks the inner content vertically.
+         *  `min-w-0` prevents flex blowout on narrow viewports.
+         *  `overflow-auto` lets the content scroll when needed.
+         * ──────────────────────────────────────────────────────────────── */}
+        <div className="flex-1 flex flex-col min-w-0 overflow-auto">
 
-            {(openMenus.includes("speaker-management") || sidebarCollapsed) && (
-              <div className={`mt-1 space-y-0.5 ${sidebarCollapsed ? "pl-0" : "pl-1"}`}>
-                {navItem("overview", "Overview", <BarChart3 className="w-4 h-4" />)}
-                {navItem("myprofile", "My Profile", <User className="w-4 h-4" />)}
-                {navItem("mysessions", "My Sessions", <CalendarDays className="w-4 h-4" />)}
-                {navItem("materials", "Presentations", <Presentation className="w-4 h-4" />)}
+          {/* Mobile top bar */}
+          <div className="md:hidden flex items-center gap-3 px-4 py-3 bg-white/80 backdrop-blur-sm border-b border-slate-200/60">
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="p-2 rounded-xl hover:bg-slate-100 transition"
+            >
+              <Menu className="w-5 h-5 text-slate-600" />
+            </button>
+            <span className="text-sm font-bold text-slate-800">Speaker Dashboard</span>
+          </div>
+
+          <main className="flex-1 p-6">
+            <div className="max-w-7xl mx-auto space-y-5">
+              <DashboardManagedBanner page="speaker-dashboard" />
+
+              {/* Header breadcrumb row */}
+              <div className="flex items-center justify-between mt-4">
+                <div className="flex items-center gap-3">
+                  <div
+                    className="flex items-center gap-2 px-4 py-2 rounded-2xl text-xs font-bold"
+                    style={{
+                      background: "linear-gradient(135deg, #dbeafe, #ede9fe)",
+                      color: "#2563eb",
+                      border: "1px solid rgba(99,102,241,0.15)",
+                    }}
+                  >
+                    <LayoutDashboard className="w-3.5 h-3.5" />
+                    {sectionLabel[activeSection ?? "overview"] ?? "Dashboard"}
+                  </div>
+                  <div
+                    className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-semibold text-emerald-700"
+                    style={{
+                      background: "rgba(209,250,229,0.6)",
+                      border: "1px solid rgba(167,243,208,0.6)",
+                    }}
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    Active
+                  </div>
+                </div>
               </div>
-            )}
-          </div>
 
-          {/* Communication group */}
-          <div className="pt-2">
-            {!sidebarCollapsed && (
-              <button
-                onClick={() => toggleMenu("communication")}
-                className="w-full flex items-center justify-between px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 hover:text-slate-600 transition rounded-lg hover:bg-slate-50"
+              {/*
+               * CONTENT CARD
+               * `min-h-[calc(100vh-220px)]` ensures the card is always tall
+               * enough to visually match the sidebar on short-content pages.
+               */}
+              <div
+                className="rounded-3xl min-h-[calc(100vh-220px)] p-6 md:p-8"
+                style={{
+                  background: "rgba(255,255,255,0.80)",
+                  backdropFilter: "blur(20px)",
+                  border: "1px solid rgba(255,255,255,0.8)",
+                  boxShadow: "0 4px 32px rgba(99,102,241,0.06), 0 1px 4px rgba(0,0,0,0.04)",
+                }}
               >
-                <span className="flex items-center gap-2">
-                  <MessageSquare className="w-3 h-3" />
-                  Communication
-                </span>
-                {openMenus.includes("communication")
-                  ? <ChevronDown className="w-3 h-3" />
-                  : <ChevronRight className="w-3 h-3" />}
-              </button>
-            )}
-
-            {(openMenus.includes("communication") || sidebarCollapsed) && (
-              <div className={`mt-1 space-y-0.5 ${sidebarCollapsed ? "pl-0" : "pl-1"}`}>
-                {navItem("message", "Messages", <MessageSquare className="w-4 h-4" />)}
-                {navItem("connection", "Connections", <User className="w-4 h-4" />)}
+                {renderContent()}
               </div>
-            )}
-          </div>
-
-          {/* Standalone items */}
-          <div className={`pt-3 space-y-0.5 ${!sidebarCollapsed ? "pt-3" : "pt-2"}`} style={{ borderTop: !sidebarCollapsed ? "1px solid rgba(148,163,184,0.12)" : "none", marginTop: "12px", paddingTop: "16px" }}>
-            {navItem("help", "Help & Support", <HelpCircle className="w-4 h-4" />)}
-            {navItem("settings", "Settings", <Settings className="w-4 h-4" />)}
-          </div>
+            </div>
+          </main>
         </div>
 
-        {/* Speaker mini-card + logout - only show when expanded */}
-        {!sidebarCollapsed && (
-          <div className="px-3 pb-5 pt-4 space-y-3" style={{ borderTop: "1px solid rgba(148,163,184,0.12)" }}>
-            <div
-              className="flex items-center gap-3 p-3 rounded-2xl"
-              style={{ background: "linear-gradient(135deg, #f0f4ff, #faf5ff)" }}
-            >
-              <Avatar className="w-9 h-9 ring-2 ring-white shadow-sm">
-                <AvatarImage src={speaker.avatar || ""} alt={speaker.firstName} />
-                <AvatarFallback
-                  className="text-xs font-bold"
-                  style={{ background: "linear-gradient(135deg, #dbeafe, #ede9fe)", color: "#2563eb" }}
-                >
-                  {speaker.firstName?.[0]}{speaker.lastName?.[0]}
-                </AvatarFallback>
-              </Avatar>
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold text-slate-800 truncate">{speaker.firstName} {speaker.lastName}</p>
-                <p className="text-[10px] text-slate-400 truncate font-medium">{speaker.email}</p>
-              </div>
-            </div>
-            <button
-              onClick={() => logout()}
-              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium text-red-500 hover:bg-red-50 transition-all duration-200"
-            >
-              <LogOut className="w-4 h-4" />
-              Log out
-            </button>
-          </div>
-        )}
-
-        {/* Collapsed logout button */}
-        {sidebarCollapsed && (
-          <div className="px-2 pb-5 pt-4">
-            <button
-              onClick={() => logout()}
-              className="w-full flex items-center justify-center p-2.5 rounded-xl text-red-500 hover:bg-red-50 transition-all duration-200"
-              title="Log out"
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
-          </div>
-        )}
-      </aside>
-
-      {/* ══════════════ MAIN ══════════════ */}
-      <div className={`flex-1 flex flex-col min-h-screen overflow-hidden transition-all duration-300 ${sidebarCollapsed ? "ml-0" : ""}`}>
-        {/* Top bar */}
-     
-
-        {/* ── Page content ── */}
-        <main className="flex-1 overflow-auto p-6">
-          <div className="max-w-7xl mx-auto space-y-5">
-
-            <DashboardManagedBanner page="speaker-dashboard" />
-            {/* Header row with section breadcrumb */}
-            <div className="flex items-center justify-between mt-4">
-              <div className="flex items-center gap-3">
-                <div
-                  className="flex items-center gap-2 px-4 py-2 rounded-2xl text-xs font-bold"
-                  style={{
-                    background: "linear-gradient(135deg, #dbeafe, #ede9fe)",
-                    color: "#2563eb",
-                    border: "1px solid rgba(99,102,241,0.15)",
-                  }}
-                >
-                  <LayoutDashboard className="w-3.5 h-3.5" />
-                  {sectionLabel[activeSection ?? "myprofile"] ?? "Dashboard"}
-                </div>
-                <div
-                  className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-semibold text-emerald-700"
-                  style={{ background: "rgba(209,250,229,0.6)", border: "1px solid rgba(167,243,208,0.6)" }}
-                >
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  Active
-                </div>
-              </div>
-            </div>
-
-            {/* ── Content card with left gap ── */}
-            <div
-              className="rounded-3xl min-h-[calc(100vh-220px)] p-6 md:p-8 ml-0 md:ml-2"
-              style={{
-                background: "rgba(255,255,255,0.80)",
-                backdropFilter: "blur(20px)",
-                border: "1px solid rgba(255,255,255,0.8)",
-                boxShadow: "0 4px 32px rgba(99,102,241,0.06), 0 1px 4px rgba(0,0,0,0.04)",
-              }}
-            >
-              {renderContent()}
-            </div>
-
-          </div>
-        </main>
-      </div>
+      </div>{/* end body-row */}
     </div>
   )
 }
