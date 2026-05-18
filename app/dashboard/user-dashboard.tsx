@@ -501,7 +501,7 @@ export function UserDashboard({ userId }: UserDashboardProps) {
 
   if (authLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-cyan-200/70 via-[#004A96]/35 to-fuchsia-200/65">
+      <div className="flex min-h-screen items-center justify-center bg-white">
         <Loader2 className="h-8 w-8 animate-spin text-[#004A96]" />
       </div>
     )
@@ -512,7 +512,7 @@ export function UserDashboard({ userId }: UserDashboardProps) {
   const showShellHeader = Boolean(!loading && !error && userData && activeSection !== "profile")
 
   return (
-    <div className="flex min-h-screen w-full justify-center bg-gradient-to-br from-cyan-200/70 via-[#004A96]/35 to-fuchsia-200/65">
+    <div className="flex min-h-screen w-full justify-center bg-white">
       <div className="flex w-full max-w-[1680px] flex-1 flex-col md:flex-row md:items-stretch md:gap-0 md:px-5 md:py-5">
         {renderSidebar()}
 
