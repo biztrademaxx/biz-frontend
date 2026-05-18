@@ -120,10 +120,6 @@ export default function EventManagement() {
             sizes="(max-width: 640px) 100vw, 320px"
             unoptimized={imgSrc.startsWith("http")}
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
-          <button className="absolute top-3 right-3 bg-white/90 hover:bg-white rounded-lg p-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-            <MoreHorizontal className="w-4 h-4 text-[#64748B]" />
-          </button>
         </div>
 
         {/* Content */}
@@ -172,10 +168,7 @@ export default function EventManagement() {
           <h1 className="text-2xl font-bold text-[#1E293B]">Event Management</h1>
           <p className="text-sm text-[#64748B] mt-0.5">Manage and organize your venue events</p>
         </div>
-        <Button className="rounded-xl bg-[#4F46E5] hover:bg-[#4338CA] text-white flex items-center gap-2">
-          <Plus className="w-4 h-4" />
-          Add New Event
-        </Button>
+
       </div>
 
       {loading ? (
@@ -225,9 +218,9 @@ export default function EventManagement() {
                 <CalendarIcon className="w-12 h-12 text-[#CBD5E1] mx-auto mb-3" />
                 <p className="text-base font-semibold text-[#94A3B8]">No upcoming events</p>
                 <p className="text-sm text-[#CBD5E1] mt-1">Events scheduled for future dates will appear here</p>
-                <Button className="mt-4 rounded-xl bg-[#4F46E5] text-white">
+                {/* <Button className="mt-4 rounded-xl bg-[#4F46E5] text-white">
                   <Plus className="w-4 h-4 mr-1" />Add Event
-                </Button>
+                </Button> */}
               </div>
             )}
           </TabsContent>
