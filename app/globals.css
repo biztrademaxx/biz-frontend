@@ -97,6 +97,55 @@
   --sidebar-ring: oklch(0.58 0.16 265);
 }
 
+/* Admin dashboard dark palette (reference: midnight + navy cards + cyan accent) */
+.dark .admin-dashboard-root {
+  --background: #010639;
+  --foreground: #eef2ff;
+  --card: #18193d;
+  --card-foreground: #f0f4ff;
+  --popover: #18193d;
+  --popover-foreground: #f0f4ff;
+  --primary: #17f0f6;
+  --primary-foreground: #010639;
+  --secondary: #122d4d;
+  --secondary-foreground: #e8ecff;
+  --muted: #122d4d;
+  --muted-foreground: #8b9cb8;
+  --accent: #1a2f52;
+  --accent-foreground: #17f0f6;
+  --destructive: oklch(0.58 0.22 25);
+  --destructive-foreground: oklch(0.98 0.01 25);
+  --border: #2a3a5c;
+  --input: #122d4d;
+  --ring: #17f0f6;
+  --chart-1: #17f0f6;
+  --chart-2: #8b5cf6;
+  --chart-3: #f472b6;
+  --chart-4: #38bdf8;
+  --chart-5: #fbbf24;
+  --sidebar: #122d4d;
+  --sidebar-foreground: #f0f4ff;
+  --sidebar-primary: #17f0f6;
+  --sidebar-primary-foreground: #010639;
+  --sidebar-accent: #1a2f52;
+  --sidebar-accent-foreground: #17f0f6;
+  --sidebar-border: #2a3a5c;
+  --sidebar-ring: #17f0f6;
+}
+
+.dark .admin-dashboard-root .admin-panel-card {
+  border-color: var(--border);
+  background-color: var(--card);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
+  --tw-ring-color: rgb(255 255 255 / 0.04);
+}
+
+.dark .admin-dashboard-root .admin-stat-card {
+  border-color: var(--border);
+  background-color: var(--card);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.32);
+}
+
 @theme inline {
   --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
     Arial, "Noto Sans", "Liberation Sans", sans-serif,
@@ -305,4 +354,76 @@
 .no-scrollbar {
   -ms-overflow-style: none;  /* IE & Edge */
   scrollbar-width: none;     /* Firefox */
+}
+
+/* Visitor dashboard — collapsed sidebar (no horizontal scroll on nav-scroll) */
+.visitor-sidebar-shell--collapsed {
+  overflow-x: hidden !important;
+  overflow-y: auto;
+  min-width: 0;
+}
+
+.visitor-sidebar-shell--collapsed .visitor-sidebar-nav-scroll {
+  overflow: visible !important;
+  flex: none;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.visitor-sidebar-shell--collapsed .visitor-sidebar-nav-scroll nav {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.visitor-sidebar-shell--collapsed .visitor-sidebar-footer {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.visitor-sidebar-shell--collapsed .visitor-sidebar-nav-item {
+  position: relative;
+  z-index: 1;
+  min-height: 3rem;
+}
+
+.visitor-sidebar-shell--collapsed .visitor-sidebar-nav-item--active {
+  z-index: 2;
+}
+
+.visitor-sidebar-shell--collapsed .visitor-sidebar-nav-item button {
+  position: relative;
+  display: flex;
+  min-height: 3rem;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: transparent;
+}
+
+/* Seamless curved tab — stays inside sidebar width (no layout overflow) */
+.visitor-sidebar-shell--collapsed .visitor-sidebar-icon-slot--active {
+  --visitor-tab-curve: 14px;
+  display: flex;
+  height: 3rem;
+  width: 100%;
+  max-width: 100%;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(
+      circle at 0 0,
+      transparent var(--visitor-tab-curve),
+      #ffffff var(--visitor-tab-curve)
+    )
+      0 0 / var(--visitor-tab-curve) var(--visitor-tab-curve) no-repeat,
+    radial-gradient(
+      circle at 0 100%,
+      transparent var(--visitor-tab-curve),
+      #ffffff var(--visitor-tab-curve)
+    )
+      0 100% / var(--visitor-tab-curve) var(--visitor-tab-curve) no-repeat,
+    #ffffff;
+  border-radius: 0 var(--visitor-tab-curve) var(--visitor-tab-curve) 0;
 }

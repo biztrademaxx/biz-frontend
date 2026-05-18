@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useState, type CSSProperties } from "react"
 import Image from "next/image"
 import {
   Users,
@@ -36,6 +36,7 @@ import {
 } from "recharts"
 import { format, subDays, formatDistanceToNow } from "date-fns"
 import { cn } from "@/lib/utils"
+import { useTheme } from "next-themes"
 
 const PLACEHOLDER_EVENT = "/images/gpex.jpg"
 
@@ -49,37 +50,43 @@ const iconMap: Record<string, any> = {
 
 const statVisual: Record<
   string,
-  { iconWrap: string; icon: string; chart: string }
+  { iconWrap: string; icon: string; chart: string; chartDark: string }
 > = {
   blue: {
-    iconWrap: "bg-blue-100",
-    icon: "text-blue-600",
+    iconWrap: "bg-blue-100 dark:bg-[#17F0F6]/15",
+    icon: "text-blue-600 dark:text-[#17F0F6]",
     chart: "#3b82f6",
+    chartDark: "#17F0F6",
   },
   purple: {
-    iconWrap: "bg-violet-100",
-    icon: "text-violet-600",
+    iconWrap: "bg-violet-100 dark:bg-violet-500/15",
+    icon: "text-violet-600 dark:text-violet-300",
     chart: "#7c3aed",
+    chartDark: "#a78bfa",
   },
   green: {
-    iconWrap: "bg-emerald-100",
-    icon: "text-emerald-600",
+    iconWrap: "bg-emerald-100 dark:bg-emerald-500/15",
+    icon: "text-emerald-600 dark:text-emerald-300",
     chart: "#10b981",
+    chartDark: "#34d399",
   },
   indigo: {
-    iconWrap: "bg-indigo-100",
-    icon: "text-indigo-600",
+    iconWrap: "bg-indigo-100 dark:bg-indigo-500/15",
+    icon: "text-indigo-600 dark:text-indigo-300",
     chart: "#6366f1",
+    chartDark: "#818cf8",
   },
   orange: {
-    iconWrap: "bg-orange-100",
-    icon: "text-orange-600",
+    iconWrap: "bg-orange-100 dark:bg-orange-500/15",
+    icon: "text-orange-600 dark:text-orange-300",
     chart: "#f97316",
+    chartDark: "#fb923c",
   },
   yellow: {
-    iconWrap: "bg-amber-100",
-    icon: "text-amber-600",
+    iconWrap: "bg-amber-100 dark:bg-amber-500/15",
+    icon: "text-amber-600 dark:text-amber-300",
     chart: "#d97706",
+    chartDark: "#fbbf24",
   },
 }
 
@@ -217,6 +224,26 @@ export default function DashboardOverview({
   onNavigate?: (sectionId: string) => void
 }) {
   void _onNavigate
+
+  const { resolvedTheme } = useTheme()
+  const isDark = resolvedTheme === "dark"
+  const chartGrid = isDark ? "#2a3a5c" : "#f1f5f9"
+  const chartTick = isDark ? "#8b9cb8" : "#94a3b8"
+  const chartTooltipStyle: CSSProperties = isDark
+    ? {
+        borderRadius: "12px",
+        border: "1px solid #2a3a5c",
+        backgroundColor: "#18193d",
+        color: "#f0f4ff",
+        fontSize: "12px",
+      }
+    : {
+        borderRadius: "12px",
+        border: "1px solid #e2e8f0",
+        backgroundColor: "#ffffff",
+        color: "#0f172a",
+        fontSize: "12px",
+      }
 
   const [stats, setStats] = useState<any[]>([])
   const [activities, setActivities] = useState<ActivityRow[]>([])
@@ -359,21 +386,21 @@ export default function DashboardOverview({
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">Admin Dashboard</h1>
-          <p className="mt-1 text-sm text-gray-600 sm:text-base">System overview and key metrics</p>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">Admin Dashboard</h1>
+          <p className="mt-1 text-sm text-muted-foreground sm:text-base">System overview and key metrics</p>
         </div>
         <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center">
           <Button
             type="button"
             variant="outline"
-            className="h-10 justify-center rounded-2xl border-gray-200 bg-white text-xs font-medium text-gray-700 shadow-sm sm:text-sm"
+            className="h-10 justify-center rounded-2xl border-border bg-card text-xs font-medium text-muted-foreground shadow-sm sm:text-sm"
           >
-            <CalendarDays className="mr-2 h-4 w-4 text-gray-500" />
+            <CalendarDays className="mr-2 h-4 w-4 text-muted-foreground" />
             {dateRangeLabel}
           </Button>
           <Button
             variant="outline"
-            className="h-10 flex items-center gap-2 rounded-2xl border-gray-200 bg-white font-semibold text-gray-800 shadow-sm hover:bg-slate-50"
+            className="h-10 flex items-center gap-2 rounded-2xl border-border bg-card font-semibold text-foreground shadow-sm hover:bg-muted/80"
           >
             <Download className="h-4 w-4" />
             Export Report
@@ -389,12 +416,12 @@ export default function DashboardOverview({
           return (
             <div
               key={index}
-              className="rounded-3xl border border-gray-100 bg-white p-5 shadow-sm transition-shadow hover:shadow-md sm:p-6"
+              className="admin-stat-card rounded-3xl border border-border bg-card p-5 shadow-sm transition-shadow hover:shadow-md sm:p-6"
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-gray-600">{stat.title}</p>
-                  <p className="mt-1 text-2xl font-bold tabular-nums text-gray-900 sm:text-3xl">{stat.value}</p>
+                  <p className="text-sm font-medium text-muted-foreground">{stat.title}</p>
+                  <p className="mt-1 text-2xl font-bold tabular-nums text-foreground sm:text-3xl">{stat.value}</p>
                   <div className="mt-1 flex items-center gap-1">
                     {stat.trend === "up" ? (
                       <TrendingUp className="h-4 w-4 text-emerald-500" />
@@ -415,7 +442,7 @@ export default function DashboardOverview({
                   <div className={cn("rounded-2xl p-3 shadow-inner ring-1 ring-black/[0.04]", pal.iconWrap)}>
                     <Icon className={cn("h-6 w-6", pal.icon)} />
                   </div>
-                  <MiniStatSparkline color={pal.chart} uid={`${stat.title}-${index}`} />
+                  <MiniStatSparkline color={isDark ? pal.chartDark : pal.chart} uid={`${stat.title}-${index}`} />
                 </div>
               </div>
             </div>
@@ -424,10 +451,10 @@ export default function DashboardOverview({
       </div>
 
       {/* Event overview — full width (Quick Actions removed) */}
-      <Card className="rounded-3xl border-gray-100 bg-white shadow-sm">
-        <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 border-b border-gray-50 pb-4">
-          <CardTitle className="text-lg font-semibold text-gray-900">Event overview</CardTitle>
-          <span className="rounded-full border border-gray-100 bg-slate-50 px-3 py-1 text-xs font-medium text-gray-600">
+      <Card className="admin-panel-card rounded-3xl border-border bg-card shadow-sm">
+        <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 border-b border-border/60 pb-4">
+          <CardTitle className="text-lg font-semibold text-foreground">Event overview</CardTitle>
+          <span className="rounded-full border border-border bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
             Last 30 days
           </span>
         </CardHeader>
@@ -436,16 +463,10 @@ export default function DashboardOverview({
             <div className="h-[300px] w-full min-h-[240px]">
               <ResponsiveContainer width="100%" height="100%">
                 <ComposedChart data={trend} margin={{ top: 10, right: 24, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-                  <XAxis dataKey="label" tick={{ fontSize: 10 }} stroke="#94a3b8" interval="preserveStartEnd" />
-                  <YAxis tick={{ fontSize: 10 }} stroke="#94a3b8" allowDecimals={false} width={36} />
-                  <Tooltip
-                    contentStyle={{
-                      borderRadius: "12px",
-                      border: "1px solid #e2e8f0",
-                      fontSize: "12px",
-                    }}
-                  />
+                  <CartesianGrid strokeDasharray="3 3" stroke={chartGrid} vertical={false} />
+                  <XAxis dataKey="label" tick={{ fontSize: 10 }} stroke={chartTick} interval="preserveStartEnd" />
+                  <YAxis tick={{ fontSize: 10 }} stroke={chartTick} allowDecimals={false} width={36} />
+                  <Tooltip contentStyle={chartTooltipStyle} />
                   <Legend wrapperStyle={{ fontSize: "12px" }} />
                   <Area
                     type="basis"
@@ -478,16 +499,16 @@ export default function DashboardOverview({
               </ResponsiveContainer>
             </div>
           ) : (
-            <p className="py-12 text-center text-sm text-gray-500">No trend data for this period.</p>
+            <p className="py-12 text-center text-sm text-muted-foreground">No trend data for this period.</p>
           )}
         </CardContent>
       </Card>
 
       {/* Recent Activity (timeline) + Upcoming + Registrations overview */}
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-3 xl:gap-6">
-        <Card className="rounded-3xl border-gray-100 bg-white shadow-sm">
-          <CardHeader className="border-b border-gray-50 pb-4">
-            <CardTitle className="text-lg font-semibold text-gray-900">Recent Activity</CardTitle>
+        <Card className="admin-panel-card rounded-3xl border-border bg-card shadow-sm">
+          <CardHeader className="border-b border-border/60 pb-4">
+            <CardTitle className="text-lg font-semibold text-foreground">Recent Activity</CardTitle>
           </CardHeader>
           <CardContent className="pt-5">
             {sortedActivities.length > 0 ? (
@@ -545,10 +566,10 @@ export default function DashboardOverview({
                           i === sortedActivities.length - 1 && "border-b-0 pb-0",
                         )}
                       >
-                        <p className="font-semibold text-gray-900">{activity.action}</p>
-                        <p className="mt-1 text-sm leading-snug text-gray-600">
-                          <span className="font-medium text-gray-800">{activity.adminName}</span>
-                          <span className="text-gray-400"> — </span>
+                        <p className="font-semibold text-foreground">{activity.action}</p>
+                        <p className="mt-1 text-sm leading-snug text-muted-foreground">
+                          <span className="font-medium text-foreground">{activity.adminName}</span>
+                          <span className="text-muted-foreground"> — </span>
                           {activity.resource}
                         </p>
                         {activity.eventStatus ? (
@@ -559,7 +580,7 @@ export default function DashboardOverview({
                             {formatEventStatusLabel(activity.eventStatus)}
                           </Badge>
                         ) : null}
-                        <p className="mt-2 text-xs font-medium text-gray-400">
+                        <p className="mt-2 text-xs font-medium text-muted-foreground">
                           {formatDistanceToNow(new Date(activity.timestamp), { addSuffix: true })}
                         </p>
                       </div>
@@ -568,14 +589,14 @@ export default function DashboardOverview({
                 })}
               </div>
             ) : (
-              <p className="text-sm text-gray-500">No recent activity found.</p>
+              <p className="text-sm text-muted-foreground">No recent activity found.</p>
             )}
           </CardContent>
         </Card>
 
-        <Card className="rounded-3xl border-gray-100 bg-white shadow-sm">
-          <CardHeader className="border-b border-gray-50 pb-4">
-            <CardTitle className="text-lg font-semibold text-gray-900">Upcoming Events</CardTitle>
+        <Card className="admin-panel-card rounded-3xl border-border bg-card shadow-sm">
+          <CardHeader className="border-b border-border/60 pb-4">
+            <CardTitle className="text-lg font-semibold text-foreground">Upcoming Events</CardTitle>
           </CardHeader>
           <CardContent className="max-h-[min(420px,65vh)] space-y-3 overflow-y-auto pt-5">
             {upcomingEvents.length > 0 ? (
@@ -593,18 +614,18 @@ export default function DashboardOverview({
                 return (
                   <div
                     key={ev.id}
-                    className="flex gap-3 rounded-2xl border border-gray-100 bg-white p-3 shadow-sm ring-1 ring-black/[0.02]"
+                    className="flex gap-3 rounded-2xl border border-border bg-muted/30 p-3 shadow-sm ring-1 ring-white/[0.03] dark:bg-[#122D4D]/40"
                   >
                     <div className="relative h-16 w-20 shrink-0 overflow-hidden rounded-xl">
                       <Image src={img} alt="" fill className="object-cover" sizes="80px" unoptimized={ext} />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="line-clamp-2 text-sm font-semibold leading-snug text-gray-900">{ev.title}</p>
-                      <p className="mt-1 flex items-center gap-1 text-xs text-gray-500">
+                      <p className="line-clamp-2 text-sm font-semibold leading-snug text-foreground">{ev.title}</p>
+                      <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
                         <CalendarDays className="h-3.5 w-3.5 shrink-0 text-sky-500" />
                         {dateLabel}
                       </p>
-                      <p className="mt-0.5 flex items-center gap-1 text-xs text-gray-500">
+                      <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
                         <MapPin className="h-3.5 w-3.5 shrink-0 text-violet-500" />
                         <span className="truncate">{formatLocation(ev)}</span>
                       </p>
@@ -616,15 +637,15 @@ export default function DashboardOverview({
                 )
               })
             ) : (
-              <p className="text-sm text-gray-500">No upcoming events in the schedule.</p>
+              <p className="text-sm text-muted-foreground">No upcoming events in the schedule.</p>
             )}
           </CardContent>
         </Card>
 
-        <Card className="rounded-3xl border-gray-100 bg-white shadow-sm">
-          <CardHeader className="border-b border-gray-50 pb-4">
-            <CardTitle className="text-lg font-semibold text-gray-900">Registrations overview</CardTitle>
-            <p className="text-xs font-normal text-gray-500">Event mix by status</p>
+        <Card className="admin-panel-card rounded-3xl border-border bg-card shadow-sm">
+          <CardHeader className="border-b border-border/60 pb-4">
+            <CardTitle className="text-lg font-semibold text-foreground">Registrations overview</CardTitle>
+            <p className="text-xs font-normal text-muted-foreground">Event mix by status</p>
           </CardHeader>
           <CardContent className="relative pt-2">
             {registrationsByStatus.length > 0 ? (
@@ -655,12 +676,12 @@ export default function DashboardOverview({
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="pointer-events-none absolute left-[42%] top-[44%] z-10 -translate-x-1/2 -translate-y-1/2 text-center sm:left-[44%]">
-                  <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">Total</p>
-                  <p className="text-xl font-bold tabular-nums text-gray-900">{donutTotal}</p>
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Total</p>
+                  <p className="text-xl font-bold tabular-nums text-foreground">{donutTotal}</p>
                 </div>
               </div>
             ) : (
-              <p className="py-12 text-center text-sm text-gray-500">No registration overview data.</p>
+              <p className="py-12 text-center text-sm text-muted-foreground">No registration overview data.</p>
             )}
           </CardContent>
         </Card>
@@ -668,17 +689,17 @@ export default function DashboardOverview({
 
       {/* Revenue + Top events + System status */}
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-3 lg:gap-6">
-        <Card className="rounded-3xl border-gray-100 bg-white shadow-sm">
-          <CardHeader className="border-b border-gray-50 pb-4">
-            <CardTitle className="text-lg font-semibold text-gray-900">Revenue overview</CardTitle>
-            <p className="text-xs font-normal text-gray-500">Confirmed registration totals</p>
+        <Card className="admin-panel-card rounded-3xl border-border bg-card shadow-sm">
+          <CardHeader className="border-b border-border/60 pb-4">
+            <CardTitle className="text-lg font-semibold text-foreground">Revenue overview</CardTitle>
+            <p className="text-xs font-normal text-muted-foreground">Confirmed registration totals</p>
           </CardHeader>
           <CardContent className="pt-5">
             <div className="flex items-start justify-between gap-2">
               <div>
                 <div className="flex items-baseline gap-1">
                   <DollarSign className="h-7 w-7 text-blue-600" />
-                  <span className="text-3xl font-bold tabular-nums text-gray-900">
+                  <span className="text-3xl font-bold tabular-nums text-foreground">
                     {revenue ? fmtMoney(revenue.total, revenue.currency) : "—"}
                   </span>
                 </div>
@@ -692,22 +713,22 @@ export default function DashboardOverview({
           </CardContent>
         </Card>
 
-        <Card className="rounded-3xl border-gray-100 bg-white shadow-sm">
-          <CardHeader className="border-b border-gray-50 pb-4">
-            <CardTitle className="text-lg font-semibold text-gray-900">Top performing events</CardTitle>
-            <p className="text-xs font-normal text-gray-500">By current attendees</p>
+        <Card className="admin-panel-card rounded-3xl border-border bg-card shadow-sm">
+          <CardHeader className="border-b border-border/60 pb-4">
+            <CardTitle className="text-lg font-semibold text-foreground">Top performing events</CardTitle>
+            <p className="text-xs font-normal text-muted-foreground">By current attendees</p>
           </CardHeader>
           <CardContent className="space-y-4 pt-5">
             {topEvents.length > 0 ? (
               topEvents.map((te) => (
                 <div key={te.id}>
                   <div className="mb-1 flex items-center justify-between gap-2 text-sm">
-                    <span className="line-clamp-1 min-w-0 font-medium text-gray-900">{te.title}</span>
-                    <span className="shrink-0 text-xs font-semibold tabular-nums text-gray-600">
+                    <span className="line-clamp-1 min-w-0 font-medium text-foreground">{te.title}</span>
+                    <span className="shrink-0 text-xs font-semibold tabular-nums text-muted-foreground">
                       {te.registrations} registrations
                     </span>
                   </div>
-                  <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+                  <div className="h-2 overflow-hidden rounded-full bg-muted">
                     <div
                       className="h-full rounded-full bg-gradient-to-r from-blue-500 to-indigo-500"
                       style={{ width: `${Math.min(100, (te.registrations / maxTopReg) * 100)}%` }}
@@ -716,14 +737,14 @@ export default function DashboardOverview({
                 </div>
               ))
             ) : (
-              <p className="text-sm text-gray-500">No events to rank yet.</p>
+              <p className="text-sm text-muted-foreground">No events to rank yet.</p>
             )}
           </CardContent>
         </Card>
 
-        <Card className="rounded-3xl border-gray-100 bg-white shadow-sm">
-          <CardHeader className="border-b border-gray-50 pb-4">
-            <CardTitle className="text-lg font-semibold text-gray-900">System status</CardTitle>
+        <Card className="admin-panel-card rounded-3xl border-border bg-card shadow-sm">
+          <CardHeader className="border-b border-border/60 pb-4">
+            <CardTitle className="text-lg font-semibold text-foreground">System status</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 pt-5">
             {[
@@ -735,7 +756,7 @@ export default function DashboardOverview({
                 key={row.label}
                 className="flex items-center justify-between rounded-2xl border border-emerald-100/80 bg-emerald-50/40 px-4 py-3"
               >
-                <span className="text-sm font-medium text-gray-800">{row.label}</span>
+                <span className="text-sm font-medium text-foreground">{row.label}</span>
                 <span className="flex items-center gap-2 text-xs font-semibold text-emerald-700">
                   <CheckCircle className="h-4 w-4" />
                   {row.detail}

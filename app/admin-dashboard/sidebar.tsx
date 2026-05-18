@@ -718,7 +718,7 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
   return (
     <div className="flex min-h-0 min-w-0 flex-1 overflow-hidden bg-background">
       {/* Sidebar */}
-      <aside className="flex w-[272px] min-w-[272px] shrink-0 flex-col border-r border-border bg-card shadow-[4px_0_24px_-12px_rgba(15,23,42,0.08)] dark:shadow-[4px_0_28px_-8px_rgba(0,0,0,0.45)]">
+      <aside className="flex w-[272px] min-w-[272px] shrink-0 flex-col border-r border-sidebar-border bg-sidebar shadow-[4px_0_24px_-12px_rgba(15,23,42,0.08)] dark:shadow-[4px_0_28px_-12px_rgba(0,0,0,0.5)]">
         <div className="flex items-center gap-3 border-b border-border px-4 py-4">
           <button
             type="button"
@@ -744,13 +744,13 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
                       onClick={() => toggleMenu(item.id)}
                       className={`flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left transition-all ${
                         isActive(item.id)
-                          ? "bg-sky-50 font-medium text-sky-700 shadow-sm ring-1 ring-sky-100/80 dark:bg-sky-950/55 dark:text-sky-200 dark:ring-sky-800/60"
-                          : "text-foreground/90 hover:bg-muted/80 dark:text-foreground/85"
+                          ? "bg-sky-50 font-medium text-sky-700 shadow-sm ring-1 ring-sky-100/80 dark:bg-[#17F0F6]/12 dark:text-[#17F0F6] dark:ring-[#17F0F6]/25"
+                          : "text-foreground/90 hover:bg-muted/80 dark:hover:bg-sidebar-accent"
                       }`}
                     >
                       <div className="flex min-w-0 items-center gap-3">
                         <item.icon
-                          className={`h-[18px] w-[18px] shrink-0 ${isActive(item.id) ? "text-sky-600 dark:text-sky-400" : "text-muted-foreground"}`}
+                          className={`h-[18px] w-[18px] shrink-0 ${isActive(item.id) ? "text-sky-600 dark:text-[#17F0F6]" : "text-muted-foreground"}`}
                         />
                         <span className="truncate text-sm">{item.title}</span>
                       </div>
@@ -770,7 +770,7 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
                             onClick={() => handleSubSectionClick(item.id, subItem.id)}
                             className={`block w-full rounded-lg px-2.5 py-2 text-left text-sm transition-colors ${
                               isSubActive(subItem.id)
-                                ? "bg-sky-50 font-medium text-sky-800 ring-1 ring-sky-100/60 dark:bg-sky-950/50 dark:text-sky-100 dark:ring-sky-800/50"
+                                ? "bg-sky-50 font-medium text-sky-800 ring-1 ring-sky-100/60 dark:bg-[#17F0F6]/10 dark:text-[#17F0F6] dark:ring-[#17F0F6]/20"
                                 : "text-muted-foreground hover:bg-muted/70 hover:text-foreground"
                             }`}
                           >
@@ -786,11 +786,11 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
                     onClick={() => handleSectionClick(item.id)}
                     className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-all ${
                       isActive(item.id)
-                        ? "bg-sky-50 font-medium text-sky-700 shadow-sm ring-1 ring-sky-100/80 dark:bg-sky-950/55 dark:text-sky-200 dark:ring-sky-800/60"
-                        : "text-foreground/90 hover:bg-muted/80 dark:text-foreground/85"
+                        ? "bg-sky-50 font-medium text-sky-700 shadow-sm ring-1 ring-sky-100/80 dark:bg-[#17F0F6]/12 dark:text-[#17F0F6] dark:ring-[#17F0F6]/25"
+                        : "text-foreground/90 hover:bg-muted/80 dark:hover:bg-sidebar-accent"
                     }`}
                   >
-                    <item.icon className={`h-[18px] w-[18px] shrink-0 ${isActive(item.id) ? "text-sky-600 dark:text-sky-400" : "text-muted-foreground"}`} />
+                    <item.icon className={`h-[18px] w-[18px] shrink-0 ${isActive(item.id) ? "text-sky-600 dark:text-[#17F0F6]" : "text-muted-foreground"}`} />
                     <span className="text-sm font-medium">{item.title}</span>
                   </button>
                 )}
@@ -800,16 +800,16 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
         </div>
 
         <div className="shrink-0 space-y-3 border-t border-border p-3">
-          <div className="rounded-2xl bg-gradient-to-br from-sky-50 to-indigo-50/80 p-4 ring-1 ring-sky-100/60 dark:from-sky-950/40 dark:to-indigo-950/35 dark:ring-sky-900/50">
+          <div className="rounded-2xl bg-gradient-to-br from-sky-50 to-indigo-50/80 p-4 ring-1 ring-sky-100/60 dark:from-[#122D4D] dark:to-[#18193D] dark:ring-border">
             <div className="flex items-start gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-card shadow-sm ring-1 ring-sky-100/80 dark:ring-sky-800/60">
-                <Star className="h-5 w-5 text-sky-600 dark:text-sky-400" strokeWidth={1.5} />
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-card shadow-sm ring-1 ring-sky-100/80 dark:bg-[#010639] dark:ring-border">
+                <Star className="h-5 w-5 text-sky-600 dark:text-[#17F0F6]" strokeWidth={1.5} />
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold text-foreground">Pro Plan</p>
                 <Button
                   type="button"
-                  className="mt-2 h-8 w-full rounded-xl bg-sky-600 text-xs font-semibold text-white shadow-sm hover:bg-sky-700 dark:bg-sky-500 dark:hover:bg-sky-400"
+                  className="mt-2 h-8 w-full rounded-xl bg-sky-600 text-xs font-semibold text-white shadow-sm hover:bg-sky-700 dark:bg-[#17F0F6] dark:text-[#010639] dark:hover:opacity-90"
                   variant="default"
                 >
                   Manage Plan
@@ -833,7 +833,7 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
       </aside>
 
       {/* Main Content */}
-      <main className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden bg-muted/30 p-5 sm:p-6 lg:p-8 dark:bg-background">
+      <main className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden bg-muted/30 p-5 sm:p-6 lg:p-8 dark:bg-[#010639]">
         {renderContent()}
       </main>
     </div>

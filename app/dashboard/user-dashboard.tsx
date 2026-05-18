@@ -148,9 +148,14 @@ export function UserDashboard({ userId }: UserDashboardProps) {
   }
 
   const toggleMenu = (menu: string) => {
-    setOpenMenus((prev) => 
-      prev.includes(menu) 
-        ? prev.filter((m) => m !== menu) 
+    // Auto expand sidebar when collapsed
+    if (isSidebarCollapsed) {
+      setIsSidebarCollapsed(false)
+    }
+  
+    setOpenMenus((prev) =>
+      prev.includes(menu)
+        ? prev.filter((m) => m !== menu)
         : [...prev, menu]
     )
   }
@@ -243,12 +248,20 @@ export function UserDashboard({ userId }: UserDashboardProps) {
 
     const sidebarContent = (
       <div
-        className={`${
-          isSidebarCollapsed ? "w-[4.5rem]" : "w-64"
-        } flex max-h-[calc(100vh-2rem)] flex-col justify-between overflow-hidden rounded-[2rem] border border-white/30 bg-gradient-to-b from-[#004A96] via-[#003d7a] to-[#002f5e] py-5 text-white shadow-[0_8px_32px_rgba(0,74,150,0.4)] transition-[width] duration-300 ease-out md:h-[calc(100vh-2rem)]`}
+        className={cn(
+          "visitor-sidebar-shell flex max-h-[calc(100vh-2rem)] flex-col justify-between rounded-[2rem] border border-white/30 bg-gradient-to-b from-[#004A96] via-[#003d7a] to-[#002f5e] py-5 text-white shadow-[0_8px_32px_rgba(0,74,150,0.4)] transition-[width] duration-300 ease-out md:h-[calc(100vh-2rem)]",
+          isSidebarCollapsed
+            ? "visitor-sidebar-shell--collapsed no-scrollbar w-[5.25rem] min-w-0 overflow-x-hidden overflow-y-auto"
+            : "w-64 overflow-hidden",
+        )}
       >
-        <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
-          <nav className="space-y-1 px-2 text-sm">
+        <div
+          className={cn(
+            "visitor-sidebar-nav-scroll min-w-0",
+            isSidebarCollapsed ? "overflow-visible" : "min-h-0 flex-1 overflow-x-hidden overflow-y-auto no-scrollbar",
+          )}
+        >
+          <nav className={cn("min-w-0 max-w-full space-y-1 text-sm", isSidebarCollapsed ? "space-y-1.5 px-0" : "px-2")}>
             {/* Notifications — matches reference; opens Messages */}
             <div className={`mb-3 flex ${isSidebarCollapsed ? "justify-center" : "justify-center px-1"}`}>
               <button
@@ -270,15 +283,21 @@ export function UserDashboard({ userId }: UserDashboardProps) {
             </div>
 
             {/* Dashboard */}
-            <div>
+            <div className={visitorCollapsedNavItemClass(isSidebarCollapsed, activeSection, "dashboard")}>
               <button
                 type="button"
                 title={isSidebarCollapsed ? "Dashboard" : undefined}
-                className={`flex w-full items-center rounded-xl py-2.5 text-left font-medium text-white/95 transition hover:bg-white/10 ${navBtnCollapsed}`}
+                className={cn(
+                  "flex w-full items-center rounded-xl py-2.5 text-left font-medium text-white/95 transition hover:bg-white/10",
+                  navBtnCollapsed,
+                  isSidebarCollapsed && isVisitorMenuGroupActive(activeSection, "dashboard") && "hover:bg-transparent",
+                )}
                 onClick={() => toggleMenu("dashboard")}
               >
-                <span className={`flex items-center gap-3 ${isSidebarCollapsed ? "" : "min-w-0 flex-1"}`}>
-                  <LayoutDashboard className="h-[18px] w-[18px] shrink-0" />
+                <span className={`flex items-center gap-3 ${isSidebarCollapsed ? "w-full justify-center" : "min-w-0 flex-1"}`}>
+                  <span className={visitorCollapsedIconSlotClass(isSidebarCollapsed, activeSection, "dashboard")}>
+                    <LayoutDashboard className={visitorCollapsedIconClass(isSidebarCollapsed, activeSection, "dashboard")} />
+                  </span>
                   {!isSidebarCollapsed && <span className="truncate">Dashboard</span>}
                 </span>
                 {!isSidebarCollapsed &&
@@ -301,15 +320,21 @@ export function UserDashboard({ userId }: UserDashboardProps) {
             </div>
 
             {/* Event */}
-            <div>
+            <div className={visitorCollapsedNavItemClass(isSidebarCollapsed, activeSection, "event")}>
               <button
                 type="button"
                 title={isSidebarCollapsed ? "My Events" : undefined}
-                className={`flex w-full items-center rounded-xl py-2.5 text-left font-medium text-white/95 transition hover:bg-white/10 ${navBtnCollapsed}`}
+                className={cn(
+                  "flex w-full items-center rounded-xl py-2.5 text-left font-medium text-white/95 transition hover:bg-white/10",
+                  navBtnCollapsed,
+                  isSidebarCollapsed && isVisitorMenuGroupActive(activeSection, "event") && "hover:bg-transparent",
+                )}
                 onClick={() => toggleMenu("event")}
               >
-                <span className={`flex items-center gap-3 ${isSidebarCollapsed ? "" : "min-w-0 flex-1"}`}>
-                  <Calendar className="h-[18px] w-[18px] shrink-0" />
+                <span className={`flex items-center gap-3 ${isSidebarCollapsed ? "w-full justify-center" : "min-w-0 flex-1"}`}>
+                  <span className={visitorCollapsedIconSlotClass(isSidebarCollapsed, activeSection, "event")}>
+                    <Calendar className={visitorCollapsedIconClass(isSidebarCollapsed, activeSection, "event")} />
+                  </span>
                   {!isSidebarCollapsed && <span className="truncate">My Events</span>}
                 </span>
                 {!isSidebarCollapsed &&
@@ -331,15 +356,21 @@ export function UserDashboard({ userId }: UserDashboardProps) {
             </div>
 
             {/* Networking */}
-            <div>
+            <div className={visitorCollapsedNavItemClass(isSidebarCollapsed, activeSection, "networking")}>
               <button
                 type="button"
                 title={isSidebarCollapsed ? "Networking" : undefined}
-                className={`flex w-full items-center rounded-xl py-2.5 text-left font-medium text-white/95 transition hover:bg-white/10 ${navBtnCollapsed}`}
+                className={cn(
+                  "flex w-full items-center rounded-xl py-2.5 text-left font-medium text-white/95 transition hover:bg-white/10",
+                  navBtnCollapsed,
+                  isSidebarCollapsed && isVisitorMenuGroupActive(activeSection, "networking") && "hover:bg-transparent",
+                )}
                 onClick={() => toggleMenu("networking")}
               >
-                <span className={`flex items-center gap-3 ${isSidebarCollapsed ? "" : "min-w-0 flex-1"}`}>
-                  <Network className="h-[18px] w-[18px] shrink-0" />
+                <span className={`flex items-center gap-3 ${isSidebarCollapsed ? "w-full justify-center" : "min-w-0 flex-1"}`}>
+                  <span className={visitorCollapsedIconSlotClass(isSidebarCollapsed, activeSection, "networking")}>
+                    <Network className={visitorCollapsedIconClass(isSidebarCollapsed, activeSection, "networking")} />
+                  </span>
                   {!isSidebarCollapsed && <span className="truncate">Networking</span>}
                 </span>
                 {!isSidebarCollapsed &&
@@ -358,15 +389,21 @@ export function UserDashboard({ userId }: UserDashboardProps) {
             </div>
 
             {/* Exhibitor */}
-            <div>
+            <div className={visitorCollapsedNavItemClass(isSidebarCollapsed, activeSection, "exhibitor")}>
               <button
                 type="button"
                 title={isSidebarCollapsed ? "My Exhibitors" : undefined}
-                className={`flex w-full items-center rounded-xl py-2.5 text-left font-medium text-white/95 transition hover:bg-white/10 ${navBtnCollapsed}`}
+                className={cn(
+                  "flex w-full items-center rounded-xl py-2.5 text-left font-medium text-white/95 transition hover:bg-white/10",
+                  navBtnCollapsed,
+                  isSidebarCollapsed && isVisitorMenuGroupActive(activeSection, "exhibitor") && "hover:bg-transparent",
+                )}
                 onClick={() => toggleMenu("exhibitor")}
               >
-                <span className={`flex items-center gap-3 ${isSidebarCollapsed ? "" : "min-w-0 flex-1"}`}>
-                  <Store className="h-[18px] w-[18px] shrink-0" />
+                <span className={`flex items-center gap-3 ${isSidebarCollapsed ? "w-full justify-center" : "min-w-0 flex-1"}`}>
+                  <span className={visitorCollapsedIconSlotClass(isSidebarCollapsed, activeSection, "exhibitor")}>
+                    <Store className={visitorCollapsedIconClass(isSidebarCollapsed, activeSection, "exhibitor")} />
+                  </span>
                   {!isSidebarCollapsed && <span className="truncate">My Exhibitors</span>}
                 </span>
                 {!isSidebarCollapsed &&
@@ -385,15 +422,21 @@ export function UserDashboard({ userId }: UserDashboardProps) {
             </div>
 
             {/* Event Planning Tools */}
-            <div>
+            <div className={visitorCollapsedNavItemClass(isSidebarCollapsed, activeSection, "tools")}>
               <button
                 type="button"
                 title={isSidebarCollapsed ? "Event Planning Tools" : undefined}
-                className={`flex w-full items-center rounded-xl py-2.5 text-left font-medium text-white/95 transition hover:bg-white/10 ${navBtnCollapsed}`}
+                className={cn(
+                  "flex w-full items-center rounded-xl py-2.5 text-left font-medium text-white/95 transition hover:bg-white/10",
+                  navBtnCollapsed,
+                  isSidebarCollapsed && isVisitorMenuGroupActive(activeSection, "tools") && "hover:bg-transparent",
+                )}
                 onClick={() => toggleMenu("tools")}
               >
-                <span className={`flex items-center gap-3 ${isSidebarCollapsed ? "" : "min-w-0 flex-1"}`}>
-                  <List className="h-[18px] w-[18px] shrink-0" />
+                <span className={`flex items-center gap-3 ${isSidebarCollapsed ? "w-full justify-center" : "min-w-0 flex-1"}`}>
+                  <span className={visitorCollapsedIconSlotClass(isSidebarCollapsed, activeSection, "tools")}>
+                    <List className={visitorCollapsedIconClass(isSidebarCollapsed, activeSection, "tools")} />
+                  </span>
                   {!isSidebarCollapsed && <span className="truncate">Event Planning Tools</span>}
                 </span>
                 {!isSidebarCollapsed &&
@@ -412,31 +455,43 @@ export function UserDashboard({ userId }: UserDashboardProps) {
             </div>
 
             {/* Help & Support */}
-            <div>
+            <div className={visitorCollapsedNavItemClass(isSidebarCollapsed, activeSection, "help")}>
               <button
                 type="button"
                 title={isSidebarCollapsed ? "Help & Support" : undefined}
                 onClick={() => setActiveSection("Help & Support")}
-                className={`flex w-full items-center rounded-xl py-2.5 font-medium transition hover:bg-white/10 ${simpleNavBtnCollapsed} ${
-                  activeSection === "Help & Support" ? "bg-white/15 text-white" : "text-white/95"
-                }`}
+                className={cn(
+                  "flex w-full items-center rounded-xl py-2.5 font-medium transition hover:bg-white/10",
+                  simpleNavBtnCollapsed,
+                  !isSidebarCollapsed && activeSection === "Help & Support" && "bg-white/15 text-white",
+                  !isSidebarCollapsed && activeSection !== "Help & Support" && "text-white/95",
+                  isSidebarCollapsed && isVisitorMenuGroupActive(activeSection, "help") && "hover:bg-transparent",
+                )}
               >
-                <HelpCircle className="h-[18px] w-[18px] shrink-0" />
+                <span className={visitorCollapsedIconSlotClass(isSidebarCollapsed, activeSection, "help")}>
+                  <HelpCircle className={visitorCollapsedIconClass(isSidebarCollapsed, activeSection, "help")} />
+                </span>
                 {!isSidebarCollapsed && <span className="ml-3 truncate">Help & Support</span>}
               </button>
             </div>
 
             {/* Settings */}
-            <div>
+            <div className={visitorCollapsedNavItemClass(isSidebarCollapsed, activeSection, "settings")}>
               <button
                 type="button"
                 title={isSidebarCollapsed ? "Settings" : undefined}
                 onClick={() => setActiveSection("settings")}
-                className={`flex w-full items-center rounded-xl py-2.5 font-medium transition hover:bg-white/10 ${simpleNavBtnCollapsed} ${
-                  activeSection === "settings" ? "bg-white/15 text-white" : "text-white/95"
-                }`}
+                className={cn(
+                  "flex w-full items-center rounded-xl py-2.5 font-medium transition hover:bg-white/10",
+                  simpleNavBtnCollapsed,
+                  !isSidebarCollapsed && activeSection === "settings" && "bg-white/15 text-white",
+                  !isSidebarCollapsed && activeSection !== "settings" && "text-white/95",
+                  isSidebarCollapsed && isVisitorMenuGroupActive(activeSection, "settings") && "hover:bg-transparent",
+                )}
               >
-                <Settings className="h-[18px] w-[18px] shrink-0" />
+                <span className={visitorCollapsedIconSlotClass(isSidebarCollapsed, activeSection, "settings")}>
+                  <Settings className={visitorCollapsedIconClass(isSidebarCollapsed, activeSection, "settings")} />
+                </span>
                 {!isSidebarCollapsed && <span className="ml-3 truncate">Settings</span>}
               </button>
             </div>
@@ -444,12 +499,20 @@ export function UserDashboard({ userId }: UserDashboardProps) {
         </div>
 
         {/* Collapse & Logout */}
-        <div className="mt-2 space-y-2 border-t border-white/15 px-2 pt-4">
+        <div
+          className={cn(
+            "visitor-sidebar-footer mt-2 min-w-0 shrink-0 space-y-2 overflow-hidden border-t border-white/15 pt-4",
+            isSidebarCollapsed ? "px-1" : "px-2",
+          )}
+        >
           <Button
             type="button"
             onClick={toggleSidebar}
             title={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-            className={`flex w-full border-white/40 bg-white/10 text-white hover:bg-white/20 hover:text-white ${isSidebarCollapsed ? "justify-center px-0" : "justify-center gap-2"}`}
+            className={cn(
+              "flex w-full min-w-0 max-w-full border-white/40 bg-white/10 text-white hover:bg-white/20 hover:text-white",
+              isSidebarCollapsed ? "justify-center px-0" : "justify-center gap-2",
+            )}
             variant="outline"
             size="sm"
           >
@@ -460,7 +523,10 @@ export function UserDashboard({ userId }: UserDashboardProps) {
             type="button"
             onClick={handleSignOut}
             title="Logout"
-            className={`flex w-full text-white hover:opacity-95 ${isSidebarCollapsed ? "justify-center px-0" : "justify-center gap-2"}`}
+            className={cn(
+              "flex w-full min-w-0 max-w-full text-white hover:opacity-95",
+              isSidebarCollapsed ? "justify-center px-0" : "justify-center gap-2",
+            )}
             style={{ backgroundColor: VISITOR_ACCENT }}
             size="sm"
           >
@@ -568,4 +634,38 @@ function menuItemClass(activeSection: string, id: string) {
       ? "border-[#FF131C] font-medium text-white"
       : "border-transparent text-white/80 hover:text-white"
   }`
+}
+
+const VISITOR_MENU_SECTIONS: Record<string, string[]> = {
+  dashboard: ["profile"],
+  event: ["events", "past-events", "wishlist", "upcoming-events", "favourites", "recommended-events"],
+  networking: ["connections", "messages"],
+  exhibitor: ["my-appointments", "exhibitor-schedule", "Suggested"],
+  tools: ["travel", "schedule"],
+  help: ["Help & Support"],
+  settings: ["settings"],
+}
+
+function isVisitorMenuGroupActive(activeSection: string, menuId: string): boolean {
+  return VISITOR_MENU_SECTIONS[menuId]?.includes(activeSection) ?? false
+}
+
+function visitorCollapsedNavItemClass(collapsed: boolean, activeSection: string, menuId: string) {
+  return cn(collapsed && "visitor-sidebar-nav-item", collapsed && isVisitorMenuGroupActive(activeSection, menuId) && "visitor-sidebar-nav-item--active")
+}
+
+function visitorCollapsedIconSlotClass(collapsed: boolean, activeSection: string, menuId: string) {
+  const isActive = collapsed && isVisitorMenuGroupActive(activeSection, menuId)
+  return cn(
+    "shrink-0",
+    collapsed && !isActive && "flex h-12 w-full items-center justify-center",
+    isActive && "visitor-sidebar-icon-slot--active",
+  )
+}
+
+function visitorCollapsedIconClass(collapsed: boolean, activeSection: string, menuId: string) {
+  return cn(
+    "h-[18px] w-[18px] shrink-0",
+    collapsed && isVisitorMenuGroupActive(activeSection, menuId) ? "text-[#004A96]" : "text-white",
+  )
 }
