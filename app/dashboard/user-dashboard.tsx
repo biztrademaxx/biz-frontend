@@ -46,6 +46,7 @@ import { HelpSupport } from "@/components/HelpSupport"
 import { useDashboard } from "@/contexts/dashboard-context"
 import { DashboardManagedBanner } from "@/components/dashboard-managed-banner"
 import { cn } from "@/lib/utils"
+import { DashboardOverview } from "./dashboard-overview"
 
 const VISITOR_ACCENT = "#FF131C"
 
@@ -121,7 +122,7 @@ export function UserDashboard({ userId }: UserDashboardProps) {
     } catch (err) {
       console.error("Error fetching user data:", err)
       setError(err instanceof Error ? err.message : "Error loading user data")
-      
+
       toast({
         title: "Error",
         description: "Failed to load user data",
@@ -139,10 +140,10 @@ export function UserDashboard({ userId }: UserDashboardProps) {
       // Ensure unique events to prevent duplicate key errors
       const uniqueEvents = Array.isArray(list)
         ? list.filter((event: any, index: number, self: any[]) =>
-            index === self.findIndex((e: any) => e.id === event.id)
-          )
+          index === self.findIndex((e: any) => e.id === event.id)
+        )
         : []
-        
+
       setInterestedEvents(uniqueEvents)
     } catch (err) {
       console.error("Error fetching interested events:", err)
@@ -171,7 +172,7 @@ export function UserDashboard({ userId }: UserDashboardProps) {
     if (isSidebarCollapsed) {
       setIsSidebarCollapsed(false)
     }
-  
+
     setOpenMenus((prev) =>
       prev.includes(menu)
         ? prev.filter((m) => m !== menu)
@@ -203,7 +204,7 @@ export function UserDashboard({ userId }: UserDashboardProps) {
         </div>
       )
     }
-    
+
     if (error) {
       return (
         <div className="text-center py-8">
@@ -214,7 +215,7 @@ export function UserDashboard({ userId }: UserDashboardProps) {
         </div>
       )
     }
-    
+
     if (!userData) {
       return (
         <div className="text-center py-8">
@@ -224,6 +225,14 @@ export function UserDashboard({ userId }: UserDashboardProps) {
     }
 
     switch (activeSection) {
+      case "dashboard":
+        return (
+          <DashboardOverview
+            userId={resolvedUserId}
+            events={interestedEvents}
+            userName={displayName || userData?.firstName || "User"}
+          />
+        )
       case "profile":
         return <ProfileSection userData={userData} onUpdate={handleProfileUpdate} organizerId={""} />
       case "events":
@@ -251,13 +260,19 @@ export function UserDashboard({ userId }: UserDashboardProps) {
       case "messages":
         return <MessagesSection organizerId={resolvedUserId} surface="visitor" />
       case "settings":
-        return <VisitorSettings  />
+        return <VisitorSettings />
       case "travel":
         return <TravelAccommodation />
       case "Help & Support":
         return <HelpSupport />
       default:
-        return <ProfileSection userData={userData} onUpdate={handleProfileUpdate} organizerId={""} />
+        return (
+          <DashboardOverview
+            userId={resolvedUserId}
+            events={interestedEvents}
+            userName={displayName || userData?.firstName || "User"}
+          />
+        )
     }
   }
 
@@ -325,12 +340,17 @@ export function UserDashboard({ userId }: UserDashboardProps) {
               {openMenus.includes("dashboard") && !isSidebarCollapsed && (
                 <ul className="ml-2 mt-1 space-y-1 border-l border-white/20">
                   <li
+                    onClick={() => setActiveSection("dashboard")}
+                    className={menuItemClass(activeSection, "dashboard")}
+                  >
+                    Dashboard Overview
+                  </li>
+                  <li
                     onClick={() => setActiveSection("profile")}
-                    className={`cursor-pointer border-l-4 py-1.5 pl-3 transition-colors ${
-                      activeSection === "profile"
+                    className={`cursor-pointer border-l-4 py-1.5 pl-3 transition-colors ${activeSection === "profile"
                         ? "border-[#FF131C] font-medium text-white"
                         : "border-transparent text-white/80 hover:text-white"
-                    }`}
+                      }`}
                   >
                     Profile
                   </li>
@@ -570,8 +590,8 @@ export function UserDashboard({ userId }: UserDashboardProps) {
         {/* Sidebar: drawer on mobile; on md+ overlaps main glass (half out / half in) */}
         <div
           className={`
-          fixed inset-y-0 left-0 z-50 p-4
-          md:relative md:inset-auto md:z-30 md:flex md:shrink-0 md:items-start md:pl-6 md:pr-0 md:pt-5 md:pb-5
+          fixed inset-y-0 left-0 z-50 h-screen p-4
+          md:sticky md:top-0 md:z-30 md:flex md:shrink-0 md:items-start md:pl-6 md:pr-0 md:pt-5 md:pb-5
           transition-[margin] duration-300 ease-out
           ${isSidebarCollapsed ? "md:-mr-9" : "md:-mr-32"}
           transform transition-transform duration-300 ease-in-out
@@ -597,8 +617,8 @@ export function UserDashboard({ userId }: UserDashboardProps) {
   const showShellHeader = Boolean(!loading && !error && userData && activeSection !== "profile")
 
   return (
-    <div className="flex min-h-screen w-full justify-center bg-white">
-      <div className="flex w-full max-w-[1680px] flex-1 flex-col md:flex-row md:items-stretch md:gap-0 md:px-5 md:py-5">
+    <div className="flex h-screen overflow-hidden w-full justify-center bg-white">
+      <div className="flex h-full w-full max-w-[1680px] flex-1 flex-col overflow-hidden md:flex-row md:items-stretch md:gap-0 md:px-5 md:py-5">
         {renderSidebar()}
 
         {/* Main column — glass panel aligns with overlapped sidebar */}
@@ -614,7 +634,7 @@ export function UserDashboard({ userId }: UserDashboardProps) {
 
           <main
             className={cn(
-              "mx-4 mb-4 mt-4 flex min-h-0 flex-1 flex-col overflow-auto rounded-[1.75rem] border border-white/50 bg-white/45 shadow-[0_8px_32px_rgba(0,74,150,0.12)] backdrop-blur-xl",
+              "mx-4 mb-4 mt-4 flex h-full min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden rounded-[1.75rem] border border-white/50 bg-white/45 shadow-[0_8px_32px_rgba(0,74,150,0.12)] backdrop-blur-xl",
               "p-5 sm:p-6",
               "md:mx-0 md:mb-0 md:mt-0 md:min-h-[calc(100vh-2.5rem)] md:pt-6 md:pb-6 md:pr-6",
               /* Keep text & controls out from under the overlapping pill (half overlap + radius) */
@@ -648,11 +668,10 @@ export function UserDashboard({ userId }: UserDashboardProps) {
 
 // Helper for menu items (expanded sidebar)
 function menuItemClass(activeSection: string, id: string) {
-  return `cursor-pointer border-l-4 py-1.5 pl-3 transition-colors ${
-    activeSection === id
+  return `cursor-pointer border-l-4 py-1.5 pl-3 transition-colors ${activeSection === id
       ? "border-[#FF131C] font-medium text-white"
       : "border-transparent text-white/80 hover:text-white"
-  }`
+    }`
 }
 
 const VISITOR_MENU_SECTIONS: Record<string, string[]> = {
