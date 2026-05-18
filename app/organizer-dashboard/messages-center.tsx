@@ -2,28 +2,8 @@
 
 import { useState, useEffect, useRef, useCallback } from "react"
 import { apiFetch, isAuthenticated } from "@/lib/api"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { useToast } from "@/hooks/use-toast"
-import {
-  Search,
-  Send,
-  Phone,
-  Video,
-  MoreVertical,
-  Plus,
-  Users,
-  MessageCircle,
-  CheckCheck,
-  Check,
-  Loader2,
-  Trash2,
-  X,
-} from "lucide-react"
-import Image from "next/image"
+import { Loader2 } from "lucide-react"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -34,9 +14,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { cn } from "@/lib/utils"
-import { exBtnPrimary } from "@/app/exhibitor-dashboard/dashboard-theme"
+import type { MessageSurface } from "@/components/messages/message-theme"
+import { MessagesInbox } from "@/components/messages/messages-inbox"
 
 interface Connection {
   id: string
@@ -92,8 +71,8 @@ interface Conversation {
 
 interface MessagesCenterProps {
   organizerId: string
-  /** Glass shell + brand accents for exhibitor dashboard. */
-  surface?: "default" | "exhibitor"
+  /** Brand accents: exhibitor (violet glass), visitor (blue), default (violet). */
+  surface?: MessageSurface
 }
 
 export default function MessagesCenter({ organizerId, surface = "default" }: MessagesCenterProps) {
@@ -103,6 +82,7 @@ export default function MessagesCenter({ organizerId, surface = "default" }: Mes
   const [messages, setMessages] = useState<Message[]>([])
   const [newMessage, setNewMessage] = useState("")
   const [searchQuery, setSearchQuery] = useState("")
+  const [chatListSearch, setChatListSearch] = useState("")
   const [connections, setConnections] = useState<Connection[]>([])
   const [showNewChat, setShowNewChat] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -249,60 +229,46 @@ export default function MessagesCenter({ organizerId, surface = "default" }: Mes
   const sendMessage = async () => {
     if (!newMessage.trim() || !selectedContact) return
 
-    // Declare tempId outside the try block so it's accessible in catch
     const tempId = Date.now().toString()
+    const content = newMessage.trim()
 
     try {
       setSending(true)
 
-      // Optimistically add message to UI
       const optimisticMessage: Message = {
         id: tempId,
         senderId: organizerId,
         receiverId: selectedContact,
-        content: newMessage.trim(),
+        content,
         createdAt: new Date().toISOString(),
         isRead: false,
         sender: {
           firstName: "You",
           lastName: "",
-          avatar: "/city/c4.jpg"
-        }
+          avatar: "/city/c4.jpg",
+        },
       }
 
-      setMessages(prev => [...prev, optimisticMessage])
+      setMessages((prev) => [...prev, optimisticMessage])
       setNewMessage("")
 
-      // Update conversations list optimistically
-      setConversations(prev => {
-        const existingConvIndex = prev.findIndex(conv => conv.contactId === selectedContact)
-        if (existingConvIndex !== -1) {
-          const updatedConvs = [...prev]
-          updatedConvs[existingConvIndex] = {
-            ...updatedConvs[existingConvIndex],
-            lastMessage: newMessage.trim(),
-            lastMessageTime: new Date().toISOString()
-          }
-          return updatedConvs
-        }
-        return prev
-      })
+      setConversations((prev) =>
+        prev.map((conv) =>
+          conv.id === selectedContact
+            ? { ...conv, lastMessage: content, lastMessageTime: new Date().toISOString() }
+            : conv,
+        ),
+      )
 
-      // Send via backend API (selectedContact is conversation id)
       const data = await apiFetch<{ message?: Message }>("/api/messages", {
         method: "POST",
-        body: { conversationId: selectedContact, content: newMessage.trim() },
+        body: { conversationId: selectedContact, content },
         auth: true,
       })
 
       if (data?.message) {
         setMessages((prev) => prev.map((msg) => (msg.id === tempId ? data.message! : msg)))
       }
-
-      toast({
-        title: "Success",
-        description: "Message sent successfully",
-      })
     } catch (error) {
       console.error("Error sending message:", error)
       // Remove optimistic message on error
@@ -384,25 +350,6 @@ export default function MessagesCenter({ organizerId, surface = "default" }: Mes
     }
   }
 
-  const getRoleBadgeColor = (role: string) => {
-    switch (role.toLowerCase()) {
-      case "organizer":
-        return surface === "exhibitor" ? "bg-[#8E54E9]/12 text-[#5b21b6]" : "bg-[#8E54E9]/15 text-[#4c1d95]"
-      case "speaker":
-        return "bg-green-100 text-green-800"
-      case "attendee":
-        return "bg-gray-100 text-gray-800"
-      case "exhibitor":
-        return "bg-purple-100 text-purple-800"
-      case "venue_manager":
-        return "bg-orange-100 text-orange-800"
-      case "admin":
-        return "bg-red-100 text-red-800"
-      default:
-        return "bg-gray-100 text-gray-800"
-    }
-  }
-
   const deleteMessage = async (messageId: string) => {
     try {
       setDeleting(true)
@@ -460,377 +407,51 @@ export default function MessagesCenter({ organizerId, surface = "default" }: Mes
   )
 
   const selectedContactInfo = getSelectedContactInfo()
-  const shell = surface === "exhibitor"
+
+  const filteredConversations = conversations.filter((conversation) => {
+    if (!chatListSearch.trim()) return true
+    const q = chatListSearch.toLowerCase()
+    const name = `${conversation.contact?.firstName ?? ""} ${conversation.contact?.lastName ?? ""}`.toLowerCase()
+    return name.includes(q) || (conversation.lastMessage ?? "").toLowerCase().includes(q)
+  })
+
+  const selectedConv = conversations.find((c) => c.id === selectedContact)
+  const isContactOnline = selectedConv?.contact
+    ? isOnlineFromLastLogin(selectedConv.contact.lastLogin)
+    : false
 
   return (
-    <div
-      className={cn(
-        "h-[600px] flex rounded-lg overflow-hidden border",
-        shell ? "border-white/60 bg-white/45 backdrop-blur-md" : "border-gray-200 bg-white",
-      )}
-    >
-      {/* Conversations Sidebar */}
-      <div className={cn("w-1/3 flex flex-col border-r", shell ? "border-white/50" : "border-gray-200")}>
-        {/* Header */}
-        <div className={cn("p-4 border-b", shell ? "border-white/50 bg-white/35 backdrop-blur-sm" : "border-gray-200 bg-gray-50")}>
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-              <MessageCircle className="w-5 h-5" />
-              Chats
-            </h3>
-            <Dialog open={showNewChat} onOpenChange={setShowNewChat}>
-              <DialogTrigger asChild>
-                <Button size="sm" className={cn("h-8 w-8 p-0", shell && exBtnPrimary)} aria-label="Start new chat">
-                  <Plus className="w-4 h-4" />
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-md" aria-describedby="start-new-chat-desc">
-                <DialogHeader>
-                  <DialogTitle className="flex items-center gap-2">
-                    <Users className="w-5 h-5" />
-                    Start New Chat
-                  </DialogTitle>
-                  <DialogDescription id="start-new-chat-desc">
-                    Choose a connection to start a conversation.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                    <Input
-                      placeholder="Search connections..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-10"
-                      aria-label="Search connections"
-                    />
-                  </div>
-                  <ScrollArea className="h-64">
-                    <div className="space-y-2">
-                      {filteredConnections.map((connection) => (
-                        <div
-                          key={connection.id}
-                          className={cn(
-                            "flex items-center gap-3 rounded-lg p-3 cursor-pointer",
-                            shell ? "hover:bg-white/40" : "hover:bg-gray-50",
-                          )}
-                          onClick={() => startNewChat(connection)}
-                          onKeyPress={(e) => e.key === 'Enter' && startNewChat(connection)}
-                          tabIndex={0}
-                          role="button"
-                          aria-label={`Start chat with ${connection.firstName} ${connection.lastName}`}
-                        >
-                          <div className="relative">
-                            <Image
-                              src={connection.avatar || "/city/c4.jpg"}
-                              alt={`${connection.firstName} ${connection.lastName}`}
-                              width={40}
-                              height={40}
-                              className="rounded-full"
-                            />
-                            {connection.isOnline && (
-                              <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 border-2 border-white rounded-full" />
-                            )}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <p className="font-medium text-sm text-gray-900 truncate">
-                                {connection.firstName} {connection.lastName}
-                              </p>
-                              <Badge className={`text-xs px-1.5 py-0.5 ${getRoleBadgeColor(connection.role)}`}>
-                                {connection.role}
-                              </Badge>
-                            </div>
-                            <p className="text-xs text-gray-500 truncate">{connection.company}</p>
-                          </div>
-                        </div>
-                      ))}
-                      {filteredConnections.length === 0 && (
-                        <div className="text-center py-8 text-gray-500">
-                          <Users className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-                          <p className="text-sm">No connections found</p>
-                        </div>
-                      )}
-                    </div>
-                  </ScrollArea>
-                </div>
-              </DialogContent>
-            </Dialog>
-          </div>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <Input
-              placeholder="Search chats..."
-              className="pl-10 h-9"
-              aria-label="Search chats"
-            />
-          </div>
-        </div>
-
-        {/* Conversations List */}
-        <ScrollArea className="flex-1">
-          {loading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
-              <span className="sr-only">Loading conversations</span>
-            </div>
-          ) : conversations.length === 0 ? (
-            <div className="text-center py-8 px-4">
-              <MessageCircle className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-              <p className="text-sm text-gray-500 mb-2">No conversations yet</p>
-              <p className="text-xs text-gray-400">Start a new chat to begin messaging</p>
-            </div>
-          ) : (
-            <div className="divide-y">
-              {conversations.map((conversation) => (
-                <div
-                  key={conversation.id}
-                  className={cn(
-                    "group relative cursor-pointer p-3",
-                    shell ? "hover:bg-white/35" : "hover:bg-gray-50",
-                    selectedContact === conversation.id
-                      ? shell
-                        ? "border-r-2 border-[#8E54E9] bg-[#8E54E9]/10"
-                        : "border-r-2 border-[#8E54E9] bg-[#8E54E9]/10"
-                      : "",
-                  )}
-                >
-                  <div
-                    className="flex items-start gap-3"
-                    onClick={() => setSelectedContact(conversation.id)}
-                    onKeyPress={(e) => e.key === "Enter" && setSelectedContact(conversation.id)}
-                    tabIndex={0}
-                    role="button"
-                    aria-label={`Open conversation with ${conversation.contact?.firstName} ${conversation.contact?.lastName}`}
-                  >
-                    <div className="relative shrink-0">
-                      <Image
-                        src={conversation.contact?.avatar || "/city/c4.jpg"}
-                        alt="Contact"
-                        width={40}
-                        height={40}
-                        className="rounded-full"
-                      />
-                      {isOnlineFromLastLogin(conversation.contact?.lastLogin) && (
-                        <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full" title="Online" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <p className="font-medium text-sm text-gray-900 truncate">
-                          {conversation.contact?.firstName} {conversation.contact?.lastName}
-                        </p>
-                        <span className="text-xs text-gray-500">{formatTime(conversation.lastMessageTime)}</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <p className="text-sm text-gray-600 truncate">
-                          {conversation.lastMessage || "No messages yet"}
-                        </p>
-                        {conversation.unreadCount > 0 && (
-                          <Badge
-                            className={cn(
-                              "flex h-5 w-5 items-center justify-center rounded-full p-0 text-xs text-white",
-                              shell ? "bg-gradient-to-r from-[#8E54E9] to-[#4776E6]" : "bg-[#8E54E9]",
-                            )}
-                          >
-                            {conversation.unreadCount}
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  {/* Delete button for conversations */}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="absolute top-2 right-2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setDeleteConversationId(conversation.id)
-                    }}
-                    aria-label="Delete conversation"
-                  >
-                    <X className="w-3 h-3 text-gray-400 hover:text-red-500" />
-                  </Button>
-                </div>
-              ))}
-            </div>
-          )}
-        </ScrollArea>
-      </div>
-
-      {/* Chat Area - flex column so messages scroll and input stays at bottom */}
-      <div className="flex-1 flex flex-col min-h-0">
-        {selectedContact && selectedContactInfo ? (
-          <>
-            {/* Chat Header */}
-            <div className={cn("shrink-0 border-b p-4", shell ? "border-white/50 bg-white/35 backdrop-blur-sm" : "border-gray-200 bg-gray-50")}>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="relative shrink-0">
-                    <Image
-                      src={selectedContactInfo.avatar || "/city/c4.jpg"}
-                      alt={`${selectedContactInfo.firstName} ${selectedContactInfo.lastName}`}
-                      width={40}
-                      height={40}
-                      className="rounded-full"
-                    />
-                    {(() => {
-                      const conv = conversations.find((c) => c.id === selectedContact)
-                      const online = conv?.contact ? isOnlineFromLastLogin(conv.contact.lastLogin) : false
-                      return online ? <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full" title="Online" /> : null
-                    })()}
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-gray-900">
-                      {selectedContactInfo.firstName} {selectedContactInfo.lastName}
-                    </h4>
-                    <div className="flex items-center gap-2">
-                      <Badge className={`text-xs ${getRoleBadgeColor(selectedContactInfo.role)}`}>
-                        {selectedContactInfo.role}
-                      </Badge>
-                      {(() => {
-                        const conv = conversations.find((c) => c.id === selectedContact)
-                        const online = conv?.contact ? isOnlineFromLastLogin(conv.contact.lastLogin) : false
-                        return (
-                          <span className={`text-sm ${online ? "text-green-600" : "text-gray-500"}`}>
-                            {online ? "Online" : "Offline"}
-                          </span>
-                        )
-                      })()}
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button variant="ghost" size="sm" aria-label="Call">
-                    <Phone className="w-4 h-4" />
-                  </Button>
-                  <Button variant="ghost" size="sm" aria-label="Video call">
-                    <Video className="w-4 h-4" />
-                  </Button>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm" aria-label="More options">
-                        <MoreVertical className="w-4 h-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem
-                        className="text-red-600 focus:text-red-600"
-                        onClick={() => setDeleteConversationId(selectedContact)}
-                      >
-                        <Trash2 className="w-4 h-4 mr-2" />
-                        Delete Conversation
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              </div>
-            </div>
-
-            {/* Messages - scrollable, left/right alignment: sent = right, received = left */}
-            <ScrollArea className="flex-1 min-h-0 p-4">
-              {loading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
-                  <span className="sr-only">Loading messages</span>
-                </div>
-              ) : messages.length === 0 ? (
-                <div className="text-center py-8">
-                  <MessageCircle className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                  <p className="text-sm text-gray-500">No messages yet</p>
-                  <p className="text-xs text-gray-400">Send a message to start the conversation</p>
-                </div>
-              ) : (
-                <div className="space-y-3 flex flex-col">
-                  {messages.map((message) => {
-                    const isSent = message.senderId === organizerId
-                    return (
-                    <div
-                      key={message.id}
-                      className={`group flex w-full ${isSent ? "justify-end pl-8" : "justify-start pr-8"}`}
-                    >
-                      <div className={`relative max-w-[85%] sm:max-w-md ${isSent ? "order-2" : ""}`}>
-                        <div
-                          className={cn(
-                            "rounded-lg px-4 py-2",
-                            message.senderId === organizerId
-                              ? shell
-                                ? "bg-gradient-to-r from-[#8E54E9] to-[#4776E6] text-white"
-                                : "bg-[#8E54E9] text-white"
-                              : "bg-gray-100 text-gray-900",
-                          )}
-                        >
-                          <p className="text-sm break-words">{message.content}</p>
-                          <div
-                            className={cn(
-                              "mt-1 flex items-center justify-end gap-1",
-                              message.senderId === organizerId
-                                ? shell
-                                  ? "text-white/80"
-                                  : "text-white/85"
-                                : "text-gray-500",
-                            )}
-                          >
-                            <span className="text-xs">{formatTime(message.createdAt)}</span>
-                            {isSent &&
-                              (message.isRead ?
-                                <CheckCheck className="w-3 h-3" aria-label="Message read" /> :
-                                <Check className="w-3 h-3" aria-label="Message sent" />)}
-                          </div>
-                        </div>
-                        {/* Delete button for messages */}
-                        {isSent && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="absolute -top-2 -left-8 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                            onClick={() => setDeleteMessageId(message.id)}
-                            aria-label="Delete message"
-                          >
-                            <Trash2 className="w-3 h-3 text-gray-400 hover:text-red-500" />
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  )})}
-                  <div ref={messagesEndRef} />
-                </div>
-              )}
-            </ScrollArea>
-
-            {/* Message Input - fixed at bottom */}
-            <div className={cn("shrink-0 border-t p-4", shell ? "border-white/50 bg-white/30 backdrop-blur-sm" : "border-gray-200 bg-white")}>
-              <div className="flex items-center gap-2">
-                <Input
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  placeholder="Type a message..."
-                  onKeyPress={(e) => e.key === "Enter" && !e.shiftKey && sendMessage()}
-                  disabled={sending}
-                  aria-label="Type a message"
-                />
-                <Button onClick={sendMessage} disabled={!newMessage.trim() || sending} className={cn(shell && exBtnPrimary)} aria-label="Send message">
-                  {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                </Button>
-              </div>
-            </div>
-          </>
-        ) : (
-          <div className={cn("flex flex-1 items-center justify-center", shell ? "bg-white/20" : "bg-gray-50")}>
-            <div className="text-center">
-              <MessageCircle className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Select a conversation</h3>
-              <p className="text-gray-500 mb-4">Choose from your existing conversations or start a new one</p>
-              <Button onClick={() => setShowNewChat(true)} className={cn(shell && exBtnPrimary)} aria-label="Start new chat">
-                <Plus className="w-4 h-4 mr-2" />
-                Start New Chat
-              </Button>
-            </div>
-          </div>
-        )}
-      </div>
-
+    <>
+    <MessagesInbox
+      surface={surface}
+      organizerId={organizerId}
+      conversations={conversations}
+      filteredConversations={filteredConversations}
+      selectedContact={selectedContact}
+      onSelectContact={setSelectedContact}
+      onClearContact={() => setSelectedContact(null)}
+      messages={messages}
+      newMessage={newMessage}
+      onNewMessageChange={setNewMessage}
+      onSendMessage={sendMessage}
+      sending={sending}
+      loading={loading}
+      chatListSearch={chatListSearch}
+      onChatListSearchChange={setChatListSearch}
+      connectionSearch={searchQuery}
+      onConnectionSearchChange={setSearchQuery}
+      filteredConnections={filteredConnections}
+      showNewChat={showNewChat}
+      onShowNewChatChange={setShowNewChat}
+      onStartNewChat={startNewChat}
+      selectedContactInfo={selectedContactInfo}
+      isContactOnline={isContactOnline}
+      isConversationOnline={isOnlineFromLastLogin}
+      formatTime={formatTime}
+      onDeleteMessage={setDeleteMessageId}
+      onDeleteConversation={setDeleteConversationId}
+      messagesEndRef={messagesEndRef}
+    />
       {/* Delete message confirmation dialog */}
       <AlertDialog open={!!deleteMessageId} onOpenChange={() => setDeleteMessageId(null)}>
         <AlertDialogContent>
@@ -877,7 +498,7 @@ export default function MessagesCenter({ organizerId, surface = "default" }: Mes
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </>
   )
 }
 

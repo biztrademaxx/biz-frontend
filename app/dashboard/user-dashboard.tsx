@@ -225,7 +225,7 @@ export function UserDashboard({ userId }: UserDashboardProps) {
       case "connections":
         return <ConnectionsSection userId={userId} />
       case "messages":
-        return <MessagesSection organizerId={userId} />
+        return <MessagesSection organizerId={userId} surface="visitor" />
       case "settings":
         return <VisitorSettings  />
       case "travel":
