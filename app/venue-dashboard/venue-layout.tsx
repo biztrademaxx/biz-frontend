@@ -782,33 +782,7 @@ function VenueDashboardHome({ venueData, setActiveSection }: { venueData: VenueD
                               <p className="text-[11px] text-[#475569]">{booking.notes}</p>
                             </div>
                           )}
-                          {status === 'PENDING' && (
-                            <div className="flex gap-2 pt-2">
-                              <Button
-                                size="sm"
-                                className="rounded-lg bg-[#16A34A] hover:bg-[#15803D] text-white text-xs h-7"
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  updateBookingStatus(bookingId, 'CONFIRMED')
-                                }}
-                              >
-                                <CheckCircle className="w-3 h-3 mr-1" />
-                                Approve
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="rounded-lg border-[#FECACA] text-[#DC2626] hover:bg-[#FEF2F2] text-xs h-7"
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  updateBookingStatus(bookingId, 'CANCELLED')
-                                }}
-                              >
-                                <X className="w-3 h-3 mr-1" />
-                                Decline
-                              </Button>
-                            </div>
-                          )}
+                          
                         </div>
                       )}
                     </div>
