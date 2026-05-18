@@ -872,33 +872,7 @@ case "view-feedback":
                 </button>
                 </div>
 
-                {!isSidebarCollapsed && (
-                  <div className="mt-3 shrink-0 rounded-2xl border border-white/75 bg-white/50 p-3 shadow-[0_6px_28px_rgba(142,84,233,0.11)] backdrop-blur-md">
-                    <div
-                      className="mb-3 flex h-14 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-[#8E54E9]/15 via-white/50 to-[#4776E6]/14"
-                      aria-hidden
-                    >
-                      <div className="flex items-end gap-1">
-                        <span className="h-5 w-2 rounded-t-md bg-[#8E54E9]" />
-                        <span className="h-10 w-2 rounded-t-md bg-[#4776E6]" />
-                        <span className="h-7 w-2 rounded-t-md bg-[#a855f7]" />
-                        <span className="h-4 w-2 rounded-t-md bg-[#818cf8]" />
-                      </div>
-                    </div>
-                    <p className="text-sm font-bold leading-tight text-slate-800">Analysis report</p>
-                    <p className="mt-1 text-xs leading-snug text-slate-600">Yearly detail & booth metrics</p>
-                    <Button
-                      type="button"
-                      className="mt-3 h-9 w-full rounded-full bg-gradient-to-r from-[#8E54E9] to-[#4776E6] text-xs font-semibold text-white shadow-md shadow-[#8E54E9]/25 hover:opacity-[0.96]"
-                      onClick={() => {
-                        setActiveSection("analytics")
-                        setSidebarOpen(false)
-                      }}
-                    >
-                      Get report
-                    </Button>
-                  </div>
-                )}
+                
 
                 <div className="mt-2 shrink-0 space-y-1.5 border-t border-[#8E54E9]/12 pt-2">
                   <Button

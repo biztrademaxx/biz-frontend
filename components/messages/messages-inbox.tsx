@@ -14,8 +14,8 @@ import {
   CheckCheck,
   Check,
   Loader2,
-  Trash2,
-  X,
+  // Trash2,
+  // X,
   ArrowLeft,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -353,7 +353,7 @@ export function MessagesInbox(props: MessagesInboxProps) {
                         </div>
                       </div>
                     </button>
-                    <Button
+                    {/* <Button
                       variant="ghost"
                       size="icon"
                       className="absolute right-1 top-1 h-7 w-7 opacity-0 transition-opacity group-hover:opacity-100"
@@ -364,7 +364,7 @@ export function MessagesInbox(props: MessagesInboxProps) {
                       aria-label="Delete conversation"
                     >
                       <X className="h-3.5 w-3.5 text-muted-foreground hover:text-destructive" />
-                    </Button>
+                    </Button> */}
                   </div>
                 )
               })}
@@ -421,7 +421,7 @@ export function MessagesInbox(props: MessagesInboxProps) {
                   <Button variant="ghost" size="icon" className="hidden h-9 w-9 rounded-full sm:inline-flex" aria-label="Video call">
                     <Video className="h-4 w-4" />
                   </Button>
-                  <DropdownMenu>
+                  {/* <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full" aria-label="More options">
                         <MoreVertical className="h-4 w-4" />
@@ -436,7 +436,7 @@ export function MessagesInbox(props: MessagesInboxProps) {
                         Delete conversation
                       </DropdownMenuItem>
                     </DropdownMenuContent>
-                  </DropdownMenu>
+                  </DropdownMenu> */}
                 </div>
               </div>
             </header>
@@ -485,7 +485,7 @@ export function MessagesInbox(props: MessagesInboxProps) {
                                   ))}
                               </div>
                             </div>
-                            {isSent && (
+                            {/* {isSent && (
                               <Button
                                 variant="ghost"
                                 size="icon"
@@ -495,7 +495,7 @@ export function MessagesInbox(props: MessagesInboxProps) {
                               >
                                 <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-destructive" />
                               </Button>
-                            )}
+                            )} */}
                           </div>
                         </div>
                       )
