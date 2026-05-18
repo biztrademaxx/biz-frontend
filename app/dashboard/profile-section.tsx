@@ -38,6 +38,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import Link from "next/link"
 import { apiFetch } from "@/lib/api"
 import { eventPublicPath } from "@/lib/event-path"
+import { formatEventCardMetaLine } from "@/lib/event-card-meta"
 import { cn } from "@/lib/utils"
 import { useDashboard } from "@/contexts/dashboard-context"
 
@@ -97,12 +98,18 @@ interface FormData {
 }
 
 interface Event {
-  tags: any
+  tags?: unknown
   id: string
   title: string
-  description: string
-  date: string
-  organizer?: string
+  description?: string
+  date?: string
+  startDate?: string
+  endDate?: string
+  city?: string
+  state?: string
+  location?: string | { city?: string; state?: string; country?: string; address?: string }
+  venue?: string | { venueName?: string; venueCity?: string; venueState?: string; venueCountry?: string }
+  organizer?: string | Record<string, unknown>
 }
 
 export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSectionProps) {
@@ -823,7 +830,9 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
                       : `No events found matching "${selectedEventFilter}"`}
                   </p>
                 ) : (
-                  displayedEvents.map((event) => (
+                  displayedEvents.map((event) => {
+                    const metaLine = formatEventCardMetaLine(event)
+                    return (
                     <Link
                       key={event.id}
                       href={eventPublicPath(event)}
@@ -831,11 +840,10 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
                     >
                       <p className="truncate text-sm font-semibold text-slate-900">{event.title}</p>
                       <p className="line-clamp-2 text-xs text-slate-600">{event.description}</p>
-                      <p className="mt-1 text-xs text-slate-500">
-                        {new Date(event.date).toLocaleDateString()} {event.organizer && `• ${event.organizer}`}
-                      </p>
+                      {metaLine ? <p className="mt-1 text-xs text-slate-500">{metaLine}</p> : null}
                     </Link>
-                  ))
+                    )
+                  })
                 )}
               </CardContent>
             </Card>

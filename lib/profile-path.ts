@@ -63,6 +63,20 @@ export function getOrganizerDashboardPath(userId: string, data: ProfilePathInput
   return `/organizer-dashboard/${userId}`;
 }
 
+/** Logged-in visitor dashboard URL: full name slug when possible, else UUID. */
+export function getVisitorDashboardPath(userId: string, data: ProfilePathInput): string {
+  const segment = data.publicSlug?.trim() || deriveSlug("user", data);
+  if (segment) {
+    return `/dashboard/${encodeURIComponent(segment)}`;
+  }
+  return `/dashboard/${userId}`;
+}
+
+/** Resolves `/dashboard/[segment]` when segment is a name slug (not the user id). */
+export function visitorDashboardSegmentForUser(data: ProfilePathInput): string {
+  return slugifyPublicProfile(`${data.firstName ?? ""} ${data.lastName ?? ""}`);
+}
+
 /** Logged-in exhibitor dashboard URL: company / org slug, else full name, else UUID. */
 export function getExhibitorDashboardPath(userId: string, data: ProfilePathInput): string {
   const segment = data.publicSlug?.trim() || deriveSlug("exhibitor", data);

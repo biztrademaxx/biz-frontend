@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react"
 import { useAuth } from "@/hooks/use-auth"
 import { apiFetch, clearTokens, markLogoutSuccessBanner } from "@/lib/api"
-import { useRouter } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
+import { getVisitorDashboardPath } from "@/lib/profile-path"
 import { Button } from "@/components/ui/button"
 import {
   Loader2,
@@ -62,6 +63,7 @@ interface UserDashboardProps {
 export function UserDashboard({ userId }: UserDashboardProps) {
   const { userId: authUserId, loading: authLoading } = useAuth({ requireAuth: true })
   const router = useRouter()
+  const pathname = usePathname()
   const { toast } = useToast()
   const { activeSection, setActiveSection } = useDashboard()
 
@@ -76,10 +78,27 @@ export function UserDashboard({ userId }: UserDashboardProps) {
 
   useEffect(() => {
     if (authLoading || !userId) return
-
     fetchUserData()
-    fetchInterestedEvents()
   }, [authLoading, userId])
+
+  const resolvedUserId = userData?.id ?? userId
+
+  useEffect(() => {
+    if (!userData?.id) return
+    fetchInterestedEvents(userData.id)
+  }, [userData?.id])
+
+  useEffect(() => {
+    if (!userData?.id) return
+    const canonical = getVisitorDashboardPath(userData.id, {
+      publicSlug: userData.publicSlug,
+      firstName: userData.firstName,
+      lastName: userData.lastName,
+    })
+    if (pathname && canonical !== pathname) {
+      router.replace(canonical)
+    }
+  }, [userData?.id, userData?.publicSlug, userData?.firstName, userData?.lastName, pathname, router])
 
   // Close mobile sidebar when switching sections
   useEffect(() => {
@@ -113,9 +132,9 @@ export function UserDashboard({ userId }: UserDashboardProps) {
     }
   }
 
-  const fetchInterestedEvents = async () => {
+  const fetchInterestedEvents = async (id: string) => {
     try {
-      const data = await apiFetch<{ events?: any[]; data?: any[] }>(`/api/users/${userId}/interested-events`, { auth: true })
+      const data = await apiFetch<{ events?: any[]; data?: any[] }>(`/api/users/${id}/interested-events`, { auth: true })
       const list = data.events ?? data.data ?? []
       // Ensure unique events to prevent duplicate key errors
       const uniqueEvents = Array.isArray(list)
@@ -208,29 +227,29 @@ export function UserDashboard({ userId }: UserDashboardProps) {
       case "profile":
         return <ProfileSection userData={userData} onUpdate={handleProfileUpdate} organizerId={""} />
       case "events":
-        return <EventsSection userId={userId} />
+        return <EventsSection userId={resolvedUserId} />
       case "past-events":
-        return <PastEvents userId={userId} />
+        return <PastEvents userId={resolvedUserId} />
       case "wishlist":
-        return <SavedEvents userId={userId} />
+        return <SavedEvents userId={resolvedUserId} />
       case "upcoming-events":
-        return <UpcomingEvents events={interestedEvents} userId={userId} />
+        return <UpcomingEvents events={interestedEvents} userId={resolvedUserId} />
       case "my-appointments":
-        return <MyAppointments userId={userId} />
+        return <MyAppointments userId={resolvedUserId} />
       case "exhibitor-schedule":
-        return <ExhibitorSchedule userId={userId} />
+        return <ExhibitorSchedule userId={resolvedUserId} />
       case "schedule":
-        return <Schedule userId={userId} />
+        return <Schedule userId={resolvedUserId} />
       case "favourites":
         return <Favourites />
       case "recommended-events":
-        return <RecommendedEvents userId={userId} interests={userInterests} />
+        return <RecommendedEvents userId={resolvedUserId} interests={userInterests} />
       case "Suggested":
         return <Recommendations />
       case "connections":
-        return <ConnectionsSection userId={userId} />
+        return <ConnectionsSection userId={resolvedUserId} />
       case "messages":
-        return <MessagesSection organizerId={userId} surface="visitor" />
+        return <MessagesSection organizerId={resolvedUserId} surface="visitor" />
       case "settings":
         return <VisitorSettings  />
       case "travel":
