@@ -38,7 +38,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import Link from "next/link"
 import { apiFetch } from "@/lib/api"
 import { eventPublicPath } from "@/lib/event-path"
-import { formatEventCardMetaLine } from "@/lib/event-card-meta"
+import { EVENT_CARD_PLACEHOLDER_IMAGE, formatEventCardMetaLine, getEventCardImageUrl } from "@/lib/event-card-meta"
 import { cn } from "@/lib/utils"
 import { useDashboard } from "@/contexts/dashboard-context"
 
@@ -98,15 +98,20 @@ interface FormData {
 }
 
 interface Event {
-  tags?: unknown
+  tags?: string[]
   id: string
+  slug?: string | null
   title: string
   description?: string
+  shortDescription?: string
   date?: string
   startDate?: string
   endDate?: string
   city?: string
   state?: string
+  bannerImage?: string | null
+  thumbnailImage?: string | null
+  images?: unknown
   location?: string | { city?: string; state?: string; country?: string; address?: string }
   venue?: string | { venueName?: string; venueCity?: string; venueState?: string; venueCountry?: string }
   organizer?: string | Record<string, unknown>
@@ -832,16 +837,35 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
                 ) : (
                   displayedEvents.map((event) => {
                     const metaLine = formatEventCardMetaLine(event)
+                    const imageUrl = getEventCardImageUrl(event)
                     return (
-                    <Link
-                      key={event.id}
-                      href={eventPublicPath(event)}
-                      className="block rounded-xl border border-white/55 bg-white/40 p-3 transition-colors hover:border-[#004A96]/35 hover:bg-white/70"
-                    >
-                      <p className="truncate text-sm font-semibold text-slate-900">{event.title}</p>
-                      <p className="line-clamp-2 text-xs text-slate-600">{event.description}</p>
-                      {metaLine ? <p className="mt-1 text-xs text-slate-500">{metaLine}</p> : null}
-                    </Link>
+                      <Link
+                        key={event.id}
+                        href={eventPublicPath(event)}
+                        className="flex gap-3 overflow-hidden rounded-xl border border-white/55 bg-white/40 p-2.5 transition-colors hover:border-[#004A96]/35 hover:bg-white/70"
+                      >
+                        <div className="relative h-[4.5rem] w-[4.5rem] shrink-0 overflow-hidden rounded-lg bg-slate-100">
+                          <img
+                            src={imageUrl}
+                            alt={event.title}
+                            className="h-full w-full object-cover"
+                            loading="lazy"
+                            onError={(e) => {
+                              const target = e.currentTarget
+                              if (target.src !== EVENT_CARD_PLACEHOLDER_IMAGE) {
+                                target.src = EVENT_CARD_PLACEHOLDER_IMAGE
+                              }
+                            }}
+                          />
+                        </div>
+                        <div className="min-w-0 flex-1 py-0.5">
+                          <p className="truncate text-sm font-semibold text-slate-900">{event.title}</p>
+                          <p className="line-clamp-2 text-xs text-slate-600">
+                            {event.shortDescription || event.description}
+                          </p>
+                          {metaLine ? <p className="mt-1 truncate text-xs text-slate-500">{metaLine}</p> : null}
+                        </div>
+                      </Link>
                     )
                   })
                 )}

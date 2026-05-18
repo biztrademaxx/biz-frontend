@@ -1,4 +1,25 @@
-/** Small helpers for event list cards (date, location, organizer). */
+/** Small helpers for event list cards (date, location, organizer, image). */
+
+export const EVENT_CARD_PLACEHOLDER_IMAGE =
+  "https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=400&h=300&fit=crop"
+
+export function getEventCardImageUrl(event: {
+  thumbnailImage?: string | null
+  bannerImage?: string | null
+  images?: unknown
+}): string {
+  if (event.thumbnailImage?.trim()) return event.thumbnailImage.trim()
+  if (event.bannerImage?.trim()) return event.bannerImage.trim()
+  if (Array.isArray(event.images) && event.images.length > 0) {
+    const first = event.images[0]
+    if (typeof first === "string" && first.trim()) return first.trim()
+    if (first && typeof first === "object" && "url" in first) {
+      const url = (first as { url?: string }).url
+      if (typeof url === "string" && url.trim()) return url.trim()
+    }
+  }
+  return EVENT_CARD_PLACEHOLDER_IMAGE
+}
 
 export function formatEventCardDate(event: {
   startDate?: string | null
