@@ -393,8 +393,8 @@ export default function Navbar() {
             </div>
           </div>
 
-          <div className="hidden min-w-0 flex-1 justify-center px-2 lg:flex">
-            <div className="relative w-full max-w-md xl:max-w-lg" ref={searchRef}>
+          <div className="hidden min-w-0 flex-1 justify-center pl-4 pr-2 lg:flex lg:pl-6">
+            <div className="relative w-full max-w-xs xl:max-w-sm" ref={searchRef}>
               <div
                 className={`group flex w-full items-stretch rounded-none border transition-[border-color,box-shadow,background-color] duration-150 ${
                   showSearchResults
