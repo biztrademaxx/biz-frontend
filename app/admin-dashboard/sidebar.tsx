@@ -744,8 +744,8 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
                       onClick={() => toggleMenu(item.id)}
                       className={`flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left transition-all ${
                         isActive(item.id)
-                          ? "bg-sky-50 font-medium text-sky-700 shadow-sm ring-1 ring-sky-100/80 dark:bg-[#17F0F6]/12 dark:text-[#17F0F6] dark:ring-[#17F0F6]/25"
-                          : "text-foreground/90 hover:bg-muted/80 dark:hover:bg-sidebar-accent"
+                          ? "bg-sky-500/15 font-semibold text-sky-700 shadow-sm ring-1 ring-sky-300/40 hover:bg-sky-500/20 dark:bg-[#17F0F6]/20 dark:text-[#67F8FC] dark:ring-[#17F0F6]/40"
+                          : "text-foreground/90 hover:bg-sky-100/70 dark:hover:bg-sidebar-accent"
                       }`}
                     >
                       <div className="flex min-w-0 items-center gap-3">
@@ -770,8 +770,8 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
                             onClick={() => handleSubSectionClick(item.id, subItem.id)}
                             className={`block w-full rounded-lg px-2.5 py-2 text-left text-sm transition-colors ${
                               isSubActive(subItem.id)
-                                ? "bg-sky-50 font-medium text-sky-800 ring-1 ring-sky-100/60 dark:bg-[#17F0F6]/10 dark:text-[#17F0F6] dark:ring-[#17F0F6]/20"
-                                : "text-muted-foreground hover:bg-muted/70 hover:text-foreground"
+                                ? "bg-sky-300/12 font-semibold text-sky-800 ring-1 ring-sky-300/40 dark:bg-[#17F0F6]/16 dark:text-[#67F8FC] dark:ring-[#17F0F6]/35"
+                                : "text-muted-foreground hover:bg-sky-100/70 hover:text-foreground"
                             }`}
                           >
                             {subItem.title}
