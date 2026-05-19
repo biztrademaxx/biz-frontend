@@ -403,15 +403,15 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
       {/* Stat Cards */}
       <div className="grid grid-cols-4 gap-4 mb-8">
         {[
-          { label: "TOTAL ORGANIZERS", value: stats.total.toLocaleString(), sub: "+142 this month", subColor: "text-emerald-600" },
-          { label: "VERIFIED", value: stats.verified.toLocaleString(), sub: `${Math.round((stats.verified / Math.max(stats.total, 1)) * 100)}% verified`, subColor: "text-emerald-600" },
-          { label: "PREMIUM", value: stats.premium.toLocaleString(), sub: "+22 upgraded", subColor: "text-emerald-600" },
-          { label: "PENDING VERIFY", value: stats.pending.toLocaleString(), sub: "Needs action", subColor: "text-gray-400" },
+          { label: "TOTAL ORGANIZERS", value: stats.total.toLocaleString(), subColor: "text-emerald-600" },
+          { label: "VERIFIED", value: stats.verified.toLocaleString(), subColor: "text-emerald-600" },
+          { label: "PREMIUM", value: stats.premium.toLocaleString(), subColor: "text-emerald-600" },
+          { label: "PENDING VERIFY", value: stats.pending.toLocaleString(), subColor: "text-gray-400" },
         ].map((s) => (
           <div key={s.label} className="bg-white rounded-xl p-5 border border-gray-100">
             <p className="text-[10px] font-semibold tracking-[0.12em] uppercase text-gray-400 mb-2">{s.label}</p>
             <p className="text-3xl font-semibold text-gray-900" style={{ fontFamily: "'DM Mono', monospace" }}>{s.value}</p>
-            <p className={`text-xs mt-1 font-medium ${s.subColor}`}>{s.sub}</p>
+            {/* <p className={`text-xs mt-1 font-medium ${s.subColor}`}>{s.sub}</p> */}
           </div>
         ))}
       </div>
