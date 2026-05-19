@@ -427,3 +427,11 @@
     #ffffff;
   border-radius: 0 var(--visitor-tab-curve) var(--visitor-tab-curve) 0;
 }
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}

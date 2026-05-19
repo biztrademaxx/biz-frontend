@@ -231,19 +231,19 @@ export default function DashboardOverview({
   const chartTick = isDark ? "#8b9cb8" : "#94a3b8"
   const chartTooltipStyle: CSSProperties = isDark
     ? {
-        borderRadius: "12px",
-        border: "1px solid #2a3a5c",
-        backgroundColor: "#18193d",
-        color: "#f0f4ff",
-        fontSize: "12px",
-      }
+      borderRadius: "12px",
+      border: "1px solid #2a3a5c",
+      backgroundColor: "#18193d",
+      color: "#f0f4ff",
+      fontSize: "12px",
+    }
     : {
-        borderRadius: "12px",
-        border: "1px solid #e2e8f0",
-        backgroundColor: "#ffffff",
-        color: "#0f172a",
-        fontSize: "12px",
-      }
+      borderRadius: "12px",
+      border: "1px solid #e2e8f0",
+      backgroundColor: "#ffffff",
+      color: "#0f172a",
+      fontSize: "12px",
+    }
 
   const [stats, setStats] = useState<any[]>([])
   const [activities, setActivities] = useState<ActivityRow[]>([])
@@ -512,7 +512,7 @@ export default function DashboardOverview({
           </CardHeader>
           <CardContent className="pt-5">
             {sortedActivities.length > 0 ? (
-              <div className="relative">
+              <div className="relative max-h-[400px] overflow-y-auto scrollbar-hide">
                 {sortedActivities.map((activity, i) => {
                   const src = activity.imageUrl?.trim() || null
                   const ext = src?.startsWith("http")
@@ -598,47 +598,68 @@ export default function DashboardOverview({
           <CardHeader className="border-b border-border/60 pb-4">
             <CardTitle className="text-lg font-semibold text-foreground">Upcoming Events</CardTitle>
           </CardHeader>
-          <CardContent className="max-h-[min(420px,65vh)] space-y-3 overflow-y-auto pt-5">
-            {upcomingEvents.length > 0 ? (
-              upcomingEvents.map((ev) => {
-                const img = eventImageSrc(ev)
-                const ext = img.startsWith("http")
-                const start = ev.startDate ? new Date(ev.startDate) : null
-                const end = ev.endDate ? new Date(ev.endDate) : null
-                const dateLabel =
-                  start && end
-                    ? `${format(start, "d MMM")} – ${format(end, "d MMM yyyy")}`
-                    : start
-                      ? format(start, "d MMM yyyy")
-                      : "—"
-                return (
-                  <div
-                    key={ev.id}
-                    className="flex gap-3 rounded-2xl border border-border bg-muted/30 p-3 shadow-sm ring-1 ring-white/[0.03] dark:bg-[#122D4D]/40"
-                  >
-                    <div className="relative h-16 w-20 shrink-0 overflow-hidden rounded-xl">
-                      <Image src={img} alt="" fill className="object-cover" sizes="80px" unoptimized={ext} />
+          <CardContent className="pt-5">
+            <div className="space-y-3 max-h-[400px] overflow-y-auto scrollbar-hide">
+              {upcomingEvents.length > 0 ? (
+                upcomingEvents.map((ev) => {
+                  const img = eventImageSrc(ev)
+                  const ext = img.startsWith("http")
+                  const start = ev.startDate ? new Date(ev.startDate) : null
+                  const end = ev.endDate ? new Date(ev.endDate) : null
+                  const dateLabel =
+                    start && end
+                      ? `${format(start, "d MMM")} – ${format(end, "d MMM yyyy")}`
+                      : start
+                        ? format(start, "d MMM yyyy")
+                        : "—"
+                  return (
+                    <div
+                      key={ev.id}
+                      className="flex items-start gap-3 rounded-2xl border border-border bg-muted/30 p-3 shadow-sm ring-1 ring-white/[0.03] dark:bg-[#122D4D]/40 overflow-hidden"
+                    >
+                      <div className="relative h-16 w-20 shrink-0 overflow-hidden rounded-xl">
+                        <Image
+                          src={img}
+                          alt=""
+                          fill
+                          className="object-cover"
+                          sizes="80px"
+                          unoptimized={ext}
+                        />
+                      </div>
+
+                      <div className="flex-1 min-w-0 overflow-hidden">
+                        <p className="text-sm font-semibold leading-snug text-foreground break-words line-clamp-2">
+                          {ev.title}
+                        </p>
+
+                        <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+                          <CalendarDays className="h-3.5 w-3.5 shrink-0 text-sky-500" />
+                          {dateLabel}
+                        </p>
+
+                        <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
+                          <MapPin className="h-3.5 w-3.5 shrink-0 text-violet-500" />
+                          <span className="truncate">{formatLocation(ev)}</span>
+                        </p>
+
+                        <Badge
+                          variant="outline"
+                          className={cn(
+                            "mt-2 text-[10px] font-semibold",
+                            statusBadgeClass(ev.status)
+                          )}
+                        >
+                          {formatEventStatusLabel(ev.status)}
+                        </Badge>
+                      </div>
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="line-clamp-2 text-sm font-semibold leading-snug text-foreground">{ev.title}</p>
-                      <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
-                        <CalendarDays className="h-3.5 w-3.5 shrink-0 text-sky-500" />
-                        {dateLabel}
-                      </p>
-                      <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
-                        <MapPin className="h-3.5 w-3.5 shrink-0 text-violet-500" />
-                        <span className="truncate">{formatLocation(ev)}</span>
-                      </p>
-                      <Badge variant="outline" className={cn("mt-2 text-[10px] font-semibold", statusBadgeClass(ev.status))}>
-                        {formatEventStatusLabel(ev.status)}
-                      </Badge>
-                    </div>
-                  </div>
-                )
-              })
-            ) : (
-              <p className="text-sm text-muted-foreground">No upcoming events in the schedule.</p>
-            )}
+                  )
+                })
+              ) : (
+                <p className="text-sm text-muted-foreground">No upcoming events in the schedule.</p>
+              )}
+            </div>
           </CardContent>
         </Card>
 
@@ -718,7 +739,7 @@ export default function DashboardOverview({
             <CardTitle className="text-lg font-semibold text-foreground">Top performing events</CardTitle>
             <p className="text-xs font-normal text-muted-foreground">By current attendees</p>
           </CardHeader>
-          <CardContent className="space-y-4 pt-5">
+          <CardContent className="space-y-4 pt-5 max-h-[400px] overflow-y-auto scrollbar-hide">
             {topEvents.length > 0 ? (
               topEvents.map((te) => (
                 <div key={te.id}>
