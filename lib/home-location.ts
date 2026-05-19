@@ -1,5 +1,67 @@
+import { NEARBY_COUNTRY_CODES } from "@/lib/browse-geo"
+
 export const HOME_CITY_COOKIE = "biz_home_city"
 export const HOME_CITY_STORAGE_KEY = "biz_home_city"
+/** Set when city/country was auto-detected from IP (not manually chosen). */
+export const HOME_LOCATION_AUTO_COOKIE = "biz_home_auto"
+
+/** Common venue-country strings / ISO codes for regional matching. */
+export const ISO_COUNTRY_ALIASES: Record<string, string[]> = {
+  IN: ["india", "in", "bharat"],
+  AE: ["uae", "united arab emirates", "dubai", "abu dhabi", "ae"],
+  SA: ["saudi arabia", "saudi", "sa", "riyadh"],
+  QA: ["qatar", "qa", "doha"],
+  SG: ["singapore", "sg"],
+  US: ["united states", "usa", "u.s.", "america", "us"],
+  GB: ["united kingdom", "uk", "britain", "england", "gb"],
+  DE: ["germany", "deutschland", "de"],
+  FR: ["france", "fr"],
+  NL: ["netherlands", "holland", "nl"],
+  IT: ["italy", "it"],
+  ES: ["spain", "es"],
+  CH: ["switzerland", "ch"],
+  AT: ["austria", "at"],
+  CN: ["china", "cn"],
+  JP: ["japan", "jp"],
+  AU: ["australia", "au"],
+  CA: ["canada", "ca"],
+  MX: ["mexico", "mx"],
+  BR: ["brazil", "br"],
+  KR: ["south korea", "korea", "kr"],
+  MY: ["malaysia", "my"],
+  TH: ["thailand", "th"],
+  ID: ["indonesia", "id"],
+  PH: ["philippines", "ph"],
+  HK: ["hong kong", "hk"],
+  IE: ["ireland", "ie"],
+  BE: ["belgium", "be"],
+  PL: ["poland", "pl"],
+  TR: ["turkey", "tr"],
+  ZA: ["south africa", "za"],
+  EG: ["egypt", "eg"],
+}
+
+export type ResolvedHomeLocation = {
+  city: string | null
+  countryCode: string | null
+  countryName: string | null
+  nearbyCountryCodes: string[]
+  /** Passed to backend `?location=` (city preferred, else country name). */
+  locationQuery: string | null
+  /** Human label for section headings / navbar. */
+  displayLabel: string | null
+  isManual: boolean
+}
+
+export const EMPTY_HOME_LOCATION: ResolvedHomeLocation = {
+  city: null,
+  countryCode: null,
+  countryName: null,
+  nearbyCountryCodes: [],
+  locationQuery: null,
+  displayLabel: null,
+  isManual: false,
+}
 
 /** Case-insensitive partial match (e.g. "Bengaluru" matches "Bengaluru, Karnataka"). */
 export function cityMatches(value: string | null | undefined, city: string): boolean {
@@ -10,12 +72,73 @@ export function cityMatches(value: string | null | undefined, city: string): boo
   return hay.includes(needle) || needle.includes(hay)
 }
 
+export function countryMatchesValue(
+  value: string | null | undefined,
+  needles: string[],
+): boolean {
+  const hay = (value ?? "").trim().toLowerCase()
+  if (!hay || needles.length === 0) return false
+  return needles.some((n) => n && (hay.includes(n) || n.includes(hay)))
+}
+
+/** Build lowercase needles for country / nearby-region venue matching. */
+export function countryMatchNeedles(loc: ResolvedHomeLocation): string[] {
+  const out = new Set<string>()
+  if (loc.countryName?.trim()) out.add(loc.countryName.trim().toLowerCase())
+  if (loc.countryCode?.trim()) {
+    const cc = loc.countryCode.trim().toUpperCase()
+    out.add(cc.toLowerCase())
+    for (const alias of ISO_COUNTRY_ALIASES[cc] ?? []) out.add(alias)
+    for (const nearby of loc.nearbyCountryCodes) {
+      out.add(nearby.toLowerCase())
+      for (const alias of ISO_COUNTRY_ALIASES[nearby] ?? []) out.add(alias)
+    }
+  }
+  return [...out]
+}
+
+export function buildResolvedHomeLocation(input: {
+  city?: string | null
+  countryCode?: string | null
+  countryName?: string | null
+  isManual?: boolean
+}): ResolvedHomeLocation {
+  const city = input.city?.trim() || null
+  const countryCode = input.countryCode?.trim().toUpperCase() || null
+  const countryName = input.countryName?.trim() || null
+  const nearbyCountryCodes = countryCode ? (NEARBY_COUNTRY_CODES[countryCode] ?? []) : []
+  const locationQuery = city || countryName || null
+  const displayLabel =
+    city ||
+    countryName ||
+    (countryCode && (ISO_COUNTRY_ALIASES[countryCode]?.[0] ?? countryCode)) ||
+    null
+  return {
+    city,
+    countryCode,
+    countryName,
+    nearbyCountryCodes,
+    locationQuery,
+    displayLabel,
+    isManual: input.isManual ?? false,
+  }
+}
+
 export function getEventCityLabel(event: {
   city?: string | null
   venue?: { venueCity?: string | null; venueState?: string | null; venueCountry?: string | null } | null
 }): string {
   if (event.city?.trim()) return event.city.trim()
   if (event.venue?.venueCity?.trim()) return event.venue.venueCity.trim()
+  return ""
+}
+
+export function getEventCountryLabel(event: {
+  venue?: { venueCountry?: string | null } | null
+  country?: string | null
+}): string {
+  if (event.venue?.venueCountry?.trim()) return event.venue.venueCountry.trim()
+  if (event.country?.trim()) return event.country.trim()
   return ""
 }
 
@@ -30,6 +153,28 @@ export function filterByHomeCity<T>(
   return items.filter((item) => cityMatches(getCity(item), c))
 }
 
+/** City first, then country + nearby region (e.g. Germany → DE + NL, FR, AT, CH). */
+export function filterByHomeLocation<T>(
+  items: T[],
+  loc: ResolvedHomeLocation,
+  getters: {
+    getCity: (item: T) => string | null | undefined
+    getCountry: (item: T) => string | null | undefined
+  },
+): T[] {
+  if (!loc.locationQuery) return items
+
+  if (loc.city) {
+    const byCity = filterByHomeCity(items, loc.city, getters.getCity)
+    if (byCity.length > 0) return byCity
+  }
+
+  const needles = countryMatchNeedles(loc)
+  if (needles.length === 0) return items
+
+  return items.filter((item) => countryMatchesValue(getters.getCountry(item), needles))
+}
+
 export function homeCityQueryParam(city: string | null | undefined): string {
   const c = city?.trim()
   if (!c) return ""
@@ -42,11 +187,30 @@ export function homeCityLocationQuery(city: string | null | undefined): string {
   return `location=${encodeURIComponent(c)}`
 }
 
+export function homeLocationQueryParam(loc: ResolvedHomeLocation): string {
+  const q = loc.locationQuery?.trim()
+  if (!q) return ""
+  return `&location=${encodeURIComponent(q)}`
+}
+
+export function homeLocationQueryString(loc: ResolvedHomeLocation): string {
+  const q = loc.locationQuery?.trim()
+  if (!q) return ""
+  return `location=${encodeURIComponent(q)}`
+}
+
 export function getTrendingEventCityLabel(event: {
   venue?: { venueCity?: string | null } | null
   location?: { city?: string | null } | null
 }): string {
   return event.venue?.venueCity?.trim() || event.location?.city?.trim() || ""
+}
+
+export function getTrendingEventCountryLabel(event: {
+  venue?: { venueCountry?: string | null } | null
+  location?: { country?: string | null } | null
+}): string {
+  return event.venue?.venueCountry?.trim() || event.location?.country?.trim() || ""
 }
 
 export function getFeaturedEventCityLabel(event: {
@@ -55,10 +219,22 @@ export function getFeaturedEventCityLabel(event: {
   return event.venue?.venueCity?.trim() || ""
 }
 
+export function getFeaturedEventCountryLabel(event: {
+  venue?: { venueCountry?: string | null } | null
+}): string {
+  return event.venue?.venueCountry?.trim() || ""
+}
+
 export function getHeroSlideshowCityLabel(event: {
   venue?: { venueCity?: string | null } | null
 }): string {
   return event.venue?.venueCity?.trim() || ""
+}
+
+export function getHeroSlideshowCountryLabel(event: {
+  venue?: { venueCountry?: string | null } | null
+}): string {
+  return event.venue?.venueCountry?.trim() || ""
 }
 
 export function getOrganizerCityLabel(organizer: {
@@ -66,4 +242,12 @@ export function getOrganizerCityLabel(organizer: {
   location?: string | null
 }): string {
   return organizer.headquarters?.trim() || organizer.location?.trim() || ""
+}
+
+export function getOrganizerCountryLabel(organizer: {
+  headquarters?: string | null
+  location?: string | null
+  country?: string | null
+}): string {
+  return organizer.country?.trim() || organizer.headquarters?.trim() || organizer.location?.trim() || ""
 }

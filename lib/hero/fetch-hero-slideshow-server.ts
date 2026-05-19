@@ -1,9 +1,10 @@
 import {
-  filterByHomeCity,
+  filterByHomeLocation,
   getHeroSlideshowCityLabel,
-  homeCityLocationQuery,
+  getHeroSlideshowCountryLabel,
+  homeLocationQueryString,
 } from "@/lib/home-location"
-import { getHomeCityFromCookies } from "@/lib/home-location-server"
+import { resolveHomeLocation } from "@/lib/home-location-server"
 import type { HeroSlideshowEvent } from "./types"
 
 const SLIDE_COUNT = 12
@@ -96,8 +97,8 @@ function mergeUniqueById(
 }
 
 export async function fetchHeroSlideshowEventsServer(): Promise<HeroSlideshowEvent[]> {
-  const homeCity = await getHomeCityFromCookies()
-  const locationQs = homeCityLocationQuery(homeCity)
+  const loc = await resolveHomeLocation()
+  const locationQs = homeLocationQueryString(loc)
   const locationSuffix = locationQs ? `?${locationQs}` : ""
   let events: HeroSlideshowEvent[] = []
 
@@ -143,6 +144,9 @@ export async function fetchHeroSlideshowEventsServer(): Promise<HeroSlideshowEve
     console.error("Hero slideshow error:", err)
   }
 
-  const filtered = filterByHomeCity(events, homeCity, getHeroSlideshowCityLabel)
+  const filtered = filterByHomeLocation(events, loc, {
+    getCity: getHeroSlideshowCityLabel,
+    getCountry: getHeroSlideshowCountryLabel,
+  })
   return filtered.slice(0, SLIDE_COUNT)
 }

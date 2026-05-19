@@ -2,7 +2,7 @@ import type { ReactNode } from "react"
 import { Suspense } from "react"
 import { FeaturedOrganizersSkeleton } from "@/components/home-skeletons"
 import { fetchFeaturedOrganizersForHomeServer } from "@/lib/organizers/fetch-public-organizers-server"
-import { getHomeCityFromCookies } from "@/lib/home-location-server"
+import { getHomeLocationDisplayLabel } from "@/lib/home-location-server"
 import { FeaturedOrganizersSectionHeading } from "./FeaturedOrganizersSectionHeading"
 import { FeaturedOrganizersRefreshButton } from "./FeaturedOrganizersRefreshButton"
 import FeaturedOrganizersStripClient from "./FeaturedOrganizersStripClient"
@@ -19,7 +19,7 @@ function Shell({ children, homeCity }: { children: ReactNode; homeCity?: string 
 async function FeaturedOrganizersContent() {
   const [{ organizers, fetchFailed }, homeCity] = await Promise.all([
     fetchFeaturedOrganizersForHomeServer(),
-    getHomeCityFromCookies(),
+    getHomeLocationDisplayLabel(),
   ])
 
   if (fetchFailed && organizers.length === 0) {

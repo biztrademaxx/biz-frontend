@@ -13,6 +13,14 @@ import { useRouter } from "next/navigation"
 import { fetchGeoHint } from "@/lib/browse-geo"
 import { HOME_CITY_STORAGE_KEY } from "@/lib/home-location"
 
+type HomeLocationApi = {
+  city?: string | null
+  countryCode?: string | null
+  countryName?: string | null
+  displayLabel?: string | null
+  auto?: boolean
+}
+
 type HomeLocationContextValue = {
   city: string | null
   isLoading: boolean
@@ -25,16 +33,33 @@ type HomeLocationContextValue = {
 
 const HomeLocationContext = createContext<HomeLocationContextValue | null>(null)
 
-async function persistCity(city: string | null) {
+async function persistLocation(payload: {
+  city: string | null
+  countryCode?: string | null
+  countryName?: string | null
+  auto?: boolean
+}) {
+  const label =
+    payload.city?.trim() ||
+    payload.countryName?.trim() ||
+    payload.countryCode?.trim() ||
+    null
+
   if (typeof window !== "undefined") {
-    if (city) window.localStorage.setItem(HOME_CITY_STORAGE_KEY, city)
+    if (label) window.localStorage.setItem(HOME_CITY_STORAGE_KEY, label)
     else window.localStorage.removeItem(HOME_CITY_STORAGE_KEY)
   }
-  if (city) {
+
+  if (label) {
     await fetch("/api/home-location", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ city }),
+      body: JSON.stringify({
+        city: payload.city || label,
+        countryCode: payload.countryCode,
+        countryName: payload.countryName,
+        auto: payload.auto,
+      }),
     })
   } else {
     await fetch("/api/home-location", { method: "DELETE" })
@@ -58,6 +83,16 @@ async function reverseGeocodeCity(lat: number, lon: number): Promise<string | nu
   }
 }
 
+function labelFromApi(data: HomeLocationApi): string | null {
+  return (
+    data.displayLabel?.trim() ||
+    data.city?.trim() ||
+    data.countryName?.trim() ||
+    data.countryCode?.trim() ||
+    null
+  )
+}
+
 export function HomeLocationProvider({ children }: { children: ReactNode }) {
   const router = useRouter()
   const [city, setCityState] = useState<string | null>(null)
@@ -68,25 +103,45 @@ export function HomeLocationProvider({ children }: { children: ReactNode }) {
     let cancelled = false
     ;(async () => {
       try {
-        const stored =
-          typeof window !== "undefined" ? window.localStorage.getItem(HOME_CITY_STORAGE_KEY)?.trim() : ""
-        if (stored) {
-          if (!cancelled) setCityState(stored)
-          await fetch("/api/home-location", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ city: stored }),
-          }).catch(() => null)
-          return
-        }
+        // GET auto-detects from IP when no cookie (sets cookie server-side).
         const r = await fetch("/api/home-location", { cache: "no-store" })
         if (r.ok) {
-          const data = (await r.json()) as { city?: string | null }
-          const fromCookie = data.city?.trim() || null
-          if (!cancelled && fromCookie) {
-            setCityState(fromCookie)
-            window.localStorage.setItem(HOME_CITY_STORAGE_KEY, fromCookie)
+          const data = (await r.json()) as HomeLocationApi
+          const label = labelFromApi(data)
+          if (!cancelled && label) {
+            setCityState(label)
+            window.localStorage.setItem(HOME_CITY_STORAGE_KEY, label)
+            if (data.auto) {
+              router.refresh()
+            }
+            return
           }
+        }
+
+        const stored = window.localStorage.getItem(HOME_CITY_STORAGE_KEY)?.trim()
+        if (stored) {
+          if (!cancelled) setCityState(stored)
+          await persistLocation({ city: stored })
+          return
+        }
+
+        // Fallback client geo (same IP logic via /api/geo).
+        const geo = await fetchGeoHint()
+        const detected =
+          geo?.city?.trim() ||
+          geo?.countryName?.trim() ||
+          geo?.countryCode?.trim() ||
+          null
+        if (!cancelled && detected) {
+          setCityState(detected)
+          window.localStorage.setItem(HOME_CITY_STORAGE_KEY, detected)
+          await persistLocation({
+            city: geo?.city?.trim() || detected,
+            countryCode: geo?.countryCode,
+            countryName: geo?.countryName,
+            auto: true,
+          })
+          router.refresh()
         }
       } finally {
         if (!cancelled) setIsLoading(false)
@@ -95,13 +150,13 @@ export function HomeLocationProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [router])
 
   const applyCity = useCallback(
     async (next: string | null) => {
       const trimmed = next?.trim() || null
       setCityState(trimmed)
-      await persistCity(trimmed)
+      await persistLocation({ city: trimmed, auto: false })
       router.refresh()
     },
     [router],
@@ -122,12 +177,25 @@ export function HomeLocationProvider({ children }: { children: ReactNode }) {
     setIsDetecting(true)
     try {
       const geo = await fetchGeoHint()
-      const detected = geo?.city?.trim() || null
-      if (detected) await applyCity(detected)
+      const detected =
+        geo?.city?.trim() ||
+        geo?.countryName?.trim() ||
+        geo?.countryCode?.trim() ||
+        null
+      if (detected) {
+        await persistLocation({
+          city: geo?.city?.trim() || detected,
+          countryCode: geo?.countryCode,
+          countryName: geo?.countryName,
+          auto: true,
+        })
+        setCityState(detected)
+        router.refresh()
+      }
     } finally {
       setIsDetecting(false)
     }
-  }, [applyCity])
+  }, [router])
 
   const detectFromBrowser = useCallback(async () => {
     if (!navigator.geolocation) {

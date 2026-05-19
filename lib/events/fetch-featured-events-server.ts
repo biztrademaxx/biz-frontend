@@ -1,5 +1,10 @@
-import { filterByHomeCity, getFeaturedEventCityLabel } from "@/lib/home-location"
-import { getHomeCityFromCookies } from "@/lib/home-location-server"
+import {
+  filterByHomeLocation,
+  getFeaturedEventCityLabel,
+  getFeaturedEventCountryLabel,
+  homeLocationQueryParam,
+} from "@/lib/home-location"
+import { resolveHomeLocation } from "@/lib/home-location-server"
 import type { FeaturedEventPayload } from "./types"
 import { normalizeFeaturedEvent } from "./normalize-featured-event"
 
@@ -14,9 +19,13 @@ function getApiBaseUrl(): string {
  */
 export async function fetchFeaturedEventsForHomeSection(): Promise<FeaturedEventPayload[]> {
   try {
-    const res = await fetch(`${getApiBaseUrl()}${FEATURED_EVENTS_PATH}`, {
+    const loc = await resolveHomeLocation()
+    const res = await fetch(
+      `${getApiBaseUrl()}${FEATURED_EVENTS_PATH}${homeLocationQueryParam(loc)}`,
+      {
       next: { revalidate: 120 },
-    })
+    },
+    )
     if (!res.ok) {
       console.error("Featured events backend error:", res.status, await res.text())
       return []
@@ -33,8 +42,10 @@ export async function fetchFeaturedEventsForHomeSection(): Promise<FeaturedEvent
       const normalized = normalizeFeaturedEvent(raw)
       if (normalized) out.push(normalized)
     }
-    const homeCity = await getHomeCityFromCookies()
-    return filterByHomeCity(out, homeCity, getFeaturedEventCityLabel)
+    return filterByHomeLocation(out, loc, {
+      getCity: getFeaturedEventCityLabel,
+      getCountry: getFeaturedEventCountryLabel,
+    })
   } catch (error) {
     console.error("Error fetching featured events from backend:", error)
     return []
