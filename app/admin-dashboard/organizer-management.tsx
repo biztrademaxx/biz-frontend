@@ -136,6 +136,9 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<"all" | "bulk-import">(initialTab)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [sendingEmailFor, setSendingEmailFor] = useState<string | null>(null)
+  const [bulkSending, setBulkSending] = useState(false)
 
   useEffect(() => {
     fetchOrganizers()
@@ -251,17 +254,92 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
     }
   }
 
-  const handleSendMessage = async (organizer: TransformedOrganizer) => {
+  const sendAccountEmail = async (organizer: { id: string; email: string }) => {
+    if (!organizer.email?.trim()) {
+      toast({ title: "No email", description: "This organizer has no email address.", variant: "destructive" })
+      return false
+    }
+    await adminApi("/organizers/send-account-email", {
+      method: "POST",
+      body: { organizerId: organizer.id, organizerEmail: organizer.email },
+    })
+    return true
+  }
+
+  const handleSendAccountEmail = async (organizer: TransformedOrganizer) => {
+    const key = organizer.id
     try {
-      await adminApi("/organizers/send-account-email", {
-        method: "POST",
-        body: { organizerId: organizer.id },
+      setSendingEmailFor(key)
+      const ok = await sendAccountEmail(organizer)
+      if (ok) {
+        toast({ title: "Email sent", description: `Account access email sent to ${organizer.email}` })
+      }
+    } catch (error: unknown) {
+      toast({
+        title: "Failed to send email",
+        description: error instanceof Error ? error.message : "Could not send organizer email",
+        variant: "destructive",
       })
-      toast({ title: "Email sent", description: `Account email sent to ${organizer.email}` })
-    } catch (error: any) {
-      toast({ title: "Failed to send email", description: error?.message || "Could not send organizer email", variant: "destructive" })
+    } finally {
+      setSendingEmailFor(null)
     }
   }
+
+  const handleBulkSendEmail = async () => {
+    const targets = filteredOrganizers.filter((o) => selectedIds.has(o.id))
+    if (targets.length === 0) {
+      toast({ title: "No selection", description: "Select at least one organizer.", variant: "destructive" })
+      return
+    }
+    setBulkSending(true)
+    let sent = 0
+    let failed = 0
+    for (const organizer of targets) {
+      try {
+        const ok = await sendAccountEmail(organizer)
+        if (ok) sent += 1
+        else failed += 1
+      } catch {
+        failed += 1
+      }
+    }
+    setBulkSending(false)
+    if (sent > 0) {
+      toast({
+        title: "Emails sent",
+        description:
+          failed > 0
+            ? `Sent ${sent} email(s); ${failed} failed (missing email or server error).`
+            : `Account access email sent to ${sent} organizer(s).`,
+      })
+    } else {
+      toast({
+        title: "Failed to send",
+        description: "No emails were sent. Check organizer emails and SMTP configuration.",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const toggleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedIds(new Set(filteredOrganizers.map((o) => o.id)))
+    } else {
+      setSelectedIds(new Set())
+    }
+  }
+
+  const toggleSelectOne = (id: string, checked: boolean) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (checked) next.add(id)
+      else next.delete(id)
+      return next
+    })
+  }
+
+  const allVisibleSelected =
+    filteredOrganizers.length > 0 && filteredOrganizers.every((o) => selectedIds.has(o.id))
 
   if (loading) {
     return (
@@ -300,14 +378,25 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
           <h1 className="text-2xl font-semibold text-gray-900">Organizers</h1>
         </div>
         <div className="flex gap-2">
+          {activeTab === "all" && selectedIds.size > 0 && (
+            <button
+              type="button"
+              onClick={handleBulkSendEmail}
+              disabled={bulkSending}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-gray-900 border border-gray-900 rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-60"
+            >
+              <Mail className="w-4 h-4" />
+              {bulkSending ? "Sending…" : `Send email (${selectedIds.size})`}
+            </button>
+          )}
           <button
+            type="button"
             onClick={handleExport}
             className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
           >
             <Download className="w-4 h-4" />
             Export
           </button>
-
         </div>
       </div>
 
@@ -362,7 +451,13 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
               <thead>
                 <tr className="border-b border-gray-100">
                   <th className="w-10 px-5 py-3">
-                    <input type="checkbox" className="rounded border-gray-300" />
+                    <input
+                      type="checkbox"
+                      className="rounded border-gray-300"
+                      checked={allVisibleSelected}
+                      onChange={(e) => toggleSelectAll(e.target.checked)}
+                      aria-label="Select all organizers"
+                    />
                   </th>
                   <th className="text-left px-4 py-3 text-[10px] font-semibold tracking-[0.12em] uppercase text-gray-400">Organizer</th>
                   <th className="text-left px-4 py-3 text-[10px] font-semibold tracking-[0.12em] uppercase text-gray-400">Plan</th>
@@ -384,7 +479,13 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
                   return (
                     <tr key={organizer.id} className="hover:bg-gray-50/60 transition-colors">
                       <td className="px-5 py-4">
-                        <input type="checkbox" className="rounded border-gray-300" />
+                        <input
+                          type="checkbox"
+                          className="rounded border-gray-300"
+                          checked={selectedIds.has(organizer.id)}
+                          onChange={(e) => toggleSelectOne(organizer.id, e.target.checked)}
+                          aria-label={`Select ${organizer.name}`}
+                        />
                       </td>
                       <td className="px-4 py-4">
                         <div className="flex items-center gap-3">
@@ -441,6 +542,16 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
                               Approve
                             </button>
                           )}
+                          <button
+                            type="button"
+                            onClick={() => handleSendAccountEmail(organizer)}
+                            disabled={!organizer.email || sendingEmailFor === organizer.id || bulkSending}
+                            className="inline-flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+                            title="Send account access email with password reset link"
+                          >
+                            <Mail className="h-3.5 w-3.5" />
+                            {sendingEmailFor === organizer.id ? "Sending…" : "Send email"}
+                          </button>
                           <Dialog>
                             <DialogTrigger asChild>
                               <button className="text-xs font-medium px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors">
@@ -498,15 +609,21 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
                                   <span>Joined: {new Date(organizer.joinDate).toLocaleDateString()}</span>
                                   <span>Last Active: {new Date(organizer.lastActive).toLocaleDateString()}</span>
                                 </div>
+                                <div className="flex justify-end pt-2">
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleSendAccountEmail(organizer)}
+                                    disabled={!organizer.email || sendingEmailFor === organizer.id}
+                                  >
+                                    <Mail className="mr-2 h-4 w-4" />
+                                    {sendingEmailFor === organizer.id ? "Sending…" : "Send account email"}
+                                  </Button>
+                                </div>
                               </div>
                             </DialogContent>
                           </Dialog>
-                          {/* <button
-                            onClick={() => handleSendMessage(organizer)}
-                            className="text-xs font-medium px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
-                          >
-                            Events
-                          </button> */}
                         </div>
                       </td>
                     </tr>
