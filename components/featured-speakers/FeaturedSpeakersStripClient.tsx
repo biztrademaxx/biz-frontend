@@ -7,9 +7,16 @@ import type { FeaturedSpeakerTile } from "@/lib/speakers/types"
 
 export interface FeaturedSpeakersStripClientProps {
   speakers: FeaturedSpeakerTile[]
+  homeCity?: string | null
 }
 
-export default function FeaturedSpeakersStripClient({ speakers }: FeaturedSpeakersStripClientProps) {
+export default function FeaturedSpeakersStripClient({
+  speakers,
+  homeCity,
+}: FeaturedSpeakersStripClientProps) {
+  const subtitle = homeCity
+    ? `Industry experts and keynote speakers in ${homeCity}`
+    : "Learn from industry experts and keynote speakers."
   const scrollRef = useRef<HTMLDivElement | null>(null)
   const router = useRouter()
 
@@ -26,7 +33,7 @@ export default function FeaturedSpeakersStripClient({ speakers }: FeaturedSpeake
           <h2 className="home-tt-h2 mb-3">
             Featured Speakers
             <br />
-            <span className="home-tt-sub">Learn from industry experts and keynote speakers.</span>
+            <span className="home-tt-sub">{subtitle}</span>
           </h2>
         </div>
 

@@ -1,3 +1,9 @@
+import {
+  filterByHomeCity,
+  getHeroSlideshowCityLabel,
+  homeCityLocationQuery,
+} from "@/lib/home-location"
+import { getHomeCityFromCookies } from "@/lib/home-location-server"
 import type { HeroSlideshowEvent } from "./types"
 
 const SLIDE_COUNT = 12
@@ -90,10 +96,13 @@ function mergeUniqueById(
 }
 
 export async function fetchHeroSlideshowEventsServer(): Promise<HeroSlideshowEvent[]> {
+  const homeCity = await getHomeCityFromCookies()
+  const locationQs = homeCityLocationQuery(homeCity)
+  const locationSuffix = locationQs ? `?${locationQs}` : ""
   let events: HeroSlideshowEvent[] = []
 
   try {
-    const vipRes = await fetch(`${getApiBaseUrl()}/api/events/vip`, {
+    const vipRes = await fetch(`${getApiBaseUrl()}/api/events/vip${locationSuffix}`, {
       next: { revalidate: 60 },
     })
     if (vipRes.ok) {
@@ -103,9 +112,10 @@ export async function fetchHeroSlideshowEventsServer(): Promise<HeroSlideshowEve
     }
 
     if (events.length === 0) {
-      const listRes = await fetch(`${getApiBaseUrl()}/api/events?limit=24`, {
-        next: { revalidate: 60 },
-      })
+      const listRes = await fetch(
+        `${getApiBaseUrl()}/api/events?limit=24${locationQs ? `&${locationQs}` : ""}`,
+        { next: { revalidate: 60 } },
+      )
       if (listRes.ok) {
         const data = await listRes.json()
         const list = (data?.events ?? []) as Record<string, unknown>[]
@@ -117,9 +127,10 @@ export async function fetchHeroSlideshowEventsServer(): Promise<HeroSlideshowEve
     }
 
     if (events.length < SLIDE_COUNT) {
-      const listRes = await fetch(`${getApiBaseUrl()}/api/events?limit=40`, {
-        next: { revalidate: 60 },
-      })
+      const listRes = await fetch(
+        `${getApiBaseUrl()}/api/events?limit=40${locationQs ? `&${locationQs}` : ""}`,
+        { next: { revalidate: 60 } },
+      )
       if (listRes.ok) {
         const data = await listRes.json()
         const list = ((data?.events ?? []) as Record<string, unknown>[]).map(normalizeEvent)
@@ -132,5 +143,6 @@ export async function fetchHeroSlideshowEventsServer(): Promise<HeroSlideshowEve
     console.error("Hero slideshow error:", err)
   }
 
-  return events.slice(0, SLIDE_COUNT)
+  const filtered = filterByHomeCity(events, homeCity, getHeroSlideshowCityLabel)
+  return filtered.slice(0, SLIDE_COUNT)
 }

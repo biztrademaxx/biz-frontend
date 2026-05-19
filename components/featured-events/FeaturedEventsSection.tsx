@@ -1,8 +1,15 @@
 import { fetchFeaturedEventsForHomeSection } from "@/lib/events/fetch-featured-events-server"
+import { getHomeCityFromCookies } from "@/lib/home-location-server"
 import FeaturedEventsGridClient from "./FeaturedEventsGridClient"
 
 export default async function FeaturedEventsSection() {
-  const events = await fetchFeaturedEventsForHomeSection()
+  const [events, homeCity] = await Promise.all([
+    fetchFeaturedEventsForHomeSection(),
+    getHomeCityFromCookies(),
+  ])
+  const subtitle = homeCity
+    ? `Handpicked popular events in ${homeCity}`
+    : "Handpicked Popular Events"
 
   return (
     <section
@@ -12,7 +19,7 @@ export default async function FeaturedEventsSection() {
       <h2 className="home-tt-h2 mb-3">
         Featured Events
         <br />
-        <span className="home-tt-sub">Handpicked Popular Events</span>
+        <span className="home-tt-sub">{subtitle}</span>
       </h2>
       <FeaturedEventsGridClient events={events} />
     </section>

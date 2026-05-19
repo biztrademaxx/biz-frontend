@@ -144,7 +144,13 @@ function EventCard({ event }: { event: Event }) {
 
 const AUTO_ADVANCE_MS = 5000
 
-export default function HeroSlideshowClient({ initialEvents }: { initialEvents: Event[] }) {
+export default function HeroSlideshowClient({
+  initialEvents,
+  homeCity,
+}: {
+  initialEvents: Event[]
+  homeCity?: string | null
+}) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const events = initialEvents
 
@@ -175,9 +181,12 @@ export default function HeroSlideshowClient({ initialEvents }: { initialEvents: 
   }, [events.length, advance])
 
   if (!initialEvents.length) {
+    const emptyMsg = homeCity
+      ? `No VIP events in ${homeCity} at the moment`
+      : "No VIP events at the moment"
     return (
       <div className="flex h-56 w-full items-center justify-center bg-neutral-100 text-gray-500">
-        No VIP events at the moment
+        {emptyMsg}
       </div>
     )
   }

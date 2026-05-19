@@ -18,6 +18,7 @@ import { getBrandLogoSrc, isBrandLogoRemoteUrl } from "@/lib/brand-logo"
 import { eventPublicPath } from "@/lib/event-path"
 import { getVenuePublicPath } from "@/lib/venue-dashboard-path"
 import ExploreMegaMenu from "./ExploreMegaMenu"
+import LocationPicker from "./location/LocationPicker"
 
 type SearchEventRow = {
   id: string
@@ -374,18 +375,21 @@ export default function Navbar() {
               />
             </Link>
             {/* Explore lives in the mobile drawer below lg — keeps the top bar from crowding */}
-            <div className="relative ml-3 hidden shrink-0 sm:ml-4 lg:ml-5 lg:block" ref={exploreRef}>
-              <button
-                type="button"
-                className={`inline-flex items-center gap-0.5 rounded-md px-1 py-1 text-sm lg:px-0 lg:py-0 ${navLinkClass}`}
-                onClick={() => setExploreOpen((v) => !v)}
-                aria-expanded={exploreOpen}
-                aria-haspopup="true"
-                aria-label="Explore menu"
-              >
-                Explore
-                <ChevronDown className={`h-4 w-4 transition-transform ${exploreOpen ? "rotate-180" : ""}`} />
-              </button>
+            <div className="relative ml-3 hidden shrink-0 items-center gap-2 sm:ml-4 lg:ml-5 lg:flex">
+              <div ref={exploreRef}>
+                <button
+                  type="button"
+                  className={`inline-flex items-center gap-0.5 rounded-md px-1 py-1 text-sm lg:px-0 lg:py-0 ${navLinkClass}`}
+                  onClick={() => setExploreOpen((v) => !v)}
+                  aria-expanded={exploreOpen}
+                  aria-haspopup="true"
+                  aria-label="Explore menu"
+                >
+                  Explore
+                  <ChevronDown className={`h-4 w-4 transition-transform ${exploreOpen ? "rotate-180" : ""}`} />
+                </button>
+              </div>
+              <LocationPicker />
             </div>
           </div>
 
@@ -552,6 +556,9 @@ export default function Navbar() {
               Explore
               <ChevronDown className="h-4 w-4" />
             </button>
+            <div className="border-b border-gray-200/80 px-4 py-3">
+              <LocationPicker className="w-full" />
+            </div>
             <Link
               href="/event"
               className="block px-4 py-2.5 text-sm font-semibold text-gray-800 hover:bg-white/80"

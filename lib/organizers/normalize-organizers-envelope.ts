@@ -14,6 +14,8 @@ function normalizeOne(raw: unknown): OrganizerListEntry | null {
     name: typeof raw.name === "string" ? raw.name : null,
     image: typeof raw.image === "string" ? raw.image : null,
     avatar: typeof raw.avatar === "string" ? raw.avatar : null,
+    headquarters: typeof raw.headquarters === "string" ? raw.headquarters : null,
+    location: typeof raw.location === "string" ? raw.location : null,
   }
 }
 

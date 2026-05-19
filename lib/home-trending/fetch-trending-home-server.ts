@@ -1,3 +1,9 @@
+import {
+  filterByHomeCity,
+  getTrendingEventCityLabel,
+  homeCityLocationQuery,
+} from "@/lib/home-location"
+import { getHomeCityFromCookies } from "@/lib/home-location-server"
 import { mergeGoingBundleFromJson } from "./followers-bundle"
 import { normalizeTrendingHomeEvent } from "./normalize-trending-event"
 import { pickTrendingHomeEvents } from "./pick-trending-events"
@@ -29,7 +35,10 @@ export interface TrendingHomePayload {
 export async function fetchTrendingHomePayloadServer(): Promise<TrendingHomePayload> {
   const empty: TrendingHomePayload = { events: [], goingBundles: {} }
   try {
-    const res = await fetch(`${getApiBaseUrl()}/api/events`, { next: { revalidate: 60 } })
+    const homeCity = await getHomeCityFromCookies()
+    const locationQs = homeCityLocationQuery(homeCity)
+    const url = `${getApiBaseUrl()}/api/events${locationQs ? `?${locationQs}` : ""}`
+    const res = await fetch(url, { next: { revalidate: 60 } })
     if (!res.ok) return empty
     const data: unknown = await res.json()
     const rawList = rawEventsFromPayload(data)
@@ -38,7 +47,8 @@ export async function fetchTrendingHomePayloadServer(): Promise<TrendingHomePayl
       const ev = normalizeTrendingHomeEvent(row)
       if (ev) normalized.push(ev)
     }
-    const picked = pickTrendingHomeEvents(normalized, TRENDING_HOME_MAX_EVENTS)
+    const cityFiltered = filterByHomeCity(normalized, homeCity, getTrendingEventCityLabel)
+    const picked = pickTrendingHomeEvents(cityFiltered, TRENDING_HOME_MAX_EVENTS)
     if (picked.length === 0) return empty
 
     const goingBundles: Record<string, GoingBundle> = {}

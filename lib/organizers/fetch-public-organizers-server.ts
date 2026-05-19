@@ -1,3 +1,5 @@
+import { filterByHomeCity, getOrganizerCityLabel } from "@/lib/home-location"
+import { getHomeCityFromCookies } from "@/lib/home-location-server"
 import { filterOrganizersWithProfileImage } from "./organizer-visibility"
 import { normalizeOrganizersFromApiPayload } from "./normalize-organizers-envelope"
 import type { OrganizerListEntry } from "./types"
@@ -24,7 +26,9 @@ export async function fetchFeaturedOrganizersForHomeServer(): Promise<FeaturedOr
     const data: unknown = await res.json()
     const list = normalizeOrganizersFromApiPayload(data)
     const visible = filterOrganizersWithProfileImage(list)
-    return { organizers: visible, fetchFailed: false }
+    const homeCity = await getHomeCityFromCookies()
+    const filtered = filterByHomeCity(visible, homeCity, getOrganizerCityLabel)
+    return { organizers: filtered, fetchFailed: false }
   } catch (e) {
     console.error("Featured organizers fetch error:", e)
     return empty

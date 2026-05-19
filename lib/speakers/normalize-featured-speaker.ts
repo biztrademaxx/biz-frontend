@@ -19,5 +19,6 @@ export function normalizeFeaturedSpeakerTile(raw: unknown): FeaturedSpeakerTile 
   const displayName = joined || readString(raw.name) || "Speaker"
   const imageUrl = readString(raw.avatar) || readString(raw.image)
   if (!imageUrl) return null
-  return { id, displayName, imageUrl }
+  const location = readString(raw.location) || null
+  return { id, displayName, imageUrl, location }
 }

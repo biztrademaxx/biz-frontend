@@ -3,4 +3,5 @@ export interface FeaturedSpeakerTile {
   id: string
   displayName: string
   imageUrl: string
+  location?: string | null
 }

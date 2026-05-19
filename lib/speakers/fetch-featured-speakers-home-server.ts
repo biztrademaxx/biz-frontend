@@ -1,3 +1,5 @@
+import { filterByHomeCity } from "@/lib/home-location"
+import { getHomeCityFromCookies } from "@/lib/home-location-server"
 import { normalizeFeaturedSpeakerTile } from "./normalize-featured-speaker"
 import type { FeaturedSpeakerTile } from "./types"
 
@@ -20,7 +22,8 @@ export async function fetchFeaturedSpeakersForHomeServer(): Promise<FeaturedSpea
       const s = normalizeFeaturedSpeakerTile(row)
       if (s) out.push(s)
     }
-    return out
+    const homeCity = await getHomeCityFromCookies()
+    return filterByHomeCity(out, homeCity, (s) => s.location)
   } catch (e) {
     console.error("fetchFeaturedSpeakersForHomeServer:", e)
     return []

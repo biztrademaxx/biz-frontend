@@ -1,3 +1,5 @@
+import { filterByHomeCity, getFeaturedEventCityLabel } from "@/lib/home-location"
+import { getHomeCityFromCookies } from "@/lib/home-location-server"
 import type { FeaturedEventPayload } from "./types"
 import { normalizeFeaturedEvent } from "./normalize-featured-event"
 
@@ -31,7 +33,8 @@ export async function fetchFeaturedEventsForHomeSection(): Promise<FeaturedEvent
       const normalized = normalizeFeaturedEvent(raw)
       if (normalized) out.push(normalized)
     }
-    return out
+    const homeCity = await getHomeCityFromCookies()
+    return filterByHomeCity(out, homeCity, getFeaturedEventCityLabel)
   } catch (error) {
     console.error("Error fetching featured events from backend:", error)
     return []

@@ -72,9 +72,13 @@ function VenueCard({ venue, onNavigate }: { venue: ExploreVenueCard; onNavigate:
 
 export interface ExploreVenuesGridClientProps {
   venues: ExploreVenueCard[]
+  homeCity?: string | null
 }
 
-export default function ExploreVenuesGridClient({ venues }: ExploreVenuesGridClientProps) {
+export default function ExploreVenuesGridClient({ venues, homeCity }: ExploreVenuesGridClientProps) {
+  const subtitle = homeCity
+    ? `Discover event spaces and venues in ${homeCity}`
+    : "Discover event spaces and venues in top cities"
   const router = useRouter()
   const row1 = venues.slice(0, 3)
   const row2 = venues.slice(3, 6)
@@ -85,7 +89,7 @@ export default function ExploreVenuesGridClient({ venues }: ExploreVenuesGridCli
         <h2 className="home-tt-h2 mb-3">
           Explore Venues
           <br />
-          <span className="home-tt-sub">Discover event spaces and venues in top cities</span>
+          <span className="home-tt-sub">{subtitle}</span>
         </h2>
       </div>
 

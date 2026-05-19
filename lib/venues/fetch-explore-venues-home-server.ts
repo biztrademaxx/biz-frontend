@@ -1,3 +1,5 @@
+import { filterByHomeCity } from "@/lib/home-location"
+import { getHomeCityFromCookies } from "@/lib/home-location-server"
 import { normalizeExploreVenue } from "./normalize-explore-venue"
 import type { ExploreVenueCard } from "./types"
 
@@ -23,7 +25,8 @@ export async function fetchExploreVenuesForHomeServer(): Promise<ExploreVenueCar
       const v = normalizeExploreVenue(row)
       if (v) out.push(v)
     }
-    return out
+    const homeCity = await getHomeCityFromCookies()
+    return filterByHomeCity(out, homeCity, (v) => v.city)
   } catch (e) {
     console.error("fetchExploreVenuesForHomeServer:", e)
     return []
