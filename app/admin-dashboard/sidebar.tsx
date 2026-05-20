@@ -25,6 +25,7 @@ import {
   ArrowLeft,
   Menu,
   Star,
+  Inbox,
 } from "lucide-react"
 
 // Import all section components
@@ -100,6 +101,8 @@ import MarketingTrafficPanel from "./marketing-traffic"
 import SeoKeywordsPanel from "./seo-keywords"
 import SubAdminAnalyticsPanel from "../sub-admin/SubAdminAnalyticsPanel"
 import SubAdminTrackingPage from "./sub-admin-tracking"
+import ContactInquiriesPage from "./contact-inquiries-page"
+import NewsletterAdminPage from "./newsletter-admin-page"
 
 interface AdminDashboardProps {
   userRole: "SUPER_ADMIN" | "SUB_ADMIN"
@@ -194,6 +197,8 @@ const MENU_PERMISSIONS = {
   "support-notes": "support-notes",
   "support-faq": "support-faq",
   "visitors-suggestions": "visitors-suggestions",
+  "contact-inquiries": "contact-inquiries",
+  newsletter: "newsletter",
   // Add permissions for locations
   locations: "locations",
   countries: "countries",
@@ -337,6 +342,15 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
         { title: "Connections", id: "visitors-connections" },
         { title: "Appointments", id: "visitors-appointments" },
          { title: "Exhibitor Suggestions", id: "visitors-suggestions" },
+      ],
+    },
+    {
+      title: "Inquiries & registrations",
+      icon: Inbox,
+      id: "inquiries-registrations",
+      subItems: [
+        { title: "Contact inquiry", id: "contact-inquiries" },
+        { title: "Newsletter", id: "newsletter" },
       ],
     },
     {
@@ -563,6 +577,11 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
         case "visitors-appointments":
           return <VisitorAppointmentsPage />
 
+        case "contact-inquiries":
+          return <ContactInquiriesPage />
+        case "newsletter":
+          return <NewsletterAdminPage />
+
         // Financial
         case "financial-payments":
           return <FinancialPaymentsPage />
@@ -696,6 +715,8 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
         return <SystemSettings />
       case "support":
         return <MainHelpSupport />
+      case "inquiries-registrations":
+        return <ContactInquiriesPage />
       default:
         return <DashboardPage onNavigate={navigateFromDashboard} />
     }

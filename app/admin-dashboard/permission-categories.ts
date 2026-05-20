@@ -84,6 +84,14 @@ export const ADMIN_PERMISSION_CATEGORIES: PermissionCategory[] = [
     ],
   },
   {
+    title: "Inquiries & registrations",
+    id: "inquiries-registrations",
+    subItems: [
+      { title: "Contact inquiry", id: "contact-inquiries" },
+      { title: "Newsletter", id: "newsletter" },
+    ],
+  },
+  {
     title: "Financial & Transactions",
     id: "financial",
     subItems: [

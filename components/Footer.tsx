@@ -8,6 +8,7 @@ import {
   FaLinkedin,
 } from "react-icons/fa"
 import FooterChatBot from "@/components/footer-chat-bot"
+import { NewsletterFooterSignup } from "@/components/newsletter-footer-signup"
 import { getBrandLogoSrc, isBrandLogoRemoteUrl } from "@/lib/brand-logo"
 
 const linkClass =
@@ -22,6 +23,10 @@ const Footer: React.FC = () => {
   return (
     <footer className="relative bg-gray-100 px-4 py-12 md:px-8 lg:px-16">
       <div className="mx-auto max-w-7xl">
+        <div className="mb-10">
+          <NewsletterFooterSignup />
+        </div>
+
         <div className="mb-8 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-6">
           <div className="lg:col-span-1">
             <Link
@@ -230,15 +235,15 @@ const Footer: React.FC = () => {
 
         <div className="border-t border-gray-400 pt-8">
           <div className="mb-6">
-            <h5 className="mb-2 text-base font-semibold text-gray-900">Registered Office:</h5>
-            <p className="text-base leading-relaxed text-gray-600">
+            <h5 className="mb-2 font-semibold text-gray-900">Registered Office:</h5>
+            <p className="text-sm leading-relaxed text-gray-600">
               Maxx Business Media Pvt Ltd | # T9, 3rd Floor, Swastik Manandi Arcade, SC Road, Seshadripuram,
               Bengaluru – 560020, India, Support-+91-9148319993 | CIN: U74999KA2019PTC123194
             </p>
           </div>
 
           <div className="mb-6">
-            <p className="text-sm leading-relaxed text-gray-600">
+            <p className="text-xs leading-relaxed text-gray-600">
               ** All event names, logos, and brands are property of their respective owners. All company, event and
               service names used in this website are for identification purposes only. Use of these names, logos, and
               brands does not imply endorsement.
@@ -247,7 +252,7 @@ const Footer: React.FC = () => {
 
           <div className="border-t border-gray-400 pt-10" />
 
-          <div className="text-base text-gray-600">
+          <div className="text-sm text-gray-600">
             Copyright © {new Date().getFullYear()} Maxx Business Media Pvt Ltd All rights reserved
           </div>
         </div>

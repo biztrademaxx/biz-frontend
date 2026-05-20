@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ContactInquiryForm } from "@/components/contact-inquiry-form";
 
 export const metadata = {
   title: "Contact Us | BizTradeFairs.com",
@@ -117,41 +118,7 @@ export default function ContactPage() {
 
       {/* Contact Form */}
       <Section title="Send Us a Message">
-        <form className="grid gap-4 md:grid-cols-2">
-          <input
-            type="text"
-            placeholder="Full Name"
-            className="border rounded-md px-3 py-2 text-sm"
-          />
-          <input
-            type="email"
-            placeholder="Email Address"
-            className="border rounded-md px-3 py-2 text-sm"
-          />
-          <input
-            type="tel"
-            placeholder="Phone Number"
-            className="border rounded-md px-3 py-2 text-sm"
-          />
-
-          <select className="border rounded-md px-3 py-2 text-sm">
-            <option>Inquiry Type</option>
-            <option>Organizer</option>
-            <option>Exhibitor</option>
-            <option>Visitor</option>
-            <option>Partnership</option>
-          </select>
-
-          <textarea
-            placeholder="Your Message"
-            rows={4}
-            className="border rounded-md px-3 py-2 text-sm md:col-span-2"
-          />
-
-          <button className="bg-blue-600 text-white px-5 py-2 rounded-md hover:bg-blue-700 md:col-span-2">
-            Submit Inquiry
-          </button>
-        </form>
+        <ContactInquiryForm />
       </Section>
 
       {/* Social */}
