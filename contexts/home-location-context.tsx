@@ -19,6 +19,8 @@ type HomeLocationApi = {
   countryName?: string | null
   displayLabel?: string | null
   auto?: boolean
+  /** Set when this response just wrote the IP-detected cookie (one-time refresh). */
+  primed?: boolean
 }
 
 type HomeLocationContextValue = {
@@ -111,7 +113,7 @@ export function HomeLocationProvider({ children }: { children: ReactNode }) {
           if (!cancelled && label) {
             setCityState(label)
             window.localStorage.setItem(HOME_CITY_STORAGE_KEY, label)
-            if (data.auto) {
+            if (data.primed) {
               router.refresh()
             }
             return

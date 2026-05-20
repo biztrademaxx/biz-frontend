@@ -1,4 +1,5 @@
 import {
+  buildResolvedHomeLocation,
   filterByHomeLocation,
   getFeaturedEventCityLabel,
   getFeaturedEventCountryLabel,
@@ -42,10 +43,25 @@ export async function fetchFeaturedEventsForHomeSection(): Promise<FeaturedEvent
       const normalized = normalizeFeaturedEvent(raw)
       if (normalized) out.push(normalized)
     }
-    return filterByHomeLocation(out, loc, {
+    const filtered = filterByHomeLocation(out, loc, {
       getCity: getFeaturedEventCityLabel,
       getCountry: getFeaturedEventCountryLabel,
     })
+    // If nothing matches the visitor city, show country-wide featured before going empty.
+    if (filtered.length === 0 && loc.city && loc.countryName) {
+      const countryOnly = buildResolvedHomeLocation({
+        city: null,
+        countryCode: loc.countryCode,
+        countryName: loc.countryName,
+        isManual: loc.isManual,
+      })
+      const byCountry = filterByHomeLocation(out, countryOnly, {
+        getCity: getFeaturedEventCityLabel,
+        getCountry: getFeaturedEventCountryLabel,
+      })
+      if (byCountry.length > 0) return byCountry
+    }
+    return filtered
   } catch (error) {
     console.error("Error fetching featured events from backend:", error)
     return []

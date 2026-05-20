@@ -23,6 +23,7 @@ function parseCookieValue(value: string) {
 function jsonFromResolved(
   loc: ReturnType<typeof buildResolvedHomeLocation>,
   auto: boolean,
+  primed = false,
 ) {
   return {
     city: loc.city,
@@ -30,6 +31,8 @@ function jsonFromResolved(
     countryName: loc.countryName,
     displayLabel: loc.displayLabel,
     auto,
+    /** True only when this response just set the cookie from IP detection. */
+    primed,
   }
 }
 
@@ -97,7 +100,7 @@ export async function GET() {
     isManual: false,
   })
 
-  const res = NextResponse.json(jsonFromResolved(loc, true))
+  const res = NextResponse.json(jsonFromResolved(loc, true, true))
   setLocationCookies(res, cookieValue, true)
   return res
 }

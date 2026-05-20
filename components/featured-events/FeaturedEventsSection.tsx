@@ -21,7 +21,7 @@ export default async function FeaturedEventsSection() {
         <br />
         <span className="home-tt-sub">{subtitle}</span>
       </h2>
-      <FeaturedEventsGridClient events={events} />
+      <FeaturedEventsGridClient events={events} homeCity={homeCity} />
     </section>
   )
 }

@@ -128,9 +128,10 @@ function PlaceholderCard({ index }: { index: number }) {
 
 export interface FeaturedEventsGridClientProps {
   events: FeaturedEventPayload[]
+  homeCity?: string | null
 }
 
-export default function FeaturedEventsGridClient({ events }: FeaturedEventsGridClientProps) {
+export default function FeaturedEventsGridClient({ events, homeCity }: FeaturedEventsGridClientProps) {
   const n = events.length
   const [offset, setOffset] = useState(0)
 
@@ -152,17 +153,24 @@ export default function FeaturedEventsGridClient({ events }: FeaturedEventsGridC
   )
 
   if (events.length === 0) {
+    const emptyMsg = homeCity
+      ? `No featured events in ${homeCity} right now. Try another city from the location menu, or browse all events.`
+      : "No featured events at the moment."
     return (
       <div className="col-12">
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-3 md:grid-rows-3 md:gap-4">
-          {Array.from({ length: 9 }).map((_, i) => (
-            <PlaceholderCard key={i} index={i} />
-          ))}
-        </div>
-        <div className="mt-4 flex justify-center">
+        <p className="mb-6 rounded-md border border-gray-200 bg-gray-50 px-4 py-6 text-center text-sm text-gray-600">
+          {emptyMsg}
+        </p>
+        <div className="flex flex-wrap justify-center gap-3">
+          <Link
+            href="/event"
+            className="inline-flex items-center justify-center rounded-md border border-[#002C71] px-4 py-2 text-sm font-medium text-[#002C71] transition-colors hover:bg-[#002C71]/5"
+          >
+            Browse all events
+          </Link>
           <Link
             href="/organizer-signup"
-            className="inline-flex w-[120px] items-center justify-center rounded-md border border-[#002C71] px-3 py-2 text-sm font-medium text-[#002C71] transition-colors hover:bg-[#002C71]/5"
+            className="inline-flex items-center justify-center rounded-md bg-[#002C71] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#001a48]"
           >
             Add Event
           </Link>

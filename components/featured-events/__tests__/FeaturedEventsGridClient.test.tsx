@@ -30,12 +30,13 @@ function makeEvent(over: Partial<FeaturedEventPayload> = {}): FeaturedEventPaylo
 }
 
 describe("FeaturedEventsGridClient", () => {
-  it("renders empty grid with placeholders and Add Event CTA", () => {
-    renderWithProviders(<FeaturedEventsGridClient events={[]} />)
-    expect(screen.getAllByText(/placeholder featured event/i)).toHaveLength(9)
-    expect(screen.getAllByRole("link", { name: /^add event$/i })[0]).toHaveAttribute(
+  it("renders empty state message and browse CTA", () => {
+    renderWithProviders(<FeaturedEventsGridClient events={[]} homeCity="Paris" />)
+    expect(screen.getByText(/no featured events in paris/i)).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: /browse all events/i })).toHaveAttribute("href", "/event")
+    expect(screen.getByRole("link", { name: /^add event$/i })).toHaveAttribute(
       "href",
-      "/organizer-signup"
+      "/organizer-signup",
     )
   })
 
