@@ -3,7 +3,6 @@ import {
   filterByHomeLocation,
   getFeaturedEventCityLabel,
   getFeaturedEventCountryLabel,
-  homeLocationQueryParam,
 } from "@/lib/home-location"
 import { resolveHomeLocation } from "@/lib/home-location-server"
 import type { FeaturedEventPayload } from "./types"
@@ -21,12 +20,10 @@ function getApiBaseUrl(): string {
 export async function fetchFeaturedEventsForHomeSection(): Promise<FeaturedEventPayload[]> {
   try {
     const loc = await resolveHomeLocation()
-    const res = await fetch(
-      `${getApiBaseUrl()}${FEATURED_EVENTS_PATH}${homeLocationQueryParam(loc)}`,
-      {
+    // Featured endpoint has no location filter; filtering is done below client-side.
+    const res = await fetch(`${getApiBaseUrl()}${FEATURED_EVENTS_PATH}`, {
       next: { revalidate: 120 },
-    },
-    )
+    })
     if (!res.ok) {
       console.error("Featured events backend error:", res.status, await res.text())
       return []

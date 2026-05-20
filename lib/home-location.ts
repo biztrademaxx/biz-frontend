@@ -187,10 +187,15 @@ export function homeCityLocationQuery(city: string | null | undefined): string {
   return `location=${encodeURIComponent(c)}`
 }
 
-export function homeLocationQueryParam(loc: ResolvedHomeLocation): string {
+/** Append `?location=` or `&location=` depending on whether the URL already has query params. */
+export function homeLocationQueryParam(
+  loc: ResolvedHomeLocation,
+  options?: { hasExistingQuery?: boolean },
+): string {
   const q = loc.locationQuery?.trim()
   if (!q) return ""
-  return `&location=${encodeURIComponent(q)}`
+  const prefix = options?.hasExistingQuery ? "&" : "?"
+  return `${prefix}location=${encodeURIComponent(q)}`
 }
 
 export function homeLocationQueryString(loc: ResolvedHomeLocation): string {
