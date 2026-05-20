@@ -19,7 +19,8 @@ import {
   HelpCircle,
   MessageSquare,
   Users,
-  Star
+  Star,
+  Crown,
 } from "lucide-react"
 import { clearTokens, markLogoutSuccessBanner } from "@/lib/api"
 import DashboardOverview from "./dashboard-overview"
@@ -37,6 +38,7 @@ import { OrganizerHelpSupport } from "./help-support"
 import { apiFetch, getCurrentUserId } from "@/lib/api"
 import { getOrganizerDashboardPath } from "@/lib/profile-path"
 import { DashboardManagedBanner } from "@/components/dashboard-managed-banner"
+import { DashboardPricingPlansView } from "@/components/dashboard-packages"
 import { cn } from "@/lib/utils"
 import {
   orgBlobLayer,
@@ -292,6 +294,11 @@ export default function OrganizerDashboardSimplified({ organizerId }: OrganizerD
 
   const individualSidebarItems: SidebarItem[] = [
     {
+      title: "Pricing & plans",
+      icon: Crown,
+      id: "subscription-plans",
+    },
+    {
       title: "Help & Support",
       icon: HelpCircle,
       id: "help-support",
@@ -411,6 +418,8 @@ export default function OrganizerDashboardSimplified({ organizerId }: OrganizerD
         return <MessagesCenter organizerId={organizerData.id} />
       case "feed-back":
         return <FeedbackSection organizerId={organizerData.id} />
+      case "subscription-plans":
+        return <DashboardPricingPlansView role="ORGANIZER" />
       default:
         return <div>Select a section from the sidebar</div>
     }

@@ -21,6 +21,7 @@ import {
   List,
   Menu,
   Bell,
+  Crown,
 } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -47,6 +48,7 @@ import { useDashboard } from "@/contexts/dashboard-context"
 import { DashboardManagedBanner } from "@/components/dashboard-managed-banner"
 import { cn } from "@/lib/utils"
 import { DashboardOverview } from "./dashboard-overview"
+import { DashboardPricingPlansView } from "@/components/dashboard-packages"
 
 const VISITOR_ACCENT = "#FF131C"
 
@@ -265,6 +267,8 @@ export function UserDashboard({ userId }: UserDashboardProps) {
         return <TravelAccommodation />
       case "Help & Support":
         return <HelpSupport />
+      case "upgrade-plan":
+        return <DashboardPricingPlansView role="VISITOR" />
       default:
         return (
           <DashboardOverview
@@ -514,6 +518,30 @@ export function UserDashboard({ userId }: UserDashboardProps) {
               </button>
             </div>
 
+            {/* Upgrade plan */}
+            <div className={visitorCollapsedNavItemClass(isSidebarCollapsed, activeSection, "settings")}>
+              <button
+                type="button"
+                title={isSidebarCollapsed ? "Upgrade plan" : undefined}
+                onClick={() => {
+                  setActiveSection("upgrade-plan")
+                  if (typeof window !== "undefined" && window.innerWidth < 768) setIsMobileSidebarOpen(false)
+                }}
+                className={cn(
+                  "flex w-full items-center rounded-xl py-2.5 font-medium transition hover:bg-white/10",
+                  simpleNavBtnCollapsed,
+                  !isSidebarCollapsed && activeSection === "upgrade-plan" && "bg-white/15 text-white",
+                  !isSidebarCollapsed && activeSection !== "upgrade-plan" && "text-white/95",
+                  isSidebarCollapsed && isVisitorMenuGroupActive(activeSection, "settings") && "hover:bg-transparent",
+                )}
+              >
+                <span className={visitorCollapsedIconSlotClass(isSidebarCollapsed, activeSection, "settings")}>
+                  <Crown className={visitorCollapsedIconClass(isSidebarCollapsed, activeSection, "settings")} />
+                </span>
+                {!isSidebarCollapsed && <span className="ml-3 truncate">Upgrade plan</span>}
+              </button>
+            </div>
+
             {/* Settings */}
             <div className={visitorCollapsedNavItemClass(isSidebarCollapsed, activeSection, "settings")}>
               <button
@@ -681,7 +709,7 @@ const VISITOR_MENU_SECTIONS: Record<string, string[]> = {
   exhibitor: ["my-appointments", "exhibitor-schedule", "Suggested"],
   tools: ["travel", "schedule"],
   help: ["Help & Support"],
-  settings: ["settings"],
+  settings: ["settings", "upgrade-plan"],
 }
 
 function isVisitorMenuGroupActive(activeSection: string, menuId: string): boolean {
