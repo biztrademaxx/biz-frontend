@@ -342,7 +342,7 @@ export default function OrganizerInfo({ organizerData: initialData, onOrganizerU
         <div className="w-32 h-32 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
           {organizerData.avatar ? (
             <Image
-              src={organizerData.avatar || "/city/c4.jpg"}
+              src={organizerData.avatar }
               alt="Organization Logo"
               width={128}
               height={128}

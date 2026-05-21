@@ -68,12 +68,18 @@ export function EventsListingFeaturedSection({
                 className="hover:shadow-xl transition-all duration-300 border border-gray-300 rounded-sm overflow-hidden group"
               >
                 <div className="relative aspect-video overflow-hidden">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={getListingEventPrimaryImage(event) || "/city/c4.jpg"}
-                    alt={event.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
+                  {getListingEventPrimaryImage(event)?.trim() ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img
+                      src={getListingEventPrimaryImage(event).trim()}
+                      alt={event.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 text-sm text-slate-500">
+                      No image
+                    </div>
+                  )}
                   <div className="absolute top-3 right-3 bg-white rounded-full p-2 shadow-lg hover:bg-gray-50 cursor-pointer">
                     <Heart className="w-5 h-5 text-gray-700" />
                   </div>

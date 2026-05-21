@@ -375,9 +375,9 @@ export default function Navbar() {
                 className="block h-[44px] w-auto max-h-[44px] max-w-full shrink object-contain object-left sm:h-[52px] sm:max-h-[52px] md:h-[60px] md:max-h-[60px] lg:h-[72px] lg:max-h-[72px]"
               />
             </Link>
-            {/* Explore lives in the mobile drawer below lg — keeps the top bar from crowding */}
-            <div className="relative ml-3 hidden shrink-0 items-center gap-2 sm:ml-4 lg:ml-5 lg:flex">
-              <div ref={exploreRef}>
+            {/* Explore (lg+) + country label (md+) — mobile drawer has Explore below lg */}
+            <div className="relative ml-2 hidden shrink-0 items-center gap-2 sm:ml-3 md:flex lg:ml-5">
+              <div ref={exploreRef} className="hidden lg:block">
                 <button
                   type="button"
                   className={`inline-flex items-center gap-0.5 rounded-md px-1 py-1 text-sm lg:px-0 lg:py-0 ${navLinkClass}`}

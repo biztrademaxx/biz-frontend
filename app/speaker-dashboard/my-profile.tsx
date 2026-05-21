@@ -145,7 +145,7 @@ export default function MyProfile({ speakerId }: { speakerId: string }) {
           <div className="relative">
             <div className="w-28 h-28 rounded-3xl overflow-hidden ring-4 ring-white shadow-lg">
               <Avatar className="w-full h-full rounded-3xl">
-                <AvatarImage src={profile.avatar || "/city/c4.jpg"} alt={profile.fullName} className="object-cover" />
+                <AvatarImage src={profile.avatar } alt={profile.fullName} className="object-cover" />
                 <AvatarFallback
                   className="text-2xl font-bold rounded-3xl"
                   style={{ background: "linear-gradient(135deg, #dbeafe, #ede9fe)", color: "#2563eb" }}

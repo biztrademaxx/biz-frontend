@@ -338,7 +338,7 @@ export default function AddExhibitor({ eventId }: AddExhibitorProps) {
                         )}
                         <div className="flex items-start gap-4">
                           <Avatar className="w-16 h-16">
-                            <AvatarImage src={exhibitor.avatar || "/city/c4.jpg"} />
+                            <AvatarImage src={exhibitor.avatar } />
                             <AvatarFallback>
                               {exhibitor.firstName[0]}
                               {exhibitor.lastName[0]}

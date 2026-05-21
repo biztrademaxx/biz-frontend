@@ -36,11 +36,17 @@ export default function BrowseByCountryGridClient({
               >
                 <div className="flex min-w-0 flex-col items-start gap-2">
                   <div className="flex h-7 w-11 shrink-0 items-center justify-start overflow-hidden rounded-none">
-                    <img
-                      src={country.flag || "/city/c4.jpg"}
-                      alt=""
-                      className="h-full w-full object-contain object-left"
-                    />
+                    {country.flag?.trim() ? (
+                      <img
+                        src={country.flag.trim()}
+                        alt=""
+                        className="h-full w-full object-contain object-left"
+                      />
+                    ) : (
+                      <span className="text-lg leading-none" aria-hidden>
+                        🌐
+                      </span>
+                    )}
                   </div>
                   <div className="w-full min-w-0 text-left leading-tight">
                     <h3 className="line-clamp-2 text-sm font-bold text-gray-900">{country.name}</h3>

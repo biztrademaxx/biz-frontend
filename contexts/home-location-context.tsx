@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from "react"
 import { useRouter } from "next/navigation"
+import { fetchGeoHint } from "@/lib/browse-geo"
 import { countryNameFromCode } from "@/lib/geo-from-request"
 import { resolveCountryForCityName } from "@/lib/city-country"
 import { HOME_CITY_STORAGE_KEY } from "@/lib/home-location"
@@ -87,6 +88,35 @@ async function persistLocation(payload: {
   }
 }
 
+function applyGeoHint(
+  geo: { city?: string | null; countryCode?: string | null; countryName?: string | null },
+  setCityState: (c: string | null) => void,
+  setCountryState: (c: string | null) => void,
+) {
+  applyApiLocation(
+    {
+      city: geo.city,
+      countryCode: geo.countryCode,
+      countryName: geo.countryName,
+    },
+    setCityState,
+    setCountryState,
+  )
+}
+
+async function resolveCountryForNavbar(
+  data: HomeLocationApi,
+): Promise<HomeLocationApi> {
+  if (countryLabelFromApi(data)) return data
+  const geo = await fetchGeoHint()
+  if (!geo?.countryCode && !geo?.countryName && !geo?.city) return data
+  return {
+    city: data.city ?? geo.city,
+    countryCode: data.countryCode ?? geo.countryCode,
+    countryName: data.countryName ?? geo.countryName,
+  }
+}
+
 function applyApiLocation(
   data: HomeLocationApi,
   setCityState: (c: string | null) => void,
@@ -108,8 +138,12 @@ export function HomeLocationProvider({ children }: { children: ReactNode }) {
 
   const syncGeoFromIp = useCallback(async () => {
     const r = await fetch("/api/home-location?refresh=1", { cache: "no-store" })
-    if (!r.ok) return
-    const data = (await r.json()) as HomeLocationApi
+    if (!r.ok) {
+      const geo = await fetchGeoHint()
+      if (geo) applyGeoHint(geo, setCityState, setCountryName)
+      return
+    }
+    const data = await resolveCountryForNavbar((await r.json()) as HomeLocationApi)
     applyApiLocation(data, setCityState, setCountryName)
     router.refresh()
   }, [router])
@@ -119,8 +153,14 @@ export function HomeLocationProvider({ children }: { children: ReactNode }) {
     ;(async () => {
       try {
         const r = await fetch("/api/home-location?refresh=1", { cache: "no-store" })
-        if (r.ok && !cancelled) {
-          const data = (await r.json()) as HomeLocationApi
+        if (!cancelled) {
+          let data: HomeLocationApi = {}
+          if (r.ok) {
+            data = await resolveCountryForNavbar((await r.json()) as HomeLocationApi)
+          } else {
+            const geo = await fetchGeoHint()
+            if (geo) data = geo
+          }
           applyApiLocation(data, setCityState, setCountryName)
           if (data.primed) router.refresh()
         }

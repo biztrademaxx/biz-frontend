@@ -80,7 +80,7 @@ export async function GET(req: Request) {
   const geo = await resolveGeoFromHeaders(h)
   const cookieValue = geoToCookieValue(geo)
 
-  if (!cookieValue) {
+  if (!cookieValue && !geo.countryCode && !geo.countryName && !geo.city) {
     return NextResponse.json({
       city: null,
       countryCode: null,
@@ -99,9 +99,10 @@ export async function GET(req: Request) {
     isManual: false,
   })
 
-  const primed = !previousCookie || previousCookie !== cookieValue
+  const storeCookie = cookieValue ?? geoToCookieValue(geo) ?? geo.countryCode ?? ""
+  const primed = !previousCookie || (storeCookie.length > 0 && previousCookie !== storeCookie)
   const res = NextResponse.json(jsonFromResolved(loc, true, primed))
-  setLocationCookies(res, cookieValue, true)
+  if (storeCookie) setLocationCookies(res, storeCookie, true)
   return res
 }
 

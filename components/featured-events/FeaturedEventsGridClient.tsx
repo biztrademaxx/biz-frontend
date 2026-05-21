@@ -46,7 +46,7 @@ function FeaturedEventCard({ event }: { event: FeaturedEventPayload }) {
   const labels = featuredEventCategoryLabels(event).slice(0, 3)
 
   return (
-    <div className="overflow-hidden rounded-sm border border-gray-200 bg-white p-2 shadow-sm transition-shadow hover:shadow-md">
+    <div className="overflow-hidden rounded-sm border border-gray-200/90 bg-white p-2 shadow-[0_3px_12px_rgba(15,23,42,0.08)] transition-shadow hover:shadow-[0_6px_18px_rgba(15,23,42,0.12)]">
       <Link href={href} className="block cursor-pointer">
         <div className="text-sm font-medium leading-snug text-gray-800">{formattedDate}</div>
         <div className="mt-1 flex w-full justify-between gap-2">
@@ -109,7 +109,10 @@ function FeaturedEventCard({ event }: { event: FeaturedEventPayload }) {
 
 function PlaceholderCard({ index }: { index: number }) {
   return (
-    <div aria-hidden className="rounded-md border border-gray-200 bg-white p-2 shadow-sm">
+    <div
+      aria-hidden
+      className="rounded-md border border-gray-200/90 bg-white p-2 shadow-[0_3px_12px_rgba(15,23,42,0.08)]"
+    >
       <div className="home-shimmer h-3 w-36 rounded" />
       <div className="mt-2 flex justify-between gap-2">
         <div className="flex min-w-0 flex-1 flex-col gap-2">

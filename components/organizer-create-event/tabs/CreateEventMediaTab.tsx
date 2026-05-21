@@ -114,7 +114,7 @@ export function CreateEventMediaTab({
               {formData.images.map((image, index) => (
                 <div key={index} className="relative">
                   <Image
-                    src={image || "/city/c4.jpg"}
+                    src={image }
                     alt={`Event image ${index + 1}`}
                     width={200}
                     height={150}

@@ -204,7 +204,7 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
       totalRevenue: organizer.totalRevenue || 0,
       averageRating: avg,
       totalReviews: reviewCount,
-      avatar: organizer.avatar || "/city/c4.jpg",
+      avatar: organizer.avatar ,
       category: organizer.specialties?.[0] || "General Events",
       description: organizer.description || "No description provided",
       documents,

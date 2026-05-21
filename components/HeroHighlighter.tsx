@@ -6,7 +6,7 @@
   import { ArrowRight, Calendar, ChevronRight, MapPin } from "lucide-react"
   import { apiFetch } from "@/lib/api"
 import { eventPublicPath } from "@/lib/event-path"
-import { EVENT_IMAGE_FALLBACK } from "@/lib/placeholder"
+import { sanitizeImageUrl } from "@/lib/placeholder"
   const FEATURED_EVENTS_LIMIT = 12
   const FEATURED_ROTATE_MS = 12000
   const VIP_VISIBLE_COUNT = 4
@@ -125,8 +125,8 @@ import { EVENT_IMAGE_FALLBACK } from "@/lib/placeholder"
     return start.toDateString() === end.toDateString() ? fmt(start) : `${fmt(start)} – ${fmt(end)}`
   }
 
-  function featuredHeroImage(ev: FeaturedListEvent): string {
-    return ev.bannerImage || EVENT_IMAGE_FALLBACK
+  function featuredHeroImage(ev: FeaturedListEvent): string | undefined {
+    return sanitizeImageUrl(ev.bannerImage)
   }
 
   function formatFeaturedVenueLine(ev: FeaturedListEvent): string {
@@ -264,8 +264,8 @@ import { EVENT_IMAGE_FALLBACK } from "@/lib/placeholder"
   }
 
   /** Image only (never a watch URL) — used when no valid YouTube embed. */
-  function vipHeroImageUrl(e: VipEvent): string {
-    return e.bannerImage || e.images?.[0] || EVENT_IMAGE_FALLBACK
+  function vipHeroImageUrl(e: VipEvent): string | undefined {
+    return sanitizeImageUrl(e.bannerImage) ?? sanitizeImageUrl(e.images?.[0])
   }
 
   /**
@@ -701,15 +701,16 @@ import { EVENT_IMAGE_FALLBACK } from "@/lib/placeholder"
                                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                                 allowFullScreen
                               />
-                            ) : (
+                            ) : vipHeroImageUrl(panel) ? (
                               <img
                                 src={vipHeroImageUrl(panel)}
                                 alt=""
                                 className="absolute inset-0 block h-full w-full object-cover"
-                                onError={(e) => {
-                                  const img = e.currentTarget
-                                  if (img.src !== EVENT_IMAGE_FALLBACK) img.src = EVENT_IMAGE_FALLBACK
-                                }}
+                              />
+                            ) : (
+                              <div
+                                className="absolute inset-0 bg-gradient-to-br from-slate-200 to-slate-300"
+                                aria-hidden
                               />
                             )}
                           </div>
@@ -758,15 +759,18 @@ import { EVENT_IMAGE_FALLBACK } from "@/lib/placeholder"
                     >
                       {/* Full-bleed image; copy + countdown sit on top */}
                       <div className="relative h-full min-h-0 w-full min-w-0">
-                        <img
-                          src={featuredHeroImage(featuredPanel)}
-                          alt=""
-                          className="absolute inset-0 h-full w-full object-cover"
-                          onError={(e) => {
-                            const img = e.currentTarget
-                            if (img.src !== EVENT_IMAGE_FALLBACK) img.src = EVENT_IMAGE_FALLBACK
-                          }}
-                        />
+                        {featuredHeroImage(featuredPanel) ? (
+                          <img
+                            src={featuredHeroImage(featuredPanel)}
+                            alt=""
+                            className="absolute inset-0 h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div
+                            className="absolute inset-0 bg-gradient-to-br from-slate-200 to-slate-300"
+                            aria-hidden
+                          />
+                        )}
                         <div
                           className="absolute inset-0"
                           style={{ background: activeFeaturedTheme.overlayCss }}

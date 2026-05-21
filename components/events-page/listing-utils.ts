@@ -188,7 +188,6 @@ export function normalizeEventImageUrls(event: Record<string, unknown>): string[
   push(event.bannerImage)
   push(event.thumbnailImage)
 
-  if (out.length === 0) return [LISTING_DEFAULT_EVENT_IMAGE]
   return out
 }
 
@@ -196,13 +195,13 @@ export function getListingEventPrimaryImage(
   event: { images?: unknown; image?: unknown },
   defaultImage = LISTING_DEFAULT_EVENT_IMAGE,
 ): string {
-  const image = (event as { images?: { url?: string }[] }).images?.[0] ?? event.image ?? defaultImage
-  if (typeof image === "string") {
-    return image
+  const image = (event as { images?: { url?: string }[] }).images?.[0] ?? event.image
+  if (typeof image === "string" && image.trim()) {
+    return image.trim()
   }
   if (image && typeof image === "object" && "url" in image) {
     const u = (image as { url?: string }).url
-    if (typeof u === "string" && u) return u
+    if (typeof u === "string" && u.trim()) return u.trim()
   }
   return defaultImage
 }

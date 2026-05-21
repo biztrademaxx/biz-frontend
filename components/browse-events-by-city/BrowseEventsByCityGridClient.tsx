@@ -41,11 +41,17 @@ export default function BrowseEventsByCityGridClient({
                 <div className="flex min-w-0 flex-col items-start gap-2">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-none">
                     <div className="relative h-7 w-7">
-                      <img
-                        src={city.image || "/city/c4.jpg"}
-                        alt=""
-                        className="h-full w-full object-contain"
-                      />
+                      {city.image?.trim() ? (
+                        <img
+                          src={city.image.trim()}
+                          alt=""
+                          className="h-full w-full object-contain"
+                        />
+                      ) : (
+                        <span className="flex h-7 w-7 items-center justify-center text-lg" aria-hidden>
+                          🏙️
+                        </span>
+                      )}
                     </div>
                   </div>
                   <div className="w-full min-w-0 text-left leading-tight">

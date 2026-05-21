@@ -18,7 +18,7 @@ export function DashboardHeader({ userData }: DashboardHeaderProps) {
           <Bell className="w-4 h-4" />
         </Button>
         <Avatar className="w-8 h-8">
-          <AvatarImage src={userData.avatar || "/city/c4.jpg"} />
+          <AvatarImage src={userData.avatar } />
           <AvatarFallback>RS</AvatarFallback>
         </Avatar>
       </div>

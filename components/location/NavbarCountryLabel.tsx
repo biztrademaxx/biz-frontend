@@ -3,7 +3,7 @@
 import { MapPin } from "lucide-react"
 import { useHomeLocation } from "@/contexts/home-location-context"
 
-/** Navbar: detected country from IP/VPN only (no picker). */
+/** Navbar: detected country from IP/VPN (read-only, beside Explore). */
 export default function NavbarCountryLabel({ className = "" }: { className?: string }) {
   const { countryName, isLoading } = useHomeLocation()
 
@@ -15,7 +15,9 @@ export default function NavbarCountryLabel({ className = "" }: { className?: str
       aria-label={countryName ? `Showing content for ${countryName}` : "Detecting location"}
     >
       <MapPin className="h-4 w-4 shrink-0" aria-hidden />
-      <span className="truncate font-medium">{isLoading ? "Location…" : countryName}</span>
+      <span className="truncate font-medium">
+        {isLoading ? "Location…" : countryName ?? ""}
+      </span>
     </span>
   )
 }
