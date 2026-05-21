@@ -33,16 +33,30 @@ export interface TrendingHomePayload {
  * Per-event `/leads` / “going” data is **not** fetched here — `TrendingEventsGridClient` loads it
  * after hydration. Doing 4× many SSR fetches was blocking home for 10s+ when the API was slow.
  */
+function eventIdFromRaw(raw: unknown): string | null {
+  if (!raw || typeof raw !== "object" || !("id" in raw)) return null
+  const id = (raw as { id: unknown }).id
+  return id != null ? String(id) : null
+}
+
 export async function fetchTrendingHomePayloadServer(): Promise<TrendingHomePayload> {
   const empty: TrendingHomePayload = { events: [], goingBundles: {} }
   try {
     const loc = await resolveHomeLocation()
-    const res = await fetch(`${getApiBaseUrl()}/api/events?limit=80`, { next: { revalidate: 60 } })
-    if (!res.ok) return empty
-    const data: unknown = await res.json()
-    const rawList = rawEventsFromPayload(data)
+    const base = getApiBaseUrl()
+    const [listRes, vipRes] = await Promise.all([
+      fetch(`${base}/api/events?limit=120`, { next: { revalidate: 60 } }),
+      fetch(`${base}/api/events/vip`, { next: { revalidate: 60 } }),
+    ])
+    const listJson = listRes.ok ? await listRes.json() : null
+    const vipJson = vipRes.ok ? await vipRes.json() : null
+
+    const seen = new Set<string>()
     const normalized: TrendingHomeEvent[] = []
-    for (const row of rawList) {
+    for (const row of [...rawEventsFromPayload(listJson), ...rawEventsFromPayload(vipJson)]) {
+      const id = eventIdFromRaw(row)
+      if (!id || seen.has(id)) continue
+      seen.add(id)
       const ev = normalizeTrendingHomeEvent(row)
       if (ev) normalized.push(ev)
     }

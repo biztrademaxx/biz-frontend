@@ -6,6 +6,7 @@ import { UserRound } from "lucide-react"
 import { BookmarkButton } from "@/components/bookmark-button"
 import HomeSectionEmptyState, { homeEmptyDescription } from "@/components/home/HomeSectionEmptyState"
 import { hasDisplayableEventImage } from "@/lib/event-card-meta"
+import { resolveEventBannerImage } from "@/lib/events/resolve-event-banner-image"
 import { eventPublicPath } from "@/lib/event-path"
 import { trendingDateBadgeParts } from "@/lib/home-trending/trending-dates"
 import type { FollowerProfile, GoingBundle, TrendingHomeEvent } from "@/lib/home-trending/types"
@@ -174,8 +175,7 @@ export default function TrendingEventsGridClient({
         ) : (
         <div className="grid grid-cols-1 items-stretch gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-4 lg:gap-5">
           {displayEvents.map((event, index) => {
-                const imageUrl =
-                  event.bannerImage?.trim() || event.logo?.trim() || ""
+                const imageUrl = resolveEventBannerImage(event)
                 if (!imageUrl) return null
 
                 const { day, month } = trendingDateBadgeParts(event.startDate)
