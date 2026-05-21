@@ -34,12 +34,14 @@ async function shareFeaturedEvent(title: string, path: string) {
 }
 
 function FeaturedEventCard({ event }: { event: FeaturedEventPayload }) {
+  const thumb = event.bannerImage?.trim()
+  if (!thumb) return null
+
   const start = new Date(event.startDate)
   const end = new Date(event.endDate)
   const formattedDate = formatFeaturedDateRange(start, end)
   const href = eventPublicPath({ id: event.id, slug: event.slug })
   const labels = featuredEventCategoryLabels(event).slice(0, 3)
-  const thumb = event.bannerImage || "/herosection-images/food.jpg"
 
   return (
     <div className="overflow-hidden rounded-sm border border-gray-200 bg-white p-2 shadow-sm transition-shadow hover:shadow-md">
@@ -132,7 +134,8 @@ export interface FeaturedEventsGridClientProps {
 }
 
 export default function FeaturedEventsGridClient({ events, homeCountry }: FeaturedEventsGridClientProps) {
-  const n = events.length
+  const withImages = events.filter((e) => Boolean(e.bannerImage?.trim()))
+  const n = withImages.length
   const [offset, setOffset] = useState(0)
 
   useEffect(() => {
@@ -148,11 +151,11 @@ export default function FeaturedEventsGridClient({ events, homeCountry }: Featur
   }, [n])
 
   const slotEvents = useMemo(
-    () => eventsForFeaturedSlots(events, offset, SLOT_COUNT),
-    [events, offset],
+    () => eventsForFeaturedSlots(withImages, offset, SLOT_COUNT),
+    [withImages, offset],
   )
 
-  if (events.length === 0) {
+  if (withImages.length === 0) {
     const emptyMsg = homeCountry
       ? `No featured events in ${homeCountry} right now. Try another city from the location menu, or browse all events.`
       : "No featured events at the moment."

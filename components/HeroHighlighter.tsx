@@ -6,8 +6,7 @@
   import { ArrowRight, Calendar, ChevronRight, MapPin } from "lucide-react"
   import { apiFetch } from "@/lib/api"
 import { eventPublicPath } from "@/lib/event-path"
-
-  const FALLBACK_IMAGE = "/herosection-images/food.jpg"
+import { EVENT_IMAGE_FALLBACK } from "@/lib/placeholder"
   const FEATURED_EVENTS_LIMIT = 12
   const FEATURED_ROTATE_MS = 12000
   const VIP_VISIBLE_COUNT = 4
@@ -127,7 +126,7 @@ import { eventPublicPath } from "@/lib/event-path"
   }
 
   function featuredHeroImage(ev: FeaturedListEvent): string {
-    return ev.bannerImage || FALLBACK_IMAGE
+    return ev.bannerImage || EVENT_IMAGE_FALLBACK
   }
 
   function formatFeaturedVenueLine(ev: FeaturedListEvent): string {
@@ -266,7 +265,7 @@ import { eventPublicPath } from "@/lib/event-path"
 
   /** Image only (never a watch URL) — used when no valid YouTube embed. */
   function vipHeroImageUrl(e: VipEvent): string {
-    return e.bannerImage || e.images?.[0] || FALLBACK_IMAGE
+    return e.bannerImage || e.images?.[0] || EVENT_IMAGE_FALLBACK
   }
 
   /**
@@ -707,6 +706,10 @@ import { eventPublicPath } from "@/lib/event-path"
                                 src={vipHeroImageUrl(panel)}
                                 alt=""
                                 className="absolute inset-0 block h-full w-full object-cover"
+                                onError={(e) => {
+                                  const img = e.currentTarget
+                                  if (img.src !== EVENT_IMAGE_FALLBACK) img.src = EVENT_IMAGE_FALLBACK
+                                }}
                               />
                             )}
                           </div>
@@ -759,6 +762,10 @@ import { eventPublicPath } from "@/lib/event-path"
                           src={featuredHeroImage(featuredPanel)}
                           alt=""
                           className="absolute inset-0 h-full w-full object-cover"
+                          onError={(e) => {
+                            const img = e.currentTarget
+                            if (img.src !== EVENT_IMAGE_FALLBACK) img.src = EVENT_IMAGE_FALLBACK
+                          }}
                         />
                         <div
                           className="absolute inset-0"

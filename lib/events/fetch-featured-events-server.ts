@@ -42,7 +42,7 @@ export async function fetchFeaturedEventsForHomeSection(): Promise<FeaturedEvent
     return filterByHomeCountryPrioritizeCity(out, loc, {
       getCity: getFeaturedEventCityLabel,
       getCountry: getFeaturedEventCountryLabel,
-    })
+    }).filter((e) => Boolean(e.bannerImage?.trim()))
   } catch (error) {
     console.error("Error fetching featured events from backend:", error)
     return []

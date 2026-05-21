@@ -5,8 +5,13 @@ import {
   getHeroSlideshowCountryLabel,
   homeLocationQueryString,
 } from "@/lib/home-location"
+import { hasDisplayableEventImage } from "@/lib/event-card-meta"
 import { resolveHomeLocation } from "@/lib/home-location-server"
 import type { HeroSlideshowEvent } from "./types"
+
+function withDisplayableImage(events: HeroSlideshowEvent[]): HeroSlideshowEvent[] {
+  return events.filter((e) => e.id && hasDisplayableEventImage(e))
+}
 
 const SLIDE_COUNT = 12
 
@@ -110,7 +115,9 @@ export async function fetchHeroSlideshowEventsServer(): Promise<HeroSlideshowEve
     if (vipRes.ok) {
       const data = await vipRes.json()
       const raw = Array.isArray(data) ? data : data?.events ?? []
-      events = (raw as Record<string, unknown>[]).map(normalizeEvent).filter((e) => e.id)
+      events = withDisplayableImage(
+        (raw as Record<string, unknown>[]).map(normalizeEvent).filter((e) => e.id),
+      )
     }
 
     if (events.length === 0) {
@@ -124,7 +131,7 @@ export async function fetchHeroSlideshowEventsServer(): Promise<HeroSlideshowEve
         const vipOnly = list.filter(
           (e) => e?.isVIP === true || e?.is_vip === true || e?.vip === true,
         )
-        events = vipOnly.map(normalizeEvent).filter((e) => e.id)
+        events = withDisplayableImage(vipOnly.map(normalizeEvent).filter((e) => e.id))
       }
     }
 
@@ -135,7 +142,9 @@ export async function fetchHeroSlideshowEventsServer(): Promise<HeroSlideshowEve
       )
       if (listRes.ok) {
         const data = await listRes.json()
-        const list = ((data?.events ?? []) as Record<string, unknown>[]).map(normalizeEvent)
+        const list = withDisplayableImage(
+          ((data?.events ?? []) as Record<string, unknown>[]).map(normalizeEvent).filter((e) => e.id),
+        )
         events = mergeUniqueById(events, list, SLIDE_COUNT)
       }
     } else {
@@ -145,9 +154,11 @@ export async function fetchHeroSlideshowEventsServer(): Promise<HeroSlideshowEve
     console.error("Hero slideshow error:", err)
   }
 
-  const filtered = filterByHomeCountryPrioritizeCity(events, loc, {
-    getCity: getHeroSlideshowCityLabel,
-    getCountry: getHeroSlideshowCountryLabel,
-  })
+  const filtered = withDisplayableImage(
+    filterByHomeCountryPrioritizeCity(events, loc, {
+      getCity: getHeroSlideshowCityLabel,
+      getCountry: getHeroSlideshowCountryLabel,
+    }),
+  )
   return filtered.slice(0, SLIDE_COUNT)
 }

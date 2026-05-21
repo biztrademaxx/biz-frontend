@@ -3,6 +3,27 @@
 export const EVENT_CARD_PLACEHOLDER_IMAGE =
   "https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=400&h=300&fit=crop"
 
+/** True when the event has a real image URL (home strips hide events without one). */
+export function hasDisplayableEventImage(event: {
+  thumbnailImage?: string | null
+  bannerImage?: string | null
+  logo?: string | null
+  images?: unknown
+}): boolean {
+  if (event.thumbnailImage?.trim()) return true
+  if (event.bannerImage?.trim()) return true
+  if (event.logo?.trim()) return true
+  if (Array.isArray(event.images) && event.images.length > 0) {
+    const first = event.images[0]
+    if (typeof first === "string" && first.trim()) return true
+    if (first && typeof first === "object" && "url" in first) {
+      const url = (first as { url?: string }).url
+      if (typeof url === "string" && url.trim()) return true
+    }
+  }
+  return false
+}
+
 export function getEventCardImageUrl(event: {
   thumbnailImage?: string | null
   bannerImage?: string | null

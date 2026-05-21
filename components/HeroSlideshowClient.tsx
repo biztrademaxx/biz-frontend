@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef } from "react"
 import { Noto_Sans } from "next/font/google"
 import { ChevronLeft, ChevronRight, MapPin } from "lucide-react"
 import { eventPublicPath } from "@/lib/event-path"
+import { hasDisplayableEventImage } from "@/lib/event-card-meta"
 import type { HeroSlideshowEvent } from "@/lib/hero/types"
 
 const vipDateFont = Noto_Sans({
@@ -14,13 +15,11 @@ const vipDateFont = Noto_Sans({
 
 export type Event = HeroSlideshowEvent
 
-const FALLBACK_IMAGE = "/herosection-images/food.jpg"
-
 function cardImageUrl(event: Event): string {
   if (event.bannerImage?.trim()) return event.bannerImage.trim()
   const first = event.images?.[0]
   if (typeof first === "string" && first.trim()) return first.trim()
-  return FALLBACK_IMAGE
+  return ""
 }
 
 /** Day, month, and year from event start only (end date is not shown). */
@@ -67,6 +66,9 @@ function formatLocationLine(event: Event): string {
 }
 
 function EventCard({ event }: { event: Event }) {
+  const imageUrl = cardImageUrl(event)
+  if (!imageUrl) return null
+
   const { line1: dateLine1, line2: dateLine2, yearLine: dateYear } =
     heroCardDateParts(event.startDate, event.endDate)
   const location = formatLocationLine(event)
@@ -80,7 +82,7 @@ function EventCard({ event }: { event: Event }) {
     >
       <div className="group relative h-[448px] w-full min-w-0 overflow-hidden bg-[#F2F2F2] transition-all duration-300 ease-out hover:z-10 hover:scale-[1.02] hover:shadow-2xl md:h-[488px] lg:h-[528px] lg:hover:scale-105">
         <img
-          src={cardImageUrl(event)}
+          src={imageUrl}
           alt={event.title}
           className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
         />
@@ -152,7 +154,7 @@ export default function HeroSlideshowClient({
   homeCountry?: string | null
 }) {
   const scrollRef = useRef<HTMLDivElement>(null)
-  const events = initialEvents
+  const events = initialEvents.filter((e) => hasDisplayableEventImage(e))
 
   const advance = useCallback((dir: "left" | "right") => {
     const el = scrollRef.current
@@ -180,7 +182,7 @@ export default function HeroSlideshowClient({
     return () => window.clearInterval(id)
   }, [events.length, advance])
 
-  if (!initialEvents.length) {
+  if (!events.length) {
     const emptyMsg = homeCountry
       ? `No VIP events in ${homeCountry} at the moment`
       : "No VIP events at the moment"

@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { UserRound } from "lucide-react"
 import { BookmarkButton } from "@/components/bookmark-button"
+import { hasDisplayableEventImage } from "@/lib/event-card-meta"
 import { eventPublicPath } from "@/lib/event-path"
 import { trendingDateBadgeParts } from "@/lib/home-trending/trending-dates"
 import type { FollowerProfile, GoingBundle, TrendingHomeEvent } from "@/lib/home-trending/types"
@@ -133,7 +134,7 @@ export default function TrendingEventsGridClient({
     ? `Upcoming trade fairs and summits in ${homeCountry}`
     : "Connecting the global B2B trade fair community—where new business opportunities begin every minute."
   const router = useRouter()
-  const displayEvents = events
+  const displayEvents = events.filter((e) => hasDisplayableEventImage(e))
 
   const handleCardClick = (event: TrendingHomeEvent) => {
     router.push(eventPublicPath(event))
@@ -158,6 +159,10 @@ export default function TrendingEventsGridClient({
         <div className="grid grid-cols-1 items-stretch gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-4 lg:gap-5">
           {displayEvents.length > 0
             ? displayEvents.map((event, index) => {
+                const imageUrl =
+                  event.bannerImage?.trim() || event.logo?.trim() || ""
+                if (!imageUrl) return null
+
                 const { day, month } = trendingDateBadgeParts(event.startDate)
                 const locationLine = formatEventLocation(event)
 
@@ -182,13 +187,9 @@ export default function TrendingEventsGridClient({
                   >
                     <div className="relative aspect-[5/3] w-full shrink-0 overflow-hidden bg-gradient-to-br from-slate-100 to-slate-200">
                       <img
-                        src={event.bannerImage || event.logo || "/herosection-images/food.jpg"}
+                        src={imageUrl}
                         alt=""
                         className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement
-                          target.src = "/herosection-images/food.jpg"
-                        }}
                       />
                       <div
                         className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-black/5 to-transparent"

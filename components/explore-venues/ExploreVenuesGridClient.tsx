@@ -4,11 +4,12 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Calendar, MapPin, Star } from "lucide-react"
 import type { ExploreVenueCard } from "@/lib/venues/types"
+import { formatVenueLocationLabel } from "@/lib/venues/format-venue-location"
 import { getVenuePublicPath } from "@/lib/venue-dashboard-path"
 
 function VenueCard({ venue, onNavigate }: { venue: ExploreVenueCard; onNavigate: () => void }) {
   const showRating = venue.averageRating > 0 || venue.totalReviews > 0
-  const locationLabel = venue.city.trim() || "Location TBD"
+  const locationLabel = formatVenueLocationLabel(venue.city, venue.country)
 
   return (
     <button

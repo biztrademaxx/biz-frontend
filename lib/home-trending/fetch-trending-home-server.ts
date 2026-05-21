@@ -5,6 +5,7 @@ import {
   getTrendingEventCountryLabel,
   homeLocationQueryString,
 } from "@/lib/home-location"
+import { hasDisplayableEventImage } from "@/lib/event-card-meta"
 import { resolveHomeLocation } from "@/lib/home-location-server"
 import { mergeGoingBundleFromJson } from "./followers-bundle"
 import { normalizeTrendingHomeEvent } from "./normalize-trending-event"
@@ -52,7 +53,7 @@ export async function fetchTrendingHomePayloadServer(): Promise<TrendingHomePayl
     const locationFiltered = filterByHomeCountryPrioritizeCity(normalized, loc, {
       getCity: getTrendingEventCityLabel,
       getCountry: getTrendingEventCountryLabel,
-    })
+    }).filter((e) => hasDisplayableEventImage(e))
     const picked = pickTrendingHomeEvents(locationFiltered, TRENDING_HOME_MAX_EVENTS)
     if (picked.length === 0) return empty
 
