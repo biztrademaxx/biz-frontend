@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef } from "react"
 import { Noto_Sans } from "next/font/google"
 import { ChevronLeft, ChevronRight, MapPin } from "lucide-react"
 import { eventPublicPath } from "@/lib/event-path"
+import HomeSectionEmptyState, { homeEmptyDescription } from "@/components/home/HomeSectionEmptyState"
 import { hasDisplayableEventImage } from "@/lib/event-card-meta"
 import type { HeroSlideshowEvent } from "@/lib/hero/types"
 
@@ -148,9 +149,11 @@ const AUTO_ADVANCE_MS = 5000
 
 export default function HeroSlideshowClient({
   initialEvents,
+  homeCity,
   homeCountry,
 }: {
   initialEvents: Event[]
+  homeCity?: string | null
   homeCountry?: string | null
 }) {
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -183,12 +186,20 @@ export default function HeroSlideshowClient({
   }, [events.length, advance])
 
   if (!events.length) {
-    const emptyMsg = homeCountry
-      ? `No VIP events in ${homeCountry} at the moment`
-      : "No VIP events at the moment"
     return (
-      <div className="flex h-56 w-full items-center justify-center bg-neutral-100 text-gray-500">
-        {emptyMsg}
+      <div className="w-full px-3 sm:px-4 lg:px-6">
+        <HomeSectionEmptyState
+          icon="trending"
+          title="No VIP events in this region"
+          description={homeEmptyDescription("VIP events with images", homeCity, homeCountry)}
+          homeCity={homeCity}
+          homeCountry={homeCountry}
+          actions={[
+            { label: "Browse all events", href: "/event" },
+            { label: "Add event", href: "/organizer-signup", variant: "secondary" },
+          ]}
+          className="min-h-[280px] lg:min-h-[320px]"
+        />
       </div>
     )
   }

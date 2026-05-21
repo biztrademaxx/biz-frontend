@@ -1,9 +1,7 @@
 import {
-  countryScopedHomeLocation,
   filterByHomeCountryPrioritizeCity,
   getTrendingEventCityLabel,
   getTrendingEventCountryLabel,
-  homeLocationQueryString,
 } from "@/lib/home-location"
 import { hasDisplayableEventImage } from "@/lib/event-card-meta"
 import { resolveHomeLocation } from "@/lib/home-location-server"
@@ -39,9 +37,7 @@ export async function fetchTrendingHomePayloadServer(): Promise<TrendingHomePayl
   const empty: TrendingHomePayload = { events: [], goingBundles: {} }
   try {
     const loc = await resolveHomeLocation()
-    const locationQs = homeLocationQueryString(countryScopedHomeLocation(loc))
-    const url = `${getApiBaseUrl()}/api/events${locationQs ? `?${locationQs}` : ""}`
-    const res = await fetch(url, { next: { revalidate: 60 } })
+    const res = await fetch(`${getApiBaseUrl()}/api/events?limit=80`, { next: { revalidate: 60 } })
     if (!res.ok) return empty
     const data: unknown = await res.json()
     const rawList = rawEventsFromPayload(data)

@@ -1,9 +1,7 @@
 import {
-  countryScopedHomeLocation,
   filterByHomeCountryPrioritizeCity,
   getHeroSlideshowCityLabel,
   getHeroSlideshowCountryLabel,
-  homeLocationQueryString,
 } from "@/lib/home-location"
 import { hasDisplayableEventImage } from "@/lib/event-card-meta"
 import { resolveHomeLocation } from "@/lib/home-location-server"
@@ -102,63 +100,60 @@ function mergeUniqueById(
   return out
 }
 
-export async function fetchHeroSlideshowEventsServer(): Promise<HeroSlideshowEvent[]> {
-  const loc = await resolveHomeLocation()
-  const locationQs = homeLocationQueryString(countryScopedHomeLocation(loc))
-  const locationSuffix = locationQs ? `?${locationQs}` : ""
-  let events: HeroSlideshowEvent[] = []
-
-  try {
-    const vipRes = await fetch(`${getApiBaseUrl()}/api/events/vip${locationSuffix}`, {
-      next: { revalidate: 60 },
-    })
-    if (vipRes.ok) {
-      const data = await vipRes.json()
-      const raw = Array.isArray(data) ? data : data?.events ?? []
-      events = withDisplayableImage(
-        (raw as Record<string, unknown>[]).map(normalizeEvent).filter((e) => e.id),
-      )
-    }
-
-    if (events.length === 0) {
-      const listRes = await fetch(
-        `${getApiBaseUrl()}/api/events?limit=24${locationQs ? `&${locationQs}` : ""}`,
-        { next: { revalidate: 60 } },
-      )
-      if (listRes.ok) {
-        const data = await listRes.json()
-        const list = (data?.events ?? []) as Record<string, unknown>[]
-        const vipOnly = list.filter(
-          (e) => e?.isVIP === true || e?.is_vip === true || e?.vip === true,
-        )
-        events = withDisplayableImage(vipOnly.map(normalizeEvent).filter((e) => e.id))
-      }
-    }
-
-    if (events.length < SLIDE_COUNT) {
-      const listRes = await fetch(
-        `${getApiBaseUrl()}/api/events?limit=40${locationQs ? `&${locationQs}` : ""}`,
-        { next: { revalidate: 60 } },
-      )
-      if (listRes.ok) {
-        const data = await listRes.json()
-        const list = withDisplayableImage(
-          ((data?.events ?? []) as Record<string, unknown>[]).map(normalizeEvent).filter((e) => e.id),
-        )
-        events = mergeUniqueById(events, list, SLIDE_COUNT)
-      }
-    } else {
-      events = events.slice(0, SLIDE_COUNT)
-    }
-  } catch (err) {
-    console.error("Hero slideshow error:", err)
-  }
-
-  const filtered = withDisplayableImage(
+function applyHomeEventFilters(events: HeroSlideshowEvent[], loc: Awaited<ReturnType<typeof resolveHomeLocation>>) {
+  return withDisplayableImage(
     filterByHomeCountryPrioritizeCity(events, loc, {
       getCity: getHeroSlideshowCityLabel,
       getCountry: getHeroSlideshowCountryLabel,
     }),
   )
-  return filtered.slice(0, SLIDE_COUNT)
+}
+
+export async function fetchHeroSlideshowEventsServer(): Promise<HeroSlideshowEvent[]> {
+  const loc = await resolveHomeLocation()
+  let pool: HeroSlideshowEvent[] = []
+
+  try {
+    const vipRes = await fetch(`${getApiBaseUrl()}/api/events/vip`, {
+      next: { revalidate: 60 },
+    })
+    if (vipRes.ok) {
+      const data = await vipRes.json()
+      const raw = Array.isArray(data) ? data : data?.events ?? []
+      pool = (raw as Record<string, unknown>[]).map(normalizeEvent).filter((e) => e.id)
+    }
+
+    if (pool.length < SLIDE_COUNT) {
+      const listRes = await fetch(`${getApiBaseUrl()}/api/events?limit=60`, {
+        next: { revalidate: 60 },
+      })
+      if (listRes.ok) {
+        const data = await listRes.json()
+        const rawList = (data?.events ?? []) as Record<string, unknown>[]
+        const vipOnly = rawList.filter(
+          (e) => e?.isVIP === true || e?.is_vip === true || e?.vip === true,
+        )
+        pool = mergeUniqueById(
+          pool,
+          vipOnly.map(normalizeEvent).filter((e) => e.id),
+          60,
+        )
+      }
+    }
+
+    if (pool.length < SLIDE_COUNT) {
+      const listRes = await fetch(`${getApiBaseUrl()}/api/events?limit=80`, {
+        next: { revalidate: 60 },
+      })
+      if (listRes.ok) {
+        const data = await listRes.json()
+        const list = ((data?.events ?? []) as Record<string, unknown>[]).map(normalizeEvent).filter((e) => e.id)
+        pool = mergeUniqueById(pool, list, 80)
+      }
+    }
+  } catch (err) {
+    console.error("Hero slideshow error:", err)
+  }
+
+  return applyHomeEventFilters(pool, loc).slice(0, SLIDE_COUNT)
 }

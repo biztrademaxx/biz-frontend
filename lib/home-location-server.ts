@@ -3,6 +3,7 @@ import "server-only"
 import { cache } from "react"
 import { cookies } from "next/headers"
 import { fetchGeoHintServer } from "@/lib/browse-geo-server"
+import { resolveCountryForCityName } from "@/lib/city-country"
 import { countryNameFromCode, parseHomeLocationCookie } from "@/lib/geo-from-request"
 import {
   buildResolvedHomeLocation,
@@ -29,9 +30,15 @@ export const resolveHomeLocation = cache(async (): Promise<ResolvedHomeLocation>
       let countryName = countryCode ? countryNameFromCode(countryCode) : null
 
       if (!countryCode && parsed.city) {
-        const geo = await fetchGeoHintServer()
-        countryCode = geo?.countryCode?.trim().toUpperCase() || null
-        countryName = geo?.countryName?.trim() || countryNameFromCode(countryCode)
+        const mapped = resolveCountryForCityName(parsed.city)
+        if (mapped) {
+          countryCode = mapped.countryCode
+          countryName = mapped.countryName
+        } else if (isAuto) {
+          const geo = await fetchGeoHintServer()
+          countryCode = geo?.countryCode?.trim().toUpperCase() || null
+          countryName = geo?.countryName?.trim() || countryNameFromCode(countryCode)
+        }
       }
 
       return buildResolvedHomeLocation({

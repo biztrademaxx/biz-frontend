@@ -1,4 +1,5 @@
 import { NEARBY_COUNTRY_CODES } from "@/lib/browse-geo"
+import { resolveCountryForCityName } from "@/lib/city-country"
 
 export const HOME_CITY_COOKIE = "biz_home_city"
 export const HOME_CITY_STORAGE_KEY = "biz_home_city"
@@ -21,7 +22,7 @@ export const ISO_COUNTRY_ALIASES: Record<string, string[]> = {
   ES: ["spain", "es"],
   CH: ["switzerland", "ch"],
   AT: ["austria", "at"],
-  CN: ["china", "cn"],
+  CN: ["china", "cn", "chn", "prc", "people's republic of china", "peoples republic of china"],
   JP: ["japan", "jp"],
   AU: ["australia", "au"],
   CA: ["canada", "ca"],
@@ -188,6 +189,23 @@ export function filterByHomeLocation<T>(
   return items.filter((item) => countryMatchesValue(getters.getCountry(item), needles))
 }
 
+/** Match item to visitor country via venue country and/or known city → country map. */
+export function matchesHomeCountry<T>(
+  item: T,
+  loc: ResolvedHomeLocation,
+  getters: {
+    getCity: (item: T) => string | null | undefined
+    getCountry: (item: T) => string | null | undefined
+  },
+): boolean {
+  const needles = countryMatchNeedles(loc)
+  if (needles.length === 0) return true
+  if (countryMatchesValue(getters.getCountry(item), needles)) return true
+  if (!loc.countryCode) return false
+  const mapped = resolveCountryForCityName(getters.getCity(item))
+  return mapped?.countryCode === loc.countryCode
+}
+
 /**
  * Home sections: all items in the visitor's country, with their city first
  * (e.g. Bengaluru events, then other cities in India).
@@ -203,7 +221,7 @@ export function filterByHomeCountryPrioritizeCity<T>(
   const needles = countryMatchNeedles(loc)
   const inCountry =
     needles.length > 0
-      ? items.filter((item) => countryMatchesValue(getters.getCountry(item), needles))
+      ? items.filter((item) => matchesHomeCountry(item, loc, getters))
       : items
 
   const homeCity = loc.city?.trim()

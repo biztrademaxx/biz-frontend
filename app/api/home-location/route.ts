@@ -8,6 +8,7 @@ import {
   resolveGeoFromHeaders,
   countryNameFromCode,
 } from "@/lib/geo-from-request"
+import { resolveCountryForCityName } from "@/lib/city-country"
 import { buildResolvedHomeLocation, HOME_CITY_COOKIE, HOME_LOCATION_AUTO_COOKIE } from "@/lib/home-location"
 
 export const dynamic = "force-dynamic"
@@ -47,29 +48,71 @@ function setLocationCookies(
       sameSite: "lax",
     })
   } else {
-    res.cookies.set(HOME_LOCATION_AUTO_COOKIE, "", {
+    res.cookies.set(HOME_LOCATION_AUTO_COOKIE, "0", {
       path: "/",
-      maxAge: 0,
+      maxAge: COOKIE_MAX_AGE,
       sameSite: "lax",
     })
   }
 }
 
-/** GET — read saved location; auto-detect from IP when cookie is missing. */
-export async function GET() {
-  const jar = await cookies()
-  const cookieVal = jar.get(HOME_CITY_COOKIE)?.value?.trim()
-  const isAuto = jar.get(HOME_LOCATION_AUTO_COOKIE)?.value === "1"
+function enrichCountry(
+  city: string | null,
+  countryCode: string | null,
+  countryName: string | null,
+  isAuto: boolean,
+): { countryCode: string | null; countryName: string | null } {
+  if (countryCode) {
+    return { countryCode, countryName: countryName ?? countryNameFromCode(countryCode) }
+  }
+  if (city) {
+    const mapped = resolveCountryForCityName(city)
+    if (mapped) return { countryCode: mapped.countryCode, countryName: mapped.countryName }
+  }
+  return { countryCode: null, countryName: null }
+}
 
-  if (cookieVal) {
+/** GET — read saved location; `?refresh=1` re-detects from IP (VPN / “use my location”). */
+export async function GET(req: Request) {
+  const refresh = new URL(req.url).searchParams.get("refresh") === "1"
+  const jar = await cookies()
+  const cookieVal = refresh ? undefined : jar.get(HOME_CITY_COOKIE)?.value?.trim()
+  const autoCookie = refresh ? "1" : jar.get(HOME_LOCATION_AUTO_COOKIE)?.value
+  const isManualLocation = Boolean(cookieVal) && autoCookie === "0"
+
+  if (cookieVal && !refresh && isManualLocation) {
     const parsed = parseHomeLocationCookie(cookieVal)
+    const enriched = enrichCountry(parsed.city, parsed.countryCode, null, false)
     const loc = buildResolvedHomeLocation({
       city: parsed.city,
-      countryCode: parsed.countryCode,
-      countryName: parsed.countryCode ? countryNameFromCode(parsed.countryCode) : null,
-      isManual: !isAuto,
+      countryCode: enriched.countryCode,
+      countryName: enriched.countryName,
+      isManual: true,
     })
-    return NextResponse.json(jsonFromResolved(loc, isAuto))
+    return NextResponse.json(jsonFromResolved(loc, false))
+  }
+
+  if (cookieVal && !refresh && autoCookie === "1") {
+    const h = await headers()
+    const geo = await resolveGeoFromHeaders(h)
+    const freshCookie = geoToCookieValue(geo)
+    if (freshCookie) {
+      const parsed = parseHomeLocationCookie(freshCookie)
+      const enriched = enrichCountry(parsed.city, parsed.countryCode, geo.countryName, true)
+      const loc = buildResolvedHomeLocation({
+        city: parsed.city ?? geo.city,
+        countryCode: enriched.countryCode ?? geo.countryCode,
+        countryName: enriched.countryName ?? geo.countryName,
+        isManual: false,
+      })
+      const oldParsed = parseHomeLocationCookie(cookieVal)
+      const primed =
+        (loc.city ?? "") !== (oldParsed.city ?? "") ||
+        (loc.countryCode ?? "") !== (oldParsed.countryCode ?? "")
+      const res = NextResponse.json(jsonFromResolved(loc, true, primed))
+      setLocationCookies(res, freshCookie, true)
+      return res
+    }
   }
 
   // No cookie — detect from IP and prime cookie for subsequent requests.
@@ -119,7 +162,16 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid body" }, { status: 400 })
   }
 
-  const cookieValue = city || countryCode || countryName
+  const enriched = enrichCountry(city || null, countryCode, countryName, isAuto)
+  countryCode = enriched.countryCode
+  countryName = enriched.countryName
+
+  const cookieValue = geoToCookieValue({
+    city: city || null,
+    countryCode,
+    countryName,
+    region: null,
+  })
   if (!cookieValue) {
     return NextResponse.json({ error: "city or country is required" }, { status: 400 })
   }

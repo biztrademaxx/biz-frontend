@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { UserRound } from "lucide-react"
 import { BookmarkButton } from "@/components/bookmark-button"
+import HomeSectionEmptyState, { homeEmptyDescription } from "@/components/home/HomeSectionEmptyState"
 import { hasDisplayableEventImage } from "@/lib/event-card-meta"
 import { eventPublicPath } from "@/lib/event-path"
 import { trendingDateBadgeParts } from "@/lib/home-trending/trending-dates"
@@ -122,12 +123,14 @@ function TrendingGoingRow({ profiles, total }: { profiles: FollowerProfile[]; to
 export interface TrendingEventsGridClientProps {
   events: TrendingHomeEvent[]
   goingBundles: Record<string, GoingBundle>
+  homeCity?: string | null
   homeCountry?: string | null
 }
 
 export default function TrendingEventsGridClient({
   events,
   goingBundles,
+  homeCity,
   homeCountry,
 }: TrendingEventsGridClientProps) {
   const subtitle = homeCountry
@@ -156,9 +159,21 @@ export default function TrendingEventsGridClient({
       </div>
 
       <div className="relative">
+        {displayEvents.length === 0 ? (
+          <HomeSectionEmptyState
+            icon="trending"
+            title="No upcoming events here yet"
+            description={homeEmptyDescription("upcoming events with images", homeCity, homeCountry)}
+            homeCity={homeCity}
+            homeCountry={homeCountry}
+            actions={[
+              { label: "Browse all events", href: "/event" },
+              { label: "Add event", href: "/organizer-signup", variant: "secondary" },
+            ]}
+          />
+        ) : (
         <div className="grid grid-cols-1 items-stretch gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-4 lg:gap-5">
-          {displayEvents.length > 0
-            ? displayEvents.map((event, index) => {
+          {displayEvents.map((event, index) => {
                 const imageUrl =
                   event.bannerImage?.trim() || event.logo?.trim() || ""
                 if (!imageUrl) return null
@@ -243,35 +258,9 @@ export default function TrendingEventsGridClient({
                     </div>
                   </div>
                 )
-              })
-            : Array.from({ length: 4 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="flex h-full flex-col overflow-hidden rounded-sm border border-gray-100/90 bg-white shadow-sm ring-1 ring-black/[0.04]"
-                >
-                  <div className="home-shimmer aspect-[5/3] w-full shrink-0" />
-                  <div className="flex min-h-0 flex-1 flex-col space-y-3 px-5 pb-5 pt-4">
-                    <div className="home-shimmer h-5 min-h-[2.75rem] w-[82%] rounded-sm md:min-h-[3rem]" />
-                    <div className="home-shimmer h-4 min-h-[2.5rem] w-[88%] rounded-sm md:min-h-[2.75rem]" />
-                    <div className="mt-auto flex items-center justify-between gap-3 border-t border-gray-100 pt-4">
-                      <div className="flex min-w-0 flex-1 items-center gap-2">
-                        <div className="flex shrink-0">
-                          {Array.from({ length: 3 }).map((_, j) => (
-                            <div
-                              key={j}
-                              className="home-shimmer h-8 w-8 rounded-full border-2 border-white"
-                              style={{ marginLeft: j === 0 ? 0 : -10, zIndex: 3 - j }}
-                            />
-                          ))}
-                        </div>
-                        <div className="home-shimmer h-4 w-24 rounded" />
-                      </div>
-                      <div className="home-shimmer h-10 w-[5.5rem] shrink-0 rounded-sm" />
-                    </div>
-                  </div>
-                </div>
-              ))}
+              })}
         </div>
+        )}
       </div>
     </section>
   )

@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Calendar, MapPin, Star } from "lucide-react"
+import HomeSectionEmptyState, { homeEmptyDescription } from "@/components/home/HomeSectionEmptyState"
 import type { ExploreVenueCard } from "@/lib/venues/types"
 import { formatVenueLocationLabel } from "@/lib/venues/format-venue-location"
 import { getVenuePublicPath } from "@/lib/venue-dashboard-path"
@@ -73,10 +74,15 @@ function VenueCard({ venue, onNavigate }: { venue: ExploreVenueCard; onNavigate:
 
 export interface ExploreVenuesGridClientProps {
   venues: ExploreVenueCard[]
+  homeCity?: string | null
   homeCountry?: string | null
 }
 
-export default function ExploreVenuesGridClient({ venues, homeCountry }: ExploreVenuesGridClientProps) {
+export default function ExploreVenuesGridClient({
+  venues,
+  homeCity,
+  homeCountry,
+}: ExploreVenuesGridClientProps) {
   const subtitle = homeCountry
     ? `Discover event spaces and venues in ${homeCountry}`
     : "Discover event spaces and venues in top cities"
@@ -96,7 +102,17 @@ export default function ExploreVenuesGridClient({ venues, homeCountry }: Explore
 
       <div>
         {venues.length === 0 ? (
-          <p className="py-8 text-center text-sm text-gray-500">No venues available yet.</p>
+          <HomeSectionEmptyState
+            icon="venues"
+            title="No venues in this region yet"
+            description={homeEmptyDescription("venues with photos", homeCity, homeCountry)}
+            homeCity={homeCity}
+            homeCountry={homeCountry}
+            actions={[
+              { label: "Browse all venues", href: "/venues" },
+              { label: "List your venue", href: "/organizer-signup", variant: "secondary" },
+            ]}
+          />
         ) : (
           <>
             <div className="mb-6 grid grid-cols-1 gap-5 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">

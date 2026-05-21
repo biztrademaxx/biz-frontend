@@ -5,6 +5,7 @@ import { Share2 } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 import type { FeaturedEventPayload } from "@/lib/events/types"
 import { eventPublicPath } from "@/lib/event-path"
+import HomeSectionEmptyState, { homeEmptyDescription } from "@/components/home/HomeSectionEmptyState"
 import {
   eventsForFeaturedSlots,
   featuredEventCategoryLabels,
@@ -130,10 +131,15 @@ function PlaceholderCard({ index }: { index: number }) {
 
 export interface FeaturedEventsGridClientProps {
   events: FeaturedEventPayload[]
+  homeCity?: string | null
   homeCountry?: string | null
 }
 
-export default function FeaturedEventsGridClient({ events, homeCountry }: FeaturedEventsGridClientProps) {
+export default function FeaturedEventsGridClient({
+  events,
+  homeCity,
+  homeCountry,
+}: FeaturedEventsGridClientProps) {
   const withImages = events.filter((e) => Boolean(e.bannerImage?.trim()))
   const n = withImages.length
   const [offset, setOffset] = useState(0)
@@ -156,28 +162,19 @@ export default function FeaturedEventsGridClient({ events, homeCountry }: Featur
   )
 
   if (withImages.length === 0) {
-    const emptyMsg = homeCountry
-      ? `No featured events in ${homeCountry} right now. Try another city from the location menu, or browse all events.`
-      : "No featured events at the moment."
     return (
       <div className="col-12">
-        <p className="mb-6 rounded-md border border-gray-200 bg-gray-50 px-4 py-6 text-center text-sm text-gray-600">
-          {emptyMsg}
-        </p>
-        <div className="flex flex-wrap justify-center gap-3">
-          <Link
-            href="/event"
-            className="inline-flex items-center justify-center rounded-md border border-[#002C71] px-4 py-2 text-sm font-medium text-[#002C71] transition-colors hover:bg-[#002C71]/5"
-          >
-            Browse all events
-          </Link>
-          <Link
-            href="/organizer-signup"
-            className="inline-flex items-center justify-center rounded-md bg-[#002C71] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#001a48]"
-          >
-            Add Event
-          </Link>
-        </div>
+        <HomeSectionEmptyState
+          icon="events"
+          title="No featured events here yet"
+          description={homeEmptyDescription("featured events with images", homeCity, homeCountry)}
+          homeCity={homeCity}
+          homeCountry={homeCountry}
+          actions={[
+            { label: "Browse all events", href: "/event" },
+            { label: "Add event", href: "/organizer-signup", variant: "secondary" },
+          ]}
+        />
       </div>
     )
   }

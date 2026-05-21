@@ -1,10 +1,11 @@
 import { fetchFeaturedEventsForHomeSection } from "@/lib/events/fetch-featured-events-server"
-import { getHomeCountryDisplayLabel } from "@/lib/home-location-server"
+import { getHomeCityDisplayLabel, getHomeCountryDisplayLabel } from "@/lib/home-location-server"
 import FeaturedEventsGridClient from "./FeaturedEventsGridClient"
 
 export default async function FeaturedEventsSection() {
-  const [events, homeCountry] = await Promise.all([
+  const [events, homeCity, homeCountry] = await Promise.all([
     fetchFeaturedEventsForHomeSection(),
+    getHomeCityDisplayLabel(),
     getHomeCountryDisplayLabel(),
   ])
   const subtitle = homeCountry
@@ -21,7 +22,7 @@ export default async function FeaturedEventsSection() {
         <br />
         <span className="home-tt-sub">{subtitle}</span>
       </h2>
-      <FeaturedEventsGridClient events={events} homeCountry={homeCountry} />
+      <FeaturedEventsGridClient events={events} homeCity={homeCity} homeCountry={homeCountry} />
     </section>
   )
 }

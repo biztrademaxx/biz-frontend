@@ -2,12 +2,19 @@ import type { ReactNode } from "react"
 import { Suspense } from "react"
 import { FeaturedOrganizersSkeleton } from "@/components/home-skeletons"
 import { fetchFeaturedOrganizersForHomeServer } from "@/lib/organizers/fetch-public-organizers-server"
-import { getHomeCountryDisplayLabel } from "@/lib/home-location-server"
+import HomeSectionEmptyState, { homeEmptyDescription } from "@/components/home/HomeSectionEmptyState"
+import { getHomeCityDisplayLabel, getHomeCountryDisplayLabel } from "@/lib/home-location-server"
 import { FeaturedOrganizersSectionHeading } from "./FeaturedOrganizersSectionHeading"
 import { FeaturedOrganizersRefreshButton } from "./FeaturedOrganizersRefreshButton"
 import FeaturedOrganizersStripClient from "./FeaturedOrganizersStripClient"
 
-function Shell({ children, homeCountry }: { children: ReactNode; homeCountry?: string | null }) {
+function Shell({
+  children,
+  homeCountry,
+}: {
+  children: ReactNode
+  homeCountry?: string | null
+}) {
   return (
     <div className="home-tt-section mx-auto w-full min-w-0 max-w-7xl px-3 sm:px-4 lg:px-6">
       <FeaturedOrganizersSectionHeading homeCountry={homeCountry} />
@@ -17,8 +24,9 @@ function Shell({ children, homeCountry }: { children: ReactNode; homeCountry?: s
 }
 
 async function FeaturedOrganizersContent() {
-  const [{ organizers, fetchFailed }, homeCountry] = await Promise.all([
+  const [{ organizers, fetchFailed }, homeCity, homeCountry] = await Promise.all([
     fetchFeaturedOrganizersForHomeServer(),
+    getHomeCityDisplayLabel(),
     getHomeCountryDisplayLabel(),
   ])
 
@@ -39,7 +47,21 @@ async function FeaturedOrganizersContent() {
   }
 
   if (organizers.length === 0) {
-    return null
+    return (
+      <Shell homeCountry={homeCountry}>
+        <HomeSectionEmptyState
+          icon="organizers"
+          title="No organizers in this region yet"
+          description={homeEmptyDescription("organizers", homeCity, homeCountry)}
+          homeCity={homeCity}
+          homeCountry={homeCountry}
+          actions={[
+            { label: "Browse organizers", href: "/organizers" },
+            { label: "Become an organizer", href: "/become-organizer", variant: "secondary" },
+          ]}
+        />
+      </Shell>
+    )
   }
 
   return (
