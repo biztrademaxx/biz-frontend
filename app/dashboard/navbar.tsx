@@ -64,11 +64,11 @@ export default function Navbar() {
           <div className="flex items-center space-x-6">
             <Link href="/" className="inline-block">
               <Image
-                src="/logo/bizlogo.png"
+                src="/logo/biztradefairs-1.png"
                 alt="BizTradeFairs.com"
                 width={160}
-                height={80}
-                className="h-42 w-auto"
+                height={50}
+                className="h-20 w-auto"
               />
             </Link>
 

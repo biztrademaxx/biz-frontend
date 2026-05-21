@@ -1,14 +1,14 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useRouter } from "next/navigation"
 import { apiFetch } from "@/lib/api"
 import { eventPublicPath } from "@/lib/event-path"
+import { ChevronLeft, ChevronRight } from "lucide-react"
 
-const daysOfWeek = ["S", "M", "T", "W", "T", "F", "S"]
+const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 
 function generateCalendar(year: number, month: number) {
   const firstDay = new Date(year, month, 1).getDay()
@@ -44,7 +44,6 @@ export function DynamicCalendar({ className, userId }: DynamicCalendarProps) {
 
   const calendarDays = generateCalendar(currentYear, currentMonth)
 
-  // 🔹 Fetch user's interested events from backend
   useEffect(() => {
     const fetchEvents = async () => {
       try {
@@ -58,7 +57,6 @@ export function DynamicCalendar({ className, userId }: DynamicCalendarProps) {
     if (userId) fetchEvents()
   }, [userId])
 
-  // Reset selected date when month/year changes
   useEffect(() => {
     setSelectedDate(null)
   }, [currentMonth, currentYear])
@@ -89,7 +87,6 @@ export function DynamicCalendar({ className, userId }: DynamicCalendarProps) {
     router.push(eventPublicPath(ev))
   }
 
-  // 🔹 Filter events for the current month
   const monthEvents = events.filter(ev => {
     const evDate = new Date(ev.startDate)
     return (
@@ -99,115 +96,133 @@ export function DynamicCalendar({ className, userId }: DynamicCalendarProps) {
   })
 
   return (
-    <Card className={cn("h-full flex flex-col", className)}>
+    <div className={cn("w-full", className)}>
       {/* Header */}
-      <CardHeader className="pb-3 flex justify-between items-center">
-        <CardTitle>
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold text-slate-800">
           {new Date(currentYear, currentMonth).toLocaleString("default", {
             month: "long",
             year: "numeric",
           })}
-        </CardTitle>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={handlePrev}>
-            &lt;
+        </h3>
+        <div className="flex gap-1">
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-8 w-8 rounded-full border-gray-200"
+            onClick={handlePrev}
+          >
+            <ChevronLeft className="h-4 w-4" />
           </Button>
-          <Button variant="outline" size="sm" onClick={handleNext}>
-            &gt;
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-8 w-8 rounded-full border-gray-200"
+            onClick={handleNext}
+          >
+            <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
-      </CardHeader>
+      </div>
 
-      {/* Calendar Content */}
-      <CardContent className="flex-1">
-        {/* Weekdays */}
-        <div className="grid grid-cols-7 gap-1 text-xs text-center mb-2">
-          {daysOfWeek.map((day, i) => (
-            <div key={i} className="font-medium text-gray-500 py-1">
-              {day}
-            </div>
-          ))}
-        </div>
+      {/* Weekdays */}
+      <div className="grid grid-cols-7 gap-1 mb-2">
+        {daysOfWeek.map((day, i) => (
+          <div key={i} className="text-center text-xs font-medium text-gray-500 py-2">
+            {day}
+          </div>
+        ))}
+      </div>
 
-        {/* Days */}
-        <div className="grid grid-cols-7 gap-1 text-xs text-center">
-          {calendarDays.map((day, idx) => {
-            if (!day) return <div key={idx} />
+      {/* Days */}
+      <div className="grid grid-cols-7 gap-1">
+        {calendarDays.map((day, idx) => {
+          if (!day) {
+            return <div key={idx} className="aspect-square p-1" />
+          }
 
-            const dayEvents = monthEvents.filter(ev => {
-              const start = new Date(ev.startDate)
-              const end = new Date(ev.endDate)
+          const dayEvents = monthEvents.filter(ev => {
+            const start = new Date(ev.startDate)
+            const end = new Date(ev.endDate)
+            const current = new Date(currentYear, currentMonth, day)
+            return current >= start && current <= end
+          })
 
-              const current = new Date(currentYear, currentMonth, day)
+          const isToday = day === today.getDate() &&
+            currentMonth === today.getMonth() &&
+            currentYear === today.getFullYear()
 
-              return current >= start && current <= end
-            })
+          const isSelected = selectedDate === day
+          const hasEvents = dayEvents.length > 0
 
+          return (
+            <div key={idx} className="relative">
+              <button
+                onClick={() => handleDateClick(day)}
+                className={cn(
+                  "w-full aspect-square rounded-lg flex flex-col items-center justify-center transition-all duration-200 text-sm",
+                  isToday
+                    ? "bg-red-500 text-white font-semibold shadow-sm"
+                    : isSelected
+                      ? "bg-blue-100 text-blue-700 border-2 border-blue-400"
+                      : hasEvents
+                        ? "bg-green-50 hover:bg-green-100 text-gray-700"
+                        : "hover:bg-gray-50 text-gray-700"
+                )}
+              >
+                <span>{day}</span>
+                {hasEvents && !isSelected && !isToday && (
+                  <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-0.5" />
+                )}
+                {hasEvents && !isSelected && isToday && (
+                  <div className="w-1.5 h-1.5 bg-white rounded-full mt-0.5" />
+                )}
+              </button>
 
-            const isToday = day === today.getDate() &&
-              currentMonth === today.getMonth() &&
-              currentYear === today.getFullYear()
-
-            const isSelected = selectedDate === day
-            const hasEvents = dayEvents.length > 0
-
-            return (
-              <div key={idx} className="relative">
-                <div
-                  className={cn(
-                    "relative p-2 rounded aspect-square flex items-center justify-center border cursor-pointer transition-colors",
-                    isToday
-                      ? "bg-red-400 text-white font-bold hover:bg-red-500"
-                      : isSelected
-                        ? "bg-blue-100 border-blue-300 hover:bg-blue-200"
-                        : hasEvents
-                          ? "bg-green-50 border-green-200 hover:bg-green-100"
-                          : "hover:bg-gray-100"
-                  )}
-                  onClick={() => handleDateClick(day)}
-                >
-                  <div>{day}</div>
-
-                  {/* Small indicator for events */}
-                  {hasEvents && !isSelected && (
-                    <div className="absolute bottom-1 right-1 w-2 h-2 bg-blue-500 rounded-full"></div>
-                  )}
-                </div>
-
-                {/* Event list - shows when date is selected */}
-                {isSelected && dayEvents.length > 0 && (
-                  <div className="absolute top-full left-0 z-10 mt-1 min-w-[200px] bg-white border border-gray-200 rounded-md shadow-lg p-2">
-                    <div className="text-xs font-medium text-gray-600 mb-1">
-                      Events on {day}:
-                    </div>
+              {/* Event Popup */}
+              {isSelected && dayEvents.length > 0 && (
+                <div className="absolute top-full left-0 z-20 mt-2 w-64 bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden">
+                  <div className="bg-gray-50 px-3 py-2 border-b border-gray-200">
+                    <p className="text-xs font-semibold text-gray-700">
+                      Events on {day} {new Date(currentYear, currentMonth).toLocaleString("default", { month: "short" })}
+                    </p>
+                  </div>
+                  <div className="max-h-48 overflow-y-auto p-2">
                     {dayEvents.map(ev => (
                       <div
                         key={ev.id}
-                        className="text-xs text-blue-600 hover:text-blue-800 cursor-pointer py-1 px-2 hover:bg-blue-50 rounded truncate"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleEventClick(ev)
-                        }}
-                        title={ev.title}
+                        className="p-2 hover:bg-blue-50 rounded-md cursor-pointer transition-colors"
+                        onClick={() => handleEventClick(ev)}
                       >
-                        {ev.title}
+                        <p className="text-sm font-medium text-blue-600 truncate">{ev.title}</p>
                         {ev.city && (
-                          <span className="text-gray-500 ml-1">({ev.city})</span>
+                          <p className="text-xs text-gray-500 mt-0.5">📍 {ev.city}</p>
                         )}
                       </div>
                     ))}
                   </div>
-                )}
-              </div>
-            )
-          })}
-        </div>
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
 
-        {/* Instructions */}
-        <div className="mt-4 text-xs text-gray-500 text-center">
-          Click on a date to see events • Click on event name to view details
+      {/* Legend */}
+      <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-center gap-4 text-xs text-gray-500">
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 rounded-full bg-red-500" />
+          <span>Today</span>
         </div>
-      </CardContent>
-    </Card>
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 rounded-full bg-blue-500" />
+          <span>Has events</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 rounded-full bg-blue-100 border border-blue-400" />
+          <span>Selected</span>
+        </div>
+      </div>
+    </div>
   )
 }

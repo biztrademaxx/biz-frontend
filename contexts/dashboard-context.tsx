@@ -11,8 +11,9 @@ interface DashboardContextType {
 const DashboardContext = createContext<DashboardContextType | undefined>(undefined)
 
 export function DashboardProvider({ children }: { children: React.ReactNode }) {
-  const [activeSection, setActiveSection] = useState("profile")
-  
+  // Change this from "profile" to "dashboard"
+  const [activeSection, setActiveSection] = useState("dashboard")
+
   // Memoize the context value to prevent unnecessary re-renders
   const contextValue = useMemo(() => ({
     activeSection,

@@ -76,7 +76,7 @@ export default function Navbar() {
           {/* Left: Logo + Explore */}
           <div className="flex items-center space-x-6">
             <Link href="/" className="inline-block">
-              <Image src="/logo/bizlogo.png" alt="BizTradeFairs.com" width={160} height={80} className="h-42 w-auto" />
+              <Image src="/logo/biztradefairs-1.png" alt="BizTradeFairs.com" width={160} height={50} className="h-20 w-auto" />
             </Link>
 
             <div className="relative">

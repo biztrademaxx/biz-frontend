@@ -23,7 +23,6 @@ import {
   Bell,
   Crown,
 } from "lucide-react"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useToast } from "@/hooks/use-toast"
 
@@ -300,26 +299,6 @@ export function UserDashboard({ userId }: UserDashboardProps) {
           )}
         >
           <nav className={cn("min-w-0 max-w-full space-y-1 text-sm", isSidebarCollapsed ? "space-y-1.5 px-0" : "px-2")}>
-            {/* Notifications — matches reference; opens Messages */}
-            <div className={`mb-3 flex ${isSidebarCollapsed ? "justify-center" : "justify-center px-1"}`}>
-              <button
-                type="button"
-                title="Notifications"
-                onClick={() => {
-                  setActiveSection("messages")
-                  if (window.innerWidth < 768) setIsMobileSidebarOpen(false)
-                }}
-                className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/15 ring-2 ring-white/30 transition hover:bg-white/25"
-              >
-                <Bell className="h-5 w-5 text-white" strokeWidth={2} />
-                <span
-                  className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border-2 border-[#003d7a]"
-                  style={{ backgroundColor: VISITOR_ACCENT }}
-                  aria-hidden
-                />
-              </button>
-            </div>
-
             {/* Dashboard */}
             <div className={visitorCollapsedNavItemClass(isSidebarCollapsed, activeSection, "dashboard")}>
               <button
@@ -352,8 +331,8 @@ export function UserDashboard({ userId }: UserDashboardProps) {
                   <li
                     onClick={() => setActiveSection("profile")}
                     className={`cursor-pointer border-l-4 py-1.5 pl-3 transition-colors ${activeSection === "profile"
-                        ? "border-[#FF131C] font-medium text-white"
-                        : "border-transparent text-white/80 hover:text-white"
+                      ? "border-[#FF131C] font-medium text-white"
+                      : "border-transparent text-white/80 hover:text-white"
                       }`}
                   >
                     Profile
@@ -649,10 +628,10 @@ export function UserDashboard({ userId }: UserDashboardProps) {
       <div className="flex h-full w-full max-w-[1680px] flex-1 flex-col overflow-hidden md:flex-row md:items-stretch md:gap-0 md:px-5 md:py-5">
         {renderSidebar()}
 
-        {/* Main column — glass panel aligns with overlapped sidebar */}
+        {/* Main column - no border or shadow */}
         <div className="relative z-10 flex min-h-0 min-w-0 flex-1 flex-col">
           {/* Mobile top bar */}
-          <div className="mx-4 mt-4 flex items-center justify-between rounded-2xl border border-white/40 bg-white/45 px-4 py-3 shadow-sm backdrop-blur-xl md:hidden">
+          <div className="mx-4 mt-4 flex items-center justify-between rounded-2xl bg-white px-4 py-3 shadow-sm md:hidden">
             <Button variant="ghost" size="sm" className="text-[#004A96]" onClick={() => setIsMobileSidebarOpen(true)}>
               <Menu className="h-5 w-5" />
             </Button>
@@ -662,8 +641,7 @@ export function UserDashboard({ userId }: UserDashboardProps) {
 
           <main
             className={cn(
-              "mx-4 mb-4 mt-4 flex h-full min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden rounded-[1.75rem] border border-white/50 bg-white/45 shadow-[0_8px_32px_rgba(0,74,150,0.12)] backdrop-blur-xl",
-              "p-5 sm:p-6",
+              "mx-4 mb-4 mt-4 flex h-full min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden rounded-[1.75rem] bg-white p-5 sm:p-6",
               "md:mx-0 md:mb-0 md:mt-0 md:min-h-[calc(100vh-2.5rem)] md:pt-6 md:pb-6 md:pr-6",
               /* Keep text & controls out from under the overlapping pill (half overlap + radius) */
               isSidebarCollapsed ? "md:pl-12" : "md:pl-36",
@@ -674,12 +652,6 @@ export function UserDashboard({ userId }: UserDashboardProps) {
                 <p className="text-lg font-semibold tracking-tight text-slate-800 md:text-xl">
                   {visitorGreeting()}, {displayName || "there"}!
                 </p>
-                <Avatar className="h-11 w-11 shrink-0 ring-2 ring-[#004A96]/25 ring-offset-2">
-                  <AvatarImage src={userData!.avatar || undefined} alt="" />
-                  <AvatarFallback className="bg-[#004A96]/10 text-sm font-medium text-[#004A96]">
-                    {(userData!.firstName?.[0] ?? "") + (userData!.lastName?.[0] ?? "") || "?"}
-                  </AvatarFallback>
-                </Avatar>
               </div>
             )}
 
@@ -697,8 +669,8 @@ export function UserDashboard({ userId }: UserDashboardProps) {
 // Helper for menu items (expanded sidebar)
 function menuItemClass(activeSection: string, id: string) {
   return `cursor-pointer border-l-4 py-1.5 pl-3 transition-colors ${activeSection === id
-      ? "border-[#FF131C] font-medium text-white"
-      : "border-transparent text-white/80 hover:text-white"
+    ? "border-[#FF131C] font-medium text-white"
+    : "border-transparent text-white/80 hover:text-white"
     }`
 }
 
