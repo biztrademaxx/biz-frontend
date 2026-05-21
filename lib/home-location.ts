@@ -1,46 +1,13 @@
 import { NEARBY_COUNTRY_CODES } from "@/lib/browse-geo"
+import { ISO_COUNTRY_ALIASES } from "@/lib/country-data"
 import { resolveCountryForCityName } from "@/lib/city-country"
+
+export { ISO_COUNTRY_ALIASES } from "@/lib/country-data"
 
 export const HOME_CITY_COOKIE = "biz_home_city"
 export const HOME_CITY_STORAGE_KEY = "biz_home_city"
 /** Set when city/country was auto-detected from IP (not manually chosen). */
 export const HOME_LOCATION_AUTO_COOKIE = "biz_home_auto"
-
-/** Common venue-country strings / ISO codes for regional matching. */
-export const ISO_COUNTRY_ALIASES: Record<string, string[]> = {
-  IN: ["india", "in", "bharat"],
-  AE: ["uae", "united arab emirates", "dubai", "abu dhabi", "ae"],
-  SA: ["saudi arabia", "saudi", "sa", "riyadh"],
-  QA: ["qatar", "qa", "doha"],
-  SG: ["singapore", "sg"],
-  US: ["united states", "usa", "u.s.", "america", "us"],
-  GB: ["united kingdom", "uk", "britain", "england", "gb"],
-  DE: ["germany", "deutschland", "de"],
-  FR: ["france", "fr"],
-  NL: ["netherlands", "holland", "nl"],
-  IT: ["italy", "it"],
-  ES: ["spain", "es"],
-  CH: ["switzerland", "ch"],
-  AT: ["austria", "at"],
-  CN: ["china", "cn", "chn", "prc", "people's republic of china", "peoples republic of china"],
-  JP: ["japan", "jp"],
-  AU: ["australia", "au"],
-  CA: ["canada", "ca"],
-  MX: ["mexico", "mx"],
-  BR: ["brazil", "br"],
-  KR: ["south korea", "korea", "kr"],
-  MY: ["malaysia", "my"],
-  TH: ["thailand", "th"],
-  ID: ["indonesia", "id"],
-  PH: ["philippines", "ph"],
-  HK: ["hong kong", "hk"],
-  IE: ["ireland", "ie"],
-  BE: ["belgium", "be"],
-  PL: ["poland", "pl"],
-  TR: ["turkey", "tr"],
-  ZA: ["south africa", "za"],
-  EG: ["egypt", "eg"],
-}
 
 export type ResolvedHomeLocation = {
   city: string | null

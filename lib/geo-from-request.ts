@@ -7,45 +7,7 @@ export const EMPTY_GEO_HINT: GeoHint = {
   countryName: null,
 }
 
-const COUNTRY_NAMES: Record<string, string> = {
-  IN: "India",
-  AE: "United Arab Emirates",
-  US: "United States",
-  GB: "United Kingdom",
-  DE: "Germany",
-  FR: "France",
-  SG: "Singapore",
-  AU: "Australia",
-  CA: "Canada",
-  JP: "Japan",
-  CN: "China",
-  SA: "Saudi Arabia",
-  QA: "Qatar",
-  NL: "Netherlands",
-  IT: "Italy",
-  ES: "Spain",
-  CH: "Switzerland",
-  BR: "Brazil",
-  MX: "Mexico",
-  KR: "South Korea",
-  MY: "Malaysia",
-  TH: "Thailand",
-  ID: "Indonesia",
-  PH: "Philippines",
-  HK: "Hong Kong",
-  IE: "Ireland",
-  BE: "Belgium",
-  PL: "Poland",
-  TR: "Turkey",
-  ZA: "South Africa",
-  EG: "Egypt",
-}
-
-export function countryNameFromCode(code: string | null | undefined): string | null {
-  if (!code?.trim()) return null
-  const cc = code.trim().toUpperCase()
-  return COUNTRY_NAMES[cc] ?? cc
-}
+export { COUNTRY_NAMES, countryNameFromCode } from "@/lib/country-data"
 
 function isPrivateIP(ip: string): boolean {
   return (
