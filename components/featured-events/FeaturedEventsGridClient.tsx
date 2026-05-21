@@ -128,10 +128,10 @@ function PlaceholderCard({ index }: { index: number }) {
 
 export interface FeaturedEventsGridClientProps {
   events: FeaturedEventPayload[]
-  homeCity?: string | null
+  homeCountry?: string | null
 }
 
-export default function FeaturedEventsGridClient({ events, homeCity }: FeaturedEventsGridClientProps) {
+export default function FeaturedEventsGridClient({ events, homeCountry }: FeaturedEventsGridClientProps) {
   const n = events.length
   const [offset, setOffset] = useState(0)
 
@@ -153,8 +153,8 @@ export default function FeaturedEventsGridClient({ events, homeCity }: FeaturedE
   )
 
   if (events.length === 0) {
-    const emptyMsg = homeCity
-      ? `No featured events in ${homeCity} right now. Try another city from the location menu, or browse all events.`
+    const emptyMsg = homeCountry
+      ? `No featured events in ${homeCountry} right now. Try another city from the location menu, or browse all events.`
       : "No featured events at the moment."
     return (
       <div className="col-12">

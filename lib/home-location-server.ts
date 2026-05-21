@@ -64,12 +64,18 @@ export async function getHomeCityFromCookies(): Promise<string | null> {
   return loc.displayLabel
 }
 
-export async function getHomeLocationDisplayLabel(): Promise<string | null> {
+/** City label for navbar only (never falls back to country). */
+export async function getHomeCityDisplayLabel(): Promise<string | null> {
   const loc = await resolveHomeLocation()
-  return loc.displayLabel
+  return loc.city?.trim() || null
 }
 
-/** Country label for home sections scoped to the visitor's country (not city). */
+/** @deprecated Prefer getHomeCityDisplayLabel (navbar) or getHomeCountryDisplayLabel (sections). */
+export async function getHomeLocationDisplayLabel(): Promise<string | null> {
+  return getHomeCityDisplayLabel()
+}
+
+/** Country label for home section headings. */
 export async function getHomeCountryDisplayLabel(): Promise<string | null> {
   const loc = await resolveHomeLocation()
   return (

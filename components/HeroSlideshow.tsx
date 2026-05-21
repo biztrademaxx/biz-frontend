@@ -1,13 +1,13 @@
 import HeroSlideshowClient from "./HeroSlideshowClient"
 import { fetchHeroSlideshowEventsServer } from "@/lib/hero/fetch-hero-slideshow-server"
-import { getHomeLocationDisplayLabel } from "@/lib/home-location-server"
+import { getHomeCountryDisplayLabel } from "@/lib/home-location-server"
 
 export const revalidate = 60
 
 export default async function HeroSlideshow() {
-  const [events, homeCity] = await Promise.all([
+  const [events, homeCountry] = await Promise.all([
     fetchHeroSlideshowEventsServer(),
-    getHomeLocationDisplayLabel(),
+    getHomeCountryDisplayLabel(),
   ])
-  return <HeroSlideshowClient initialEvents={events} homeCity={homeCity} />
+  return <HeroSlideshowClient initialEvents={events} homeCountry={homeCountry} />
 }

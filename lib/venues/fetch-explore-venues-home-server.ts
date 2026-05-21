@@ -1,4 +1,4 @@
-import { countryScopedHomeLocation, filterByHomeLocation } from "@/lib/home-location"
+import { filterByHomeCountryPrioritizeCity } from "@/lib/home-location"
 import { resolveHomeLocation } from "@/lib/home-location-server"
 import { normalizeExploreVenue } from "./normalize-explore-venue"
 import type { ExploreVenueCard } from "./types"
@@ -25,8 +25,8 @@ export async function fetchExploreVenuesForHomeServer(): Promise<ExploreVenueCar
       const v = normalizeExploreVenue(row)
       if (v) out.push(v)
     }
-    const loc = countryScopedHomeLocation(await resolveHomeLocation())
-    return filterByHomeLocation(out, loc, {
+    const loc = await resolveHomeLocation()
+    return filterByHomeCountryPrioritizeCity(out, loc, {
       getCity: (v) => v.city,
       getCountry: (v) => v.country,
     })

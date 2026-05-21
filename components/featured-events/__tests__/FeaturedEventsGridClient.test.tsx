@@ -31,8 +31,8 @@ function makeEvent(over: Partial<FeaturedEventPayload> = {}): FeaturedEventPaylo
 
 describe("FeaturedEventsGridClient", () => {
   it("renders empty state message and browse CTA", () => {
-    renderWithProviders(<FeaturedEventsGridClient events={[]} homeCity="Paris" />)
-    expect(screen.getByText(/no featured events in paris/i)).toBeInTheDocument()
+    renderWithProviders(<FeaturedEventsGridClient events={[]} homeCountry="France" />)
+    expect(screen.getByText(/no featured events in france/i)).toBeInTheDocument()
     expect(screen.getByRole("link", { name: /browse all events/i })).toHaveAttribute("href", "/event")
     expect(screen.getByRole("link", { name: /^add event$/i })).toHaveAttribute(
       "href",

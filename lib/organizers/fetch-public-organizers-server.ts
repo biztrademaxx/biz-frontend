@@ -1,6 +1,5 @@
 import {
-  countryScopedHomeLocation,
-  filterByHomeLocation,
+  filterByHomeCountryPrioritizeCity,
   getOrganizerCityLabel,
   getOrganizerCountryLabel,
 } from "@/lib/home-location"
@@ -31,8 +30,8 @@ export async function fetchFeaturedOrganizersForHomeServer(): Promise<FeaturedOr
     const data: unknown = await res.json()
     const list = normalizeOrganizersFromApiPayload(data)
     const visible = filterOrganizersWithProfileImage(list)
-    const loc = countryScopedHomeLocation(await resolveHomeLocation())
-    const filtered = filterByHomeLocation(visible, loc, {
+    const loc = await resolveHomeLocation()
+    const filtered = filterByHomeCountryPrioritizeCity(visible, loc, {
       getCity: getOrganizerCityLabel,
       getCountry: getOrganizerCountryLabel,
     })

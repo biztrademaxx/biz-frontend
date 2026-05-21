@@ -1,5 +1,6 @@
 import {
-  filterByHomeLocation,
+  countryScopedHomeLocation,
+  filterByHomeCountryPrioritizeCity,
   getHeroSlideshowCityLabel,
   getHeroSlideshowCountryLabel,
   homeLocationQueryString,
@@ -98,7 +99,7 @@ function mergeUniqueById(
 
 export async function fetchHeroSlideshowEventsServer(): Promise<HeroSlideshowEvent[]> {
   const loc = await resolveHomeLocation()
-  const locationQs = homeLocationQueryString(loc)
+  const locationQs = homeLocationQueryString(countryScopedHomeLocation(loc))
   const locationSuffix = locationQs ? `?${locationQs}` : ""
   let events: HeroSlideshowEvent[] = []
 
@@ -144,7 +145,7 @@ export async function fetchHeroSlideshowEventsServer(): Promise<HeroSlideshowEve
     console.error("Hero slideshow error:", err)
   }
 
-  const filtered = filterByHomeLocation(events, loc, {
+  const filtered = filterByHomeCountryPrioritizeCity(events, loc, {
     getCity: getHeroSlideshowCityLabel,
     getCountry: getHeroSlideshowCountryLabel,
   })

@@ -97,10 +97,7 @@ export function countryMatchNeedles(loc: ResolvedHomeLocation): string[] {
   return [...out]
 }
 
-/**
- * Home sections that should show country-wide results (e.g. all of India),
- * not only the detected city (Bengaluru). Navbar / hero / featured keep city scope.
- */
+/** Country-only scope for API `?location=` (navbar keeps full `loc` with city). */
 export function countryScopedHomeLocation(loc: ResolvedHomeLocation): ResolvedHomeLocation {
   if (!loc.countryName?.trim() && !loc.countryCode?.trim()) {
     return { ...loc, city: null, locationQuery: null }
@@ -189,6 +186,36 @@ export function filterByHomeLocation<T>(
   if (needles.length === 0) return items
 
   return items.filter((item) => countryMatchesValue(getters.getCountry(item), needles))
+}
+
+/**
+ * Home sections: all items in the visitor's country, with their city first
+ * (e.g. Bengaluru events, then other cities in India).
+ */
+export function filterByHomeCountryPrioritizeCity<T>(
+  items: T[],
+  loc: ResolvedHomeLocation,
+  getters: {
+    getCity: (item: T) => string | null | undefined
+    getCountry: (item: T) => string | null | undefined
+  },
+): T[] {
+  const needles = countryMatchNeedles(loc)
+  const inCountry =
+    needles.length > 0
+      ? items.filter((item) => countryMatchesValue(getters.getCountry(item), needles))
+      : items
+
+  const homeCity = loc.city?.trim()
+  if (!homeCity) return inCountry
+
+  const cityFirst: T[] = []
+  const rest: T[] = []
+  for (const item of inCountry) {
+    if (cityMatches(getters.getCity(item), homeCity)) cityFirst.push(item)
+    else rest.push(item)
+  }
+  return [...cityFirst, ...rest]
 }
 
 export function homeCityQueryParam(city: string | null | undefined): string {
