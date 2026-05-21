@@ -9,55 +9,42 @@ import {
   buildResolvedHomeLocation,
   EMPTY_HOME_LOCATION,
   HOME_CITY_COOKIE,
-  HOME_LOCATION_AUTO_COOKIE,
   type ResolvedHomeLocation,
 } from "@/lib/home-location"
 
 /**
- * Resolves visitor location for home filtering:
- * 1. Manual cookie (navbar picker)
- * 2. IP geo via `/api/geo` (no browser permission)
+ * Home filtering location: always from current request IP / VPN (geo hint),
+ * with cookie city as fallback when geo has no city.
  */
 export const resolveHomeLocation = cache(async (): Promise<ResolvedHomeLocation> => {
   try {
+    const geo = await fetchGeoHintServer()
     const jar = await cookies()
     const cookieVal = jar.get(HOME_CITY_COOKIE)?.value?.trim()
-    const isAuto = jar.get(HOME_LOCATION_AUTO_COOKIE)?.value === "1"
+    const parsed = cookieVal ? parseHomeLocationCookie(cookieVal) : { city: null, countryCode: null }
 
-    if (cookieVal) {
-      const parsed = parseHomeLocationCookie(cookieVal)
-      let countryCode = parsed.countryCode
-      let countryName = countryCode ? countryNameFromCode(countryCode) : null
+    let countryCode =
+      geo?.countryCode?.trim().toUpperCase() || parsed.countryCode?.trim().toUpperCase() || null
+    let countryName =
+      geo?.countryName?.trim() || countryNameFromCode(countryCode) || null
+    let city = geo?.city?.trim() || parsed.city?.trim() || null
 
-      if (!countryCode && parsed.city) {
-        const mapped = resolveCountryForCityName(parsed.city)
-        if (mapped) {
-          countryCode = mapped.countryCode
-          countryName = mapped.countryName
-        } else if (isAuto) {
-          const geo = await fetchGeoHintServer()
-          countryCode = geo?.countryCode?.trim().toUpperCase() || null
-          countryName = geo?.countryName?.trim() || countryNameFromCode(countryCode)
-        }
+    if (!countryCode && city) {
+      const mapped = resolveCountryForCityName(city)
+      if (mapped) {
+        countryCode = mapped.countryCode
+        countryName = mapped.countryName
       }
-
-      return buildResolvedHomeLocation({
-        city: parsed.city,
-        countryCode,
-        countryName,
-        isManual: !isAuto,
-      })
     }
 
-    const geo = await fetchGeoHintServer()
-    if (!geo?.city && !geo?.countryCode && !geo?.countryName) {
+    if (!countryCode && !countryName && !city) {
       return EMPTY_HOME_LOCATION
     }
 
     return buildResolvedHomeLocation({
-      city: geo.city,
-      countryCode: geo.countryCode,
-      countryName: geo.countryName ?? countryNameFromCode(geo.countryCode),
+      city,
+      countryCode,
+      countryName,
       isManual: false,
     })
   } catch {
@@ -71,15 +58,15 @@ export async function getHomeCityFromCookies(): Promise<string | null> {
   return loc.displayLabel
 }
 
-/** City label for navbar only (never falls back to country). */
+/** City from IP geo (used in section empty-state copy). */
 export async function getHomeCityDisplayLabel(): Promise<string | null> {
   const loc = await resolveHomeLocation()
   return loc.city?.trim() || null
 }
 
-/** @deprecated Prefer getHomeCityDisplayLabel (navbar) or getHomeCountryDisplayLabel (sections). */
+/** @deprecated Prefer getHomeCountryDisplayLabel. */
 export async function getHomeLocationDisplayLabel(): Promise<string | null> {
-  return getHomeCityDisplayLabel()
+  return getHomeCountryDisplayLabel()
 }
 
 /** Country label for home section headings. */

@@ -18,7 +18,8 @@ import { getBrandLogoSrc, isBrandLogoRemoteUrl } from "@/lib/brand-logo"
 import { eventPublicPath } from "@/lib/event-path"
 import { getVenuePublicPath } from "@/lib/venue-dashboard-path"
 import ExploreMegaMenu from "./ExploreMegaMenu"
-import LocationPicker from "./location/LocationPicker"
+// import LocationPicker from "./location/LocationPicker" // legacy manual picker — kept in repo, not used
+import NavbarCountryLabel from "./location/NavbarCountryLabel"
 
 type SearchEventRow = {
   id: string
@@ -389,7 +390,7 @@ export default function Navbar() {
                   <ChevronDown className={`h-4 w-4 transition-transform ${exploreOpen ? "rotate-180" : ""}`} />
                 </button>
               </div>
-              <LocationPicker />
+              <NavbarCountryLabel />
             </div>
           </div>
 
@@ -557,7 +558,7 @@ export default function Navbar() {
               <ChevronDown className="h-4 w-4" />
             </button>
             <div className="border-b border-gray-200/80 px-4 py-3">
-              <LocationPicker className="w-full" />
+              <NavbarCountryLabel className="w-full" />
             </div>
             <Link
               href="/event"

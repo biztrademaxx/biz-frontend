@@ -2,9 +2,7 @@ import { headers } from "next/headers"
 import { cookies } from "next/headers"
 import { NextResponse } from "next/server"
 import {
-  geoDisplayLabel,
   geoToCookieValue,
-  parseHomeLocationCookie,
   resolveGeoFromHeaders,
   countryNameFromCode,
 } from "@/lib/geo-from-request"
@@ -72,50 +70,12 @@ function enrichCountry(
   return { countryCode: null, countryName: null }
 }
 
-/** GET — read saved location; `?refresh=1` re-detects from IP (VPN / “use my location”). */
+/** GET — detect country/city from request IP (VPN). `?refresh=1` always re-reads headers. */
 export async function GET(req: Request) {
   const refresh = new URL(req.url).searchParams.get("refresh") === "1"
   const jar = await cookies()
-  const cookieVal = refresh ? undefined : jar.get(HOME_CITY_COOKIE)?.value?.trim()
-  const autoCookie = refresh ? "1" : jar.get(HOME_LOCATION_AUTO_COOKIE)?.value
-  const isManualLocation = Boolean(cookieVal) && autoCookie === "0"
+  const previousCookie = refresh ? undefined : jar.get(HOME_CITY_COOKIE)?.value?.trim()
 
-  if (cookieVal && !refresh && isManualLocation) {
-    const parsed = parseHomeLocationCookie(cookieVal)
-    const enriched = enrichCountry(parsed.city, parsed.countryCode, null, false)
-    const loc = buildResolvedHomeLocation({
-      city: parsed.city,
-      countryCode: enriched.countryCode,
-      countryName: enriched.countryName,
-      isManual: true,
-    })
-    return NextResponse.json(jsonFromResolved(loc, false))
-  }
-
-  if (cookieVal && !refresh && autoCookie === "1") {
-    const h = await headers()
-    const geo = await resolveGeoFromHeaders(h)
-    const freshCookie = geoToCookieValue(geo)
-    if (freshCookie) {
-      const parsed = parseHomeLocationCookie(freshCookie)
-      const enriched = enrichCountry(parsed.city, parsed.countryCode, geo.countryName, true)
-      const loc = buildResolvedHomeLocation({
-        city: parsed.city ?? geo.city,
-        countryCode: enriched.countryCode ?? geo.countryCode,
-        countryName: enriched.countryName ?? geo.countryName,
-        isManual: false,
-      })
-      const oldParsed = parseHomeLocationCookie(cookieVal)
-      const primed =
-        (loc.city ?? "") !== (oldParsed.city ?? "") ||
-        (loc.countryCode ?? "") !== (oldParsed.countryCode ?? "")
-      const res = NextResponse.json(jsonFromResolved(loc, true, primed))
-      setLocationCookies(res, freshCookie, true)
-      return res
-    }
-  }
-
-  // No cookie — detect from IP and prime cookie for subsequent requests.
   const h = await headers()
   const geo = await resolveGeoFromHeaders(h)
   const cookieValue = geoToCookieValue(geo)
@@ -126,18 +86,21 @@ export async function GET(req: Request) {
       countryCode: null,
       countryName: null,
       displayLabel: null,
-      auto: false,
+      auto: true,
+      primed: false,
     })
   }
 
+  const enriched = enrichCountry(geo.city, geo.countryCode, geo.countryName, true)
   const loc = buildResolvedHomeLocation({
     city: geo.city,
-    countryCode: geo.countryCode,
-    countryName: geo.countryName,
+    countryCode: enriched.countryCode ?? geo.countryCode,
+    countryName: enriched.countryName ?? geo.countryName,
     isManual: false,
   })
 
-  const res = NextResponse.json(jsonFromResolved(loc, true, true))
+  const primed = !previousCookie || previousCookie !== cookieValue
+  const res = NextResponse.json(jsonFromResolved(loc, true, primed))
   setLocationCookies(res, cookieValue, true)
   return res
 }
@@ -180,7 +143,7 @@ export async function POST(req: Request) {
     city: city || null,
     countryCode,
     countryName,
-    isManual: !isAuto,
+    isManual: false,
   })
 
   const res = NextResponse.json({

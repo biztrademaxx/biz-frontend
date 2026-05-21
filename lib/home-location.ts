@@ -79,10 +79,10 @@ export function countryMatchesValue(
 ): boolean {
   const hay = (value ?? "").trim().toLowerCase()
   if (!hay || needles.length === 0) return false
-  return needles.some((n) => n && (hay.includes(n) || n.includes(hay)))
+  return needles.some((n) => countryNeedleMatchesHay(hay, n))
 }
 
-/** Build lowercase needles for country / nearby-region venue matching. */
+/** Build lowercase needles for the visitor's country only (no nearby-region fallback). */
 export function countryMatchNeedles(loc: ResolvedHomeLocation): string[] {
   const out = new Set<string>()
   if (loc.countryName?.trim()) out.add(loc.countryName.trim().toLowerCase())
@@ -90,15 +90,23 @@ export function countryMatchNeedles(loc: ResolvedHomeLocation): string[] {
     const cc = loc.countryCode.trim().toUpperCase()
     out.add(cc.toLowerCase())
     for (const alias of ISO_COUNTRY_ALIASES[cc] ?? []) out.add(alias)
-    for (const nearby of loc.nearbyCountryCodes) {
-      out.add(nearby.toLowerCase())
-      for (const alias of ISO_COUNTRY_ALIASES[nearby] ?? []) out.add(alias)
-    }
   }
   return [...out]
 }
 
-/** Country-only scope for API `?location=` (navbar keeps full `loc` with city). */
+/** Avoid false positives (e.g. ISO `in` matching inside "singapore"). */
+function countryNeedleMatchesHay(hay: string, needle: string): boolean {
+  const n = needle.trim().toLowerCase()
+  if (!n) return false
+  if (hay === n) return true
+  if (n.length <= 3) {
+    const tokens = hay.split(/[\s,./|&()-]+/).filter(Boolean)
+    return tokens.some((t) => t === n)
+  }
+  return hay.includes(n) || n.includes(hay)
+}
+
+/** Country-only scope for API `?location=` (navbar shows country; city used for ordering). */
 export function countryScopedHomeLocation(loc: ResolvedHomeLocation): ResolvedHomeLocation {
   if (!loc.countryName?.trim() && !loc.countryCode?.trim()) {
     return { ...loc, city: null, locationQuery: null }
@@ -167,7 +175,7 @@ export function filterByHomeCity<T>(
   return items.filter((item) => cityMatches(getCity(item), c))
 }
 
-/** City first, then country + nearby region (e.g. Germany → DE + NL, FR, AT, CH). */
+/** City first, then same country only (no cross-country fallback). */
 export function filterByHomeLocation<T>(
   items: T[],
   loc: ResolvedHomeLocation,
@@ -199,7 +207,7 @@ export function matchesHomeCountry<T>(
   },
 ): boolean {
   const needles = countryMatchNeedles(loc)
-  if (needles.length === 0) return true
+  if (needles.length === 0) return !loc.countryCode && !loc.countryName
   if (countryMatchesValue(getters.getCountry(item), needles)) return true
   if (!loc.countryCode) return false
   const mapped = resolveCountryForCityName(getters.getCity(item))
@@ -218,11 +226,10 @@ export function filterByHomeCountryPrioritizeCity<T>(
     getCountry: (item: T) => string | null | undefined
   },
 ): T[] {
-  const needles = countryMatchNeedles(loc)
-  const inCountry =
-    needles.length > 0
-      ? items.filter((item) => matchesHomeCountry(item, loc, getters))
-      : items
+  const hasCountryScope = Boolean(loc.countryCode?.trim() || loc.countryName?.trim())
+  const inCountry = hasCountryScope
+    ? items.filter((item) => matchesHomeCountry(item, loc, getters))
+    : items
 
   const homeCity = loc.city?.trim()
   if (!homeCity) return inCountry

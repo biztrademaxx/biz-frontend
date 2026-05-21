@@ -1,5 +1,10 @@
 "use client"
 
+/**
+ * Legacy manual city picker (dropdown). Kept for reference — not mounted in the navbar.
+ * Home location is IP/VPN auto-detect only; see `NavbarCountryLabel.tsx`.
+ */
+
 import { useEffect, useRef, useState } from "react"
 import { ChevronDown, Loader2, MapPin, Navigation, X } from "lucide-react"
 import { useHomeLocation } from "@/contexts/home-location-context"
