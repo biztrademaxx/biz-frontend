@@ -2,7 +2,7 @@
 export function getBrandLogoSrc(): string {
   const fromEnv = process.env.NEXT_PUBLIC_BRAND_LOGO_URL?.trim()
   if (fromEnv) return fromEnv
-  return "/images/biz-logo.png"
+  return "/logo/biztradefairs-1.png"
 }
 
 /** Absolute URLs need `unoptimized` on `next/image` unless the host is in `next.config` `images.remotePatterns`. */
