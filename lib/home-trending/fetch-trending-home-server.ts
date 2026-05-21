@@ -1,4 +1,5 @@
 import {
+  countryScopedHomeLocation,
   filterByHomeLocation,
   getTrendingEventCityLabel,
   getTrendingEventCountryLabel,
@@ -36,7 +37,7 @@ export interface TrendingHomePayload {
 export async function fetchTrendingHomePayloadServer(): Promise<TrendingHomePayload> {
   const empty: TrendingHomePayload = { events: [], goingBundles: {} }
   try {
-    const loc = await resolveHomeLocation()
+    const loc = countryScopedHomeLocation(await resolveHomeLocation())
     const locationQs = homeLocationQueryString(loc)
     const url = `${getApiBaseUrl()}/api/events${locationQs ? `?${locationQs}` : ""}`
     const res = await fetch(url, { next: { revalidate: 60 } })

@@ -1,12 +1,12 @@
 import { fetchFeaturedSpeakersForHomeServer } from "@/lib/speakers/fetch-featured-speakers-home-server"
-import { getHomeLocationDisplayLabel } from "@/lib/home-location-server"
+import { getHomeCountryDisplayLabel } from "@/lib/home-location-server"
 import FeaturedSpeakersStripClient from "./FeaturedSpeakersStripClient"
 
 export default async function FeaturedSpeakersSection() {
-  const [speakers, homeCity] = await Promise.all([
+  const [speakers, homeCountry] = await Promise.all([
     fetchFeaturedSpeakersForHomeServer(),
-    getHomeLocationDisplayLabel(),
+    getHomeCountryDisplayLabel(),
   ])
   if (speakers.length === 0) return null
-  return <FeaturedSpeakersStripClient speakers={speakers} homeCity={homeCity} />
+  return <FeaturedSpeakersStripClient speakers={speakers} homeCountry={homeCountry} />
 }

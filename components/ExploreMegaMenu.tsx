@@ -260,18 +260,18 @@ export default function ExploreMegaMenu({
 
           <div className="mt-8 flex flex-wrap items-center gap-3 border-t border-gray-100 pt-4">
             <Link
-              href="/event"
+              href="/contact"
               onClick={onClose}
               className="bg-[#d61a73] px-4 py-2 text-sm font-semibold text-white hover:bg-[#bd1666]"
             >
               Advertise with us
             </Link>
             <Link
-              href="/event"
+              href="/organizer-signup"
               onClick={onClose}
               className="bg-[#7b2cbf] px-4 py-2 text-sm font-semibold text-white hover:bg-[#6622a4]"
             >
-              Add your business
+              Add your Event
             </Link>
           </div>
         </div>

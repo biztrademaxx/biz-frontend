@@ -121,16 +121,16 @@ function TrendingGoingRow({ profiles, total }: { profiles: FollowerProfile[]; to
 export interface TrendingEventsGridClientProps {
   events: TrendingHomeEvent[]
   goingBundles: Record<string, GoingBundle>
-  homeCity?: string | null
+  homeCountry?: string | null
 }
 
 export default function TrendingEventsGridClient({
   events,
   goingBundles,
-  homeCity,
+  homeCountry,
 }: TrendingEventsGridClientProps) {
-  const subtitle = homeCity
-    ? `Upcoming trade fairs and summits in ${homeCity}`
+  const subtitle = homeCountry
+    ? `Upcoming trade fairs and summits in ${homeCountry}`
     : "Connecting the global B2B trade fair community—where new business opportunities begin every minute."
   const router = useRouter()
   const displayEvents = events

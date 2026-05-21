@@ -2,8 +2,8 @@
 
 import { memo } from "react"
 
-function FeaturedOrganizersSectionHeadingComponent({ homeCity }: { homeCity?: string | null }) {
-  const subtitle = homeCity ? `Organizers in ${homeCity}` : "Worldwide Organizers"
+function FeaturedOrganizersSectionHeadingComponent({ homeCountry }: { homeCountry?: string | null }) {
+  const subtitle = homeCountry ? `Organizers in ${homeCountry}` : "Worldwide Organizers"
   return (
     <div className="border-b border-gray-200 py-6">
       <h2 className="home-tt-h2 mb-3">

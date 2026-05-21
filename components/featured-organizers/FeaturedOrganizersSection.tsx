@@ -2,29 +2,29 @@ import type { ReactNode } from "react"
 import { Suspense } from "react"
 import { FeaturedOrganizersSkeleton } from "@/components/home-skeletons"
 import { fetchFeaturedOrganizersForHomeServer } from "@/lib/organizers/fetch-public-organizers-server"
-import { getHomeLocationDisplayLabel } from "@/lib/home-location-server"
+import { getHomeCountryDisplayLabel } from "@/lib/home-location-server"
 import { FeaturedOrganizersSectionHeading } from "./FeaturedOrganizersSectionHeading"
 import { FeaturedOrganizersRefreshButton } from "./FeaturedOrganizersRefreshButton"
 import FeaturedOrganizersStripClient from "./FeaturedOrganizersStripClient"
 
-function Shell({ children, homeCity }: { children: ReactNode; homeCity?: string | null }) {
+function Shell({ children, homeCountry }: { children: ReactNode; homeCountry?: string | null }) {
   return (
     <div className="home-tt-section mx-auto w-full min-w-0 max-w-7xl px-3 sm:px-4 lg:px-6">
-      <FeaturedOrganizersSectionHeading homeCity={homeCity} />
+      <FeaturedOrganizersSectionHeading homeCountry={homeCountry} />
       {children}
     </div>
   )
 }
 
 async function FeaturedOrganizersContent() {
-  const [{ organizers, fetchFailed }, homeCity] = await Promise.all([
+  const [{ organizers, fetchFailed }, homeCountry] = await Promise.all([
     fetchFeaturedOrganizersForHomeServer(),
-    getHomeLocationDisplayLabel(),
+    getHomeCountryDisplayLabel(),
   ])
 
   if (fetchFailed && organizers.length === 0) {
     return (
-      <Shell homeCity={homeCity}>
+      <Shell homeCountry={homeCountry}>
         <div
           className="flex flex-col gap-2 border-b border-red-100 bg-red-50/80 px-4 py-4 sm:flex-row sm:items-center sm:justify-between"
           role="alert"
@@ -43,7 +43,7 @@ async function FeaturedOrganizersContent() {
   }
 
   return (
-    <Shell homeCity={homeCity}>
+    <Shell homeCountry={homeCountry}>
       <FeaturedOrganizersStripClient organizers={organizers} />
     </Shell>
   )

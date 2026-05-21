@@ -1,4 +1,4 @@
-import { filterByHomeLocation } from "@/lib/home-location"
+import { countryScopedHomeLocation, filterByHomeLocation } from "@/lib/home-location"
 import { resolveHomeLocation } from "@/lib/home-location-server"
 import { normalizeFeaturedSpeakerTile } from "./normalize-featured-speaker"
 import type { FeaturedSpeakerTile } from "./types"
@@ -22,7 +22,7 @@ export async function fetchFeaturedSpeakersForHomeServer(): Promise<FeaturedSpea
       const s = normalizeFeaturedSpeakerTile(row)
       if (s) out.push(s)
     }
-    const loc = await resolveHomeLocation()
+    const loc = countryScopedHomeLocation(await resolveHomeLocation())
     return filterByHomeLocation(out, loc, {
       getCity: (s) => s.location,
       getCountry: (s) => s.location,

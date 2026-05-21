@@ -22,6 +22,14 @@ function venueCity(v: Record<string, unknown>): string {
   return ""
 }
 
+function venueCountry(v: Record<string, unknown>): string {
+  const loc = v.location as { country?: string } | undefined
+  if (typeof loc?.country === "string" && loc.country.trim()) return loc.country.trim()
+  if (typeof v.country === "string" && v.country.trim()) return v.country.trim()
+  if (typeof v.venueCountry === "string" && v.venueCountry.trim()) return v.venueCountry.trim()
+  return ""
+}
+
 function firstImage(v: Record<string, unknown>): string {
   const images = v.images
   if (Array.isArray(images) && typeof images[0] === "string" && images[0]) return images[0]
@@ -68,6 +76,7 @@ export function normalizeExploreVenue(raw: unknown): ExploreVenueCard | null {
     imageUrl: firstImage(raw),
     eventCount: venueEventCount(raw),
     city: venueCity(raw),
+    country: venueCountry(raw),
     description: desc,
     averageRating: avg,
     totalReviews: reviews,

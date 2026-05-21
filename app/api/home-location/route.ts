@@ -4,21 +4,15 @@ import { NextResponse } from "next/server"
 import {
   geoDisplayLabel,
   geoToCookieValue,
+  parseHomeLocationCookie,
   resolveGeoFromHeaders,
+  countryNameFromCode,
 } from "@/lib/geo-from-request"
 import { buildResolvedHomeLocation, HOME_CITY_COOKIE, HOME_LOCATION_AUTO_COOKIE } from "@/lib/home-location"
 
 export const dynamic = "force-dynamic"
 
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 365
-
-function parseCookieValue(value: string) {
-  const v = value.trim()
-  if (/^[A-Za-z]{2}$/.test(v)) {
-    return { city: null as string | null, countryCode: v.toUpperCase() }
-  }
-  return { city: v, countryCode: null as string | null }
-}
 
 function jsonFromResolved(
   loc: ReturnType<typeof buildResolvedHomeLocation>,
@@ -68,11 +62,11 @@ export async function GET() {
   const isAuto = jar.get(HOME_LOCATION_AUTO_COOKIE)?.value === "1"
 
   if (cookieVal) {
-    const parsed = parseCookieValue(cookieVal)
+    const parsed = parseHomeLocationCookie(cookieVal)
     const loc = buildResolvedHomeLocation({
       city: parsed.city,
       countryCode: parsed.countryCode,
-      countryName: parsed.countryCode ? null : parsed.city,
+      countryName: parsed.countryCode ? countryNameFromCode(parsed.countryCode) : null,
       isManual: !isAuto,
     })
     return NextResponse.json(jsonFromResolved(loc, isAuto))

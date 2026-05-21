@@ -114,9 +114,29 @@ export async function resolveGeoFromHeaders(h: Headers): Promise<GeoHint> {
   return geoFromIpapi(ip)
 }
 
-/** Cookie / storage value for detected location. */
+/** Cookie / storage value for detected location (`City::CC` when both are known). */
 export function geoToCookieValue(geo: GeoHint): string | null {
-  return geo.city?.trim() || geo.countryCode?.trim() || geo.countryName?.trim() || null
+  const city = geo.city?.trim()
+  const cc = geo.countryCode?.trim().toUpperCase()
+  if (city && cc) return `${city}::${cc}`
+  return city || cc || geo.countryName?.trim() || null
+}
+
+/** Parse `HOME_CITY_COOKIE` value (plain city, ISO code, or `City::CC`). */
+export function parseHomeLocationCookie(value: string): {
+  city: string | null
+  countryCode: string | null
+} {
+  const v = value.trim()
+  if (!v) return { city: null, countryCode: null }
+  const scoped = v.match(/^(.+)::([A-Za-z]{2})$/)
+  if (scoped) {
+    return { city: scoped[1].trim() || null, countryCode: scoped[2].toUpperCase() }
+  }
+  if (/^[A-Za-z]{2}$/.test(v)) {
+    return { city: null, countryCode: v.toUpperCase() }
+  }
+  return { city: v, countryCode: null }
 }
 
 export function geoDisplayLabel(geo: GeoHint): string | null {

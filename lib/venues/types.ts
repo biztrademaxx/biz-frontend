@@ -5,6 +5,7 @@ export interface ExploreVenueCard {
   imageUrl: string
   eventCount: number
   city: string
+  country: string
   description: string
   averageRating: number
   totalReviews: number

@@ -1,11 +1,11 @@
 import { fetchTrendingHomePayloadServer } from "@/lib/home-trending/fetch-trending-home-server"
-import { getHomeLocationDisplayLabel } from "@/lib/home-location-server"
+import { getHomeCountryDisplayLabel } from "@/lib/home-location-server"
 import TrendingEventsGridClient from "./TrendingEventsGridClient"
 
 export default async function TrendingEventsSection() {
-  const [{ events, goingBundles }, homeCity] = await Promise.all([
+  const [{ events, goingBundles }, homeCountry] = await Promise.all([
     fetchTrendingHomePayloadServer(),
-    getHomeLocationDisplayLabel(),
+    getHomeCountryDisplayLabel(),
   ])
-  return <TrendingEventsGridClient events={events} goingBundles={goingBundles} homeCity={homeCity} />
+  return <TrendingEventsGridClient events={events} goingBundles={goingBundles} homeCountry={homeCountry} />
 }

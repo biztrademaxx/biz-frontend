@@ -97,6 +97,22 @@ export function countryMatchNeedles(loc: ResolvedHomeLocation): string[] {
   return [...out]
 }
 
+/**
+ * Home sections that should show country-wide results (e.g. all of India),
+ * not only the detected city (Bengaluru). Navbar / hero / featured keep city scope.
+ */
+export function countryScopedHomeLocation(loc: ResolvedHomeLocation): ResolvedHomeLocation {
+  if (!loc.countryName?.trim() && !loc.countryCode?.trim()) {
+    return { ...loc, city: null, locationQuery: null }
+  }
+  return buildResolvedHomeLocation({
+    city: null,
+    countryCode: loc.countryCode,
+    countryName: loc.countryName,
+    isManual: loc.isManual,
+  })
+}
+
 export function buildResolvedHomeLocation(input: {
   city?: string | null
   countryCode?: string | null

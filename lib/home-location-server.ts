@@ -3,7 +3,7 @@ import "server-only"
 import { cache } from "react"
 import { cookies } from "next/headers"
 import { fetchGeoHintServer } from "@/lib/browse-geo-server"
-import { countryNameFromCode } from "@/lib/geo-from-request"
+import { countryNameFromCode, parseHomeLocationCookie } from "@/lib/geo-from-request"
 import {
   buildResolvedHomeLocation,
   EMPTY_HOME_LOCATION,
@@ -11,14 +11,6 @@ import {
   HOME_LOCATION_AUTO_COOKIE,
   type ResolvedHomeLocation,
 } from "@/lib/home-location"
-
-function parseCookieValue(value: string): { city: string | null; countryCode: string | null } {
-  const v = value.trim()
-  if (/^[A-Za-z]{2}$/.test(v)) {
-    return { city: null, countryCode: v.toUpperCase() }
-  }
-  return { city: v, countryCode: null }
-}
 
 /**
  * Resolves visitor location for home filtering:
@@ -32,11 +24,20 @@ export const resolveHomeLocation = cache(async (): Promise<ResolvedHomeLocation>
     const isAuto = jar.get(HOME_LOCATION_AUTO_COOKIE)?.value === "1"
 
     if (cookieVal) {
-      const parsed = parseCookieValue(cookieVal)
+      const parsed = parseHomeLocationCookie(cookieVal)
+      let countryCode = parsed.countryCode
+      let countryName = countryCode ? countryNameFromCode(countryCode) : null
+
+      if (!countryCode && parsed.city) {
+        const geo = await fetchGeoHintServer()
+        countryCode = geo?.countryCode?.trim().toUpperCase() || null
+        countryName = geo?.countryName?.trim() || countryNameFromCode(countryCode)
+      }
+
       return buildResolvedHomeLocation({
         city: parsed.city,
-        countryCode: parsed.countryCode,
-        countryName: parsed.countryCode ? countryNameFromCode(parsed.countryCode) : parsed.city,
+        countryCode,
+        countryName,
         isManual: !isAuto,
       })
     }
@@ -66,4 +67,14 @@ export async function getHomeCityFromCookies(): Promise<string | null> {
 export async function getHomeLocationDisplayLabel(): Promise<string | null> {
   const loc = await resolveHomeLocation()
   return loc.displayLabel
+}
+
+/** Country label for home sections scoped to the visitor's country (not city). */
+export async function getHomeCountryDisplayLabel(): Promise<string | null> {
+  const loc = await resolveHomeLocation()
+  return (
+    loc.countryName?.trim() ||
+    (loc.countryCode ? countryNameFromCode(loc.countryCode) : null) ||
+    null
+  )
 }
