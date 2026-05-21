@@ -4,6 +4,7 @@ import Link from "next/link"
 import { Share2 } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 import type { FeaturedEventPayload } from "@/lib/events/types"
+import { resolveEventBannerImage } from "@/lib/events/resolve-event-banner-image"
 import { eventPublicPath } from "@/lib/event-path"
 import HomeSectionEmptyState, { homeEmptyDescription } from "@/components/home/HomeSectionEmptyState"
 import {
@@ -35,7 +36,7 @@ async function shareFeaturedEvent(title: string, path: string) {
 }
 
 function FeaturedEventCard({ event }: { event: FeaturedEventPayload }) {
-  const thumb = event.bannerImage?.trim()
+  const thumb = resolveEventBannerImage(event)
   if (!thumb) return null
 
   const start = new Date(event.startDate)
@@ -140,7 +141,7 @@ export default function FeaturedEventsGridClient({
   homeCity,
   homeCountry,
 }: FeaturedEventsGridClientProps) {
-  const withImages = events.filter((e) => Boolean(e.bannerImage?.trim()))
+  const withImages = events.filter((e) => Boolean(resolveEventBannerImage(e)))
   const n = withImages.length
   const [offset, setOffset] = useState(0)
 

@@ -280,15 +280,17 @@ export function getTrendingEventCountryLabel(event: {
 }
 
 export function getFeaturedEventCityLabel(event: {
+  city?: string | null
   venue?: { venueCity?: string | null } | null
 }): string {
-  return event.venue?.venueCity?.trim() || ""
+  return event.venue?.venueCity?.trim() || event.city?.trim() || ""
 }
 
 export function getFeaturedEventCountryLabel(event: {
+  country?: string | null
   venue?: { venueCountry?: string | null } | null
 }): string {
-  return event.venue?.venueCountry?.trim() || ""
+  return event.venue?.venueCountry?.trim() || event.country?.trim() || ""
 }
 
 export function getHeroSlideshowCityLabel(event: {

@@ -13,6 +13,7 @@ export interface FeaturedEventPayload {
   startDate: string
   endDate: string
   bannerImage: string | null
+  images?: unknown
   edition: string | null
   tags: string[]
   eventType: string[]

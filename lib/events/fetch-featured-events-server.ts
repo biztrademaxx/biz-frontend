@@ -1,3 +1,4 @@
+import { hasDisplayableEventImage } from "@/lib/event-card-meta"
 import {
   filterByHomeCountryPrioritizeCity,
   getFeaturedEventCityLabel,
@@ -8,47 +9,60 @@ import type { FeaturedEventPayload } from "./types"
 import { normalizeFeaturedEvent } from "./normalize-featured-event"
 
 const FEATURED_EVENTS_PATH = "/api/events/featured"
+const VIP_EVENTS_PATH = "/api/events/vip"
 
 function getApiBaseUrl(): string {
   return process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"
 }
 
+function rawEventsFromPayload(data: unknown): unknown[] {
+  if (Array.isArray(data)) return data
+  if (data && typeof data === "object" && Array.isArray((data as { events?: unknown[] }).events)) {
+    return (data as { events: unknown[] }).events
+  }
+  return []
+}
+
+function eventIdFromRaw(raw: unknown): string | null {
+  if (!raw || typeof raw !== "object" || !("id" in raw)) return null
+  const id = (raw as { id: unknown }).id
+  return id != null ? String(id) : null
+}
+
 /**
- * Server-side fetch for home featured events (RSC): calls the Express API only (`NEXT_PUBLIC_API_URL`), not Next.js `/app/api`.
+ * Home featured grid: admin-featured events plus VIP events (same pool as hero),
+ * then country filter + city-first ordering. Matches VIP when an event is VIP-only.
  */
 export async function fetchFeaturedEventsForHomeSection(): Promise<FeaturedEventPayload[]> {
   try {
     const loc = await resolveHomeLocation()
-    // Featured endpoint has no location filter; filtering is done below client-side.
-    const res = await fetch(`${getApiBaseUrl()}${FEATURED_EVENTS_PATH}`, {
-      next: { revalidate: 120 },
-    })
-    if (!res.ok) {
-      console.error("Featured events backend error:", res.status, await res.text())
-      return []
-    }
-    const data: unknown = await res.json()
-    const rawEvents: unknown[] = Array.isArray(data)
-      ? data
-      : isRecord(data) && Array.isArray(data.events)
-        ? data.events
-        : []
+    const base = getApiBaseUrl()
 
+    const [featuredRes, vipRes] = await Promise.all([
+      fetch(`${base}${FEATURED_EVENTS_PATH}`, { next: { revalidate: 120 } }),
+      fetch(`${base}${VIP_EVENTS_PATH}`, { next: { revalidate: 120 } }),
+    ])
+
+    const featuredJson = featuredRes.ok ? await featuredRes.json() : null
+    const vipJson = vipRes.ok ? await vipRes.json() : null
+
+    const seen = new Set<string>()
     const out: FeaturedEventPayload[] = []
-    for (const raw of rawEvents) {
+
+    for (const raw of [...rawEventsFromPayload(featuredJson), ...rawEventsFromPayload(vipJson)]) {
+      const id = eventIdFromRaw(raw)
+      if (!id || seen.has(id)) continue
+      seen.add(id)
       const normalized = normalizeFeaturedEvent(raw)
       if (normalized) out.push(normalized)
     }
+
     return filterByHomeCountryPrioritizeCity(out, loc, {
       getCity: getFeaturedEventCityLabel,
       getCountry: getFeaturedEventCountryLabel,
-    }).filter((e) => Boolean(e.bannerImage?.trim()))
+    }).filter((e) => hasDisplayableEventImage(e))
   } catch (error) {
     console.error("Error fetching featured events from backend:", error)
     return []
   }
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value)
 }
