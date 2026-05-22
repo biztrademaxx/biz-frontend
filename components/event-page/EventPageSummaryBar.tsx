@@ -38,8 +38,8 @@ export function EventPageSummaryBar({
   onExhibitClick,
 }: Props) {
   return (
-    <div className="max-w-7xl mx-auto py-4">
-      <div className="bg-white rounded-sm p-6 mb-8 shadow-sm">
+    <div className="mx-auto max-w-7xl px-3 py-4 sm:px-4 lg:px-6">
+      <div className="mb-8 rounded-sm bg-white p-4 shadow-sm sm:p-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
           <div className="flex-1">
             <h1 className="text-2xl sm:text-3xl font-bold text-[#004A96] mb-3">{event.title || "Event Title"}</h1>

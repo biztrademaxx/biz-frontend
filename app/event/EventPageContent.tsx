@@ -388,73 +388,75 @@ export default function EventPageContent({ event, session: _session, router, toa
         onExhibitClick={handleExhibitClick}
       />
 
-      <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col lg:flex-row gap-6">
-          <div className="flex-1 min-w-0">
+      <div className="mx-auto max-w-7xl px-3 sm:px-4 lg:px-6">
+        <div className="flex flex-col gap-6 lg:flex-row">
+          <div className="min-w-0 flex-1">
             <Tabs defaultValue="about" className="w-full">
-              <div className="bg-white rounded-lg mb-6 shadow-sm border border-gray-200 overflow-hidden">
-                <TabsList className="grid w-full grid-cols-10 h-auto p-0 bg-transparent rounded-none">
+              <div className="mb-6 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+                <div className="overflow-x-auto overscroll-x-contain [-webkit-overflow-scrolling:touch]">
+                  <TabsList className="inline-flex h-auto min-w-full w-max flex-nowrap gap-0 rounded-none bg-transparent p-0 sm:grid sm:w-full sm:grid-cols-5 sm:gap-0 lg:grid-cols-10">
                   <TabsTrigger
                     value="about"
-                    className="data-[state=active]:bg-[#FF131C] data-[state=active]:text-white rounded-none py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium truncate first:rounded-l-lg last:rounded-r-lg"
+                    className="shrink-0 min-w-[4.25rem] data-[state=active]:bg-[#FF131C] data-[state=active]:text-white rounded-none px-3 py-3 text-xs font-medium sm:min-w-0 sm:px-2 sm:text-sm sm:truncate first:rounded-l-lg"
                   >
                     About
                   </TabsTrigger>
                   <TabsTrigger
                     value="exhibitors"
-                    className="data-[state=active]:bg-[#FF131C] data-[state=active]:text-white rounded-none py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium truncate"
+                    className="shrink-0 min-w-[4.25rem] data-[state=active]:bg-[#FF131C] data-[state=active]:text-white rounded-none px-3 py-3 text-xs font-medium sm:min-w-0 sm:px-2 sm:text-sm sm:truncate"
                   >
                     Exhibitors
                   </TabsTrigger>
                   <TabsTrigger
                     value="space-cost"
-                    className="data-[state=active]:bg-[#FF131C] data-[state=active]:text-white rounded-none py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium truncate"
+                    className="shrink-0 min-w-[4.25rem] data-[state=active]:bg-[#FF131C] data-[state=active]:text-white rounded-none px-3 py-3 text-xs font-medium sm:min-w-0 sm:px-2 sm:text-sm sm:truncate"
                   >
                     Space Cost
                   </TabsTrigger>
                   <TabsTrigger
                     value="layout"
-                    className="data-[state=active]:bg-[#FF131C] data-[state=active]:text-white rounded-none py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium truncate"
+                    className="shrink-0 min-w-[4.25rem] data-[state=active]:bg-[#FF131C] data-[state=active]:text-white rounded-none px-3 py-3 text-xs font-medium sm:min-w-0 sm:px-2 sm:text-sm sm:truncate"
                   >
                     Layout Plan
                   </TabsTrigger>
                   <TabsTrigger
                     value="brochure"
-                    className="data-[state=active]:bg-[#FF131C] data-[state=active]:text-white rounded-none py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium truncate"
+                    className="shrink-0 min-w-[4.25rem] data-[state=active]:bg-[#FF131C] data-[state=active]:text-white rounded-none px-3 py-3 text-xs font-medium sm:min-w-0 sm:px-2 sm:text-sm sm:truncate"
                   >
                     Brochure
                   </TabsTrigger>
                   <TabsTrigger
                     value="venue"
-                    className="data-[state=active]:bg-[#FF131C] data-[state=active]:text-white rounded-none py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium truncate"
+                    className="shrink-0 min-w-[4.25rem] data-[state=active]:bg-[#FF131C] data-[state=active]:text-white rounded-none px-3 py-3 text-xs font-medium sm:min-w-0 sm:px-2 sm:text-sm sm:truncate"
                   >
                     Venue
                   </TabsTrigger>
                   <TabsTrigger
                     value="speakers"
-                    className="data-[state=active]:bg-[#FF131C] data-[state=active]:text-white rounded-none py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium truncate"
+                    className="shrink-0 min-w-[4.25rem] data-[state=active]:bg-[#FF131C] data-[state=active]:text-white rounded-none px-3 py-3 text-xs font-medium sm:min-w-0 sm:px-2 sm:text-sm sm:truncate"
                   >
                     Speakers
                   </TabsTrigger>
                   <TabsTrigger
                     value="organizer"
-                    className="data-[state=active]:bg-[#FF131C] data-[state=active]:text-white rounded-none py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium truncate"
+                    className="shrink-0 min-w-[4.25rem] data-[state=active]:bg-[#FF131C] data-[state=active]:text-white rounded-none px-3 py-3 text-xs font-medium sm:min-w-0 sm:px-2 sm:text-sm sm:truncate"
                   >
                     Organizer
                   </TabsTrigger>
                   <TabsTrigger
                     value="followers"
-                    className="data-[state=active]:bg-[#FF131C] data-[state=active]:text-white rounded-none py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium truncate"
+                    className="shrink-0 min-w-[4.25rem] data-[state=active]:bg-[#FF131C] data-[state=active]:text-white rounded-none px-3 py-3 text-xs font-medium sm:min-w-0 sm:px-2 sm:text-sm sm:truncate"
                   >
                     Followers
                   </TabsTrigger>
                   <TabsTrigger
                     value="reviews"
-                    className="data-[state=active]:bg-[#FF131C] data-[state=active]:text-white rounded-none py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium truncate last:rounded-r-lg"
+                    className="shrink-0 min-w-[4.25rem] data-[state=active]:bg-[#FF131C] data-[state=active]:text-white rounded-none px-3 py-3 text-xs font-medium sm:min-w-0 sm:px-2 sm:text-sm sm:truncate last:rounded-r-lg"
                   >
                     Review
                   </TabsTrigger>
                 </TabsList>
+                </div>
               </div>
 
               <TabsContent value="about" className="space-y-6">

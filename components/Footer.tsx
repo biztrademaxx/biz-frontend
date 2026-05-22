@@ -21,8 +21,23 @@ const Footer: React.FC = () => {
   const brandLogoUnoptimized = isBrandLogoRemoteUrl(brandLogoSrc)
 
   return (
-    <footer className="relative bg-gray-100 px-4 py-12 md:px-8 lg:px-16">
-      <div className="mx-auto max-w-7xl">
+    <footer className="relative overflow-hidden bg-gray-100 px-4 py-12 md:px-8 lg:px-16">
+      {/* World map — navy tint so it reads on gray-100 (original #ececec was invisible) */}
+      <div className="pointer-events-none absolute inset-0 z-0" aria-hidden>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/world-footer.svg"
+          alt=""
+          width={2000}
+          height={857}
+          className="absolute -bottom-6 right-0 h-[clamp(220px,42vw,520px)] w-auto max-w-[min(95vw,920px)] object-contain object-right-bottom sm:-bottom-10 lg:h-[min(55vh,560px)]"
+        />
+        <div
+          className="absolute inset-0 bg-gradient-to-r from-gray-100 from-45% via-gray-100/80 via-70% to-transparent"
+        />
+      </div>
+
+      <div className="relative z-10 mx-auto max-w-7xl">
         <div className="mb-10">
           <NewsletterFooterSignup />
         </div>

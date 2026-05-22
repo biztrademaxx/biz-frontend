@@ -11,33 +11,18 @@ export default function VenuesListingPageSkeleton() {
         </div>
       </div>
 
-      <div className="mx-auto max-w-7xl px-4 py-8">
-        <div className="flex gap-8">
-          <div className="w-80 shrink-0">
-            <div className="sticky top-8 rounded-lg border bg-white p-6">
-              <div className="home-shimmer mb-6 h-7 w-40 rounded-md" />
-              <div className="home-shimmer mb-6 h-10 w-full rounded-md" />
-              <div className="home-shimmer mb-3 h-4 w-28 rounded" />
-              <div className="mb-8 grid grid-cols-2 gap-2">
-                {Array.from({ length: 8 }).map((_, i) => (
-                  <div key={i} className="home-shimmer h-9 rounded-md" />
-                ))}
-              </div>
-              <div className="home-shimmer mb-3 h-4 w-32 rounded" />
-              <div className="grid grid-cols-2 gap-2">
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className="home-shimmer h-9 rounded-md" />
-                ))}
-              </div>
+      <div className="mx-auto max-w-7xl px-4 py-6 sm:py-8">
+        <div className="flex min-w-0 flex-col gap-6 lg:flex-row lg:items-start lg:gap-8">
+          <div className="order-1 min-w-0 w-full flex-1 lg:order-2">
+            <div className="mb-4 space-y-3 lg:hidden">
+              <div className="home-shimmer h-10 w-full rounded-md" />
+              <div className="home-shimmer h-10 w-full rounded-md" />
             </div>
-          </div>
-
-          <div className="min-w-0 flex-1">
             <div className="mb-6">
               <div className="home-shimmer mb-2 h-7 w-48 max-w-[85%] rounded-md" />
               <div className="home-shimmer h-4 w-56 rounded-md" />
             </div>
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-2 xl:grid-cols-3">
               {Array.from({ length: 6 }).map((_, i) => (
                 <div key={i} className="overflow-hidden rounded-sm border bg-white shadow-sm">
                   <div className="home-shimmer h-48 w-full" />
@@ -53,6 +38,25 @@ export default function VenuesListingPageSkeleton() {
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+
+          <div className="order-2 hidden w-full shrink-0 lg:order-1 lg:block lg:w-64 xl:w-72">
+            <div className="sticky top-8 rounded-lg border bg-white p-6">
+              <div className="home-shimmer mb-6 h-7 w-40 rounded-md" />
+              <div className="home-shimmer mb-6 h-10 w-full rounded-md" />
+              <div className="home-shimmer mb-3 h-4 w-28 rounded" />
+              <div className="mb-8 grid grid-cols-2 gap-2">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <div key={i} className="home-shimmer h-9 rounded-md" />
+                ))}
+              </div>
+              <div className="home-shimmer mb-3 h-4 w-32 rounded" />
+              <div className="grid grid-cols-2 gap-2">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="home-shimmer h-9 rounded-md" />
+                ))}
+              </div>
             </div>
           </div>
         </div>

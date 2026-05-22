@@ -9,6 +9,7 @@ import { useEffect, useState } from "react"
 import { formatPublicTicketPriceLine } from "@/lib/ticket-price-display"
 import { formatEventSidebarTimeRange } from "@/lib/event-sidebar-time-range"
 import { BRAND_IMAGE_BOTTOM_FADE } from "@/lib/brand-image-gradients"
+import { resolveEventBannerImage } from "@/lib/events/resolve-event-banner-image"
 
 const DEFAULT_EVENT_HERO_IMAGE = "/herosection-images/eventbanner.jpeg"
 
@@ -72,8 +73,18 @@ export default function EventHero({ event }: EventHeroProps) {
   }, [instanceRef])
 
   useEffect(() => {
-    setImages(event.images || [])
-  }, [event.images])
+    const raw = Array.isArray(event.images) ? event.images : []
+    const cleaned = raw.filter(
+      (img): img is string =>
+        typeof img === "string" && img.trim() !== "" && img !== "null" && img !== "undefined",
+    )
+    const banner = resolveEventBannerImage(event as Parameters<typeof resolveEventBannerImage>[0])
+    if (banner && !cleaned.includes(banner)) {
+      setImages([banner, ...cleaned])
+    } else {
+      setImages(cleaned)
+    }
+  }, [event.images, event.bannerImage, event.thumbnailImage, event.logo])
 
   // Get ticket price display
   const getTicketPriceDisplay = () => formatPublicTicketPriceLine(event.ticketTypes)
@@ -189,19 +200,26 @@ export default function EventHero({ event }: EventHeroProps) {
       </div>
 
       {/* Main Card */}
-      <div className="relative w-full max-w-7xl mx-auto bg-white overflow-hidden shadow-md flex flex-col md:flex-row items-stretch mt-[-150px] md:mt-[-120px] z-10 left-1/2 lg:left-160 -translate-x-1/2 rounded-sm">
+      <div className="relative z-10 mx-auto mt-[-72px] flex w-[calc(100%-1.5rem)] max-w-7xl flex-col items-stretch overflow-hidden rounded-sm bg-white shadow-md sm:mt-[-96px] sm:w-[calc(100%-2rem)] md:mt-[-120px] md:flex-row">
         {/* Slider Section */}
-        <div className="md:w-2/3 w-full min-h-[280px] md:min-h-[320px] relative">
-          <div ref={sliderRef} className="keen-slider h-full w-full">
+        <div className="relative min-h-[220px] w-full sm:min-h-[260px] md:min-h-[320px] md:w-2/3">
+          <div
+            ref={sliderRef}
+            className="keen-slider h-[220px] w-full sm:h-[260px] md:h-[320px]"
+          >
             {hasMainSliderMedia ? (
               <>
                 {slideImages.map((imgSrc, index) => (
-                  <div key={`image-${index}`} className="keen-slider__slide relative h-full w-full bg-white">
+                  <div
+                    key={`image-${index}`}
+                    className="keen-slider__slide relative h-[220px] w-full bg-neutral-100 sm:h-[260px] md:h-[320px]"
+                  >
                     <Image
                       src={imgSrc}
                       alt={`${event.title} Image ${index + 1}`}
                       fill
                       className="object-cover"
+                      sizes="(max-width: 768px) 100vw, 66vw"
                       priority={index === 0}
                       onLoadingComplete={(imgEl) => {
                         const ratio = imgEl.naturalWidth / imgEl.naturalHeight
@@ -212,18 +230,26 @@ export default function EventHero({ event }: EventHeroProps) {
                 ))}
 
                 {videoSlides.map((vid: string, index: number) => (
-                  <div key={`video-${index}`} className="keen-slider__slide relative h-full w-full">
-                    <video className="w-full h-full object-cover" autoPlay loop muted playsInline>
+                  <div
+                    key={`video-${index}`}
+                    className="keen-slider__slide relative h-[220px] w-full sm:h-[260px] md:h-[320px]"
+                  >
+                    <video className="h-full w-full object-cover" autoPlay loop muted playsInline>
                       <source src={vid} type="video/mp4" />
                     </video>
                   </div>
                 ))}
               </>
             ) : (
-              <div
-                className="keen-slider__slide relative h-full min-h-[280px] w-full bg-neutral-100"
-                aria-hidden
-              />
+              <div className="keen-slider__slide relative h-[220px] w-full bg-neutral-100 sm:h-[260px] md:h-[320px]">
+                <Image
+                  src={DEFAULT_EVENT_HERO_IMAGE}
+                  alt={event.title}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, 66vw"
+                />
+              </div>
             )}
           </div>
 

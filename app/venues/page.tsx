@@ -60,7 +60,10 @@ export default function VenuesPage() {
   const [venues, setVenues] = useState<Venue[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
   const router = useRouter()
+
+  const activeFilterCount = selectedCities.length + selectedCountries.length
 
   // Fetch venues only once on component mount
   useEffect(() => {
@@ -252,155 +255,52 @@ export default function VenuesPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 py-6">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Find Perfect Venues</h1>
-              <p className="text-gray-600 mt-1">Discover amazing venues for your next event</p>
-            </div>
+      <div className="border-b bg-white">
+        <div className="mx-auto max-w-7xl px-4 py-5 sm:py-6">
+          <div className="mb-2 sm:mb-0">
+            <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">Find Perfect Venues</h1>
+            <p className="mt-1 text-sm text-gray-600 sm:text-base">Discover amazing venues for your next event</p>
           </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="flex gap-8">
-          {/* Left Sidebar - Filters */}
-          <div className="w-80 flex-shrink-0">
-            <div className="bg-white rounded-lg border p-6 sticky top-8">
-              <h2 className="text-xl font-semibold text-gray-900 mb-6">Discover Venues</h2>
-
-              {/* Search Input */}
-              <div className="mb-6">
-                <input
-                  type="text"
-                  placeholder="Search venues..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              {/* Active Filters Display */}
-              {(selectedCities.length > 0 || selectedCountries.length > 0) && (
-                <div className="mb-4 p-3 bg-blue-50 rounded-md">
-                  <h4 className="text-sm font-medium text-blue-800 mb-2">Active Filters:</h4>
-                  <div className="flex flex-wrap gap-1">
-                    {selectedCities.map(city => (
-                      <Badge key={city} variant="secondary" className="bg-blue-100 text-blue-700">
-                        {city} ×
-                      </Badge>
-                    ))}
-                    {selectedCountries.map(country => (
-                      <Badge key={country} variant="secondary" className="bg-blue-100 text-blue-700">
-                        {country} ×
-                      </Badge>
-                    ))}
-                  </div>
-                  <button 
-                    onClick={() => {
-                      setSelectedCities([])
-                      setSelectedCountries([])
-                    }}
-                    className="text-xs text-blue-600 hover:text-blue-800 mt-1"
-                  >
-                    Clear all
-                  </button>
-                </div>
-              )}
-
-              {/* Popular Cities */}
-              <div className="mb-8">
-                <h3 className="text-sm font-medium text-gray-700 mb-4">Popular cities</h3>
-                <div className="grid grid-cols-2 gap-2">
-                  {popularCities.map((city, index) => (
-                    <button
-                      key={index}
-                      onClick={() => toggleCityFilter(city)}
-                      className={`text-left text-sm py-2 px-3 rounded-md transition-colors ${
-                        selectedCities.includes(city) ? "bg-blue-100 text-blue-700 font-medium" : "text-gray-600 hover:bg-gray-100"
-                      }`}
-                    >
-                      {city}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Popular Countries */}
-              <div className="mb-8">
-                <h3 className="text-sm font-medium text-gray-700 mb-4">Popular countries</h3>
-                <div className="grid grid-cols-2 gap-2 mb-4">
-                  {popularCountries.map((country, index) => (
-                    <button
-                      key={index}
-                      onClick={() => toggleCountryFilter(country.name)}
-                      className={`flex items-center text-left text-sm py-2 px-3 rounded-md transition-colors ${
-                        selectedCountries.includes(country.name)
-                          ? "bg-blue-100 text-blue-700 font-medium"
-                          : "text-gray-600 hover:bg-gray-100"
-                      }`}
-                    >
-                      <span className="mr-2">{country.flag}</span>
-                      {country.name}
-                    </button>
-                  ))}
-                </div>
-                {/* <Button variant="outline" className="w-full text-sm bg-transparent">
-                  Browse All Countries
-                </Button> */}
-              </div>
-
-              {/* Collections */}
-              {/* <div>
-                <h3 className="text-sm font-medium text-gray-700 mb-4">Collections</h3>
-                <div className="space-y-2 mb-4">
-                  {collections.map((collection) => {
-                    const IconComponent = collection.icon
-                    return (
-                      <button
-                        key={collection.name}
-                        onClick={() => toggleCollectionFilter(collection.name)}
-                        className={`flex items-center w-full text-left text-sm py-3 px-3 rounded-md transition-colors ${
-                          selectedCollections.includes(collection.name)
-                            ? "bg-blue-100 text-blue-700 font-medium"
-                            : "text-gray-600 hover:bg-gray-100"
-                        }`}
-                      >
-                        <IconComponent className="w-4 h-4 mr-3" />
-                        {collection.name}
-                      </button>
-                    )
-                  })}
-                </div>
-                <Button variant="outline" className="w-full text-sm bg-transparent">
-                  All Category
-                </Button>
-              </div> */}
-            </div>
-          </div>
-
-          {/* Right Content */}
-          <div className="flex-1">
-            {/* Results Header */}
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="text-xl font-semibold text-gray-900">
-                  {filteredVenues.length} venue{filteredVenues.length !== 1 ? 's' : ''} found
-                  {(selectedCities.length > 0 || selectedCountries.length > 0) && (
-                    <span className="text-sm font-normal text-gray-600 ml-2">
-                      {selectedCities.length > 0 && `in ${selectedCities.join(', ')}`}
-                      {selectedCountries.length > 0 && ` from ${selectedCountries.join(', ')}`}
-                    </span>
-                  )}
-                </h2>
-                <p className="text-gray-600">Best venues for your events</p>
-              </div>
+      <div className="mx-auto max-w-7xl px-4 py-6 sm:py-8">
+        <div className="flex min-w-0 flex-col gap-6 lg:flex-row lg:items-start lg:gap-8">
+          {/* Venue results — first on mobile, right column on desktop */}
+          <div className="order-1 min-w-0 w-full flex-1 lg:order-2">
+            <div className="mb-4 space-y-3 lg:hidden">
+              <input
+                type="text"
+                placeholder="Search venues..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full rounded-md border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <button
+                type="button"
+                onClick={() => setMobileFiltersOpen((v) => !v)}
+                className="w-full rounded-md border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-800 shadow-sm"
+              >
+                {mobileFiltersOpen ? "Hide filters" : "City & country filters"}
+                {activeFilterCount > 0 ? ` (${activeFilterCount} active)` : ""}
+              </button>
             </div>
 
-            {/* Venues Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+            <div className="mb-4 sm:mb-6">
+              <h2 className="text-lg font-semibold text-gray-900 sm:text-xl">
+                {filteredVenues.length} venue{filteredVenues.length !== 1 ? "s" : ""} found
+                {(selectedCities.length > 0 || selectedCountries.length > 0) && (
+                  <span className="ml-2 text-sm font-normal text-gray-600">
+                    {selectedCities.length > 0 && `in ${selectedCities.join(", ")}`}
+                    {selectedCountries.length > 0 && ` from ${selectedCountries.join(", ")}`}
+                  </span>
+                )}
+              </h2>
+              <p className="text-sm text-gray-600 sm:text-base">Best venues for your events</p>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-2 xl:grid-cols-3">
               {filteredVenues.map((venue, index) => (
                 <div
                   key={venue.id || index}
@@ -412,7 +312,7 @@ export default function VenuesPage() {
                     <img
                       src={venue.venueImages?.[0] || "/placeholder.svg"}
                       alt={venue.venueName || "Venue"}
-                      className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                      className="h-44 w-full object-cover transition-transform duration-300 group-hover:scale-105 sm:h-48"
                       onError={(e) => {
                         if (e.currentTarget.src.endsWith("/placeholder.svg")) return
                         e.currentTarget.src = "/placeholder.svg"
@@ -509,6 +409,98 @@ export default function VenuesPage() {
               </div>
             )}
           </div>
+
+          {/* Filters — left on desktop; collapsible below venues on mobile */}
+          <aside className="order-2 w-full shrink-0 lg:order-1 lg:w-64 xl:w-72">
+            <div
+              className={`rounded-lg border bg-white p-4 sm:p-6 lg:sticky lg:top-8 ${
+                mobileFiltersOpen ? "block" : "hidden lg:block"
+              }`}
+            >
+              <h2 className="mb-4 hidden text-lg font-semibold text-gray-900 lg:block xl:text-xl">
+                Discover Venues
+              </h2>
+
+              <div className="mb-4 hidden lg:block">
+                <input
+                  type="text"
+                  placeholder="Search venues..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              {(selectedCities.length > 0 || selectedCountries.length > 0) && (
+                <div className="mb-4 rounded-md bg-blue-50 p-3">
+                  <h4 className="mb-2 text-sm font-medium text-blue-800">Active filters</h4>
+                  <div className="flex flex-wrap gap-1">
+                    {selectedCities.map((city) => (
+                      <Badge key={city} variant="secondary" className="bg-blue-100 text-blue-700">
+                        {city}
+                      </Badge>
+                    ))}
+                    {selectedCountries.map((country) => (
+                      <Badge key={country} variant="secondary" className="bg-blue-100 text-blue-700">
+                        {country}
+                      </Badge>
+                    ))}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedCities([])
+                      setSelectedCountries([])
+                    }}
+                    className="mt-2 text-xs text-blue-600 hover:text-blue-800"
+                  >
+                    Clear all
+                  </button>
+                </div>
+              )}
+
+              <div className="mb-6">
+                <h3 className="mb-3 text-sm font-medium text-gray-700">Popular cities</h3>
+                <div className="grid grid-cols-2 gap-2">
+                  {popularCities.map((city) => (
+                    <button
+                      key={city}
+                      type="button"
+                      onClick={() => toggleCityFilter(city)}
+                      className={`rounded-md px-3 py-2 text-left text-sm transition-colors ${
+                        selectedCities.includes(city)
+                          ? "bg-blue-100 font-medium text-blue-700"
+                          : "text-gray-600 hover:bg-gray-100"
+                      }`}
+                    >
+                      {city}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <h3 className="mb-3 text-sm font-medium text-gray-700">Popular countries</h3>
+                <div className="grid max-h-[min(40vh,320px)] grid-cols-2 gap-2 overflow-y-auto pr-1 lg:max-h-none">
+                  {popularCountries.map((country) => (
+                    <button
+                      key={country.name}
+                      type="button"
+                      onClick={() => toggleCountryFilter(country.name)}
+                      className={`flex items-center rounded-md px-2 py-2 text-left text-sm transition-colors ${
+                        selectedCountries.includes(country.name)
+                          ? "bg-blue-100 font-medium text-blue-700"
+                          : "text-gray-600 hover:bg-gray-100"
+                      }`}
+                    >
+                      <span className="mr-1.5 shrink-0">{country.flag}</span>
+                      <span className="truncate">{country.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </aside>
         </div>
       </div>
     </div>
