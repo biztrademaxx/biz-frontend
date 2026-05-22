@@ -11,5 +11,5 @@
     <circle cx="335" cy="265" r="20" fill="#94a3b8"/>
     <path d="M280 360 L355 285 L420 340 L470 305 L520 360 Z" fill="#94a3b8"/>
   </g>
-  <text x="400" y="430" text-anchor="middle" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="22" fill="#64748b">No image available</text>
+  <text x="400" y="430" text-anchor="middle" font-family="Roboto, Arial, sans-serif" font-size="22" fill="#64748b">No image available</text>
 </svg>

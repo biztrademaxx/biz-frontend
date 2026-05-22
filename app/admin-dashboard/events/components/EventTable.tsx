@@ -402,16 +402,7 @@ export function EventTable({
   ]
 
   return (
-    <div
-      style={{
-        fontFamily: "'DM Sans', system-ui, sans-serif",
-        background: "#F5F4F0",
-        minHeight: "100vh",
-        padding: "24px",
-      }}
-    >
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');`}</style>
-
+    <div className="min-h-screen bg-[#F5F4F0] p-6">
       <div style={{ maxWidth: "1400px", margin: "0 auto" }}>
         <div style={{ marginBottom: "16px" }}>
           <div style={{ position: "relative", maxWidth: "360px" }}>

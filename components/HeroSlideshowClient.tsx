@@ -2,17 +2,11 @@
 
 import Link from "next/link"
 import { useCallback, useEffect, useRef } from "react"
-import { Noto_Sans } from "next/font/google"
 import { ChevronLeft, ChevronRight, MapPin } from "lucide-react"
 import { eventPublicPath } from "@/lib/event-path"
 import HomeSectionEmptyState, { homeEmptyDescription } from "@/components/home/HomeSectionEmptyState"
 import { hasDisplayableEventImage } from "@/lib/event-card-meta"
 import type { HeroSlideshowEvent } from "@/lib/hero/types"
-
-const vipDateFont = Noto_Sans({
-  subsets: ["latin"],
-  weight: ["600", "700", "800", "900"],
-})
 
 export type Event = HeroSlideshowEvent
 
@@ -98,7 +92,7 @@ function EventCard({ event }: { event: Event }) {
               Top events
             </span>
             <div
-              className={`${vipDateFont.className} relative flex min-h-[5.25rem] w-full flex-col items-center justify-center overflow-hidden rounded-md bg-gradient-to-br from-[#0b3c8a] via-[#0a2f6b] to-[#081f4d] px-2 py-2 text-center shadow-[0_8px_22px_rgba(1,45,114,0.32),0_3px_10px_rgba(0,0,0,0.12)] ring-1 ring-white/10 md:min-h-[5.75rem] md:px-2.5 md:py-2.5 lg:min-h-[6rem]`}
+              className="relative flex min-h-[5.25rem] w-full flex-col items-center justify-center overflow-hidden rounded-md bg-gradient-to-br from-[#0b3c8a] via-[#0a2f6b] to-[#081f4d] px-2 py-2 text-center font-bold shadow-[0_8px_22px_rgba(1,45,114,0.32),0_3px_10px_rgba(0,0,0,0.12)] ring-1 ring-white/10 md:min-h-[5.75rem] md:px-2.5 md:py-2.5 lg:min-h-[6rem]"
               aria-hidden
             >
               <div

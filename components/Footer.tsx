@@ -9,9 +9,8 @@ import {
 } from "react-icons/fa"
 import FooterChatBot from "@/components/footer-chat-bot"
 import { NewsletterFooterSignup } from "@/components/newsletter-footer-signup"
-import { getBrandLogoSrc, isBrandLogoRemoteUrl } from "@/lib/brand-logo"
+import { getFooterLogoSrc, isBrandLogoRemoteUrl } from "@/lib/brand-logo"
 import {
-  brandLogoOnNavyClass,
   footerDividerClass,
   footerHeadingClass,
   footerLinkClass,
@@ -22,8 +21,8 @@ import {
 } from "@/lib/brand-shell-theme"
 
 const Footer: React.FC = () => {
-  const brandLogoSrc = getBrandLogoSrc()
-  const brandLogoUnoptimized = isBrandLogoRemoteUrl(brandLogoSrc)
+  const footerLogoSrc = getFooterLogoSrc()
+  const footerLogoUnoptimized = isBrandLogoRemoteUrl(footerLogoSrc)
 
   return (
     <footer className={footerShellClass}>
@@ -51,13 +50,13 @@ const Footer: React.FC = () => {
               className="mb-4 flex max-w-[300px] items-center sm:max-w-[360px] lg:max-w-[420px]"
             >
               <Image
-                src={brandLogoSrc}
+                src={footerLogoSrc}
                 alt="BizTradeFairs.com"
                 width={440}
                 height={120}
                 sizes="(min-width: 1024px) 420px, (min-width: 640px) 360px, 300px"
-                unoptimized={brandLogoUnoptimized ? true : undefined}
-                className={`block h-14 w-auto max-h-14 max-w-[min(100%,440px)] shrink-0 object-contain object-left sm:h-16 sm:max-h-16 lg:h-[72px] lg:max-h-[72px] ${brandLogoOnNavyClass}`}
+                unoptimized={footerLogoUnoptimized ? true : undefined}
+                className="block h-14 w-auto max-h-14 max-w-[min(100%,440px)] shrink-0 object-contain object-left sm:h-16 sm:max-h-16 lg:h-[72px] lg:max-h-[72px]"
               />
             </Link>
             <p className={`mb-4 text-sm ${footerMutedTextClass}`}>Follow us on</p>

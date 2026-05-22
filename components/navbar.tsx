@@ -14,7 +14,7 @@ import {
   getCurrentUserRole,
   isAuthenticated,
 } from "@/lib/api"
-import { getBrandLogoSrc, isBrandLogoRemoteUrl } from "@/lib/brand-logo"
+import { getNavbarLogoSrc, isBrandLogoRemoteUrl, isBrandLogoSvg } from "@/lib/brand-logo"
 import { eventPublicPath } from "@/lib/event-path"
 import { getVenuePublicPath } from "@/lib/venue-dashboard-path"
 import ExploreMegaMenu from "./ExploreMegaMenu"
@@ -81,8 +81,9 @@ export default function Navbar() {
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const abortRef = useRef<AbortController | null>(null)
 
-  const brandLogoSrc = getBrandLogoSrc()
-  const brandLogoUnoptimized = isBrandLogoRemoteUrl(brandLogoSrc)
+  const brandLogoSrc = getNavbarLogoSrc()
+  const brandLogoUnoptimized =
+    isBrandLogoRemoteUrl(brandLogoSrc) || isBrandLogoSvg(brandLogoSrc)
 
   const closeSearchUi = useCallback(() => {
     setShowSearchResults(false)
