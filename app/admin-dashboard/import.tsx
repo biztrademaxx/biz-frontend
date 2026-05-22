@@ -27,10 +27,7 @@ const MINIMAL_IMPORT_HEADERS = [
   'organizerName',
   'venueEmail',
   'venueName',
-  'timezone',
   'images',
-  'brochure',
-  'layoutPlan',
 ] as const;
 
 const MINIMAL_SAMPLE_ROW = [
@@ -47,10 +44,7 @@ const MINIMAL_SAMPLE_ROW = [
   'John Doe',
   'info@sfcc.com',
   'San Francisco Convention Center',
-  'America/Los_Angeles',
   'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1200,https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1200',
-  'https://techexpo2025.com/brochure.pdf',
-  'https://techexpo2025.com/layout.pdf',
 ] as const;
 
 export default function ImportPage() {
@@ -477,7 +471,7 @@ export default function ImportPage() {
             </li>
             <li className="flex items-start gap-2">
               <span className="text-blue-600 mt-1">•</span>
-              <span><strong>Media & Content fields:</strong> use images (Event Images), brochure (Event Brochure), layoutPlan (Layout Plan)</span>
+              <span><strong>Images:</strong> optional <code className="bg-gray-200 px-1 rounded text-xs">images</code> column — comma-separated image URLs for event banners</span>
             </li>
           </ul>
 
