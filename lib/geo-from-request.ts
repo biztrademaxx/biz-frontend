@@ -1,4 +1,5 @@
 import type { GeoHint } from "@/lib/browse-geo"
+import { resolveCountryForCityName } from "@/lib/city-country"
 
 export const EMPTY_GEO_HINT: GeoHint = {
   city: null,
@@ -65,6 +66,49 @@ export async function geoFromIpapi(ip: string | null): Promise<GeoHint> {
   }
 }
 
+/** Secondary IP lookup when ipapi.co is rate-limited or blocked. */
+export async function geoFromIpWhoIs(): Promise<GeoHint> {
+  try {
+    const r = await fetch("https://ipwho.is/", { cache: "no-store" })
+    if (!r.ok) return EMPTY_GEO_HINT
+    const d = (await r.json()) as Record<string, unknown>
+    if (d.success === false) return EMPTY_GEO_HINT
+    const countryCode =
+      typeof d.country_code === "string" ? d.country_code.trim().toUpperCase() : null
+    return {
+      city: typeof d.city === "string" ? d.city : null,
+      region: typeof d.region === "string" ? d.region : null,
+      countryCode,
+      countryName:
+        typeof d.country === "string" ? d.country : countryNameFromCode(countryCode),
+    }
+  } catch {
+    return EMPTY_GEO_HINT
+  }
+}
+
+function hasGeoSignal(geo: GeoHint): boolean {
+  return Boolean(geo.countryCode || geo.countryName || geo.city)
+}
+
+/** Build geo hint from `HOME_CITY_COOKIE` (`City::CC`, ISO code, or city name). */
+export function geoFromHomeLocationCookie(cookieRaw: string | undefined): GeoHint | null {
+  const v = cookieRaw?.trim()
+  if (!v) return null
+  const parsed = parseHomeLocationCookie(v)
+  const countryCode = parsed.countryCode
+  const city = parsed.city
+  if (!countryCode && !city) return null
+  const mapped = city ? resolveCountryForCityName(city) : null
+  const cc = countryCode ?? mapped?.countryCode ?? null
+  return {
+    city,
+    region: null,
+    countryCode: cc,
+    countryName: countryNameFromCode(cc) ?? mapped?.countryName ?? null,
+  }
+}
+
 /**
  * Resolve visitor geo from request headers (edge → ipapi fallback).
  * No browser permission required.
@@ -73,7 +117,11 @@ export async function resolveGeoFromHeaders(h: Headers): Promise<GeoHint> {
   const edge = geoFromEdgeHeaders(h)
   if (edge?.countryCode || edge?.city) return edge
   const ip = clientIpFromHeaders(h)
-  return geoFromIpapi(ip)
+  const fromIpapi = await geoFromIpapi(ip)
+  if (hasGeoSignal(fromIpapi)) return fromIpapi
+  const fromIpWho = await geoFromIpWhoIs()
+  if (hasGeoSignal(fromIpWho)) return fromIpWho
+  return fromIpapi
 }
 
 /** Cookie / storage value for detected location (`City::CC` when both are known). */

@@ -39,6 +39,7 @@ type HomeLocationContextValue = {
 
 const HomeLocationContext = createContext<HomeLocationContextValue | null>(null)
 
+/** Navbar shows country only (never city name). */
 function countryLabelFromApi(data: HomeLocationApi): string | null {
   const name = data.countryName?.trim()
   if (name) return name
@@ -46,6 +47,8 @@ function countryLabelFromApi(data: HomeLocationApi): string | null {
   if (code) return countryNameFromCode(code)
   const city = data.city?.trim()
   if (city) return resolveCountryForCityName(city)?.countryName ?? null
+  const display = data.displayLabel?.trim()
+  if (display) return resolveCountryForCityName(display)?.countryName ?? null
   return null
 }
 
@@ -157,9 +160,10 @@ export function HomeLocationProvider({ children }: { children: ReactNode }) {
           let data: HomeLocationApi = {}
           if (r.ok) {
             data = await resolveCountryForNavbar((await r.json()) as HomeLocationApi)
-          } else {
+          }
+          if (!countryLabelFromApi(data)) {
             const geo = await fetchGeoHint()
-            if (geo) data = geo
+            if (geo) data = { ...data, ...geo }
           }
           applyApiLocation(data, setCityState, setCountryName)
           if (data.primed) router.refresh()

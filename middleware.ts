@@ -20,7 +20,8 @@ export function middleware(request: NextRequest) {
 
   const city = request.headers.get("x-vercel-ip-city")?.trim()
   const countryCode = request.headers.get("x-vercel-ip-country")?.trim()?.toUpperCase()
-  const value = city || countryCode
+  const value =
+    city && countryCode ? `${city}::${countryCode}` : city || countryCode
 
   if (!value) {
     return response

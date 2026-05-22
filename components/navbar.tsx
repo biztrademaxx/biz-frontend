@@ -375,8 +375,12 @@ export default function Navbar() {
                 className="block h-[44px] w-auto max-h-[44px] max-w-full shrink object-contain object-left sm:h-[52px] sm:max-h-[52px] md:h-[60px] md:max-h-[60px] lg:h-[72px] lg:max-h-[72px]"
               />
             </Link>
-            {/* Explore (lg+) + country label (md+) — mobile drawer has Explore below lg */}
-            <div className="relative ml-2 hidden shrink-0 items-center gap-2 sm:ml-3 md:flex lg:ml-5">
+            {/* Country from IP/VPN — visible sm+ (mobile menu also shows it below lg) */}
+            <div className="ml-1 hidden shrink-0 sm:ml-2 sm:flex">
+              <NavbarCountryLabel />
+            </div>
+            {/* Explore (lg+) */}
+            <div className="relative ml-2 hidden shrink-0 items-center lg:ml-5 lg:flex">
               <div ref={exploreRef} className="hidden lg:block">
                 <button
                   type="button"
@@ -390,7 +394,6 @@ export default function Navbar() {
                   <ChevronDown className={`h-4 w-4 transition-transform ${exploreOpen ? "rotate-180" : ""}`} />
                 </button>
               </div>
-              <NavbarCountryLabel />
             </div>
           </div>
 

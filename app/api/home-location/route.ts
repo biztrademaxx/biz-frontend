@@ -2,6 +2,7 @@ import { headers } from "next/headers"
 import { cookies } from "next/headers"
 import { NextResponse } from "next/server"
 import {
+  geoFromHomeLocationCookie,
   geoToCookieValue,
   resolveGeoFromHeaders,
   countryNameFromCode,
@@ -77,7 +78,17 @@ export async function GET(req: Request) {
   const previousCookie = refresh ? undefined : jar.get(HOME_CITY_COOKIE)?.value?.trim()
 
   const h = await headers()
-  const geo = await resolveGeoFromHeaders(h)
+  const cookieRaw = jar.get(HOME_CITY_COOKIE)?.value?.trim()
+  let geo = await resolveGeoFromHeaders(h)
+  const fromCookie = geoFromHomeLocationCookie(cookieRaw)
+  if (fromCookie) {
+    geo = {
+      city: geo.city ?? fromCookie.city,
+      region: geo.region ?? fromCookie.region,
+      countryCode: geo.countryCode ?? fromCookie.countryCode,
+      countryName: geo.countryName ?? fromCookie.countryName,
+    }
+  }
   const cookieValue = geoToCookieValue(geo)
 
   if (!cookieValue && !geo.countryCode && !geo.countryName && !geo.city) {
