@@ -6,7 +6,7 @@ import { formatEventCountDisplay } from "@/lib/format-event-count"
 import { resolvedEventCountForCity } from "./utils/display-event-count"
 
 const browseCardClass =
-  "group flex w-full min-h-0 cursor-pointer flex-col rounded-md border border-gray-200 bg-white px-3 py-3.5 text-left shadow-sm transition-shadow duration-200 hover:border-gray-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+  "group flex w-full min-h-0 cursor-pointer flex-col rounded-md border border-[#001a48]/35  bg-white px-3 py-3.5 text-left shadow-sm transition-shadow duration-200 hover:border-gray-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
 
 const browseGridClass =
   "grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-6 md:gap-3 lg:gap-4"

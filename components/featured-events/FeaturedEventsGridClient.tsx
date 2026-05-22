@@ -46,7 +46,7 @@ function FeaturedEventCard({ event }: { event: FeaturedEventPayload }) {
   const labels = featuredEventCategoryLabels(event).slice(0, 3)
 
   return (
-    <div className="overflow-hidden rounded-sm border border-[#001a48]/35 bg-[#f8f9fa] p-2 shadow-[0_3px_12px_rgba(15,23,42,0.08)] transition-shadow hover:shadow-[0_6px_18px_rgba(15,23,42,0.12)]">
+    <div className="overflow-hidden rounded-sm border border-[#001a48]/35  p-2 shadow-[0_3px_12px_rgba(15,23,42,0.08)] transition-shadow hover:shadow-[0_6px_18px_rgba(15,23,42,0.12)]">
       <Link href={href} className="block cursor-pointer">
         <div className="text-sm font-medium leading-snug text-gray-800">{formattedDate}</div>
         <div className="mt-1 flex w-full justify-between gap-2">
@@ -58,7 +58,7 @@ function FeaturedEventCard({ event }: { event: FeaturedEventPayload }) {
               {featuredEventLocationLine(event)}
             </div>
           </div>
-          <div className="mt-0.5 h-28 w-28 flex-shrink-0 overflow-hidden rounded-sm border border-gray-200 bg-gray-50 sm:h-32 sm:w-32">
+          <div className="mt-0.5 h-28 w-28 flex-shrink-0 overflow-hidden rounded-sm bg-white border border-gray-200 bg-gray-50 sm:h-32 sm:w-32">
             <img
               src={thumb}
               alt={event.title}

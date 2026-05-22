@@ -111,7 +111,7 @@ const Footer: React.FC = () => {
                 </Link>
               </li>
               <li>
-                <Link href="/exhibitors" className={linkClass}>
+                <Link href="/event" className={linkClass}>
                   Exhibitor Services
                 </Link>
               </li>

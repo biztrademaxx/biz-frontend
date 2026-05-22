@@ -98,7 +98,7 @@ export default function CategoryGridClient({ categories, variant = "home" }: Cat
   return (
     <section
       id={isFull ? "browse-all-categories" : "category"}
-      className="home-tt-section bg-[#F3F2F0] py-6 sm:py-8"
+      className="home-tt-section bg-[#F3F2F0]  py-6 sm:py-8"
       aria-label="Browse events by category"
     >
       <div className="mx-auto w-full min-w-0 max-w-7xl px-3 sm:px-4 lg:px-6">
@@ -112,7 +112,7 @@ export default function CategoryGridClient({ categories, variant = "home" }: Cat
               <Link
                 key={category.id}
                 href={categoryHref(category.name)}
-                className={`${categoryCardClass} cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#002C71] focus-visible:ring-offset-2`}
+                className={`${categoryCardClass} bg-white  cursor-pointer  focus:outline-none focus-visible:ring-2 focus-visible:ring-[#002C71] focus-visible:ring-offset-2 `}
               >
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#efefef] text-gray-800">
                   <Icon className="h-4 w-4" strokeWidth={2} aria-hidden />

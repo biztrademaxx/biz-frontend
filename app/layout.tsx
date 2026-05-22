@@ -77,7 +77,14 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const locationSeed = await getHomeLocationClientSeed();
+  let locationSeed = { city: null, countryCode: null, countryName: null } as Awaited<
+    ReturnType<typeof getHomeLocationClientSeed>
+  >;
+  try {
+    locationSeed = await getHomeLocationClientSeed();
+  } catch (err) {
+    console.error("[layout] home location seed failed:", err);
+  }
 
   return (
     <html lang="en" suppressHydrationWarning>
