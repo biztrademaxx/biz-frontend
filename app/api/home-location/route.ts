@@ -1,12 +1,12 @@
-import { headers } from "next/headers"
 import { cookies } from "next/headers"
 import { NextResponse } from "next/server"
+import { fetchGeoHintServer } from "@/lib/browse-geo-server"
 import {
   geoFromHomeLocationCookie,
   geoToCookieValue,
-  resolveGeoFromHeaders,
   countryNameFromCode,
 } from "@/lib/geo-from-request"
+import type { GeoHint } from "@/lib/browse-geo"
 import { resolveCountryForCityName } from "@/lib/city-country"
 import { buildResolvedHomeLocation, HOME_CITY_COOKIE, HOME_LOCATION_AUTO_COOKIE } from "@/lib/home-location"
 
@@ -77,9 +77,14 @@ export async function GET(req: Request) {
   const jar = await cookies()
   const previousCookie = refresh ? undefined : jar.get(HOME_CITY_COOKIE)?.value?.trim()
 
-  const h = await headers()
   const cookieRaw = jar.get(HOME_CITY_COOKIE)?.value?.trim()
-  let geo = await resolveGeoFromHeaders(h)
+  const fromServer = (await fetchGeoHintServer()) as GeoHint | null
+  let geo: GeoHint = fromServer ?? {
+    city: null,
+    region: null,
+    countryCode: null,
+    countryName: null,
+  }
   const fromCookie = geoFromHomeLocationCookie(cookieRaw)
   if (fromCookie) {
     geo = {

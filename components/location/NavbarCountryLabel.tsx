@@ -7,6 +7,7 @@ import { useHomeLocation } from "@/contexts/home-location-context"
 export default function NavbarCountryLabel({ className = "" }: { className?: string }) {
   const { countryName, isLoading } = useHomeLocation()
   const label = countryName?.trim() || null
+  const showLoading = isLoading && !label
 
   return (
     <span
@@ -16,7 +17,7 @@ export default function NavbarCountryLabel({ className = "" }: { className?: str
     >
       <MapPin className="h-4 w-4 shrink-0" aria-hidden />
       <span className="truncate font-medium">
-        {isLoading ? "Location…" : label ?? "Location…"}
+        {showLoading ? "Location…" : label ?? "—"}
       </span>
     </span>
   )

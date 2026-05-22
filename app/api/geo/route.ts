@@ -1,18 +1,17 @@
-import { headers } from "next/headers"
 import { NextResponse } from "next/server"
-import { EMPTY_GEO_HINT, resolveGeoFromHeaders } from "@/lib/geo-from-request"
+import { fetchGeoHintServer } from "@/lib/browse-geo-server"
+import { EMPTY_GEO_HINT } from "@/lib/geo-from-request"
 
 export const dynamic = "force-dynamic"
 
 /**
- * Approximate visitor location from request IP (Vercel edge headers or ipapi.co).
+ * Approximate visitor location from request IP (Vercel edge headers, Express geo, or ipapi).
  * No browser permission required — IP is sent on every HTTP request.
  */
 export async function GET() {
   try {
-    const h = await headers()
-    const geo = await resolveGeoFromHeaders(h)
-    if (!geo.countryCode && !geo.city && !geo.countryName) {
+    const geo = await fetchGeoHintServer()
+    if (!geo?.countryCode && !geo?.city && !geo?.countryName) {
       return NextResponse.json(EMPTY_GEO_HINT)
     }
     return NextResponse.json(geo)

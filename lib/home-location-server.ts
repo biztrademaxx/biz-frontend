@@ -11,6 +11,9 @@ import {
   HOME_CITY_COOKIE,
   type ResolvedHomeLocation,
 } from "@/lib/home-location"
+import type { HomeLocationClientSeed } from "@/lib/home-location-seed"
+
+export type { HomeLocationClientSeed } from "@/lib/home-location-seed"
 
 /**
  * Home filtering location: always from current request IP / VPN (geo hint),
@@ -77,4 +80,16 @@ export async function getHomeCountryDisplayLabel(): Promise<string | null> {
     (loc.countryCode ? countryNameFromCode(loc.countryCode) : null) ||
     null
   )
+}
+
+export async function getHomeLocationClientSeed(): Promise<HomeLocationClientSeed> {
+  const loc = await resolveHomeLocation()
+  const countryCode = loc.countryCode?.trim().toUpperCase() || null
+  const countryName =
+    loc.countryName?.trim() || (countryCode ? countryNameFromCode(countryCode) : null) || null
+  return {
+    city: loc.city?.trim() || null,
+    countryCode,
+    countryName,
+  }
 }

@@ -7,28 +7,49 @@ import ConditionalLayout from "./conditional-layout";
 import JsonLd from "@/components/seo/JsonLd";
 import { organizationJsonLd, websiteJsonLd } from "@/lib/seo/schemas";
 import { SITE_DESCRIPTION, SITE_NAME, getSiteUrl } from "@/lib/seo/site";
+import { getHomeLocationClientSeed } from "@/lib/home-location-server";
 
 const siteUrl = getSiteUrl();
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  themeColor: "#ffffff",
 };
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
+
   title: {
     default: SITE_NAME,
     template: `%s | ${SITE_NAME}`,
   },
+
   description: SITE_DESCRIPTION,
+
+  manifest: "/site.webmanifest",
+
   icons: {
-    icon: [{ url: "/favicon.ico", type: "image/x-icon" }],
+    icon: [
+      { url: "/favicon.ico", type: "image/x-icon" },
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/favicon-96x96.png", sizes: "96x96", type: "image/png" },
+    ],
+
+    apple: [
+      {
+        url: "/apple-touch-icon.png",
+        sizes: "180x180",
+        type: "image/png",
+      },
+    ],
   },
+
   robots: {
     index: true,
     follow: true,
   },
+
   openGraph: {
     type: "website",
     locale: "en_US",
@@ -37,6 +58,7 @@ export const metadata: Metadata = {
     description: SITE_DESCRIPTION,
     url: siteUrl,
   },
+
   twitter: {
     card: "summary_large_image",
     title: SITE_NAME,
@@ -47,23 +69,23 @@ export const metadata: Metadata = {
 const roboto = Roboto({
   subsets: ["latin"],
   weight: ["300", "400", "500", "700"],
-  display: "swap", // ✅ important for performance
+  display: "swap",
 });
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const locationSeed = await getHomeLocationClientSeed();
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={roboto.className}>
-        {/* SEO Structured Data */}
         <JsonLd data={[organizationJsonLd(), websiteJsonLd()]} />
 
-        {/* Global Providers */}
         <ReactQueryProvider>
-          <ClientLayout>
+          <ClientLayout locationSeed={locationSeed}>
             <ConditionalLayout>{children}</ConditionalLayout>
           </ClientLayout>
         </ReactQueryProvider>
