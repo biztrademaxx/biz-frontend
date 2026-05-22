@@ -61,6 +61,7 @@ export default function ImportPage() {
   const [result, setResult] = useState<{
     imported: string[];
     errors?: string[];
+    skippedDuplicates?: string[];
   } | null>(null);
 
   const handleUpload = async () => {
@@ -116,14 +117,22 @@ export default function ImportPage() {
       const summary = Array.isArray(last.importedSummary) ? last.importedSummary : [];
       const imported = summary.map((s) => s.title);
       const rawErr = Array.isArray(last.errors) ? last.errors : [];
-      const errors = rawErr.map((e) => `Row ${e.row}: ${e.message}`);
+      const allMessages = rawErr.map((e) => `Row ${e.row}: ${e.message}`);
+      const skippedDuplicates = allMessages.filter((m) => m.includes('Duplicate (skipped)'));
+      const errors = allMessages.filter((m) => !m.includes('Duplicate (skipped)'));
+      const dupCount = skippedDuplicates.length;
+      const errCount = errors.length;
 
       setMessage(
         last.status === 'FAILED' && imported.length === 0
-          ? `❌ Import failed (${last.errorCount} row error(s)).`
-          : `✅ Import finished: ${last.successCount} succeeded, ${last.errorCount} error(s). Organizers receive a thank-you email when SMTP is configured.`,
+          ? `❌ Import failed (${last.errorCount} row issue(s)).`
+          : `✅ Import finished: ${last.successCount} created${dupCount ? `, ${dupCount} duplicate(s) skipped` : ''}${errCount ? `, ${errCount} error(s)` : ''}. Organizers receive a thank-you email when SMTP is configured.`,
       );
-      setResult({ imported, errors: errors.length ? errors : undefined });
+      setResult({
+        imported,
+        errors: errors.length ? errors : undefined,
+        skippedDuplicates: skippedDuplicates.length ? skippedDuplicates : undefined,
+      });
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : 'Unknown error';
       setMessage(`❌ ${msg}`);
@@ -238,6 +247,7 @@ export default function ImportPage() {
             <p><strong>Default time:</strong> If startTime/endTime are blank, import uses 10:00 AM to 6:00 PM</p>
             <p><strong>Organizer/Venue mapping:</strong> Provide at least one identifier (email or name)</p>
             <p><strong>Many events, same organizer:</strong> Use one spreadsheet row per event. Repeat the same <code className="bg-blue-100 px-1 rounded text-xs">organizerEmail</code> on each row, set a unique <code className="bg-blue-100 px-1 rounded text-xs">eventTitle</code> and dates, and set <code className="bg-blue-100 px-1 rounded text-xs">venueEmail</code> or <code className="bg-blue-100 px-1 rounded text-xs">venueName</code> to the correct venue for that event (each row can point to a different venue). Prefer organizer email so every row attaches to the same organizer account.</p>
+            <p><strong>Duplicates:</strong> A row is skipped only when <code className="bg-blue-100 px-1 rounded text-xs">eventTitle</code> + <code className="bg-blue-100 px-1 rounded text-xs">startDate</code> + <code className="bg-blue-100 px-1 rounded text-xs">venueName</code> all match another row in the file or an existing event. Same title on a different year or venue is allowed (e.g. Tech Expo 2026, or same date at Mumbai vs Bangalore).</p>
           </div>
         </div>
 
@@ -386,6 +396,26 @@ export default function ImportPage() {
               </div>
             )}
 
+            {result.skippedDuplicates && result.skippedDuplicates.length > 0 && (
+              <div className="bg-amber-50 rounded-lg border border-amber-200 p-6">
+                <h3 className="text-lg font-semibold text-amber-800 mb-3">
+                  Skipped duplicates ({result.skippedDuplicates.length})
+                </h3>
+                <p className="text-sm text-amber-700 mb-3">
+                  These rows were not created because the same event title, start date, and venue already exist in the file or database.
+                </p>
+                <div className="bg-white rounded border border-amber-100 overflow-hidden">
+                  <ul className="divide-y divide-amber-100 max-h-60 overflow-y-auto">
+                    {result.skippedDuplicates.map((line, index) => (
+                      <li key={index} className="px-4 py-3 hover:bg-amber-50 text-sm text-amber-900">
+                        {line}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            )}
+
             {/* Errors Display */}
             {result.errors && result.errors.length > 0 && (
               <div className="bg-red-50 rounded-lg border border-red-200 p-6">
@@ -436,6 +466,10 @@ export default function ImportPage() {
             <li className="flex items-start gap-2">
               <span className="text-blue-600 mt-1">•</span>
               <span><strong>Times:</strong> Use HH:mm (e.g., 10:00 / 18:00). If blank, 10:00 to 18:00 is applied.</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-blue-600 mt-1">•</span>
+              <span><strong>Duplicate protection:</strong> Import skips a row when <strong>eventTitle</strong>, <strong>startDate</strong> (calendar day), and <strong>venueName</strong> all match another row in the same file or an event already in Biz. Repeating yearly editions (different start date) or the same show at another venue is allowed.</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-blue-600 mt-1">•</span>
