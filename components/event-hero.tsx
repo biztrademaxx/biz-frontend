@@ -199,8 +199,9 @@ export default function EventHero({ event }: EventHeroProps) {
         </div>
       </div>
 
-      {/* Main Card */}
-      <div className="relative z-10 mx-auto mt-[-72px] flex w-[calc(100%-1.5rem)] max-w-7xl flex-col items-stretch overflow-hidden rounded-sm bg-white shadow-md sm:mt-[-96px] sm:w-[calc(100%-2rem)] md:mt-[-120px] md:flex-row">
+      {/* Main Card — same horizontal inset as EventPageSummaryBar (max-w-7xl + px-3/4/6) */}
+      <div className="mx-auto max-w-7xl px-3 sm:px-4 lg:px-6">
+        <div className="relative z-10 -mt-[72px] flex w-full flex-col items-stretch overflow-hidden rounded-sm bg-white shadow-md sm:-mt-[96px] md:-mt-[120px] md:flex-row">
         {/* Slider Section */}
         <div className="relative min-h-[220px] w-full sm:min-h-[260px] md:min-h-[320px] md:w-2/3">
           <div
@@ -314,6 +315,7 @@ export default function EventHero({ event }: EventHeroProps) {
               </span>
             </div>
           )}
+        </div>
         </div>
       </div>
     </div>

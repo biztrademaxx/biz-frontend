@@ -10,7 +10,8 @@ export default function EventPageSkeleton() {
       </div>
 
       {/* Overlapping main card */}
-      <div className="relative z-10 -mt-[150px] flex w-full max-w-7xl flex-col items-stretch overflow-hidden rounded-sm bg-white shadow-md md:-mt-[120px] md:flex-row left-1/2 lg:left-160 -translate-x-1/2 mx-auto mb-0 ring-1 ring-neutral-200/80">
+      <div className="mx-auto max-w-7xl px-3 sm:px-4 lg:px-6">
+        <div className="relative z-10 -mt-[72px] flex w-full flex-col items-stretch overflow-hidden rounded-sm bg-white shadow-md ring-1 ring-neutral-200/80 sm:-mt-[96px] md:-mt-[120px] md:flex-row">
         <div className="relative min-h-[280px] w-full md:min-h-[320px] md:w-2/3">
           <div className="hero-card-shimmer absolute inset-0 min-h-[280px] md:min-h-[320px]" />
           <div className="pointer-events-none absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-2">
@@ -31,10 +32,11 @@ export default function EventPageSkeleton() {
             ))}
           </div>
         </div>
+        </div>
       </div>
 
       {/* Title + actions bar */}
-      <div className="mx-auto max-w-7xl py-4">
+      <div className="mx-auto max-w-7xl px-3 py-4 sm:px-4 lg:px-6">
         <div className="mb-8 rounded-sm bg-white p-6 shadow-sm ring-1 ring-neutral-200/60">
           <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex-1 space-y-4">
