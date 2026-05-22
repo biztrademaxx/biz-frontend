@@ -546,12 +546,12 @@ export default function Navbar() {
           </div>
         )}
 
-        {mobileMenuOpen && (
-          <div ref={mobileMenuRef} className="space-y-0 border-t border-gray-200 bg-[#f3f2f0] py-2 lg:hidden">
+        {/* {mobileMenuOpen && (
+          <div ref={mobileMenuRef} className={`space-y-0 border-t ${navFooterDividerClass} bg-[#001a48] py-2 lg:hidden`}>
             <button
               ref={exploreMobileRef}
               type="button"
-              className="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm font-semibold text-gray-800 hover:bg-white/80"
+              className="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm font-semibold text-white hover:bg-white/10"
               onClick={() => {
                 setExploreOpen((v) => !v)
                 setMobileMenuOpen(false)
@@ -613,7 +613,7 @@ export default function Navbar() {
               About Us
             </Link>
           </div>
-        )}
+        )} */}
       </div>
 
       <ExploreMegaMenu open={exploreOpen} onClose={() => setExploreOpen(false)} />
