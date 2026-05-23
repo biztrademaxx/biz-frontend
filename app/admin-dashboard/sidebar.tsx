@@ -40,6 +40,12 @@ import SystemSettings from "./system-settings"
 import CustomRolesManagement from "./custom-roles-management"
 import { CreateEventForm } from "./eventManagement/createEvent/create-event"
 import { clearTokens, markLogoutSuccessBanner } from "@/lib/api"
+import {
+  NAVBAR_LOGO_COMPACT_CLASSNAME,
+  NAVBAR_LOGO_HEIGHT,
+  NAVBAR_LOGO_WIDTH,
+  getNavbarLogoImageProps,
+} from "@/lib/brand-logo"
 import { Button } from "@/components/ui/button"
 import { AdminThemeToggle } from "@/components/admin-theme-toggle"
 import CountriesManagement from "./countries-management"
@@ -214,6 +220,7 @@ const LEGACY_PERMISSION_ALIASES: Record<string, string[]> = {
 }
 
 export default function AdminDashboard({ userRole, userPermissions }: AdminDashboardProps) {
+  const sidebarLogo = getNavbarLogoImageProps()
   const router = useRouter()
   const [activeSection, setActiveSection] = useState("dashboard")
   const [activeSubSection, setActiveSubSection] = useState("")
@@ -749,7 +756,14 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
             <Menu className="h-4 w-4" />
           </button>
           <div className="flex min-w-0 items-center gap-2">
-            <Image src="/logo/bizlogo.png" alt="" width={120} height={40} className="h-8 w-auto shrink-0 object-contain dark:brightness-110 dark:contrast-95" />
+            <Image
+              src={sidebarLogo.src}
+              alt="BizTradeFairs"
+              width={NAVBAR_LOGO_WIDTH}
+              height={NAVBAR_LOGO_HEIGHT}
+              className={`${NAVBAR_LOGO_COMPACT_CLASSNAME} dark:brightness-110 dark:contrast-95`}
+              unoptimized={sidebarLogo.unoptimized}
+            />
             <span className="truncate text-sm font-semibold tracking-tight text-foreground">BizTradeFairs</span>
           </div>
         </div>

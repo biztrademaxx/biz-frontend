@@ -14,7 +14,7 @@ import {
   getCurrentUserRole,
   isAuthenticated,
 } from "@/lib/api"
-import { getNavbarLogoSrc, isBrandLogoRemoteUrl, isBrandLogoSvg } from "@/lib/brand-logo"
+import { NAVBAR_LOGO_LINK_CLASSNAME, getNavbarLogoImageProps } from "@/lib/brand-logo"
 import { eventPublicPath } from "@/lib/event-path"
 import { getVenuePublicPath } from "@/lib/venue-dashboard-path"
 import ExploreMegaMenu from "./ExploreMegaMenu"
@@ -71,7 +71,7 @@ export default function Navbar() {
   const [showAccountMenu, setShowAccountMenu] = useState(false)
   const [exploreOpen, setExploreOpen] = useState(false)
 
-  const mobileMenuRef = useRef<HTMLDivElement>(null)
+  const navShellRef = useRef<HTMLDivElement>(null)
   const exploreRef = useRef<HTMLDivElement>(null)
   const exploreMobileRef = useRef<HTMLButtonElement>(null)
   const searchRef = useRef<HTMLDivElement>(null)
@@ -81,9 +81,7 @@ export default function Navbar() {
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const abortRef = useRef<AbortController | null>(null)
 
-  const brandLogoSrc = getNavbarLogoSrc()
-  const brandLogoUnoptimized =
-    isBrandLogoRemoteUrl(brandLogoSrc) || isBrandLogoSvg(brandLogoSrc)
+  const brandLogo = getNavbarLogoImageProps()
 
   const closeSearchUi = useCallback(() => {
     setShowSearchResults(false)
@@ -219,7 +217,8 @@ export default function Navbar() {
   // Close menus when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target as Node)) {
+      const t = event.target as Node
+      if (mobileMenuOpen && !navShellRef.current?.contains(t)) {
         setMobileMenuOpen(false)
       }
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
@@ -228,7 +227,6 @@ export default function Navbar() {
       if (mobileSearchRef.current && !mobileSearchRef.current.contains(event.target as Node)) {
         setShowSearchResults(false)
       }
-      const t = event.target as Node
       const inDesktopAccount = desktopAccountRef.current?.contains(t)
       const inMobileAccount = mobileAccountRef.current?.contains(t)
       if (!inDesktopAccount && !inMobileAccount) {
@@ -245,7 +243,7 @@ export default function Navbar() {
 
     document.addEventListener("mousedown", handleClickOutside)
     return () => document.removeEventListener("mousedown", handleClickOutside)
-  }, [])
+  }, [mobileMenuOpen])
 
   const navLinkClass = "text-gray-700 transition-colors hover:text-gray-900"
 
@@ -349,7 +347,7 @@ export default function Navbar() {
 
   return (
     <nav className="sticky top-0 z-50 bg-white shadow-[0_4px_12px_rgba(0,0,0,0.12)]">
-      <div className="mx-auto max-w-7xl px-3 sm:px-4 lg:px-6">
+      <div ref={navShellRef} className="mx-auto max-w-7xl px-3 sm:px-4 lg:px-6">
         <div className="flex h-[5.5rem] min-h-[5.5rem] items-center justify-between gap-1.5 sm:gap-3">
           <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-4">
             <button
@@ -363,18 +361,9 @@ export default function Navbar() {
             </button>
             <Link
               href="/"
-              className="flex min-w-0 max-w-[min(58vw,220px)] shrink items-center sm:max-w-[300px] sm:shrink-0 md:max-w-[360px] lg:max-w-[440px]"
+              className={NAVBAR_LOGO_LINK_CLASSNAME}
             >
-              <Image
-                src={brandLogoSrc}
-                alt="BizTradeFairs.com"
-                width={440}
-                height={120}
-                sizes="(min-width: 1024px) 440px, (min-width: 640px) 280px, 200px"
-                priority
-                unoptimized={brandLogoUnoptimized ? true : undefined}
-                className="block h-[44px] w-auto max-h-[44px] max-w-full shrink object-contain object-left sm:h-[52px] sm:max-h-[52px] md:h-[60px] md:max-h-[60px] lg:h-[72px] lg:max-h-[72px]"
-              />
+              <Image {...brandLogo} alt="BizTradeFairs.com" priority />
             </Link>
             {/* Country from IP/VPN — visible sm+ (mobile menu also shows it below lg) */}
             <div className="ml-1 hidden shrink-0 sm:ml-2 sm:flex">
@@ -547,74 +536,46 @@ export default function Navbar() {
           </div>
         )}
 
-        {/* {mobileMenuOpen && (
-          <div ref={mobileMenuRef} className={`space-y-0 border-t ${navFooterDividerClass} bg-[#001a48] py-2 lg:hidden`}>
+        {mobileMenuOpen ? (
+          <div className="max-h-[min(70vh,480px)] overflow-y-auto border-t border-gray-200 bg-white py-2 lg:hidden">
             <button
               ref={exploreMobileRef}
               type="button"
-              className="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm font-semibold text-white hover:bg-white/10"
+              className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium text-gray-800 hover:bg-gray-50"
               onClick={() => {
-                setExploreOpen((v) => !v)
+                setExploreOpen(true)
                 setMobileMenuOpen(false)
               }}
             >
               Explore
-              <ChevronDown className="h-4 w-4" />
+              <ChevronDown className="h-4 w-4 text-gray-500" />
             </button>
-            <div className="border-b border-gray-200/80 px-4 py-3">
+            <div className="border-b border-gray-100 px-4 py-3 sm:hidden">
               <NavbarCountryLabel className="w-full" />
             </div>
             <Link
               href="/event"
-              className="block px-4 py-2.5 text-sm font-semibold text-gray-800 hover:bg-white/80"
+              className="block px-4 py-3 text-sm font-medium text-gray-800 hover:bg-gray-50"
               onClick={() => setMobileMenuOpen(false)}
             >
               Top 100 Must Visit
             </Link>
             <Link
               href="/speakers"
-              className="block px-4 py-2.5 text-sm font-semibold text-gray-800 hover:bg-white/80"
+              className="block px-4 py-3 text-sm font-medium text-gray-800 hover:bg-gray-50"
               onClick={() => setMobileMenuOpen(false)}
             >
               Speakers
             </Link>
             <Link
-              href="/event"
-              className="block px-4 py-2.5 text-sm font-semibold text-gray-800 hover:bg-white/80"
+              href="/organizer-signup"
+              className="block px-4 py-3 text-sm font-medium text-gray-800 hover:bg-gray-50"
               onClick={() => setMobileMenuOpen(false)}
             >
               Add Event
             </Link>
-            <Link
-              href="/event"
-              className="block px-4 py-2.5 text-sm font-semibold text-gray-800 hover:bg-white/80"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Exhibitions
-            </Link>
-            <Link
-              href="/organizer-signup"
-              className="block px-4 py-2.5 text-sm font-semibold text-gray-800 hover:bg-white/80"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Buyer Services
-            </Link>
-            <Link
-              href="/venues"
-              className="block px-4 py-2.5 text-sm font-semibold text-gray-800 hover:bg-white/80"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Supplier Services
-            </Link>
-            <Link
-              href="/about"
-              className="block px-4 py-2.5 text-sm font-semibold text-gray-800 hover:bg-white/80"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              About Us
-            </Link>
           </div>
-        )} */}
+        ) : null}
       </div>
 
       <ExploreMegaMenu open={exploreOpen} onClose={() => setExploreOpen(false)} />

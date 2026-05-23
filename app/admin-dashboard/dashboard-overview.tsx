@@ -38,7 +38,7 @@ import { format, subDays, formatDistanceToNow } from "date-fns"
 import { cn } from "@/lib/utils"
 import { useTheme } from "next-themes"
 
-const PLACEHOLDER_EVENT = "/images/gpex.jpg"
+import { getEventDisplayImageUrl } from "@/lib/default-event-image"
 
 const iconMap: Record<string, any> = {
   Users,
@@ -131,20 +131,9 @@ type ActivityRow = {
   eventStatus?: string
 }
 
-function pickEventImage(e: DashboardEventCard | null | undefined): string | null {
-  if (!e) return null
-  const thumb = e.thumbnailImage
-  if (typeof thumb === "string" && thumb.trim()) return thumb.trim()
-  if (Array.isArray(e.images) && e.images.length > 0 && typeof e.images[0] === "string" && e.images[0].trim()) {
-    return e.images[0].trim()
-  }
-  const banner = e.bannerImage
-  if (typeof banner === "string" && banner.trim()) return banner.trim()
-  return null
-}
-
 function eventImageSrc(e: DashboardEventCard | null | undefined): string {
-  return pickEventImage(e) || PLACEHOLDER_EVENT
+  if (!e) return getEventDisplayImageUrl({})
+  return getEventDisplayImageUrl(e)
 }
 
 function statusBadgeClass(status: string | undefined) {

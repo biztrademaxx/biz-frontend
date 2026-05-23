@@ -7,6 +7,7 @@ import {
   getEncodedFullAddressForMaps,
   getPublicVenueCityCountry,
 } from "./event-page-utils"
+import { getEventPostponedNotice, isEventPostponed } from "@/lib/event-schedule-display"
 
 type Props = {
   event: any
@@ -124,6 +125,15 @@ export function EventPageSummaryBar({
               <p className="text-center lg:text-left text-gray-700 font-medium text-base sm:text-lg">
                 Interested in this Event?
               </p>
+
+              {isEventPostponed(event) && (
+                <p
+                  className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-center text-sm font-medium text-amber-900 lg:text-left"
+                  role="status"
+                >
+                  {getEventPostponedNotice(event)}
+                </p>
+              )}
 
               <div className="flex gap-3 flex-col sm:flex-row sm:justify-start">
                 <Button

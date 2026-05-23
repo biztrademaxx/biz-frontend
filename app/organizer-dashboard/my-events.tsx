@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Calendar, MapPin, Users, DollarSign, Search, TrendingUp } from "lucide-react"
 import Image from "next/image"
+import { getEventDisplayImageUrl } from "@/lib/default-event-image"
 
 interface Event {
   id: string
@@ -209,12 +210,7 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
   }
 
   // Get the best image to display
-  const getEventImage = (event: Event) => {
-    if (event.bannerImage && event.bannerImage !== "") return event.bannerImage
-    if (event.thumbnailImage && event.thumbnailImage !== "") return event.thumbnailImage
-    if (event.images && event.images.length > 0 && event.images[0] !== "") return event.images[0]
-    return defaultImage
-  }
+  const getEventImage = (event: Event) => getEventDisplayImageUrl(event)
 
   return (
     <div className="space-y-6">
@@ -300,18 +296,13 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
                 <div className="flex flex-col h-full">
                   {/* Image Section - Smaller and Full Width */}
                   <div className="relative w-full h-48 bg-gray-100 overflow-hidden">
-                    {eventImage?.trim() ? (
-                      <Image
-                        src={eventImage.trim()}
-                        alt={event.title}
-                        fill
-                        className="object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
-                    ) : (
-                      <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 text-sm text-slate-500">
-                        No image
-                      </div>
-                    )}
+                    <Image
+                      src={eventImage}
+                      alt={event.title}
+                      fill
+                      className="object-cover group-hover:scale-105 transition-transform duration-500"
+                      sizes="(max-width: 768px) 100vw, 50vw"
+                    />
 
                     {/* Overlay Gradient for better text readability */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />

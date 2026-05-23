@@ -25,6 +25,7 @@ import {
   ArrowLeft,
 } from "lucide-react"
 import Image from "next/image"
+import { getEventDisplayImageUrl } from "@/lib/default-event-image"
 
 interface Event {
   id: string
@@ -125,11 +126,12 @@ export default function EditEventPage() {
   const [selectedStatus, setSelectedStatus] = useState<string[]>([])
   const [selectedFeatured, setSelectedFeatured] = useState<string[]>([])
 
-  const DEFAULT_EVENT_IMAGE = "/herosection-images/test.jpg"
-
-  const getEventImage = (event: Event) => {
-    return event.images?.[0]?.url || DEFAULT_EVENT_IMAGE
-  }
+  const getEventImage = (event: Event) =>
+    getEventDisplayImageUrl({
+      bannerImage: event.bannerImage,
+      thumbnailImage: event.thumbnailImage,
+      images: event.images,
+    })
 
   const fetchEvents = async () => {
     try {

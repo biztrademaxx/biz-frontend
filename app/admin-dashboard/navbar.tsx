@@ -1,9 +1,6 @@
 "use client"
 
 import { devLog } from "@/lib/dev-log"
-import { useState } from "react"
-import Link from "next/link"
-import Image from "next/image"
 import { usePathname } from "next/navigation"
 import {
   ChevronDown,
@@ -29,17 +26,21 @@ import { clearTokens, markLogoutSuccessBanner } from "@/lib/api"
 import { useAuth } from "@/hooks/use-auth"
 import { cn } from "@/lib/utils"
 import { AdminThemeToggle } from "@/components/admin-theme-toggle"
+import { DashboardResponsiveNavbar } from "@/components/dashboard-responsive-navbar"
 
 type NavbarProps = { onLogout?: () => void }
+
+const EXPLORE_LINKS = [
+  { href: "/trade-fairs", label: "Trade Fairs" },
+  { href: "/conferences", label: "Conferences" },
+  { href: "/webinars", label: "Webinars" },
+]
 
 export default function Navbar({ onLogout }: NavbarProps) {
   const pathname = usePathname()
   const isAdminDashboard = pathname?.startsWith("/admin-dashboard") ?? false
   const { role } = useAuth({ requireAuth: false })
-  const [exploreOpen, setExploreOpen] = useState(false)
   const router = useRouter()
-
-  const toggleExplore = () => setExploreOpen((prev) => !prev)
 
   const handleLogout = () => {
     markLogoutSuccessBanner()
@@ -153,96 +154,42 @@ export default function Navbar({ onLogout }: NavbarProps) {
   }
 
   return (
-    <nav className="border-b bg-white shadow-sm">
-      <div className="mx-auto max-w-full px-4 py-2 sm:px-6 lg:px-8">
-        <div className="flex h-16 items-center justify-between">
-          <div className="flex items-center space-x-6">
-            <Link href="/" className="inline-block">
-              <Image
-                src="/logo/bizlogo.png"
-                alt="BizTradeFairs.com"
-                width={160}
-                height={80}
-                className="h-10 w-auto"
-              />
-            </Link>
-
-            <div className="relative">
+    <DashboardResponsiveNavbar
+      exploreLinks={EXPLORE_LINKS}
+      extraDesktopLinks={[{ href: "/admin-dashboard", label: "Admin Dashboard" }]}
+      extraMobileLinks={[{ href: "/admin-dashboard", label: "Admin Dashboard" }]}
+      actions={
+        <>
+          <AdminNotificationsDropdown />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                onClick={toggleExplore}
-                className="flex items-center text-gray-700 hover:text-gray-900 focus:outline-none"
+                className="flex items-center gap-2 rounded-full bg-[#002C71] p-2 text-white transition-colors hover:bg-blue-800 focus:outline-none"
+                aria-label="Account menu"
               >
-                <span>Explore</span>
-                <ChevronDown className="ml-1 w-4 h-4" />
+                <User className="h-4 w-4" />
+                <ChevronDown className="hidden h-3 w-3 sm:block" />
               </button>
-
-              {exploreOpen && (
-                <div className="absolute left-0 z-10 mt-2 w-48 rounded-md border border-gray-200 bg-white shadow-lg">
-                  <ul className="py-1">
-                    <li>
-                      <Link href="/trade-fairs">
-                        <p className="block px-4 py-2 hover:bg-gray-100">Trade Fairs</p>
-                      </Link>
-                    </li>
-                    <li>
-                      <Link href="/conferences">
-                        <p className="block px-4 py-2 hover:bg-gray-100">Conferences</p>
-                      </Link>
-                    </li>
-                    <li>
-                      <Link href="/webinars">
-                        <p className="block px-4 py-2 hover:bg-gray-100">Webinars</p>
-                      </Link>
-                    </li>
-                  </ul>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="flex items-center space-x-6">
-            <Link href="/event">
-              <p className="text-gray-700 hover:text-gray-900">Top 10 Must Visit</p>
-            </Link>
-            <Link href="/speakers">
-              <p className="text-gray-700 hover:text-gray-900">Speakers</p>
-            </Link>
-            <Link href="/admin-dashboard">
-              <p className="cursor-pointer text-gray-700 hover:text-gray-900">Admin Dashboard</p>
-            </Link>
-
-            <AdminNotificationsDropdown />
-
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  type="button"
-                  className="flex items-center gap-2 rounded-full bg-[#002C71] p-2 text-white transition-colors hover:bg-blue-800 focus:outline-none"
-                >
-                  <User className="h-4 w-4" />
-                  <ChevronDown className="h-3 w-3" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="end" forceMount>
-                <DropdownMenuItem onClick={navigateToProfile}>
-                  <User className="mr-2 h-4 w-4" />
-                  <span>My Profile</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={navigateToSettings}>
-                  <Settings className="mr-2 h-4 w-4" />
-                  <span>Settings</span>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout}>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Logout</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
-      </div>
-    </nav>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56" align="end" forceMount>
+              <DropdownMenuItem onClick={navigateToProfile}>
+                <User className="mr-2 h-4 w-4" />
+                <span>My Profile</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={navigateToSettings}>
+                <Settings className="mr-2 h-4 w-4" />
+                <span>Settings</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleLogout}>
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Logout</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </>
+      }
+    />
   )
 }

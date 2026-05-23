@@ -680,7 +680,12 @@ export default function EventPage({ params }: EventPageProps) {
       <div className="max-w-7xl mx-auto">
         {/* Hero Section */}
         <div className="mb-10">
-          <EventHero event={event} />
+          <EventHero
+            event={event}
+            onScheduleUpdate={(patch) =>
+              setEvent((prev: Record<string, unknown> | null) => (prev ? { ...prev, ...patch } : prev))
+            }
+          />
         </div>
         <div className="flex flex-col lg:flex-row gap-6">
           <div className="flex-1">

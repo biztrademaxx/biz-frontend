@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Plus, Users, TrendingUp, TrendingDown, Calendar, CalendarDays, Loader2, Clock, ChevronRight, MoreHorizontal, LayoutGrid } from "lucide-react"
 import { orgCardShell, orgWelcomeBanner } from "./organizer-dashboard-theme"
 import { cn } from "@/lib/utils"
+import { getEventDisplayImageUrl } from "@/lib/default-event-image"
 
 interface DashboardStats {
   title: string
@@ -148,7 +149,6 @@ export default function DashboardOverview({
   onViewAllEventsClick,
 }: DashboardOverviewProps) {
   const router = useRouter()
-  const defaultEventImage = ""
   const [attendeeStats, setAttendeeStats] = useState<OrganizerAttendeeStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -219,12 +219,7 @@ export default function DashboardOverview({
     },
   ]
 
-  const getEventImage = (event: RecentEvent) => {
-    if (event.bannerImage) return event.bannerImage
-    if (event.thumbnailImage) return event.thumbnailImage
-    if (event.images?.[0]) return event.images[0]
-    return defaultEventImage
-  }
+  const getEventImage = (event: RecentEvent) => getEventDisplayImageUrl(event)
 
   const formatSlashDate = (dateString?: string) => {
     if (!dateString) return "—"
@@ -416,19 +411,13 @@ export default function DashboardOverview({
                       className="flex w-full cursor-pointer gap-4 rounded-xl py-4 text-left transition hover:bg-[#8E54E9]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8E54E9]/25"
                     >
                       <div className="relative h-[4.5rem] w-[4.5rem] shrink-0 overflow-hidden rounded-xl bg-gray-100 ring-1 ring-gray-200/80">
-                        {img?.trim() ? (
-                          <Image
-                            src={img.trim()}
-                            alt=""
-                            fill
-                            sizes="72px"
-                            className="object-cover"
-                          />
-                        ) : (
-                          <div className="flex h-full w-full items-center justify-center text-[10px] text-slate-400">
-                            —
-                          </div>
-                        )}
+                        <Image
+                          src={img}
+                          alt=""
+                          fill
+                          sizes="72px"
+                          className="object-cover"
+                        />
                       </div>
 
                       <div className="flex min-w-0 flex-1 flex-col gap-2">

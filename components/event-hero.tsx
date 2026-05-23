@@ -8,6 +8,7 @@ import Image from "next/image"
 import { useEffect, useState } from "react"
 import { formatPublicTicketPriceLine } from "@/lib/ticket-price-display"
 import { formatEventSidebarTimeRange } from "@/lib/event-sidebar-time-range"
+import { formatEventPublicDateRange, getEventPostponedNotice, isEventPostponed } from "@/lib/event-schedule-display"
 import { BRAND_IMAGE_BOTTOM_FADE } from "@/lib/brand-image-gradients"
 import { resolveEventBannerImage } from "@/lib/events/resolve-event-banner-image"
 
@@ -21,6 +22,9 @@ interface Event {
   address?: string
   startDate?: string
   endDate?: string
+  previousStartDate?: string | null
+  previousEndDate?: string | null
+  isPostponed?: boolean
   postponedReason?: string
   images: string[]
   videos?: string[]
@@ -103,59 +107,8 @@ export default function EventHero({ event }: EventHeroProps) {
     return null
   }
 
-  // Format date range
-  const formatDateRange = () => {
-    if (!event.startDate || !event.endDate) {
-      return "Date to be announced"
-    }
-
-    const startDate = new Date(event.startDate)
-    const endDate = new Date(event.endDate)
-
-    const isSameDay = startDate.toDateString() === endDate.toDateString()
-
-    if (isSameDay) {
-      return startDate.toLocaleDateString("en-IN", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-      })
-    } else {
-      return `${startDate.toLocaleDateString("en-IN", {
-        day: "2-digit",
-        month: "short",
-      })} - ${endDate.toLocaleDateString("en-IN", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-      })}`
-    }
-  }
-
-  // Format time range
-  const formatTimeRange = () => {
-    if (!event.startDate || !event.endDate) {
-      return "Time to be announced"
-    }
-
-    const startTime = new Date(event.startDate).toLocaleTimeString("en-IN", {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: true,
-      timeZone: "Asia/Kolkata",
-    })
-
-    const endTime = new Date(event.endDate).toLocaleTimeString("en-IN", {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: true,
-      timeZone: "Asia/Kolkata",
-    })
-
-    return `${startTime} – ${endTime}`
-  }
-
   const followersCount = getFollowersCount()
+  const postponed = isEventPostponed(event)
 
   const slideImages = images.filter(
     (img) =>
@@ -279,7 +232,7 @@ export default function EventHero({ event }: EventHeroProps) {
             {/* Date */}
             <div className="flex items-center gap-2 sm:gap-3">
               <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-black flex-shrink-0" />
-              <p className="leading-tight">{formatDateRange()}</p>
+              <p className="leading-tight">{formatEventPublicDateRange(event.startDate, event.endDate)}</p>
             </div>
 
             {/* Time */}
@@ -307,11 +260,10 @@ export default function EventHero({ event }: EventHeroProps) {
             )}
           </div>
 
-          {/* Status Badge if postponed */}
-          {event.postponedReason && (
+          {postponed && (
             <div className="mt-2">
-              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                Postponed: {event.postponedReason}
+              <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-1 text-xs font-medium text-amber-900">
+                {getEventPostponedNotice(event)}
               </span>
             </div>
           )}

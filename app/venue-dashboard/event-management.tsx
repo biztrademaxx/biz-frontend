@@ -9,18 +9,7 @@ import { Button } from "@/components/ui/button"
 import { CalendarIcon, MapPin, Users, Building, Plus, MoreHorizontal } from "lucide-react"
 import { apiFetch } from "@/lib/api"
 import { cn } from "@/lib/utils"
-
-const EVENT_PLACEHOLDER = "/images/gpex.jpg"
-
-function getEventImageSrc(event: Record<string, unknown>): string {
-  const thumb = event.thumbnailImage
-  const banner = event.bannerImage
-  const images = event.images
-  if (typeof thumb === "string" && thumb.trim()) return thumb.trim()
-  if (Array.isArray(images) && images.length > 0 && typeof images[0] === "string" && images[0].trim()) return images[0].trim()
-  if (typeof banner === "string" && banner.trim()) return banner.trim()
-  return EVENT_PLACEHOLDER
-}
+import { getEventDisplayImageFromRecord } from "@/lib/default-event-image"
 
 function formatCategory(category: unknown): string {
   if (Array.isArray(category)) {
@@ -100,7 +89,7 @@ export default function EventManagement() {
 
   const EventCard = ({ event }: { event: Record<string, unknown> }) => {
     const title = typeof event.title === "string" ? event.title : "Event"
-    const imgSrc = getEventImageSrc(event)
+    const imgSrc = getEventDisplayImageFromRecord(event)
     const startDate = typeof event.startDate === "string" ? event.startDate : undefined
     const endDate = typeof event.endDate === "string" ? event.endDate : undefined
     const locationLabel = formatEventLocation(event)
