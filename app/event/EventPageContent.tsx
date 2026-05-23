@@ -370,7 +370,7 @@ export default function EventPageContent({ event, session: _session, router, toa
   const showActionButtons = !isOrganizer
 
   return (
-    <div className="min-h-screen bg-[#f1f7fb] pb-8 md:pb-10">
+    <div className="min-h-screen bg-[#f1f7fb] pb-6 md:pb-8">
       <EventHero event={event} />
 
       <EventPageSummaryBar

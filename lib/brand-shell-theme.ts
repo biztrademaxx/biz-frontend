@@ -3,7 +3,7 @@ export const FOOTER_BG = "#001a48"
 export const FOOTER_ACCENT = "#002C71"
 
 export const footerShellClass =
-  "relative mt-8 overflow-hidden bg-[#001a48] px-4 py-12 text-white md:mt-10 md:px-8 lg:mt-12 lg:px-16"
+  "relative overflow-hidden bg-[#001a48] px-4 py-12 text-white md:px-8 lg:px-16"
 
 export const footerLinkClass =
   "text-sm text-white transition-colors duration-200 hover:text-white/80"
