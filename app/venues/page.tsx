@@ -3,6 +3,7 @@
 
 import { devLog } from "@/lib/dev-log"
 import VenuesListingPageSkeleton from "@/components/VenuesListingPageSkeleton"
+import { DEFAULT_VENUE_IMAGE, getVenueDisplayImageUrl } from "@/lib/default-venue-image"
 import { getVenuePublicPath } from "@/lib/venue-dashboard-path"
 
 import { useState, useEffect } from "react"
@@ -310,12 +311,12 @@ export default function VenuesPage() {
                   {/* Image */}
                   <div className="relative">
                     <img
-                      src={venue.venueImages?.[0] || "/placeholder.svg"}
+                      src={getVenueDisplayImageUrl(venue)}
                       alt={venue.venueName || "Venue"}
                       className="h-44 w-full object-cover transition-transform duration-300 group-hover:scale-105 sm:h-48"
                       onError={(e) => {
-                        if (e.currentTarget.src.endsWith("/placeholder.svg")) return
-                        e.currentTarget.src = "/placeholder.svg"
+                        if (e.currentTarget.src.includes(DEFAULT_VENUE_IMAGE)) return
+                        e.currentTarget.src = DEFAULT_VENUE_IMAGE
                       }}
                     />
 

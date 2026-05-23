@@ -6,6 +6,7 @@ import { Calendar, MapPin, Star } from "lucide-react"
 import HomeSectionEmptyState, { homeEmptyDescription } from "@/components/home/HomeSectionEmptyState"
 import type { ExploreVenueCard } from "@/lib/venues/types"
 import { formatVenueLocationLabel } from "@/lib/venues/format-venue-location"
+import { DEFAULT_VENUE_IMAGE } from "@/lib/default-venue-image"
 import { getVenuePublicPath } from "@/lib/venue-dashboard-path"
 
 function VenueCard({ venue, onNavigate }: { venue: ExploreVenueCard; onNavigate: () => void }) {
@@ -22,12 +23,12 @@ function VenueCard({ venue, onNavigate }: { venue: ExploreVenueCard; onNavigate:
       <div className="relative h-28 w-full shrink-0 overflow-hidden bg-gray-100 sm:h-32">
         <img
           src={venue.imageUrl}
-          alt=""
-          aria-hidden
+          alt={venue.name}
           className="h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-[1.02]"
           onError={(e) => {
             const t = e.target as HTMLImageElement
-            t.src = "/city/c1.jpg"
+            if (t.src.includes(DEFAULT_VENUE_IMAGE)) return
+            t.src = DEFAULT_VENUE_IMAGE
           }}
         />
         {venue.eventCount > 0 ? (

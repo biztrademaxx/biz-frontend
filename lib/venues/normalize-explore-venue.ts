@@ -1,3 +1,4 @@
+import { getVenueDisplayImageFromRecord, venueHasDisplayableImage } from "@/lib/default-venue-image"
 import type { ExploreVenueCard } from "./types"
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -30,16 +31,6 @@ function venueCountry(v: Record<string, unknown>): string {
   return ""
 }
 
-function firstImage(v: Record<string, unknown>): string {
-  const images = v.images
-  if (Array.isArray(images) && typeof images[0] === "string" && images[0]) return images[0]
-  const venueImages = v.venueImages
-  if (Array.isArray(venueImages) && typeof venueImages[0] === "string" && venueImages[0]) {
-    return venueImages[0]
-  }
-  return "/city/c1.jpg"
-}
-
 function venueRating(v: Record<string, unknown>): { avg: number; reviews: number } {
   const stats = v.stats as { averageRating?: number; totalReviews?: number } | undefined
   const avg =
@@ -57,8 +48,10 @@ function venueRating(v: Record<string, unknown>): { avg: number; reviews: number
   return { avg, reviews }
 }
 
-export function normalizeExploreVenue(raw: unknown): ExploreVenueCard | null {
+export function normalizeExploreVenue(raw: unknown, options?: { requirePhoto?: boolean }): ExploreVenueCard | null {
   if (!isRecord(raw)) return null
+  if (options?.requirePhoto && !venueHasDisplayableImage(raw)) return null
+
   const idRaw = raw.id
   if (idRaw === undefined || idRaw === null) return null
   const id = String(idRaw)
@@ -73,7 +66,7 @@ export function normalizeExploreVenue(raw: unknown): ExploreVenueCard | null {
   return {
     id,
     name,
-    imageUrl: firstImage(raw),
+    imageUrl: getVenueDisplayImageFromRecord(raw),
     eventCount: venueEventCount(raw),
     city: venueCity(raw),
     country: venueCountry(raw),

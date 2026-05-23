@@ -3,7 +3,13 @@
  */
 
 /** Paths that were used as placeholders; never treat as a real event photo. */
-const LEGACY_PLACEHOLDER_PATHS = ["/images/gpex.jpg", "/city/c4.jpg"] as const
+const LEGACY_PLACEHOLDER_PATHS = [
+  "/images/gpex.jpg",
+  "/city/c1.jpg",
+  "/city/c2.jpg",
+  "/city/c3.jpg",
+  "/city/c4.jpg",
+] as const
 
 /** @deprecated Use `isLegacyDummyImage` — kept for callers that imported the constant. */
 export const LEGACY_DUMMY_IMAGE_PATH = "/images/gpex.jpg"
@@ -11,7 +17,10 @@ export const LEGACY_DUMMY_IMAGE_PATH = "/images/gpex.jpg"
 export function isLegacyDummyImage(url: string | null | undefined): boolean {
   const t = url?.trim()
   if (!t) return true
-  return LEGACY_PLACEHOLDER_PATHS.some((p) => t === p || t.endsWith(p))
+  if (LEGACY_PLACEHOLDER_PATHS.some((p) => t === p || t.endsWith(p))) return true
+  // Seed data used /city/cN.jpg stock paths that are not in public/
+  if (/^\/city\/c\d+\.jpg$/i.test(t)) return true
+  return false
 }
 
 /** Returns a trimmed URL or `undefined` when empty / legacy dummy. */
