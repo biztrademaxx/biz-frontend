@@ -9,6 +9,7 @@ import { eventPublicPath } from "@/lib/event-path"
 import { useDashboard } from "@/contexts/dashboard-context"
 import { useState, useEffect } from "react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { AppImage } from "@/components/app-image"
 import { EVENT_CARD_PLACEHOLDER_IMAGE, getEventCardImageUrl } from "@/lib/event-card-meta"
 
 interface DashboardOverviewProps {
@@ -338,17 +339,14 @@ export function DashboardOverview({ userId, events, userName }: DashboardOvervie
                                                 >
                                                     <div className="flex gap-3 p-3 rounded-lg border border-gray-100 hover:border-purple-200 hover:bg-purple-50/50 transition-all duration-200">
                                                         <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-gray-100">
-                                                            <img
+                                                            <AppImage
                                                                 src={getEventCardImageUrl(event)}
                                                                 alt={event.title}
-                                                                className="h-full w-full object-cover"
+                                                                fill
+                                                                sizes="64px"
+                                                                fallbackSrc={EVENT_CARD_PLACEHOLDER_IMAGE}
+                                                                className="object-cover"
                                                                 loading="lazy"
-                                                                onError={(e) => {
-                                                                    const target = e.currentTarget
-                                                                    if (target.src !== EVENT_CARD_PLACEHOLDER_IMAGE) {
-                                                                        target.src = EVENT_CARD_PLACEHOLDER_IMAGE
-                                                                    }
-                                                                }}
                                                             />
                                                         </div>
                                                         <div className="flex-1 min-w-0">

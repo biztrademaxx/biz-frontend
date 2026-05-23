@@ -1,5 +1,6 @@
 import Image from "next/image"
 import type React from "react"
+import { AppImage } from "@/components/app-image"
 import Link from "next/link"
 import {
   FaInstagramSquare,
@@ -56,8 +57,7 @@ const Footer: React.FC<FooterProps> = ({ categories }) => {  const footerLogoSrc
   return (
     <footer className={footerShellClass}>
       <div className="pointer-events-none absolute inset-0 z-0" aria-hidden>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+        <AppImage
           src="/world.svg"
           alt=""
           width={2000}

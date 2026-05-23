@@ -1,4 +1,5 @@
 "use client"
+import { AppImage } from "@/components/app-image"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -77,11 +78,12 @@ function EventBrochurePreview({ url }: { url: string }) {
   if (kind === "image") {
     return (
       <div className="relative flex min-h-[280px] items-center justify-center bg-slate-50 p-3">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+        <AppImage
           src={url}
           alt="Event brochure"
-          className="max-h-[min(70vh,560px)] w-auto max-w-full object-contain"
+          width={800}
+          height={560}
+          className="max-h-[min(70vh,560px)] h-auto w-auto max-w-full object-contain"
           loading="lazy"
         />
       </div>
@@ -1166,14 +1168,15 @@ export default function EventPage({ params }: EventPageProps) {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="bg-gray-100 h-96 rounded-lg flex items-center justify-center overflow-hidden">
+                    <div className="relative bg-gray-100 h-96 rounded-lg flex items-center justify-center overflow-hidden">
                       {layoutPlanUrl ? (
                         isLayoutImage ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
+                          <AppImage
                             src={layoutPlanUrl}
                             alt="Event Layout Plan"
-                            className="h-full w-full object-contain rounded-lg"
+                            fill
+                            sizes="(max-width: 768px) 100vw, 50vw"
+                            className="object-contain rounded-lg"
                             loading="lazy"
                           />
                         ) : isLayoutPdf ? (

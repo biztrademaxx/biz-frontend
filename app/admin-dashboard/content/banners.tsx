@@ -2,6 +2,7 @@
 
 import type React from "react"
 
+import { AppImage } from "@/components/app-image"
 import { useState, useEffect } from "react"
 import { apiFetch } from "@/lib/api"
 import { Button } from "@/components/ui/button"
@@ -573,10 +574,13 @@ export default function BannersPage() {
             {uploadForm.file && (
               <div className="border rounded-lg p-4 bg-gray-50">
                 <p className="text-sm font-medium mb-2">Preview:</p>
-                <img
-                  src={URL.createObjectURL(uploadForm.file) }
+                <AppImage
+                  src={URL.createObjectURL(uploadForm.file)}
                   alt="Preview"
-                  className="w-full h-48 object-cover rounded"
+                  width={800}
+                  height={192}
+                  className="h-48 w-full rounded object-cover"
+                  unoptimized
                 />
               </div>
             )}
@@ -716,21 +720,26 @@ export default function BannersPage() {
                 {editFilePreviewUrl ? (
                   <>
                     <p className="text-xs font-medium text-gray-700">New image preview</p>
-                    <img
+                    <AppImage
                       src={editFilePreviewUrl}
                       alt="New banner preview"
-                      className="w-full max-h-48 object-contain rounded-md border border-gray-200 bg-white"
+                      width={800}
+                      height={192}
+                      className="max-h-48 w-full rounded-md border border-gray-200 bg-white object-contain"
+                      unoptimized
                     />
                     <p className="text-xs text-gray-500">This replaces the image below after you save.</p>
                   </>
                 ) : (
                   <>
                     <p className="text-xs font-medium text-gray-700">Current image</p>
-                    <img
+                    <AppImage
                       key={`${editingBanner.id}-${editingBanner.updatedAt}-${editingBanner.imageUrl}`}
-                      src={editingBanner.imageUrl }
+                      src={editingBanner.imageUrl}
                       alt=""
-                      className="w-full max-h-48 object-contain rounded-md border border-gray-200 bg-white"
+                      width={800}
+                      height={192}
+                      className="max-h-48 w-full rounded-md border border-gray-200 bg-white object-contain"
                     />
                   </>
                 )}
@@ -770,9 +779,11 @@ export default function BannersPage() {
 
           {selectedBanner && (
             <div className="space-y-4">
-              <img
-                src={selectedBanner.imageUrl }
+              <AppImage
+                src={selectedBanner.imageUrl}
                 alt={selectedBanner.title}
+                width={1200}
+                height={400}
                 className="w-full rounded-lg"
               />
 
@@ -854,10 +865,12 @@ function BannerGrid({
       {banners.map((banner) => (
         <Card key={banner.id} className="overflow-hidden">
           <div className="relative h-48 bg-gray-100">
-            <img
-              src={banner.imageUrl }
+            <AppImage
+              src={banner.imageUrl}
               alt={banner.title}
-              className="w-full h-full object-cover"
+              fill
+              sizes="(max-width: 768px) 100vw, 33vw"
+              className="object-cover"
             />
             <Badge className="absolute top-2 right-2" variant={banner.isActive ? "default" : "secondary"}>
               {banner.isActive ? "Active" : "Inactive"}

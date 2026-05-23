@@ -1,5 +1,6 @@
 "use client"
 
+import { AppImage } from "@/components/app-image"
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -353,11 +354,12 @@ export default function EventDetailsPanel({
                             className="aspect-square relative rounded-lg overflow-hidden border bg-gray-100 group cursor-pointer"
                             onClick={() => window.open(image, '_blank')}
                           >
-                            {/* Using img tag instead of Next.js Image for dynamic images */}
-                            <img
-                              src={image }
+                            <AppImage
+                              src={image}
                               alt={`Event image ${index + 1}`}
-                              className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-200"
+                              fill
+                              sizes="(max-width: 768px) 50vw, 25vw"
+                              className="object-cover transition-transform duration-200 group-hover:scale-105"
                             />
                             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-200" />
                           </div>

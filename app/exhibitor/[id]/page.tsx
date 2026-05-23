@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { getCurrentUserId, isAuthenticated } from "@/lib/api"
-import Image from "next/image"
+import { AppImage } from "@/components/app-image"
 import {
   MapPin,
   Phone,
@@ -211,10 +211,12 @@ function ReviewCard({ review, exhibitorId, onReplyAdded }: {
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-center gap-3">
             {review.user?.avatar ? (
-              <img
+              <AppImage
                 src={review.user.avatar}
                 alt={`${review.user.firstName} ${review.user.lastName}`}
-                className="w-10 h-10 rounded-full"
+                width={40}
+                height={40}
+                className="h-10 w-10 rounded-full object-cover"
               />
             ) : (
               <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
@@ -262,10 +264,12 @@ function ReviewCard({ review, exhibitorId, onReplyAdded }: {
               <div key={reply.id} className="flex items-start gap-3">
                 <div className="flex-shrink-0">
                   {reply.user?.avatar ? (
-                    <img
+                    <AppImage
                       src={reply.user.avatar}
                       alt={`${reply.user.firstName} ${reply.user.lastName}`}
-                      className="w-8 h-8 rounded-full"
+                      width={32}
+                      height={32}
+                      className="h-8 w-8 rounded-full object-cover"
                     />
                   ) : (
                     <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">

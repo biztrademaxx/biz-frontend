@@ -1,5 +1,6 @@
 "use client"
 
+import { AppImage } from "@/components/app-image"
 import Link from "next/link"
 import { Users, Bookmark } from "lucide-react"
 import { eventPublicPath } from "@/lib/event-path"
@@ -30,10 +31,11 @@ export function TrendingEventsSideCard({ event, imageUrl }: { event: Event; imag
           <p className="line-clamp-2 pr-1 text-sm font-bold leading-snug text-[#1F5D84] group-hover:underline">
             {subtitle}
           </p>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <AppImage
             src={imageUrl}
             alt={event.title}
+            width={48}
+            height={48}
             className="absolute right-0 top-0 h-12 w-12 rounded-sm border border-gray-100 object-cover bg-slate-50"
           />
         </div>

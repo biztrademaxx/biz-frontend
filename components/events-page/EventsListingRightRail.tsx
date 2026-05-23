@@ -3,6 +3,7 @@
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Heart, ShieldCheck, UserPlus } from "lucide-react"
+import { AppImage } from "@/components/app-image"
 import AdCard from "@/components/add-card"
 import { EVENT_VENUE_LOCATION_PENDING } from "@/lib/event-location-copy"
 import { resolvedVerifiedBadgeImageUrl } from "@/lib/verified-event-badge"
@@ -54,11 +55,12 @@ export function EventsListingRightRail({ trendingSidebarEvents, featuredFirst, o
         {featuredFirst && (
           <Card className="bg-white shadow-xl border border-gray-300 rounded-sm overflow-hidden">
             <div className="relative aspect-video">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <AppImage
                 src={getListingEventPrimaryImage(featuredFirst)}
                 alt={featuredFirst.title}
-                className="w-full h-full object-cover"
+                fill
+                sizes="(max-width: 1024px) 100vw, 33vw"
+                className="object-cover"
               />
               <div className="absolute top-3 right-3 bg-white rounded-full p-2 shadow-lg">
                 <Heart className="w-5 h-5 text-gray-700" />
@@ -87,8 +89,7 @@ export function EventsListingRightRail({ trendingSidebarEvents, featuredFirst, o
                     featuredFirst.verifiedBadgeImage,
                   )
                   return url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={url} alt="Verified" className="w-6 h-6 ml-2 object-contain" />
+                    <AppImage src={url} alt="Verified" width={24} height={24} className="w-6 h-6 ml-2 object-contain" />
                   ) : null
                 })()}
               </div>

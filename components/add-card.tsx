@@ -1,5 +1,6 @@
 "use client"
 
+import { AppImage } from "@/components/app-image"
 import Link from "next/link"
 import { useCallback, useEffect, useState } from "react"
 import { useKeenSlider } from "keen-slider/react"
@@ -71,13 +72,13 @@ function EditorialAdBody() {
   const click = resolveClickTarget("")
   const body = (
     <div className="bg-gray-100 p-[3px]">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
+      <AppImage
         src={FALLBACK_IMAGE}
         alt={title}
+        width={800}
+        height={218}
         className="block h-[186px] w-full object-cover object-center sm:h-[218px]"
         loading="lazy"
-        decoding="async"
       />
     </div>
   )
@@ -132,13 +133,14 @@ function CmsAdCarousel({ banners }: { banners: PublicBannerAd[] }) {
   const slideImage = useCallback((b: PublicBannerAd) => {
     const src = imgFallback[b.id] ? FALLBACK_IMAGE : (b.imageUrl?.trim() || FALLBACK_IMAGE)
     return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
+      <AppImage
         src={src}
         alt={b.title || "Advertisement"}
-        className="h-full w-full object-cover object-center"
+        fill
+        sizes="(max-width: 768px) 100vw, 400px"
+        className="object-cover object-center"
         loading="lazy"
-        decoding="async"
+        fallbackSrc={FALLBACK_IMAGE}
         onError={() => setImgFallback((prev) => ({ ...prev, [b.id]: true }))}
       />
     )
@@ -186,13 +188,14 @@ function SingleCmsAdCard({ banner }: { banner: PublicBannerAd }) {
 
   const body = (
     <div className="bg-gray-100 p-[3px]">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
+      <AppImage
         src={imageSrc}
         alt={alt}
+        width={800}
+        height={218}
         className="block h-[186px] w-full object-cover object-center sm:h-[218px]"
         loading="lazy"
-        decoding="async"
+        fallbackSrc={FALLBACK_IMAGE}
         onError={() => setImageSrc(FALLBACK_IMAGE)}
       />
     </div>

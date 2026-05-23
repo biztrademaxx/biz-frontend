@@ -6,6 +6,7 @@ import { Calendar, MapPin, Star } from "lucide-react"
 import HomeSectionEmptyState, { homeEmptyDescription } from "@/components/home/HomeSectionEmptyState"
 import type { ExploreVenueCard } from "@/lib/venues/types"
 import { formatVenueLocationLabel } from "@/lib/venues/format-venue-location"
+import { AppImage } from "@/components/app-image"
 import { DEFAULT_VENUE_IMAGE } from "@/lib/default-venue-image"
 import { getVenuePublicPath } from "@/lib/venue-dashboard-path"
 
@@ -21,15 +22,13 @@ function VenueCard({ venue, onNavigate }: { venue: ExploreVenueCard; onNavigate:
       className="group flex h-full w-full cursor-pointer flex-col overflow-hidden rounded-lg border border-[#2563EB] bg-white text-left shadow-[0_8px_16px_-10px_rgba(0,0,0,0.18)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_12px_22px_-10px_rgba(0,0,0,0.22)] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
     >
       <div className="relative h-28 w-full shrink-0 overflow-hidden bg-gray-100 sm:h-32">
-        <img
+        <AppImage
           src={venue.imageUrl}
           alt={venue.name}
-          className="h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-[1.02]"
-          onError={(e) => {
-            const t = e.target as HTMLImageElement
-            if (t.src.includes(DEFAULT_VENUE_IMAGE)) return
-            t.src = DEFAULT_VENUE_IMAGE
-          }}
+          fill
+          sizes="(max-width: 768px) 100vw, 33vw"
+          fallbackSrc={DEFAULT_VENUE_IMAGE}
+          className="object-cover transition-transform duration-300 ease-out group-hover:scale-[1.02]"
         />
         {venue.eventCount > 0 ? (
           <div className="absolute bottom-1.5 left-1.5 flex items-center gap-0.5 rounded bg-black/55 px-1.5 py-0.5 text-[10px] font-medium text-white backdrop-blur-[2px] sm:text-[11px]">

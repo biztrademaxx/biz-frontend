@@ -1,6 +1,7 @@
 // app/components/super-admin/venue-banner-manager.tsx
 "use client"
 
+import { AppImage } from "@/components/app-image"
 import { useState, useEffect } from "react"
 import { useToast } from "@/hooks/use-toast"
 import { Button } from "@/components/ui/button"
@@ -388,10 +389,12 @@ export function VenueBannerManager() {
                               <DialogTitle>{banner.title}</DialogTitle>
                             </DialogHeader>
                             <div className="relative w-full h-64 md:h-96">
-                              <img
+                              <AppImage
                                 src={banner.imageUrl}
                                 alt={banner.title}
-                                className="object-contain w-full h-full"
+                                fill
+                                sizes="(max-width: 768px) 100vw, 80vw"
+                                className="object-contain"
                               />
                             </div>
                           </DialogContent>

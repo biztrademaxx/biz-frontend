@@ -1,5 +1,6 @@
 "use client";
 
+import { AppImage } from "@/components/app-image";
 import { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -75,11 +76,13 @@ export default function RecommendedEvents({ userId, interests }: RecommendedEven
           >
             {/* Image */}
             {event.images?.[0] && (
-              <div className="h-72 w-full overflow-hidden">
-                <img
+              <div className="relative h-72 w-full overflow-hidden">
+                <AppImage
                   src={event.images[0].url}
                   alt={event.title}
-                  className="w-full h-full object-cover transition-transform hover:scale-105"
+                  fill
+                  sizes="(max-width: 768px) 100vw, 33vw"
+                  className="object-cover transition-transform hover:scale-105"
                 />
               </div>
             )}

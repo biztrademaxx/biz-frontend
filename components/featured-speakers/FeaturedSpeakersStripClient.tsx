@@ -1,5 +1,6 @@
 "use client"
 
+import { AppImage } from "@/components/app-image"
 import { useRef } from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { useRouter } from "next/navigation"
@@ -73,11 +74,13 @@ export default function FeaturedSpeakersStripClient({
               }}
               className="flex min-w-[100px] max-w-[140px] cursor-pointer flex-col items-center"
             >
-              <div className="flex h-[90px] w-[90px] items-center justify-center overflow-hidden rounded-full bg-white shadow-sm">
-                <img
+              <div className="relative flex h-[90px] w-[90px] items-center justify-center overflow-hidden rounded-full bg-white shadow-sm">
+                <AppImage
                   src={spk.imageUrl}
                   alt={spk.displayName}
-                  className="h-full w-full rounded-full object-cover"
+                  fill
+                  sizes="90px"
+                  className="rounded-full object-cover"
                 />
               </div>
               <p className="mt-3 line-clamp-2 text-center text-sm text-gray-700">{spk.displayName}</p>

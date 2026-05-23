@@ -1,5 +1,6 @@
 "use client"
 
+import { AppImage } from "@/components/app-image"
 import { useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -412,10 +413,12 @@ export function VisitorSuggestionsAdmin({ visitorId, visitorName, onClose, onSug
                   {/* Header */}
                   <div className="flex items-start space-x-3">
                     {exhibitor.avatar ? (
-                      <img
+                      <AppImage
                         src={exhibitor.avatar}
                         alt={exhibitor.name}
-                        className="w-12 h-12 rounded-full object-cover"
+                        width={48}
+                        height={48}
+                        className="h-12 w-12 rounded-full object-cover"
                       />
                     ) : (
                       <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center">

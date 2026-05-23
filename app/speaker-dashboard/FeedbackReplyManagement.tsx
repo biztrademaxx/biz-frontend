@@ -1,5 +1,6 @@
 "use client"
 
+import { AppImage } from "@/components/app-image"
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -473,9 +474,11 @@ export default function FeedbackReplyManagement({ speakerId }: { speakerId?: str
                     <div className="flex items-start space-x-4 flex-1">
                       <div className="flex-shrink-0">
                         {review.user.avatar ? (
-                          <img
+                          <AppImage
                             src={review.user.avatar}
                             alt={`${review.user.firstName} ${review.user.lastName}`}
+                            width={48}
+                            height={48}
                             className="w-12 h-12 rounded-full object-cover"
                           />
                         ) : (
@@ -537,9 +540,11 @@ export default function FeedbackReplyManagement({ speakerId }: { speakerId?: str
                                     <div className="flex items-start space-x-3">
                                       <div className="flex-shrink-0">
                                         {reply.user.avatar ? (
-                                          <img
+                                          <AppImage
                                             src={reply.user.avatar}
                                             alt={`${reply.user.firstName} ${reply.user.lastName}`}
+                                            width={32}
+                                            height={32}
                                             className="w-8 h-8 rounded-full object-cover"
                                           />
                                         ) : (

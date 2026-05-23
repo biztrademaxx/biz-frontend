@@ -1,5 +1,6 @@
 "use client"
 
+import { AppImage } from "@/components/app-image"
 import { useState } from "react"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
@@ -108,11 +109,13 @@ export function BadgeGeneratorDialog({ open, onOpenChange, attendee, event, orga
               <div className="bg-gradient-to-br from-gray-50 to-blue-50/30 p-6 rounded-xl border-2 border-blue-100/50">
                 {badgeDataUrl ? (
                   <div className="relative">
-                    <img
+                    <AppImage
                       src={badgeDataUrl}
                       alt="Professional Visitor Badge"
-                      className="max-w-full h-auto rounded-lg shadow-lg"
-                      style={{ maxHeight: "300px" }}
+                      width={400}
+                      height={300}
+                      className="h-auto max-h-[300px] max-w-full rounded-lg shadow-lg"
+                      unoptimized
                     />
                     <div className="absolute -top-2 -right-2">
                       <Badge className="bg-blue-600 hover:bg-blue-700 text-xs">

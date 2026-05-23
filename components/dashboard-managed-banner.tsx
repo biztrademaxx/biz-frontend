@@ -1,5 +1,6 @@
 "use client"
 
+import { AppImage } from "@/components/app-image"
 import { useEffect, useMemo, useState } from "react"
 import { X } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -54,10 +55,12 @@ function DashboardBannerBackdrop({
   }
 
   return (
-    <img
+    <AppImage
       src={remoteUrl}
       alt={alt}
-      className="h-full w-full object-cover"
+      fill
+      sizes="100vw"
+      className="object-cover"
       onError={() => setImgFailed(true)}
     />
   )

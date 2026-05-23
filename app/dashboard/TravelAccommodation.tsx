@@ -1,3 +1,4 @@
+import { AppImage } from "@/components/app-image";
 import React, { useState } from "react";
 import { JSX } from "react/jsx-runtime";
 
@@ -77,11 +78,14 @@ const HotelCard: React.FC<{ hotel: Hotel; defaultImage: string; renderStars: (ra
 
   return (
     <div className="border rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow bg-white">
-      <div className="h-40 w-full">
-        <img
+      <div className="relative h-40 w-full">
+        <AppImage
           src={imageSrc}
           alt={hotel.name}
-          className="w-full h-full object-cover"
+          fill
+          sizes="(max-width: 768px) 100vw, 33vw"
+          fallbackSrc={defaultImage}
+          className="object-cover"
           onError={handleImageError}
         />
       </div>

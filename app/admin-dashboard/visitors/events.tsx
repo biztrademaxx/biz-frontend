@@ -1,5 +1,6 @@
 "use client"
 
+import { AppImage } from "@/components/app-image"
 import { useState, useEffect } from "react"
 import { adminApi } from "@/lib/admin-api"
 import {
@@ -255,10 +256,12 @@ export default function VisitorEventsPage() {
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
                             {visitor.visitor.avatar ? (
-                              <img
-                                src={visitor.visitor.avatar }
+                              <AppImage
+                                src={visitor.visitor.avatar}
                                 alt={visitor.visitor.name}
-                                className="w-10 h-10 rounded-full"
+                                width={40}
+                                height={40}
+                                className="h-10 w-10 rounded-full object-cover"
                               />
                             ) : (
                               <span className="text-sm font-medium text-primary">

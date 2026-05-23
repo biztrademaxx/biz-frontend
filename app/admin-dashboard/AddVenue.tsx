@@ -1,5 +1,6 @@
 "use client"
 
+import { AppImage } from "@/components/app-image"
 import { useEffect, useMemo, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -405,10 +406,13 @@ export default function AddVenueComponent() {
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
                   {formData.logo ? (
                     <div className="flex flex-col items-center">
-                      <img
+                      <AppImage
                         src={URL.createObjectURL(formData.logo)}
                         alt="Venue logo"
-                        className="w-32 h-32 object-contain mb-4"
+                        width={128}
+                        height={128}
+                        className="mb-4 h-32 w-32 object-contain"
+                        unoptimized
                       />
                       <Button variant="destructive" onClick={handleRemoveLogo}>
                         <X className="w-4 h-4 mr-2" />
@@ -724,10 +728,13 @@ export default function AddVenueComponent() {
                   <div className="grid grid-cols-3 gap-2">
                     {formData.venuePhotos.map((file, index) => (
                       <div key={index} className="relative group">
-                        <img
+                        <AppImage
                           src={URL.createObjectURL(file)}
                           alt={`Venue photo ${index + 1}`}
-                          className="w-full h-20 object-cover rounded"
+                          width={200}
+                          height={80}
+                          className="h-20 w-full rounded object-cover"
+                          unoptimized
                         />
                         <Button
                           variant="destructive"

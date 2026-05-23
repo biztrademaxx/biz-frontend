@@ -1,5 +1,6 @@
 "use client"
 
+import { AppImage } from "@/components/app-image"
 import { useState, useEffect } from "react"
 import { 
   Plus, 
@@ -643,10 +644,12 @@ export default function CountriesManagement({ activeTab = "countries" }: Countri
                 <div className="flex items-center gap-3">
                   {country.flag ? (
                     <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-gray-100 overflow-hidden">
-                      <img 
-                        src={country.flag} 
+                      <AppImage
+                        src={country.flag}
                         alt={`${country.name} flag`}
-                        className="w-12 h-12 object-cover"
+                        width={48}
+                        height={48}
+                        className="h-12 w-12 object-cover"
                       />
                     </div>
                   ) : (
@@ -747,10 +750,12 @@ export default function CountriesManagement({ activeTab = "countries" }: Countri
                 <div className="flex items-center gap-3">
                   {city.image ? (
                     <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-gray-100 overflow-hidden">
-                      <img 
-                        src={city.image} 
+                      <AppImage
+                        src={city.image}
                         alt={`${city.name} image`}
-                        className="w-12 h-12 object-cover"
+                        width={48}
+                        height={48}
+                        className="h-12 w-12 object-cover"
                       />
                     </div>
                   ) : (

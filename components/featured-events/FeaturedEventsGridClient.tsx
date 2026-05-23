@@ -1,5 +1,6 @@
 "use client"
 
+import { AppImage } from "@/components/app-image"
 import Link from "next/link"
 import { Share2 } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
@@ -57,19 +58,17 @@ function FeaturedEventCard({ event }: { event: FeaturedEventPayload }) {
               {featuredEventLocationLine(event)}
             </div>
           </div>
-          <div className="mt-0.5 h-28 w-28 flex-shrink-0 overflow-hidden rounded-sm bg-white border border-gray-200 bg-gray-50 sm:h-32 sm:w-32">
-            <img
+          <div className="relative mt-0.5 h-28 w-28 flex-shrink-0 overflow-hidden rounded-sm border border-gray-200 bg-white bg-gray-50 sm:h-32 sm:w-32">
+            <AppImage
               src={thumb}
               alt={event.title}
-              width={128}
-              height={128}
-              className="h-full w-full"
-              style={{ objectFit: 'cover' }}
+              fill
+              sizes="128px"
+              className="object-cover"
               onLoad={(e) => {
                 const img = e.currentTarget
                 const ratio = img.naturalWidth / img.naturalHeight
-                // only contain if width is MORE than 2x the height (very wide banners)
-                img.style.objectFit = ratio > 2 ? 'contain' : 'cover'
+                img.style.objectFit = ratio > 2 ? "contain" : "cover"
               }}
             />
           </div>

@@ -5,6 +5,7 @@ import { useState } from "react"
 import { signIn } from "next-auth/react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { AppImage } from "@/components/app-image"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
@@ -816,10 +817,12 @@ export default function SignupFormCard({ variant, onRegistrationSuccess }: Signu
                     key={organizer.id}
                     className="bg-white border border-gray-200 rounded-lg p-3 hover:shadow-md hover:border-gray-300 transition duration-200"
                   >
-                    <div className="flex items-center justify-center h-10 mb-4">
-                      <img
-                        src={organizer.logo }
+                    <div className="relative flex h-10 w-full items-center justify-center mb-4">
+                      <AppImage
+                        src={organizer.logo}
                         alt={organizer.name}
+                        width={120}
+                        height={40}
                         className="max-h-full max-w-full object-contain"
                       />
                     </div>

@@ -1,5 +1,6 @@
 "use client"
 
+import { AppImage } from "@/components/app-image"
 import { devLog } from "@/lib/dev-log"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
@@ -304,7 +305,7 @@ export default function VisitorManagement() {
                   <td className="px-4 py-4">
                     <div className="flex items-center gap-3">
                       {visitor.avatar ? (
-                        <img src={visitor.avatar} alt={visitor.name} className="w-9 h-9 rounded-full object-cover flex-shrink-0" />
+                        <AppImage src={visitor.avatar} alt={visitor.name} width={36} height={36} className="w-9 h-9 rounded-full object-cover flex-shrink-0" />
                       ) : (
                         <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0 ${colorClass}`}>
                           {initials}
@@ -443,7 +444,7 @@ export default function VisitorManagement() {
             <div className="p-6 space-y-6">
               <div className="flex items-center gap-4">
                 {selectedVisitor.avatar ? (
-                  <img src={selectedVisitor.avatar} alt={selectedVisitor.name} className="w-16 h-16 rounded-full object-cover" />
+                  <AppImage src={selectedVisitor.avatar} alt={selectedVisitor.name} width={64} height={64} className="w-16 h-16 rounded-full object-cover" />
                 ) : (
                   <div className={`w-16 h-16 rounded-full flex items-center justify-center text-xl font-semibold ${getAvatarColor(selectedVisitor.name)}`}>
                     {getInitials(selectedVisitor.name)}

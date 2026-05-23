@@ -1,5 +1,6 @@
 "use client"
 
+import { AppImage } from "@/components/app-image"
 import { useCallback, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { UserPlus, UserCheck, User } from "lucide-react"
@@ -141,8 +142,7 @@ export function EventCardFollowStrip({
                 style={{ zIndex: i + 2 }}
               >
                 {src ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={src} alt="" className="h-full w-full object-cover" />
+                  <AppImage src={src} alt="" fill sizes="32px" className="object-cover" />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 text-[10px] font-bold text-slate-600">
                     {faceInitials(f)}

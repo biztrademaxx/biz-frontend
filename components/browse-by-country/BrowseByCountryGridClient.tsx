@@ -1,5 +1,6 @@
 "use client"
 
+import { AppImage } from "@/components/app-image"
 import { useRouter } from "next/navigation"
 import type { BrowseByCountryServerPayload } from "@/lib/browse-by-country/types"
 import { countryEventsCountLabel } from "./utils/country-events-count-label"
@@ -34,12 +35,14 @@ export default function BrowseByCountryGridClient({
                 className={browseCardClass}
               >
                 <div className="flex h-full min-w-0 flex-col items-start gap-2">
-                  <div className="flex h-7 w-11 shrink-0 items-center justify-start overflow-hidden rounded-none">
+                  <div className="relative flex h-7 w-11 shrink-0 items-center justify-start overflow-hidden rounded-none">
                     {country.flag?.trim() ? (
-                      <img
+                      <AppImage
                         src={country.flag.trim()}
                         alt=""
-                        className="h-full w-full object-contain object-left"
+                        fill
+                        sizes="44px"
+                        className="object-contain object-left"
                       />
                     ) : (
                       <span className="text-lg leading-none" aria-hidden>

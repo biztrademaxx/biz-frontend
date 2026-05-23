@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { UserRound } from "lucide-react"
+import { AppImage } from "@/components/app-image"
 import { BookmarkButton } from "@/components/bookmark-button"
 import HomeSectionEmptyState, { homeEmptyDescription } from "@/components/home/HomeSectionEmptyState"
 import { hasDisplayableEventImage } from "@/lib/event-card-meta"
@@ -58,9 +59,11 @@ function GoingFace({
 
   if (resolvedAvatar && !imgFailed) {
     return (
-      <img
+      <AppImage
         src={resolvedAvatar}
         alt=""
+        width={32}
+        height={32}
         className={`${dim} relative rounded-full border-2 border-white object-cover shadow-sm ring-1 ring-gray-200/60`}
         style={stackStyle}
         onError={() => setImgFailed(true)}
@@ -201,10 +204,12 @@ export default function TrendingEventsGridClient({
                     className="group flex h-full cursor-pointer flex-col overflow-hidden rounded-lg border border-[#2563EB] bg-white shadow-[0_8px_16px_-10px_rgba(0,0,0,0.18)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_12px_22px_-10px_rgba(0,0,0,0.22)]"
                   >
                     <div className="relative aspect-[5/3] w-full shrink-0 overflow-hidden bg-gradient-to-br from-slate-100 to-slate-200">
-                      <img
+                      <AppImage
                         src={imageUrl}
                         alt=""
-                        className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
+                        fill
+                        sizes="(max-width: 768px) 100vw, 33vw"
+                        className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
                       />
                       <div
                         className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-black/5 to-transparent"

@@ -12,6 +12,7 @@ import {
   TrendingUp,
   SlidersHorizontal,
 } from "lucide-react"
+import { AppImage } from "@/components/app-image"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -498,10 +499,12 @@ export default function OrganizersPage() {
                     onClick={() => handleCardClick(organizer)}
                   >
                     <div className="relative aspect-[16/10] w-full overflow-hidden bg-muted">
-                      <img
-                        src={organizer.image }
+                      <AppImage
+                        src={organizer.image}
                         alt={organizer.company || organizer.name}
-                        className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
+                        fill
+                        sizes="(max-width: 768px) 100vw, 33vw"
+                        className="object-cover transition duration-300 group-hover:scale-[1.02]"
                       />
                       {organizer.featured && (
                         <Badge className="absolute left-3 top-3 bg-orange-500 text-white hover:bg-orange-600">

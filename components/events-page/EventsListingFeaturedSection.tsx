@@ -1,5 +1,6 @@
 "use client"
 
+import { AppImage } from "@/components/app-image"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
@@ -68,11 +69,12 @@ export function EventsListingFeaturedSection({
                 className="hover:shadow-xl transition-all duration-300 border border-gray-300 rounded-sm overflow-hidden group"
               >
                 <div className="relative aspect-video overflow-hidden">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
+                  <AppImage
                     src={getListingEventPrimaryImage(event)}
                     alt={event.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    fill
+                    sizes="(max-width: 768px) 100vw, 33vw"
+                    className="object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                   <div className="absolute top-3 right-3 bg-white rounded-full p-2 shadow-lg hover:bg-gray-50 cursor-pointer">
                     <Heart className="w-5 h-5 text-gray-700" />
@@ -87,8 +89,7 @@ export function EventsListingFeaturedSection({
                   <div className="flex items-start justify-between mb-2">
                     <h3 className="text-2xl font-black text-gray-900 line-clamp-2 flex-1">{event.title}</h3>
                     {badgeImgUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={badgeImgUrl} alt="Verified" className="ml-1 h-10 w-10 object-contain" />
+                      <AppImage src={badgeImgUrl} alt="Verified" width={40} height={40} className="ml-1 h-10 w-10 object-contain" />
                     ) : null}
                   </div>
                   <div className="flex items-center text-base text-gray-700 mb-2 font-bold">

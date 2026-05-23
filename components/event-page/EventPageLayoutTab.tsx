@@ -1,5 +1,6 @@
 "use client"
 
+import { AppImage } from "@/components/app-image"
 import { ExternalLink } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -21,14 +22,15 @@ export function EventPageLayoutTab({ layoutPlanUrl, isLayoutImage, isLayoutPdf, 
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="bg-gray-100 h-96 rounded-lg flex items-center justify-center overflow-hidden">
+        <div className="relative bg-gray-100 h-96 rounded-lg flex items-center justify-center overflow-hidden">
           {layoutPlanUrl ? (
             isLayoutImage ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
+              <AppImage
                 src={layoutPlanUrl}
                 alt="Event Layout Plan"
-                className="h-full w-full object-contain rounded-lg"
+                fill
+                sizes="(max-width: 768px) 100vw, 50vw"
+                className="object-contain rounded-lg"
                 loading="lazy"
               />
             ) : isLayoutPdf ? (

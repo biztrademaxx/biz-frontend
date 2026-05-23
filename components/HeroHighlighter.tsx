@@ -1,5 +1,6 @@
 "use client"
 
+  import { AppImage } from "@/components/app-image"
   import { useEffect, useState } from "react"
   import Link from "next/link"
   import { motion } from "framer-motion"
@@ -702,10 +703,12 @@ import { sanitizeImageUrl } from "@/lib/placeholder"
                                 allowFullScreen
                               />
                             ) : vipHeroImageUrl(panel) ? (
-                              <img
-                                src={vipHeroImageUrl(panel)}
+                              <AppImage
+                                src={vipHeroImageUrl(panel)!}
                                 alt=""
-                                className="absolute inset-0 block h-full w-full object-cover"
+                                fill
+                                sizes="100vw"
+                                className="object-cover"
                               />
                             ) : (
                               <div
@@ -760,10 +763,12 @@ import { sanitizeImageUrl } from "@/lib/placeholder"
                       {/* Full-bleed image; copy + countdown sit on top */}
                       <div className="relative h-full min-h-0 w-full min-w-0">
                         {featuredHeroImage(featuredPanel) ? (
-                          <img
-                            src={featuredHeroImage(featuredPanel)}
+                          <AppImage
+                            src={featuredHeroImage(featuredPanel)!}
                             alt=""
-                            className="absolute inset-0 h-full w-full object-cover"
+                            fill
+                            sizes="100vw"
+                            className="object-cover"
                           />
                         ) : (
                           <div

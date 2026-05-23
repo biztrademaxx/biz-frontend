@@ -1,5 +1,6 @@
 "use client"
 
+import { AppImage } from "@/components/app-image"
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { eventPublicPath } from "@/lib/event-path"
@@ -50,10 +51,12 @@ export default function TrendingEvents() {
                 >
                   {/* Image */}
                   {(event.image || event.banner)?.trim() ? (
-                    <img
+                    <AppImage
                       src={(event.image || event.banner)!.trim()}
                       alt={event.title}
-                      className="w-full h-[140px] object-cover rounded-[4px]"
+                      width={400}
+                      height={140}
+                      className="h-[140px] w-full rounded-[4px] object-cover"
                     />
                   ) : (
                     <div

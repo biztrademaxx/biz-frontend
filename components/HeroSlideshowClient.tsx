@@ -1,5 +1,6 @@
 "use client"
 
+import { AppImage } from "@/components/app-image"
 import Link from "next/link"
 import { useCallback, useEffect, useRef } from "react"
 import { ChevronLeft, ChevronRight, MapPin } from "lucide-react"
@@ -76,10 +77,12 @@ function EventCard({ event }: { event: Event }) {
       aria-label={vipCardTitleDisplay(event.title)}
     >
       <div className="group relative h-[448px] w-full min-w-0 overflow-hidden bg-[#F2F2F2] transition-all duration-300 ease-out hover:z-10 hover:scale-[1.02] hover:shadow-2xl md:h-[488px] lg:h-[528px] lg:hover:scale-105">
-        <img
+        <AppImage
           src={imageUrl}
           alt={event.title}
-          className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+          fill
+          sizes="(max-width: 768px) 100vw, 50vw"
+          className="object-cover transition-transform duration-500 group-hover:scale-110"
         />
         <div
           className="absolute inset-0 bg-gradient-to-t from-blue-950/90 via-blue-950/40 to-transparent transition-all duration-300 group-hover:from-blue-950/95 group-hover:via-blue-950/50"

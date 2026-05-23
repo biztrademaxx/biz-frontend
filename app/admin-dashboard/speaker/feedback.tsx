@@ -1,5 +1,6 @@
 "use client"
 
+import { AppImage } from "@/components/app-image"
 import { useState, useEffect } from "react"
 import { apiFetch } from "@/lib/api"
 import { Search, Star, Eye, Check, X, Filter, TrendingUp } from "lucide-react"
@@ -314,10 +315,12 @@ export default function SpeakerFeedbackPage() {
                       <TableCell>
                         <div className="flex items-center gap-3">
                           {item.speaker.avatar ? (
-                            <img
+                            <AppImage
                               src={item.speaker.avatar}
                               alt={speakerName}
-                              className="w-10 h-10 rounded-full object-cover"
+                              width={40}
+                              height={40}
+                              className="h-10 w-10 rounded-full object-cover"
                             />
                           ) : (
                             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-semibold">

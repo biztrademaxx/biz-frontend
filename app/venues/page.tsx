@@ -3,6 +3,7 @@
 
 import { devLog } from "@/lib/dev-log"
 import VenuesListingPageSkeleton from "@/components/VenuesListingPageSkeleton"
+import { AppImage } from "@/components/app-image"
 import { DEFAULT_VENUE_IMAGE, getVenueDisplayImageUrl } from "@/lib/default-venue-image"
 import { getVenuePublicPath } from "@/lib/venue-dashboard-path"
 
@@ -309,15 +310,14 @@ export default function VenuesPage() {
                   onClick={() => handleVenueClick(venue)}
                 >
                   {/* Image */}
-                  <div className="relative">
-                    <img
+                  <div className="relative h-44 w-full overflow-hidden sm:h-48">
+                    <AppImage
                       src={getVenueDisplayImageUrl(venue)}
                       alt={venue.venueName || "Venue"}
-                      className="h-44 w-full object-cover transition-transform duration-300 group-hover:scale-105 sm:h-48"
-                      onError={(e) => {
-                        if (e.currentTarget.src.includes(DEFAULT_VENUE_IMAGE)) return
-                        e.currentTarget.src = DEFAULT_VENUE_IMAGE
-                      }}
+                      fill
+                      sizes="(max-width: 768px) 100vw, 33vw"
+                      fallbackSrc={DEFAULT_VENUE_IMAGE}
+                      className="object-cover transition-transform duration-300 group-hover:scale-105"
                     />
 
                     {/* {venue.isVerified && (

@@ -5,6 +5,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Star, MessageCircle, Send, CheckCircle2, X } from "lucide-react"
 import { format } from "date-fns"
+import { AppImage } from "@/components/app-image"
 import { apiFetch } from "@/lib/api"
 
 interface ReviewReply {
@@ -153,10 +154,12 @@ function ReviewCard({
         <div className="mb-2 flex items-start justify-between">
           <div className="flex items-center gap-3">
             {review.user?.avatar ? (
-              <img
+              <AppImage
                 src={review.user?.avatar}
                 alt={`${review.user.firstName} ${review.user.lastName}`}
-                className="w-10 h-10 rounded-full"
+                width={40}
+                height={40}
+                className="w-10 h-10 rounded-full object-cover"
               />
             ) : (
               <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
@@ -256,10 +259,12 @@ function ReplyCard({ reply }: { reply: ReviewReply }) {
     <div className="bg-white p-3 rounded border-l-4 border-blue-200">
       <div className="flex items-start gap-3">
         {reply.user.avatar ? (
-          <img
+          <AppImage
             src={reply.user?.avatar}
             alt={`${reply.user.firstName} ${reply.user.lastName}`}
-            className="w-8 h-8 rounded-full"
+            width={32}
+            height={32}
+            className="w-8 h-8 rounded-full object-cover"
           />
         ) : (
           <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center">

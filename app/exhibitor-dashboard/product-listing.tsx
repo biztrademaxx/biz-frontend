@@ -1,5 +1,6 @@
 "use client"
 
+import { AppImage } from "@/components/app-image"
 import type React from "react"
 import { useState, useEffect } from "react"
 import { apiFetch } from "@/lib/api"
@@ -433,10 +434,12 @@ export default function ProductListing({ exhibitorId }: ProductListingProps) {
       <CardContent className="p-6">
         <div className="flex items-start gap-4">
           <div className="relative">
-            <img
-              src={product.images[0] }
+            <AppImage
+              src={product.images[0]}
               alt={product.name}
-              className="w-24 h-24 object-cover rounded-lg"
+              width={96}
+              height={96}
+              className="h-24 w-24 rounded-lg object-cover"
             />
             {product.images.length > 1 && (
               <Badge variant="secondary" className="absolute bottom-1 right-1 text-xs">

@@ -1,5 +1,6 @@
 "use client"
 
+import { AppImage } from "@/components/app-image"
 import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -374,15 +375,14 @@ export function EventsSection({ userId }: EventsSectionProps) {
                       className="flex w-full min-w-0 border border-gray-200 bg-white rounded-lg hover:shadow-md transition-shadow overflow-hidden cursor-pointer"
                     >
                       {/* Left Image Section - Keep exact same styling */}
-                      <div className="w-40 h-32 flex-shrink-0">
-                        <img
+                      <div className="relative mx-3 mt-3 h-32 w-40 shrink-0 overflow-hidden rounded-2xl">
+                        <AppImage
                           src={event.thumbnailImage || event.bannerImage || "https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=400&h=300&fit=crop"}
                           alt={event.title}
-                          className="w-full h-full object-cover rounded-2xl mt-3 mx-3"
-                          onError={(e) => {
-                            const target = e.currentTarget as HTMLImageElement
-                            target.src = "https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=400&h=300&fit=crop"
-                          }}
+                          fill
+                          sizes="160px"
+                          fallbackSrc="https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=400&h=300&fit=crop"
+                          className="object-cover"
                         />
                       </div>
 

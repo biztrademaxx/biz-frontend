@@ -1,5 +1,6 @@
 "use client"
 
+import { AppImage } from "@/components/app-image"
 import { useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -217,10 +218,13 @@ function VerifyEventDialog({
                 <div>
                   <Label>Preview:</Label>
                   <div className="mt-2 flex items-center gap-4">
-                    <img
+                    <AppImage
                       src={URL.createObjectURL(customBadgeFile)}
                       alt="Custom badge preview"
-                      className="w-20 h-20 object-contain border rounded"
+                      width={80}
+                      height={80}
+                      className="h-20 w-20 rounded border object-contain"
+                      unoptimized
                     />
                     <div className="text-sm text-gray-600">
                       <p>Custom badge will be used</p>
@@ -276,7 +280,7 @@ function VerifiedBadge({ event }: { event: Event }) {
 
   return (
     <Badge className="bg-green-100 text-green-800 border border-green-300">
-      <img src={src} alt="Verified" className="w-4 h-4 mr-1 object-contain" />
+      <AppImage src={src} alt="Verified" width={16} height={16} className="mr-1 h-4 w-4 object-contain" />
       Verified
     </Badge>
   )
@@ -396,10 +400,13 @@ function FileUpload({
 function ImagePreview({ src, onRemove }: { src: string; onRemove: () => void }) {
   return (
     <div className="relative group">
-      <img
+      <AppImage
         src={src}
         alt="Preview"
-        className="w-20 h-20 object-cover rounded-lg border"
+        width={80}
+        height={80}
+        className="h-20 w-20 rounded-lg border object-cover"
+        unoptimized
       />
       <button
         type="button"
@@ -1485,10 +1492,12 @@ function EventList({
                       <div className="flex flex-col md:flex-row gap-5">
                         {/* Event Image */}
                         <div className="md:w-32 lg:w-36 flex-shrink-0">
-                          <img
+                          <AppImage
                             src={event.thumbnailImage || event.bannerImage || event.image || "https://placehold.co/400x300?text=Event"}
                             alt={event.title}
-                            className="w-full h-24 md:h-28 rounded-lg object-cover"
+                            width={400}
+                            height={112}
+                            className="h-24 w-full rounded-lg object-cover md:h-28"
                           />
                         </div>
 

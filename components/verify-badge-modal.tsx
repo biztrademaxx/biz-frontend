@@ -1,6 +1,7 @@
 // components/verify-badge-modal.tsx
 "use client"
 
+import { AppImage } from "@/components/app-image"
 import { useState } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
@@ -226,13 +227,13 @@ export function VerifyBadgeModal({
           {/* Preview Section */}
           <div className="flex flex-col items-center justify-center p-4 border rounded-lg">
             <div className="relative mb-4">
-              <img
+              <AppImage
                 src={previewImage}
                 alt="Badge Preview"
-                className="w-24 h-24 object-contain"
-                onError={(e) => {
-                  e.currentTarget.src = "/badge/VerifiedBADGE (1).png"
-                }}
+                width={96}
+                height={96}
+                className="h-24 w-24 object-contain"
+                fallbackSrc="/badge/VerifiedBADGE (1).png"
               />
               {currentStatus && (
                 <Badge className="absolute -top-2 -right-2 bg-green-500">
@@ -259,10 +260,12 @@ export function VerifyBadgeModal({
                         <p className="text-xs text-gray-500">{option.description}</p>
                       </div>
                       {option.imageUrl && option.id !== "custom" && (
-                        <img
+                        <AppImage
                           src={option.imageUrl}
                           alt={option.label}
-                          className="w-10 h-10 object-contain"
+                          width={40}
+                          height={40}
+                          className="h-10 w-10 object-contain"
                         />
                       )}
                     </div>
@@ -280,10 +283,13 @@ export function VerifyBadgeModal({
                 {customImage || currentBadgeImage ? (
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
-                      <img
+                      <AppImage
                         src={previewImage}
                         alt="Custom badge"
-                        className="w-12 h-12 object-cover rounded"
+                        width={48}
+                        height={48}
+                        className="h-12 w-12 rounded object-cover"
+                        unoptimized
                       />
                       <div>
                         <p className="text-sm font-medium truncate">

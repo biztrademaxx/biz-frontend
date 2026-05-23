@@ -1,5 +1,6 @@
 "use client"
 
+import { AppImage } from "@/components/app-image"
 import { useState, useEffect, JSX } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -882,12 +883,14 @@ function VenuesList({
               <div className="flex flex-col md:flex-row gap-4">
                 {/* Venue Image */}
                 <div className="flex-shrink-0">
-                  <div className="w-20 h-20 md:w-24 md:h-24 bg-gradient-to-br from-blue-100 to-blue-200 rounded-xl flex items-center justify-center border">
+                  <div className="relative h-20 w-20 overflow-hidden rounded-xl border bg-gradient-to-br from-blue-100 to-blue-200 md:h-24 md:w-24">
                     {venue.logo ? (
-                      <img 
-                        src={venue.logo} 
-                        alt={venue.venueName} 
-                        className="w-full h-full object-cover rounded-xl"
+                      <AppImage
+                        src={venue.logo}
+                        alt={venue.venueName}
+                        fill
+                        sizes="96px"
+                        className="rounded-xl object-cover"
                       />
                     ) : (
                       <Building2 className="w-8 h-8 md:w-10 md:h-10 text-blue-600" />
@@ -1101,12 +1104,14 @@ function PendingVenuesList({
               <div className="flex flex-col md:flex-row gap-4">
                 {/* Venue Image */}
                 <div className="flex-shrink-0">
-                  <div className="w-20 h-20 md:w-24 md:h-24 bg-gradient-to-br from-yellow-100 to-yellow-200 rounded-xl flex items-center justify-center border border-yellow-200">
+                  <div className="relative h-20 w-20 overflow-hidden rounded-xl border border-yellow-200 bg-gradient-to-br from-yellow-100 to-yellow-200 md:h-24 md:w-24">
                     {venue.logo ? (
-                      <img 
-                        src={venue.logo} 
-                        alt={venue.venueName} 
-                        className="w-full h-full object-cover rounded-xl"
+                      <AppImage
+                        src={venue.logo}
+                        alt={venue.venueName}
+                        fill
+                        sizes="96px"
+                        className="rounded-xl object-cover"
                       />
                     ) : (
                       <Building2 className="w-8 h-8 md:w-10 md:h-10 text-yellow-600" />

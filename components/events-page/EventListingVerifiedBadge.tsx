@@ -1,5 +1,6 @@
 "use client"
 
+import { AppImage } from "@/components/app-image"
 import { useCallback, useEffect, useState } from "react"
 import type { Event } from "./listing-types"
 import { verifiedBadgeSrc } from "./listing-utils"
@@ -33,15 +34,16 @@ export function EventListingVerifiedBadge({
       title="Verified event"
     >
       {showImg ? (
-        // eslint-disable-next-line @next/next/no-img-element
         <>
-        <img
+        <AppImage
           src={src}
           alt="Verified"
+          width={80}
+          height={24}
           className="h-6 max-h-6 w-auto max-w-[80px] object-contain object-left"
           onError={onImgError}
         />
-        <span className="text-sm font-semibold text emerald-700">verified</span>
+        <span className="text-sm font-semibold text-emerald-700">verified</span>
         </>
       ) : (
         <span className="text-[11px] font-bold leading-none text-emerald-800 sm:text-xs">Verified</span>

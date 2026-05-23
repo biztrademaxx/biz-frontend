@@ -1,5 +1,6 @@
 "use client"
 
+import { AppImage } from "@/components/app-image"
 import { useRouter } from "next/navigation"
 import type { BrowseByCityServerPayload } from "@/lib/browse-by-city/types"
 import { formatEventCountDisplay } from "@/lib/format-event-count"
@@ -41,10 +42,12 @@ export default function BrowseEventsByCityGridClient({
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-none">
                     <div className="relative h-7 w-7">
                       {city.image?.trim() ? (
-                        <img
+                        <AppImage
                           src={city.image.trim()}
                           alt=""
-                          className="h-full w-full object-contain"
+                          fill
+                          sizes="28px"
+                          className="object-contain"
                         />
                       ) : (
                         <span className="flex h-7 w-7 items-center justify-center text-lg" aria-hidden>

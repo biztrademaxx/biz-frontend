@@ -7,6 +7,7 @@ import { Edit, Star, Eye, Trash2 } from "lucide-react"
 import { getCategoryDisplay } from "../types/event.types"
 import type { Event } from "../types/event.types"
 import { EventActions } from "./EventActions"
+import { AppImage } from "@/components/app-image"
 import { getEventDisplayImageUrl } from "@/lib/default-event-image"
 
 interface EventRowProps {
@@ -270,19 +271,21 @@ export function EventRow({
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
           {/* Thumbnail */}
           <div style={{
+            position: "relative",
             width: "46px", height: "46px", borderRadius: "10px",
             background: "#F4F4F5", overflow: "hidden", flexShrink: 0,
-            display: "flex", alignItems: "center", justifyContent: "center",
             border: "1px solid #ECECEC",
           }}>
-            <img
+            <AppImage
               src={getEventDisplayImageUrl({
                 thumbnailImage: event.thumbnailImage,
                 bannerImage: event.bannerImage,
                 images: event.images,
               })}
               alt={eventDisplayTitle}
-              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+              fill
+              sizes="46px"
+              className="object-cover"
             />
           </div>
           <div>

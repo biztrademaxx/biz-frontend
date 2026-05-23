@@ -1,5 +1,6 @@
 "use client"
 
+import { AppImage } from "@/components/app-image"
 import type { KeyboardEvent } from "react"
 import { memo, useCallback } from "react"
 import type { OrganizerListEntry } from "@/lib/organizers/types"
@@ -44,7 +45,7 @@ function OrganizerLogoTileComponent({
   if (mode === "decorative") {
     return (
       <div className={TILE_CLASS} onClick={activate}>
-        <img src={src} alt="" className="max-h-full max-w-full object-contain" />
+        <AppImage src={src} alt="" width={160} height={80} className="max-h-full max-w-full object-contain" />
       </div>
     )
   }
@@ -57,7 +58,7 @@ function OrganizerLogoTileComponent({
       onClick={activate}
       onKeyDown={onKeyDown}
     >
-      <img src={src} alt={displayName} className="max-h-full max-w-full object-contain" />
+      <AppImage src={src} alt={displayName} width={160} height={80} className="max-h-full max-w-full object-contain" />
     </div>
   )
 }

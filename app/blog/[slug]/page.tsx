@@ -1,3 +1,4 @@
+import { AppImage } from "@/components/app-image"
 import Link from "next/link"
 import type { Metadata } from "next"
 import { notFound } from "next/navigation"
@@ -76,8 +77,13 @@ export default async function BlogArticlePage({ params }: PageProps) {
       <header className="relative border-b border-gray-200">
         {post.coverImageUrl ? (
           <div className="relative h-[min(52vh,420px)] w-full overflow-hidden bg-gray-900">
-            {/* eslint-disable-next-line @next/next/no-img-element and no-unsafe- and warn-unsafe-inline and inline-style */}
-            <img src={post.coverImageUrl} alt={post.title} className="h-full w-full object-cover opacity-90" />
+            <AppImage
+              src={post.coverImageUrl}
+              alt={post.title}
+              fill
+              sizes="100vw"
+              className="object-cover opacity-90"
+            />
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/35 to-transparent" />
             <div className="absolute inset-0 flex flex-col justify-end p-6 md:p-10">
               <div className="mx-auto w-full max-w-3xl">
