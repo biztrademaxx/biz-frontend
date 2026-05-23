@@ -6,13 +6,29 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
+  type Dispatch,
   type ReactNode,
+  type SetStateAction,
 } from "react"
 import { useRouter } from "next/navigation"
+import { fetchGeoHint } from "@/lib/browse-geo"
 import { countryNameFromCode } from "@/lib/geo-from-request"
 import { resolveCountryForCityName } from "@/lib/city-country"
 import { HOME_CITY_STORAGE_KEY } from "@/lib/home-location"
+import type { HomeLocationClientSeed } from "@/lib/home-location-seed"
+
+function countryFromSeed(seed?: HomeLocationClientSeed): string | null {
+  if (!seed) return null
+  const name = seed.countryName?.trim()
+  if (name) return name
+  const code = seed.countryCode?.trim().toUpperCase()
+  if (code) return countryNameFromCode(code)
+  const city = seed.city?.trim()
+  if (city) return resolveCountryForCityName(city)?.countryName ?? null
+  return null
+}
 
 type HomeLocationApi = {
   city?: string | null
@@ -38,6 +54,7 @@ type HomeLocationContextValue = {
 
 const HomeLocationContext = createContext<HomeLocationContextValue | null>(null)
 
+/** Navbar shows country only (never city name). */
 function countryLabelFromApi(data: HomeLocationApi): string | null {
   const name = data.countryName?.trim()
   if (name) return name
@@ -45,6 +62,8 @@ function countryLabelFromApi(data: HomeLocationApi): string | null {
   if (code) return countryNameFromCode(code)
   const city = data.city?.trim()
   if (city) return resolveCountryForCityName(city)?.countryName ?? null
+  const display = data.displayLabel?.trim()
+  if (display) return resolveCountryForCityName(display)?.countryName ?? null
   return null
 }
 
@@ -87,42 +106,94 @@ async function persistLocation(payload: {
   }
 }
 
-function applyApiLocation(
-  data: HomeLocationApi,
+function applyGeoHint(
+  geo: { city?: string | null; countryCode?: string | null; countryName?: string | null },
   setCityState: (c: string | null) => void,
   setCountryState: (c: string | null) => void,
 ) {
-  const cityLabel = data.city?.trim() || null
-  setCountryState(countryLabelFromApi(data))
-  setCityState(cityLabel)
-  if (cityLabel) window.localStorage.setItem(HOME_CITY_STORAGE_KEY, cityLabel)
-  else window.localStorage.removeItem(HOME_CITY_STORAGE_KEY)
+  applyApiLocation(
+    {
+      city: geo.city,
+      countryCode: geo.countryCode,
+      countryName: geo.countryName,
+    },
+    setCityState,
+    setCountryState,
+  )
 }
 
-export function HomeLocationProvider({ children }: { children: ReactNode }) {
+async function resolveCountryForNavbar(
+  data: HomeLocationApi,
+): Promise<HomeLocationApi> {
+  if (countryLabelFromApi(data)) return data
+  const geo = await fetchGeoHint()
+  if (!geo?.countryCode && !geo?.countryName && !geo?.city) return data
+  return {
+    city: data.city ?? geo.city,
+    countryCode: data.countryCode ?? geo.countryCode,
+    countryName: data.countryName ?? geo.countryName,
+  }
+}
+
+/**
+ * Apply API geo without wiping SSR seed / last good value when the client
+ * refresh returns empty (common when edge headers differ from document request).
+ */
+function applyApiLocation(
+  data: HomeLocationApi,
+  setCityState: Dispatch<SetStateAction<string | null>>,
+  setCountryState: Dispatch<SetStateAction<string | null>>,
+) {
+  const cityLabel = data.city?.trim() || null
+  const countryLabel = countryLabelFromApi(data)
+
+  setCountryState((prev) => countryLabel ?? prev)
+  setCityState((prev) => cityLabel ?? prev)
+
+  if (cityLabel) {
+    window.localStorage.setItem(HOME_CITY_STORAGE_KEY, cityLabel)
+  }
+}
+
+export function HomeLocationProvider({
+  children,
+  seed,
+}: {
+  children: ReactNode
+  seed?: HomeLocationClientSeed
+}) {
   const router = useRouter()
-  const [city, setCityState] = useState<string | null>(null)
-  const [countryName, setCountryName] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const seededCountry = countryFromSeed(seed)
+  const [city, setCityState] = useState<string | null>(seed?.city?.trim() || null)
+  const [countryName, setCountryName] = useState<string | null>(seededCountry)
+  const [isLoading, setIsLoading] = useState(!seededCountry)
   const [isDetecting, setIsDetecting] = useState(false)
+  const hadSeedRef = useRef(Boolean(seededCountry))
 
   const syncGeoFromIp = useCallback(async () => {
     const r = await fetch("/api/home-location?refresh=1", { cache: "no-store" })
-    if (!r.ok) return
-    const data = (await r.json()) as HomeLocationApi
+    if (!r.ok) {
+      const geo = await fetchGeoHint()
+      if (geo) applyGeoHint(geo, setCityState, setCountryName)
+      return
+    }
+    let data = await resolveCountryForNavbar((await r.json()) as HomeLocationApi)
+    if (!countryLabelFromApi(data)) {
+      const geo = await fetchGeoHint()
+      if (geo) data = { ...data, ...geo }
+    }
     applyApiLocation(data, setCityState, setCountryName)
-    router.refresh()
-  }, [router])
+  }, [])
 
   useEffect(() => {
     let cancelled = false
     ;(async () => {
       try {
-        const r = await fetch("/api/home-location?refresh=1", { cache: "no-store" })
-        if (r.ok && !cancelled) {
-          const data = (await r.json()) as HomeLocationApi
-          applyApiLocation(data, setCityState, setCountryName)
-          if (data.primed) router.refresh()
+        await syncGeoFromIp()
+      } catch {
+        if (!cancelled && !hadSeedRef.current) {
+          const geo = await fetchGeoHint()
+          if (geo) applyGeoHint(geo, setCityState, setCountryName)
         }
       } finally {
         if (!cancelled) setIsLoading(false)
@@ -131,7 +202,7 @@ export function HomeLocationProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true
     }
-  }, [router])
+  }, [syncGeoFromIp])
 
   useEffect(() => {
     const onVisible = () => {
@@ -180,9 +251,14 @@ export function HomeLocationProvider({ children }: { children: ReactNode }) {
   )
 
   const clearCity = useCallback(async () => {
-    await applyCity(null)
+    setCityState(null)
+    setCountryName(null)
+    hadSeedRef.current = false
+    window.localStorage.removeItem(HOME_CITY_STORAGE_KEY)
+    await fetch("/api/home-location", { method: "DELETE" })
     await syncGeoFromIp()
-  }, [applyCity, syncGeoFromIp])
+    router.refresh()
+  }, [syncGeoFromIp, router])
 
   const detectFromIp = useCallback(async () => {
     setIsDetecting(true)

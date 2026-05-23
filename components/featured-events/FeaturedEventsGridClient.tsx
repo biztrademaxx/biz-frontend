@@ -46,8 +46,7 @@ function FeaturedEventCard({ event }: { event: FeaturedEventPayload }) {
   const labels = featuredEventCategoryLabels(event).slice(0, 3)
 
   return (
-    <div className="overflow-hidden rounded-sm border border-gray-200 bg-white p-2 shadow-sm transition-shadow hover:shadow-md">
-      <Link href={href} className="block cursor-pointer">
+    <div className="flex h-full min-h-[220px] flex-col overflow-hidden rounded-lg border border-[#2563EB] bg-white p-3 shadow-[0_8px_16px_-10px_rgba(0,0,0,0.18)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_12px_22px_-10px_rgba(0,0,0,0.22)]">      <Link href={href} className="block cursor-pointer">
         <div className="text-sm font-medium leading-snug text-gray-800">{formattedDate}</div>
         <div className="mt-1 flex w-full justify-between gap-2">
           <div className="flex min-w-0 flex-1 flex-col">
@@ -58,7 +57,7 @@ function FeaturedEventCard({ event }: { event: FeaturedEventPayload }) {
               {featuredEventLocationLine(event)}
             </div>
           </div>
-          <div className="mt-0.5 h-28 w-28 flex-shrink-0 overflow-hidden rounded-sm border border-gray-200 bg-gray-50 sm:h-32 sm:w-32">
+          <div className="mt-0.5 h-28 w-28 flex-shrink-0 overflow-hidden rounded-sm bg-white border border-gray-200 bg-gray-50 sm:h-32 sm:w-32">
             <img
               src={thumb}
               alt={event.title}
@@ -109,7 +108,10 @@ function FeaturedEventCard({ event }: { event: FeaturedEventPayload }) {
 
 function PlaceholderCard({ index }: { index: number }) {
   return (
-    <div aria-hidden className="rounded-md border border-gray-200 bg-white p-2 shadow-sm">
+    <div
+      aria-hidden
+      className="rounded-md border border-gray-200/90 bg-white p-2 shadow-[0_3px_12px_rgba(15,23,42,0.08)]"
+    >
       <div className="home-shimmer h-3 w-36 rounded" />
       <div className="mt-2 flex justify-between gap-2">
         <div className="flex min-w-0 flex-1 flex-col gap-2">

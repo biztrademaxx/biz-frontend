@@ -17,7 +17,7 @@ function VenueCard({ venue, onNavigate }: { venue: ExploreVenueCard; onNavigate:
       type="button"
       onClick={onNavigate}
       aria-label={`View venue: ${venue.name}`}
-      className="group flex h-full w-full cursor-pointer flex-col overflow-hidden rounded-sm border border-gray-200 bg-white text-left shadow-sm transition-shadow duration-200 hover:border-gray-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+      className="group flex h-full w-full cursor-pointer flex-col overflow-hidden rounded-lg border border-[#2563EB] bg-white text-left shadow-[0_8px_16px_-10px_rgba(0,0,0,0.18)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_12px_22px_-10px_rgba(0,0,0,0.22)] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
     >
       <div className="relative h-28 w-full shrink-0 overflow-hidden bg-gray-100 sm:h-32">
         <img

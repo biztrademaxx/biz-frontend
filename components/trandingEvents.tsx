@@ -49,19 +49,20 @@ export default function TrendingEvents() {
                   className="bg-white rounded-[6px] p-2 cursor-pointer"
                 >
                   {/* Image */}
-                  <img
-                    src={
-                      event.image ||
-                      event.banner ||
-                      "/city/c4.jpg"
-                    }
-                    alt={event.title}
-                    className="w-full h-[140px] object-cover rounded-[4px]"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement
-                      target.src = "/city/c4.jpg"
-                    }}
-                  />
+                  {(event.image || event.banner)?.trim() ? (
+                    <img
+                      src={(event.image || event.banner)!.trim()}
+                      alt={event.title}
+                      className="w-full h-[140px] object-cover rounded-[4px]"
+                    />
+                  ) : (
+                    <div
+                      className="flex h-[140px] w-full items-center justify-center rounded-[4px] bg-gradient-to-br from-slate-100 to-slate-200 text-xs text-slate-500"
+                      aria-hidden
+                    >
+                      No image
+                    </div>
+                  )}
 
                   {/* Title */}
                   <p className="text-sm font-medium text-gray-800 mt-2 line-clamp-2">

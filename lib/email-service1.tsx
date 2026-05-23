@@ -92,7 +92,7 @@ const html = `
   margin:0;
   padding:0;
   background:#f1f5f9;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-family: Roboto, Arial, sans-serif;
 ">
 
 <!-- Wrapper -->

@@ -395,7 +395,7 @@ export default function EventApprovalDashboard() {
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f0ede8", padding: "24px", fontFamily: "system-ui, sans-serif" }}>
+    <div style={{ minHeight: "100vh", background: "#f0ede8", padding: "24px" }}>
 
       {/* Stats Row */}
       <div style={{ display: "flex", gap: "12px", marginBottom: "24px" }}>

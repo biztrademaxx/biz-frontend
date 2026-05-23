@@ -319,7 +319,6 @@ export function EventRow({
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
           <span style={{
             fontSize: "13px", fontWeight: 700, color: "#18181B", minWidth: "44px",
-            fontFamily: "'DM Mono', monospace",
           }}>
             {attendees.toLocaleString()}
           </span>

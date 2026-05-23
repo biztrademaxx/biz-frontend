@@ -236,7 +236,7 @@ export default function VenueDashboardPage({ routeSegment }: UserDashboardProps)
       const merged: VenueData = {
         id: raw.id || "",
         venueName: (mgr?.venueName ?? raw.name ?? "") as string,
-        logo: (raw.logo || (raw.images?.[0]) || "/city/c4.jpg") as string,
+        logo: (raw.logo || (raw.images?.[0]) ) as string,
         contactPerson: (mgr?.name ?? raw.contactPerson ?? "") as string,
         email: (mgr?.email ?? raw.email ?? "") as string,
         mobile: (mgr?.phone ?? raw.mobile ?? "") as string,

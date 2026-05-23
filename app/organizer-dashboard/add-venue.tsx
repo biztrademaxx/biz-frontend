@@ -452,7 +452,7 @@ export default function AddVenue({ organizerId, onVenueChange, selectedVenueId }
                     <CardContent className="p-4">
                       <div className="flex items-start gap-4">
                         <Avatar className="w-16 h-16">
-                          <AvatarImage src={venue.avatar || "/city/c4.jpg"} />
+                          <AvatarImage src={venue.avatar } />
                           <AvatarFallback>
                             {(venue.firstName?.[0] || venue.venueName?.[0] || "V").toUpperCase()}
                             {(venue.lastName?.[0] || venue.venueName?.split(" ")[1]?.[0] || "").toUpperCase()}

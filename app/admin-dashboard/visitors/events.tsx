@@ -256,7 +256,7 @@ export default function VisitorEventsPage() {
                           <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
                             {visitor.visitor.avatar ? (
                               <img
-                                src={visitor.visitor.avatar || "/city/c4.jpg"}
+                                src={visitor.visitor.avatar }
                                 alt={visitor.visitor.name}
                                 className="w-10 h-10 rounded-full"
                               />

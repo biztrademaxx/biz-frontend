@@ -14,7 +14,7 @@ import {
   getCurrentUserRole,
   isAuthenticated,
 } from "@/lib/api"
-import { getBrandLogoSrc, isBrandLogoRemoteUrl } from "@/lib/brand-logo"
+import { getNavbarLogoSrc, isBrandLogoRemoteUrl, isBrandLogoSvg } from "@/lib/brand-logo"
 import { eventPublicPath } from "@/lib/event-path"
 import { getVenuePublicPath } from "@/lib/venue-dashboard-path"
 import ExploreMegaMenu from "./ExploreMegaMenu"
@@ -81,8 +81,9 @@ export default function Navbar() {
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const abortRef = useRef<AbortController | null>(null)
 
-  const brandLogoSrc = getBrandLogoSrc()
-  const brandLogoUnoptimized = isBrandLogoRemoteUrl(brandLogoSrc)
+  const brandLogoSrc = getNavbarLogoSrc()
+  const brandLogoUnoptimized =
+    isBrandLogoRemoteUrl(brandLogoSrc) || isBrandLogoSvg(brandLogoSrc)
 
   const closeSearchUi = useCallback(() => {
     setShowSearchResults(false)
@@ -375,9 +376,13 @@ export default function Navbar() {
                 className="block h-[44px] w-auto max-h-[44px] max-w-full shrink object-contain object-left sm:h-[52px] sm:max-h-[52px] md:h-[60px] md:max-h-[60px] lg:h-[72px] lg:max-h-[72px]"
               />
             </Link>
-            {/* Explore lives in the mobile drawer below lg — keeps the top bar from crowding */}
-            <div className="relative ml-3 hidden shrink-0 items-center gap-2 sm:ml-4 lg:ml-5 lg:flex">
-              <div ref={exploreRef}>
+            {/* Country from IP/VPN — visible sm+ (mobile menu also shows it below lg) */}
+            <div className="ml-1 hidden shrink-0 sm:ml-2 sm:flex">
+              <NavbarCountryLabel />
+            </div>
+            {/* Explore (lg+) */}
+            <div className="relative ml-2 hidden shrink-0 items-center lg:ml-5 lg:flex">
+              <div ref={exploreRef} className="hidden lg:block">
                 <button
                   type="button"
                   className={`inline-flex items-center gap-0.5 rounded-md px-1 py-1 text-sm lg:px-0 lg:py-0 ${navLinkClass}`}
@@ -390,7 +395,6 @@ export default function Navbar() {
                   <ChevronDown className={`h-4 w-4 transition-transform ${exploreOpen ? "rotate-180" : ""}`} />
                 </button>
               </div>
-              <NavbarCountryLabel />
             </div>
           </div>
 
@@ -543,12 +547,12 @@ export default function Navbar() {
           </div>
         )}
 
-        {mobileMenuOpen && (
-          <div ref={mobileMenuRef} className="space-y-0 border-t border-gray-200 bg-[#f3f2f0] py-2 lg:hidden">
+        {/* {mobileMenuOpen && (
+          <div ref={mobileMenuRef} className={`space-y-0 border-t ${navFooterDividerClass} bg-[#001a48] py-2 lg:hidden`}>
             <button
               ref={exploreMobileRef}
               type="button"
-              className="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm font-semibold text-gray-800 hover:bg-white/80"
+              className="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm font-semibold text-white hover:bg-white/10"
               onClick={() => {
                 setExploreOpen((v) => !v)
                 setMobileMenuOpen(false)
@@ -610,7 +614,7 @@ export default function Navbar() {
               About Us
             </Link>
           </div>
-        )}
+        )} */}
       </div>
 
       <ExploreMegaMenu open={exploreOpen} onClose={() => setExploreOpen(false)} />

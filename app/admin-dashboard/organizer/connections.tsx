@@ -228,7 +228,7 @@ export default function OrganizerConnectionsPage() {
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <Avatar className="h-10 w-10">
-                          <AvatarImage src={organizer.avatar || "/city/c4.jpg"} />
+                          <AvatarImage src={organizer.avatar } />
                           <AvatarFallback>
                             {organizer.firstName?.[0] ?? ""}
                             {organizer.lastName?.[0] ?? ""}
@@ -292,7 +292,7 @@ export default function OrganizerConnectionsPage() {
                 <CardContent>
                   <div className="flex items-start gap-4">
                     <Avatar className="h-16 w-16">
-                      <AvatarImage src={selectedOrganizer.organizer.avatar || "/city/c4.jpg"} />
+                      <AvatarImage src={selectedOrganizer.organizer.avatar } />
                       <AvatarFallback>
                         {selectedOrganizer.organizer.firstName[0]}
                         {selectedOrganizer.organizer.lastName[0]}
@@ -340,7 +340,7 @@ export default function OrganizerConnectionsPage() {
                         >
                           <div className="flex items-center gap-3">
                             <Avatar className="h-10 w-10">
-                              <AvatarImage src={follower.avatar || "/city/c4.jpg"} />
+                              <AvatarImage src={follower.avatar } />
                               <AvatarFallback>
                                 {follower.firstName[0]}
                                 {follower.lastName[0]}

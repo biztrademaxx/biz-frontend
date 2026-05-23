@@ -66,7 +66,7 @@ const LOCATION_NONE = "__none__"
 const mapBackendToVenueData = (data: any): VenueData => ({
   id: data.id,
   venueName: data.manager?.venueName || data.name || "",
-  logo: data.manager?.avatar || data.images?.[0] || "/city/c4.jpg",
+  logo: data.manager?.avatar || data.images?.[0] ,
   contactPerson: data.manager?.name || "",
   email: data.manager?.email || data.contact?.email || "",
   mobile: data.manager?.phone || data.contact?.phone || "",
@@ -286,7 +286,7 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
     )
   }
 
-  const heroBg = images[0] || profileData?.venueImages?.[0] || "/city/c4.jpg"
+  const heroBg = images[0] || profileData?.venueImages?.[0] 
 
   return (
     <div className="space-y-0">
@@ -322,7 +322,11 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
       <div className="relative mb-8">
         {/* Hero Image Container - no bottom margin, card will overlap */}
         <div className="relative w-full h-56 md:h-72 rounded-2xl overflow-hidden">
-          <Image src={heroBg} alt="Venue" fill className="object-cover" />
+          {heroBg?.trim() ? (
+            <Image src={heroBg.trim()} alt="Venue" fill className="object-cover" />
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-br from-slate-200 to-slate-300" aria-hidden />
+          )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
 
           {/* Edit button overlay on image */}
@@ -536,7 +540,11 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 mb-4">
               {images.map((image, index) => (
                 <div key={index} className="relative group rounded-xl overflow-hidden aspect-video">
-                  <Image src={image || "/city/c4.jpg"} alt={`Venue ${index + 1}`} fill className="object-cover" />
+                  {image?.trim() ? (
+                    <Image src={image.trim()} alt={`Venue ${index + 1}`} fill className="object-cover" />
+                  ) : (
+                    <div className="absolute inset-0 bg-slate-100" aria-hidden />
+                  )}
                   {isEditing && (
                     <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                       <button onClick={() => handleImageDelete(image, "venue")} className="bg-red-500 text-white p-2 rounded-lg">
@@ -640,7 +648,11 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {floorPlans.map((plan, index) => (
                 <div key={index} className="relative rounded-xl overflow-hidden border border-[#E2E8F0] aspect-square bg-[#F8FAFC] group">
-                  <Image src={plan || "/city/c4.jpg"} alt={`Floor Plan ${index + 1}`} fill className="object-contain p-4" />
+                  {plan?.trim() ? (
+                    <Image src={plan.trim()} alt={`Floor Plan ${index + 1}`} fill className="object-contain p-4" />
+                  ) : (
+                    <div className="absolute inset-0 bg-slate-50" aria-hidden />
+                  )}
                   <div className="absolute top-2 left-2"><Badge className="bg-[#EEF2FF] text-[#4F46E5] border-0 text-xs">Floor {index + 1}</Badge></div>
                   {isEditing && (
                     <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">

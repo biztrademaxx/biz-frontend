@@ -13,7 +13,8 @@ export const EVENTS_LISTING_BANNER_GRADIENT_OVER_IMAGE =
 
 export const EVENTS_API = "/api/events"
 
-export const LISTING_DEFAULT_EVENT_IMAGE = "/city/c4.jpg"
+/** No stock image — listing UI uses gradient/initials when missing. */
+export const LISTING_DEFAULT_EVENT_IMAGE = ""
 
 /** Regular listing events shown above the inline featured ad on each page. */
 export const EVENTS_LISTING_PAGE_CHUNK_BEFORE_FEATURED_AD = 5

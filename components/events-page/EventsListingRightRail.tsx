@@ -33,7 +33,7 @@ export function EventsListingRightRail({ trendingSidebarEvents, featuredFirst, o
             <TrendingEventsSideCard
               key={event.id}
               event={event}
-              imageUrl={getListingEventPrimaryImage(event) || "/city/c4.jpg"}
+              imageUrl={getListingEventPrimaryImage(event) }
             />
           ))}
         </div>
@@ -44,7 +44,7 @@ export function EventsListingRightRail({ trendingSidebarEvents, featuredFirst, o
               <div key={event.id} className="w-[min(100%,340px)] shrink-0 snap-start">
                 <TrendingEventsSideCard
                   event={event}
-                  imageUrl={getListingEventPrimaryImage(event) || "/city/c4.jpg"}
+                  imageUrl={getListingEventPrimaryImage(event) }
                 />
               </div>
             ))}
@@ -54,12 +54,18 @@ export function EventsListingRightRail({ trendingSidebarEvents, featuredFirst, o
         {featuredFirst && (
           <Card className="bg-white shadow-xl border border-gray-300 rounded-sm overflow-hidden">
             <div className="relative aspect-video">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={getListingEventPrimaryImage(featuredFirst) || "/city/c4.jpg"}
-                alt={featuredFirst.title}
-                className="w-full h-full object-cover"
-              />
+              {getListingEventPrimaryImage(featuredFirst)?.trim() ? (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  src={getListingEventPrimaryImage(featuredFirst).trim()}
+                  alt={featuredFirst.title}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 text-sm text-slate-500">
+                  No image
+                </div>
+              )}
               <div className="absolute top-3 right-3 bg-white rounded-full p-2 shadow-lg">
                 <Heart className="w-5 h-5 text-gray-700" />
               </div>

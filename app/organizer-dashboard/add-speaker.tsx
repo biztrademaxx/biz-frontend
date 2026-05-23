@@ -378,7 +378,7 @@ export default function AddSpeaker({ organizerId }: AddSpeakerProps) {
                     <CardContent className="p-4">
                       <div className="flex items-start gap-4">
                         <Avatar className="w-16 h-16">
-                          <AvatarImage src={speaker.avatar || "/city/c4.jpg"} />
+                          <AvatarImage src={speaker.avatar } />
                           <AvatarFallback>
                             {speaker.firstName[0]}
                             {speaker.lastName[0]}

@@ -6,8 +6,7 @@ import { formatEventCountDisplay } from "@/lib/format-event-count"
 import { resolvedEventCountForCity } from "./utils/display-event-count"
 
 const browseCardClass =
-  "group flex w-full min-h-0 cursor-pointer flex-col rounded-md border border-gray-200 bg-white px-3 py-3.5 text-left shadow-sm transition-shadow duration-200 hover:border-gray-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-
+  "group flex w-full min-h-[120px] cursor-pointer flex-col rounded-lg border border-[#2563EB] bg-white px-3 py-3.5 text-left shadow-[0_8px_16px_-10px_rgba(0,0,0,0.18)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_12px_22px_-10px_rgba(0,0,0,0.22)] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
 const browseGridClass =
   "grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-6 md:gap-3 lg:gap-4"
 
@@ -38,17 +37,23 @@ export default function BrowseEventsByCityGridClient({
                 onClick={() => router.push(`/event?location=${encodeURIComponent(city.name)}`)}
                 className={browseCardClass}
               >
-                <div className="flex min-w-0 flex-col items-start gap-2">
+                <div className="flex h-full min-w-0 flex-col items-start gap-2">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-none">
                     <div className="relative h-7 w-7">
-                      <img
-                        src={city.image || "/city/c4.jpg"}
-                        alt=""
-                        className="h-full w-full object-contain"
-                      />
+                      {city.image?.trim() ? (
+                        <img
+                          src={city.image.trim()}
+                          alt=""
+                          className="h-full w-full object-contain"
+                        />
+                      ) : (
+                        <span className="flex h-7 w-7 items-center justify-center text-lg" aria-hidden>
+                          🏙️
+                        </span>
+                      )}
                     </div>
                   </div>
-                  <div className="w-full min-w-0 text-left leading-tight">
+                  <div className="mt-auto w-full min-w-0 text-left leading-tight">
                     <h3 className="line-clamp-2 text-sm font-bold text-gray-900">{city.name}</h3>
                     <p className="mt-1 text-xs font-normal text-gray-500">{countLabel}</p>
                   </div>

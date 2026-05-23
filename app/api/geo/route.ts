@@ -5,7 +5,7 @@ import { EMPTY_GEO_HINT, resolveGeoFromHeaders } from "@/lib/geo-from-request"
 export const dynamic = "force-dynamic"
 
 /**
- * Approximate visitor location from request IP (Vercel edge headers or ipapi.co).
+ * Approximate visitor location from request IP (Vercel edge headers or ipapi).
  * No browser permission required — IP is sent on every HTTP request.
  */
 export async function GET() {
@@ -16,7 +16,8 @@ export async function GET() {
       return NextResponse.json(EMPTY_GEO_HINT)
     }
     return NextResponse.json(geo)
-  } catch {
+  } catch (err) {
+    console.error("[geo] GET failed:", err)
     return NextResponse.json(EMPTY_GEO_HINT)
   }
 }

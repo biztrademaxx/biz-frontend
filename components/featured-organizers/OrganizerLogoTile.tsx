@@ -11,8 +11,7 @@ import {
 } from "./utils/organizers.helpers"
 
 const TILE_CLASS =
-  "flex h-[120px] w-[200px] shrink-0 cursor-pointer items-center justify-center rounded-sm border border-gray-200 bg-white p-4 transition duration-200 hover:border-blue-300 hover:shadow-lg"
-
+  "group flex h-[120px] w-[200px] shrink-0 cursor-pointer items-center justify-center rounded-lg border border-[#2563EB] bg-white p-4 shadow-[0_8px_16px_-10px_rgba(0,0,0,0.18)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_12px_22px_-10px_rgba(0,0,0,0.22)]"
 export interface OrganizerLogoTileProps {
   organizer: OrganizerListEntry
   mode: OrganizerLogoTileMode

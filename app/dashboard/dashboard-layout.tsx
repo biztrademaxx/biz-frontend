@@ -51,7 +51,7 @@ export default function UserDashboard() {
     location: "Mumbai, India",
     website: "www.company.com",
     bio: "Experienced business leader with over 15 years in the industry. Passionate about innovation and building meaningful connections through events and conferences.",
-    avatar: "/city/c4.jpg",
+    avatar: "",
     followers: 3032,
     following: 1250,
     eventsAttended: 45,
@@ -90,7 +90,7 @@ export default function UserDashboard() {
       name: "Priya Sharma",
       title: "Marketing Director",
       company: "Tech Solutions Ltd",
-      avatar: "/city/c4.jpg",
+      avatar: "",
       mutualConnections: 12,
     },
     {
@@ -98,7 +98,7 @@ export default function UserDashboard() {
       name: "Arjun Patel",
       title: "Event Manager",
       company: "Global Events Inc",
-      avatar: "/city/c4.jpg",
+      avatar: "",
       mutualConnections: 8,
     },
     {
@@ -106,7 +106,7 @@ export default function UserDashboard() {
       name: "Sneha Reddy",
       title: "Business Development",
       company: "Innovation Hub",
-      avatar: "/city/c4.jpg",
+      avatar: "",
       mutualConnections: 15,
     },
   ]
@@ -118,7 +118,7 @@ export default function UserDashboard() {
       message: "Hi Ramesh! Great meeting you at the conference. Would love to discuss potential collaboration.",
       time: "2 hours ago",
       unread: true,
-      avatar: "/city/c4.jpg",
+      avatar: "",
     },
     {
       id: 2,
@@ -126,7 +126,7 @@ export default function UserDashboard() {
       message: "Thank you for registering for Global Precision Expo 2025. Here are your event details...",
       time: "1 day ago",
       unread: false,
-      avatar: "/city/c4.jpg",
+      avatar: "",
     },
     {
       id: 3,
@@ -134,7 +134,7 @@ export default function UserDashboard() {
       message: "Looking forward to your keynote at the upcoming summit!",
       time: "3 days ago",
       unread: false,
-      avatar: "/city/c4.jpg",
+      avatar: "",
     },
   ]
 
@@ -184,7 +184,7 @@ export default function UserDashboard() {
               <Card className="lg:col-span-1">
                 <CardContent className="p-6 text-center">
                   <Avatar className="w-24 h-24 mx-auto mb-4">
-                    <AvatarImage src={userData.avatar || "/city/c4.jpg"} />
+                    <AvatarImage src={userData.avatar } />
                     <AvatarFallback className="text-2xl">RS</AvatarFallback>
                   </Avatar>
                   <h2 className="text-xl font-semibold mb-1">{userData.name}</h2>
@@ -367,7 +367,7 @@ export default function UserDashboard() {
                 <Card key={connection.id}>
                   <CardContent className="p-6 text-center">
                     <Avatar className="w-16 h-16 mx-auto mb-4">
-                      <AvatarImage src={connection.avatar || "/city/c4.jpg"} />
+                      <AvatarImage src={connection.avatar } />
                       <AvatarFallback>
                         {connection.name
                           .split(" ")
@@ -417,7 +417,7 @@ export default function UserDashboard() {
                       >
                         <div className="flex items-start gap-3">
                           <Avatar className="w-10 h-10">
-                            <AvatarImage src={message.avatar || "/city/c4.jpg"} />
+                            <AvatarImage src={message.avatar } />
                             <AvatarFallback>
                               {message.sender
                                 .split(" ")
@@ -590,7 +590,7 @@ export default function UserDashboard() {
           <SidebarHeader className="border-b p-4">
             <div className="flex items-center gap-3">
               <Avatar className="w-10 h-10">
-                <AvatarImage src={userData.avatar || "/city/c4.jpg"} />
+                <AvatarImage src={userData.avatar } />
                 <AvatarFallback>RS</AvatarFallback>
               </Avatar>
               <div>
@@ -630,7 +630,7 @@ export default function UserDashboard() {
                 <Bell className="w-4 h-4" />
               </Button>
               <Avatar className="w-8 h-8">
-                <AvatarImage src={userData.avatar || "/city/c4.jpg"} />
+                <AvatarImage src={userData.avatar } />
                 <AvatarFallback>RS</AvatarFallback>
               </Avatar>
             </div>

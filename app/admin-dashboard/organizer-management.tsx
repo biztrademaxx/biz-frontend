@@ -204,7 +204,7 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
       totalRevenue: organizer.totalRevenue || 0,
       averageRating: avg,
       totalReviews: reviewCount,
-      avatar: organizer.avatar || "/city/c4.jpg",
+      avatar: organizer.avatar ,
       category: organizer.specialties?.[0] || "General Events",
       description: organizer.description || "No description provided",
       documents,
@@ -364,13 +364,7 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
   }
 
   return (
-    <div
-      className="min-h-screen p-8"
-      style={{ background: "#F5F4F0", fontFamily: "'DM Sans', sans-serif" }}
-    >
-      {/* Google Font */}
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');`}</style>
-
+    <div className="min-h-screen bg-[#F5F4F0] p-8">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
@@ -410,7 +404,7 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
         ].map((s) => (
           <div key={s.label} className="bg-white rounded-xl p-5 border border-gray-100">
             <p className="text-[10px] font-semibold tracking-[0.12em] uppercase text-gray-400 mb-2">{s.label}</p>
-            <p className="text-3xl font-semibold text-gray-900" style={{ fontFamily: "'DM Mono', monospace" }}>{s.value}</p>
+            <p className="font-mono text-3xl font-semibold tabular-nums text-gray-900">{s.value}</p>
             {/* <p className={`text-xs mt-1 font-medium ${s.subColor}`}>{s.sub}</p> */}
           </div>
         ))}
@@ -509,10 +503,10 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
                           </span>
                         )}
                       </td>
-                      <td className="px-4 py-4 text-sm text-gray-700 font-medium" style={{ fontFamily: "'DM Mono', monospace" }}>
+                      <td className="px-4 py-4 font-mono text-sm font-medium tabular-nums text-gray-700">
                         {organizer.totalEvents}
                       </td>
-                      <td className="px-4 py-4 text-sm text-gray-700 font-medium" style={{ fontFamily: "'DM Mono', monospace" }}>
+                      <td className="px-4 py-4 font-mono text-sm font-medium tabular-nums text-gray-700">
                         {organizer.originalData.totalAttendees?.toLocaleString() || "—"}
                       </td>
                       <td className="px-4 py-4">

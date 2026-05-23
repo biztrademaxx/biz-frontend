@@ -222,7 +222,7 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
               <div className={cn(exGlassNested, "p-4 text-center")}>
                 <div className="relative inline-block">
                   <Avatar className="mx-auto mb-4 h-32 w-32 ring-2 ring-[#4776E6]/20 ring-offset-2 ring-offset-white/50">
-                    <AvatarImage src={formData.avatar || "/city/c4.jpg"} />
+                    <AvatarImage src={formData.avatar } />
                     <AvatarFallback className="bg-[#4776E6]/10 text-2xl font-semibold text-[#4776E6]">
                       {formData.firstName?.[0]}
                       {formData.lastName?.[0]}

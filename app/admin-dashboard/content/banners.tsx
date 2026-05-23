@@ -574,7 +574,7 @@ export default function BannersPage() {
               <div className="border rounded-lg p-4 bg-gray-50">
                 <p className="text-sm font-medium mb-2">Preview:</p>
                 <img
-                  src={URL.createObjectURL(uploadForm.file) || "/city/c4.jpg"}
+                  src={URL.createObjectURL(uploadForm.file) }
                   alt="Preview"
                   className="w-full h-48 object-cover rounded"
                 />
@@ -728,7 +728,7 @@ export default function BannersPage() {
                     <p className="text-xs font-medium text-gray-700">Current image</p>
                     <img
                       key={`${editingBanner.id}-${editingBanner.updatedAt}-${editingBanner.imageUrl}`}
-                      src={editingBanner.imageUrl || "/city/c4.jpg"}
+                      src={editingBanner.imageUrl }
                       alt=""
                       className="w-full max-h-48 object-contain rounded-md border border-gray-200 bg-white"
                     />
@@ -771,7 +771,7 @@ export default function BannersPage() {
           {selectedBanner && (
             <div className="space-y-4">
               <img
-                src={selectedBanner.imageUrl || "/city/c4.jpg"}
+                src={selectedBanner.imageUrl }
                 alt={selectedBanner.title}
                 className="w-full rounded-lg"
               />
@@ -855,7 +855,7 @@ function BannerGrid({
         <Card key={banner.id} className="overflow-hidden">
           <div className="relative h-48 bg-gray-100">
             <img
-              src={banner.imageUrl || "/city/c4.jpg"}
+              src={banner.imageUrl }
               alt={banner.title}
               className="w-full h-full object-cover"
             />

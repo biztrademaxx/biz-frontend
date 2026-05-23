@@ -245,7 +245,7 @@ export default function MessagesCenter({ organizerId, surface = "default" }: Mes
         sender: {
           firstName: "You",
           lastName: "",
-          avatar: "/city/c4.jpg",
+          avatar: "",
         },
       }
 

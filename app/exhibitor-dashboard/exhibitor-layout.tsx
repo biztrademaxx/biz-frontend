@@ -452,7 +452,7 @@ export function ExhibitorLayout({ routeSegment }: UserDashboardProps) {
               <CardContent>
                 <div className="flex items-start gap-4">
                   <Avatar className="h-16 w-16 ring-2 ring-[#4776E6]/20 ring-offset-2 ring-offset-white/40">
-                    <AvatarImage src={exhibitor.avatar || "/city/c4.jpg"} />
+                    <AvatarImage src={exhibitor.avatar } />
                     <AvatarFallback className="bg-[#4776E6]/10 text-lg font-semibold text-[#4776E6]">
                       {(() => {
                         const label = (

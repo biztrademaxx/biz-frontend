@@ -156,7 +156,7 @@ export function FollowManagement({ userId }: FollowManagementProps) {
                     >
                       <div className="flex items-center space-x-4">
                         <Avatar className="h-12 w-12">
-                          <AvatarImage src={follower.avatar || "/city/c4.jpg"} />
+                          <AvatarImage src={follower.avatar } />
                           <AvatarFallback>
                             {follower.firstName[0]}
                             {follower.lastName[0]}
@@ -209,7 +209,7 @@ export function FollowManagement({ userId }: FollowManagementProps) {
                     >
                       <div className="flex items-center space-x-4">
                         <Avatar className="h-12 w-12">
-                          <AvatarImage src={user.avatar || "/city/c4.jpg"} />
+                          <AvatarImage src={user.avatar } />
                           <AvatarFallback>
                             {user.firstName[0]}
                             {user.lastName[0]}

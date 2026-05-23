@@ -305,31 +305,38 @@ const OrganizerSignup = () => {
     if (currentStep !== 1) return null;
     
     return (
-      <div className="min-h-screen relative flex items-center justify-center overflow-hidden bg-blue-100">
-        <div className="absolute inset-0 w-full h-full">
-          <div className="absolute inset-0 bg-black/40"></div>
+      <div className="relative flex min-h-screen flex-col overflow-hidden bg-blue-100">
+        <div className="absolute inset-0 h-full w-full">
+          <div className="absolute inset-0 bg-black/40" />
           <div
-            className="absolute inset-0 w-full h-full bg-cover bg-center"
+            className="absolute inset-0 h-full w-full bg-cover bg-center"
             style={{ backgroundImage: "url('/organizer-signup/BG_ORG_DSH.jpg')" }}
-          ></div>
+          />
         </div>
 
-        <div className="relative z-10 flex items-center justify-between max-w-7xl mx-auto px-6 w-full">
-          <div className="flex-1 text-blue-900 pr-12 max-w-lg">
+        <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 sm:py-8 lg:flex-row lg:items-center lg:justify-between lg:gap-10">
+          <div className="hidden max-w-lg flex-1 text-white lg:block lg:pr-8">
             <AnimatedMessage messages={messages} />
-            
-            <p className="text-base mb-8 leading-relaxed text-white">
-              Showcase your event to an engaged audience and build genuine trust using targeted, multi-channel outreach.
-              Reach potential attendees through platforms they prefer—social media, mobile updates, our dynamic website,
-              curated newsletters, and direct database access. Present your event as a credible industry opportunity.
+
+            <p className="mb-8 text-base leading-relaxed">
+              Showcase your event to an engaged audience and build genuine trust using targeted, multi-channel
+              outreach. Reach potential attendees through platforms they prefer—social media, mobile updates, our
+              dynamic website, curated newsletters, and direct database access.
             </p>
 
-            <button className="bg-transparent border-2 border-white text-white px-8 py-3 rounded-full font-semibold hover:bg-white hover:text-blue-900 transition-colors">
+            <button
+              type="button"
+              className="rounded-full border-2 border-white bg-transparent px-8 py-3 font-semibold text-white transition-colors hover:bg-white hover:text-blue-900"
+            >
               LEARN MORE
             </button>
           </div>
 
-          <div className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-md relative">
+          <p className="text-center text-sm font-medium text-white lg:hidden">
+            Join BizTradeFairs — list events and reach exhibitors worldwide
+          </p>
+
+          <div className="relative mx-auto w-full max-w-md shrink-0 rounded-3xl bg-white p-6 shadow-2xl sm:p-8 lg:mx-0">
             <h2 className="text-2xl font-bold text-gray-900 text-center mb-6">
               {formState.showOtpSection ? 'Verify Your Email' : "Let's get started"}
             </h2>
@@ -451,12 +458,12 @@ const OrganizerSignup = () => {
       <div className="min-h-screen bg-gray-100 flex items-center justify-center p-6">
         <div className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-2xl">
           <div className="mb-6">
-            <div className="flex justify-between items-center mb-4">
+            <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <span className="text-gray-600">Email</span>
-              <div className="flex items-center space-x-2">
-                <span className="font-medium">{formData.email}</span>
-                <span className="px-3 py-1 bg-green-100 text-green-600 text-xs rounded-full flex items-center">
-                  <CheckCircle className="w-3 h-3 mr-1" />
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="break-all font-medium text-sm">{formData.email}</span>
+                <span className="flex items-center rounded-full bg-green-100 px-3 py-1 text-xs text-green-600">
+                  <CheckCircle className="mr-1 h-3 w-3" />
                   email verified
                 </span>
               </div>

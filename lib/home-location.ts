@@ -1,5 +1,5 @@
 import { NEARBY_COUNTRY_CODES } from "@/lib/browse-geo"
-import { ISO_COUNTRY_ALIASES } from "@/lib/country-data"
+import { countryNameFromCode, ISO_COUNTRY_ALIASES } from "@/lib/country-data"
 import { resolveCountryForCityName } from "@/lib/city-country"
 
 export { ISO_COUNTRY_ALIASES } from "@/lib/country-data"
@@ -94,7 +94,8 @@ export function buildResolvedHomeLocation(input: {
 }): ResolvedHomeLocation {
   const city = input.city?.trim() || null
   const countryCode = input.countryCode?.trim().toUpperCase() || null
-  const countryName = input.countryName?.trim() || null
+  const countryName =
+    input.countryName?.trim() || countryNameFromCode(countryCode) || null
   const nearbyCountryCodes = countryCode ? (NEARBY_COUNTRY_CODES[countryCode] ?? []) : []
   const locationQuery = city || countryName || null
   const displayLabel =

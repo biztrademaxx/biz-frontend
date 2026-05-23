@@ -59,7 +59,7 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
-  const defaultImage = "/city/c4.jpg"
+  const defaultImage = ""
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -300,12 +300,18 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
                 <div className="flex flex-col h-full">
                   {/* Image Section - Smaller and Full Width */}
                   <div className="relative w-full h-48 bg-gray-100 overflow-hidden">
-                    <Image
-                      src={eventImage}
-                      alt={event.title}
-                      fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
+                    {eventImage?.trim() ? (
+                      <Image
+                        src={eventImage.trim()}
+                        alt={event.title}
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 text-sm text-slate-500">
+                        No image
+                      </div>
+                    )}
 
                     {/* Overlay Gradient for better text readability */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />

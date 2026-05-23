@@ -277,21 +277,21 @@ export default function FooterChatBot() {
             onClick={() => setOpen(true)}
             whileHover={{ scale: 1.03, y: -2 }}
             whileTap={{ scale: 0.98 }}
-            className="pointer-events-auto flex w-max max-w-[min(13rem,calc(100vw-2rem))] items-center gap-2 rounded-full border border-white/25 bg-gradient-to-r from-[#5b21b6] via-[#002c71] to-[#0d9488] py-1.5 pl-1.5 pr-3 text-left text-white shadow-[0_12px_40px_-8px_rgba(0,44,113,0.55)] backdrop-blur-md transition-[box-shadow] hover:shadow-[0_16px_48px_-6px_rgba(0,44,113,0.65)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/80"
+            className="text-black pointer-events-auto flex w-max max-w-[min(13rem,calc(100vw-2rem))] items-center gap-2 rounded-full border border-gray-200/25 bg-white py-1.5 pl-1.5 pr-3 text-left "
             aria-expanded={false}
             aria-haspopup="dialog"
             aria-label="Open Chat With Bizz"
           >
-            <AnimatedBizzBot size={36} className="drop-shadow-sm" />
+            <AnimatedBizzBot size={80} className="drop-shadow-sm" />
             <div className="min-w-0 max-w-[8.75rem] shrink">
               <div className="flex items-center gap-1.5">
                 <span className="text-xs font-semibold tracking-tight sm:text-sm">Chat With Bizz</span>
                 <span className="relative flex h-2.5 w-2.5 shrink-0">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-400 ring-2 ring-white/30" />
+                  {/* <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" /> */}
+                  {/* <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-400 ring-2 ring-white/30" /> */}
                 </span>
               </div>
-              <p className="text-[10px] leading-snug text-white/85 sm:text-[11px]">Events, venues &amp; tips — ask anything.</p>
+              <p className="text-[10px] leading-snug text-black/85 sm:text-[11px]">Events, venues &amp; tips — ask anything.</p>
             </div>
           </motion.button>
         </motion.div>

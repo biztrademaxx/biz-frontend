@@ -392,7 +392,7 @@ export default function AddVenue({ organizerId, onVenueChange }: AddVenueProps) 
                     <CardContent className="p-4">
                       <div className="flex items-start gap-4">
                         <Avatar className="w-16 h-16">
-                          <AvatarImage src={venue.avatar || "/city/c4.jpg"} />
+                          <AvatarImage src={venue.avatar } />
                           <AvatarFallback>
                             {venue.firstName[0]}
                             {venue.lastName[0]}

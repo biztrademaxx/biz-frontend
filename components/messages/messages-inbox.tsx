@@ -122,15 +122,33 @@ function ContactAvatar({
   online?: boolean
   size?: number
 }) {
+  const url = src?.trim()
+  const initials = alt
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((p) => p[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase()
   return (
     <div className="relative shrink-0">
-      <Image
-        src={src || "/city/c4.jpg"}
-        alt={alt}
-        width={size}
-        height={size}
-        className="rounded-full object-cover ring-2 ring-background shadow-sm"
-      />
+      {url ? (
+        <Image
+          src={url}
+          alt={alt}
+          width={size}
+          height={size}
+          className="rounded-full object-cover ring-2 ring-background shadow-sm"
+        />
+      ) : (
+        <div
+          className="flex items-center justify-center rounded-full bg-slate-200 text-xs font-semibold text-slate-600 ring-2 ring-background"
+          style={{ width: size, height: size }}
+          aria-hidden
+        >
+          {initials || "?"}
+        </div>
+      )}
       {online && (
         <span
           className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-background bg-emerald-500"
