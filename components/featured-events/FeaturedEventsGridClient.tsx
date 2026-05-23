@@ -46,8 +46,7 @@ function FeaturedEventCard({ event }: { event: FeaturedEventPayload }) {
   const labels = featuredEventCategoryLabels(event).slice(0, 3)
 
   return (
-    <div className="overflow-hidden rounded-sm border border-[#001a48]/35  p-2 shadow-[0_3px_12px_rgba(15,23,42,0.08)] transition-shadow hover:shadow-[0_6px_18px_rgba(15,23,42,0.12)]">
-      <Link href={href} className="block cursor-pointer">
+    <div className="flex h-full min-h-[220px] flex-col overflow-hidden rounded-lg border border-[#2563EB] bg-white p-3 shadow-[0_8px_16px_-10px_rgba(0,0,0,0.18)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_12px_22px_-10px_rgba(0,0,0,0.22)]">      <Link href={href} className="block cursor-pointer">
         <div className="text-sm font-medium leading-snug text-gray-800">{formattedDate}</div>
         <div className="mt-1 flex w-full justify-between gap-2">
           <div className="flex min-w-0 flex-1 flex-col">

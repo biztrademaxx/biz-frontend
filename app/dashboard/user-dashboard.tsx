@@ -706,4 +706,4 @@ function visitorCollapsedIconClass(collapsed: boolean, activeSection: string, me
     "h-[18px] w-[18px] shrink-0",
     collapsed && isVisitorMenuGroupActive(activeSection, menuId) ? "text-[#004A96]" : "text-white",
   )
-}
+} 

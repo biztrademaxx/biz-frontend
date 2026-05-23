@@ -74,7 +74,7 @@ export default function Navbar() {
                 alt="BizTradeFairs.com"
                 width={160}
                 height={50}
-                className="h-42 w-auto"
+                className="h-20 w-auto"
               />
             </Link>
 

@@ -5,8 +5,7 @@ import type { BrowseByCountryServerPayload } from "@/lib/browse-by-country/types
 import { countryEventsCountLabel } from "./utils/country-events-count-label"
 
 const browseCardClass =
-  "group flex w-full min-h-0 cursor-pointer flex-col rounded-md border border-[#001a48]/35  bg-white px-3 py-3.5 text-left shadow-sm transition-shadow duration-200 hover:border-gray-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-
+  "group flex w-full min-h-[120px] cursor-pointer flex-col rounded-lg border border-[#2563EB] bg-white px-3 py-3.5 text-left shadow-[0_8px_16px_-10px_rgba(0,0,0,0.18)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_12px_22px_-10px_rgba(0,0,0,0.22)] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
 const browseGridClass =
   "grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-6 md:gap-3 lg:gap-4"
 
@@ -34,7 +33,7 @@ export default function BrowseByCountryGridClient({
                 onClick={() => router.push(`/event?country=${encodeURIComponent(country.name)}`)}
                 className={browseCardClass}
               >
-                <div className="flex min-w-0 flex-col items-start gap-2">
+                <div className="flex h-full min-w-0 flex-col items-start gap-2">
                   <div className="flex h-7 w-11 shrink-0 items-center justify-start overflow-hidden rounded-none">
                     {country.flag?.trim() ? (
                       <img
@@ -48,7 +47,7 @@ export default function BrowseByCountryGridClient({
                       </span>
                     )}
                   </div>
-                  <div className="w-full min-w-0 text-left leading-tight">
+                  <div className="mt-auto w-full min-w-0 text-left leading-tight">
                     <h3 className="line-clamp-2 text-sm font-bold text-gray-900">{country.name}</h3>
                     <p className="mt-1 text-xs font-normal text-gray-500">{countLabel}</p>
                   </div>

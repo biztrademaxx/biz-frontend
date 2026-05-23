@@ -173,10 +173,10 @@ export function BrowseByCountrySkeleton() {
         </div>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-6 md:gap-3 lg:gap-4">
           {Array.from({ length: 12 }).map((_, i) => (
-            <div key={i} className="rounded-md border border-gray-200 bg-white px-3 py-3.5 shadow-sm">
-              <div className="flex min-w-0 flex-col items-start gap-2">
+            <div key={i} className="min-h-[120px] rounded-lg border border-[#2563EB] bg-white px-3 py-3.5 shadow-[0_8px_16px_-10px_rgba(0,0,0,0.18)]">
+              <div className="flex h-full min-w-0 flex-col items-start gap-2">
                 <div className="home-shimmer h-7 w-11 shrink-0 rounded-none" />
-                <div className="w-full min-w-0">
+                <div className="mt-auto w-full min-w-0">
                   <div className="home-shimmer h-3.5 w-[85%] rounded" />
                   <div className="home-shimmer mt-2 h-3 w-[55%] rounded" />
                 </div>
@@ -199,10 +199,10 @@ export function BrowseByCitySkeleton() {
         </div>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-6 md:gap-3 lg:gap-4">
           {Array.from({ length: 12 }).map((_, i) => (
-            <div key={i} className="rounded-md border border-gray-200 bg-white px-3 py-3.5 shadow-sm">
-              <div className="flex min-w-0 flex-col items-start gap-2">
+            <div key={i} className="min-h-[120px] rounded-lg border border-[#2563EB] bg-white px-3 py-3.5 shadow-[0_8px_16px_-10px_rgba(0,0,0,0.18)]">
+              <div className="flex h-full min-w-0 flex-col items-start gap-2">
                 <div className="home-shimmer h-10 w-10 shrink-0 rounded-none" />
-                <div className="w-full min-w-0">
+                <div className="mt-auto w-full min-w-0">
                   <div className="home-shimmer h-3.5 w-[85%] rounded" />
                   <div className="home-shimmer mt-2 h-3 w-[55%] rounded" />
                 </div>
