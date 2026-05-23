@@ -1,14 +1,17 @@
 /**
- * Image URL helpers — no stock `/city/c4.jpg` placeholder (removed).
+ * Image URL helpers — legacy stock paths are treated as “no image”.
  */
 
-/** Legacy dummy path still stored on some records; treat as missing. */
-export const LEGACY_DUMMY_IMAGE_PATH = ""
+/** Paths that were used as placeholders; never treat as a real event photo. */
+const LEGACY_PLACEHOLDER_PATHS = ["/images/gpex.jpg", "/city/c4.jpg"] as const
+
+/** @deprecated Use `isLegacyDummyImage` — kept for callers that imported the constant. */
+export const LEGACY_DUMMY_IMAGE_PATH = "/images/gpex.jpg"
 
 export function isLegacyDummyImage(url: string | null | undefined): boolean {
   const t = url?.trim()
-  if (!t) return false
-  return t === LEGACY_DUMMY_IMAGE_PATH || t.endsWith(LEGACY_DUMMY_IMAGE_PATH)
+  if (!t) return true
+  return LEGACY_PLACEHOLDER_PATHS.some((p) => t === p || t.endsWith(p))
 }
 
 /** Returns a trimmed URL or `undefined` when empty / legacy dummy. */

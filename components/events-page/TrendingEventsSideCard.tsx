@@ -30,21 +30,12 @@ export function TrendingEventsSideCard({ event, imageUrl }: { event: Event; imag
           <p className="line-clamp-2 pr-1 text-sm font-bold leading-snug text-[#1F5D84] group-hover:underline">
             {subtitle}
           </p>
-          {imageUrl?.trim() ? (
-            /* eslint-disable-next-line @next/next/no-img-element */
-            <img
-              src={imageUrl.trim()}
-              alt={event.title}
-              className="absolute right-0 top-0 h-12 w-12 rounded-sm border border-gray-100 object-cover"
-            />
-          ) : (
-            <div
-              className="absolute right-0 top-0 flex h-12 w-12 items-center justify-center rounded-sm border border-gray-100 bg-slate-100 text-[10px] text-slate-500"
-              aria-hidden
-            >
-              —
-            </div>
-          )}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={imageUrl}
+            alt={event.title}
+            className="absolute right-0 top-0 h-12 w-12 rounded-sm border border-gray-100 object-cover bg-slate-50"
+          />
         </div>
         <p className="mt-1 text-xs font-semibold leading-tight text-gray-900 line-clamp-1">
           {trendingLocationLine(event)}

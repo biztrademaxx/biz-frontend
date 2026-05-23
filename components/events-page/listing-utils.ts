@@ -1,5 +1,7 @@
+import { DEFAULT_EVENT_IMAGE } from "@/lib/default-event-image"
 import { avatarUrlFromRecord } from "@/lib/user-avatar-url"
 import { EVENT_VENUE_LOCATION_PENDING } from "@/lib/event-location-copy"
+import { sanitizeImageUrl } from "@/lib/placeholder"
 import { resolvedVerifiedBadgeImageUrl } from "@/lib/verified-event-badge"
 import type { ListingFollowerFace } from "@/components/event-listing/EventCardFollowStrip"
 import type { Event } from "./listing-types"
@@ -175,9 +177,10 @@ export function normalizeEventImageUrls(event: Record<string, unknown>): string[
       const u = (raw as { url: unknown }).url
       if (typeof u === "string" && u.trim()) s = u.trim()
     }
-    if (s && !seen.has(s)) {
-      seen.add(s)
-      out.push(s)
+    const clean = s ? sanitizeImageUrl(s) : undefined
+    if (clean && !seen.has(clean)) {
+      seen.add(clean)
+      out.push(clean)
     }
   }
 
@@ -191,19 +194,14 @@ export function normalizeEventImageUrls(event: Record<string, unknown>): string[
   return out
 }
 
+/** Primary image for cards: real event URL only, or default when none exist. */
 export function getListingEventPrimaryImage(
-  event: { images?: unknown; image?: unknown },
+  event: { images?: unknown; image?: unknown; bannerImage?: unknown; thumbnailImage?: unknown },
   defaultImage = LISTING_DEFAULT_EVENT_IMAGE,
 ): string {
-  const image = (event as { images?: { url?: string }[] }).images?.[0] ?? event.image
-  if (typeof image === "string" && image.trim()) {
-    return image.trim()
-  }
-  if (image && typeof image === "object" && "url" in image) {
-    const u = (image as { url?: string }).url
-    if (typeof u === "string" && u.trim()) return u.trim()
-  }
-  return defaultImage
+  const urls = normalizeEventImageUrls(event as Record<string, unknown>)
+  if (urls.length > 0) return urls[0]
+  return defaultImage || DEFAULT_EVENT_IMAGE
 }
 
 export function formatListingDateShort(dateString: string): string {
@@ -371,7 +369,7 @@ export function mapApiEventToListingEvent(event: any): Event {
     featured: e.tags?.includes("featured") || false,
     categories,
     tags: e.tags || [],
-    images: e.images || ["/images/gpex.jpg"],
+    images: normalizeEventImageUrls(event as Record<string, unknown>).map((url) => ({ url })),
     pricing: e.pricing || { general: 0 },
     rating: { average: avg },
     totalReviews: typeof e?.totalReviews === "number" ? e.totalReviews : undefined,

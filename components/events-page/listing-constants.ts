@@ -1,3 +1,5 @@
+import { DEFAULT_EVENT_IMAGE } from "@/lib/default-event-image"
+
 /**
  * Listing hero gradient — matches navbar navy system: deep hover blue → primary #002C71 → slate #1F5D84
  * (same as `navbar.tsx` `bg-[#002C71]` / `hover:bg-[#001a48]` and listing link color #1F5D84).
@@ -13,8 +15,8 @@ export const EVENTS_LISTING_BANNER_GRADIENT_OVER_IMAGE =
 
 export const EVENTS_API = "/api/events"
 
-/** No stock image — listing UI uses gradient/initials when missing. */
-export const LISTING_DEFAULT_EVENT_IMAGE = ""
+/** Fallback image for listing / trending cards when event has no media. */
+export const LISTING_DEFAULT_EVENT_IMAGE = DEFAULT_EVENT_IMAGE
 
 /** Regular listing events shown above the inline featured ad on each page. */
 export const EVENTS_LISTING_PAGE_CHUNK_BEFORE_FEATURED_AD = 5

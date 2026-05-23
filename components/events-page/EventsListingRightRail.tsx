@@ -54,18 +54,12 @@ export function EventsListingRightRail({ trendingSidebarEvents, featuredFirst, o
         {featuredFirst && (
           <Card className="bg-white shadow-xl border border-gray-300 rounded-sm overflow-hidden">
             <div className="relative aspect-video">
-              {getListingEventPrimaryImage(featuredFirst)?.trim() ? (
-                /* eslint-disable-next-line @next/next/no-img-element */
-                <img
-                  src={getListingEventPrimaryImage(featuredFirst).trim()}
-                  alt={featuredFirst.title}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 text-sm text-slate-500">
-                  No image
-                </div>
-              )}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={getListingEventPrimaryImage(featuredFirst)}
+                alt={featuredFirst.title}
+                className="w-full h-full object-cover"
+              />
               <div className="absolute top-3 right-3 bg-white rounded-full p-2 shadow-lg">
                 <Heart className="w-5 h-5 text-gray-700" />
               </div>
