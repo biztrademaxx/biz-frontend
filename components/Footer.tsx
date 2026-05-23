@@ -20,9 +20,38 @@ import {
   footerSubtleTextClass,
 } from "@/lib/brand-shell-theme"
 
-const Footer: React.FC = () => {
-  const footerLogoSrc = getFooterLogoSrc()
+interface FooterCategory {
+  id: string
+  name: string
+  eventCount: number
+}
+
+interface FooterProps {
+  categories?: FooterCategory[]
+}
+
+const Footer: React.FC<FooterProps> = ({ categories }) => {  const footerLogoSrc = getFooterLogoSrc()
   const footerLogoUnoptimized = isBrandLogoRemoteUrl(footerLogoSrc)
+
+
+  const fallbackCategories: FooterCategory[] = [
+    { id: "1", name: "Auto & Automotive", eventCount: 1200 },
+    { id: "2", name: "Miscellaneous", eventCount: 1100 },
+    { id: "3", name: "Packing & Packaging", eventCount: 1000 },
+    { id: "4", name: "Agriculture & Forestry", eventCount: 950 },
+    // { id: "5", name: "Building & Construction", eventCount: 900 },
+  ]
+
+  const topCategories = (
+    categories && categories.length > 0
+      ? [...categories]
+        .sort(
+          (a: FooterCategory, b: FooterCategory) =>
+            b.eventCount - a.eventCount
+        )
+        .slice(0, 4)
+      : fallbackCategories
+  )
 
   return (
     <footer className={footerShellClass}>
@@ -123,11 +152,7 @@ const Footer: React.FC = () => {
                   Find Speakers
                 </Link>
               </li>
-              <li>
-                <Link href="/event" className={footerLinkClass}>
-                  Exhibitor Services
-                </Link>
-              </li>
+          
             </ul>
           </div>
 
@@ -160,41 +185,16 @@ const Footer: React.FC = () => {
           <div className="lg:col-span-1">
             <h4 className={footerHeadingClass}>Event Categories</h4>
             <ul className="space-y-3">
-              <li>
-                <Link href="/event?category=Education" className={footerLinkClass}>
-                  Education Training
-                </Link>
-              </li>
-              <li>
-                <Link href="/event?category=Medical" className={footerLinkClass}>
-                  Medical & Pharma
-                </Link>
-              </li>
-              <li>
-                <Link href="/event?category=Technology" className={footerLinkClass}>
-                  IT & Technology
-                </Link>
-              </li>
-              <li>
-                <Link href="/event?category=Finance" className={footerLinkClass}>
-                  Banking & Finance
-                </Link>
-              </li>
-              <li>
-                <Link href="/event?category=Business" className={footerLinkClass}>
-                  Business Services
-                </Link>
-              </li>
-              <li>
-                <Link href="/event?category=Industrial%20Engineering" className={footerLinkClass}>
-                  Industrial Engineering
-                </Link>
-              </li>
-              <li>
-                <Link href="/event?category=Building%20%26%20Construction" className={footerLinkClass}>
-                  Building & Construction
-                </Link>
-              </li>
+              {topCategories.map((category) => (
+                <li key={category.id}>
+                  <Link
+                    href={`/event?category=${encodeURIComponent(category.name)}`}
+                    className={footerLinkClass}
+                  >
+                    {category.name}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 
@@ -217,10 +217,11 @@ const Footer: React.FC = () => {
                 </Link>
               </li>
               <li>
-                <Link href="/refund-policy" className={footerLinkClass}>
-                  Refund Policy
+                <Link href="/contact" className={footerLinkClass}>
+                  Refund an Issue
                 </Link>
               </li>
+            
             </ul>
           </div>
 
@@ -242,6 +243,12 @@ const Footer: React.FC = () => {
                   Cookie Policy
                 </Link>
               </li>
+              
+              <li>
+                <Link href="/refund-policy" className={footerLinkClass}>
+                  Refund Policy
+                </Link>
+              </li>
             </ul>
           </div>
         </div>
@@ -254,19 +261,18 @@ const Footer: React.FC = () => {
               Bengaluru – 560020, India, Support-+91-9148319993 | CIN: U74999KA2019PTC123194
             </p>
           </div>
+          <div className={`border-t ${footerDividerClass} pt-6 max-w-10xl`}>
+            <div className="flex flex-col gap-3 text-xs leading-relaxed md:flex-row md:items-center md:justify-between">
+              <p className={` ${footerSubtleTextClass}`}>
+                ** All event names, logos, and brands are property of their respective owners. All company,
+                event and service names used in this website are for identification purposes only.
+                Use of these names, logos, and brands does not imply endorsement.
+              </p>
 
-          <div className="mb-6">
-            <p className={`text-xs leading-relaxed ${footerSubtleTextClass}`}>
-              ** All event names, logos, and brands are property of their respective owners. All company, event and
-              service names used in this website are for identification purposes only. Use of these names, logos, and
-              brands does not imply endorsement.
-            </p>
-          </div>
-
-          <div className={`border-t ${footerDividerClass} pt-10`} />
-
-          <div className={`text-sm ${footerMutedTextClass}`}>
-            Copyright © {new Date().getFullYear()} Maxx Business Media Pvt Ltd All rights reserved
+              <div className={`shrink-0  ${footerSubtleTextClass}`}>
+                Copyright © {new Date().getFullYear()} Maxx Business Media Pvt Ltd
+              </div>
+            </div>
           </div>
         </div>
       </div>
