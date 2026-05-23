@@ -2,7 +2,6 @@
 
 import Image from "next/image"
 import type React from "react"
-import { AppImage } from "@/components/app-image"
 import Link from "next/link"
 import {
   FaInstagramSquare,
@@ -43,18 +42,6 @@ const Footer: React.FC<FooterProps> = ({ categories }) => {
       : fallbackCategories
 
   return (
-<<<<<<< HEAD
-    <footer className={footerShellClass}>
-      <div className="pointer-events-none absolute inset-0 z-0" aria-hidden>
-        <AppImage
-          src="/world.svg"
-          alt=""
-          width={2000}
-          height={857}
-          className="absolute -bottom-6 right-0 h-[clamp(220px,42vw,520px)] w-auto max-w-[min(95vw,920px)] object-contain object-right-bottom opacity-25 sm:-bottom-10 lg:h-[min(55vh,560px)]"
-        />
-        <div className={footerMapGradientClass} />
-=======
     <>
       {/* TOP TRUST BAR */}
       <div className="w-full border-b border-gray-200 bg-white">
@@ -101,7 +88,6 @@ const Footer: React.FC<FooterProps> = ({ categories }) => {
             </div>
           </div>
         </div>
->>>>>>> 13f278a4e449034cbe373006f8c2d39357dc091b
       </div>
 
       {/* ══════════════════════════════════════════
@@ -116,21 +102,15 @@ const Footer: React.FC<FooterProps> = ({ categories }) => {
       <footer style={{ backgroundColor: "#02122b", position: "relative", overflow: "hidden" }}>
 
         {/* IMAGE — absolute, full footer, no gradient at all */}
-        <img
-          src="/Organizers/max3.png"
-          alt=""
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-            objectPosition: "center top",
-            opacity: 1,
-            zIndex: 0,
-          }}
-        />
+        <div className="pointer-events-none absolute inset-0 z-0" aria-hidden>
+          <Image
+            src="/Organizers/max3.png"
+            alt=""
+            fill
+            sizes="100vw"
+            className="object-cover object-top"
+          />
+        </div>
 
         {/* SECTION 1 OVERLAY — only covers the nav columns area, not the gap */}
         {/* We use a div that is position:absolute but only covers top portion */}

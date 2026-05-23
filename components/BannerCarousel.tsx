@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
+import { AppImage } from "@/components/app-image"
 
 interface ImageBannerCarouselProps {
   images: string[]
@@ -16,48 +17,42 @@ export default function ImageBannerCarousel({
 }: ImageBannerCarouselProps) {
   const [current, setCurrent] = useState(0)
 
-  // autoplay
   useEffect(() => {
-    if (!autoPlay) return
+    if (!autoPlay || images.length === 0) return
     const timer = setInterval(() => {
       setCurrent((prev) => (prev + 1) % images.length)
     }, interval)
     return () => clearInterval(timer)
   }, [autoPlay, interval, images.length])
 
+  if (images.length === 0) return null
+
   return (
     <div
-      className="relative w-full overflow-hidden shadow max-w-6xl mx-auto"
+      className="relative mx-auto w-full max-w-6xl overflow-hidden shadow"
       style={{
-        height: "130px", // reduced height (slimmer look)
-        aspectRatio: "16/5", // slightly flatter aspect ratio for balance
+        height: "130px",
+        aspectRatio: "16/5",
       }}
     >
       <AnimatePresence mode="wait">
-        <motion.img
+        <motion.div
           key={current}
-          src={images[current]}
-          alt={`banner-${current}`}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.5 }}
-          className="absolute inset-0 w-full h-full object-cover"
-        />
-      </AnimatePresence>
-
-      {/* Dots */}
-      {/* <div className="absolute bottom-2 w-full flex justify-center gap-2">
-        {images.map((_, index) => (
-          <button
-            key={index}
-            onClick={() => setCurrent(index)}
-            className={`w-3 h-3 rounded-full ${
-              current === index ? "bg-black" : "bg-black/40"
-            }`}
+          className="absolute inset-0"
+        >
+          <AppImage
+            src={images[current]}
+            alt={`banner-${current + 1}`}
+            fill
+            sizes="(max-width: 1152px) 100vw, 1152px"
+            className="object-cover"
           />
-        ))}
-      </div> */}
+        </motion.div>
+      </AnimatePresence>
     </div>
   )
 }
