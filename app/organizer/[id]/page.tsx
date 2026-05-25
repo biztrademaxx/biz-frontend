@@ -30,6 +30,7 @@ import { eventPublicPath } from "@/lib/event-path"
 import { getPublicProfilePath } from "@/lib/profile-path"
 import { formatOrganizerLocationLine } from "@/lib/organizer-location-display"
 import OrganizerPageSkeleton from "@/components/OrganizerPageSkeleton"
+import { getEventDisplayImageUrl } from "@/lib/default-event-image"
 
 interface Organizer {
   id: string
@@ -541,7 +542,7 @@ export default function OrganizerPage() {
                         <Link href={eventPublicPath(event)} key={event.id}>
                           <div className="flex gap-4 p-4 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
                             <Image
-                              src={event.bannerImage }
+                              src={getEventDisplayImageUrl(event)}
                               alt={event.title}
                               width={80}
                               height={60}
@@ -642,7 +643,7 @@ export default function OrganizerPage() {
                     <div className="p-0">
                       <div className="relative">
                         <Image
-                          src={event.bannerImage }
+                          src={getEventDisplayImageUrl(event)}
                           alt={event.title}
                           width={400}
                           height={200}
