@@ -764,7 +764,7 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
               className={`${NAVBAR_LOGO_COMPACT_CLASSNAME} dark:brightness-110 dark:contrast-95`}
               unoptimized={sidebarLogo.unoptimized}
             />
-            <span className="truncate text-sm font-semibold tracking-tight text-foreground">BizTradeFairs</span>
+            {/* <span className="truncate text-sm font-semibold tracking-tight text-foreground">BizTradeFairs</span> */}
           </div>
         </div>
 
