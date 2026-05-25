@@ -1,6 +1,6 @@
 "use client"
 
-import VenueManagement from "../venue-management"
+import VenueManagement from "./VenueManagementPage"
 
 export default function VenuesPage({
   initialTab,
