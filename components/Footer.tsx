@@ -10,6 +10,13 @@ import {
   FaLinkedin,
   FaYoutube,
 } from "react-icons/fa"
+import {
+  Globe,
+  BadgeCheck,
+  RefreshCw,
+  Headphones,
+  ShieldCheck,
+} from "lucide-react";
 
 import FooterChatBot from "@/components/footer-chat-bot"
 import { getFooterLogoSrc, isBrandLogoRemoteUrl } from "@/lib/brand-logo"
@@ -33,73 +40,145 @@ const Footer: React.FC<FooterProps> = ({ categories }) => {
     { id: "2", name: "Industrial Engineering", eventCount: 1100 },
     { id: "3", name: "Building & Construction", eventCount: 1000 },
     { id: "4", name: "IT & Technology", eventCount: 950 },
-    { id: "5", name: "Healthcare & Pharma", eventCount: 900 },
+    // { id: "5", name: "Healthcare & Pharma", eventCount: 900 },
   ]
 
   const topCategories =
     categories && categories.length > 0
-      ? [...categories].sort((a, b) => b.eventCount - a.eventCount).slice(0, 5)
+      ? [...categories]
+        .sort((a, b) => b.eventCount - a.eventCount)
+        .slice(0, 5)
       : fallbackCategories
 
   return (
     <>
       {/* TOP TRUST BAR */}
-      <div className="w-full border-b border-gray-200 bg-white">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-6 py-4 lg:px-10">
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full border border-blue-100 bg-blue-50">
-              <svg className="h-5 w-5 text-blue-700" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+      <div className="w-full bg-white px-3 py-5">
+        <div className="mx-auto flex min-h-[120px] max-w-7xl flex-wrap items-center justify-between gap-8 rounded-2xl border border-gray-200 bg-white px-8 py-7 shadow-sm">
+
+          {/* Trusted */}
+          <div className="flex items-center gap-4">
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#F3F7FF]">
+              <svg
+                className="h-6 w-6 text-[#1E63E9]"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                viewBox="0 0 24 24"
+              >
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                <path d="M9 12l2 2 4-4" />
               </svg>
             </div>
+
             <div className="leading-tight">
-              <p className="text-[13px] font-semibold text-gray-900">Trusted by Organizers</p>
-              <p className="text-[13px] text-gray-500">Worldwide</p>
+              <p className="text-[15px] font-semibold text-[#1A1A1A]">
+                Trusted by Organizers
+              </p>
+
+              <p className="mt-1 text-[14px] text-[#5F6B7A]">
+                Worldwide
+              </p>
             </div>
           </div>
-          <div className="hidden h-10 w-px bg-gray-200 lg:block" />
-          <div className="flex items-center gap-3">
-            <svg className="h-7 w-7 text-blue-600" fill="none" stroke="currentColor" strokeWidth={1.6} viewBox="0 0 24 24">
-              <rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
+
+          {/* Divider */}
+          <div className="hidden h-14 w-px bg-gray-200 lg:block" />
+
+          {/* Events */}
+          <div className="flex items-center gap-4">
+            <svg
+              className="h-8 w-8 text-[#1E63E9]"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={1.8}
+              viewBox="0 0 24 24"
+            >
+              <rect x="3" y="4" width="18" height="18" rx="2" />
+              <line x1="8" y1="2" x2="8" y2="6" />
+              <line x1="16" y1="2" x2="16" y2="6" />
+              <line x1="3" y1="10" x2="21" y2="10" />
             </svg>
-            <div>
-              <p className="text-[20px] font-bold leading-tight text-blue-600">10,000+</p>
-              <p className="text-[12px] text-gray-500">Events Listed</p>
+
+            <div className="leading-tight">
+              <p className="text-[28px] font-bold text-[#1E63E9]">
+                10,000+
+              </p>
+
+              <p className="mt-1 text-[14px] text-[#5F6B7A]">
+                Events Listed
+              </p>
             </div>
           </div>
-          <div className="hidden h-10 w-px bg-gray-200 lg:block" />
-          <div className="flex items-center gap-3">
-            <svg className="h-7 w-7 text-blue-600" fill="none" stroke="currentColor" strokeWidth={1.6} viewBox="0 0 24 24">
-              <rect x="2" y="2" width="9" height="9" rx="1" /><rect x="13" y="2" width="9" height="9" rx="1" /><rect x="2" y="13" width="9" height="9" rx="1" /><rect x="13" y="13" width="9" height="9" rx="1" />
+
+          {/* Divider */}
+          <div className="hidden h-14 w-px bg-gray-200 lg:block" />
+
+          {/* Organizers */}
+          <div className="flex items-center gap-4">
+            <svg
+              className="h-8 w-8 text-[#1E63E9]"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={1.8}
+              viewBox="0 0 24 24"
+            >
+              <path d="M4 20V10" />
+              <path d="M10 20V4" />
+              <path d="M16 20v-8" />
+              <path d="M22 20V7" />
             </svg>
-            <div>
-              <p className="text-[20px] font-bold leading-tight text-blue-600">5,000+</p>
-              <p className="text-[12px] text-gray-500">Verified Organizers</p>
+
+            <div className="leading-tight">
+              <p className="text-[28px] font-bold text-[#1E63E9]">
+                5,000+
+              </p>
+
+              <p className="mt-1 text-[14px] text-[#5F6B7A]">
+                Verified Organizers
+              </p>
             </div>
           </div>
-          <div className="hidden h-10 w-px bg-gray-200 lg:block" />
-          <div className="flex items-center gap-3">
-            <svg className="h-7 w-7 text-blue-600" fill="none" stroke="currentColor" strokeWidth={1.6} viewBox="0 0 24 24">
-              <circle cx="12" cy="12" r="10" /><line x1="2" y1="12" x2="22" y2="12" /><path d="M12 2a15 15 0 014 10 15 15 0 01-4 10 15 15 0 01-4-10 15 15 0 014-10z" />
+
+          {/* Divider */}
+          <div className="hidden h-14 w-px bg-gray-200 lg:block" />
+
+          {/* Countries */}
+          <div className="flex items-center gap-4">
+            <svg
+              className="h-8 w-8 text-[#1E63E9]"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={1.8}
+              viewBox="0 0 24 24"
+            >
+              <circle cx="12" cy="12" r="9" />
+              <path d="M3 12h18" />
+              <path d="M12 3c3 3 3 15 0 18" />
+              <path d="M12 3c-3 3-3 15 0 18" />
             </svg>
-            <div>
-              <p className="text-[20px] font-bold leading-tight text-blue-600">120+</p>
-              <p className="text-[12px] text-gray-500">Countries Covered</p>
+
+            <div className="leading-tight">
+              <p className="text-[28px] font-bold text-[#1E63E9]">
+                120+
+              </p>
+
+              <p className="mt-1 text-[14px] text-[#5F6B7A]">
+                Countries Covered
+              </p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* ══════════════════════════════════════════
-          MAIN FOOTER
-          Structure (top to bottom):
-          [1] Nav columns  — image behind, light dark overlay
-          [2] Trust strip  — semi-dark band
-          [3] PURE GAP     — zero overlay, raw image shows
-          [4] Registered   — solid dark band
-          [5] Copyright    — solid dark band
-      ══════════════════════════════════════════ */}
-      <footer style={{ backgroundColor: "#02122b", position: "relative", overflow: "hidden" }}>
+      {/* MAIN FOOTER */}
+      <footer
+        style={{
+          backgroundColor: "#02122b",
+          position: "relative",
+          overflow: "hidden",
+        }}
+      >
 
         {/* IMAGE — absolute, full footer, no gradient at all */}
         <div className="pointer-events-none absolute inset-0 z-0" aria-hidden>
@@ -112,25 +191,22 @@ const Footer: React.FC<FooterProps> = ({ categories }) => {
           />
         </div>
 
-        {/* SECTION 1 OVERLAY — only covers the nav columns area, not the gap */}
-        {/* We use a div that is position:absolute but only covers top portion */}
+
+        {/* SINGLE CLEAN OVERLAY */}
         <div
           style={{
             position: "absolute",
-            top: 0,
-            left: 0,
-            width: "100%",
-            height: "460px", /* roughly height of nav columns section */
-            background: "rgba(0,9,26,0.62)",
+            inset: 0,
+            background: "rgba(2,18,43,0.72)",
             zIndex: 1,
           }}
         />
 
-        {/* All content sits above both layers */}
+        {/* CONTENT */}
         <div style={{ position: "relative", zIndex: 2 }}>
 
-          {/* ── [1] NAV COLUMNS ── */}
-          <div className="mx-auto max-w-7xl px-6 pt-12 pb-12 lg:px-10">
+          {/* NAV SECTION */}
+          <div className="mx-auto max-w-7xl px-6 pt-14 pb-14 lg:px-10">
             <div className="grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
 
               {/* LOGO */}
@@ -140,24 +216,49 @@ const Footer: React.FC<FooterProps> = ({ categories }) => {
                     src={footerLogoSrc}
                     alt="BizTradeFairs.com"
                     width={190}
-                    height={50}
-                    unoptimized={footerLogoUnoptimized ? true : undefined}
-                    className="h-10 w-auto object-contain object-left"
+                    height={100}
+                    unoptimized={
+                      footerLogoUnoptimized ? true : undefined
+                    }
+                    className="h-15 w-auto object-contain object-left"
                   />
                 </Link>
-                <p className="mb-5 text-[12.5px] leading-relaxed text-white/90">
-                  Your global platform to discover, connect and participate in world-class exhibitions and trade fairs.
+
+                <p className="mb-5 text-[14px] leading-relaxed text-white">
+                  Your global platform to discover, connect and participate in
+                  world-class exhibitions and trade fairs.
                 </p>
+
                 <div className="flex items-center gap-2">
                   {[
-                    { href: "https://www.facebook.com/biztradefair/", Icon: FaFacebookSquare },
-                    { href: "https://www.linkedin.com/company/biztradefairs/", Icon: FaLinkedin },
-                    { href: "https://x.com/biztradefair", Icon: FaTwitterSquare },
-                    { href: "https://www.instagram.com/biztradefairs/", Icon: FaInstagramSquare },
-                    { href: "#", Icon: FaYoutube },
+                    {
+                      href: "https://www.facebook.com/biztradefair/",
+                      Icon: FaFacebookSquare,
+                    },
+                    {
+                      href: "https://www.linkedin.com/company/biztradefairs/",
+                      Icon: FaLinkedin,
+                    },
+                    {
+                      href: "https://x.com/biztradefair",
+                      Icon: FaTwitterSquare,
+                    },
+                    {
+                      href: "https://www.instagram.com/biztradefairs/",
+                      Icon: FaInstagramSquare,
+                    },
+                    {
+                      href: "#",
+                      Icon: FaYoutube,
+                    },
                   ].map(({ href, Icon }) => (
-                    <a key={href} href={href} target="_blank" rel="noopener noreferrer"
-                      className="flex h-8 w-8 items-center justify-center rounded-full border border-white/30 text-white/80 transition hover:border-white hover:text-white">
+                    <a
+                      key={href}
+                      href={href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex h-8 w-8 items-center justify-center rounded-full border border-white/30 text-white/80 transition hover:border-white hover:text-white"
+                    >
                       <Icon className="h-[13px] w-[13px]" />
                     </a>
                   ))}
@@ -166,106 +267,280 @@ const Footer: React.FC<FooterProps> = ({ categories }) => {
 
               {/* SERVICES */}
               <div>
-                <h4 className="mb-4 text-[10px] font-bold uppercase tracking-[0.14em] text-white">Services</h4>
+                <h4 className="mb-4 text-[14px] font-bold uppercase tracking-[0.14em] text-white">
+                  Services
+                </h4>
+
                 <ul className="space-y-[9px]">
-                  {[["Find Events", "/event"], ["Event Calendar", "/event"], ["Add Event", "/add-event"], ["For Organizers", "/organizers"], ["For Sponsors", "/sponsors"], ["Exhibition Venues", "/venues"]].map(([label, href]) => (
-                    <li key={label}><Link href={href} className="text-[12.5px] text-white/80 transition hover:text-white">{label}</Link></li>
+                  {[
+                    ["Find Events", "/event"],
+                    ["Event Calendar", "/event"],
+                    // ["Add Event", "/add-event"],
+                    ["For Organizers", "/organizers"],
+                    // ["For Sponsors", "/sponsors"],
+                    ["Exhibition Venues", "/venues"],
+                  ].map(([label, href]) => (
+                    <li key={label}>
+                      <Link
+                        href={href}
+                        className="text-[14px] text-white transition hover:text-white"
+                      >
+                        {label}
+                      </Link>
+                    </li>
                   ))}
                 </ul>
               </div>
 
               {/* COMPANY */}
               <div>
-                <h4 className="mb-4 text-[10px] font-bold uppercase tracking-[0.14em] text-white">Company</h4>
+                <h4 className="mb-4 text-[14px] font-bold uppercase tracking-[0.14em] text-white">
+                  Company
+                </h4>
+
                 <ul className="space-y-[9px]">
-                  {[["About Us", "/about-us"], ["Careers", "/careers"], ["Blogs", "/blog"], ["Press & Media", "/press"], ["Become Organizer", "/become-organizer"], ["Contact Us", "/contact"]].map(([label, href]) => (
-                    <li key={label}><Link href={href} className="text-[12.5px] text-white/80 transition hover:text-white">{label}</Link></li>
+                  {[
+                    ["About Us", "/about-us"],
+                    ["Careers", "/careers"],
+                    // ["Blogs", "/blog"],
+                    // ["Press & Media", "/press"],
+                    ["Become Organizer", "/become-organizer"],
+                    ["Contact Us", "/contact"],
+                  ].map(([label, href]) => (
+                    <li key={label}>
+                      <Link
+                        href={href}
+                        className="text-[14px] text-white transition hover:text-white"
+                      >
+                        {label}
+                      </Link>
+                    </li>
                   ))}
                 </ul>
               </div>
 
               {/* EVENT CATEGORIES */}
               <div>
-                <h4 className="mb-4 text-[10px] font-bold uppercase tracking-[0.14em] text-white">Event Categories</h4>
+                <h4 className="mb-4 text-[14px] font-bold uppercase tracking-[0.14em] text-white">
+                  Event Categories
+                </h4>
+
                 <ul className="space-y-[9px]">
                   {topCategories.map((cat) => (
                     <li key={cat.id}>
-                      <Link href={`/event?category=${encodeURIComponent(cat.name)}`} className="text-[12.5px] text-white/80 transition hover:text-white">{cat.name}</Link>
+                      <Link
+                        href={`/event?category=${encodeURIComponent(cat.name)}`}
+                        className="text-[14px] text-white transition hover:text-white"
+                      >
+                        {cat.name}
+                      </Link>
                     </li>
                   ))}
-                  <li><Link href="/event" className="text-[12.5px] text-white/80 transition hover:text-white">View All Categories</Link></li>
+{/* 
+                  <li>
+                    <Link
+                      href="/event"
+                      className="text-[14px] text-white transition hover:text-white"
+                    >
+                      View All Categories
+                    </Link>
+                  </li> */}
                 </ul>
               </div>
 
-              {/* HELP & SUPPORT */}
+              {/* HELP */}
               <div>
-                <h4 className="mb-4 text-[10px] font-bold uppercase tracking-[0.14em] text-white">Help & Support</h4>
+                <h4 className="mb-4 text-[14px] font-bold uppercase tracking-[0.14em] text-white">
+                  Help & Support
+                </h4>
+
                 <ul className="space-y-[9px]">
-                  {[["FAQ", "/faq"], ["Contact Us", "/contact"], ["Support Center", "/support"], ["How It Works", "/how-it-works"], ["Terms & Conditions", "/terms-conditions"], ["Privacy Policy", "/privacy-policy"]].map(([label, href]) => (
-                    <li key={label}><Link href={href} className="text-[12.5px] text-white/80 transition hover:text-white">{label}</Link></li>
+                  {[
+                    ["FAQ", "/faq"],
+                    ["Contact Us", "/contact"],
+                    ["Support Center", "/support"],
+                    ["Report an Issue", "/contact"],
+                    // ["Terms & Conditions", "/terms-conditions"],
+                    // ["Privacy Policy", "/privacy-policy"],
+                  ].map(([label, href]) => (
+                    <li key={label}>
+                      <Link
+                        href={href}
+                        className="text-[14px] text-white transition hover:text-white"
+                      >
+                        {label}
+                      </Link>
+                    </li>
                   ))}
                 </ul>
               </div>
 
               {/* MORE INFO */}
               <div>
-                <h4 className="mb-4 text-[10px] font-bold uppercase tracking-[0.14em] text-white">More Info</h4>
+                <h4 className="mb-4 text-[14px] font-bold uppercase tracking-[0.14em] text-white">
+                  More Info
+                </h4>
+
                 <ul className="space-y-[9px]">
-                  {[["Terms & Conditions", "/terms-conditions"], ["Privacy Policy", "/privacy-policy"], ["Cookie Policy", "/cookie-policy"], ["Refund Policy", "/refund-policy"]].map(([label, href]) => (
-                    <li key={label}><Link href={href} className="text-[12.5px] text-white/80 transition hover:text-white">{label}</Link></li>
+                  {[
+                    ["Terms & Conditions", "/terms-conditions"],
+                    ["Privacy Policy", "/privacy-policy"],
+                    ["Cookie Policy", "/cookie-policy"],
+                    ["Refund Policy", "/refund-policy"],
+                  ].map(([label, href]) => (
+                    <li key={label}>
+                      <Link
+                        href={href}
+                        className="text-[14px] text-white transition hover:text-white"
+                      >
+                        {label}
+                      </Link>
+                    </li>
                   ))}
                 </ul>
               </div>
-
             </div>
           </div>
 
-          {/* ── [2] TRUST STRIP — semi-dark band, no blur ── */}
-          <div style={{ borderTop: "1px solid rgba(255,255,255,0.18)", borderBottom: "1px solid rgba(255,255,255,0.18)", backgroundColor: "rgba(0,9,26,0.68)" }}>
+          {/* TRUST STRIP */}
+          <div
+            style={{
+              borderTop: "1px solid rgba(255,255,255,0.12)",
+              borderBottom: "1px solid rgba(255,255,255,0.12)",
+              backgroundColor: "rgba(255,255,255,0.04)",
+              backdropFilter: "blur(2px)",
+            }}
+          >
             <div className="mx-auto max-w-7xl px-6 lg:px-10">
-              <div style={{ display: "flex", flexWrap: "wrap", alignItems: "stretch" }}>
+              <div className="flex flex-wrap items-stretch">
                 {[
-                  { title: "Global Reach", sub: "Events in 120+ countries", icon: <svg style={{ width: 28, height: 28, flexShrink: 0, color: "rgba(255,255,255,0.85)" }} fill="none" stroke="currentColor" strokeWidth={1.4} viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><line x1="2" y1="12" x2="22" y2="12" /><path d="M12 2a15 15 0 014 10 15 15 0 01-4 10 15 15 0 01-4-10 15 15 0 014-10z" /></svg> },
-                  { title: "Verified & Trusted", sub: "Authentic events & organizers", icon: <svg style={{ width: 28, height: 28, flexShrink: 0, color: "rgba(255,255,255,0.85)" }} fill="none" stroke="currentColor" strokeWidth={1.4} viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /><path d="M9 12l2 2 4-4" /></svg> },
-                  { title: "Always Updated", sub: "Real-time event information", icon: <svg style={{ width: 28, height: 28, flexShrink: 0, color: "rgba(255,255,255,0.85)" }} fill="none" stroke="currentColor" strokeWidth={1.4} viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg> },
-                  { title: "Dedicated Support", sub: "Here to help you anytime", icon: <svg style={{ width: 28, height: 28, flexShrink: 0, color: "rgba(255,255,255,0.85)" }} fill="none" stroke="currentColor" strokeWidth={1.4} viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" /></svg> },
-                  { title: "Secure & Reliable", sub: "Your data is always safe", icon: <svg style={{ width: 28, height: 28, flexShrink: 0, color: "rgba(255,255,255,0.85)" }} fill="none" stroke="currentColor" strokeWidth={1.4} viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0110 0v4" /></svg> },
-                ].map((item, i, arr) => (
-                  <div key={item.title} style={{ flex: 1, minWidth: 150, display: "flex", alignItems: "center", gap: 14, padding: "16px 20px", borderRight: i < arr.length - 1 ? "1px solid rgba(255,255,255,0.15)" : "none" }}>
-                    {item.icon}
-                    <div>
-                      <p style={{ fontSize: 13, fontWeight: 600, color: "#fff", margin: 0 }}>{item.title}</p>
-                      <p style={{ fontSize: 11, color: "rgba(255,255,255,0.60)", margin: 0, lineHeight: 1.4 }}>{item.sub}</p>
+                  {
+                    title: "Global Reach",
+                    sub: "Events in 120+ countries",
+                    icon: Globe,
+                  },
+                  {
+                    title: "Verified & Trusted",
+                    sub: "Authentic events & organizers",
+                    icon: BadgeCheck,
+                  },
+                  {
+                    title: "Always Updated",
+                    sub: "Real-time event information",
+                    icon: RefreshCw,
+                  },
+                  {
+                    title: "Dedicated Support",
+                    sub: "Here to help you anytime",
+                    icon: Headphones,
+                  },
+                  {
+                    title: "Secure & Reliable",
+                    sub: "Your data is always safe",
+                    icon: ShieldCheck,
+                  },
+                ].map((item, i, arr) => {
+                  const Icon = item.icon;
+
+                  return (
+                    <div
+                      key={item.title}
+                      style={{
+                        flex: 1,
+                        minWidth: 220,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 14,
+                        padding: "18px 20px",
+                        borderRight:
+                          i < arr.length - 1
+                            ? "1px solid rgba(255,255,255,0.10)"
+                            : "none",
+                      }}
+                    >
+                      <div className="flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/10 backdrop-blur-sm">
+                        <Icon className="h-5 w-5 text-white" strokeWidth={1.8} />
+                      </div>
+
+                      <div>
+                        <p
+                          style={{
+                            fontSize: 13,
+                            fontWeight: 600,
+                            color: "#fff",
+                            margin: 0,
+                          }}
+                        >
+                          {item.title}
+                        </p>
+
+                        <p
+                          style={{
+                            fontSize: 11,
+                            color: "rgba(255,255,255,0.65)",
+                            margin: 0,
+                            lineHeight: 1.4,
+                          }}
+                        >
+                          {item.sub}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>
 
-          {/* ── [3] PURE GAP — raw image shows, zero overlay, zero bg ── */}
-          <div style={{ height: "160px" }} />
-
-          {/* ── [4] REGISTERED OFFICE ── */}
-          <div style={{ borderTop: "1px solid rgba(255,255,255,0.15)", backgroundColor: "rgba(0,9,26,0.88)" }}>
+          {/* REGISTERED */}
+          <div
+            style={{
+              borderTop: "1px solid rgba(255,255,255,0.10)",
+              backgroundColor: "rgba(2,18,43,0.92)",
+            }}
+          >
             <div className="mx-auto max-w-7xl px-6 py-4 lg:px-10">
-              <p style={{ fontSize: 11.5, lineHeight: 1.7, color: "rgba(255,255,255,0.75)", margin: 0 }}>
-                <span style={{ fontWeight: 600, color: "#fff" }}>Registered Office:</span>{" "}
-                Maxx Business Media Pvt Ltd | # T9, 3rd Floor, Swastik Manandi Arcade, SC Road,
-                Seshadripuram, Bengaluru – 560020, India, Support-+91-9148319993 | CIN: U74999KA2019PTC123194
+              <p
+                style={{
+                  fontSize: 11.5,
+                  lineHeight: 1.7,
+                  color: "rgba(255,255,255,0.75)",
+                  margin: 0,
+                }}
+              >
+                <span style={{ fontWeight: 600, color: "#fff" }}>
+                  Registered Office:
+                </span>{" "}
+                Maxx Business Media Pvt Ltd | # T9, 3rd Floor,
+                Swastik Manandi Arcade, SC Road, Seshadripuram,
+                Bengaluru – 560020, India,
+                Support-+91-9148319993 |
+                CIN: U74999KA2019PTC123194
               </p>
             </div>
           </div>
 
-          {/* ── [5] COPYRIGHT ── */}
-          <div style={{ borderTop: "1px solid rgba(255,255,255,0.10)", backgroundColor: "rgba(0,9,26,0.92)" }}>
+          {/* COPYRIGHT */}
+          <div
+            style={{
+              borderTop: "1px solid rgba(255,255,255,0.10)",
+              backgroundColor: "rgba(2,18,43,0.98)",
+            }}
+          >
             <div className="mx-auto max-w-7xl px-6 py-3 lg:px-10">
-              <p style={{ textAlign: "center", fontSize: 11, color: "rgba(255,255,255,0.50)", margin: 0 }}>
-                © {new Date().getFullYear()} BizTradeFairs. All rights reserved.
+              <p
+                style={{
+                  textAlign: "center",
+                  fontSize: 11,
+                  color: "rgba(255,255,255,0.50)",
+                  margin: 0,
+                }}
+              >
+                © {new Date().getFullYear()} BizTradeFairs.
+                All rights reserved.
               </p>
             </div>
           </div>
-
         </div>
 
         <FooterChatBot />
