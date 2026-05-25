@@ -227,7 +227,7 @@ function SingleCmsAdCard({ banner }: { banner: PublicBannerAd }) {
 }
 
 /**
- * Sidebar ad from `/api/public/content-banners`. One or more images: multiple banners auto-slide every 5s;
+ * Sidebar ad from `/api/banners`. One or more images: multiple banners auto-slide every 5s;
  * a single banner keeps the whole card as one link when a URL is set.
  */
 export default function AdCard({ page = "events", position = "sidebar" }: AdCardProps) {
@@ -240,7 +240,7 @@ export default function AdCard({ page = "events", position = "sidebar" }: AdCard
     const q = new URLSearchParams({ page, position })
     ;(async () => {
       try {
-        const res = await fetch(`/api/public/content-banners?${q.toString()}`, {
+        const res = await fetch(`/api/banners?${q.toString()}`, {
           cache: "no-store",
         })
         const data = res.ok ? await res.json() : []

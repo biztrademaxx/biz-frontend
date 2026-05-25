@@ -8,7 +8,9 @@ export const EMPTY_GEO_HINT: GeoHint = {
   countryName: null,
 }
 
-export { COUNTRY_NAMES, countryNameFromCode } from "@/lib/country-data"
+import { COUNTRY_NAMES, countryNameFromCode } from "@/lib/country-data"
+
+export { COUNTRY_NAMES, countryNameFromCode }
 
 function isPrivateIP(ip: string): boolean {
   return (

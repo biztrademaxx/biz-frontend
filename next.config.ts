@@ -15,6 +15,21 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
+      {
+        source: "/api/public/content-banners",
+        destination: "/api/banners",
+        permanent: false,
+      },
+      {
+        source: "/api/content/banners",
+        destination: "/api/banners",
+        permanent: false,
+      },
+      {
+        source: "/api/auth/oauth-signup-intent",
+        destination: "/api/oauth-signup-intent",
+        permanent: false,
+      },
       // Listing lives at /venues; detail pages are /venue/[id]. Same pattern as /speakers vs /speaker/[id].
       {
         source: "/venues/:id",

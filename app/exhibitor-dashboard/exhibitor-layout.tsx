@@ -213,11 +213,13 @@ export function ExhibitorLayout({ routeSegment }: UserDashboardProps) {
     upcomingAppointments: (e as any)?.upcomingAppointments ?? 0,
   })
 
-  // Valid URL segment or JWT user id (never call API with undefined → encodeURIComponent("undefined"))
+  /** API id for the logged-in exhibitor: always prefer JWT `sub` so slug URLs (canonical redirect) never break fetch. */
   const resolveExhibitorSegment = (): string | null => {
+    const sessionId = getCurrentUserId()?.trim()
+    if (sessionId && sessionId !== "undefined") return sessionId
     const t = routeSegment?.trim()
     if (t && t !== "undefined") return t
-    return getCurrentUserId()
+    return null
   }
 
   const fetchExhibitorData = async () => {

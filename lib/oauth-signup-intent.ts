@@ -42,7 +42,7 @@ export async function postOAuthSignupIntentRole(role: string): Promise<void> {
   const safe = (OAUTH_INTENDED_ROLES as readonly string[]).includes(upper)
     ? upper
     : "ATTENDEE"
-  const res = await fetch("/api/auth/oauth-signup-intent", {
+  const res = await fetch("/api/oauth-signup-intent", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ role: safe }),
@@ -64,7 +64,7 @@ export function clearOAuthSignupIntentRole(): void {
 
 /** Clears HttpOnly intent cookie (call from login page on mount). */
 export async function clearOAuthSignupIntentRoleServer(): Promise<void> {
-  await fetch("/api/auth/oauth-signup-intent", {
+  await fetch("/api/oauth-signup-intent", {
     method: "DELETE",
     credentials: "same-origin",
   })

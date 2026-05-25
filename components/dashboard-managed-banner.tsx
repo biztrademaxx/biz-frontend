@@ -82,7 +82,7 @@ export function DashboardManagedBanner({ page, className }: DashboardManagedBann
 
     const loadBanner = async () => {
       try {
-        const res = await fetch(`/api/public/content-banners?page=${encodeURIComponent(page)}&position=hero`, {
+        const res = await fetch(`/api/banners?page=${encodeURIComponent(page)}&position=hero`, {
           cache: "no-store",
         })
         if (!res.ok) return
