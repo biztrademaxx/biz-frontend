@@ -321,7 +321,7 @@ export default function DashboardOverview({
               resource: e.title,
               timestamp: (e.createdAt as string) || new Date().toISOString(),
               icon: "default",
-              imageUrl: pickEventImage(e),
+              imageUrl: eventImageSrc(e),
               eventStatus: e.status,
             })
           })
@@ -334,7 +334,7 @@ export default function DashboardOverview({
               resource: r.event?.title || "Event",
               timestamp: r.registeredAt || r.createdAt || new Date().toISOString(),
               icon: "success",
-              imageUrl: pickEventImage(r.event ?? undefined),
+              imageUrl: eventImageSrc(r.event ?? undefined),
               eventStatus: r.event?.status,
             })
           })
