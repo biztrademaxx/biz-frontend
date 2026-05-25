@@ -64,7 +64,7 @@ export function AnimatedBizzBot({
         }
       >
         <DotLottieReact
-          src="https://lottie.host/e04cabbd-6a4b-46ef-896a-3b3b8884c138/HNbIwcDRnk.lottie"
+          src="https://lottie.host/f7ddedb6-f718-467e-8c77-e586d2965bf4/G1CfIkc4Lr.lottie"
           loop
           autoplay={!reduce}
           style={{

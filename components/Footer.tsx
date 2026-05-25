@@ -53,7 +53,7 @@ const Footer: React.FC<FooterProps> = ({ categories }) => {
   return (
     <>
       {/* TOP TRUST BAR */}
-      <div className="w-full bg-white px-3 py-5">
+      <div className="w-full bg-white px-7 py-10">
         <div className="mx-auto flex min-h-[120px] max-w-7xl flex-wrap items-center justify-between gap-8 rounded-2xl border border-gray-200 bg-white px-8 py-7 shadow-sm">
 
           {/* Trusted */}
@@ -177,6 +177,7 @@ const Footer: React.FC<FooterProps> = ({ categories }) => {
           backgroundColor: "#02122b",
           position: "relative",
           overflow: "hidden",
+          minHeight: "100%",
         }}
       >
 
@@ -186,6 +187,7 @@ const Footer: React.FC<FooterProps> = ({ categories }) => {
             src="/Organizers/max3.png"
             alt=""
             fill
+            priority
             sizes="100vw"
             className="object-cover object-top"
           />
@@ -197,7 +199,8 @@ const Footer: React.FC<FooterProps> = ({ categories }) => {
           style={{
             position: "absolute",
             inset: 0,
-            background: "rgba(2,18,43,0.72)",
+            background:
+              "linear-gradient(to bottom, rgba(2,18,43,0.45), rgba(2,18,43,0.65))",
             zIndex: 1,
           }}
         />

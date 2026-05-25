@@ -71,6 +71,28 @@ export default function FooterChatBot() {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [botTyping, setBotTyping] = useState(false)
   const listRef = useRef<HTMLDivElement>(null)
+  const [isOnLightSection, setIsOnLightSection] = useState(false)
+
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const footer = document.querySelector("footer")
+
+      if (!footer) return
+
+      const rect = footer.getBoundingClientRect()
+
+      // if footer visible => dark mode
+      // otherwise => light mode
+      setIsOnLightSection(rect.top > window.innerHeight - 120)
+    }
+
+    handleScroll()
+
+    window.addEventListener("scroll", handleScroll, { passive: true })
+
+    return () => window.removeEventListener("scroll", handleScroll)
+  }, [])
 
   useEffect(() => {
     setMessages(getFooterChatInitialMessages())
@@ -145,7 +167,8 @@ export default function FooterChatBot() {
                 className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/15 text-3xl shadow-inner ring-2 ring-white/20 backdrop-blur-sm"
                 aria-hidden
               >
-                {expression.emoji}
+                {/* {expression.emoji} */}
+                <AnimatedBizzBot size={80}/>
               </motion.div>
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold leading-tight">Chat With Bizz</p>
@@ -261,44 +284,64 @@ export default function FooterChatBot() {
     </AnimatePresence>
   )
 
-  const launcher = (
-    <AnimatePresence>
-      {!open && (
-        <motion.div
-          key="chat-launcher"
-          initial={{ opacity: 0, y: 16, scale: 0.92 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 12, scale: 0.96 }}
-          transition={{ type: "spring", stiffness: 380, damping: 28 }}
-          className="pointer-events-none fixed inset-x-0 bottom-0 z-[260] flex justify-end p-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:p-6"
+const launcher = (
+  <AnimatePresence>
+    {!open && (
+      <motion.div
+        key="chat-launcher"
+        initial={{ opacity: 0, y: 16, scale: 0.92 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 12, scale: 0.96 }}
+        transition={{ type: "spring", stiffness: 380, damping: 28 }}
+        className="pointer-events-none fixed bottom-2 right-2 z-[260] flex justify-end sm:bottom-4 sm:right-4"
+      >
+        <motion.button
+          type="button"
+          onClick={() => setOpen(true)}
+          whileHover={{ scale: 1.03, y: -2 }}
+          whileTap={{ scale: 0.98 }}
+          className="pointer-events-auto border-0 bg-transparent p-0 shadow-none"
+          aria-expanded={false}
+          aria-haspopup="dialog"
+          aria-label="Open Chat With Bizz"
         >
-          <motion.button
-            type="button"
-            onClick={() => setOpen(true)}
-            whileHover={{ scale: 1.03, y: -2 }}
-            whileTap={{ scale: 0.98 }}
-            className="text-black pointer-events-auto flex w-max max-w-[min(13rem,calc(100vw-2rem))] items-center gap-2 rounded-full border border-gray-200/25 bg-white py-1.5 pl-1.5 pr-3 text-left "
-            aria-expanded={false}
-            aria-haspopup="dialog"
-            aria-label="Open Chat With Bizz"
-          >
-            <AnimatedBizzBot size={80} className="drop-shadow-sm" />
-            <div className="min-w-0 max-w-[8.75rem] shrink">
-              <div className="flex items-center gap-1.5">
-                <span className="text-xs font-semibold tracking-tight sm:text-sm">Chat With Bizz</span>
-                <span className="relative flex h-2.5 w-2.5 shrink-0">
-                  {/* <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" /> */}
-                  {/* <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-400 ring-2 ring-white/30" /> */}
-                </span>
-              </div>
-              <p className="text-[10px] leading-snug text-black/85 sm:text-[11px]">Events, venues &amp; tips — ask anything.</p>
-            </div>
-          </motion.button>
-        </motion.div>
-      )}
-    </AnimatePresence>
-  )
+          <div className="flex items-center">
 
+            {/* BOT */}
+            <div className="relative shrink-0">
+              <AnimatedBizzBot
+                size={180}
+                className="drop-shadow-[0_10px_25px_rgba(0,0,0,0.18)]"
+              />
+            </div>
+
+            {/* TEXT */}
+            <div className="-ml-[42px] mb-1">
+
+              <div className="relative px-1 py-1">
+
+                {/* BUTTON */}
+                <div className="rounded-full bg-green-700 px-3 py-[6px] shadow-[0_10px_25px_rgba(0,176,80,0.35)]">
+                  <span className="whitespace-nowrap text-[10px] font-extrabold leading-none tracking-[-0.01em] text-white sm:text-[16px]">
+                    Chat With Biz!
+                  </span>
+                </div>
+
+                {/* SUBTEXT */}
+                <p
+                  className={`pt-2 text-center text-[8px] font-medium leading-none sm:text-[11px] ${isOnLightSection ? "text-[#1F1F1F]" : "text-white"
+                    }`}
+                >
+                  Ask me about events
+                </p>
+              </div>
+            </div>
+          </div>
+        </motion.button>
+      </motion.div>
+    )}
+  </AnimatePresence>
+)
   return (
     <>
       {mounted && createPortal(

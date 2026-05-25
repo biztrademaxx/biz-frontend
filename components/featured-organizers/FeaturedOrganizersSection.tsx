@@ -34,7 +34,7 @@ async function FeaturedOrganizersContent() {
     return (
       <Shell homeCountry={homeCountry}>
         <div
-          className="flex flex-col gap-2 border-b border-red-100 bg-red-50/80 px-4 py-4 sm:flex-row sm:items-center sm:justify-between"
+          className="flex flex-col gap-2 bg-red-50/80 px-4 py-4 sm:flex-row sm:items-center sm:justify-between"
           role="alert"
         >
           <p className="text-sm text-red-800">
