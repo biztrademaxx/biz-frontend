@@ -404,7 +404,7 @@ export default function VenueManagement({
       toast.success("Venue created successfully")
     } catch (error) {
       console.error("Error creating venue:", error)
-      toast.error("Failed to create venue")
+      toast.error(error instanceof Error ? error.message : "Failed to create venue")
     }
   }
 
@@ -432,7 +432,7 @@ export default function VenueManagement({
       toast.success("Venue updated successfully")
     } catch (error) {
       console.error("Error updating venue:", error)
-      toast.error("Failed to update venue")
+      toast.error(error instanceof Error ? error.message : "Failed to update venue")
     }
   }
 
@@ -746,7 +746,7 @@ export default function VenueManagement({
         <TabsContent value="bulk-import" className="space-y-6">
           <EntityBulkImport
             title="Venue Bulk Import"
-            description="Import venues using the same core fields as Add Venue."
+            description="Import venues using the same core fields as Add Venue. Each venueName must be unique (not already in Biz and not repeated in the file)."
             endpoint="/venues/import"
             templateHeaders={[
               "venueName",

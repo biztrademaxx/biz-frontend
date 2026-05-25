@@ -366,7 +366,7 @@ export default function AddVenueComponent() {
       }
     } catch (error) {
       console.error('Error adding venue:', error)
-      toast.error("Failed to add venue")
+      toast.error(error instanceof Error ? error.message : "Failed to add venue")
     } finally {
       setIsSubmitting(false)
     }
