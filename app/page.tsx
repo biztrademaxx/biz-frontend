@@ -48,7 +48,7 @@ export default function Home() {
         <BrowseEventsByCity />
       </Suspense>
 
-      <div className="mx-auto w-full min-w-0 max-w-7xl border-b border-gray-200 px-3 py-6 sm:px-4 lg:px-6">
+      <div className="mx-auto w-full min-w-0 max-w-7xl px-3 py-6 sm:px-4 lg:px-6">
         <Suspense
           fallback={
             <div
@@ -83,7 +83,7 @@ export default function Home() {
         <FeaturedSpeakers />
       </Suspense>
 
-      <div className="mx-auto w-full min-w-0 max-w-7xl border-b border-gray-200 px-3 py-6 sm:px-4 lg:px-6">
+      <div className="mx-auto w-full min-w-0 max-w-7xl px-3 py-6 sm:px-4 lg:px-6">
         <Suspense
           fallback={
             <div className="w-full space-y-4" aria-hidden>

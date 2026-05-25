@@ -12,7 +12,7 @@ export default async function FeaturedSpeakersSection() {
 
   if (speakers.length === 0) {
     return (
-      <section className="home-tt-section mx-auto w-full min-w-0 max-w-7xl px-3 py-8 sm:px-4 lg:px-6">
+      <section className="home-tt-section mx-auto w-full min-w-0 max-w-7xl px-5 py-10 sm:px-6 lg:px-8">
         <h2 className="home-tt-h2 mb-3">
           Featured Speakers
           <br />
