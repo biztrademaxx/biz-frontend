@@ -31,13 +31,29 @@ export const EMPTY_HOME_LOCATION: ResolvedHomeLocation = {
   isManual: false,
 }
 
+/** Common city aliases (e.g. Bengaluru ↔ Bangalore). */
+const CITY_MATCH_ALIASES: Record<string, string[]> = {
+  bengaluru: ["bangalore"],
+  bangalore: ["bengaluru"],
+  mumbai: ["bombay"],
+  bombay: ["mumbai"],
+  kolkata: ["calcutta"],
+  calcutta: ["kolkata"],
+  chennai: ["madras"],
+  madras: ["chennai"],
+}
+
 /** Case-insensitive partial match (e.g. "Bengaluru" matches "Bengaluru, Karnataka"). */
 export function cityMatches(value: string | null | undefined, city: string): boolean {
   const needle = city.trim().toLowerCase()
   if (!needle) return true
   const hay = (value ?? "").trim().toLowerCase()
   if (!hay) return false
-  return hay.includes(needle) || needle.includes(hay)
+  if (hay.includes(needle) || needle.includes(hay)) return true
+  for (const alias of CITY_MATCH_ALIASES[needle] ?? []) {
+    if (hay.includes(alias) || alias.includes(hay)) return true
+  }
+  return false
 }
 
 export function countryMatchesValue(
@@ -165,7 +181,7 @@ export function filterByHomeLocation<T>(
   return items.filter((item) => countryMatchesValue(getters.getCountry(item), needles))
 }
 
-/** Match item to visitor country via venue country and/or known city → country map. */
+/** Match item to visitor country (IP/geo): country field, full address line, or known city → country. */
 export function matchesHomeCountry<T>(
   item: T,
   loc: ResolvedHomeLocation,
@@ -176,15 +192,31 @@ export function matchesHomeCountry<T>(
 ): boolean {
   const needles = countryMatchNeedles(loc)
   if (needles.length === 0) return !loc.countryCode && !loc.countryName
-  if (countryMatchesValue(getters.getCountry(item), needles)) return true
+
+  const countryRaw = getters.getCountry(item)?.trim() ?? ""
+  const locationLine = getters.getCity(item)?.trim() ?? ""
+
+  if (countryRaw) {
+    if (countryMatchesValue(countryRaw, needles)) return true
+    if (/^[A-Za-z]{2}$/.test(countryRaw)) {
+      const expanded = countryNameFromCode(countryRaw.toUpperCase())
+      if (expanded && countryMatchesValue(expanded, needles)) return true
+    }
+  }
+
+  if (locationLine && countryMatchesValue(locationLine, needles)) return true
+
   if (!loc.countryCode) return false
-  const mapped = resolveCountryForCityName(getters.getCity(item))
-  return mapped?.countryCode === loc.countryCode
+
+  const cityMapped = resolveCountryForCityName(locationLine || countryRaw)
+  if (cityMapped?.countryCode === loc.countryCode) return true
+
+  return false
 }
 
 /**
- * Home sections: all items in the visitor's country, with their city first
- * (e.g. Bengaluru events, then other cities in India).
+ * Home sections: every item in the visitor's country (from IP), home city first when set.
+ * Does not limit results to the home city only.
  */
 export function filterByHomeCountryPrioritizeCity<T>(
   items: T[],

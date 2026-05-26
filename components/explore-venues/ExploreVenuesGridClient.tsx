@@ -84,8 +84,10 @@ export default function ExploreVenuesGridClient({
   homeCountry,
 }: ExploreVenuesGridClientProps) {
   const subtitle = homeCountry
-    ? `Discover event spaces and venues in ${homeCountry}`
-    : "Discover event spaces and venues in top cities"
+    ? homeCity
+      ? `Venues across ${homeCountry} — near ${homeCity} first`
+      : `Discover event spaces and venues in ${homeCountry}`
+    : "Discover event spaces and venues worldwide"
   const router = useRouter()
   const row1 = venues.slice(0, 3)
   const row2 = venues.slice(3, 6)
@@ -105,7 +107,7 @@ export default function ExploreVenuesGridClient({
           <HomeSectionEmptyState
             icon="venues"
             title="No venues in this region yet"
-            description={homeEmptyDescription("venues with photos", homeCity, homeCountry)}
+            description={homeEmptyDescription("venues", homeCity, homeCountry)}
             homeCity={homeCity}
             homeCountry={homeCountry}
             actions={[

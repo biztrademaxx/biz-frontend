@@ -1,5 +1,6 @@
 import {
   buildResolvedHomeLocation,
+  cityMatches,
   countryMatchNeedles,
   filterByHomeCountryPrioritizeCity,
   matchesHomeCountry,
@@ -45,6 +46,42 @@ describe("home country filtering", () => {
     ]
     const filtered = filterByHomeCountryPrioritizeCity(items, loc, getters)
     expect(filtered.map((r) => r.id)).toEqual(["1"])
+  })
+
+  it("matches Bengaluru and Bangalore as the same city", () => {
+    expect(cityMatches("Bangalore, Karnataka", "Bengaluru")).toBe(true)
+    expect(cityMatches("Bengaluru", "Bangalore")).toBe(true)
+  })
+
+  it("matches venues by visitor country when only city is set on the venue", () => {
+    const loc = buildResolvedHomeLocation({
+      city: "Bengaluru",
+      countryCode: "IN",
+      countryName: "India",
+    })
+    const venues: Row[] = [
+      { id: "1", city: "Mumbai", country: "" },
+      { id: "2", city: "Sydney", country: "Australia" },
+    ]
+    expect(matchesHomeCountry(venues[0], loc, getters)).toBe(true)
+    expect(matchesHomeCountry(venues[1], loc, getters)).toBe(false)
+    const ordered = filterByHomeCountryPrioritizeCity(venues, loc, getters)
+    expect(ordered.map((r) => r.id)).toEqual(["1"])
+  })
+
+  it("includes all venues in country with home city listed first", () => {
+    const loc = buildResolvedHomeLocation({
+      city: "Bengaluru",
+      countryCode: "IN",
+      countryName: "India",
+    })
+    const venues: Row[] = [
+      { id: "mumbai", city: "Mumbai", country: "India" },
+      { id: "blr", city: "Bengaluru", country: "India" },
+      { id: "delhi", city: "Delhi", country: "India" },
+    ]
+    const ordered = filterByHomeCountryPrioritizeCity(venues, loc, getters)
+    expect(ordered.map((r) => r.id)).toEqual(["blr", "mumbai", "delhi"])
   })
 
   it("does not match India via `in` substring inside Singapore", () => {
