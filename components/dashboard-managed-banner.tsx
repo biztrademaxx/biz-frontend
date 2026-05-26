@@ -25,6 +25,8 @@ type DashboardManagedBannerProps = {
   page: DashboardBannerPage
   /** Applied only while the banner is visible (hidden → `null`, no layout gap). */
   className?: string
+  /** Shorter inline strip (e.g. organizer overview header). */
+  variant?: "default" | "compact"
 }
 
 /** After × close only: banner comes back (in-memory; reload always shows banner again). */
@@ -47,7 +49,7 @@ function DashboardBannerBackdrop({
   }, [remoteUrl])
 
   if (!remoteUrl || imgFailed) {
-    return <div className={cn("h-full min-h-[6rem] w-full", backdropClassName)} aria-hidden />
+    return <div className={cn("h-full min-h-0 w-full", backdropClassName)} aria-hidden />
   }
 
   return (
@@ -62,7 +64,12 @@ function DashboardBannerBackdrop({
   )
 }
 
-export function DashboardManagedBanner({ page, className }: DashboardManagedBannerProps) {
+export function DashboardManagedBanner({
+  page,
+  className,
+  variant = "default",
+}: DashboardManagedBannerProps) {
+  const isCompact = variant === "compact"
   const theme = getDashboardBannerTheme(page)
   const [banner, setBanner] = useState<PublicBanner | null>(null)
   const [isHidden, setIsHidden] = useState(false)
@@ -110,17 +117,31 @@ export function DashboardManagedBanner({ page, className }: DashboardManagedBann
     banner?.description?.trim() || "Promote your events to a global audience and connect with the right people."
 
   const imageNode = (
-    <div className="relative h-full w-full overflow-hidden rounded-sm">
+    <div
+      className={cn("relative h-full w-full overflow-hidden", isCompact ? "rounded-md" : "rounded-sm")}
+    >
       <DashboardBannerBackdrop
         remoteUrl={imageUrl}
         alt={alt}
         backdropClassName={theme.backdrop}
       />
       <div className={cn("pointer-events-none absolute inset-0", theme.overlay)} />
-      <div className="absolute inset-0 flex items-center px-4 md:px-6">
+      <div
+        className={cn(
+          "absolute inset-0 flex items-center",
+          isCompact ? "px-3 pr-9 md:px-4" : "px-4 md:px-6",
+        )}
+      >
         <div className="max-w-md">
-          <h3 className="text-base md:text-xl font-semibold text-white leading-tight">{title}</h3>
-          <p className={cn("mt-1 text-xs md:text-sm line-clamp-2", theme.descriptionText)}>
+          <h3
+            className={cn(
+              "font-semibold leading-tight text-white",
+              isCompact ? "text-sm md:text-base" : "text-base md:text-xl",
+            )}
+          >
+            {title}
+          </h3>
+          <p className={cn("mt-1 line-clamp-2 text-xs md:text-sm", theme.descriptionText)}>
             {description}
           </p>
           {href ? (
@@ -129,7 +150,7 @@ export function DashboardManagedBanner({ page, className }: DashboardManagedBann
               target="_blank"
               rel="noopener noreferrer"
               className={cn(
-                "mt-2 inline-flex items-center rounded-sm px-2.5 py-1 text-xs md:text-sm font-medium text-white",
+                "mt-2 inline-flex items-center rounded-sm px-2.5 py-1 text-xs font-medium text-white md:text-sm",
                 theme.badgeLink,
               )}
             >
@@ -138,7 +159,7 @@ export function DashboardManagedBanner({ page, className }: DashboardManagedBann
           ) : (
             <span
               className={cn(
-                "mt-2 inline-flex items-center rounded-sm px-2.5 py-1 text-xs md:text-sm font-medium text-white",
+                "mt-2 inline-flex items-center rounded-sm px-2.5 py-1 text-xs font-medium text-white md:text-sm",
                 theme.badge,
               )}
             >
@@ -151,9 +172,12 @@ export function DashboardManagedBanner({ page, className }: DashboardManagedBann
         type="button"
         aria-label="Close banner"
         onClick={() => setIsHidden(true)}
-        className="absolute right-2 top-2 rounded-sm bg-black/40 p-1 text-white hover:bg-black/60"
+        className={cn(
+          "absolute rounded-sm bg-black/40 text-white hover:bg-black/60",
+          isCompact ? "right-1 top-1 p-0.5" : "right-2 top-2 p-1",
+        )}
       >
-        <X className="h-4 w-4" />
+        <X className={isCompact ? "h-3 w-3" : "h-4 w-4"} />
       </button>
     </div>
   )

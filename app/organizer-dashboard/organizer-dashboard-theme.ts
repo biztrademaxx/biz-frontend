@@ -12,7 +12,7 @@ export const orgPrimaryBtn =
 
 /** Overview header: welcome · banner (middle column) · action pinned in last column. */
 export const orgPageHeader =
-  "grid gap-4 border-b border-[#e8e4f0] pb-5 md:grid-cols-[minmax(0,17rem)_minmax(0,1fr)_auto] md:items-center md:gap-x-5"
+  "grid gap-4 border-b border-[#e8e4f0] pb-5 md:grid-cols-[minmax(0,15rem)_minmax(0,1fr)_auto] md:items-center md:gap-x-4 lg:grid-cols-[minmax(0,17rem)_minmax(0,1fr)_auto] lg:gap-x-6"
 
 export const orgCardShell = "rounded-2xl border border-[#ebe7f3]/90 bg-white shadow-[0_4px_24px_rgba(142,84,233,0.07)]"
 

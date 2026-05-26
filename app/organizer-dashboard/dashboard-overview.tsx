@@ -283,21 +283,22 @@ export default function DashboardOverview({
   return (
     <div className="w-full space-y-6">
       <header className={cn(orgPageHeader)}>
-        <div className="min-w-0">
+        <div className="min-w-0 self-center">
           <p className="text-xs font-semibold uppercase tracking-wider text-[#8E54E9]">Overview</p>
           <h1 className="mt-1 text-2xl font-bold tracking-tight text-[#1E293B] sm:text-3xl">Dashboard</h1>
-          <p className="mt-1 text-sm text-[#64748B]">
+          <p className="mt-1 text-sm leading-snug text-[#64748B]">
             Welcome back,{" "}
             <span className="font-medium text-[#334155]">{organizerName}</span>
           </p>
         </div>
-        <div className="min-w-0 w-full">
+        <div className="flex min-w-0 w-full items-center justify-center self-center md:px-1">
           <DashboardManagedBanner
             page="organizer-dashboard"
-            className="h-[5.5rem] w-full md:h-24 lg:h-28"
+            variant="compact"
+            className="!h-14 w-full max-w-md sm:!h-16 lg:max-w-lg"
           />
         </div>
-        <div className="justify-self-stretch md:col-start-3 md:justify-self-end md:pl-2 md:pr-1">
+        <div className="self-center justify-self-stretch md:col-start-3 md:justify-self-end md:pl-3">
           <Button
             type="button"
             onClick={onCreateEventClick}
