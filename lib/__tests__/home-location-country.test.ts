@@ -89,4 +89,24 @@ describe("home country filtering", () => {
     expect(matchesHomeCountry({ id: "x", city: "Singapore", country: "Singapore" }, loc, getters)).toBe(true)
     expect(matchesHomeCountry({ id: "y", city: "Mumbai", country: "India" }, loc, getters)).toBe(false)
   })
+
+  it("matches speakers in India when only legacy location line is set", () => {
+    const loc = buildResolvedHomeLocation({
+      city: "Bengaluru",
+      countryCode: "IN",
+      countryName: "India",
+    })
+    const speakerGetters = {
+      getCity: (s: { city: string; country: string; locationHay: string }) =>
+        s.city?.trim() || s.locationHay?.trim() || "",
+      getCountry: (s: { city: string; country: string; locationHay: string }) =>
+        s.country?.trim() || s.locationHay?.trim() || "",
+    }
+    const speakers = [
+      { id: "1", city: "Mumbai", country: "", locationHay: "Mumbai Maharashtra India" },
+      { id: "2", city: "Paris", country: "France", locationHay: "Paris France" },
+    ]
+    const filtered = filterByHomeCountryPrioritizeCity(speakers, loc, speakerGetters)
+    expect(filtered.map((s) => s.id)).toEqual(["1"])
+  })
 })

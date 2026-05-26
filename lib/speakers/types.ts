@@ -4,4 +4,9 @@ export interface FeaturedSpeakerTile {
   displayName: string
   imageUrl: string
   location?: string | null
+  city?: string
+  state?: string
+  country?: string
+  /** Combined city, state, country, legacy location — used for geo matching. */
+  locationHay?: string
 }

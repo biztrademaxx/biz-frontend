@@ -30,7 +30,14 @@ import {
   BriefcaseBusiness,
   Building2,
   Camera,
+  MapPin,
 } from "lucide-react"
+import {
+  ProfileLocationFields,
+  formatProfileLocationLine,
+  profileLocationFromLegacy,
+  type ProfileLocationValue,
+} from "@/components/location/ProfileLocationFields"
 import type { UserData } from "@/types/user"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { apiFetch } from "@/lib/api"
@@ -90,6 +97,25 @@ interface FormData {
   twitter: string
   instagram: string
   interests: string[]
+  profileCity: string
+  profileState: string
+  profileCountry: string
+}
+
+function getProfileLocationFromUser(user: UserData): ProfileLocationValue {
+  const loc = user.location
+  if (loc && typeof loc === "object") {
+    return profileLocationFromLegacy(null, {
+      city: loc.city,
+      state: loc.state,
+      country: loc.country,
+    })
+  }
+  return profileLocationFromLegacy(typeof loc === "string" ? loc : null, {
+    city: user.profileCity ?? "",
+    state: user.profileState ?? "",
+    country: user.profileCountry ?? "",
+  })
 }
 
 export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSectionProps) {
@@ -110,6 +136,10 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
     twitter: userData?.twitter || "",
     instagram: userData?.instagram || "",
     interests: userData?.interests || [],
+    ...(() => {
+      const loc = getProfileLocationFromUser(userData)
+      return { profileCity: loc.city, profileState: loc.state, profileCountry: loc.country }
+    })(),
   }
 
   const [isEditing, setIsEditing] = useState(false)
@@ -139,6 +169,10 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
         twitter: userData.twitter,
         instagram: userData.instagram,
         interests: userData.interests,
+        profileCity: userData.profileCity,
+        profileState: userData.profileState,
+        profileCountry: userData.profileCountry,
+        location: userData.location,
       }),
     [userData],
   )
@@ -163,6 +197,10 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
       twitter: localUserData?.twitter || "",
       instagram: localUserData?.instagram || "",
       interests: localUserData?.interests || [],
+      ...(() => {
+        const loc = getProfileLocationFromUser(localUserData)
+        return { profileCity: loc.city, profileState: loc.state, profileCountry: loc.country }
+      })(),
     })
   }, [localUserData, userDataSyncKey, userData])
 
@@ -264,6 +302,10 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
       twitter: localUserData?.twitter || "",
       instagram: localUserData?.instagram || "",
       interests: localUserData?.interests || [],
+      ...(() => {
+        const loc = getProfileLocationFromUser(localUserData)
+        return { profileCity: loc.city, profileState: loc.state, profileCountry: loc.country }
+      })(),
     })
     setIsEditing(false)
     setSaveError(null)
@@ -537,6 +579,11 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
                 <span className="flex-1 truncate text-sm text-slate-600">{localUserData.companyIndustry || "N/A"}</span>
               </div>
               <div className="flex items-center gap-3 border-b border-white/50 px-4 py-3">
+                <MapPin size={16} className="shrink-0 text-[#004A96]" />
+                <span className="text-sm font-medium text-slate-700 w-32">Location</span>
+                <span className="flex-1 truncate text-sm text-slate-600">{displayLocation || "Not specified"}</span>
+              </div>
+              <div className="flex items-center gap-3 border-b border-white/50 px-4 py-3">
                 <UserIcon size={16} className="shrink-0 text-[#004A96]" />
                 <span className="text-sm font-medium text-slate-700 w-32">Interests</span>
                 <div className="flex-1 flex flex-wrap gap-2">
@@ -605,6 +652,25 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
                   onChange={(e) => setFormData({ ...formData, companyIndustry: e.target.value })}
                   placeholder="e.g. Fintech, Education"
                   className="border-white/60 bg-white/60 backdrop-blur-sm"
+                />
+              </div>
+              <div>
+                <Label>Location</Label>
+                <ProfileLocationFields
+                  value={{
+                    city: formData.profileCity,
+                    state: formData.profileState,
+                    country: formData.profileCountry,
+                  }}
+                  onChange={(next) =>
+                    setFormData({
+                      ...formData,
+                      profileCity: next.city,
+                      profileState: next.state,
+                      profileCountry: next.country,
+                    })
+                  }
+                  className="mt-1"
                 />
               </div>
               <div>

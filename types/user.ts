@@ -20,6 +20,9 @@ export interface UserData {
   company?: string
   jobTitle?: string
   interests?: string[]
+  profileCity?: string | null
+  profileState?: string | null
+  profileCountry?: string | null
   location?: {
     address: string
     city: string

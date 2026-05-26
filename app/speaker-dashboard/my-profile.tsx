@@ -10,6 +10,12 @@ import { useToast } from "@/hooks/use-toast"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Edit, Save, Camera, MapPin, Mail, Phone, Linkedin, Globe, User, Briefcase, Building2, Mic2 } from "lucide-react"
 import { apiFetch } from "@/lib/api"
+import {
+  ProfileLocationFields,
+  formatProfileLocationLine,
+  profileLocationFromLegacy,
+  type ProfileLocationValue,
+} from "@/components/location/ProfileLocationFields"
 
 type SpeakerProfile = {
   fullName: string
@@ -20,6 +26,9 @@ type SpeakerProfile = {
   linkedin: string
   website: string
   location: string
+  country: string
+  state: string
+  city: string
   bio: string
   speakingExperience: string
   avatar?: string
@@ -103,11 +112,17 @@ export default function MyProfile({ speakerId }: { speakerId: string }) {
     )
   }
 
+  const locationParts: ProfileLocationValue = profileLocationFromLegacy(profile.location, {
+    city: profile.city,
+    state: profile.state,
+    country: profile.country,
+  })
+  const locationDisplay = formatProfileLocationLine(locationParts) || profile.location || "—"
+
   const fields = [
     { id: "fullName", label: "Full Name", value: profile.fullName, icon: <User className="w-4 h-4" /> },
     { id: "designation", label: "Designation", value: profile.designation, icon: <Briefcase className="w-4 h-4" /> },
     { id: "company", label: "Company / Institution", value: profile.company, icon: <Building2 className="w-4 h-4" /> },
-    { id: "location", label: "Location", value: profile.location, icon: <MapPin className="w-4 h-4" /> },
     { id: "email", label: "Email", value: profile.email, type: "email", icon: <Mail className="w-4 h-4" />, readOnly: true },
     { id: "phone", label: "Phone", value: profile.phone, icon: <Phone className="w-4 h-4" />, readOnly: true },
     { id: "linkedin", label: "LinkedIn", value: profile.linkedin, icon: <Linkedin className="w-4 h-4" /> },
@@ -212,6 +227,29 @@ export default function MyProfile({ speakerId }: { speakerId: string }) {
                 </div>
               </div>
             ))}
+            <div className="space-y-1.5 md:col-span-2">
+              <Label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                <MapPin className="w-3.5 h-3.5" /> Location
+              </Label>
+              {isEditing ? (
+                <ProfileLocationFields
+                  value={locationParts}
+                  onChange={(next) =>
+                    setProfile({
+                      ...profile,
+                      city: next.city,
+                      state: next.state,
+                      country: next.country,
+                      location: formatProfileLocationLine(next),
+                    })
+                  }
+                />
+              ) : (
+                <p className="rounded-xl border border-slate-200/60 bg-slate-50/60 px-3 py-2.5 text-sm text-slate-700">
+                  {locationDisplay}
+                </p>
+              )}
+            </div>
           </div>
         </div>
       </div>

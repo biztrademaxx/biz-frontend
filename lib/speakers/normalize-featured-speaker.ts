@@ -1,3 +1,4 @@
+import { parseSpeakerLocationParts } from "./parse-speaker-location"
 import type { FeaturedSpeakerTile } from "./types"
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -19,6 +20,29 @@ export function normalizeFeaturedSpeakerTile(raw: unknown): FeaturedSpeakerTile 
   const displayName = joined || readString(raw.name) || "Speaker"
   const imageUrl = readString(raw.avatar) || readString(raw.image)
   if (!imageUrl) return null
-  const location = readString(raw.location) || null
-  return { id, displayName, imageUrl, location }
+
+  const legacyLocation = readString(raw.location) || null
+  const parts = parseSpeakerLocationParts({
+    profileCity: readString(raw.profileCity) || null,
+    profileState: readString(raw.profileState) || null,
+    profileCountry: readString(raw.profileCountry) || null,
+    city: readString(raw.city) || null,
+    state: readString(raw.state) || null,
+    country: readString(raw.country) || null,
+    location: legacyLocation,
+  })
+  const locationLine =
+    [parts.city, parts.state, parts.country].filter(Boolean).join(", ") || legacyLocation
+  const locationHay = [parts.city, parts.state, parts.country, legacyLocation].filter(Boolean).join(" ")
+
+  return {
+    id,
+    displayName,
+    imageUrl,
+    location: locationLine || null,
+    city: parts.city,
+    state: parts.state,
+    country: parts.country,
+    locationHay,
+  }
 }
