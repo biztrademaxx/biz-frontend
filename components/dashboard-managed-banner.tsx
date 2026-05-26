@@ -47,7 +47,7 @@ function DashboardBannerBackdrop({
   }, [remoteUrl])
 
   if (!remoteUrl || imgFailed) {
-    return <div className={cn("h-full min-h-[8rem] w-full", backdropClassName)} aria-hidden />
+    return <div className={cn("h-full min-h-[6rem] w-full", backdropClassName)} aria-hidden />
   }
 
   return (
@@ -117,10 +117,10 @@ export function DashboardManagedBanner({ page, className }: DashboardManagedBann
         backdropClassName={theme.backdrop}
       />
       <div className={cn("pointer-events-none absolute inset-0", theme.overlay)} />
-      <div className="absolute inset-0 flex items-center px-5 md:px-8">
+      <div className="absolute inset-0 flex items-center px-4 md:px-6">
         <div className="max-w-md">
-          <h3 className="text-lg md:text-2xl font-semibold text-white leading-tight">{title}</h3>
-          <p className={cn("mt-2 text-xs md:text-sm line-clamp-2", theme.descriptionText)}>
+          <h3 className="text-base md:text-xl font-semibold text-white leading-tight">{title}</h3>
+          <p className={cn("mt-1 text-xs md:text-sm line-clamp-2", theme.descriptionText)}>
             {description}
           </p>
           {href ? (
@@ -129,7 +129,7 @@ export function DashboardManagedBanner({ page, className }: DashboardManagedBann
               target="_blank"
               rel="noopener noreferrer"
               className={cn(
-                "mt-3 inline-flex items-center rounded-sm px-3 py-1.5 text-xs md:text-sm font-medium text-white",
+                "mt-2 inline-flex items-center rounded-sm px-2.5 py-1 text-xs md:text-sm font-medium text-white",
                 theme.badgeLink,
               )}
             >
@@ -138,7 +138,7 @@ export function DashboardManagedBanner({ page, className }: DashboardManagedBann
           ) : (
             <span
               className={cn(
-                "mt-3 inline-flex items-center rounded-sm px-3 py-1.5 text-xs md:text-sm font-medium text-white",
+                "mt-2 inline-flex items-center rounded-sm px-2.5 py-1 text-xs md:text-sm font-medium text-white",
                 theme.badge,
               )}
             >
@@ -161,7 +161,7 @@ export function DashboardManagedBanner({ page, className }: DashboardManagedBann
   if (isHidden) return null
 
   return (
-    <div className={cn("relative h-32 w-full md:h-40 lg:h-44", className)}>
+    <div className={cn("relative h-24 w-full md:h-32 lg:h-36", className)}>
       {imageNode}
     </div>
   )

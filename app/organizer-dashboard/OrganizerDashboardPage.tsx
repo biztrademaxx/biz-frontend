@@ -37,7 +37,6 @@ import { FeedbackSection } from "./FeedbackSection"
 import { OrganizerHelpSupport } from "./help-support"
 import { apiFetch, getCurrentUserId } from "@/lib/api"
 import { getOrganizerDashboardPath } from "@/lib/profile-path"
-import { DashboardManagedBanner } from "@/components/dashboard-managed-banner"
 import { DashboardPricingPlansView } from "@/components/dashboard-packages"
 import { cn } from "@/lib/utils"
 import {
@@ -559,7 +558,6 @@ export default function OrganizerDashboardSimplified({ organizerId }: OrganizerD
         {/* Main Content */}
         <main className="flex-1 overflow-auto p-4 sm:p-6">
           <div className="mx-auto max-w-7xl space-y-5">
-            <DashboardManagedBanner page="organizer-dashboard" />
             <div className="min-h-0 w-full">{renderContent()}</div>
           </div>
         </main>

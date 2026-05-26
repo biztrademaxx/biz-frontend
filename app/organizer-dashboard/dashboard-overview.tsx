@@ -8,6 +8,7 @@ import { apiFetch } from "@/lib/api"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Plus, Users, TrendingUp, TrendingDown, Calendar, CalendarDays, Loader2, Clock, ChevronRight, MoreHorizontal, LayoutGrid } from "lucide-react"
+import { DashboardManagedBanner } from "@/components/dashboard-managed-banner"
 import { orgCardShell, orgPageHeader, orgPrimaryBtn } from "./organizer-dashboard-theme"
 import { cn } from "@/lib/utils"
 import { getEventDisplayImageUrl } from "@/lib/default-event-image"
@@ -290,14 +291,22 @@ export default function DashboardOverview({
             <span className="font-medium text-[#334155]">{organizerName}</span>
           </p>
         </div>
-        <Button
-          type="button"
-          onClick={onCreateEventClick}
-          className={cn(orgPrimaryBtn, "h-11 shrink-0 rounded-xl px-5")}
-        >
-          <Plus className="h-4 w-4" />
-          Create New Event
-        </Button>
+        <div className="min-w-0 w-full">
+          <DashboardManagedBanner
+            page="organizer-dashboard"
+            className="h-[5.5rem] w-full md:h-24 lg:h-28"
+          />
+        </div>
+        <div className="justify-self-stretch md:col-start-3 md:justify-self-end md:pl-2 md:pr-1">
+          <Button
+            type="button"
+            onClick={onCreateEventClick}
+            className={cn(orgPrimaryBtn, "h-11 w-full shrink-0 rounded-xl px-5 md:w-auto")}
+          >
+            <Plus className="h-4 w-4" />
+            Create New Event
+          </Button>
+        </div>
       </header>
 
       {/* Stats — compact Spectra-style metric tiles */}

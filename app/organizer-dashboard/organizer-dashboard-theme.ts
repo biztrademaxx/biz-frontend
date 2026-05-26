@@ -10,9 +10,9 @@ export const orgSidebarSurface =
 export const orgPrimaryBtn =
   "bg-gradient-to-r from-[#8E54E9] to-[#4776E6] text-white shadow-md shadow-[#8E54E9]/20 hover:opacity-[0.96]"
 
-/** Light page header under the optional hero banner (avoids stacking two gradients). */
+/** Overview header: welcome · banner (middle column) · action pinned in last column. */
 export const orgPageHeader =
-  "flex flex-col gap-4 border-b border-[#e8e4f0] pb-5 sm:flex-row sm:items-center sm:justify-between"
+  "grid gap-4 border-b border-[#e8e4f0] pb-5 md:grid-cols-[minmax(0,17rem)_minmax(0,1fr)_auto] md:items-center md:gap-x-5"
 
 export const orgCardShell = "rounded-2xl border border-[#ebe7f3]/90 bg-white shadow-[0_4px_24px_rgba(142,84,233,0.07)]"
 
