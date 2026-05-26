@@ -91,13 +91,13 @@ export function AddVenueReview({ venueId, onReviewAdded }: AddVenueReviewProps) 
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Share Your Experience</CardTitle>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base">Share Your Experience</CardTitle>
       </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-3">
-            <Label className="text-base font-semibold">Rating</Label>
+      <CardContent className="pt-0">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">Rating</Label>
             <div className="flex gap-2">
               {[1, 2, 3, 4, 5].map((star) => (
                 <button
@@ -148,7 +148,7 @@ export function AddVenueReview({ venueId, onReviewAdded }: AddVenueReviewProps) 
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               maxLength={1000}
-              rows={5}
+              rows={3}
               disabled={isSubmitting}
             />
             <p className="text-xs text-gray-500">{comment.length}/1000</p>

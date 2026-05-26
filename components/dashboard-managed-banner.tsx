@@ -5,6 +5,10 @@ import { useEffect, useMemo, useState } from "react"
 import { X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { safeResponseJson } from "@/lib/api"
+import {
+  getDashboardBannerTheme,
+  type DashboardBannerPage,
+} from "@/lib/dashboard-banner-theme"
 
 type PublicBanner = {
   id: string
@@ -18,12 +22,7 @@ type PublicBanner = {
 }
 
 type DashboardManagedBannerProps = {
-  page:
-    | "exhibitor-dashboard"
-    | "organizer-dashboard"
-    | "venue-dashboard"
-    | "speaker-dashboard"
-    | "visitor-dashboard"
+  page: DashboardBannerPage
   /** Applied only while the banner is visible (hidden → `null`, no layout gap). */
   className?: string
 }
@@ -35,9 +34,11 @@ const SHOW_BANNER_AFTER_DISMISS_MS = 90 * 1000
 function DashboardBannerBackdrop({
   remoteUrl,
   alt,
+  backdropClassName,
 }: {
   remoteUrl: string | null
   alt: string
+  backdropClassName: string
 }) {
   const [imgFailed, setImgFailed] = useState(false)
 
@@ -46,12 +47,7 @@ function DashboardBannerBackdrop({
   }, [remoteUrl])
 
   if (!remoteUrl || imgFailed) {
-    return (
-      <div
-        className="h-full min-h-[8rem] w-full bg-gradient-to-br from-slate-800 via-slate-700 to-slate-900"
-        aria-hidden
-      />
-    )
+    return <div className={cn("h-full min-h-[8rem] w-full", backdropClassName)} aria-hidden />
   }
 
   return (
@@ -67,6 +63,7 @@ function DashboardBannerBackdrop({
 }
 
 export function DashboardManagedBanner({ page, className }: DashboardManagedBannerProps) {
+  const theme = getDashboardBannerTheme(page)
   const [banner, setBanner] = useState<PublicBanner | null>(null)
   const [isHidden, setIsHidden] = useState(false)
 
@@ -114,23 +111,37 @@ export function DashboardManagedBanner({ page, className }: DashboardManagedBann
 
   const imageNode = (
     <div className="relative h-full w-full overflow-hidden rounded-sm">
-      <DashboardBannerBackdrop remoteUrl={imageUrl} alt={alt} />
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-slate-950/60 via-slate-900/35 to-transparent" />
+      <DashboardBannerBackdrop
+        remoteUrl={imageUrl}
+        alt={alt}
+        backdropClassName={theme.backdrop}
+      />
+      <div className={cn("pointer-events-none absolute inset-0", theme.overlay)} />
       <div className="absolute inset-0 flex items-center px-5 md:px-8">
         <div className="max-w-md">
           <h3 className="text-lg md:text-2xl font-semibold text-white leading-tight">{title}</h3>
-          <p className="mt-2 text-xs md:text-sm text-blue-100 line-clamp-2">{description}</p>
+          <p className={cn("mt-2 text-xs md:text-sm line-clamp-2", theme.descriptionText)}>
+            {description}
+          </p>
           {href ? (
             <a
               href={href}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-3 inline-flex items-center rounded-sm bg-blue-600 px-3 py-1.5 text-xs md:text-sm font-medium text-white hover:bg-blue-500"
+              className={cn(
+                "mt-3 inline-flex items-center rounded-sm px-3 py-1.5 text-xs md:text-sm font-medium text-white",
+                theme.badgeLink,
+              )}
             >
               Advertise Now
             </a>
           ) : (
-            <span className="mt-3 inline-flex items-center rounded-sm bg-blue-600/90 px-3 py-1.5 text-xs md:text-sm font-medium text-white">
+            <span
+              className={cn(
+                "mt-3 inline-flex items-center rounded-sm px-3 py-1.5 text-xs md:text-sm font-medium text-white",
+                theme.badge,
+              )}
+            >
               Featured Banner
             </span>
           )}

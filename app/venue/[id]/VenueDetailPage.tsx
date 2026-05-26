@@ -47,15 +47,31 @@ export default function VenueDetailPage() {
 
       <div className="mx-auto max-w-7xl px-4 py-8">
         <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="spaces">Halls ({hallsCount})</TabsTrigger>
-            <TabsTrigger value="location">Location</TabsTrigger>
-            <TabsTrigger value="events">Events ({vm.events.length})</TabsTrigger>
-            <TabsTrigger value="reviews">Reviews ({vm.reviews.length})</TabsTrigger>
+          <TabsList className="mb-2 flex h-auto w-full flex-wrap gap-1 rounded-lg bg-muted/60 p-1 sm:grid sm:grid-cols-3 lg:grid-cols-5">
+            <TabsTrigger value="overview" className="flex-1 text-xs sm:text-sm">
+              Overview
+            </TabsTrigger>
+            <TabsTrigger value="spaces" className="flex-1 text-xs sm:text-sm">
+              Halls ({hallsCount})
+            </TabsTrigger>
+            <TabsTrigger value="location" className="flex-1 text-xs sm:text-sm">
+              Location
+            </TabsTrigger>
+            <TabsTrigger value="events" className="flex-1 text-xs sm:text-sm">
+              Events ({vm.events.length})
+            </TabsTrigger>
+            <TabsTrigger value="reviews" className="flex-1 text-xs sm:text-sm">
+              Reviews ({vm.reviews.length})
+            </TabsTrigger>
           </TabsList>
 
-          <VenueOverviewTab venue={vm.venue} events={vm.events} />
+          <VenueOverviewTab
+            venue={vm.venue}
+            events={vm.events}
+            onSendConnection={() => void vm.handleSendConnection()}
+            sendingConnection={vm.sendingConnection}
+            connectionSent={vm.connectionSent}
+          />
           <VenueHallsTab venue={vm.venue} />
           <VenueLocationTab venue={vm.venue} />
           <VenueEventsTab

@@ -49,10 +49,10 @@ export function VenueReviewsTab({ venue, reviews, reviewsLoading, onReviewAdded 
                     ))}
                   </div>
                 ) : (
-                  <div className="px-6 py-12 text-center">
-                    <Star className="mx-auto mb-4 h-16 w-16 text-gray-300" />
-                    <h3 className="mb-2 text-lg font-semibold text-gray-700">No Reviews Yet</h3>
-                    <p className="mx-auto max-w-md text-gray-500">
+                  <div className="px-4 py-5 text-center sm:px-6">
+                    <Star className="mx-auto mb-2 h-8 w-8 text-gray-300" />
+                    <h3 className="mb-1 text-sm font-semibold text-gray-700">No Reviews Yet</h3>
+                    <p className="mx-auto max-w-sm text-xs leading-snug text-gray-500">
                       Be the first to share your experience with this venue! Your review will help others
                       make better decisions.
                     </p>

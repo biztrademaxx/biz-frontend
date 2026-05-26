@@ -8,7 +8,7 @@ import { apiFetch } from "@/lib/api"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Plus, Users, TrendingUp, TrendingDown, Calendar, CalendarDays, Loader2, Clock, ChevronRight, MoreHorizontal, LayoutGrid } from "lucide-react"
-import { orgCardShell, orgWelcomeBanner } from "./organizer-dashboard-theme"
+import { orgCardShell, orgPageHeader, orgPrimaryBtn } from "./organizer-dashboard-theme"
 import { cn } from "@/lib/utils"
 import { getEventDisplayImageUrl } from "@/lib/default-event-image"
 
@@ -280,25 +280,25 @@ export default function DashboardOverview({
   }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 px-4">
-      <div className={cn(orgWelcomeBanner)}>
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-white drop-shadow-sm">Dashboard</h1>
-            <p className="mt-1 text-indigo-100">Welcome back, {organizerName}</p>
-          </div>
-
-          <Button
-            onClick={onCreateEventClick}
-            className={cn(
-              "flex cursor-pointer items-center gap-2 border border-white/40 bg-white/15 text-white shadow-sm backdrop-blur-sm hover:bg-white/25",
-            )}
-          >
-            <Plus className="h-4 w-4 cursor-pointer" />
-            Create New Event
-          </Button>
+    <div className="w-full space-y-6">
+      <header className={cn(orgPageHeader)}>
+        <div className="min-w-0">
+          <p className="text-xs font-semibold uppercase tracking-wider text-[#8E54E9]">Overview</p>
+          <h1 className="mt-1 text-2xl font-bold tracking-tight text-[#1E293B] sm:text-3xl">Dashboard</h1>
+          <p className="mt-1 text-sm text-[#64748B]">
+            Welcome back,{" "}
+            <span className="font-medium text-[#334155]">{organizerName}</span>
+          </p>
         </div>
-      </div>
+        <Button
+          type="button"
+          onClick={onCreateEventClick}
+          className={cn(orgPrimaryBtn, "h-11 shrink-0 rounded-xl px-5")}
+        >
+          <Plus className="h-4 w-4" />
+          Create New Event
+        </Button>
+      </header>
 
       {/* Stats — compact Spectra-style metric tiles */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">

@@ -37,6 +37,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { cn } from "@/lib/utils"
+import { useToast } from "@/hooks/use-toast"
 import { getMessageTheme, roleBadgeClass, type MessageSurface } from "./message-theme"
 
 export type InboxConnection = {
@@ -164,7 +165,16 @@ function AvatarWrap({ children, className }: { children: React.ReactNode; classN
 }
 
 export function MessagesInbox(props: MessagesInboxProps) {
+  const { toast } = useToast()
   const theme = getMessageTheme(props.surface)
+
+  const notifyCallFeatureSoon = () => {
+    toast({
+      title: "Coming soon",
+      description: "This feature will be available soon.",
+    })
+  }
+
   const {
     organizerId,
     filteredConversations,
@@ -433,10 +443,24 @@ export function MessagesInbox(props: MessagesInboxProps) {
                   </div>
                 </div>
                 <div className="flex shrink-0 items-center gap-0.5">
-                  <Button variant="ghost" size="icon" className="hidden h-9 w-9 rounded-full sm:inline-flex" aria-label="Call">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="hidden h-9 w-9 rounded-full sm:inline-flex"
+                    aria-label="Call"
+                    onClick={notifyCallFeatureSoon}
+                  >
                     <Phone className="h-4 w-4" />
                   </Button>
-                  <Button variant="ghost" size="icon" className="hidden h-9 w-9 rounded-full sm:inline-flex" aria-label="Video call">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="hidden h-9 w-9 rounded-full sm:inline-flex"
+                    aria-label="Video call"
+                    onClick={notifyCallFeatureSoon}
+                  >
                     <Video className="h-4 w-4" />
                   </Button>
                   {/* <DropdownMenu>

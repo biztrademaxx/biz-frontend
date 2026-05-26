@@ -12,7 +12,12 @@ export function VenueDetailBackBar({ router }: VenueDetailBackBarProps) {
   return (
     <div className="border-b bg-white">
       <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
-        <Button variant="ghost" onClick={() => router.push("/venues")} className="flex items-center gap-2">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => router.push("/venues")}
+          className="flex items-center gap-2 px-2 sm:px-4"
+        >
           <ArrowLeft className="h-4 w-4" />
           Back to Venues
         </Button>

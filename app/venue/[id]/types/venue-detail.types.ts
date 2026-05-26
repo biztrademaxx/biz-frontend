@@ -1,8 +1,8 @@
 export interface VenueManager {
   id: string
   name: string
-  email: string
-  phone: string
+  email?: string
+  phone?: string
   avatar?: string
   isVerified: boolean
   bio?: string
@@ -38,8 +38,8 @@ export interface VenueDetail {
   manager: VenueManager
   location: VenueLocation
   contact: {
-    phone: string
-    email: string
+    phone?: string
+    email?: string
     website?: string
   }
   capacity?: { total: number; halls: number }

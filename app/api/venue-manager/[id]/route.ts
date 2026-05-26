@@ -34,13 +34,63 @@ async function proxy(
   }
 }
 
+function stripPublicVenueContact(payload: Record<string, unknown>): Record<string, unknown> {
+  const data = payload.data
+  if (!data || typeof data !== "object") return payload
+
+  const venue = data as Record<string, unknown>
+  const manager =
+    venue.manager && typeof venue.manager === "object"
+      ? { ...(venue.manager as Record<string, unknown>) }
+      : null
+
+  if (manager) {
+    delete manager.email
+    delete manager.phone
+    venue.manager = manager
+  }
+
+  const contact =
+    venue.contact && typeof venue.contact === "object"
+      ? { ...(venue.contact as Record<string, unknown>) }
+      : {}
+
+  delete contact.phone
+  delete contact.email
+  if (contact.website) {
+    venue.contact = { website: contact.website }
+  } else {
+    delete venue.contact
+  }
+
+  return { ...payload, data: venue }
+}
+
 // GET /api/venue-manager/[id]
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   if (!id || id === "undefined") {
     return NextResponse.json({ success: false, error: "Invalid venue manager ID" }, { status: 400 })
   }
-  return proxy(req, `/api/venue-manager/${id}`, "GET")
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/venue-manager/${encodeURIComponent(id)}`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      cache: "no-store",
+    })
+    const data = await res.json().catch(() => ({}))
+    const sanitized = stripPublicVenueContact(
+      typeof data === "object" && data !== null ? (data as Record<string, unknown>) : {},
+    )
+    return NextResponse.json(sanitized, { status: res.status })
+  } catch (error) {
+    console.error("Error proxying venue-manager GET:", error)
+    return NextResponse.json(
+      { success: false, error: "Internal venue error" },
+      { status: 500 },
+    )
+  }
 }
 
 // PUT /api/venue-manager/[id]

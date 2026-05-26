@@ -10,6 +10,7 @@ import {
   fetchVenueBySegment,
   fetchVenueEvents,
   fetchVenueReviews,
+  sendVenueConnectionRequest,
 } from "../services/venue-detail.api"
 import type { VenueDetail, VenueEvent, VenueReview } from "../types/venue-detail.types"
 
@@ -29,6 +30,8 @@ export function useVenueDetail() {
   const [error, setError] = useState<string | null>(null)
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [schedulingMeeting, setSchedulingMeeting] = useState(false)
+  const [sendingConnection, setSendingConnection] = useState(false)
+  const [connectionSent, setConnectionSent] = useState(false)
 
   const showScheduleMeeting = isAuthenticated()
 
@@ -124,6 +127,34 @@ export function useVenueDetail() {
     toast({ title: "Success", description: "Your review has been added!" })
   }
 
+  const handleSendConnection = async () => {
+    if (!venue?.manager?.id) return
+
+    try {
+      setSendingConnection(true)
+      await sendVenueConnectionRequest(venue.manager.id)
+      setConnectionSent(true)
+      toast({
+        title: "Connection request sent",
+        description: `Your request was sent to ${venue.manager.name || "the venue manager"}.`,
+      })
+    } catch (err) {
+      console.error("Error sending connection:", err)
+      toast({
+        title: "Could not send connection",
+        description:
+          err instanceof Error
+            ? err.message === "Authentication required"
+              ? "Please log in to send a connection request."
+              : err.message
+            : "Failed to send connection request",
+        variant: "destructive",
+      })
+    } finally {
+      setSendingConnection(false)
+    }
+  }
+
   const handleScheduleMeeting = async () => {
     if (!venue) return
 
@@ -175,8 +206,11 @@ export function useVenueDetail() {
     currentImageIndex,
     setCurrentImageIndex,
     schedulingMeeting,
+    sendingConnection,
+    connectionSent,
     showScheduleMeeting,
     handleReviewAdded,
+    handleSendConnection,
     handleScheduleMeeting,
     nextImage,
     prevImage,

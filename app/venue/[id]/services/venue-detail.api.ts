@@ -46,6 +46,18 @@ export async function fetchVenueEvents(venueId: string): Promise<EventsResponse[
   }
 }
 
+export async function sendVenueConnectionRequest(receiverId: string): Promise<void> {
+  const userId = getCurrentUserId()
+  if (!userId) throw new Error("Authentication required")
+  if (!receiverId) throw new Error("Invalid venue manager")
+
+  await apiFetch("/api/connections/request", {
+    method: "POST",
+    body: { receiverId },
+    auth: true,
+  })
+}
+
 export async function createVenueAppointment(venue: VenueDetail): Promise<void> {
   const userId = getCurrentUserId()
   if (!userId) throw new Error("Authentication required")

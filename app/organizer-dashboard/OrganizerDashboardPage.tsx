@@ -558,8 +558,8 @@ export default function OrganizerDashboardSimplified({ organizerId }: OrganizerD
 
         {/* Main Content */}
         <main className="flex-1 overflow-auto p-4 sm:p-6">
-          <DashboardManagedBanner page="organizer-dashboard" />
-          <div className="mx-auto max-w-7xl">
+          <div className="mx-auto max-w-7xl space-y-5">
+            <DashboardManagedBanner page="organizer-dashboard" />
             <div className="min-h-0 w-full">{renderContent()}</div>
           </div>
         </main>

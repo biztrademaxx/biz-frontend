@@ -18,8 +18,6 @@ function normalizeVenues(raw: any[]): any[] {
         "Unnamed Venue",
       logo: v.logo ?? v.avatar ?? "",
       contactPerson: fullName || "Venue Manager",
-      email: v.email ?? "",
-      mobile: v.phone ?? "",
       address: v.venueAddress ?? "",
       city: v.venueCity ?? "",
       state: v.venueState ?? "",

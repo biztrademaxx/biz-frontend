@@ -20,13 +20,13 @@ export function VenueEventPreviewCard({ event }: VenueEventPreviewCardProps) {
 
   return (
     <div
-      className="flex w-full cursor-pointer flex-col overflow-hidden rounded-lg border border-gray-200 shadow-sm transition hover:border-blue-300 hover:shadow-md sm:w-[48%] sm:flex-row"
+      className="flex w-full cursor-pointer flex-col overflow-hidden rounded-lg border border-gray-200 shadow-sm transition hover:border-blue-300 hover:shadow-md md:flex-row md:w-[calc(50%-0.75rem)]"
       onClick={() => router.push(eventPublicPath(event))}
     >
-      <div className="relative mb-4 h-44 sm:mb-0 sm:h-auto sm:w-2/5">
-        <Image src={getEventImage(event)} alt={event.title} fill className="m-2 rounded-sm object-cover" />
+      <div className="relative h-40 w-full shrink-0 md:h-auto md:min-h-[140px] md:w-2/5">
+        <Image src={getEventImage(event)} alt={event.title} fill className="object-cover md:m-2 md:rounded-sm" />
       </div>
-      <div className="flex flex-col justify-between p-4 sm:w-3/5">
+      <div className="flex min-w-0 flex-1 flex-col justify-between p-4 md:w-3/5">
         <div>
           <div className="mb-1 flex items-center justify-between">
             <h3
