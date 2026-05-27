@@ -455,7 +455,7 @@ export default function ImportPage() {
             </li>
             <li className="flex items-start gap-2">
               <span className="text-blue-600 mt-1">•</span>
-              <span><strong>Dates value:</strong> Use DD-MM-YYYY (e.g., 01-08-2026) or YYYY-MM-DD (e.g., 2026-08-01)</span>
+              <span><strong>Dates value:</strong> DD-MM-YYYY (01-08-2026), YYYY-MM-DD (2026-08-01), or Excel dates like 2/6/26 (read as day/month/year)</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-blue-600 mt-1">•</span>
