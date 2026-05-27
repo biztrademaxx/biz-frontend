@@ -455,11 +455,11 @@ export default function ImportPage() {
             </li>
             <li className="flex items-start gap-2">
               <span className="text-blue-600 mt-1">•</span>
-              <span><strong>Dates value:</strong> Use YYYY-MM-DD format (e.g., 2025-05-01)</span>
+              <span><strong>Dates value:</strong> Use DD-MM-YYYY (e.g., 01-08-2026) or YYYY-MM-DD (e.g., 2026-08-01)</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-blue-600 mt-1">•</span>
-              <span><strong>Times:</strong> Use HH:mm (e.g., 10:00 / 18:00). If blank, 10:00 to 18:00 is applied.</span>
+              <span><strong>Times:</strong> Use HH:mm or HH:mm:ss (e.g., 10:20:00 / 18:20:00). If blank, 10:00–18:00 is applied. Times use Asia/Kolkata unless you set a timezone column.</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-blue-600 mt-1">•</span>

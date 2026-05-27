@@ -5,16 +5,19 @@
 export function formatEventSidebarTimeRange(event: {
   startDate?: string
   endDate?: string
+  timezone?: string | null
 }): string {
   if (!event.startDate || !event.endDate) {
     return "Time to be announced"
   }
 
+  const timeZone = event.timezone?.trim() || "Asia/Kolkata"
+
   const opts: Intl.DateTimeFormatOptions = {
     hour: "2-digit",
     minute: "2-digit",
     hour12: true,
-    timeZone: "Asia/Kolkata",
+    timeZone,
   }
 
   const startTime = new Date(event.startDate).toLocaleTimeString("en-IN", opts)
