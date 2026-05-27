@@ -13,7 +13,7 @@ export function getDefaultCreateEventFormData(): EventFormData {
     endDate: "",
     dailyStart: "10:00",
     dailyEnd: "18:00",
-    timezone: "",
+    timezone: "Asia/Kolkata",
     venueId: "",
     venue: "",
     city: "",

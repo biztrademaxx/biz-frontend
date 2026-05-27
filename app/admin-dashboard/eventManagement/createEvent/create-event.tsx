@@ -45,7 +45,7 @@ export function CreateEventForm() {
     endDate: "",
     dailyStart: "",
     dailyEnd: "",
-    timezone: "UTC",
+    timezone: "Asia/Kolkata",
     venueId: "",
     venue: "",
     city: "",

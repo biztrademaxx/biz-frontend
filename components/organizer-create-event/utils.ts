@@ -1,4 +1,5 @@
 import { getCountryTimezoneByName } from "@/lib/location-data"
+import { isoFromWallClock } from "@/lib/event-datetime-timezone"
 import type { EventFormData, SpaceCost } from "./types"
 
 /** Organizer publish: every exhibitor space row needs a name and valid pricing (per-unit services vs sq.m + min area). */
@@ -46,9 +47,7 @@ export const convertUTCToLocalTime = (utcDateString: string, timezone: string = 
 export const convertLocalToUTC = (localTime: string, dateString: string, timezone: string = "UTC"): string => {
   if (!localTime || !dateString) return ""
   try {
-    const localDateTime = `${dateString}T${localTime}:00`
-    const date = new Date(localDateTime)
-    return date.toISOString()
+    return isoFromWallClock(dateString, localTime, timezone || "UTC")
   } catch (error) {
     console.error("Error converting local to UTC:", error)
     return ""
@@ -99,5 +98,6 @@ export function getEffectiveEventCreationTimezone(formData: Pick<EventFormData, 
     const tz = getCountryTimezoneByName(country)
     if (tz) return tz
   }
-  return "UTC"
+  // Default organizer events to India time unless explicitly changed
+  return "Asia/Kolkata"
 }
