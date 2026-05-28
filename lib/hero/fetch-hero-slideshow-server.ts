@@ -61,6 +61,7 @@ function normalizeEvent(event: Record<string, unknown>): HeroSlideshowEvent {
         : new Date().toISOString(),
     endDate:
       endRaw != null && String(endRaw) ? new Date(String(endRaw)).toISOString() : null,
+    vipImage: typeof event.vipImage === "string" ? event.vipImage.trim() || null : null,
     bannerImage: firstImageUrl(event),
     images: imageStrings?.length ? imageStrings : null,
     venue:

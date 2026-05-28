@@ -12,6 +12,7 @@ import type { HeroSlideshowEvent } from "@/lib/hero/types"
 export type Event = HeroSlideshowEvent
 
 function cardImageUrl(event: Event): string {
+  if (event.vipImage?.trim()) return event.vipImage.trim()
   if (event.bannerImage?.trim()) return event.bannerImage.trim()
   const first = event.images?.[0]
   if (typeof first === "string" && first.trim()) return first.trim()

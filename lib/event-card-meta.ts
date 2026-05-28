@@ -12,11 +12,13 @@ export const EVENT_CARD_PLACEHOLDER_IMAGE = DEFAULT_EVENT_IMAGE
 export function hasDisplayableEventImage(event: {
   thumbnailImage?: string | null
   bannerImage?: string | null
+  vipImage?: string | null
   logo?: string | null
   images?: unknown
 }): boolean {
   if (event.thumbnailImage?.trim()) return true
   if (event.bannerImage?.trim()) return true
+  if (event.vipImage?.trim()) return true
   if (event.logo?.trim()) return true
   if (Array.isArray(event.images) && event.images.length > 0) {
     const first = event.images[0]

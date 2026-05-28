@@ -20,6 +20,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { apiFetch } from "@/lib/api"
+import { uploadEventFileToBackend } from "@/components/organizer-create-event/upload-backend"
 import { resolvedVerifiedBadgeImageUrl } from "@/lib/verified-event-badge"
 import {
   Download,
@@ -84,6 +85,7 @@ interface Event {
   reviews: number
   image: string
   bannerImage: string
+  vipImage?: string | null
   thumbnailImage: string
   images: string[]
   videos: string[]
@@ -265,6 +267,79 @@ function VerifyEventDialog({
           >
             {loading ? "Processing..." : 
               event.isVerified ? "Remove Verification" : "Verify Event"}
+          </Button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function VipEventDialog({
+  event,
+  open,
+  onOpenChange,
+  onConfirm,
+  loading,
+}: {
+  event: Event | null
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  onConfirm: (file?: File) => void
+  loading: boolean
+}) {
+  const [vipFile, setVipFile] = useState<File | null>(null)
+
+  if (!event || !open) return null
+
+  const enablingVip = !event.vip
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div className="w-full max-w-md rounded-lg bg-white p-6">
+        <div className="mb-4 flex items-center justify-between">
+          <h3 className="text-lg font-semibold">{enablingVip ? "Enable VIP Event" : "Disable VIP Event"}</h3>
+          <button onClick={() => onOpenChange(false)} className="text-gray-400 hover:text-gray-600">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        {enablingVip ? (
+          <div className="space-y-3">
+            <p className="text-sm text-gray-600">
+              Upload VIP image for "{event.title}". This image is used only in homepage VIP events section.
+            </p>
+            <Input
+              type="file"
+              accept="image/*"
+              onChange={(e) => setVipFile(e.target.files?.[0] || null)}
+            />
+            {vipFile && (
+              <AppImage
+                src={URL.createObjectURL(vipFile)}
+                alt="VIP image preview"
+                width={96}
+                height={96}
+                className="h-24 w-24 rounded border object-cover"
+                unoptimized
+              />
+            )}
+          </div>
+        ) : (
+          <p className="text-sm text-gray-600">
+            Disable VIP for "{event.title}"? VIP image will be cleared.
+          </p>
+        )}
+
+        <div className="mt-6 flex justify-end gap-3">
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
+            Cancel
+          </Button>
+          <Button
+            onClick={() => onConfirm(vipFile ?? undefined)}
+            disabled={loading || (enablingVip && !vipFile)}
+            variant={enablingVip ? "default" : "destructive"}
+          >
+            {loading ? "Saving..." : enablingVip ? "Enable VIP" : "Disable VIP"}
           </Button>
         </div>
       </div>
@@ -454,6 +529,7 @@ export function EditEventForm({
     timezone: event.timezone || "UTC",
     currency: event.currency || "USD",
     bannerImage: event.bannerImage || "",
+    vipImage: (event as any).vipImage || "",
     thumbnailImage: event.thumbnailImage || "",
     brochure: event.brochure || "",
     layout: event.layout || "",
@@ -493,6 +569,7 @@ export function EditEventForm({
   const [newImages, setNewImages] = useState<File[]>([])
   const [newVideos, setNewVideos] = useState<File[]>([])
   const [newDocuments, setNewDocuments] = useState<File[]>([])
+  const [vipImageFile, setVipImageFile] = useState<File | null>(null)
 
   const fileToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -587,6 +664,18 @@ export function EditEventForm({
         documentUploads
       ])
 
+      let vipImageUrl = (formData.vipImage || "").trim()
+      if (formData.vip) {
+        if (vipImageFile) {
+          vipImageUrl = await uploadEventFileToBackend(vipImageFile, "image")
+        }
+        if (!vipImageUrl) {
+          throw new Error("VIP image is required when marking event as VIP")
+        }
+      } else {
+        vipImageUrl = ""
+      }
+
       // Only send fields that the backend updates; do not send venue/location/organizer (relations stay unchanged)
       const updateData: Record<string, unknown> = {
         title: formData.title,
@@ -614,6 +703,7 @@ export function EditEventForm({
         brochure: formData.brochure ?? "",
         layout: formData.layout ?? "",
         bannerImage: formData.bannerImage ?? "",
+        vipImage: vipImageUrl || null,
         thumbnailImage: formData.thumbnailImage ?? "",
         isVerified: formData.isVerified,
         verifiedBadgeImage: formData.verifiedBadgeImage ?? null,
@@ -799,6 +889,33 @@ export function EditEventForm({
                   </Select>
                 </div>
               </div>
+
+              {formData.vip && (
+                <div className="space-y-2">
+                  <Label htmlFor="vipImage">VIP Image (homepage VIP section only) *</Label>
+                  <Input
+                    id="vipImage"
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setVipImageFile(e.target.files?.[0] || null)}
+                  />
+                  {(vipImageFile || formData.vipImage) && (
+                    <div className="flex items-center gap-3">
+                      <AppImage
+                        src={vipImageFile ? URL.createObjectURL(vipImageFile) : (formData.vipImage as string)}
+                        alt="VIP image preview"
+                        width={80}
+                        height={80}
+                        className="h-20 w-20 rounded border object-cover"
+                        unoptimized={!!vipImageFile}
+                      />
+                      <p className="text-xs text-gray-500">
+                        This image is used only in the homepage VIP events section.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="space-y-4">
@@ -1250,7 +1367,7 @@ function EventList({
   onEdit: (event: Event) => void
   onStatusChange: (eventId: string, status: Event["status"]) => void
   onFeatureToggle: (eventId: string, current: boolean) => void
-  onVipToggle: (eventId: string, current: boolean) => void
+  onVipToggle: (event: Event) => void
   onDelete: (eventId: string) => void
   onPromote: (event: Event) => void
   onVerify: (event: Event) => void
@@ -1580,6 +1697,10 @@ function EventList({
                                     <Star className="w-4 h-4 mr-2" />
                                     {event.featured ? "Remove Featured" : "Make Featured"}
                                   </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => onVipToggle(event)}>
+                                    <Crown className="w-4 h-4 mr-2" />
+                                    {event.vip ? "Remove VIP" : "Make VIP"}
+                                  </DropdownMenuItem>
                                   <DropdownMenuItem onClick={() => onVerify(event)}>
                                     <ShieldCheck className="w-4 h-4 mr-2" />
                                     {event.isVerified ? "Remove Verification" : "Verify Event"}
@@ -1623,6 +1744,8 @@ export default function EventManagement() {
   const [isEditing, setIsEditing] = useState(false)
   const [isPromoteDialogOpen, setIsPromoteDialogOpen] = useState(false)
   const [isVerifyDialogOpen, setIsVerifyDialogOpen] = useState(false)
+  const [isVipDialogOpen, setIsVipDialogOpen] = useState(false)
+  const [vipUpdating, setVipUpdating] = useState(false)
   const [verifying, setVerifying] = useState(false)
   const [activeTab, setActiveTab] = useState("all")
 
@@ -1653,6 +1776,7 @@ export default function EventManagement() {
           maxCapacity: event.maxAttendees ?? event.maxCapacity ?? 0,
           featured: event.featured ?? event.isFeatured ?? false,
           vip: event.vip ?? event.isVIP ?? false,
+          vipImage: event.vipImage ?? null,
           eventType: scalarEventType(event.eventType),
           isVerified: !!event.isVerified,
           verifiedAt: event.verifiedAt ?? null,
@@ -1753,28 +1877,59 @@ export default function EventManagement() {
     }
   }
 
-  const handleVipToggle = async (eventId: string, current: boolean) => {
+  const handleVipToggle = (event: Event) => {
+    setSelectedEvent(event)
+    setIsVipDialogOpen(true)
+  }
+
+  const handleConfirmVipToggle = async (file?: File) => {
+    if (!selectedEvent) return
     try {
-      const result = await apiFetch<{ event?: any }>(`/api/admin/events/${eventId}`, {
+      setVipUpdating(true)
+      const enablingVip = !selectedEvent.vip
+      let vipImage: string | null = null
+
+      if (enablingVip) {
+        if (!file) {
+          toast({
+            title: "VIP image required",
+            description: "Please upload VIP image before enabling VIP.",
+            variant: "destructive",
+          })
+          return
+        }
+        vipImage = await uploadEventFileToBackend(file, "image")
+      }
+
+      const result = await apiFetch<{ event?: any; data?: any }>(`/api/admin/events/${selectedEvent.id}`, {
         method: "PATCH",
-        body: { vip: !current },
+        body: enablingVip ? { vip: true, vipImage } : { vip: false, vipImage: null },
         auth: true,
       })
       
       const updated = result.data ?? result.event
       setEvents((prev) => prev.map((e) => {
-        if (e.id === eventId) {
+        if (e.id === selectedEvent.id) {
           return {
             ...e,
-            vip: !current,
+            vip: enablingVip,
+            vipImage: updated?.vipImage ?? (enablingVip ? vipImage : null),
             isVerified: updated?.isVerified ?? e.isVerified,
             verifiedBadgeImage: updated?.verifiedBadgeImage ?? e.verifiedBadgeImage,
           }
         }
         return e
       }))
+      setIsVipDialogOpen(false)
     } catch (error) {
       console.error("Failed to toggle VIP:", error)
+      toast({
+        title: "Error",
+        description: "Failed to update VIP status",
+        variant: "destructive",
+      })
+    } finally {
+      setVipUpdating(false)
     }
   }
 
@@ -1962,6 +2117,13 @@ const handleVerifyToggle = async (event: Event, verify: boolean, customBadge?: F
           }
         }}
         loading={verifying}
+      />
+      <VipEventDialog
+        event={selectedEvent}
+        open={isVipDialogOpen}
+        onOpenChange={setIsVipDialogOpen}
+        onConfirm={handleConfirmVipToggle}
+        loading={vipUpdating}
       />
     </>
   )

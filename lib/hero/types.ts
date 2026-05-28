@@ -12,6 +12,7 @@ export interface HeroSlideshowEvent {
   startDate: string
   endDate?: string | null
   bannerImage?: string | null
+  vipImage?: string | null
   images?: string[] | null
   venue?: HeroVenue | null
 }

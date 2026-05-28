@@ -165,6 +165,7 @@ import { sanitizeImageUrl } from "@/lib/placeholder"
     startDate: string
     endDate: string
     shortDescription?: string | null
+    vipImage?: string | null
     bannerImage?: string | null
     images?: string[] | null
     category?: string[]
@@ -266,7 +267,7 @@ import { sanitizeImageUrl } from "@/lib/placeholder"
 
   /** Image only (never a watch URL) — used when no valid YouTube embed. */
   function vipHeroImageUrl(e: VipEvent): string | undefined {
-    return sanitizeImageUrl(e.bannerImage) ?? sanitizeImageUrl(e.images?.[0])
+    return sanitizeImageUrl(e.vipImage) ?? sanitizeImageUrl(e.bannerImage) ?? sanitizeImageUrl(e.images?.[0])
   }
 
   /**
