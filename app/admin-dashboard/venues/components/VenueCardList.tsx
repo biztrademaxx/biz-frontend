@@ -122,15 +122,15 @@ export function VenueCardList({
           <Card
             key={venue.id}
             className={cn(
-              "h-[200px] overflow-hidden rounded-2xl border bg-white shadow-sm transition-shadow hover:shadow-md",
+              "overflow-hidden rounded-2xl border bg-white shadow-sm transition-shadow hover:shadow-md",
               theme.border,
             )}
           >
             <div className={cn("h-1 bg-gradient-to-r", theme.bar)} />
-            <CardContent className="flex h-[calc(200px-4px)] items-center gap-4 px-4 py-3">
+            <CardContent className="flex items-start gap-4 px-4 py-3.5">
               <VenueThumbnail src={thumb} alt={venue.venueName} accent={accent} />
 
-              <div className="flex min-h-0 min-w-0 flex-1 flex-col justify-center gap-2">
+              <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5">
@@ -187,7 +187,7 @@ export function VenueCardList({
                 </div>
               </div>
 
-              <div className="flex shrink-0 flex-col justify-center gap-1.5 border-l border-border/60 pl-3">
+              <div className="flex shrink-0 flex-col gap-1.5 border-l border-border/60 pl-3 pt-0.5 pb-1">
                 <Button
                   variant="outline"
                   size="sm"

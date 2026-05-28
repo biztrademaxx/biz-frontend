@@ -130,31 +130,60 @@ function getInitials(company?: string) {
 }
 
 export default function OrganizerManagement({ initialTab = "all" }: { initialTab?: "all" | "bulk-import" }) {
+  const PAGE_SIZE = 10
   const { toast } = useToast()
   const [searchTerm, setSearchTerm] = useState("")
   const [organizers, setOrganizers] = useState<Organizer[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [totalItems, setTotalItems] = useState(0)
   const [activeTab, setActiveTab] = useState<"all" | "bulk-import">(initialTab)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [sendingEmailFor, setSendingEmailFor] = useState<string | null>(null)
   const [bulkSending, setBulkSending] = useState(false)
 
   useEffect(() => {
-    fetchOrganizers()
-  }, [])
+    const timer = setTimeout(() => {
+      fetchOrganizers(currentPage, searchTerm)
+    }, 250)
+    return () => clearTimeout(timer)
+  }, [currentPage, searchTerm])
 
   useEffect(() => {
     setActiveTab(initialTab)
   }, [initialTab])
 
-  const fetchOrganizers = async () => {
+  const fetchOrganizers = async (pageArg?: number, searchArg?: string) => {
     try {
+      const page = typeof pageArg === "number" ? pageArg : currentPage
       setLoading(true)
       setError(null)
-      const data = await adminApi<{ success?: boolean; data?: Organizer[]; organizers?: Organizer[] }>("/organizers")
+      const query = new URLSearchParams({
+        page: String(page),
+        limit: String(PAGE_SIZE),
+      })
+      const trimmedSearch = (searchArg ?? searchTerm ?? "").trim()
+      if (trimmedSearch) {
+        query.set("search", trimmedSearch)
+      }
+      const data = await adminApi<{
+        success?: boolean
+        data?: Organizer[]
+        organizers?: Organizer[]
+        pagination?: { page?: number; limit?: number; total?: number; totalPages?: number }
+      }>(`/organizers?${query.toString()}`)
       const list = data?.data ?? (data as any)?.organizers ?? []
       setOrganizers(Array.isArray(list) ? list : [])
+      const incomingTotal = Number(data?.pagination?.total ?? list?.length ?? 0)
+      const incomingPages = Math.max(1, Number(data?.pagination?.totalPages ?? 1))
+      setTotalItems(Number.isFinite(incomingTotal) ? incomingTotal : 0)
+      setTotalPages(incomingPages)
+      if (page > incomingPages) {
+        setCurrentPage(incomingPages)
+      }
+      setSelectedIds(new Set())
     } catch (err) {
       console.error("Error fetching organizers:", err)
       setError("Failed to load organizers")
@@ -171,7 +200,7 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
         body: { isVerified: true, isActive: true },
       })
       toast({ title: "Approved", description: "Organizer can now sign in and use the platform." })
-      await fetchOrganizers()
+      await fetchOrganizers(currentPage, searchTerm)
     } catch (e: any) {
       toast({
         title: "Approval failed",
@@ -195,6 +224,8 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
       id: organizer.id,
       name:
         organizer.organizationName?.trim() ||
+        organizer.company?.trim() ||
+        `${organizer.firstName || ""} ${organizer.lastName || ""}`.trim() ||
         "Unknown Organizer",
       email: organizer.email,
       phone: organizer.phone || organizer.businessPhone || "Not provided",
@@ -215,20 +246,10 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
     }
   }
 
-  const filteredOrganizers: TransformedOrganizer[] = organizers
-    .map(transformOrganizerData)
-    .filter((organizer) => {
-      const q = searchTerm.trim().toLowerCase()
-      if (!q) return true
-      return (
-        organizer.name.toLowerCase().includes(q) ||
-        organizer.email.toLowerCase().includes(q) ||
-        organizer.category.toLowerCase().includes(q)
-      )
-    })
+  const visibleOrganizers: TransformedOrganizer[] = organizers.map(transformOrganizerData)
 
   const stats = {
-    total: organizers.length,
+    total: totalItems,
     verified: organizers.filter((o) => o.isVerified).length,
     premium: organizers.filter((o) => o.isActive && o.isVerified).length,
     pending: organizers.filter((o) => !o.isVerified).length,
@@ -286,7 +307,7 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
   }
 
   const handleBulkSendEmail = async () => {
-    const targets = filteredOrganizers.filter((o) => selectedIds.has(o.id))
+    const targets = visibleOrganizers.filter((o) => selectedIds.has(o.id))
     if (targets.length === 0) {
       toast({ title: "No selection", description: "Select at least one organizer.", variant: "destructive" })
       return
@@ -323,7 +344,7 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
 
   const toggleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedIds(new Set(filteredOrganizers.map((o) => o.id)))
+      setSelectedIds(new Set(visibleOrganizers.map((o) => o.id)))
     } else {
       setSelectedIds(new Set())
     }
@@ -339,7 +360,7 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
   }
 
   const allVisibleSelected =
-    filteredOrganizers.length > 0 && filteredOrganizers.every((o) => selectedIds.has(o.id))
+    visibleOrganizers.length > 0 && visibleOrganizers.every((o) => selectedIds.has(o.id))
 
   if (loading) {
     return (
@@ -357,7 +378,7 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
       <div className="flex justify-center items-center py-20">
         <div className="text-center space-y-3">
           <p className="text-sm font-medium text-red-500">{error}</p>
-          <button onClick={fetchOrganizers} className="text-sm underline text-gray-600">Try Again</button>
+          <button onClick={() => fetchOrganizers(currentPage, searchTerm)} className="text-sm underline text-gray-600">Try Again</button>
         </div>
       </div>
     )
@@ -432,7 +453,10 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
             <input
               placeholder="Search organizers…"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => {
+                setSearchTerm(e.target.value)
+                setCurrentPage(1)
+              }}
               className="pl-9 pr-4 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900/10 w-64"
             />
           </div>
@@ -463,7 +487,7 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
-                {filteredOrganizers.map((organizer) => {
+                {visibleOrganizers.map((organizer) => {
                   const isVerified = organizer.originalData.isVerified
                   const isActive = organizer.originalData.isActive
                   const isPremium = isVerified && isActive
@@ -623,7 +647,7 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
                     </tr>
                   )
                 })}
-                {filteredOrganizers.length === 0 && (
+                {visibleOrganizers.length === 0 && (
                   <tr>
                     <td colSpan={8} className="text-center py-16 text-sm text-gray-400">
                       No organizers found
@@ -632,6 +656,29 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
                 )}
               </tbody>
             </table>
+          </div>
+          <div className="flex items-center justify-between mt-4 px-1">
+            <p className="text-xs text-gray-500">
+              Showing page {currentPage} of {totalPages} ({totalItems.toLocaleString()} organizers)
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                disabled={currentPage <= 1 || loading}
+                className="px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Previous
+              </button>
+              <button
+                type="button"
+                onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                disabled={currentPage >= totalPages || loading}
+                className="px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next
+              </button>
+            </div>
           </div>
         </TabsContent>
 
