@@ -30,9 +30,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { adminApi } from "@/lib/admin-api"
 import { useToast } from "@/components/ui/use-toast"
 import EntityBulkImport from "./entity-bulk-import"
+import { uploadVenueLogo } from "@/lib/upload-utils"
 
 interface Organizer {
-  company: string
+  company: string | null
   id: string
   firstName: string
   lastName: string
@@ -97,6 +98,26 @@ interface TransformedOrganizer {
   originalData: Organizer
 }
 
+interface OrganizerEditFormData {
+  id: string
+  firstName: string
+  lastName: string
+  email: string
+  phone: string
+  avatar: string
+  organizationName: string
+  company: string
+  description: string
+  headquarters: string
+  founded: string
+  teamSize: string
+  website: string
+  businessEmail: string
+  businessPhone: string
+  businessAddress: string
+  taxId: string
+}
+
 const avatarColors = [
   "bg-emerald-100 text-emerald-700",
   "bg-blue-100 text-blue-700",
@@ -143,6 +164,11 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [sendingEmailFor, setSendingEmailFor] = useState<string | null>(null)
   const [bulkSending, setBulkSending] = useState(false)
+  const [bulkApproving, setBulkApproving] = useState(false)
+  const [editingOrganizer, setEditingOrganizer] = useState<OrganizerEditFormData | null>(null)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [savingEdit, setSavingEdit] = useState(false)
+  const [avatarFile, setAvatarFile] = useState<File | null>(null)
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -342,6 +368,129 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
     }
   }
 
+  const handleBulkApprove = async () => {
+    const targets = visibleOrganizers.filter((o) => selectedIds.has(o.id) && !o.originalData.isVerified)
+    if (targets.length === 0) {
+      toast({
+        title: "No pending selection",
+        description: "Select at least one pending organizer to approve.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setBulkApproving(true)
+    let approved = 0
+    let failed = 0
+
+    for (const organizer of targets) {
+      try {
+        await adminApi(`/organizers/${organizer.id}`, {
+          method: "PATCH",
+          body: { isVerified: true, isActive: true },
+        })
+        approved += 1
+      } catch {
+        failed += 1
+      }
+    }
+
+    setBulkApproving(false)
+
+    if (approved > 0) {
+      toast({
+        title: "Bulk approval complete",
+        description:
+          failed > 0
+            ? `Approved ${approved} organizer(s); ${failed} failed.`
+            : `Approved ${approved} organizer(s).`,
+      })
+      await fetchOrganizers(currentPage, searchTerm)
+    } else {
+      toast({
+        title: "Approval failed",
+        description: "Could not approve selected organizers.",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleOpenEdit = (organizer: TransformedOrganizer) => {
+    const source = organizer.originalData
+    const normalizedCompany =
+      source.company?.trim() ||
+      source.organizationName?.trim() ||
+      `${source.firstName || ""} ${source.lastName || ""}`.trim()
+    setEditingOrganizer({
+      id: source.id,
+      firstName: source.firstName || "",
+      lastName: source.lastName || "",
+      email: source.email || "",
+      phone: source.phone || "",
+      avatar: source.avatar || "",
+      organizationName: source.organizationName || "",
+      company: normalizedCompany,
+      description: source.description || "",
+      headquarters: source.headquarters || "",
+      founded: source.founded || "",
+      teamSize: source.teamSize || "",
+      website: source.website || "",
+      businessEmail: source.businessEmail || "",
+      businessPhone: source.businessPhone || "",
+      businessAddress: source.businessAddress || "",
+      taxId: source.taxId || "",
+    })
+    setAvatarFile(null)
+    setIsEditDialogOpen(true)
+  }
+
+  const handleEditField = (field: keyof OrganizerEditFormData, value: string) => {
+    setEditingOrganizer((prev) => (prev ? { ...prev, [field]: value } : prev))
+  }
+
+  const handleSaveEdit = async () => {
+    if (!editingOrganizer) return
+    try {
+      setSavingEdit(true)
+      let avatarUrl = editingOrganizer.avatar.trim()
+      if (avatarFile) {
+        avatarUrl = await uploadVenueLogo(avatarFile)
+      }
+      await adminApi(`/organizers/${editingOrganizer.id}`, {
+        method: "PATCH",
+        body: {
+          firstName: editingOrganizer.firstName.trim(),
+          lastName: editingOrganizer.lastName.trim(),
+          email: editingOrganizer.email.trim(),
+          phone: editingOrganizer.phone.trim() || null,
+          avatar: avatarUrl || null,
+          organizationName: editingOrganizer.organizationName.trim() || null,
+          company: editingOrganizer.company.trim() || null,
+          description: editingOrganizer.description.trim() || null,
+          headquarters: editingOrganizer.headquarters.trim() || null,
+          founded: editingOrganizer.founded.trim() || null,
+          teamSize: editingOrganizer.teamSize.trim() || null,
+          website: editingOrganizer.website.trim() || null,
+          businessEmail: editingOrganizer.businessEmail.trim() || null,
+          businessPhone: editingOrganizer.businessPhone.trim() || null,
+          businessAddress: editingOrganizer.businessAddress.trim() || null,
+          taxId: editingOrganizer.taxId.trim() || null,
+        },
+      })
+      toast({ title: "Updated", description: "Organizer details updated successfully." })
+      setIsEditDialogOpen(false)
+      await fetchOrganizers(currentPage, searchTerm)
+    } catch (e: any) {
+      toast({
+        title: "Update failed",
+        description: e?.message || "Could not update organizer details.",
+        variant: "destructive",
+      })
+    } finally {
+      setSavingEdit(false)
+    }
+  }
+
   const toggleSelectAll = (checked: boolean) => {
     if (checked) {
       setSelectedIds(new Set(visibleOrganizers.map((o) => o.id)))
@@ -394,15 +543,26 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
         </div>
         <div className="flex gap-2">
           {activeTab === "all" && selectedIds.size > 0 && (
-            <button
-              type="button"
-              onClick={handleBulkSendEmail}
-              disabled={bulkSending}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-gray-900 border border-gray-900 rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-60"
-            >
-              <Mail className="w-4 h-4" />
-              {bulkSending ? "Sending…" : `Send email (${selectedIds.size})`}
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={handleBulkApprove}
+                disabled={bulkApproving}
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-emerald-600 border border-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-60"
+              >
+                <CheckCircle className="w-4 h-4" />
+                {bulkApproving ? "Approving…" : `Approve selected (${selectedIds.size})`}
+              </button>
+              <button
+                type="button"
+                onClick={handleBulkSendEmail}
+                disabled={bulkSending || bulkApproving}
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-gray-900 border border-gray-900 rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-60"
+              >
+                <Mail className="w-4 h-4" />
+                {bulkSending ? "Sending…" : `Send email (${selectedIds.size})`}
+              </button>
+            </>
           )}
           <button
             type="button"
@@ -555,6 +715,7 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
                             <button
                               type="button"
                               onClick={() => handleApproveOrganizer(organizer.id)}
+                              disabled={bulkApproving}
                               className="text-xs font-medium px-3 py-1.5 rounded-lg border border-emerald-200 text-emerald-700 hover:bg-emerald-50 transition-colors"
                             >
                               Approve
@@ -642,6 +803,13 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
                               </div>
                             </DialogContent>
                           </Dialog>
+                          <button
+                            type="button"
+                            onClick={() => handleOpenEdit(organizer)}
+                            className="text-xs font-medium px-3 py-1.5 rounded-lg border border-blue-200 text-blue-700 hover:bg-blue-50 transition-colors"
+                          >
+                            Edit
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -710,6 +878,116 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
           />
         </TabsContent>
       </Tabs>
+
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Organizer</DialogTitle>
+          </DialogHeader>
+          {editingOrganizer && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <Avatar className="h-14 w-14 border">
+                  <AvatarImage
+                    src={avatarFile ? URL.createObjectURL(avatarFile) : editingOrganizer.avatar || undefined}
+                    alt={editingOrganizer.organizationName || "Organizer"}
+                  />
+                  <AvatarFallback>{getInitials(editingOrganizer.organizationName || editingOrganizer.company)}</AvatarFallback>
+                </Avatar>
+                <div className="flex-1">
+                  <label className="text-xs text-gray-500">Image URL</label>
+                  <input
+                    value={editingOrganizer.avatar}
+                    onChange={(e) => handleEditField("avatar", e.target.value)}
+                    placeholder="https://..."
+                    className="w-full mt-1 px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900/10"
+                  />
+                  <label className="text-xs text-gray-500 mt-3 block">Or Upload Image</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setAvatarFile(e.target.files?.[0] ?? null)}
+                    className="w-full mt-1 px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900/10"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-gray-500">First Name</label>
+                  <input value={editingOrganizer.firstName} onChange={(e) => handleEditField("firstName", e.target.value)} className="w-full mt-1 px-3 py-2 text-sm border border-gray-200 rounded-lg" />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500">Last Name</label>
+                  <input value={editingOrganizer.lastName} onChange={(e) => handleEditField("lastName", e.target.value)} className="w-full mt-1 px-3 py-2 text-sm border border-gray-200 rounded-lg" />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500">Email</label>
+                  <input value={editingOrganizer.email} onChange={(e) => handleEditField("email", e.target.value)} className="w-full mt-1 px-3 py-2 text-sm border border-gray-200 rounded-lg" />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500">Phone</label>
+                  <input value={editingOrganizer.phone} onChange={(e) => handleEditField("phone", e.target.value)} className="w-full mt-1 px-3 py-2 text-sm border border-gray-200 rounded-lg" />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500">Organization Name</label>
+                  <input value={editingOrganizer.organizationName} onChange={(e) => handleEditField("organizationName", e.target.value)} className="w-full mt-1 px-3 py-2 text-sm border border-gray-200 rounded-lg" />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500">Company</label>
+                  <input value={editingOrganizer.company} onChange={(e) => handleEditField("company", e.target.value)} className="w-full mt-1 px-3 py-2 text-sm border border-gray-200 rounded-lg" />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500">Website</label>
+                  <input value={editingOrganizer.website} onChange={(e) => handleEditField("website", e.target.value)} className="w-full mt-1 px-3 py-2 text-sm border border-gray-200 rounded-lg" />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500">Headquarters</label>
+                  <input value={editingOrganizer.headquarters} onChange={(e) => handleEditField("headquarters", e.target.value)} className="w-full mt-1 px-3 py-2 text-sm border border-gray-200 rounded-lg" />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500">Founded</label>
+                  <input value={editingOrganizer.founded} onChange={(e) => handleEditField("founded", e.target.value)} className="w-full mt-1 px-3 py-2 text-sm border border-gray-200 rounded-lg" />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500">Team Size</label>
+                  <input value={editingOrganizer.teamSize} onChange={(e) => handleEditField("teamSize", e.target.value)} className="w-full mt-1 px-3 py-2 text-sm border border-gray-200 rounded-lg" />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500">Business Email</label>
+                  <input value={editingOrganizer.businessEmail} onChange={(e) => handleEditField("businessEmail", e.target.value)} className="w-full mt-1 px-3 py-2 text-sm border border-gray-200 rounded-lg" />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500">Business Phone</label>
+                  <input value={editingOrganizer.businessPhone} onChange={(e) => handleEditField("businessPhone", e.target.value)} className="w-full mt-1 px-3 py-2 text-sm border border-gray-200 rounded-lg" />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs text-gray-500">Business Address</label>
+                <textarea value={editingOrganizer.businessAddress} onChange={(e) => handleEditField("businessAddress", e.target.value)} rows={2} className="w-full mt-1 px-3 py-2 text-sm border border-gray-200 rounded-lg" />
+              </div>
+              <div>
+                <label className="text-xs text-gray-500">Description</label>
+                <textarea value={editingOrganizer.description} onChange={(e) => handleEditField("description", e.target.value)} rows={3} className="w-full mt-1 px-3 py-2 text-sm border border-gray-200 rounded-lg" />
+              </div>
+              <div>
+                <label className="text-xs text-gray-500">Tax ID</label>
+                <input value={editingOrganizer.taxId} onChange={(e) => handleEditField("taxId", e.target.value)} className="w-full mt-1 px-3 py-2 text-sm border border-gray-200 rounded-lg" />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)} disabled={savingEdit}>
+                  Cancel
+                </Button>
+                <Button type="button" onClick={handleSaveEdit} disabled={savingEdit}>
+                  {savingEdit ? "Saving..." : "Save Changes"}
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
