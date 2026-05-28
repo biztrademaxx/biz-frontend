@@ -531,17 +531,8 @@ const Footer: React.FC<FooterProps> = ({ categories }) => {
             }}
           >
             <div className="mx-auto max-w-7xl px-6 py-3 lg:px-10">
-              <p
-                style={{
-                  textAlign: "center",
-                  fontSize: 11,
-                  color: "rgba(255,255,255,0.50)",
-                  margin: 0,
-                }}
-              >
-                © {new Date().getFullYear()} BizTradeFairs.
-                All rights reserved.
-              </p>
+              <p className="text-sm text-white">BizTradeFairs.com provides verified information on trade fairs, expos, conferences, and industrial events worldwide. Users are advised to confirm event schedules, venue details, participation terms, and travel requirements directly with organizers before planning attendance.</p>
+              <p className="text-sm text-white text-center">© {new Date().getFullYear()} BizTradeFairs. All rights reserved.</p>
             </div>
           </div>
         </div>
