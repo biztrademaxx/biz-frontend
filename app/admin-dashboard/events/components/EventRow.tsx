@@ -1,6 +1,5 @@
 "use client"
 
-import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Edit, Star, Eye, Trash2 } from "lucide-react"
@@ -51,11 +50,8 @@ function formatDateRange(startDate: string, endDate: string): string {
 }
 
 function getOrganizerInitials(companyName: string): string {
-  // Get initials from company name (first letters of each word, max 2 letters)
-  const words = companyName.split(" ").filter(w => w.length > 0)
-  if (words.length === 1) {
-    return words[0].substring(0, 2).toUpperCase()
-  }
+  const words = companyName.split(" ").filter((w) => w.length > 0)
+  if (words.length === 1) return words[0].substring(0, 2).toUpperCase()
   return words.slice(0, 2).map((w) => w[0]?.toUpperCase() ?? "").join("")
 }
 
@@ -81,18 +77,19 @@ function getOrganizerColor(name: string) {
 function OrganizerAvatar({ name }: { name: string }) {
   const { bg, text } = getOrganizerColor(name)
   return (
-    <div style={{
-      width: "28px", height: "28px", borderRadius: "50%",
-      background: bg, color: text,
-      display: "flex", alignItems: "center", justifyContent: "center",
-      fontSize: "11px", fontWeight: 700, flexShrink: 0, letterSpacing: "0.02em",
-    }}>
+    <div
+      style={{
+        width: "28px", height: "28px", borderRadius: "50%",
+        background: bg, color: text,
+        display: "flex", alignItems: "center", justifyContent: "center",
+        fontSize: "11px", fontWeight: 700, flexShrink: 0, letterSpacing: "0.02em",
+      }}
+    >
       {getOrganizerInitials(name) || "?"}
     </div>
   )
 }
 
-// Category pill colors
 const CATEGORY_STYLES: Record<string, { bg: string; text: string }> = {
   "Summit": { bg: "#dcfce7", text: "#166534" },
   "Expo": { bg: "#ede9fe", text: "#5b21b6" },
@@ -106,17 +103,32 @@ const CATEGORY_STYLES: Record<string, { bg: string; text: string }> = {
   "Technology": { bg: "#dbeafe", text: "#1e40af" },
   "Healthcare": { bg: "#d1fae5", text: "#065f46" },
   "Finance": { bg: "#fef3c7", text: "#92400e" },
+  "Minerals & Metals": { bg: "#fef3c7", text: "#92400e" },
+  "Packing & Packaging": { bg: "#e0e7ff", text: "#3730a3" },
+  "Food & Beverages": { bg: "#dcfce7", text: "#166534" },
+  "Chemicals": { bg: "#fee2e2", text: "#991b1b" },
+  "Industrial Engineering": { bg: "#f3f4f6", text: "#374151" },
+  "Building & Construction": { bg: "#dbeafe", text: "#1d4ed8" },
 }
 
 function CategoryPill({ name }: { name: string }) {
   const style = CATEGORY_STYLES[name] || { bg: "#f3f4f6", text: "#374151" }
   return (
-    <span style={{
-      display: "inline-flex", alignItems: "center",
-      padding: "4px 12px", borderRadius: "20px",
-      fontSize: "12px", fontWeight: 600, whiteSpace: "nowrap",
-      background: style.bg, color: style.text,
-    }}>
+    <span
+      style={{
+        display: "inline-block",
+        padding: "3px 9px",
+        borderRadius: "20px",
+        fontSize: "11px",
+        fontWeight: 600,
+        background: style.bg,
+        color: style.text,
+        overflow: "hidden",
+        textOverflow: "ellipsis",
+        whiteSpace: "nowrap",
+        maxWidth: "100%",
+      }}
+    >
       {name}
     </span>
   )
@@ -131,57 +143,36 @@ function StatusPill({ status }: { status: "Live" | "Upcoming" | "Ended" | "Draft
   }
   const s = STYLES[status]
   return (
-    <span style={{
-      display: "inline-flex", alignItems: "center", gap: "5px",
-      padding: "4px 12px", borderRadius: "20px",
-      fontSize: "12px", fontWeight: 600,
-      background: s.bg, color: s.text,
-    }}>
+    <span
+      style={{
+        display: "inline-flex", alignItems: "center", gap: "5px",
+        padding: "3px 9px", borderRadius: "20px",
+        fontSize: "11px", fontWeight: 600, whiteSpace: "nowrap",
+        background: s.bg, color: s.text,
+      }}
+    >
       <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: s.dot, flexShrink: 0 }} />
       {status}
     </span>
   )
 }
 
-// FIXED: Strongly prioritize company over personal name
 function getOrganizerCompanyName(organizer: any): string {
   if (!organizer) return "Unknown"
-
-  // If organizer is string
-  if (typeof organizer === "string") {
-    return organizer
-  }
-
-  // PRIORITY 1 → company
-  if (organizer.company && organizer.company.trim() !== "") {
-    return organizer.company
-  }
-
-  // PRIORITY 2 → companyName
-  if (organizer.companyName && organizer.companyName.trim() !== "") {
-    return organizer.companyName
-  }
-
-  // PRIORITY 3 → name
-  if (organizer.name && organizer.name.trim() !== "") {
-    return organizer.name
-  }
-
-  // PRIORITY 4 → organizerName
-  if (organizer.organizerName && organizer.organizerName.trim() !== "") {
-    return organizer.organizerName
-  }
-
+  if (typeof organizer === "string") return organizer
+  if (organizer.company?.trim()) return organizer.company
+  if (organizer.companyName?.trim()) return organizer.companyName
+  if (organizer.name?.trim()) return organizer.name
+  if (organizer.organizerName?.trim()) return organizer.organizerName
   return "Unknown"
 }
 
-// Capacity bar color
-function barColor(attendees: number, capacity: number): string {
-  if (!capacity) return "#22c55e"
-  const pct = attendees / capacity
-  if (pct > 0.8) return "#ef4444"
-  if (pct > 0.5) return "#f59e0b"
-  return "#22c55e"
+// Shared truncation style — works with table-layout: fixed
+const truncStyle: React.CSSProperties = {
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
+  maxWidth: 0,
 }
 
 export function EventRow({
@@ -198,42 +189,20 @@ export function EventRow({
   onPromote,
   onVerify,
 }: EventRowProps) {
-  const [isHovered, setIsHovered] = useState(false)
-
-  // Debug logs
-  console.log("====================================")
-  console.log("📌 EVENT TITLE:", event.title)
-  console.log("👤 RAW ORGANIZER DATA:", JSON.stringify(event.organizer, null, 2))
-
-  // Get company name using the improved function
-  const organizerName =
-    typeof event.organizer === "object" && event.organizer !== null
-      ? event.organizer.company ||
-      "Unknown"
-      : event.organizer || "Unknown"
-
-  console.log("🏢 FINAL ORGANIZER DISPLAY NAME:", organizerName)
-  console.log("====================================")
-
-  // Use currentAttendees if attendees is not available
+  const organizerName = getOrganizerCompanyName(event.organizer)
   const attendees = event.attendees || event.currentAttendees || 0
-  const maxCapacity = event.maxCapacity || event.maxAttendees || 0
-  const fillPct = maxCapacity
-    ? Math.min(100, (attendees / maxCapacity) * 100)
-    : Math.min(100, attendees / 100)
-
   const categoryDisplay = getCategoryDisplay(event.category)
   const liveStatus = getEventStatusByDate(event)
 
-  // Use startDate/endDate if date is not available
   const dateRange = formatDateRange(
     event.startDate || event.date,
-    event.endDate || event.date
+    event.endDate || event.date,
   )
 
-  const locationParts = (event.location || `${event.city || ""}, ${event.country || ""}`).split(",").map(p => p.trim())
+  const locationParts = (event.location || `${event.city || ""}, ${event.country || ""}`).split(",").map((p) => p.trim())
   const city = locationParts[0] || event.city || ""
   const country = locationParts[locationParts.length - 1] || event.country || ""
+
   const regionTag = ((): string => {
     const loc = (event.location || `${event.city || ""} ${event.country || ""}`).toLowerCase()
     if (loc.includes("india") || loc.includes("singapore") || loc.includes("japan") || loc.includes("china") || loc.includes("australia")) return "APAC"
@@ -244,38 +213,39 @@ export function EventRow({
   })()
 
   const eventDisplayTitle = event.subTitle || event.shortDescription || event.title
-  const venueName = event.venue || ""
+  const locationDisplay = city
+    ? `${city}${country && country !== city ? `, ${country}` : ""}`
+    : "—"
+
+  const isFeatured = event.featured || event.isFeatured || false
 
   return (
     <tr
-      style={{
-        borderBottom: "1px solid #F5F5F5",
-        background: isHovered ? "#FAFAFA" : "#fff",
-        transition: "background 0.1s",
-      }}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      className="event-table-row"
+      style={{ borderBottom: "1px solid #F5F5F5", background: "#fff", transition: "background 0.1s" }}
+      onMouseEnter={(e) => { (e.currentTarget as HTMLTableRowElement).style.background = "#FAFAFA" }}
+      onMouseLeave={(e) => { (e.currentTarget as HTMLTableRowElement).style.background = "#fff" }}
     >
-      {/* Checkbox */}
-      {onSelect && (
-        <td style={{ padding: "0 0 0 22px", width: "48px", verticalAlign: "middle" }}>
+      {/* ── Checkbox ── */}
+      <td style={{ padding: "0 0 0 16px", verticalAlign: "middle", width: "44px" }}>
+        {onSelect && (
           <Checkbox
             checked={selected}
             onCheckedChange={(checked) => onSelect(event.id, checked === true)}
           />
-        </td>
-      )}
+        )}
+      </td>
 
-      {/* Event column */}
-      <td style={{ padding: "14px 16px", verticalAlign: "middle" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          {/* Thumbnail */}
-          <div style={{
-            position: "relative",
-            width: "46px", height: "46px", borderRadius: "10px",
-            background: "#F4F4F5", overflow: "hidden", flexShrink: 0,
-            border: "1px solid #ECECEC",
-          }}>
+      {/* ── Event: thumbnail + title + location ── */}
+      <td style={{ padding: "10px 8px 10px 10px", verticalAlign: "middle", ...truncStyle }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "9px" }}>
+          <div
+            style={{
+              position: "relative", width: "38px", height: "38px",
+              borderRadius: "7px", background: "#F4F4F5", overflow: "hidden",
+              flexShrink: 0, border: "1px solid #ECECEC",
+            }}
+          >
             <AppImage
               src={getEventDisplayImageUrl({
                 thumbnailImage: event.thumbnailImage,
@@ -284,121 +254,142 @@ export function EventRow({
               })}
               alt={eventDisplayTitle}
               fill
-              sizes="46px"
+              sizes="38px"
               className="object-cover"
             />
           </div>
-          <div>
-            <div style={{ fontSize: "14px", fontWeight: 600, color: "#18181B", lineHeight: 1.3 }}>
+          <div style={{ minWidth: 0 }}>
+            <div
+              title={eventDisplayTitle}
+              style={{ fontSize: "13px", fontWeight: 600, color: "#18181B", lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+            >
               {eventDisplayTitle}
             </div>
-            <div style={{ fontSize: "12px", color: "#A1A1AA", marginTop: "3px" }}>
-              {regionTag && <span style={{ marginRight: "6px", fontWeight: 600 }}>{regionTag}</span>}
-              {venueName && <span>{venueName}{city ? ` · ` : ""}</span>}
+            <div
+              title={locationDisplay}
+              style={{ fontSize: "11px", color: "#A1A1AA", marginTop: "2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+            >
+              {regionTag && <span style={{ marginRight: "4px", fontWeight: 600 }}>{regionTag}</span>}
               {city}{country && country !== city ? `, ${country}` : ""}
             </div>
           </div>
         </div>
       </td>
 
-      {/* Category */}
-      <td style={{ padding: "14px 16px", verticalAlign: "middle" }}>
+      {/* ── Category ── */}
+      <td style={{ padding: "10px 8px", verticalAlign: "middle", overflow: "hidden" }}>
         <CategoryPill name={categoryDisplay} />
       </td>
 
-      {/* Date */}
-      <td style={{ padding: "14px 16px", verticalAlign: "middle", whiteSpace: "nowrap" }}>
-        <span style={{ fontSize: "13px", color: "#52525B", fontWeight: 500 }}>{dateRange}</span>
-      </td>
-
-      {/* Location */}
-      <td style={{ padding: "14px 16px", verticalAlign: "middle" }}>
-        <span style={{ fontSize: "13px", color: "#52525B" }}>
-          {city}{country && country !== city ? `, ${country}` : city || "—"}
+      {/* ── Date ── */}
+      <td style={{ padding: "10px 8px", verticalAlign: "middle", ...truncStyle }}>
+        <span title={dateRange} style={{ fontSize: "12px", color: "#52525B", fontWeight: 500 }}>
+          {dateRange}
         </span>
       </td>
 
-      {/* Attendance */}
-      <td style={{ padding: "14px 16px", verticalAlign: "middle" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <span style={{
-            fontSize: "13px", fontWeight: 700, color: "#18181B", minWidth: "44px",
-          }}>
-            {attendees.toLocaleString()}
-          </span>
-          <div style={{ width: "64px", height: "4px", background: "#E4E4E7", borderRadius: "999px", overflow: "hidden" }}>
-            <div style={{
-              height: "100%", borderRadius: "999px",
-              width: `${fillPct}%`,
-              background: barColor(attendees, maxCapacity),
-              transition: "width 0.3s",
-            }} />
-          </div>
-        </div>
+      {/* ── Location (hidden ≤768px) ── */}
+      <td className="col-hide-md" style={{ padding: "10px 8px", verticalAlign: "middle", ...truncStyle }}>
+        <span title={locationDisplay} style={{ fontSize: "12px", color: "#52525B" }}>
+          {locationDisplay}
+        </span>
       </td>
 
-      {/* Status */}
-      <td style={{ padding: "14px 16px", verticalAlign: "middle" }}>
+      {/* ── Attendance (hidden ≤640px) ── no truncStyle: numbers must never clip */}
+      <td className="col-hide-sm" style={{ padding: "10px 8px", verticalAlign: "middle" }}>
+        <span style={{ fontSize: "13px", fontWeight: 700, color: "#18181B" }}>
+          {attendees.toLocaleString()}
+        </span>
+      </td>
+
+      {/* ── Status ── no truncStyle: pill must not disappear */}
+      <td style={{ padding: "10px 8px", verticalAlign: "middle" }}>
         <StatusPill status={liveStatus} />
       </td>
 
-      {/* Organizer - Shows COMPANY NAME */}
-      <td style={{ padding: "14px 16px", verticalAlign: "middle" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px", whiteSpace: "nowrap" }}>
+      {/* ── Organizer (hidden ≤1024px) ── */}
+      <td className="col-hide-lg" style={{ padding: "10px 8px", verticalAlign: "middle", ...truncStyle }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
           <OrganizerAvatar name={organizerName} />
-          <span style={{ fontSize: "13px", color: "#52525B", fontWeight: 500 }}>
+          <span
+            title={organizerName}
+            style={{ fontSize: "12px", color: "#52525B", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+          >
             {organizerName}
           </span>
         </div>
       </td>
 
-      {/* Featured star */}
-      <td style={{ padding: "14px 16px", textAlign: "center", verticalAlign: "middle" }}>
+      {/* ── Featured star ── */}
+      <td style={{ padding: "10px 6px", textAlign: "center", verticalAlign: "middle" }}>
         <button
-          onClick={() => onFeatureToggle(event.id, event.featured || event.isFeatured || false)}
+          onClick={() => onFeatureToggle(event.id, isFeatured)}
           style={{ background: "none", border: "none", cursor: "pointer", padding: "4px", lineHeight: 1 }}
-          title={event.featured || event.isFeatured ? "Remove from featured" : "Mark as featured"}
+          title={isFeatured ? "Remove from featured" : "Mark as featured"}
         >
-          <Star style={{
-            width: "16px", height: "16px",
-            fill: (event.featured || event.isFeatured) ? "#F59E0B" : "none",
-            color: (event.featured || event.isFeatured) ? "#F59E0B" : "#D4D4D8",
-            transition: "all 0.15s",
-          }} />
+          <Star
+            style={{
+              width: "15px", height: "15px",
+              fill: isFeatured ? "#F59E0B" : "none",
+              color: isFeatured ? "#F59E0B" : "#D4D4D8",
+              transition: "all 0.15s",
+            }}
+          />
         </button>
       </td>
 
-      {/* Actions */}
-      <td style={{ padding: "14px 16px", verticalAlign: "middle" }}>
-        <div style={{
-          display: "flex", alignItems: "center", gap: "2px",
-          opacity: isHovered ? 1 : 0,
-          pointerEvents: isHovered ? "auto" : "none",
-          transition: "opacity 0.15s",
-        }}>
-          <Button
-            variant="ghost" size="icon"
-            onClick={() => onEdit(event)}
-            className="h-7 w-7 text-gray-400 hover:text-blue-600"
-          >
-            <Edit className="h-3.5 w-3.5" />
-          </Button>
+      {/* ── Actions ── always visible; hover reveals them more prominently via CSS ── */}
+      <td style={{ padding: "10px 10px 10px 2px", verticalAlign: "middle", whiteSpace: "nowrap" }}>
+        <div
+          className="row-actions"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "2px",
+            // Visible at reduced opacity by default; full opacity on row hover (via CSS class)
+            opacity: 0.45,
+            transition: "opacity 0.15s",
+          }}
+        >
+          {/* View */}
           {onView && (
             <Button
-              variant="ghost" size="icon"
+              variant="ghost"
+              size="icon"
               onClick={() => onView(event)}
-              className="h-7 w-7 text-gray-400 hover:text-green-600"
+              className="h-7 w-7 hover:bg-blue-50 hover:text-blue-600"
+              title="View event details"
+              style={{ color: "#71717A" }}
             >
               <Eye className="h-3.5 w-3.5" />
             </Button>
           )}
+
+          {/* Edit */}
           <Button
-            variant="ghost" size="icon"
+            variant="ghost"
+            size="icon"
+            onClick={() => onEdit(event)}
+            className="h-7 w-7 hover:bg-green-50 hover:text-green-600"
+            title="Edit event"
+            style={{ color: "#71717A" }}
+          >
+            <Edit className="h-3.5 w-3.5" />
+          </Button>
+
+          {/* Delete */}
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={() => onDelete(event.id)}
-            className="h-7 w-7 text-gray-400 hover:text-red-600"
+            className="h-7 w-7 hover:bg-red-50 hover:text-red-600"
+            title="Delete event"
+            style={{ color: "#71717A" }}
           >
             <Trash2 className="h-3.5 w-3.5" />
           </Button>
+
+          {/* More actions dropdown */}
           <EventActions
             event={event}
             onStatusChange={onStatusChange}

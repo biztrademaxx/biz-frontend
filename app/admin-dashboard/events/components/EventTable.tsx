@@ -19,6 +19,7 @@ interface EventTableProps {
   eventCounts: Record<string, number>
   categories: Category[]
   onEdit: (event: Event) => void
+  onView?: (event: Event) => void
   onStatusChange: (eventId: string, status: Event["status"]) => void
   onFeatureToggle: (eventId: string, current: boolean) => void
   onVipToggle: (eventId: string, current: boolean) => void
@@ -40,26 +41,19 @@ interface EventTableProps {
 
 function getStatusColor(status: Event["status"]): "default" | "secondary" | "destructive" | "outline" {
   switch (status) {
-    case "Approved":
-      return "default"
-    case "Pending Review":
-      return "secondary"
+    case "Approved": return "default"
+    case "Pending Review": return "secondary"
     case "Flagged":
-    case "Rejected":
-      return "destructive"
-    case "Draft":
-      return "outline"
-    default:
-      return "secondary"
+    case "Rejected": return "destructive"
+    case "Draft": return "outline"
+    default: return "secondary"
   }
 }
 
 function getEventDateStatus(event: Event): "Live" | "Upcoming" | "Ended" | "Draft" {
   if (event.status === "Draft") return "Draft"
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const startDate = new Date(event.date)
-  startDate.setHours(0, 0, 0, 0)
+  const today = new Date(); today.setHours(0, 0, 0, 0)
+  const startDate = new Date(event.date); startDate.setHours(0, 0, 0, 0)
   const endDate = event.endDate ? new Date(event.endDate) : new Date(event.date)
   endDate.setHours(23, 59, 59, 999)
   if (today >= startDate && today <= endDate) return "Live"
@@ -102,44 +96,17 @@ function filterEvents(
     const locationStr = (event.location || "").toLowerCase()
     const matchesRegion =
       regionFilter === "all" ||
-      (regionFilter === "apac" &&
-        (locationStr.includes("india") ||
-          locationStr.includes("singapore") ||
-          locationStr.includes("japan") ||
-          locationStr.includes("china") ||
-          locationStr.includes("australia") ||
-          locationStr.includes("apac"))) ||
-      (regionFilter === "eu" &&
-        (locationStr.includes("germany") ||
-          locationStr.includes("france") ||
-          locationStr.includes("uk") ||
-          locationStr.includes("london") ||
-          locationStr.includes("europe") ||
-          locationStr.includes("eu"))) ||
-      (regionFilter === "na" &&
-        (locationStr.includes("usa") ||
-          locationStr.includes("canada") ||
-          locationStr.includes("new york") ||
-          locationStr.includes("chicago") ||
-          locationStr.includes("los angeles") ||
-          locationStr.includes("united states"))) ||
-      (regionFilter === "me" &&
-        (locationStr.includes("dubai") ||
-          locationStr.includes("uae") ||
-          locationStr.includes("saudi") ||
-          locationStr.includes("middle east") ||
-          locationStr.includes("qatar")))
+      (regionFilter === "apac" && (locationStr.includes("india") || locationStr.includes("singapore") || locationStr.includes("japan") || locationStr.includes("china") || locationStr.includes("australia") || locationStr.includes("apac"))) ||
+      (regionFilter === "eu" && (locationStr.includes("germany") || locationStr.includes("france") || locationStr.includes("uk") || locationStr.includes("london") || locationStr.includes("europe") || locationStr.includes("eu"))) ||
+      (regionFilter === "na" && (locationStr.includes("usa") || locationStr.includes("canada") || locationStr.includes("new york") || locationStr.includes("chicago") || locationStr.includes("los angeles") || locationStr.includes("united states"))) ||
+      (regionFilter === "me" && (locationStr.includes("dubai") || locationStr.includes("uae") || locationStr.includes("saudi") || locationStr.includes("middle east") || locationStr.includes("qatar")))
 
     const matchesIndustry =
       industryFilter === "all" ||
-      (industryFilter === "tech" &&
-        (categoryStr.includes("tech") || categoryStr.includes("summit") || categoryStr.includes("conference"))) ||
-      (industryFilter === "health" &&
-        (categoryStr.includes("health") || categoryStr.includes("med") || categoryStr.includes("pharma"))) ||
-      (industryFilter === "finance" &&
-        (categoryStr.includes("finance") || categoryStr.includes("fintech") || categoryStr.includes("banking"))) ||
-      (industryFilter === "manufacturing" &&
-        (categoryStr.includes("manuf") || categoryStr.includes("expo") || categoryStr.includes("industrial")))
+      (industryFilter === "tech" && (categoryStr.includes("tech") || categoryStr.includes("summit") || categoryStr.includes("conference"))) ||
+      (industryFilter === "health" && (categoryStr.includes("health") || categoryStr.includes("med") || categoryStr.includes("pharma"))) ||
+      (industryFilter === "finance" && (categoryStr.includes("finance") || categoryStr.includes("fintech") || categoryStr.includes("banking"))) ||
+      (industryFilter === "manufacturing" && (categoryStr.includes("manuf") || categoryStr.includes("expo") || categoryStr.includes("industrial")))
 
     let matchesTab = true
     if (tab === "live") matchesTab = getEventDateStatus(event) === "Live"
@@ -174,26 +141,7 @@ function exportToCSV(events: Event[]) {
     }
     return String(value).replace(/"/g, '""')
   }
-
-  const headers = [
-    "Event Title",
-    "Category",
-    "Start Date",
-    "End Date",
-    "Location",
-    "City",
-    "Country",
-    "Venue",
-    "Attendees",
-    "Capacity",
-    "Status",
-    "Organizer",
-    "Featured",
-    "VIP",
-    "Verified",
-    "Created At",
-  ]
-
+  const headers = ["Event Title", "Category", "Start Date", "End Date", "Location", "City", "Country", "Venue", "Attendees", "Capacity", "Status", "Organizer", "Featured", "VIP", "Verified", "Created At"]
   const rows = events.map((event) => [
     `"${safeString(event.title)}"`,
     `"${safeString(getCategoryDisplay(event.category))}"`,
@@ -212,7 +160,6 @@ function exportToCSV(events: Event[]) {
     event.isVerified ? "Yes" : "No",
     new Date(event.createdAt || event.date || "").toLocaleDateString(),
   ])
-
   const csvContent = [headers.join(","), ...rows.map((row) => row.join(","))].join("\n")
   const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" })
   const link = document.createElement("a")
@@ -238,9 +185,7 @@ export function groupMailCandidates(candidates: EventMailCandidate[]): GroupedMa
     const email = (c.organizerEmail || "").trim()
     if (!email) continue
     const key = email.toLowerCase()
-    if (!map.has(key)) {
-      map.set(key, { organizerEmail: email, organizerName: c.organizerName || "", eventTitles: [] })
-    }
+    if (!map.has(key)) map.set(key, { organizerEmail: email, organizerName: c.organizerName || "", eventTitles: [] })
     const g = map.get(key)!
     g.eventTitles.push(c.eventTitle)
     if (c.organizerName && !g.organizerName) g.organizerName = c.organizerName
@@ -262,6 +207,7 @@ export function EventTable({
   eventCounts,
   categories,
   onEdit,
+  onView,
   onStatusChange,
   onFeatureToggle,
   onVipToggle,
@@ -294,28 +240,18 @@ export function EventTable({
   const filteredEvents =
     activeTab === "send-email"
       ? []
-      : filterEvents(
-          events,
-          activeTab,
-          localSearch,
-          selectedStatus,
-          localCategoryFilter,
-          localRegionFilter,
-          localIndustryFilter,
-          localSort,
-        )
+      : filterEvents(events, activeTab, localSearch, selectedStatus, localCategoryFilter, localRegionFilter, localIndustryFilter, localSort)
 
   const allSelected = filteredEvents.length > 0 && filteredEvents.every((e) => selectedEvents.has(e.id))
   const selectedCount = selectedEvents.size
   const mailSelectedCount = selectedMailKeys.size
-  const allMailSelected =
-    groupedMail.length > 0 && groupedMail.every((g) => selectedMailKeys.has(g.key))
+  const allMailSelected = groupedMail.length > 0 && groupedMail.every((g) => selectedMailKeys.has(g.key))
 
   const handleSelectEvent = (eventId: string, checked: boolean) => {
-    const newSelected = new Set(selectedEvents)
-    if (checked) newSelected.add(eventId)
-    else newSelected.delete(eventId)
-    setSelectedEvents(newSelected)
+    const next = new Set(selectedEvents)
+    if (checked) next.add(eventId)
+    else next.delete(eventId)
+    setSelectedEvents(next)
   }
 
   const handleSelectAll = (checked: boolean) => {
@@ -327,14 +263,10 @@ export function EventTable({
     if (selectedCount === 0) return
     if (confirm(`Are you sure you want to delete ${selectedCount} event(s)?`)) {
       const ids = Array.from(selectedEvents)
-      ids.forEach((eventId) => onDelete(eventId))
+      ids.forEach((id) => onDelete(id))
       setSelectedEvents(new Set())
       if (onBulkDelete) onBulkDelete(ids)
     }
-  }
-
-  const handleExportCSV = () => {
-    exportToCSV(filteredEvents)
   }
 
   const handleSendListingEmailForSelection = () => {
@@ -347,17 +279,9 @@ export function EventTable({
       if (!by.has(k)) by.set(k, { organizerEmail: raw, eventTitles: [] })
       by.get(k)!.eventTitles.push(e.title)
     }
-    const items = [...by.values()].map((x) => ({
-      organizerEmail: x.organizerEmail,
-      eventTitles: [...new Set(x.eventTitles)],
-    }))
+    const items = [...by.values()].map((x) => ({ organizerEmail: x.organizerEmail, eventTitles: [...new Set(x.eventTitles)] }))
     if (items.length === 0) {
-      toast({
-        title: "No organizer email",
-        description:
-          "None of the selected events have an organizer email. Add emails on organizer accounts or use the Send email tab for import / sub-admin listings.",
-        variant: "destructive",
-      })
+      toast({ title: "No organizer email", description: "None of the selected events have an organizer email.", variant: "destructive" })
       return
     }
     void onSendListingEmailBulk(items)
@@ -378,9 +302,7 @@ export function EventTable({
   const handleBulkSendMail = () => {
     const rows = groupedMail.filter((g) => selectedMailKeys.has(g.key))
     if (rows.length === 0) return
-    void onSendListingEmailBulk(
-      rows.map((r) => ({ organizerEmail: r.organizerEmail, eventTitles: r.eventTitles })),
-    )
+    void onSendListingEmailBulk(rows.map((r) => ({ organizerEmail: r.organizerEmail, eventTitles: r.eventTitles })))
     setSelectedMailKeys(new Set())
   }
 
@@ -401,424 +323,255 @@ export function EventTable({
     { id: "send-email", label: "Send email", count: mailTabCount, dot: null, star: false, mail: true },
   ]
 
-  return (
-    <div className="min-h-screen bg-[#F5F4F0] p-6">
-      <div style={{ maxWidth: "1400px", margin: "0 auto" }}>
-        <div style={{ marginBottom: "16px" }}>
-          <div style={{ position: "relative", maxWidth: "360px" }}>
-            <Search
-              style={{
-                position: "absolute",
-                left: "12px",
-                top: "50%",
-                transform: "translateY(-50%)",
-                width: "15px",
-                height: "15px",
-                color: "#a1a1aa",
-              }}
-            />
-            <input
-              placeholder="Search events or organizers…"
-              value={localSearch}
-              onChange={(e) => {
-                setLocalSearch(e.target.value)
-                onSearchChange(e.target.value)
-              }}
-              style={{
-                width: "100%",
-                paddingLeft: "38px",
-                paddingRight: "14px",
-                paddingTop: "9px",
-                paddingBottom: "9px",
-                fontSize: "13px",
-                border: "1px solid #E5E5E5",
-                borderRadius: "10px",
-                background: "#fff",
-                outline: "none",
-                color: "#18181B",
-                fontFamily: "inherit",
-              }}
-            />
-          </div>
-        </div>
+  const thStyle: CSSProperties = {
+    padding: "10px 8px",
+    textAlign: "left",
+    fontSize: "11px",
+    fontWeight: 600,
+    color: "#A1A1AA",
+    letterSpacing: "0.06em",
+    textTransform: "uppercase",
+    whiteSpace: "nowrap",
+    borderBottom: "1px solid #F0F0F0",
+  }
 
-        <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", marginBottom: "16px" }}>
-          {tabs.map((tab) => {
-            const isActive = activeTab === tab.id
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => {
-                  onTabChange(tab.id)
-                  setSelectedEvents(new Set())
-                  setSelectedMailKeys(new Set())
-                }}
+  const selectStyle: CSSProperties = {
+    height: "34px",
+    padding: "0 10px",
+    fontSize: "13px",
+    border: "1.5px solid #E5E5E5",
+    borderRadius: "8px",
+    background: "#fff",
+    color: "#374151",
+    cursor: "pointer",
+    fontFamily: "inherit",
+  }
+
+  return (
+    <>
+      <style>{`
+        @media (max-width: 1024px) { .col-hide-lg { display: none !important; } }
+        @media (max-width: 768px)  { .col-hide-md { display: none !important; } }
+        @media (max-width: 640px)  { .col-hide-sm { display: none !important; } }
+
+        .event-table-row:hover .row-actions { opacity: 1 !important; pointer-events: auto !important; }
+
+        /* Always show actions on touch devices */
+        @media (hover: none) {
+          .row-actions { opacity: 1 !important; pointer-events: auto !important; }
+        }
+      `}</style>
+
+      <div className="min-h-screen bg-[#F5F4F0] p-4 md:p-6">
+        <div style={{ maxWidth: "1400px", margin: "0 auto" }}>
+
+          {/* ── Search bar ── */}
+          <div style={{ marginBottom: "14px" }}>
+            <div style={{ position: "relative", maxWidth: "340px" }}>
+              <Search style={{ position: "absolute", left: "11px", top: "50%", transform: "translateY(-50%)", width: "14px", height: "14px", color: "#a1a1aa" }} />
+              <input
+                placeholder="Search events or organizers…"
+                value={localSearch}
+                onChange={(e) => { setLocalSearch(e.target.value); onSearchChange(e.target.value) }}
                 style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  padding: "7px 16px",
-                  borderRadius: "999px",
-                  fontSize: "13px",
-                  fontWeight: 500,
-                  border: isActive ? "none" : "1.5px solid #E5E5E5",
-                  background: isActive ? (tab.mail ? "#2563EB" : "#22C55E") : "#fff",
-                  color: isActive ? "#fff" : "#374151",
-                  cursor: "pointer",
-                  whiteSpace: "nowrap",
-                  transition: "all 0.15s",
-                  boxShadow: isActive ? "0 1px 4px rgba(34,197,94,0.25)" : "none",
+                  width: "100%", paddingLeft: "34px", paddingRight: "12px",
+                  paddingTop: "8px", paddingBottom: "8px",
+                  fontSize: "13px", border: "1px solid #E5E5E5", borderRadius: "10px",
+                  background: "#fff", outline: "none", color: "#18181B", fontFamily: "inherit",
                 }}
-              >
-                {tab.mail && <Mail style={{ width: "14px", height: "14px" }} />}
-                {tab.dot && (
-                  <span
-                    style={{
-                      width: "8px",
-                      height: "8px",
-                      borderRadius: "50%",
-                      background: isActive ? "#fff" : tab.dot,
-                      flexShrink: 0,
-                    }}
-                  />
-                )}
-                {tab.star && <span style={{ fontSize: "13px" }}>⭐</span>}
-                {tab.label}
-                {tab.count > 0 && (
-                  <span
-                    style={{
-                      fontSize: "11px",
-                      fontWeight: 600,
-                      padding: "1px 6px",
-                      borderRadius: "999px",
-                      background: isActive ? "rgba(255,255,255,0.25)" : "#F4F4F5",
-                      color: isActive ? "#fff" : "#71717A",
-                    }}
-                  >
-                    {tab.count}
+              />
+            </div>
+          </div>
+
+          {/* ── Tabs + Filters ── */}
+          <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap", marginBottom: "14px" }}>
+            {tabs.map((tab) => {
+              const isActive = activeTab === tab.id
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => { onTabChange(tab.id); setSelectedEvents(new Set()); setSelectedMailKeys(new Set()) }}
+                  style={{
+                    display: "inline-flex", alignItems: "center", gap: "5px",
+                    padding: "6px 14px", borderRadius: "999px", fontSize: "13px", fontWeight: 500,
+                    border: isActive ? "none" : "1.5px solid #E5E5E5",
+                    background: isActive ? (tab.mail ? "#2563EB" : "#22C55E") : "#fff",
+                    color: isActive ? "#fff" : "#374151",
+                    cursor: "pointer", whiteSpace: "nowrap", transition: "all 0.15s",
+                    boxShadow: isActive ? "0 1px 4px rgba(34,197,94,0.18)" : "none",
+                  }}
+                >
+                  {tab.mail && <Mail style={{ width: "13px", height: "13px" }} />}
+                  {tab.dot && (
+                    <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: isActive ? "#fff" : tab.dot, flexShrink: 0 }} />
+                  )}
+                  {tab.star && <span style={{ fontSize: "12px" }}>⭐</span>}
+                  {tab.label}
+                  {tab.count > 0 && (
+                    <span style={{ fontSize: "11px", fontWeight: 600, padding: "1px 5px", borderRadius: "999px", background: isActive ? "rgba(255,255,255,0.25)" : "#F4F4F5", color: isActive ? "#fff" : "#71717A" }}>
+                      {tab.count}
+                    </span>
+                  )}
+                </button>
+              )
+            })}
+
+            <div style={{ flex: 1 }} />
+
+            {activeTab !== "send-email" && (
+              <>
+                <select value={localCategoryFilter} onChange={(e) => { setLocalCategoryFilter(e.target.value); onCategoryFilterChange(e.target.value) }} style={selectStyle}>
+                  <option value="all">All Categories</option>
+                  {categories.filter((c) => c.isActive).map((cat) => (
+                    <option key={cat.id} value={cat.name.toLowerCase()}>{cat.name}</option>
+                  ))}
+                </select>
+                <select value={localRegionFilter} onChange={(e) => setLocalRegionFilter(e.target.value)} style={selectStyle}>
+                  <option value="all">All Regions</option>
+                  <option value="apac">APAC</option>
+                  <option value="eu">EU</option>
+                  <option value="na">NA</option>
+                  <option value="me">ME</option>
+                </select>
+                <select value={localIndustryFilter} onChange={(e) => setLocalIndustryFilter(e.target.value)} style={selectStyle}>
+                  <option value="all">All Industries</option>
+                  <option value="tech">Technology</option>
+                  <option value="health">Healthcare</option>
+                  <option value="finance">Finance</option>
+                  <option value="manufacturing">Manufacturing</option>
+                </select>
+                <select value={localSort} onChange={(e) => setLocalSort(e.target.value)} style={selectStyle}>
+                  <option value="date">Sort: Date ↓</option>
+                  <option value="name">Sort: Name</option>
+                  <option value="attendance">Sort: Attendance</option>
+                </select>
+              </>
+            )}
+          </div>
+
+          {/* ── Main card ── */}
+          <div style={{ background: "#fff", border: "1px solid #ECECEC", borderRadius: "16px", overflow: "hidden" }}>
+
+            {/* Card header */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 20px", borderBottom: "1px solid #F0F0F0", flexWrap: "wrap", gap: "8px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+                <span style={{ fontSize: "15px", fontWeight: 600, color: "#18181B" }}>
+                  {activeTab === "send-email" ? "Send listing email" : "Event Listings"}
+                </span>
+                <span style={{ fontSize: "13px", color: "#A1A1AA" }}>
+                  {activeTab === "send-email"
+                    ? `${groupedMail.length} organizer mail groups`
+                    : `${filteredEvents.length.toLocaleString()} events found`}
+                </span>
+                {activeTab !== "send-email" && selectedCount > 0 && (
+                  <span style={{ fontSize: "11px", fontWeight: 600, padding: "2px 8px", borderRadius: "999px", background: "#DBEAFE", color: "#2563EB" }}>
+                    {selectedCount} selected
                   </span>
                 )}
-              </button>
-            )
-          })}
+                {activeTab === "send-email" && mailSelectedCount > 0 && (
+                  <span style={{ fontSize: "11px", fontWeight: 600, padding: "2px 8px", borderRadius: "999px", background: "#DBEAFE", color: "#2563EB" }}>
+                    {mailSelectedCount} selected
+                  </span>
+                )}
+              </div>
 
-          <div style={{ flex: 1 }} />
-
-          {activeTab !== "send-email" && (
-            <>
-              <select
-                value={localCategoryFilter}
-                onChange={(e) => {
-                  setLocalCategoryFilter(e.target.value)
-                  onCategoryFilterChange(e.target.value)
-                }}
-                style={{
-                  height: "36px",
-                  padding: "0 12px",
-                  fontSize: "13px",
-                  border: "1.5px solid #E5E5E5",
-                  borderRadius: "8px",
-                  background: "#fff",
-                  color: "#374151",
-                  cursor: "pointer",
-                  fontFamily: "inherit",
-                }}
-              >
-                <option value="all">All Categories</option>
-                {categories
-                  .filter((c) => c.isActive)
-                  .map((cat) => (
-                    <option key={cat.id} value={cat.name.toLowerCase()}>
-                      {cat.name}
-                    </option>
-                  ))}
-              </select>
-
-              <select
-                value={localRegionFilter}
-                onChange={(e) => setLocalRegionFilter(e.target.value)}
-                style={{
-                  height: "36px",
-                  padding: "0 12px",
-                  fontSize: "13px",
-                  border: "1.5px solid #E5E5E5",
-                  borderRadius: "8px",
-                  background: "#fff",
-                  color: "#374151",
-                  cursor: "pointer",
-                  fontFamily: "inherit",
-                }}
-              >
-                <option value="all">All Regions</option>
-                <option value="apac">APAC</option>
-                <option value="eu">EU</option>
-                <option value="na">NA</option>
-                <option value="me">ME</option>
-              </select>
-
-              <select
-                value={localIndustryFilter}
-                onChange={(e) => setLocalIndustryFilter(e.target.value)}
-                style={{
-                  height: "36px",
-                  padding: "0 12px",
-                  fontSize: "13px",
-                  border: "1.5px solid #E5E5E5",
-                  borderRadius: "8px",
-                  background: "#fff",
-                  color: "#374151",
-                  cursor: "pointer",
-                  fontFamily: "inherit",
-                }}
-              >
-                <option value="all">All Industries</option>
-                <option value="tech">Technology</option>
-                <option value="health">Healthcare</option>
-                <option value="finance">Finance</option>
-                <option value="manufacturing">Manufacturing</option>
-              </select>
-
-              <select
-                value={localSort}
-                onChange={(e) => setLocalSort(e.target.value)}
-                style={{
-                  height: "36px",
-                  padding: "0 12px",
-                  fontSize: "13px",
-                  border: "1.5px solid #E5E5E5",
-                  borderRadius: "8px",
-                  background: "#fff",
-                  color: "#374151",
-                  cursor: "pointer",
-                  fontFamily: "inherit",
-                }}
-              >
-                <option value="date">Sort: Date ↓</option>
-                <option value="name">Sort: Name</option>
-                <option value="attendance">Sort: Attendance</option>
-              </select>
-            </>
-          )}
-        </div>
-
-        <div style={{ background: "#fff", border: "1px solid #ECECEC", borderRadius: "16px", overflow: "hidden" }}>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              padding: "16px 22px",
-              borderBottom: "1px solid #F0F0F0",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              <span style={{ fontSize: "15px", fontWeight: 600, color: "#18181B" }}>
-                {activeTab === "send-email" ? "Send listing email" : "Event Listings"}
-              </span>
-              <span style={{ fontSize: "13px", color: "#A1A1AA" }}>
-                {activeTab === "send-email"
-                  ? `${groupedMail.length} organizer mail groups`
-                  : `${filteredEvents.length.toLocaleString()} events found`}
-              </span>
-              {activeTab !== "send-email" && selectedCount > 0 && (
-                <span
-                  style={{
-                    fontSize: "11px",
-                    fontWeight: 600,
-                    padding: "2px 8px",
-                    borderRadius: "999px",
-                    background: "#DBEAFE",
-                    color: "#2563EB",
-                  }}
-                >
-                  {selectedCount} selected
-                </span>
-              )}
-              {activeTab === "send-email" && mailSelectedCount > 0 && (
-                <span
-                  style={{
-                    fontSize: "11px",
-                    fontWeight: 600,
-                    padding: "2px 8px",
-                    borderRadius: "999px",
-                    background: "#DBEAFE",
-                    color: "#2563EB",
-                  }}
-                >
-                  {mailSelectedCount} selected
-                </span>
-              )}
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              {activeTab === "send-email" && mailSelectedCount > 0 && (
-                <Button
-                  type="button"
-                  size="sm"
-                  className="gap-2 bg-blue-600 hover:bg-blue-700"
-                  disabled={sendingMail}
-                  onClick={() => handleBulkSendMail()}
-                >
-                  <Mail className="h-4 w-4" />
-                  {sendingMail ? "Sending…" : `Send to ${mailSelectedCount} organizer(s)`}
-                </Button>
-              )}
-              {activeTab !== "send-email" && selectedCount > 0 && (
-                <>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="gap-2 border-blue-200 text-blue-700 hover:bg-blue-50"
-                    disabled={sendingMail}
-                    onClick={() => handleSendListingEmailForSelection()}
-                  >
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                {activeTab === "send-email" && mailSelectedCount > 0 && (
+                  <Button type="button" size="sm" className="gap-2 bg-blue-600 hover:bg-blue-700" disabled={sendingMail} onClick={handleBulkSendMail}>
                     <Mail className="h-4 w-4" />
-                    {sendingMail ? "Sending…" : "Send listing email"}
+                    {sendingMail ? "Sending…" : `Send to ${mailSelectedCount} organizer(s)`}
                   </Button>
+                )}
+                {activeTab !== "send-email" && selectedCount > 0 && (
+                  <>
+                    <Button
+                      type="button" variant="outline" size="sm"
+                      className="gap-2 border-blue-200 text-blue-700 hover:bg-blue-50"
+                      disabled={sendingMail}
+                      onClick={handleSendListingEmailForSelection}
+                    >
+                      <Mail className="h-4 w-4" />
+                      {sendingMail ? "Sending…" : "Send listing email"}
+                    </Button>
+                    <button
+                      type="button" onClick={handleBulkDelete}
+                      style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "6px 12px", borderRadius: "8px", fontSize: "13px", fontWeight: 500, border: "1px solid #FEE2E2", background: "#FFF5F5", color: "#EF4444", cursor: "pointer" }}
+                    >
+                      <Trash2 style={{ width: "13px", height: "13px" }} />
+                      Delete Selected
+                    </button>
+                  </>
+                )}
+                {activeTab !== "send-email" && (
                   <button
-                    type="button"
-                    onClick={handleBulkDelete}
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "6px",
-                      padding: "6px 14px",
-                      borderRadius: "8px",
-                      fontSize: "13px",
-                      fontWeight: 500,
-                      border: "1px solid #FEE2E2",
-                      background: "#FFF5F5",
-                      color: "#EF4444",
-                      cursor: "pointer",
-                    }}
+                    type="button" onClick={() => exportToCSV(filteredEvents)}
+                    style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "6px 12px", borderRadius: "8px", fontSize: "13px", fontWeight: 500, border: "1.5px solid #E5E5E5", background: "#fff", color: "#374151", cursor: "pointer" }}
                   >
-                    <Trash2 style={{ width: "13px", height: "13px" }} />
-                    Delete Selected
+                    <Download style={{ width: "13px", height: "13px" }} /> Export CSV
                   </button>
-                </>
-              )}
-              {activeTab !== "send-email" && (
-                <button
-                  type="button"
-                  onClick={handleExportCSV}
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "6px",
-                    padding: "6px 14px",
-                    borderRadius: "8px",
-                    fontSize: "13px",
-                    fontWeight: 500,
-                    border: "1.5px solid #E5E5E5",
-                    background: "#fff",
-                    color: "#374151",
-                    cursor: "pointer",
-                  }}
-                >
-                  <Download style={{ width: "13px", height: "13px" }} /> Export CSV
-                </button>
-              )}
+                )}
+              </div>
             </div>
-          </div>
 
-          {activeTab === "send-email" ? (
-            <div style={{ padding: "0 22px 22px" }}>
-              <p style={{ fontSize: "13px", color: "#71717A", margin: "16px 0" }}>
-                Emails are grouped by organizer. Select rows and send event listing messages (same as API mail
-                candidates from sub-admin / bulk imports).
-              </p>
-              <div style={{ overflowX: "auto" }}>
-                <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "800px" }}>
+            {/* ── Table content ── */}
+            {activeTab === "send-email" ? (
+
+              /* Mail table */
+              <div style={{ padding: "0 20px 20px" }}>
+                <p style={{ fontSize: "13px", color: "#71717A", margin: "14px 0" }}>
+                  Emails are grouped by organizer. Select rows and send event listing messages.
+                </p>
+                <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed" }}>
+                  <colgroup>
+                    <col style={{ width: "44px" }} />
+                    <col style={{ width: "22%" }} />
+                    <col style={{ width: "28%" }} />
+                    <col />
+                    <col style={{ width: "90px" }} />
+                  </colgroup>
                   <thead>
                     <tr style={{ borderBottom: "1px solid #F0F0F0", background: "#FAFAFA" }}>
-                      <th style={{ padding: "11px 0 11px 22px", width: "48px" }}>
+                      <th style={{ padding: "10px 0 10px 16px" }}>
                         <Checkbox checked={allMailSelected} onCheckedChange={(c) => handleSelectAllMail(c === true)} />
                       </th>
-                      <th
-                        style={{
-                          padding: "11px 16px",
-                          textAlign: "left",
-                          fontSize: "11px",
-                          fontWeight: 600,
-                          color: "#A1A1AA",
-                          letterSpacing: "0.07em",
-                          textTransform: "uppercase",
-                        }}
-                      >
-                        Organizer
-                      </th>
-                      <th
-                        style={{
-                          padding: "11px 16px",
-                          textAlign: "left",
-                          fontSize: "11px",
-                          fontWeight: 600,
-                          color: "#A1A1AA",
-                          letterSpacing: "0.07em",
-                          textTransform: "uppercase",
-                        }}
-                      >
-                        Email
-                      </th>
-                      <th
-                        style={{
-                          padding: "11px 16px",
-                          textAlign: "left",
-                          fontSize: "11px",
-                          fontWeight: 600,
-                          color: "#A1A1AA",
-                          letterSpacing: "0.07em",
-                          textTransform: "uppercase",
-                        }}
-                      >
-                        Events
-                      </th>
-                      <th style={{ padding: "11px 16px", width: "120px" }} />
+                      {["Organizer", "Email", "Events", ""].map((label, i) => (
+                        <th key={i} style={thStyle}>{label}</th>
+                      ))}
                     </tr>
                   </thead>
                   <tbody>
                     {groupedMail.length === 0 ? (
                       <tr>
-                        <td
-                          colSpan={5}
-                          style={{ textAlign: "center", padding: "56px", color: "#A1A1AA", fontSize: "14px" }}
-                        >
+                        <td colSpan={5} style={{ textAlign: "center", padding: "56px", color: "#A1A1AA", fontSize: "14px" }}>
                           No pending mail candidates. New sub-admin or bulk-import listings will appear here.
                         </td>
                       </tr>
                     ) : (
                       groupedMail.map((row) => (
                         <tr key={row.key} style={{ borderBottom: "1px solid #F5F5F5" }}>
-                          <td style={{ padding: "12px 0 12px 22px" }}>
-                            <Checkbox
-                              checked={selectedMailKeys.has(row.key)}
-                              onCheckedChange={(c) => handleSelectMailRow(row.key, c === true)}
-                            />
+                          <td style={{ padding: "12px 0 12px 16px" }}>
+                            <Checkbox checked={selectedMailKeys.has(row.key)} onCheckedChange={(c) => handleSelectMailRow(row.key, c === true)} />
                           </td>
-                          <td style={{ padding: "12px 16px", fontSize: "13px", fontWeight: 500, color: "#18181B" }}>
+                          <td style={{ padding: "12px 8px", fontSize: "13px", fontWeight: 500, color: "#18181B", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 0 }}>
                             {row.organizerName || "—"}
                           </td>
-                          <td style={{ padding: "12px 16px", fontSize: "13px", color: "#52525B" }}>{row.organizerEmail}</td>
-                          <td style={{ padding: "12px 16px", fontSize: "13px", color: "#52525B" }}>
-                            <ul style={{ margin: 0, paddingLeft: "18px" }}>
-                              {row.eventTitles.map((t) => (
-                                <li key={t}>{t}</li>
-                              ))}
+                          <td style={{ padding: "12px 8px", fontSize: "13px", color: "#52525B", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 0 }}>
+                            {row.organizerEmail}
+                          </td>
+                          <td style={{ padding: "12px 8px", fontSize: "13px", color: "#52525B" }}>
+                            <ul style={{ margin: 0, paddingLeft: "16px" }}>
+                              {row.eventTitles.map((t) => <li key={t}>{t}</li>)}
                             </ul>
                           </td>
-                          <td style={{ padding: "12px 16px" }}>
+                          <td style={{ padding: "12px 8px" }}>
                             <Button
-                              type="button"
-                              size="sm"
-                              variant="outline"
+                              type="button" size="sm" variant="outline"
                               className="whitespace-nowrap"
                               disabled={sendingMail && sendingMailFor === row.organizerEmail.toLowerCase()}
                               onClick={() => onSendListingEmail(row.organizerEmail, row.eventTitles)}
                             >
-                              {sendingMail && sendingMailFor === row.organizerEmail.toLowerCase()
-                                ? "Sending…"
-                                : "Send"}
+                              {sendingMail && sendingMailFor === row.organizerEmail.toLowerCase() ? "Sending…" : "Send"}
                             </Button>
                           </td>
                         </tr>
@@ -827,75 +580,86 @@ export function EventTable({
                   </tbody>
                 </table>
               </div>
-            </div>
-          ) : (
-            <div style={{ overflowX: "auto" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "1100px" }}>
-                <thead>
-                  <tr style={{ borderBottom: "1px solid #F0F0F0", background: "#FAFAFA" }}>
-                    <th style={{ padding: "11px 0 11px 22px", width: "48px" }}>
-                      <Checkbox checked={allSelected} onCheckedChange={handleSelectAll} />
-                    </th>
-                    {[
-                      { label: "EVENT", align: "left" },
-                      { label: "CATEGORY", align: "left" },
-                      { label: "DATE", align: "left" },
-                      { label: "LOCATION", align: "left" },
-                      { label: "ATTENDANCE", align: "left" },
-                      { label: "STATUS", align: "left" },
-                      { label: "ORGANIZER", align: "left" },
-                      { label: "FEATURED", align: "center" },
-                      { label: "", align: "left" },
-                    ].map((h, i) => (
-                      <th
-                        key={i}
-                        style={{
-                          padding: "11px 16px",
-                          textAlign: h.align as CSSProperties["textAlign"],
-                          fontSize: "11px",
-                          fontWeight: 600,
-                          color: "#A1A1AA",
-                          letterSpacing: "0.07em",
-                          textTransform: "uppercase",
-                        }}
-                      >
-                        {h.label}
+
+            ) : (
+
+              /* Events table — horizontally scrollable on small screens */
+              <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed", minWidth: "860px" }}>
+                  <colgroup>
+                    {/* checkbox */}
+                    <col style={{ width: "44px" }} />
+                    {/* event title + thumbnail — reduced so content doesn't float */}
+                    <col style={{ width: "22%" }} />
+                    {/* category — tighter, pill wraps itself */}
+                    <col style={{ width: "13%" }} />
+                    {/* date */}
+                    <col style={{ width: "13%" }} />
+                    {/* location — hidden ≤768px */}
+                    <col className="col-hide-md" style={{ width: "9%" }} />
+                    {/* attendance — needs enough room for header + number */}
+                    <col className="col-hide-sm" style={{ width: "9%" }} />
+                    {/* status — needs room for pill + dot */}
+                    <col style={{ width: "10%" }} />
+                    {/* organizer — hidden ≤1024px */}
+                    <col className="col-hide-lg" style={{ width: "12%" }} />
+                    {/* featured star */}
+                    <col style={{ width: "60px" }} />
+                    {/* actions */}
+                    <col style={{ width: "120px" }} />
+                  </colgroup>
+
+                  <thead>
+                    <tr style={{ background: "#FAFAFA" }}>
+                      <th style={{ padding: "10px 0 10px 16px", borderBottom: "1px solid #F0F0F0" }}>
+                        <Checkbox checked={allSelected} onCheckedChange={handleSelectAll} />
                       </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredEvents.length === 0 ? (
-                    <tr>
-                      <td colSpan={10} style={{ textAlign: "center", padding: "56px", color: "#A1A1AA", fontSize: "14px" }}>
-                        No events found
-                      </td>
+                      <th style={thStyle}>Event</th>
+                      <th style={thStyle}>Category</th>
+                      <th style={thStyle}>Date</th>
+                      <th className="col-hide-md" style={thStyle}>Location</th>
+                      <th className="col-hide-sm" style={thStyle}>Attendance</th>
+                      <th style={thStyle}>Status</th>
+                      <th className="col-hide-lg" style={thStyle}>Organizer</th>
+                      <th style={{ ...thStyle, textAlign: "center" }}>Featured</th>
+                      <th style={{ ...thStyle, textAlign: "right", paddingRight: "16px" }}>Actions</th>
                     </tr>
-                  ) : (
-                    filteredEvents.map((event) => (
-                      <EventRow
-                        key={event.id}
-                        event={event}
-                        selected={selectedEvents.has(event.id)}
-                        onSelect={handleSelectEvent}
-                        onEdit={onEdit}
-                        onStatusChange={onStatusChange}
-                        onFeatureToggle={onFeatureToggle}
-                        onVipToggle={onVipToggle}
-                        onPublicToggle={onPublicToggle}
-                        onDelete={onDelete}
-                        onPromote={onPromote}
-                        onVerify={onVerify}
-                        getStatusColor={getStatusColor}
-                      />
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          )}
+                  </thead>
+
+                  <tbody>
+                    {filteredEvents.length === 0 ? (
+                      <tr>
+                        <td colSpan={10} style={{ textAlign: "center", padding: "56px", color: "#A1A1AA", fontSize: "14px" }}>
+                          No events found
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredEvents.map((event) => (
+                        <EventRow
+                          key={event.id}
+                          event={event}
+                          selected={selectedEvents.has(event.id)}
+                          onSelect={handleSelectEvent}
+                          onEdit={onEdit}
+                          onView={onView}
+                          onStatusChange={onStatusChange}
+                          onFeatureToggle={onFeatureToggle}
+                          onVipToggle={onVipToggle}
+                          onPublicToggle={onPublicToggle}
+                          onDelete={onDelete}
+                          onPromote={onPromote}
+                          onVerify={onVerify}
+                          getStatusColor={getStatusColor}
+                        />
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </>
   )
 }
