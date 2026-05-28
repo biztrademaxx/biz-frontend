@@ -203,7 +203,10 @@ export default function HeroSlideshowClient({
   }
 
   return (
-    <div className="relative w-full min-w-0" aria-label="VIP events">
+    <div
+      className="group relative w-full min-w-0"
+      aria-label="VIP events"
+    >
       <div
         ref={scrollRef}
         className="no-scrollbar flex w-full scroll-smooth snap-x snap-mandatory gap-0 overflow-x-auto overflow-y-hidden pt-0 pb-3"
@@ -223,7 +226,7 @@ export default function HeroSlideshowClient({
         type="button"
         aria-label="Scroll left"
         onClick={() => advance("left")}
-        className="absolute left-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/95 p-2 shadow-lg ring-1 ring-black/5 hover:bg-white"
+        className="absolute left-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/95 p-2 shadow-lg ring-1 ring-black/5 transition-all duration-300 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto hover:bg-white"
       >
         <ChevronLeft className="h-6 w-6 text-gray-700" strokeWidth={2} />
       </button>
@@ -231,7 +234,7 @@ export default function HeroSlideshowClient({
         type="button"
         aria-label="Scroll right"
         onClick={() => advance("right")}
-        className="absolute right-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/95 p-2 shadow-lg ring-1 ring-black/5 hover:bg-white"
+        className="absolute right-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/95 p-2 shadow-lg ring-1 ring-black/5 transition-all duration-300 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto hover:bg-white"
       >
         <ChevronRight className="h-6 w-6 text-gray-700" strokeWidth={2} />
       </button>
