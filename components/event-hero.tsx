@@ -260,13 +260,13 @@ export default function EventHero({ event }: EventHeroProps) {
             )}
           </div>
 
-          {postponed && (
+          {/* {postponed && (
             <div className="mt-2">
               <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-1 text-xs font-medium text-amber-900">
                 {getEventPostponedNotice(event)}
               </span>
             </div>
-          )}
+          )} */}
         </div>
         </div>
       </div>

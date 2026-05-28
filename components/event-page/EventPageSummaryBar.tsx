@@ -121,19 +121,19 @@ export function EventPageSummaryBar({
           </div>
 
           {showActionButtons && (
-            <div className="flex flex-col gap-4 lg:-ml-8">
+            <div className="flex flex-col gap-3 lg:-ml-8">
               <p className="text-center lg:text-left text-gray-700 font-medium text-base sm:text-lg">
                 Interested in this Event?
               </p>
 
-              {isEventPostponed(event) && (
+              {/* {isEventPostponed(event) && (
                 <p
                   className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-center text-sm font-medium text-amber-900 lg:text-left"
                   role="status"
                 >
                   {getEventPostponedNotice(event)}
                 </p>
-              )}
+              )} */}
 
               <div className="flex gap-3 flex-col sm:flex-row sm:justify-start">
                 <Button
@@ -165,6 +165,11 @@ export function EventPageSummaryBar({
             </div>
           )}
         </div>
+        {showActionButtons && (
+          <p className="mt-3 text-sm text-gray-500 text-center lg:text-right">
+            Please verify schedules and participation details with organizers before finalizing travel plans.
+          </p>
+        )}
       </div>
     </div>
   )
