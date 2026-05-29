@@ -33,7 +33,7 @@ export function EventListingCardImages({
   }, [count, key])
 
   const viewportClass =
-    "relative mx-auto h-[84px] w-full max-w-lg overflow-hidden rounded-sm bg-slate-100 md:mx-0 md:h-[84px] md:w-[136px] md:max-w-none"
+    "relative mx-auto h-[96px] w-full max-w-lg overflow-hidden rounded-sm bg-slate-100 md:mx-0 md:h-[96px] md:w-[136px] md:max-w-none"
 
   const carouselDots = (
     <div

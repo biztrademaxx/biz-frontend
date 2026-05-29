@@ -37,7 +37,7 @@ export function EventsListingEventCard({ event }: { event: Event }) {
         </Link>
       </div>
 
-      <div className="flex flex-col md:flex-row md:items-start md:min-h-[176px]">
+      <div className="flex flex-col md:flex-row md:items-start md:min-h-[188px]">
         <div className="flex min-h-0 min-w-0 flex-1 flex-col px-4 pb-2.5 pt-1.5 sm:px-5 sm:pb-2.5 sm:pt-2.5">
           <Link href={path} className="group flex min-h-0 min-w-0 flex-1 flex-col">
             <p className="mb-1.5 flex items-center text-[12px] font-normal font-sans text-[#212529] sm:text-[13px]">

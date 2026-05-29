@@ -34,8 +34,10 @@ interface Organizer {
   id: string
   publicSlug?: string
   name: string
-  image?: string
+  image?: string | null
   company: string
+  city?: string
+  state?: string
   rating: number
   reviewCount: number
   location: string
@@ -64,7 +66,25 @@ function norm(s: string | undefined | null) {
     .trim()
 }
 
-const PLACEHOLDER_LOCATION = /^(not specified|unknown|n\/a|—|-)$/i
+const PLACEHOLDER_LOCATION = /^(not specified|unknown|n\/a|—|-|location not specified)$/i
+
+function organizerDisplayName(o: Organizer): string {
+  return o.company?.trim() || o.name?.trim() || "Organizer"
+}
+
+function organizerLocationLine(o: Organizer): string {
+  const city = o.city?.trim()
+  const state = o.state?.trim()
+  const country = o.country?.trim()
+  if (city || state || country) {
+    return [city, state, country].filter(Boolean).join(", ")
+  }
+
+  const hq = o.headquarters?.trim() || o.location?.trim() || ""
+  if (hq && !PLACEHOLDER_LOCATION.test(hq)) return hq
+
+  return "Location not specified"
+}
 
 function firstSegment(address: string) {
   const t = address.split(",")[0]?.trim() ?? ""
@@ -492,36 +512,39 @@ export default function OrganizersPage() {
               </Card>
             ) : (
               <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
-                {filteredOrganizers.map((organizer) => (
+                {filteredOrganizers.map((organizer) => {
+                  const title = organizerDisplayName(organizer)
+                  const locationLabel = organizerLocationLine(organizer)
+                  return (
                   <Card
                     key={organizer.id}
-                    className="group cursor-pointer overflow-hidden border-gray-200/80 bg-white p-0 shadow-sm transition-shadow hover:shadow-md"
+                    className="group flex h-full cursor-pointer flex-col overflow-hidden border-gray-200/80 bg-white p-0 shadow-sm transition-shadow hover:shadow-md"
                     onClick={() => handleCardClick(organizer)}
                   >
-                    <div className="relative aspect-[16/10] w-full overflow-hidden bg-muted">
+                    <div className="relative h-44 w-full shrink-0 overflow-hidden bg-gradient-to-br from-slate-100 to-slate-200 sm:h-40">
                       <AppImage
                         src={organizer.image}
-                        alt={organizer.company || organizer.name}
+                        alt={title}
                         fill
                         sizes="(max-width: 768px) 100vw, 33vw"
                         className="object-cover transition duration-300 group-hover:scale-[1.02]"
                       />
                       {organizer.featured && (
-                        <Badge className="absolute left-3 top-3 bg-orange-500 text-white hover:bg-orange-600">
+                        <Badge className="absolute left-2 top-2 bg-orange-500 text-white hover:bg-orange-600">
                           Featured
                         </Badge>
                       )}
                       {organizer.verified && (
-                        <Badge className="absolute right-3 top-3 bg-emerald-600 text-white hover:bg-emerald-700">
+                        <Badge className="absolute right-2 top-2 bg-emerald-600 text-white hover:bg-emerald-700">
                           <Award className="mr-1 h-3 w-3" />
                           Verified
                         </Badge>
                       )}
                     </div>
 
-                    <CardContent className="p-5">
-                      <div className="mb-3 flex items-start justify-between gap-2">
-                        <h3 className="line-clamp-2 font-semibold text-gray-900">{organizer.company}</h3>
+                    <CardContent className="flex flex-1 flex-col p-4">
+                      <div className="mb-2 flex items-start justify-between gap-2">
+                        <h3 className="line-clamp-2 text-base font-semibold leading-snug text-gray-900">{title}</h3>
                         <div className="flex shrink-0 items-center gap-0.5 text-sm">
                           <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
                           <span className="font-medium tabular-nums">
@@ -531,24 +554,25 @@ export default function OrganizersPage() {
                         </div>
                       </div>
 
-                      <div className="mb-3 flex items-start gap-1.5 text-sm text-muted-foreground">
-                        <MapPin className="mt-0.5 h-4 w-4 shrink-0" />
-                        <span className="line-clamp-2">{organizer.headquarters || "Location not specified"}</span>
+                      <div className="mb-2 flex items-start gap-1.5 text-sm text-muted-foreground">
+                        <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-[#004A96]/70" />
+                        <span className="line-clamp-2">{locationLabel}</span>
                       </div>
 
-                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                      <div className="mt-auto flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
                         <span className="inline-flex items-center gap-1">
-                          <Calendar className="h-4 w-4 shrink-0" />
+                          <Calendar className="h-3.5 w-3.5 shrink-0" />
                           {organizer.yearsOfExperience} yrs
                         </span>
                         <span className="inline-flex items-center gap-1">
-                          <TrendingUp className="h-4 w-4 shrink-0" />
+                          <TrendingUp className="h-3.5 w-3.5 shrink-0" />
                           {organizer.eventsOrganized} events
                         </span>
                       </div>
                     </CardContent>
                   </Card>
-                ))}
+                  )
+                })}
               </div>
             )}
           </div>

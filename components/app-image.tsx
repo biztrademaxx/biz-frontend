@@ -2,14 +2,15 @@
 
 import NextImage, { type ImageProps } from "next/image"
 import { useEffect, useState } from "react"
+import { cn } from "@/lib/utils"
 
 /** Remote / absolute URLs use unoptimized to avoid optimizer host restrictions. */
-export function isRemoteImageSrc(src: string): boolean {
-  return /^https?:\/\//i.test(src.trim())
+export function isRemoteImageSrc(src: string | null | undefined): boolean {
+  return /^https?:\/\//i.test(String(src ?? "").trim())
 }
 
 export type AppImageProps = Omit<ImageProps, "src" | "alt"> & {
-  src: string
+  src: string | null | undefined
   alt: string
   /** Shown when the primary `src` fails to load */
   fallbackSrc?: string
@@ -33,11 +34,27 @@ export function AppImage({
     setCurrentSrc(src)
   }, [src])
 
-  const resolvedUnoptimized = unoptimized ?? isRemoteImageSrc(currentSrc)
+  const safeSrc = String(currentSrc ?? "").trim()
+  const resolvedUnoptimized = unoptimized ?? isRemoteImageSrc(safeSrc)
+
+  if (!safeSrc) {
+    const isFill = "fill" in props && props.fill
+    return (
+      <div
+        className={cn(
+          isFill && "absolute inset-0",
+          "bg-gradient-to-br from-slate-100 to-slate-200",
+          className,
+        )}
+        aria-label={alt}
+        role="img"
+      />
+    )
+  }
 
   return (
     <NextImage
-      src={currentSrc}
+      src={safeSrc}
       alt={alt}
       className={className}
       unoptimized={resolvedUnoptimized}
