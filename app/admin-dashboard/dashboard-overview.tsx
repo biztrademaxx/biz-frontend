@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { useEffect, useMemo, useState, type CSSProperties } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react"
 import Image from "next/image"
 import {
   Users,
@@ -18,7 +18,15 @@ import {
   Download,
   CalendarDays,
   MapPin,
+  Loader2,
 } from "lucide-react"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { apiFetch } from "@/lib/api"
 import {
   Area,
@@ -96,6 +104,20 @@ type TrendRow = {
   eventsCreated: number
   publishedEvents: number
   registrations: number
+}
+
+type EventOverviewRange = "1m" | "3m" | "1y"
+
+const EVENT_OVERVIEW_RANGES: { value: EventOverviewRange; label: string; short: string }[] = [
+  { value: "1m", label: "1 month", short: "1M" },
+  { value: "3m", label: "3 months", short: "3M" },
+  { value: "1y", label: "1 year", short: "1Y" },
+]
+
+function overviewRangeDays(range: EventOverviewRange): number {
+  if (range === "3m") return 90
+  if (range === "1y") return 365
+  return 30
 }
 
 type DashboardEventCard = {
@@ -237,6 +259,9 @@ export default function DashboardOverview({
   const [stats, setStats] = useState<any[]>([])
   const [activities, setActivities] = useState<ActivityRow[]>([])
   const [trend, setTrend] = useState<TrendRow[]>([])
+  const [eventOverviewRange, setEventOverviewRange] = useState<EventOverviewRange>("1m")
+  const [trendLoading, setTrendLoading] = useState(false)
+  const trendRangeInitialized = useRef(false)
   const [upcomingEvents, setUpcomingEvents] = useState<DashboardEventCard[]>([])
   const [registrationsByStatus, setRegistrationsByStatus] = useState<DonutSlice[]>([])
   const [topEvents, setTopEvents] = useState<TopEventRow[]>([])
@@ -244,9 +269,39 @@ export default function DashboardOverview({
 
   const dateRangeLabel = useMemo(() => {
     const end = new Date()
-    const start = subDays(end, 30)
+    const start = subDays(end, overviewRangeDays(eventOverviewRange))
     return `${format(start, "d MMM yyyy")} – ${format(end, "d MMM yyyy")}`
+  }, [eventOverviewRange])
+
+  const eventOverviewRangeLabel = useMemo(
+    () => EVENT_OVERVIEW_RANGES.find((r) => r.value === eventOverviewRange)?.label ?? "1 month",
+    [eventOverviewRange],
+  )
+
+  const fetchEventOverviewTrend = useCallback(async (range: EventOverviewRange) => {
+    try {
+      setTrendLoading(true)
+      const res = await apiFetch<{
+        success?: boolean
+        data?: { trend?: TrendRow[]; range?: EventOverviewRange }
+      }>(`/api/admin/dashboard/event-overview?range=${range}`, { auth: true })
+      if (res.data?.trend?.length) setTrend(res.data.trend)
+      else setTrend([])
+    } catch (e) {
+      console.error("Event overview trend fetch failed:", e)
+      setTrend([])
+    } finally {
+      setTrendLoading(false)
+    }
   }, [])
+
+  useEffect(() => {
+    if (!trendRangeInitialized.current) {
+      trendRangeInitialized.current = true
+      return
+    }
+    void fetchEventOverviewTrend(eventOverviewRange)
+  }, [eventOverviewRange, fetchEventOverviewTrend])
 
   const donutTotal = useMemo(
     () => registrationsByStatus.reduce((a, b) => a + (b.value || 0), 0),
@@ -441,19 +496,50 @@ export default function DashboardOverview({
 
       {/* Event overview — full width (Quick Actions removed) */}
       <Card className="admin-panel-card rounded-3xl border-border bg-card shadow-sm">
-        <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 border-b border-border/60 pb-4">
-          <CardTitle className="text-lg font-semibold text-foreground">Event overview</CardTitle>
-          <span className="rounded-full border border-border bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
-            Last 30 days
-          </span>
+        <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3 border-b border-border/60 pb-4">
+          <div>
+            <CardTitle className="text-lg font-semibold text-foreground">Event overview</CardTitle>
+            <p className="mt-0.5 text-xs text-muted-foreground">{dateRangeLabel}</p>
+          </div>
+          <Select
+            value={eventOverviewRange}
+            onValueChange={(v) => setEventOverviewRange(v as EventOverviewRange)}
+          >
+            <SelectTrigger
+              className="h-9 w-[132px] rounded-full border-border bg-muted/50 text-xs font-semibold shadow-sm"
+              aria-label="Event overview time range"
+            >
+              <SelectValue>
+                {EVENT_OVERVIEW_RANGES.find((r) => r.value === eventOverviewRange)?.short ?? "1M"}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent align="end">
+              {EVENT_OVERVIEW_RANGES.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value} className="text-sm">
+                  {opt.short} — {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </CardHeader>
         <CardContent className="pt-5">
-          {trend.length > 0 ? (
+          {trendLoading ? (
+            <div className="flex h-[300px] min-h-[240px] items-center justify-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="h-5 w-5 animate-spin" />
+              Loading {eventOverviewRangeLabel}…
+            </div>
+          ) : trend.length > 0 ? (
             <div className="h-[300px] w-full min-h-[240px]">
               <ResponsiveContainer width="100%" height="100%">
                 <ComposedChart data={trend} margin={{ top: 10, right: 24, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke={chartGrid} vertical={false} />
-                  <XAxis dataKey="label" tick={{ fontSize: 10 }} stroke={chartTick} interval="preserveStartEnd" />
+                  <XAxis
+                    dataKey="label"
+                    tick={{ fontSize: 10 }}
+                    stroke={chartTick}
+                    interval={eventOverviewRange === "1m" ? "preserveStartEnd" : 0}
+                    minTickGap={eventOverviewRange === "1y" ? 8 : 4}
+                  />
                   <YAxis tick={{ fontSize: 10 }} stroke={chartTick} allowDecimals={false} width={36} />
                   <Tooltip contentStyle={chartTooltipStyle} />
                   <Legend wrapperStyle={{ fontSize: "12px" }} />
@@ -488,7 +574,9 @@ export default function DashboardOverview({
               </ResponsiveContainer>
             </div>
           ) : (
-            <p className="py-12 text-center text-sm text-muted-foreground">No trend data for this period.</p>
+            <p className="py-12 text-center text-sm text-muted-foreground">
+              No trend data for {eventOverviewRangeLabel}.
+            </p>
           )}
         </CardContent>
       </Card>
