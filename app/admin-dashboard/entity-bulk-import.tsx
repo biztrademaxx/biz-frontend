@@ -7,6 +7,8 @@ type ImportResponse = {
   success?: boolean;
   processed?: number;
   successCount?: number;
+  createdCount?: number;
+  updatedCount?: number;
   errorCount?: number;
   errors?: { row: number; message: string }[];
   message?: string;
@@ -125,7 +127,8 @@ export default function EntityBulkImport({
       {result?.success ? (
         <div className="rounded-sm border bg-gray-50 p-3 text-sm">
           <p>Processed: {result.processed ?? 0}</p>
-          <p>Success: {result.successCount ?? 0}</p>
+          <p>Created: {result.createdCount ?? 0}</p>
+          <p>Updated: {result.updatedCount ?? 0}</p>
           <p>Errors: {result.errorCount ?? 0}</p>
           {Array.isArray(result.errors) && result.errors.length > 0 ? (
             <div className="mt-2 max-h-48 overflow-auto rounded border bg-white p-2">

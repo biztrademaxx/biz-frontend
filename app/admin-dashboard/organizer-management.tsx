@@ -65,6 +65,9 @@ interface Organizer {
   averageRating?: number | null
   totalReviews?: number | null
   location: string | null
+  organizerCountry: string | null
+  organizerState: string | null
+  organizerCity: string | null
   website: string | null
   linkedin: string | null
   twitter: string | null
@@ -116,6 +119,9 @@ interface OrganizerEditFormData {
   businessPhone: string
   businessAddress: string
   taxId: string
+  organizerCountry: string
+  organizerState: string
+  organizerCity: string
 }
 
 const avatarColors = [
@@ -236,8 +242,19 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
     }
   }
 
+  const formatOrganizerLocation = (organizer: Organizer): string => {
+    if (organizer.location?.trim()) return organizer.location.trim()
+    const parts = [organizer.organizerCity, organizer.organizerState, organizer.organizerCountry]
+      .map((p) => p?.trim())
+      .filter(Boolean)
+    if (parts.length > 0) return parts.join(", ")
+    if (organizer.headquarters?.trim()) return organizer.headquarters.trim()
+    if (organizer.businessAddress?.trim()) return organizer.businessAddress.trim()
+    return "Location not specified"
+  }
+
   const transformOrganizerData = (organizer: Organizer): TransformedOrganizer => {
-    const location = organizer.headquarters || organizer.businessAddress || "Location not specified"
+    const location = formatOrganizerLocation(organizer)
     const eventCount = organizer._count?.organizedEvents ?? organizer.totalEvents ?? 0
     const avg = Number(organizer.averageRating ?? 0)
     const reviewCount = organizer.totalReviews ?? 0
@@ -439,6 +456,9 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
       businessPhone: source.businessPhone || "",
       businessAddress: source.businessAddress || "",
       taxId: source.taxId || "",
+      organizerCountry: source.organizerCountry || "",
+      organizerState: source.organizerState || "",
+      organizerCity: source.organizerCity || "",
     })
     setAvatarFile(null)
     setIsEditDialogOpen(true)
@@ -468,6 +488,9 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
           company: editingOrganizer.company.trim() || null,
           description: editingOrganizer.description.trim() || null,
           headquarters: editingOrganizer.headquarters.trim() || null,
+          organizerCountry: editingOrganizer.organizerCountry.trim() || null,
+          organizerState: editingOrganizer.organizerState.trim() || null,
+          organizerCity: editingOrganizer.organizerCity.trim() || null,
           founded: editingOrganizer.founded.trim() || null,
           teamSize: editingOrganizer.teamSize.trim() || null,
           website: editingOrganizer.website.trim() || null,
@@ -853,7 +876,7 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
         <TabsContent value="bulk-import">
           <EntityBulkImport
             title="Organizer Bulk Import"
-            description="Import organizers with organization contact and location. Use the template column names in row 1 (required: email)."
+            description="Import organizers with organization contact and location. Row 1 must use template column names (required: email). Uploading again updates country, state, and city for existing organizers matched by email."
             endpoint="/organizers/import"
             templateHeaders={[
               "Organization Name",
@@ -944,6 +967,18 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
                 <div>
                   <label className="text-xs text-gray-500">Headquarters</label>
                   <input value={editingOrganizer.headquarters} onChange={(e) => handleEditField("headquarters", e.target.value)} className="w-full mt-1 px-3 py-2 text-sm border border-gray-200 rounded-lg" />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500">Country</label>
+                  <input value={editingOrganizer.organizerCountry} onChange={(e) => handleEditField("organizerCountry", e.target.value)} className="w-full mt-1 px-3 py-2 text-sm border border-gray-200 rounded-lg" />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500">State</label>
+                  <input value={editingOrganizer.organizerState} onChange={(e) => handleEditField("organizerState", e.target.value)} className="w-full mt-1 px-3 py-2 text-sm border border-gray-200 rounded-lg" />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500">City</label>
+                  <input value={editingOrganizer.organizerCity} onChange={(e) => handleEditField("organizerCity", e.target.value)} className="w-full mt-1 px-3 py-2 text-sm border border-gray-200 rounded-lg" />
                 </div>
                 <div>
                   <label className="text-xs text-gray-500">Founded</label>
