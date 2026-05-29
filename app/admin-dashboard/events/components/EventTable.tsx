@@ -7,7 +7,7 @@ import { Trash2, Download, Search, Mail, Loader2 } from "lucide-react"
 import { EventRow } from "./EventRow"
 import type { Event, Category } from "../types/event.types"
 import { getOrganizerDisplay, getCategoryDisplay } from "../types/event.types"
-import type { EventMailCandidate, EventPagination } from "../services/events.api"
+import type { AdminCountry, EventMailCandidate, EventPagination } from "../services/events.api"
 import { useToast } from "@/hooks/use-toast"
 import { Pagination } from "../../shared/components/Pagination"
 
@@ -23,6 +23,9 @@ interface EventTableProps {
   onPageChange: (page: number) => void
   eventCounts: Record<string, number>
   categories: Category[]
+  countries: AdminCountry[]
+  selectedCountry: string
+  onCountryFilterChange: (value: string) => void
   onEdit: (event: Event) => void
   onView?: (event: Event) => void
   onStatusChange: (eventId: string, status: Event["status"]) => void
@@ -72,57 +75,6 @@ function sortEventsClient(events: Event[], sortBy: string): Event[] {
   if (sortBy === "name") return [...events].sort((a, b) => a.title.localeCompare(b.title))
   if (sortBy === "attendance") return [...events].sort((a, b) => (b.attendees || 0) - (a.attendees || 0))
   return [...events].sort((a, b) => new Date(b.date || b.startDate || 0).getTime() - new Date(a.date || a.startDate || 0).getTime())
-}
-
-function applyRegionIndustryFilters(
-  events: Event[],
-  regionFilter: string,
-  industryFilter: string,
-): Event[] {
-  return events.filter((event) => {
-    const categoryStr = getCategoryDisplay(event.category).toLowerCase()
-    const locationStr = (event.location || "").toLowerCase()
-    const matchesRegion =
-      regionFilter === "all" ||
-      (regionFilter === "apac" &&
-        (locationStr.includes("india") ||
-          locationStr.includes("singapore") ||
-          locationStr.includes("japan") ||
-          locationStr.includes("china") ||
-          locationStr.includes("australia") ||
-          locationStr.includes("apac"))) ||
-      (regionFilter === "eu" &&
-        (locationStr.includes("germany") ||
-          locationStr.includes("france") ||
-          locationStr.includes("uk") ||
-          locationStr.includes("london") ||
-          locationStr.includes("europe") ||
-          locationStr.includes("eu"))) ||
-      (regionFilter === "na" &&
-        (locationStr.includes("usa") ||
-          locationStr.includes("canada") ||
-          locationStr.includes("new york") ||
-          locationStr.includes("chicago") ||
-          locationStr.includes("los angeles") ||
-          locationStr.includes("united states"))) ||
-      (regionFilter === "me" &&
-        (locationStr.includes("dubai") ||
-          locationStr.includes("uae") ||
-          locationStr.includes("saudi") ||
-          locationStr.includes("middle east") ||
-          locationStr.includes("qatar")))
-    const matchesIndustry =
-      industryFilter === "all" ||
-      (industryFilter === "tech" &&
-        (categoryStr.includes("tech") || categoryStr.includes("summit") || categoryStr.includes("conference"))) ||
-      (industryFilter === "health" &&
-        (categoryStr.includes("health") || categoryStr.includes("med") || categoryStr.includes("pharma"))) ||
-      (industryFilter === "finance" &&
-        (categoryStr.includes("finance") || categoryStr.includes("fintech") || categoryStr.includes("banking"))) ||
-      (industryFilter === "manufacturing" &&
-        (categoryStr.includes("manuf") || categoryStr.includes("expo") || categoryStr.includes("industrial")))
-    return matchesRegion && matchesIndustry
-  })
 }
 
 function exportToCSV(events: Event[]) {
@@ -205,6 +157,9 @@ export function EventTable({
   onPageChange,
   eventCounts,
   categories,
+  countries,
+  selectedCountry,
+  onCountryFilterChange,
   onEdit,
   onView,
   onStatusChange,
@@ -228,8 +183,6 @@ export function EventTable({
   const { toast } = useToast()
   const [selectedEvents, setSelectedEvents] = useState<Set<string>>(new Set())
   const [selectedMailKeys, setSelectedMailKeys] = useState<Set<string>>(new Set())
-  const [localRegionFilter, setLocalRegionFilter] = useState("all")
-  const [localIndustryFilter, setLocalIndustryFilter] = useState("all")
   const [localSort, setLocalSort] = useState("date")
   const [localSearch, setLocalSearch] = useState(searchTerm)
 
@@ -241,9 +194,8 @@ export function EventTable({
 
   const filteredEvents = useMemo(() => {
     if (activeTab === "send-email") return []
-    const sorted = sortEventsClient(events, localSort)
-    return applyRegionIndustryFilters(sorted, localRegionFilter, localIndustryFilter)
-  }, [events, activeTab, localSort, localRegionFilter, localIndustryFilter])
+    return sortEventsClient(events, localSort)
+  }, [events, activeTab, localSort])
 
   const allSelected = filteredEvents.length > 0 && filteredEvents.every((e) => selectedEvents.has(e.id))
   const selectedCount = selectedEvents.size
@@ -312,14 +264,15 @@ export function EventTable({
   const mailTabCount = eventCounts.mail ?? groupedMail.length
 
   const tabs = [
-    { id: "all", label: "All", count: eventCounts.all ?? pagination.total, dot: null, star: false, mail: false },
-    { id: "live", label: "Live", count: eventCounts.live ?? 0, dot: "#22C55E", star: false, mail: false },
-    { id: "upcoming", label: "Upcoming", count: eventCounts.upcoming ?? 0, dot: "#3B82F6", star: false, mail: false },
-    { id: "ended", label: "Ended", count: eventCounts.ended ?? 0, dot: "#71717A", star: false, mail: false },
-    { id: "pending", label: "Pending", count: eventCounts.pending ?? 0, dot: "#EAB308", star: false, mail: false },
-    { id: "approved", label: "Approved", count: eventCounts.approved ?? 0, dot: "#8B5CF6", star: false, mail: false },
-    { id: "featured", label: "Featured", count: eventCounts.featured ?? 0, dot: null, star: true, mail: false },
-    { id: "send-email", label: "Send email", count: mailTabCount, dot: null, star: false, mail: true },
+    { id: "all", label: "All", count: eventCounts.all ?? pagination.total, dot: null, star: false, vip: false, mail: false },
+    { id: "live", label: "Live", count: eventCounts.live ?? 0, dot: "#22C55E", star: false, vip: false, mail: false },
+    { id: "upcoming", label: "Upcoming", count: eventCounts.upcoming ?? 0, dot: "#3B82F6", star: false, vip: false, mail: false },
+    { id: "ended", label: "Ended", count: eventCounts.ended ?? 0, dot: "#71717A", star: false, vip: false, mail: false },
+    { id: "pending", label: "Pending", count: eventCounts.pending ?? 0, dot: "#EAB308", star: false, vip: false, mail: false },
+    { id: "approved", label: "Approved", count: eventCounts.approved ?? 0, dot: "#8B5CF6", star: false, vip: false, mail: false },
+    { id: "featured", label: "Featured", count: eventCounts.featured ?? 0, dot: null, star: true, vip: false, mail: false },
+    { id: "vip", label: "VIP", count: eventCounts.vip ?? 0, dot: null, star: false, vip: true, mail: false },
+    { id: "send-email", label: "Send email", count: mailTabCount, dot: null, star: false, vip: false, mail: true },
   ]
 
   const thStyle: CSSProperties = {
@@ -432,19 +385,17 @@ export function EventTable({
                     </option>
                   ))}
                 </select>
-                <select value={localRegionFilter} onChange={(e) => setLocalRegionFilter(e.target.value)} style={selectStyle}>
-                  <option value="all">All Regions</option>
-                  <option value="apac">APAC</option>
-                  <option value="eu">EU</option>
-                  <option value="na">NA</option>
-                  <option value="me">ME</option>
-                </select>
-                <select value={localIndustryFilter} onChange={(e) => setLocalIndustryFilter(e.target.value)} style={selectStyle}>
-                  <option value="all">All Industries</option>
-                  <option value="tech">Technology</option>
-                  <option value="health">Healthcare</option>
-                  <option value="finance">Finance</option>
-                  <option value="manufacturing">Manufacturing</option>
+                <select
+                  value={selectedCountry}
+                  onChange={(e) => onCountryFilterChange(e.target.value)}
+                  style={selectStyle}
+                >
+                  <option value="all">All Countries</option>
+                  {countries.map((c) => (
+                    <option key={c.id} value={c.name}>
+                      {c.name}
+                    </option>
+                  ))}
                 </select>
                 <select value={localSort} onChange={(e) => setLocalSort(e.target.value)} style={selectStyle}>
                   <option value="date">Sort: Date ↓</option>

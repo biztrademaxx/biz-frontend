@@ -6,7 +6,15 @@ export interface GetEventsParams {
   search?: string
   tab?: string
   category?: string
+  country?: string
   status?: string
+}
+
+export interface AdminCountry {
+  id: string
+  name: string
+  code: string
+  isActive?: boolean
 }
 
 export interface EventPagination {
@@ -31,6 +39,7 @@ export interface EventStats {
   rejected: number
   pending: number
   featured: number
+  vip: number
   live: number
   upcoming: number
   ended: number
@@ -47,6 +56,7 @@ export async function getEvents(params: GetEventsParams = {}): Promise<GetEvents
   if (params.search?.trim()) qs.set("search", params.search.trim())
   if (params.tab && params.tab !== "all") qs.set("tab", params.tab)
   if (params.category && params.category !== "all") qs.set("category", params.category)
+  if (params.country && params.country !== "all") qs.set("country", params.country)
   if (params.status && params.status !== "all") qs.set("status", params.status)
   const query = qs.toString()
   return adminApi<GetEventsResponse>(`/events${query ? `?${query}` : ""}`, { auth: true })
@@ -88,6 +98,11 @@ export async function deleteEvent(id: string) {
 
 export async function getEventCategories(): Promise<unknown[] | GetCategoriesResponse> {
   return adminApi<unknown[] | GetCategoriesResponse>("/event-categories", { auth: true })
+}
+
+export async function getCountries(): Promise<AdminCountry[]> {
+  const data = await adminApi<AdminCountry[]>("/countries", { auth: true })
+  return Array.isArray(data) ? data : []
 }
 
 export type EventMailCandidate = {

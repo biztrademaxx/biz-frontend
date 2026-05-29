@@ -9,6 +9,7 @@ export default function EventManagementPage() {
   const {
     events,
     categories,
+    countries,
     loading,
     categoriesLoading,
     searchTerm,
@@ -17,6 +18,8 @@ export default function EventManagementPage() {
     setSelectedStatus,
     selectedCategory,
     setSelectedCategory,
+    selectedCountry,
+    setSelectedCountry,
     activeTab,
     setActiveTab,
     page,
@@ -78,6 +81,9 @@ export default function EventManagementPage() {
         onPageChange={handlePageChange}
         eventCounts={eventCounts}
         categories={categories}
+        countries={countries}
+        selectedCountry={selectedCountry}
+        onCountryFilterChange={setSelectedCountry}
         onEdit={handleEditEvent}
         onStatusChange={handleStatusChange}
         onFeatureToggle={handleFeatureToggle}

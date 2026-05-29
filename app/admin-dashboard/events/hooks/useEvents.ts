@@ -44,6 +44,7 @@ function normalizeEvent(raw: any): Event {
     date: raw.startDate ?? raw.date ?? "",
     endDate: raw.endDate ?? "",
     location: raw.city ?? raw.location ?? raw.venue ?? "",
+    country: typeof raw.country === "string" ? raw.country : "",
     venue: typeof raw.venue === "string" ? raw.venue : (raw.venue?.venueName ?? raw.venue?.name ?? ""),
     organizerEmail:
       raw.organizer && typeof raw.organizer === "object"
@@ -65,12 +66,14 @@ function normalizeEvent(raw: any): Event {
 export function useEvents() {
   const [events, setEvents] = useState<Event[]>([])
   const [categories, setCategories] = useState<Category[]>([])
+  const [countries, setCountries] = useState<api.AdminCountry[]>([])
   const [loading, setLoading] = useState(true)
   const [categoriesLoading, setCategoriesLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [debouncedSearch, setDebouncedSearch] = useState("")
   const [selectedStatus, setSelectedStatus] = useState("all")
   const [selectedCategory, setSelectedCategory] = useState("all")
+  const [selectedCountry, setSelectedCountry] = useState("all")
   const [activeTab, setActiveTab] = useState("all")
   const [page, setPage] = useState(1)
   const [pagination, setPagination] = useState<api.EventPagination>({
@@ -87,6 +90,7 @@ export function useEvents() {
     rejected: 0,
     pending: 0,
     featured: 0,
+    vip: 0,
     live: 0,
     upcoming: 0,
     ended: 0,
@@ -127,6 +131,7 @@ export function useEvents() {
         search: debouncedSearch || undefined,
         tab: activeTab === "send-email" ? undefined : activeTab,
         category: selectedCategory !== "all" ? selectedCategory : undefined,
+        country: selectedCountry !== "all" ? selectedCountry : undefined,
         status: selectedStatus !== "all" ? selectedStatus : undefined,
       })
       if (fetchId !== fetchIdRef.current) return
@@ -141,16 +146,21 @@ export function useEvents() {
     } finally {
       if (fetchId === fetchIdRef.current) setLoading(false)
     }
-  }, [page, debouncedSearch, activeTab, selectedCategory, selectedStatus])
+  }, [page, debouncedSearch, activeTab, selectedCategory, selectedCountry, selectedStatus])
 
   const fetchCategories = useCallback(async () => {
     try {
-      const data = await api.getEventCategories()
-      const list = Array.isArray(data) ? data : (data as any)?.data ?? []
+      const [catData, countryData] = await Promise.all([
+        api.getEventCategories(),
+        api.getCountries(),
+      ])
+      const list = Array.isArray(catData) ? catData : (catData as any)?.data ?? []
       setCategories(list)
+      setCountries(countryData.filter((c) => c.isActive !== false))
     } catch (error) {
       console.error("Error fetching categories:", error)
       setCategories([])
+      setCountries([])
     } finally {
       setCategoriesLoading(false)
     }
@@ -192,7 +202,7 @@ export function useEvents() {
     approved: stats.approved,
     flagged: 0,
     featured: stats.featured,
-    vip: 0,
+    vip: stats.vip,
     verified: 0,
     mail: mailCandidates.length,
     live: stats.live,
@@ -256,14 +266,18 @@ export function useEvents() {
     [fetchStats]
   )
 
-  const handleVipToggle = useCallback(async (eventId: string, current: boolean) => {
-    try {
-      await api.updateEvent(eventId, { vip: !current })
-      setEvents((prev) => prev.map((e) => (e.id === eventId ? { ...e, vip: !current } : e)))
-    } catch (error) {
-      console.error("Failed to toggle VIP:", error)
-    }
-  }, [])
+  const handleVipToggle = useCallback(
+    async (eventId: string, current: boolean) => {
+      try {
+        await api.updateEvent(eventId, { vip: !current })
+        setEvents((prev) => prev.map((e) => (e.id === eventId ? { ...e, vip: !current } : e)))
+        void fetchStats()
+      } catch (error) {
+        console.error("Failed to toggle VIP:", error)
+      }
+    },
+    [fetchStats]
+  )
 
   const handlePublicToggle = useCallback(async (eventId: string, current: boolean) => {
     try {
@@ -436,6 +450,12 @@ export function useEvents() {
     selectedCategory,
     setSelectedCategory: (value: string) => {
       setSelectedCategory(value)
+      setPage(1)
+    },
+    countries,
+    selectedCountry,
+    setSelectedCountry: (value: string) => {
+      setSelectedCountry(value)
       setPage(1)
     },
     activeTab,
