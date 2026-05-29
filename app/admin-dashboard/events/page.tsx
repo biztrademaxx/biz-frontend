@@ -19,6 +19,8 @@ export default function EventManagementPage() {
     setSelectedCategory,
     activeTab,
     setActiveTab,
+    page,
+    pagination,
     eventCounts,
     mailCandidates,
     sendingMail,
@@ -28,6 +30,7 @@ export default function EventManagementPage() {
     isVerifyDialogOpen,
     setIsVerifyDialogOpen,
     verifying,
+    handlePageChange,
     handleStatusChange,
     handleFeatureToggle,
     handleVipToggle,
@@ -42,7 +45,7 @@ export default function EventManagementPage() {
     handleSendListingEmailBulk,
   } = useEvents()
 
-  if (loading || categoriesLoading) {
+  if (categoriesLoading && events.length === 0 && !loading) {
     return (
       <div className="flex justify-center items-center h-[80vh]">
         <p className="text-gray-500">Loading events...</p>
@@ -65,10 +68,14 @@ export default function EventManagementPage() {
     <>
       <EventTable
         events={events}
+        loading={loading}
         searchTerm={searchTerm}
         selectedStatus={selectedStatus}
         selectedCategory={selectedCategory}
         activeTab={activeTab}
+        page={page}
+        pagination={pagination}
+        onPageChange={handlePageChange}
         eventCounts={eventCounts}
         categories={categories}
         onEdit={handleEditEvent}

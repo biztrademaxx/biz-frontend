@@ -1,17 +1,59 @@
 import { adminApi } from "../../shared/services/admin-api"
 
+export interface GetEventsParams {
+  page?: number
+  limit?: number
+  search?: string
+  tab?: string
+  category?: string
+  status?: string
+}
+
+export interface EventPagination {
+  page: number
+  limit: number
+  total: number
+  totalPages: number
+  hasNextPage: boolean
+  hasPreviousPage: boolean
+}
+
 export interface GetEventsResponse {
   success?: boolean
   events?: unknown[]
   data?: { events?: unknown[] }
+  pagination?: EventPagination
+}
+
+export interface EventStats {
+  total: number
+  approved: number
+  rejected: number
+  pending: number
+  featured: number
+  live: number
+  upcoming: number
+  ended: number
 }
 
 export interface GetCategoriesResponse {
   data?: unknown[]
 }
 
-export async function getEvents(): Promise<GetEventsResponse> {
-  return adminApi<GetEventsResponse>("/events", { auth: true })
+export async function getEvents(params: GetEventsParams = {}): Promise<GetEventsResponse> {
+  const qs = new URLSearchParams()
+  if (params.page) qs.set("page", String(params.page))
+  if (params.limit) qs.set("limit", String(params.limit))
+  if (params.search?.trim()) qs.set("search", params.search.trim())
+  if (params.tab && params.tab !== "all") qs.set("tab", params.tab)
+  if (params.category && params.category !== "all") qs.set("category", params.category)
+  if (params.status && params.status !== "all") qs.set("status", params.status)
+  const query = qs.toString()
+  return adminApi<GetEventsResponse>(`/events${query ? `?${query}` : ""}`, { auth: true })
+}
+
+export async function getEventStats(): Promise<{ stats?: EventStats }> {
+  return adminApi<{ success?: boolean; stats?: EventStats }>("/events/stats", { auth: true })
 }
 
 export async function getEventById(id: string) {

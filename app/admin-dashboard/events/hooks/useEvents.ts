@@ -1,10 +1,12 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { toast } from "@/hooks/use-toast"
 import * as api from "../services/events.api"
 import type { Event, Category } from "../types/event.types"
 import { getOrganizerDisplay, getCategoryDisplay } from "../types/event.types"
+
+const PAGE_SIZE = 15
 
 function normalizeStatusLabel(status: unknown): Event["status"] {
   const raw = String(status ?? "").trim().toUpperCase()
@@ -31,7 +33,9 @@ function normalizeEvent(raw: any): Event {
   const organizerStr = getOrganizerDisplay(raw.organizer)
   const categoryVal = Array.isArray(raw.category)
     ? raw.category
-    : (typeof raw.category === "string" && raw.category.trim() ? [raw.category.trim()] : [])
+    : typeof raw.category === "string" && raw.category.trim()
+      ? [raw.category.trim()]
+      : []
   const categoryStr = categoryVal.length > 0 ? categoryVal : getCategoryDisplay(raw.category)
   return {
     ...raw,
@@ -64,9 +68,29 @@ export function useEvents() {
   const [loading, setLoading] = useState(true)
   const [categoriesLoading, setCategoriesLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
+  const [debouncedSearch, setDebouncedSearch] = useState("")
   const [selectedStatus, setSelectedStatus] = useState("all")
   const [selectedCategory, setSelectedCategory] = useState("all")
   const [activeTab, setActiveTab] = useState("all")
+  const [page, setPage] = useState(1)
+  const [pagination, setPagination] = useState<api.EventPagination>({
+    page: 1,
+    limit: PAGE_SIZE,
+    total: 0,
+    totalPages: 1,
+    hasNextPage: false,
+    hasPreviousPage: false,
+  })
+  const [stats, setStats] = useState<api.EventStats>({
+    total: 0,
+    approved: 0,
+    rejected: 0,
+    pending: 0,
+    featured: 0,
+    live: 0,
+    upcoming: 0,
+    ended: 0,
+  })
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null)
   const [isEditing, setIsEditing] = useState(false)
   const [isVerifyDialogOpen, setIsVerifyDialogOpen] = useState(false)
@@ -74,20 +98,50 @@ export function useEvents() {
   const [mailCandidates, setMailCandidates] = useState<api.EventMailCandidate[]>([])
   const [sendingMail, setSendingMail] = useState(false)
   const [sendingMailFor, setSendingMailFor] = useState<string | null>(null)
+  const fetchIdRef = useRef(0)
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setDebouncedSearch(searchTerm.trim())
+      setPage(1)
+    }, 350)
+    return () => clearTimeout(t)
+  }, [searchTerm])
+
+  const fetchStats = useCallback(async () => {
+    try {
+      const res = await api.getEventStats()
+      if (res.stats) setStats(res.stats)
+    } catch (error) {
+      console.error("Error fetching event stats:", error)
+    }
+  }, [])
 
   const fetchEvents = useCallback(async () => {
+    const fetchId = ++fetchIdRef.current
     try {
       setLoading(true)
-      const data = await api.getEvents()
+      const data = await api.getEvents({
+        page,
+        limit: PAGE_SIZE,
+        search: debouncedSearch || undefined,
+        tab: activeTab === "send-email" ? undefined : activeTab,
+        category: selectedCategory !== "all" ? selectedCategory : undefined,
+        status: selectedStatus !== "all" ? selectedStatus : undefined,
+      })
+      if (fetchId !== fetchIdRef.current) return
       const list = data.events ?? data.data?.events ?? []
       setEvents((Array.isArray(list) ? list : []).map(normalizeEvent))
+      if (data.pagination) {
+        setPagination(data.pagination)
+      }
     } catch (error) {
       console.error("Error fetching events:", error)
       toast({ title: "Error", description: "Failed to load events", variant: "destructive" })
     } finally {
-      setLoading(false)
+      if (fetchId === fetchIdRef.current) setLoading(false)
     }
-  }, [])
+  }, [page, debouncedSearch, activeTab, selectedCategory, selectedStatus])
 
   const fetchCategories = useCallback(async () => {
     try {
@@ -103,11 +157,19 @@ export function useEvents() {
   }, [])
 
   useEffect(() => {
-    fetchEvents()
-  }, [fetchEvents])
+    if (activeTab === "send-email") {
+      setLoading(false)
+      return
+    }
+    void fetchEvents()
+  }, [fetchEvents, activeTab])
 
   useEffect(() => {
-    fetchCategories()
+    void fetchStats()
+  }, [fetchStats])
+
+  useEffect(() => {
+    void fetchCategories()
   }, [fetchCategories])
 
   const fetchMailCandidates = useCallback(async () => {
@@ -121,46 +183,78 @@ export function useEvents() {
   }, [])
 
   useEffect(() => {
-    fetchMailCandidates()
+    void fetchMailCandidates()
   }, [fetchMailCandidates])
 
   const eventCounts = {
-    all: events.length,
-    pending: events.filter((e) => e.status === "Pending Review").length,
-    approved: events.filter((e) => e.status === "Approved").length,
-    flagged: events.filter((e) => e.status === "Flagged").length,
-    featured: events.filter((e) => e.featured).length,
-    vip: events.filter((e) => e.vip).length,
-    verified: events.filter((e) => e.isVerified).length,
+    all: stats.total,
+    pending: stats.pending,
+    approved: stats.approved,
+    flagged: 0,
+    featured: stats.featured,
+    vip: 0,
+    verified: 0,
     mail: mailCandidates.length,
+    live: stats.live,
+    upcoming: stats.upcoming,
+    ended: stats.ended,
   }
 
-  const handleStatusChange = useCallback(async (eventId: string, newStatus: Event["status"]) => {
-    try {
-      const result = await api.updateEvent(eventId, { status: newStatus })
-      const updated = (result as any)?.data ?? (result as any)?.event
-      setEvents((prev) =>
-        prev.map((e) =>
-          e.id === eventId
-            ? { ...e, status: newStatus, isVerified: updated?.isVerified ?? e.isVerified, verifiedBadgeImage: updated?.verifiedBadgeImage ?? e.verifiedBadgeImage, verifiedAt: updated?.verifiedAt ?? e.verifiedAt, verifiedBy: updated?.verifiedBy ?? e.verifiedBy }
-            : e
-        )
-      )
-      toast({ title: "Status Updated", description: `Event status changed to ${newStatus}` })
-    } catch (error) {
-      console.error("Failed to update event status:", error)
-      toast({ title: "Error", description: "Failed to update event status", variant: "destructive" })
-    }
+  const handlePageChange = useCallback((nextPage: number) => {
+    setPage(nextPage)
+    window.scrollTo({ top: 0, behavior: "smooth" })
   }, [])
 
-  const handleFeatureToggle = useCallback(async (eventId: string, current: boolean) => {
-    try {
-      await api.updateEvent(eventId, { featured: !current })
-      setEvents((prev) => prev.map((e) => (e.id === eventId ? { ...e, featured: !current } : e)))
-    } catch (error) {
-      console.error("Failed to toggle featured:", error)
-    }
+  const handleTabChange = useCallback((tab: string) => {
+    setActiveTab(tab)
+    setPage(1)
   }, [])
+
+  const refreshAfterMutation = useCallback(async () => {
+    await Promise.all([fetchEvents(), fetchStats()])
+  }, [fetchEvents, fetchStats])
+
+  const handleStatusChange = useCallback(
+    async (eventId: string, newStatus: Event["status"]) => {
+      try {
+        const result = await api.updateEvent(eventId, { status: newStatus })
+        const updated = (result as any)?.data ?? (result as any)?.event
+        setEvents((prev) =>
+          prev.map((e) =>
+            e.id === eventId
+              ? {
+                  ...e,
+                  status: newStatus,
+                  isVerified: updated?.isVerified ?? e.isVerified,
+                  verifiedBadgeImage: updated?.verifiedBadgeImage ?? e.verifiedBadgeImage,
+                  verifiedAt: updated?.verifiedAt ?? e.verifiedAt,
+                  verifiedBy: updated?.verifiedBy ?? e.verifiedBy,
+                }
+              : e
+          )
+        )
+        toast({ title: "Status Updated", description: `Event status changed to ${newStatus}` })
+        void fetchStats()
+      } catch (error) {
+        console.error("Failed to update event status:", error)
+        toast({ title: "Error", description: "Failed to update event status", variant: "destructive" })
+      }
+    },
+    [fetchStats]
+  )
+
+  const handleFeatureToggle = useCallback(
+    async (eventId: string, current: boolean) => {
+      try {
+        await api.updateEvent(eventId, { featured: !current })
+        setEvents((prev) => prev.map((e) => (e.id === eventId ? { ...e, featured: !current } : e)))
+        void fetchStats()
+      } catch (error) {
+        console.error("Failed to toggle featured:", error)
+      }
+    },
+    [fetchStats]
+  )
 
   const handleVipToggle = useCallback(async (eventId: string, current: boolean) => {
     try {
@@ -180,71 +274,89 @@ export function useEvents() {
     }
   }, [])
 
-  const handleVerifyToggle = useCallback(async (event: Event, verify: boolean, customBadge?: File) => {
-    try {
-      setVerifying(true)
-      const result = await api.verifyEvent(event.id, verify, customBadge)
-      const u = (result as { data?: Record<string, unknown> })?.data
-      setEvents((prev) =>
-        prev.map((e) => {
-          if (e.id !== event.id) return e
-          if (!u) {
+  const handleVerifyToggle = useCallback(
+    async (event: Event, verify: boolean, customBadge?: File) => {
+      try {
+        setVerifying(true)
+        const result = await api.verifyEvent(event.id, verify, customBadge)
+        const u = (result as { data?: Record<string, unknown> })?.data
+        setEvents((prev) =>
+          prev.map((e) => {
+            if (e.id !== event.id) return e
+            if (!u) {
+              return {
+                ...e,
+                isVerified: verify,
+                verifiedAt: verify ? new Date().toISOString() : null,
+                verifiedBy: verify ? e.verifiedBy : null,
+                verifiedBadgeImage: verify ? e.verifiedBadgeImage : null,
+              }
+            }
+            const at = u.verifiedAt
             return {
               ...e,
-              isVerified: verify,
-              verifiedAt: verify ? new Date().toISOString() : null,
-              verifiedBy: verify ? e.verifiedBy : null,
-              verifiedBadgeImage: verify ? e.verifiedBadgeImage : null,
+              isVerified: !!u.isVerified,
+              verifiedAt:
+                at == null ? null : typeof at === "string" ? at : new Date(at as Date).toISOString(),
+              verifiedBy: (u.verifiedBy as string | null) ?? null,
+              verifiedBadgeImage: (u.verifiedBadgeImage as string | null) ?? null,
             }
-          }
-          const at = u.verifiedAt
-          return {
-            ...e,
-            isVerified: !!u.isVerified,
-            verifiedAt:
-              at == null
-                ? null
-                : typeof at === "string"
-                  ? at
-                  : new Date(at as Date).toISOString(),
-            verifiedBy: (u.verifiedBy as string | null) ?? null,
-            verifiedBadgeImage: (u.verifiedBadgeImage as string | null) ?? null,
-          }
+          })
+        )
+        setIsVerifyDialogOpen(false)
+        toast({
+          title: verify ? "Event Verified" : "Verification Removed",
+          description: verify ? "Event has been marked as verified" : "Event verification has been removed",
         })
-      )
-      setIsVerifyDialogOpen(false)
-      toast({ title: verify ? "Event Verified" : "Verification Removed", description: verify ? "Event has been marked as verified" : "Event verification has been removed" })
-    } catch (error) {
-      toast({ title: "Error", description: error instanceof Error ? error.message : "Failed to update verification", variant: "destructive" })
-    } finally {
-      setVerifying(false)
-    }
-  }, [])
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: error instanceof Error ? error.message : "Failed to update verification",
+          variant: "destructive",
+        })
+      } finally {
+        setVerifying(false)
+      }
+    },
+    []
+  )
 
-  const handleDeleteEvent = useCallback(async (eventId: string) => {
-    if (!confirm("Are you sure you want to delete this event?")) return
-    try {
-      await api.deleteEvent(eventId)
-      setEvents((prev) => prev.filter((e) => e.id !== eventId))
-      toast({ title: "Event Deleted", description: "Event has been deleted successfully" })
-    } catch (error) {
-      toast({ title: "Error", description: error instanceof Error ? error.message : "Failed to delete event", variant: "destructive" })
-    }
-  }, [])
+  const handleDeleteEvent = useCallback(
+    async (eventId: string) => {
+      if (!confirm("Are you sure you want to delete this event?")) return
+      try {
+        await api.deleteEvent(eventId)
+        setEvents((prev) => prev.filter((e) => e.id !== eventId))
+        toast({ title: "Event Deleted", description: "Event has been deleted successfully" })
+        await refreshAfterMutation()
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: error instanceof Error ? error.message : "Failed to delete event",
+          variant: "destructive",
+        })
+      }
+    },
+    [refreshAfterMutation]
+  )
 
   const handleEditEvent = useCallback((event: Event) => {
     setSelectedEvent(event)
     setIsEditing(true)
   }, [])
 
-  const handleSaveEvent = useCallback((updatedEvent: Event) => {
-    setEvents((prev) =>
-      prev.map((e) => (e.id === updatedEvent.id ? normalizeEvent(updatedEvent as any) : e))
-    )
-    setIsEditing(false)
-    setSelectedEvent(null)
-    toast({ title: "Event Updated", description: "Event details have been saved successfully" })
-  }, [])
+  const handleSaveEvent = useCallback(
+    (updatedEvent: Event) => {
+      setEvents((prev) =>
+        prev.map((e) => (e.id === updatedEvent.id ? normalizeEvent(updatedEvent as any) : e))
+      )
+      setIsEditing(false)
+      setSelectedEvent(null)
+      toast({ title: "Event Updated", description: "Event details have been saved successfully" })
+      void refreshAfterMutation()
+    },
+    [refreshAfterMutation]
+  )
 
   const handleCancelEdit = useCallback(() => {
     setIsEditing(false)
@@ -317,11 +429,19 @@ export function useEvents() {
     searchTerm,
     setSearchTerm,
     selectedStatus,
-    setSelectedStatus,
+    setSelectedStatus: (value: string) => {
+      setSelectedStatus(value)
+      setPage(1)
+    },
     selectedCategory,
-    setSelectedCategory,
+    setSelectedCategory: (value: string) => {
+      setSelectedCategory(value)
+      setPage(1)
+    },
     activeTab,
-    setActiveTab,
+    setActiveTab: handleTabChange,
+    page,
+    pagination,
     eventCounts,
     mailCandidates,
     sendingMail,
@@ -333,6 +453,7 @@ export function useEvents() {
     verifying,
     fetchEvents,
     fetchCategories,
+    handlePageChange,
     handleStatusChange,
     handleFeatureToggle,
     handleVipToggle,

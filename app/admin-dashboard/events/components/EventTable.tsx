@@ -1,21 +1,26 @@
 "use client"
 
-import { useMemo, useState, type CSSProperties } from "react"
+import { useEffect, useMemo, useState, type CSSProperties } from "react"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Trash2, Download, Search, Mail } from "lucide-react"
+import { Trash2, Download, Search, Mail, Loader2 } from "lucide-react"
 import { EventRow } from "./EventRow"
 import type { Event, Category } from "../types/event.types"
 import { getOrganizerDisplay, getCategoryDisplay } from "../types/event.types"
-import type { EventMailCandidate } from "../services/events.api"
+import type { EventMailCandidate, EventPagination } from "../services/events.api"
 import { useToast } from "@/hooks/use-toast"
+import { Pagination } from "../../shared/components/Pagination"
 
 interface EventTableProps {
   events: Event[]
+  loading?: boolean
   searchTerm: string
   selectedStatus: string
   selectedCategory: string
   activeTab: string
+  page: number
+  pagination: EventPagination
+  onPageChange: (page: number) => void
   eventCounts: Record<string, number>
   categories: Category[]
   onEdit: (event: Event) => void
@@ -50,11 +55,12 @@ function getStatusColor(status: Event["status"]): "default" | "secondary" | "des
   }
 }
 
-function getEventDateStatus(event: Event): "Live" | "Upcoming" | "Ended" | "Draft" {
-  if (event.status === "Draft") return "Draft"
-  const today = new Date(); today.setHours(0, 0, 0, 0)
-  const startDate = new Date(event.date); startDate.setHours(0, 0, 0, 0)
-  const endDate = event.endDate ? new Date(event.endDate) : new Date(event.date)
+export function getEventDateStatus(event: Event): "Live" | "Upcoming" | "Ended" {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const startDate = new Date(event.date || event.startDate || "")
+  startDate.setHours(0, 0, 0, 0)
+  const endDate = event.endDate ? new Date(event.endDate) : new Date(event.date || event.startDate || "")
   endDate.setHours(23, 59, 59, 999)
   if (today >= startDate && today <= endDate) return "Live"
   if (today < startDate) return "Upcoming"
@@ -62,72 +68,61 @@ function getEventDateStatus(event: Event): "Live" | "Upcoming" | "Ended" | "Draf
   return "Upcoming"
 }
 
-function filterEvents(
+function sortEventsClient(events: Event[], sortBy: string): Event[] {
+  if (sortBy === "name") return [...events].sort((a, b) => a.title.localeCompare(b.title))
+  if (sortBy === "attendance") return [...events].sort((a, b) => (b.attendees || 0) - (a.attendees || 0))
+  return [...events].sort((a, b) => new Date(b.date || b.startDate || 0).getTime() - new Date(a.date || a.startDate || 0).getTime())
+}
+
+function applyRegionIndustryFilters(
   events: Event[],
-  tab: string,
-  searchTerm: string,
-  selectedStatus: string,
-  categoryFilter: string,
   regionFilter: string,
   industryFilter: string,
-  sortBy: string,
 ): Event[] {
-  let filtered = events.filter((event) => {
-    const organizerStr = getOrganizerDisplay(event.organizer)
-    const matchesSearch =
-      searchTerm === "" ||
-      event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      organizerStr.toLowerCase().includes(searchTerm.toLowerCase())
-
-    let matchesStatusFilter = true
-    if (selectedStatus !== "all") {
-      const dateStatus = getEventDateStatus(event)
-      if (selectedStatus === "live") matchesStatusFilter = dateStatus === "Live"
-      else if (selectedStatus === "upcoming") matchesStatusFilter = dateStatus === "Upcoming"
-      else if (selectedStatus === "ended") matchesStatusFilter = dateStatus === "Ended"
-      else if (selectedStatus === "draft") matchesStatusFilter = dateStatus === "Draft"
-      else if (selectedStatus === "pendingreview") matchesStatusFilter = event.status === "Pending Review"
-      else if (selectedStatus === "approved") matchesStatusFilter = event.status === "Approved"
-    }
-
+  return events.filter((event) => {
     const categoryStr = getCategoryDisplay(event.category).toLowerCase()
-    const matchesCategory = categoryFilter === "all" || categoryStr === categoryFilter
-
     const locationStr = (event.location || "").toLowerCase()
     const matchesRegion =
       regionFilter === "all" ||
-      (regionFilter === "apac" && (locationStr.includes("india") || locationStr.includes("singapore") || locationStr.includes("japan") || locationStr.includes("china") || locationStr.includes("australia") || locationStr.includes("apac"))) ||
-      (regionFilter === "eu" && (locationStr.includes("germany") || locationStr.includes("france") || locationStr.includes("uk") || locationStr.includes("london") || locationStr.includes("europe") || locationStr.includes("eu"))) ||
-      (regionFilter === "na" && (locationStr.includes("usa") || locationStr.includes("canada") || locationStr.includes("new york") || locationStr.includes("chicago") || locationStr.includes("los angeles") || locationStr.includes("united states"))) ||
-      (regionFilter === "me" && (locationStr.includes("dubai") || locationStr.includes("uae") || locationStr.includes("saudi") || locationStr.includes("middle east") || locationStr.includes("qatar")))
-
+      (regionFilter === "apac" &&
+        (locationStr.includes("india") ||
+          locationStr.includes("singapore") ||
+          locationStr.includes("japan") ||
+          locationStr.includes("china") ||
+          locationStr.includes("australia") ||
+          locationStr.includes("apac"))) ||
+      (regionFilter === "eu" &&
+        (locationStr.includes("germany") ||
+          locationStr.includes("france") ||
+          locationStr.includes("uk") ||
+          locationStr.includes("london") ||
+          locationStr.includes("europe") ||
+          locationStr.includes("eu"))) ||
+      (regionFilter === "na" &&
+        (locationStr.includes("usa") ||
+          locationStr.includes("canada") ||
+          locationStr.includes("new york") ||
+          locationStr.includes("chicago") ||
+          locationStr.includes("los angeles") ||
+          locationStr.includes("united states"))) ||
+      (regionFilter === "me" &&
+        (locationStr.includes("dubai") ||
+          locationStr.includes("uae") ||
+          locationStr.includes("saudi") ||
+          locationStr.includes("middle east") ||
+          locationStr.includes("qatar")))
     const matchesIndustry =
       industryFilter === "all" ||
-      (industryFilter === "tech" && (categoryStr.includes("tech") || categoryStr.includes("summit") || categoryStr.includes("conference"))) ||
-      (industryFilter === "health" && (categoryStr.includes("health") || categoryStr.includes("med") || categoryStr.includes("pharma"))) ||
-      (industryFilter === "finance" && (categoryStr.includes("finance") || categoryStr.includes("fintech") || categoryStr.includes("banking"))) ||
-      (industryFilter === "manufacturing" && (categoryStr.includes("manuf") || categoryStr.includes("expo") || categoryStr.includes("industrial")))
-
-    let matchesTab = true
-    if (tab === "live") matchesTab = getEventDateStatus(event) === "Live"
-    else if (tab === "upcoming") matchesTab = getEventDateStatus(event) === "Upcoming"
-    else if (tab === "ended") matchesTab = getEventDateStatus(event) === "Ended"
-    else if (tab === "draft") matchesTab = event.status === "Draft"
-    else if (tab === "pending") matchesTab = event.status === "Pending Review"
-    else if (tab === "approved") matchesTab = event.status === "Approved"
-    else if (tab === "flagged") matchesTab = event.status === "Flagged"
-    else if (tab === "featured") matchesTab = event.featured === true
-    else if (tab === "vip") matchesTab = event.vip === true
-    else if (tab === "verified") matchesTab = event.isVerified === true
-
-    return matchesSearch && matchesStatusFilter && matchesCategory && matchesRegion && matchesIndustry && matchesTab
+      (industryFilter === "tech" &&
+        (categoryStr.includes("tech") || categoryStr.includes("summit") || categoryStr.includes("conference"))) ||
+      (industryFilter === "health" &&
+        (categoryStr.includes("health") || categoryStr.includes("med") || categoryStr.includes("pharma"))) ||
+      (industryFilter === "finance" &&
+        (categoryStr.includes("finance") || categoryStr.includes("fintech") || categoryStr.includes("banking"))) ||
+      (industryFilter === "manufacturing" &&
+        (categoryStr.includes("manuf") || categoryStr.includes("expo") || categoryStr.includes("industrial")))
+    return matchesRegion && matchesIndustry
   })
-
-  if (sortBy === "name") filtered = [...filtered].sort((a, b) => a.title.localeCompare(b.title))
-  else if (sortBy === "attendance") filtered = [...filtered].sort((a, b) => (b.attendees || 0) - (a.attendees || 0))
-  else filtered = [...filtered].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-
-  return filtered
 }
 
 function exportToCSV(events: Event[]) {
@@ -200,10 +195,14 @@ export function groupMailCandidates(candidates: EventMailCandidate[]): GroupedMa
 
 export function EventTable({
   events,
+  loading = false,
   searchTerm,
   selectedStatus,
   selectedCategory,
   activeTab,
+  page,
+  pagination,
+  onPageChange,
   eventCounts,
   categories,
   onEdit,
@@ -229,18 +228,22 @@ export function EventTable({
   const { toast } = useToast()
   const [selectedEvents, setSelectedEvents] = useState<Set<string>>(new Set())
   const [selectedMailKeys, setSelectedMailKeys] = useState<Set<string>>(new Set())
-  const [localCategoryFilter, setLocalCategoryFilter] = useState("all")
   const [localRegionFilter, setLocalRegionFilter] = useState("all")
   const [localIndustryFilter, setLocalIndustryFilter] = useState("all")
   const [localSort, setLocalSort] = useState("date")
   const [localSearch, setLocalSearch] = useState(searchTerm)
 
+  useEffect(() => {
+    setLocalSearch(searchTerm)
+  }, [searchTerm])
+
   const groupedMail = useMemo(() => groupMailCandidates(mailCandidates), [mailCandidates])
 
-  const filteredEvents =
-    activeTab === "send-email"
-      ? []
-      : filterEvents(events, activeTab, localSearch, selectedStatus, localCategoryFilter, localRegionFilter, localIndustryFilter, localSort)
+  const filteredEvents = useMemo(() => {
+    if (activeTab === "send-email") return []
+    const sorted = sortEventsClient(events, localSort)
+    return applyRegionIndustryFilters(sorted, localRegionFilter, localIndustryFilter)
+  }, [events, activeTab, localSort, localRegionFilter, localIndustryFilter])
 
   const allSelected = filteredEvents.length > 0 && filteredEvents.every((e) => selectedEvents.has(e.id))
   const selectedCount = selectedEvents.size
@@ -306,20 +309,16 @@ export function EventTable({
     setSelectedMailKeys(new Set())
   }
 
-  const liveCount = events.filter((e) => getEventDateStatus(e) === "Live").length
-  const upcomingCount = events.filter((e) => getEventDateStatus(e) === "Upcoming").length
-  const endedCount = events.filter((e) => getEventDateStatus(e) === "Ended").length
-  const draftCount = events.filter((e) => e.status === "Draft").length
-  const featuredCount = events.filter((e) => e.featured).length
   const mailTabCount = eventCounts.mail ?? groupedMail.length
 
   const tabs = [
-    { id: "all", label: "All", count: events.length, dot: null, star: false, mail: false },
-    { id: "live", label: "Live", count: liveCount, dot: "#22C55E", star: false, mail: false },
-    { id: "upcoming", label: "Upcoming", count: upcomingCount, dot: "#3B82F6", star: false, mail: false },
-    { id: "ended", label: "Ended", count: endedCount, dot: "#71717A", star: false, mail: false },
-    { id: "draft", label: "Draft", count: draftCount, dot: "#EAB308", star: false, mail: false },
-    { id: "featured", label: "Featured", count: featuredCount, dot: null, star: true, mail: false },
+    { id: "all", label: "All", count: eventCounts.all ?? pagination.total, dot: null, star: false, mail: false },
+    { id: "live", label: "Live", count: eventCounts.live ?? 0, dot: "#22C55E", star: false, mail: false },
+    { id: "upcoming", label: "Upcoming", count: eventCounts.upcoming ?? 0, dot: "#3B82F6", star: false, mail: false },
+    { id: "ended", label: "Ended", count: eventCounts.ended ?? 0, dot: "#71717A", star: false, mail: false },
+    { id: "pending", label: "Pending", count: eventCounts.pending ?? 0, dot: "#EAB308", star: false, mail: false },
+    { id: "approved", label: "Approved", count: eventCounts.approved ?? 0, dot: "#8B5CF6", star: false, mail: false },
+    { id: "featured", label: "Featured", count: eventCounts.featured ?? 0, dot: null, star: true, mail: false },
     { id: "send-email", label: "Send email", count: mailTabCount, dot: null, star: false, mail: true },
   ]
 
@@ -421,10 +420,16 @@ export function EventTable({
 
             {activeTab !== "send-email" && (
               <>
-                <select value={localCategoryFilter} onChange={(e) => { setLocalCategoryFilter(e.target.value); onCategoryFilterChange(e.target.value) }} style={selectStyle}>
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => onCategoryFilterChange(e.target.value)}
+                  style={selectStyle}
+                >
                   <option value="all">All Categories</option>
                   {categories.filter((c) => c.isActive).map((cat) => (
-                    <option key={cat.id} value={cat.name.toLowerCase()}>{cat.name}</option>
+                    <option key={cat.id} value={cat.name}>
+                      {cat.name}
+                    </option>
                   ))}
                 </select>
                 <select value={localRegionFilter} onChange={(e) => setLocalRegionFilter(e.target.value)} style={selectStyle}>
@@ -627,7 +632,16 @@ export function EventTable({
                   </thead>
 
                   <tbody>
-                    {filteredEvents.length === 0 ? (
+                    {loading ? (
+                      <tr>
+                        <td colSpan={10} style={{ textAlign: "center", padding: "56px", color: "#A1A1AA", fontSize: "14px" }}>
+                          <span style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}>
+                            <Loader2 style={{ width: 18, height: 18, animation: "spin 1s linear infinite" }} />
+                            Loading events…
+                          </span>
+                        </td>
+                      </tr>
+                    ) : filteredEvents.length === 0 ? (
                       <tr>
                         <td colSpan={10} style={{ textAlign: "center", padding: "56px", color: "#A1A1AA", fontSize: "14px" }}>
                           No events found
@@ -655,6 +669,12 @@ export function EventTable({
                     )}
                   </tbody>
                 </table>
+              </div>
+            )}
+
+            {activeTab !== "send-email" && !loading && pagination.totalPages > 1 && (
+              <div style={{ borderTop: "1px solid #F0F0F0", padding: "0 16px" }}>
+                <Pagination page={page} totalPages={pagination.totalPages} onPageChange={onPageChange} />
               </div>
             )}
           </div>
