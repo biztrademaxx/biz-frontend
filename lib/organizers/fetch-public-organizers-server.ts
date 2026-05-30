@@ -1,5 +1,5 @@
 import {
-  EMPTY_HOME_LOCATION,
+  countryScopedHomeLocation,
   filterByHomeCountryPrioritizeCity,
   getOrganizerCityLabel,
   getOrganizerCountryLabel,
@@ -9,7 +9,7 @@ import { filterOrganizersWithProfileImage } from "./organizer-visibility"
 import { normalizeOrganizersFromApiPayload } from "./normalize-organizers-envelope"
 import type { OrganizerListEntry } from "./types"
 
-const PATH = "/api/organizers?requireProfileImage=1"
+const FEATURED_STRIP_MAX = 20
 
 const organizerLocationGetters = {
   getCity: getOrganizerCityLabel,
@@ -20,6 +20,14 @@ function getApiBaseUrl(): string {
   return process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"
 }
 
+function buildFeaturedOrganizersPath(loc: Awaited<ReturnType<typeof resolveHomeLocation>>): string {
+  const qs = new URLSearchParams()
+  qs.set("requireProfileImage", "1")
+  const country = loc.countryName?.trim()
+  if (country) qs.set("country", country)
+  return `/api/organizers?${qs.toString()}`
+}
+
 export interface FeaturedOrganizersServerResult {
   organizers: OrganizerListEntry[]
   fetchFailed: boolean
@@ -28,30 +36,27 @@ export interface FeaturedOrganizersServerResult {
 export async function fetchFeaturedOrganizersForHomeServer(): Promise<FeaturedOrganizersServerResult> {
   const empty: FeaturedOrganizersServerResult = { organizers: [], fetchFailed: true }
   try {
-    const res = await fetch(`${getApiBaseUrl()}${PATH}`, { next: { revalidate: 120 } })
+    const loc = await resolveHomeLocation()
+    const path = buildFeaturedOrganizersPath(loc)
+    const res = await fetch(`${getApiBaseUrl()}${path}`, { next: { revalidate: 120 } })
     if (!res.ok) {
       console.error("Featured organizers fetch failed:", res.status)
       return empty
     }
     const data: unknown = await res.json()
-    const list = normalizeOrganizersFromApiPayload(data)
-    const visible = filterOrganizersWithProfileImage(list)
-    const loc = await resolveHomeLocation()
+    const list = filterOrganizersWithProfileImage(normalizeOrganizersFromApiPayload(data))
 
-    let filtered = filterByHomeCountryPrioritizeCity(visible, loc, organizerLocationGetters)
+    let filtered = filterByHomeCountryPrioritizeCity(list, loc, organizerLocationGetters)
 
-    const hasCountryScope = Boolean(loc.countryCode?.trim() || loc.countryName?.trim())
-    if (filtered.length === 0 && hasCountryScope && visible.length > 0) {
+    if (filtered.length === 0 && list.length > 0) {
       filtered = filterByHomeCountryPrioritizeCity(
-        visible,
-        { ...EMPTY_HOME_LOCATION, city: loc.city },
+        list,
+        countryScopedHomeLocation(loc),
         organizerLocationGetters,
       )
     }
 
-    if (filtered.length === 0 && visible.length > 0 && !hasCountryScope) {
-      filtered = visible
-    }
+    filtered = filtered.slice(0, FEATURED_STRIP_MAX)
 
     return { organizers: filtered, fetchFailed: false }
   } catch (e) {
