@@ -30,6 +30,8 @@ import { apiFetch } from "@/lib/api"
 import { getPublicProfilePath } from "@/lib/profile-path"
 import { cn } from "@/lib/utils"
 
+const PAGE_SIZE = 20
+
 interface Organizer {
   id: string
   publicSlug?: string
@@ -37,36 +39,16 @@ interface Organizer {
   image?: string | null
   company: string
   city?: string
-  state?: string
-  rating: number
-  reviewCount: number
-  location: string
-  country: string
-  category: string
+  country?: string
+  category?: string
   eventsOrganized: number
-  headquarters: string
   yearsOfExperience: number
-  specialties: string[]
-  description: string
-  phone: string
-  email: string
-  website: string
+  specialties?: string[]
   verified: boolean
   featured: boolean
-  totalAttendees: string
-  successRate: number
-  nextAvailable: string
   avgRating: number
   totalReviews: number
 }
-
-function norm(s: string | undefined | null) {
-  return String(s ?? "")
-    .toLowerCase()
-    .trim()
-}
-
-const PLACEHOLDER_LOCATION = /^(not specified|unknown|n\/a|—|-|location not specified)$/i
 
 function organizerDisplayName(o: Organizer): string {
   return o.company?.trim() || o.name?.trim() || "Organizer"
@@ -74,50 +56,41 @@ function organizerDisplayName(o: Organizer): string {
 
 function organizerLocationLine(o: Organizer): string {
   const city = o.city?.trim()
-  const state = o.state?.trim()
   const country = o.country?.trim()
-  if (city || state || country) {
-    return [city, state, country].filter(Boolean).join(", ")
-  }
-
-  const hq = o.headquarters?.trim() || o.location?.trim() || ""
-  if (hq && !PLACEHOLDER_LOCATION.test(hq)) return hq
-
+  if (city && country) return `${city}, ${country}`
+  if (country) return country
+  if (city) return city
   return "Location not specified"
 }
 
-function firstSegment(address: string) {
-  const t = address.split(",")[0]?.trim() ?? ""
-  if (t.length < 2 || t.length > 79 || PLACEHOLDER_LOCATION.test(t)) return ""
-  return t
+/** Build filter chips from API facets (directory-wide, not just the current page). */
+function useOrganizerFilterOptions(facets: { cities: string[]; countries: string[]; categories: string[] }) {
+  return useMemo(
+    () => ({
+      cities: facets.cities,
+      countries: facets.countries,
+      categories: facets.categories,
+    }),
+    [facets],
+  )
 }
 
-/** Build filter chips from real organizer rows (static lists never matched API data). */
-function useOrganizerFilterOptions(organizers: Organizer[]) {
-  return useMemo(() => {
-    const cities = new Set<string>()
-    const countries = new Set<string>()
-    const categories = new Set<string>()
-
-    for (const o of organizers) {
-      if (o.country?.trim()) countries.add(o.country.trim())
-      const fsHq = firstSegment(o.headquarters || "")
-      if (fsHq) cities.add(fsHq)
-      const fsLoc = firstSegment(o.location || "")
-      if (fsLoc) cities.add(fsLoc)
-
-      if (o.category?.trim()) categories.add(o.category.trim())
-      for (const s of o.specialties || []) {
-        if (s?.trim()) categories.add(s.trim())
-      }
-    }
-
-    return {
-      cities: Array.from(cities).sort((a, b) => a.localeCompare(b)).slice(0, 40),
-      countries: Array.from(countries).sort((a, b) => a.localeCompare(b)),
-      categories: Array.from(categories).sort((a, b) => a.localeCompare(b)).slice(0, 48),
-    }
-  }, [organizers])
+function buildOrganizersQuery(params: {
+  page: number
+  search: string
+  cities: string[]
+  countries: string[]
+  categories: string[]
+}) {
+  const qs = new URLSearchParams()
+  qs.set("page", String(params.page))
+  qs.set("limit", String(PAGE_SIZE))
+  const q = params.search.trim()
+  if (q) qs.set("search", q)
+  if (params.countries.length) qs.set("country", params.countries.join(","))
+  if (params.cities.length) qs.set("city", params.cities.join(","))
+  if (params.categories.length) qs.set("category", params.categories.join(","))
+  return qs.toString()
 }
 
 function FilterChipGroup({
@@ -173,32 +146,77 @@ export default function OrganizersPage() {
   const router = useRouter()
   const [organizers, setOrganizers] = useState<Organizer[]>([])
   const [loading, setLoading] = useState(true)
+  const [initialLoad, setInitialLoad] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedCities, setSelectedCities] = useState<string[]>([])
   const [selectedCountries, setSelectedCountries] = useState<string[]>([])
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
-  const [sortBy, setSortBy] = useState("rating")
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
+  const [page, setPage] = useState(1)
+  const [total, setTotal] = useState(0)
+  const [totalPages, setTotalPages] = useState(1)
+  const [facets, setFacets] = useState<{ cities: string[]; countries: string[]; categories: string[] }>({
+    cities: [],
+    countries: [],
+    categories: [],
+  })
 
-  const filterOptions = useOrganizerFilterOptions(organizers)
+  const filterOptions = useOrganizerFilterOptions(facets)
+
+  useEffect(() => {
+    const fetchFacets = async () => {
+      try {
+        const data = await apiFetch<{ cities: string[]; countries: string[]; categories: string[] }>(
+          "/api/organizers/facets",
+          { auth: false },
+        )
+        setFacets({
+          cities: data.cities ?? [],
+          countries: data.countries ?? [],
+          categories: data.categories ?? [],
+        })
+      } catch (error) {
+        console.error("Error fetching organizer facets:", error)
+      }
+    }
+
+    fetchFacets()
+  }, [])
 
   useEffect(() => {
     const fetchOrganizers = async () => {
+      setLoading(true)
       try {
-        const data = await apiFetch<{ organizers: Organizer[] }>("/api/organizers", {
+        const query = buildOrganizersQuery({
+          page,
+          search: searchTerm,
+          cities: selectedCities,
+          countries: selectedCountries,
+          categories: selectedCategories,
+        })
+        const data = await apiFetch<{
+          organizers: Organizer[]
+          total: number
+          totalPages: number
+        }>(`/api/organizers?${query}`, {
           auth: false,
         })
         setOrganizers(data.organizers || [])
+        setTotal(data.total ?? 0)
+        setTotalPages(data.totalPages ?? 1)
       } catch (error) {
         console.error("Error fetching organizers:", error)
         setOrganizers([])
+        setTotal(0)
+        setTotalPages(1)
       } finally {
         setLoading(false)
+        setInitialLoad(false)
       }
     }
 
     fetchOrganizers()
-  }, [])
+  }, [page, searchTerm, selectedCities, selectedCountries, selectedCategories])
 
   const handleCardClick = (organizer: Organizer) => {
     router.push(
@@ -211,70 +229,20 @@ export default function OrganizersPage() {
     )
   }
 
-  const filteredOrganizers = useMemo(() => {
-    const q = searchTerm.trim().toLowerCase()
-
-    const filtered = organizers.filter((organizer) => {
-      const matchesSearch =
-        !q ||
-        norm(organizer.name).includes(q) ||
-        norm(organizer.company).includes(q) ||
-        norm(organizer.description).includes(q) ||
-        norm(organizer.website).includes(q) ||
-        (organizer.specialties || []).some((s) => norm(s).includes(q))
-
-      const blobCity = norm(`${organizer.headquarters} ${organizer.location}`)
-      const matchesCity =
-        selectedCities.length === 0 ||
-        selectedCities.some((city) => blobCity.includes(norm(city)))
-
-      const blobCountry = norm(`${organizer.country} ${organizer.headquarters} ${organizer.location}`)
-      const matchesCountry =
-        selectedCountries.length === 0 ||
-        selectedCountries.some((country) => {
-          const c = norm(country)
-          return norm(organizer.country) === c || blobCountry.includes(c)
-        })
-
-      const cat = norm(organizer.category)
-      const specs = (organizer.specialties || []).map((s) => norm(s))
-      const matchesCategory =
-        selectedCategories.length === 0 ||
-        selectedCategories.some((sel) => {
-          const s = norm(sel)
-          return cat === s || specs.some((sp) => sp === s)
-        })
-
-      return matchesSearch && matchesCity && matchesCountry && matchesCategory
-    })
-
-    filtered.sort((a, b) => {
-      switch (sortBy) {
-        case "rating":
-          return (b.avgRating || 0) - (a.avgRating || 0)
-        case "experience":
-          return (b.yearsOfExperience || 0) - (a.yearsOfExperience || 0)
-        case "events":
-          return (b.eventsOrganized || 0) - (a.eventsOrganized || 0)
-        case "name":
-          return (a.name || "").localeCompare(b.name || "")
-        default:
-          return 0
+  const toggleFilter = useCallback(
+    (value: string, selectedArray: string[], setSelectedArray: (arr: string[]) => void) => {
+      setPage(1)
+      if (selectedArray.includes(value)) {
+        setSelectedArray(selectedArray.filter((item) => item !== value))
+      } else {
+        setSelectedArray([...selectedArray, value])
       }
-    })
-
-    return filtered
-  }, [organizers, searchTerm, selectedCities, selectedCountries, selectedCategories, sortBy])
-
-  const toggleFilter = useCallback((value: string, selectedArray: string[], setSelectedArray: (arr: string[]) => void) => {
-    if (selectedArray.includes(value)) {
-      setSelectedArray(selectedArray.filter((item) => item !== value))
-    } else {
-      setSelectedArray([...selectedArray, value])
-    }
-  }, [])
+    },
+    [],
+  )
 
   const clearAllFilters = useCallback(() => {
+    setPage(1)
     setSelectedCities([])
     setSelectedCountries([])
     setSelectedCategories([])
@@ -315,7 +283,7 @@ export default function OrganizersPage() {
     </>
   )
 
-  if (loading) {
+  if (initialLoad) {
     return (
       <div className="min-h-screen bg-[#f1f7fb] flex items-center justify-center px-4">
         <div className="text-center max-w-md">
@@ -351,7 +319,7 @@ export default function OrganizersPage() {
             <ScrollArea className="min-h-0 flex-1 px-4 py-4">{filterBody}</ScrollArea>
             <SheetFooter className="border-t bg-muted/30 p-4 sm:flex-col sm:gap-2">
               <Button className="w-full bg-[#004A96] hover:bg-[#003a75]" onClick={() => setMobileFiltersOpen(false)}>
-                Show {filteredOrganizers.length} result{filteredOrganizers.length !== 1 ? "s" : ""}
+                Show {total} result{total !== 1 ? "s" : ""}
               </Button>
               <Button variant="ghost" size="sm" className="w-full" onClick={clearAllFilters}>
                 Reset all
@@ -364,7 +332,10 @@ export default function OrganizersPage() {
           <Input
             placeholder="Search…"
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => {
+              setPage(1)
+              setSearchTerm(e.target.value)
+            }}
             className="h-9 pl-9 text-sm"
           />
         </div>
@@ -372,7 +343,7 @@ export default function OrganizersPage() {
 
       <div className="flex flex-col lg:flex-row">
         {/* Desktop sidebar */}
-        <aside className="hidden w-72 shrink-0 border-r border-gray-200 bg-white lg:block xl:w-80">
+        <aside className="hidden w-64 shrink-0 border-r border-gray-200 bg-white lg:block xl:w-72">
           <div className="sticky top-0 max-h-[100dvh]">
             <div className="border-b border-gray-100 px-5 py-5">
               <h2 className="text-lg font-semibold text-gray-900">Discover organizers</h2>
@@ -389,27 +360,19 @@ export default function OrganizersPage() {
               Connect with verified teams for trade shows, conferences, and corporate events.
             </p>
 
-            <div className="mt-6 hidden flex-col gap-3 sm:flex-row sm:items-center lg:flex">
-              <div className="relative max-w-xl flex-1">
+            <div className="mt-6 max-w-xl">
+              <div className="relative">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   placeholder="Search by name, company, specialty, or description…"
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={(e) => {
+                    setPage(1)
+                    setSearchTerm(e.target.value)
+                  }}
                   className="h-10 pl-10"
                 />
               </div>
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="h-10 shrink-0 rounded-md border border-input bg-background px-3 text-sm shadow-sm outline-none ring-offset-background focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30 md:min-w-[200px]"
-                aria-label="Sort organizers"
-              >
-                <option value="rating">Sort by rating</option>
-                <option value="experience">Sort by experience</option>
-                <option value="events">Sort by events hosted</option>
-                <option value="name">Sort by name</option>
-              </select>
             </div>
 
             {activeFilterCount > 0 && (
@@ -476,28 +439,40 @@ export default function OrganizersPage() {
           </div>
 
           <div className="px-4 py-6 sm:px-8">
-            <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm text-muted-foreground">
-                Showing <span className="font-semibold text-foreground">{filteredOrganizers.length}</span> of{" "}
-                <span className="font-semibold text-foreground">{organizers.length}</span> organizers
+                Showing{" "}
+                <span className="font-semibold text-foreground">
+                  {total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, total)}
+                </span>{" "}
+                of <span className="font-semibold text-foreground">{total}</span> organizers
               </p>
-              <div className="flex items-center gap-2 lg:hidden">
-                <span className="text-xs text-muted-foreground">Sort</span>
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="h-9 flex-1 rounded-md border border-input bg-background px-2 text-sm sm:max-w-xs"
-                  aria-label="Sort organizers"
-                >
-                  <option value="rating">Rating</option>
-                  <option value="experience">Experience</option>
-                  <option value="events">Events</option>
-                  <option value="name">Name</option>
-                </select>
-              </div>
+              {totalPages > 1 && (
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={page <= 1 || loading}
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  >
+                    Previous
+                  </Button>
+                  <span className="text-sm text-muted-foreground">
+                    Page {page} of {totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={page >= totalPages || loading}
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  >
+                    Next
+                  </Button>
+                </div>
+              )}
             </div>
 
-            {filteredOrganizers.length === 0 ? (
+            {organizers.length === 0 ? (
               <Card className="border-dashed bg-white/80">
                 <CardContent className="flex flex-col items-center py-14 text-center">
                   <Users className="mb-4 h-14 w-14 text-muted-foreground/40" />
@@ -511,8 +486,8 @@ export default function OrganizersPage() {
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
-                {filteredOrganizers.map((organizer) => {
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+                {organizers.map((organizer) => {
                   const title = organizerDisplayName(organizer)
                   const locationLabel = organizerLocationLine(organizer)
                   return (
@@ -521,32 +496,32 @@ export default function OrganizersPage() {
                     className="group flex h-full cursor-pointer flex-col overflow-hidden border-gray-200/80 bg-white p-0 shadow-sm transition-shadow hover:shadow-md"
                     onClick={() => handleCardClick(organizer)}
                   >
-                    <div className="relative h-44 w-full shrink-0 overflow-hidden bg-gradient-to-br from-slate-100 to-slate-200 sm:h-40">
+                    <div className="relative h-28 w-full shrink-0 overflow-hidden bg-gradient-to-br from-slate-100 to-slate-200">
                       <AppImage
                         src={organizer.image}
                         alt={title}
                         fill
-                        sizes="(max-width: 768px) 100vw, 33vw"
+                        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
                         className="object-cover transition duration-300 group-hover:scale-[1.02]"
                       />
                       {organizer.featured && (
-                        <Badge className="absolute left-2 top-2 bg-orange-500 text-white hover:bg-orange-600">
+                        <Badge className="absolute left-1.5 top-1.5 px-1.5 py-0 text-[10px] bg-orange-500 text-white hover:bg-orange-600">
                           Featured
                         </Badge>
                       )}
                       {organizer.verified && (
-                        <Badge className="absolute right-2 top-2 bg-emerald-600 text-white hover:bg-emerald-700">
-                          <Award className="mr-1 h-3 w-3" />
+                        <Badge className="absolute right-1.5 top-1.5 px-1.5 py-0 text-[10px] bg-emerald-600 text-white hover:bg-emerald-700">
+                          <Award className="mr-0.5 h-2.5 w-2.5" />
                           Verified
                         </Badge>
                       )}
                     </div>
 
-                    <CardContent className="flex flex-1 flex-col p-4">
-                      <div className="mb-2 flex items-start justify-between gap-2">
-                        <h3 className="line-clamp-2 text-base font-semibold leading-snug text-gray-900">{title}</h3>
-                        <div className="flex shrink-0 items-center gap-0.5 text-sm">
-                          <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
+                    <CardContent className="flex flex-1 flex-col p-3">
+                      <div className="mb-1.5 flex items-start justify-between gap-1.5">
+                        <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-gray-900">{title}</h3>
+                        <div className="flex shrink-0 items-center gap-0.5 text-xs">
+                          <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
                           <span className="font-medium tabular-nums">
                             {Number(organizer.avgRating || 0).toFixed(1)}
                           </span>
@@ -554,12 +529,12 @@ export default function OrganizersPage() {
                         </div>
                       </div>
 
-                      <div className="mb-2 flex items-start gap-1.5 text-sm text-muted-foreground">
-                        <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-[#004A96]/70" />
+                      <div className="mb-1.5 flex items-start gap-1 text-xs text-muted-foreground">
+                        <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#004A96]/70" />
                         <span className="line-clamp-2">{locationLabel}</span>
                       </div>
 
-                      <div className="mt-auto flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                      <div className="mt-auto flex flex-wrap gap-x-2 gap-y-0.5 text-[11px] text-muted-foreground">
                         <span className="inline-flex items-center gap-1">
                           <Calendar className="h-3.5 w-3.5 shrink-0" />
                           {organizer.yearsOfExperience} yrs
@@ -573,6 +548,30 @@ export default function OrganizersPage() {
                   </Card>
                   )
                 })}
+              </div>
+            )}
+
+            {totalPages > 1 && organizers.length > 0 && (
+              <div className="mt-8 flex items-center justify-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={page <= 1 || loading}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                >
+                  Previous
+                </Button>
+                <span className="text-sm text-muted-foreground">
+                  Page {page} of {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={page >= totalPages || loading}
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                >
+                  Next
+                </Button>
               </div>
             )}
           </div>

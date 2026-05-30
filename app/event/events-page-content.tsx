@@ -45,6 +45,7 @@ export type { EventsPageContentProps } from "@/components/events-page/listing-ty
 
 export default function EventsPageContent({
   initialBrowseCategoryMeta: initialBrowseCategoryMetaProp = [],
+  initialEvents: initialEventsProp = [],
 }: EventsPageContentProps) {
   const [activeTab, setActiveTab] = useState("All Events")
   const [selectedFormat, setSelectedFormat] = useState("All Formats")
@@ -58,8 +59,8 @@ export default function EventsPageContent({
   const searchQ = searchParams.get("search")
   const [selectedCategory, setSelectedCategory] = useState(categoryFromUrl || "All Events")
 
-  const [events, setEvents] = useState<Event[]>([])
-  const [loading, setLoading] = useState(true)
+  const [events, setEvents] = useState<Event[]>(() => initialEventsProp)
+  const [loading, setLoading] = useState(() => initialEventsProp.length === 0)
   const [error, setError] = useState<string | null>(null)
 
   const [searchQuery, setSearchQuery] = useState("")
@@ -133,15 +134,13 @@ export default function EventsPageContent({
     setCurrentPage(page)
   }
 
-  const fetchEvents = async () => {
+  const fetchEvents = async (options?: { silent?: boolean }) => {
     try {
-      setLoading(true)
-      setError(null)
-      let response = await fetch(EVENTS_API, { cache: "no-store" })
-      if (!response.ok) {
-        await new Promise((resolve) => setTimeout(resolve, 350))
-        response = await fetch(EVENTS_API, { cache: "no-store" })
+      if (!options?.silent) {
+        setLoading(true)
       }
+      setError(null)
+      const response = await fetch(EVENTS_API)
       const payload = await response.json().catch(() => ({}))
       if (!response.ok) {
         const message =
@@ -156,21 +155,27 @@ export default function EventsPageContent({
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred")
       console.error("[v0] Error fetching events:", err)
-      toast({
-        title: "Error",
-        description: "Failed to load events",
-        variant: "destructive",
-      })
+      if (!options?.silent) {
+        toast({
+          title: "Error",
+          description: "Failed to load events",
+          variant: "destructive",
+        })
+      }
     } finally {
-      setLoading(false)
+      if (!options?.silent) {
+        setLoading(false)
+      }
     }
   }
 
   useEffect(() => {
+    if (initialEventsProp.length > 0) return
     void fetchEvents()
   }, [])
 
   useEffect(() => {
+    if (initialBrowseCategoryMetaProp.length > 0) return
     let cancelled = false
     ;(async () => {
       try {

@@ -1,16 +1,20 @@
-import { Suspense } from "react"
 import EventsPageContent from "../events-page-content"
-import EventsListingPageSkeleton from "@/components/EventsListingPageSkeleton"
 import { fetchBrowseCategoryMetaServer } from "@/lib/categories/fetch-browse-categories-server"
+import { fetchEventsListingServer } from "@/lib/events/fetch-events-listing-server"
+import { EVENTS_LISTING_REVALIDATE_SEC } from "@/components/events-page/listing-constants"
 
-export const dynamic = "force-dynamic"
+export const revalidate = EVENTS_LISTING_REVALIDATE_SEC
 
 export default async function EventsPage() {
-  const initialBrowseCategoryMeta = await fetchBrowseCategoryMetaServer()
+  const [initialBrowseCategoryMeta, initialEvents] = await Promise.all([
+    fetchBrowseCategoryMetaServer(),
+    fetchEventsListingServer(),
+  ])
 
   return (
-    <Suspense fallback={<EventsListingPageSkeleton />}>
-      <EventsPageContent initialBrowseCategoryMeta={initialBrowseCategoryMeta} />
-    </Suspense>
+    <EventsPageContent
+      initialBrowseCategoryMeta={initialBrowseCategoryMeta}
+      initialEvents={initialEvents}
+    />
   )
 }

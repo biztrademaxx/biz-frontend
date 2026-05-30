@@ -54,6 +54,8 @@ export interface Event {
 export type EventsPageContentProps = {
   /** From RSC: category names + icon URLs so the banner matches DB on first paint (no default-image flash). */
   initialBrowseCategoryMeta?: Array<{ name: string; icon: string | null }>
+  /** From RSC: preloaded listing rows so the page does not wait for a client fetch. */
+  initialEvents?: Event[]
 }
 
 export type NameCount = { name: string; count: number }

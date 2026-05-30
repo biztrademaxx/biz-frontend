@@ -13,7 +13,12 @@ export const EVENTS_LISTING_BANNER_GRADIENT =
 export const EVENTS_LISTING_BANNER_GRADIENT_OVER_IMAGE =
   "linear-gradient(118deg, rgba(0, 26, 72, 0.78) 0%, rgba(0, 44, 113, 0.64) 45%, rgba(22, 61, 92, 0.58) 72%, rgba(31, 93, 132, 0.62) 100%)"
 
-export const EVENTS_API = "/api/events"
+export const EVENTS_LISTING_REVALIDATE_SEC = 45
+
+/** Matches public listing payload used across explore menu and /event filters. */
+export const EVENTS_LISTING_FETCH_LIMIT = 500
+
+export const EVENTS_API = `/api/events?limit=${EVENTS_LISTING_FETCH_LIMIT}&sort=newest`
 
 /** Fallback image for listing / trending cards when event has no media. */
 export const LISTING_DEFAULT_EVENT_IMAGE = DEFAULT_EVENT_IMAGE
