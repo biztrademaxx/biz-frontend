@@ -125,7 +125,13 @@ function normalizeCityKey(city: string): string {
 export function resolveCountryForCityName(city: string | null | undefined): CityCountry | null {
   const key = normalizeCityKey(city ?? "")
   if (!key) return null
-  return CITY_COUNTRY_MAP[key] ?? null
+  const direct = CITY_COUNTRY_MAP[key]
+  if (direct) return direct
+  const firstSegment = key.split(",")[0]?.trim()
+  if (firstSegment && firstSegment !== key) {
+    return CITY_COUNTRY_MAP[firstSegment] ?? null
+  }
+  return null
 }
 
 export function homeLocationScopeLabel(

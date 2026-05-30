@@ -90,6 +90,25 @@ describe("home country filtering", () => {
     expect(matchesHomeCountry({ id: "y", city: "Mumbai", country: "India" }, loc, getters)).toBe(false)
   })
 
+  it("matches organizers with city only (no country field) via city map", () => {
+    const loc = buildResolvedHomeLocation({
+      city: "Bengaluru",
+      countryCode: "IN",
+      countryName: "India",
+    })
+    const orgGetters = {
+      getCity: (o: { city: string; country: string }) => o.city,
+      getCountry: (o: { city: string; country: string }) => o.country,
+    }
+    const organizers = [
+      { id: "1", city: "Bengaluru", country: "" },
+      { id: "2", city: "Paris", country: "France" },
+    ]
+    expect(matchesHomeCountry(organizers[0], loc, orgGetters)).toBe(true)
+    const filtered = filterByHomeCountryPrioritizeCity(organizers, loc, orgGetters)
+    expect(filtered.map((o) => o.id)).toEqual(["1"])
+  })
+
   it("matches speakers in India when only legacy location line is set", () => {
     const loc = buildResolvedHomeLocation({
       city: "Bengaluru",

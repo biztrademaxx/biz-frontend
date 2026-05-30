@@ -10,6 +10,10 @@ describe("resolveCountryForCityName", () => {
       countryCode: "IN",
       countryName: "India",
     })
+    expect(resolveCountryForCityName("Bengaluru, Karnataka")).toEqual({
+      countryCode: "IN",
+      countryName: "India",
+    })
   })
 
   it("maps international popular cities", () => {

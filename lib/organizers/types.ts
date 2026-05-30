@@ -7,9 +7,12 @@ export interface OrganizerListEntry {
   name?: string | null
   image?: string | null
   avatar?: string | null
+  city?: string | null
+  state?: string | null
+  country?: string | null
   headquarters?: string | null
   location?: string | null
-  country?: string | null
+  locationHay?: string | null
 }
 
 export interface OrganizersApiEnvelope {

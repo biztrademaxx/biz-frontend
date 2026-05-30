@@ -12,7 +12,7 @@ import {
 } from "./utils/organizers.helpers"
 
 const TILE_CLASS =
-  "group flex h-[120px] w-[200px] shrink-0 cursor-pointer items-center justify-center rounded-lg border border-[#2563EB] bg-white p-4 shadow-[0_8px_16px_-10px_rgba(0,0,0,0.18)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_12px_22px_-10px_rgba(0,0,0,0.22)]"
+  "group flex h-[120px] w-[200px] shrink-0 cursor-pointer items-center justify-center rounded-lg border border-[#2563EB] bg-white p-2 shadow-[0_8px_16px_-10px_rgba(0,0,0,0.18)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_12px_22px_-10px_rgba(0,0,0,0.22)]"
 export interface OrganizerLogoTileProps {
   organizer: OrganizerListEntry
   mode: OrganizerLogoTileMode
@@ -45,7 +45,7 @@ function OrganizerLogoTileComponent({
   if (mode === "decorative") {
     return (
       <div className={TILE_CLASS} onClick={activate}>
-        <AppImage src={src} alt="" width={160} height={80} className="max-h-full max-w-full object-contain" />
+        <AppImage src={src} alt="" width={176} height={96} className="max-h-full max-w-full object-contain" />
       </div>
     )
   }
@@ -58,7 +58,7 @@ function OrganizerLogoTileComponent({
       onClick={activate}
       onKeyDown={onKeyDown}
     >
-      <AppImage src={src} alt={displayName} width={160} height={80} className="max-h-full max-w-full object-contain" />
+      <AppImage src={src} alt={displayName} width={176} height={96} className="max-h-full max-w-full object-contain" />
     </div>
   )
 }

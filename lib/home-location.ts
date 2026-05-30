@@ -206,6 +206,12 @@ export function matchesHomeCountry<T>(
 
   if (locationLine && countryMatchesValue(locationLine, needles)) return true
 
+  const cityLine = getters.getCity(item)?.trim() ?? ""
+  if (cityLine) {
+    const mappedFromCity = resolveCountryForCityName(cityLine)
+    if (mappedFromCity?.countryCode === loc.countryCode) return true
+  }
+
   if (!loc.countryCode) return false
 
   const cityMapped = resolveCountryForCityName(locationLine || countryRaw)
@@ -313,16 +319,35 @@ export function getHeroSlideshowCountryLabel(event: {
 }
 
 export function getOrganizerCityLabel(organizer: {
+  city?: string | null
   headquarters?: string | null
   location?: string | null
 }): string {
-  return organizer.headquarters?.trim() || organizer.location?.trim() || ""
+  const city = organizer.city?.trim()
+  if (city) return city
+  const hq = organizer.headquarters?.trim() ?? ""
+  const loc = organizer.location?.trim() ?? ""
+  if (hq && !/^location not specified$/i.test(hq)) return hq
+  if (loc && !/^location not specified$/i.test(loc)) return loc
+  return ""
 }
 
 export function getOrganizerCountryLabel(organizer: {
+  city?: string | null
+  country?: string | null
   headquarters?: string | null
   location?: string | null
-  country?: string | null
 }): string {
-  return organizer.country?.trim() || organizer.headquarters?.trim() || organizer.location?.trim() || ""
+  const country = organizer.country?.trim()
+  if (country) return country
+  const hq = organizer.headquarters?.trim() ?? ""
+  const loc = organizer.location?.trim() ?? ""
+  if (hq && !/^location not specified$/i.test(hq)) return hq
+  if (loc && !/^location not specified$/i.test(loc)) return loc
+  const city = organizer.city?.trim()
+  if (city) {
+    const mapped = resolveCountryForCityName(city)
+    if (mapped?.countryName) return mapped.countryName
+  }
+  return ""
 }

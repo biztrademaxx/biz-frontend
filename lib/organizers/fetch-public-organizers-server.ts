@@ -1,4 +1,5 @@
 import {
+  EMPTY_HOME_LOCATION,
   filterByHomeCountryPrioritizeCity,
   getOrganizerCityLabel,
   getOrganizerCountryLabel,
@@ -9,6 +10,11 @@ import { normalizeOrganizersFromApiPayload } from "./normalize-organizers-envelo
 import type { OrganizerListEntry } from "./types"
 
 const PATH = "/api/organizers?requireProfileImage=1"
+
+const organizerLocationGetters = {
+  getCity: getOrganizerCityLabel,
+  getCountry: getOrganizerCountryLabel,
+}
 
 function getApiBaseUrl(): string {
   return process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"
@@ -31,10 +37,22 @@ export async function fetchFeaturedOrganizersForHomeServer(): Promise<FeaturedOr
     const list = normalizeOrganizersFromApiPayload(data)
     const visible = filterOrganizersWithProfileImage(list)
     const loc = await resolveHomeLocation()
-    const filtered = filterByHomeCountryPrioritizeCity(visible, loc, {
-      getCity: getOrganizerCityLabel,
-      getCountry: getOrganizerCountryLabel,
-    })
+
+    let filtered = filterByHomeCountryPrioritizeCity(visible, loc, organizerLocationGetters)
+
+    const hasCountryScope = Boolean(loc.countryCode?.trim() || loc.countryName?.trim())
+    if (filtered.length === 0 && hasCountryScope && visible.length > 0) {
+      filtered = filterByHomeCountryPrioritizeCity(
+        visible,
+        { ...EMPTY_HOME_LOCATION, city: loc.city },
+        organizerLocationGetters,
+      )
+    }
+
+    if (filtered.length === 0 && visible.length > 0 && !hasCountryScope) {
+      filtered = visible
+    }
+
     return { organizers: filtered, fetchFailed: false }
   } catch (e) {
     console.error("Featured organizers fetch error:", e)

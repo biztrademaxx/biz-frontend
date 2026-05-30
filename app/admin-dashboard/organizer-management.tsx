@@ -160,6 +160,8 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
   const PAGE_SIZE = 10
   const { toast } = useToast()
   const [searchTerm, setSearchTerm] = useState("")
+  const [selectedCountry, setSelectedCountry] = useState("all")
+  const [countries, setCountries] = useState<Array<{ id: string; name: string; isActive?: boolean }>>([])
   const [organizers, setOrganizers] = useState<Organizer[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -177,17 +179,29 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
   const [avatarFile, setAvatarFile] = useState<File | null>(null)
 
   useEffect(() => {
+    const loadCountries = async () => {
+      try {
+        const data = await adminApi<Array<{ id: string; name: string; isActive?: boolean }>>("/countries")
+        setCountries(Array.isArray(data) ? data.filter((c) => c.isActive !== false) : [])
+      } catch {
+        setCountries([])
+      }
+    }
+    void loadCountries()
+  }, [])
+
+  useEffect(() => {
     const timer = setTimeout(() => {
-      fetchOrganizers(currentPage, searchTerm)
+      fetchOrganizers(currentPage, searchTerm, selectedCountry)
     }, 250)
     return () => clearTimeout(timer)
-  }, [currentPage, searchTerm])
+  }, [currentPage, searchTerm, selectedCountry])
 
   useEffect(() => {
     setActiveTab(initialTab)
   }, [initialTab])
 
-  const fetchOrganizers = async (pageArg?: number, searchArg?: string) => {
+  const fetchOrganizers = async (pageArg?: number, searchArg?: string, countryArg?: string) => {
     try {
       const page = typeof pageArg === "number" ? pageArg : currentPage
       setLoading(true)
@@ -199,6 +213,10 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
       const trimmedSearch = (searchArg ?? searchTerm ?? "").trim()
       if (trimmedSearch) {
         query.set("search", trimmedSearch)
+      }
+      const country = (countryArg ?? selectedCountry ?? "all").trim()
+      if (country && country !== "all") {
+        query.set("country", country)
       }
       const data = await adminApi<{
         success?: boolean
@@ -631,17 +649,35 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
             </TabsTrigger>
           </TabsList>
 
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
-            <input
-              placeholder="Search organizers…"
-              value={searchTerm}
+          <div className="flex items-center gap-2">
+            <select
+              value={selectedCountry}
               onChange={(e) => {
-                setSearchTerm(e.target.value)
+                setSelectedCountry(e.target.value)
                 setCurrentPage(1)
               }}
-              className="pl-9 pr-4 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900/10 w-64"
-            />
+              className="h-9 min-w-[160px] rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-900/10"
+              aria-label="Filter organizers by country"
+            >
+              <option value="all">All Countries</option>
+              {countries.map((c) => (
+                <option key={c.id} value={c.name}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+              <input
+                placeholder="Search organizers…"
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value)
+                  setCurrentPage(1)
+                }}
+                className="pl-9 pr-4 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900/10 w-64"
+              />
+            </div>
           </div>
         </div>
 

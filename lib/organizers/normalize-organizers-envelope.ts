@@ -4,19 +4,43 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value)
 }
 
+function readString(value: unknown): string {
+  return typeof value === "string" ? value.trim() : ""
+}
+
+function isPlaceholderLocation(value: string): boolean {
+  return /^location not specified$/i.test(value.trim())
+}
+
 function normalizeOne(raw: unknown): OrganizerListEntry | null {
   if (!isRecord(raw)) return null
   const id = raw.id
   if (id === undefined || id === null) return null
+
+  const city = readString(raw.city)
+  const state = readString(raw.state)
+  const country = readString(raw.country)
+  let headquarters = readString(raw.headquarters)
+  let location = readString(raw.location)
+  if (isPlaceholderLocation(headquarters)) headquarters = ""
+  if (isPlaceholderLocation(location)) location = ""
+
+  const structuredLine = [city, state, country].filter(Boolean).join(", ")
+  const locationLine = structuredLine || headquarters || location
+  const locationHay = [city, state, country, headquarters, location].filter(Boolean).join(" ")
+
   return {
     id: typeof id === "number" || typeof id === "string" ? id : String(id),
     company: typeof raw.company === "string" ? raw.company : null,
     name: typeof raw.name === "string" ? raw.name : null,
     image: typeof raw.image === "string" ? raw.image : null,
     avatar: typeof raw.avatar === "string" ? raw.avatar : null,
-    headquarters: typeof raw.headquarters === "string" ? raw.headquarters : null,
-    location: typeof raw.location === "string" ? raw.location : null,
-    country: typeof raw.country === "string" ? raw.country : null,
+    city: city || null,
+    state: state || null,
+    country: country || null,
+    headquarters: headquarters || locationLine || null,
+    location: location || locationLine || null,
+    locationHay: locationHay || null,
   }
 }
 
