@@ -29,7 +29,10 @@ export default function FeaturedSpeakersStripClient({
 
   return (
     <div className="home-tt-section mx-auto w-full min-w-0 max-w-7xl px-3 sm:px-4 lg:px-6">
-      <div className="group relative">
+      {/* group lives here so hover on the whole block reveals arrows */}
+      <div className="group">
+
+        {/* Header — separate from the scroll area so arrows don't center against it */}
         <div className="border-b border-gray-200 py-6">
           <h2 className="home-tt-h2 mb-3">
             Featured Speakers
@@ -38,54 +41,62 @@ export default function FeaturedSpeakersStripClient({
           </h2>
         </div>
 
-        <button
-          type="button"
-          onClick={() => scrollByAmount(-280)}
-          aria-label="Scroll speakers left"
-          className="absolute left-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/90 p-2 opacity-0 shadow-md transition-all hover:bg-white group-hover:opacity-100"
-        >
-          <ChevronLeft className="h-5 w-5 text-gray-700" strokeWidth={2} />
-        </button>
+        {/* Scroll strip — arrows are positioned relative to THIS div only */}
+        <div className="relative">
 
-        <button
-          type="button"
-          onClick={() => scrollByAmount(280)}
-          aria-label="Scroll speakers right"
-          className="absolute right-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/90 p-2 opacity-0 shadow-md transition-all hover:bg-white group-hover:opacity-100"
-        >
-          <ChevronRight className="h-5 w-5 text-gray-700" strokeWidth={2} />
-        </button>
+          {/* Left arrow */}
+          <button
+            type="button"
+            onClick={() => scrollByAmount(-280)}
+            aria-label="Scroll speakers left"
+            className="absolute left-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/90 p-2 opacity-0 shadow-md transition-all hover:bg-white group-hover:opacity-100"
+          >
+            <ChevronLeft className="h-5 w-5 text-gray-700" strokeWidth={2} />
+          </button>
 
-        <div
-          ref={scrollRef}
-          className="no-scrollbar flex min-w-0 items-center gap-6 overflow-x-auto scroll-smooth py-6 sm:gap-8"
-        >
-          {speakers.map((spk) => (
-            <div
-              key={spk.id}
-              role="button"
-              tabIndex={0}
-              onClick={() => router.push(`/speaker/${spk.id}`)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault()
-                  router.push(`/speaker/${spk.id}`)
-                }
-              }}
-              className="flex min-w-[100px] max-w-[140px] cursor-pointer flex-col items-center"
-            >
-              <div className="relative flex h-[90px] w-[90px] items-center justify-center overflow-hidden rounded-full bg-white shadow-sm">
-                <AppImage
-                  src={spk.imageUrl}
-                  alt={spk.displayName}
-                  fill
-                  sizes="90px"
-                  className="rounded-full object-cover"
-                />
+          {/* Right arrow */}
+          <button
+            type="button"
+            onClick={() => scrollByAmount(280)}
+            aria-label="Scroll speakers right"
+            className="absolute right-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/90 p-2 opacity-0 shadow-md transition-all hover:bg-white group-hover:opacity-100"
+          >
+            <ChevronRight className="h-5 w-5 text-gray-700" strokeWidth={2} />
+          </button>
+
+          {/* Scrollable row */}
+          <div
+            ref={scrollRef}
+            className="no-scrollbar flex min-w-0 items-center gap-6 overflow-x-auto scroll-smooth py-6 sm:gap-8"
+          >
+            {speakers.map((spk) => (
+              <div
+                key={spk.id}
+                role="button"
+                tabIndex={0}
+                onClick={() => router.push(`/speaker/${spk.id}`)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault()
+                    router.push(`/speaker/${spk.id}`)
+                  }
+                }}
+                className="flex min-w-[100px] max-w-[140px] cursor-pointer flex-col items-center"
+              >
+                <div className="relative flex h-[90px] w-[90px] items-center justify-center overflow-hidden rounded-full bg-white shadow-sm">
+                  <AppImage
+                    src={spk.imageUrl}
+                    alt={spk.displayName}
+                    fill
+                    sizes="90px"
+                    className="rounded-full object-cover"
+                  />
+                </div>
+                <p className="mt-3 line-clamp-2 text-center text-sm text-gray-700">{spk.displayName}</p>
               </div>
-              <p className="mt-3 line-clamp-2 text-center text-sm text-gray-700">{spk.displayName}</p>
-            </div>
-          ))}
+            ))}
+          </div>
+
         </div>
       </div>
     </div>
