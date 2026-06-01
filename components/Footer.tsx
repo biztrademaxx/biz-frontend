@@ -50,11 +50,56 @@ const Footer: React.FC<FooterProps> = ({ categories }) => {
   return (
     <>
       {/* ── TOP TRUST BAR ─────────────────────────────────────── */}
-      <div className="w-full bg-[#0D1E35] border-b border-white/[0.07] px-7 py-7">
-        <div className="mx-auto flex min-h-[100px] max-w-7xl flex-wrap items-center justify-between gap-8 px-8">
+      <div
+        className="relative w-full overflow-hidden border-b border-white/10 px-7 py-12"
+        style={{
+          background:
+            "linear-gradient(180deg, #0A4FA3 0%, #004A96 35%, #003D82 70%, #002C71 100%)",
+        }}
+      >
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute left-1/2 top-0 h-[500px] w-[300px] -translate-x-1/2 bg-white/5 blur-[120px]" />
+
+          <div className="absolute left-0 top-0 h-full w-full bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.08),transparent_55%)]" />
+        </div>
+        <div className="mx-auto max-w-4xl text-center pb-14">
+          <span className="inline-flex rounded-full border border-[#FFD54A]/30 bg-[#FFD54A]/10 px-4 py-1 text-xs font-semibold uppercase tracking-wider text-[#FFD54A]">
+            JOIN 34,500+ LISTED EVENTS
+          </span>
+
+          <h2 className="mt-5 text-4xl font-bold leading-tight text-white md:text-5xl">
+            Get your event in front of
+            <br />
+            the people who matter.
+          </h2>
+
+          <p className="mx-auto mt-4 max-w-2xl text-white/65">
+            List your event today and reach thousands of industry professionals
+            actively searching for exhibitions, conferences and trade fairs.
+          </p>
+
+          <div className="mt-8 flex flex-wrap justify-center gap-4">
+            <Link
+              href="/organizer-signup"
+              className="rounded-md bg-[#FFC107] px-6 py-3 text-sm font-semibold text-[#001B44] transition hover:bg-[#FFD54A]"
+            >
+              List Your Event Free →
+            </Link>
+
+            <Link
+              href="/pricing"
+              className="rounded-md border border-white/20 bg-white/5 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
+            >
+              View Premium Plans
+            </Link>
+          </div>
+        </div>
+        <div className="mx-auto mt-14 h-px max-w-5xl bg-white/15" />
+        <div className="mx-auto mt-10 grid max-w-6xl grid-cols-1 gap-10 px-8 md:grid-cols-4">
+          
 
           {/* Trusted */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center justify-center gap-4">
             <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/[0.06] border border-white/[0.12]">
               <svg className="h-5 w-5 text-[#6EAAFF]" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
@@ -67,10 +112,10 @@ const Footer: React.FC<FooterProps> = ({ categories }) => {
             </div>
           </div>
 
-          <div className="hidden h-9 w-px bg-white/[0.08] lg:block" />
+          {/* <div className="hidden h-9 w-px bg-white/[0.08] lg:block" /> */}
 
           {/* Events */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center justify-center gap-4">
             <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/[0.06] border border-white/[0.12]">
               <svg className="h-5 w-5 text-[#6EAAFF]" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
                 <rect x="3" y="4" width="18" height="18" rx="2" />
@@ -85,10 +130,10 @@ const Footer: React.FC<FooterProps> = ({ categories }) => {
             </div>
           </div>
 
-          <div className="hidden h-9 w-px bg-white/[0.08] lg:block" />
+          {/* <div className="hidden h-9 w-px bg-white/[0.08] lg:block" /> */}
 
           {/* Organizers */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center justify-center gap-4">
             <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/[0.06] border border-white/[0.12]">
               <svg className="h-5 w-5 text-[#6EAAFF]" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
                 <path d="M4 20V10" /><path d="M10 20V4" /><path d="M16 20v-8" /><path d="M22 20V7" />
@@ -100,10 +145,10 @@ const Footer: React.FC<FooterProps> = ({ categories }) => {
             </div>
           </div>
 
-          <div className="hidden h-9 w-px bg-white/[0.08] lg:block" />
+          {/* <div className="hidden h-9 w-px bg-white/[0.08] lg:block" /> */}
 
           {/* Countries */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center justify-center gap-4">
             <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/[0.06] border border-white/[0.12]">
               <svg className="h-5 w-5 text-[#6EAAFF]" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
                 <circle cx="12" cy="12" r="9" />

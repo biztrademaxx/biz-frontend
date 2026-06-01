@@ -438,3 +438,36 @@
 .hide-scrollbar::-webkit-scrollbar {
   display: none;
 }
+/* Add to your globals.css */
+.organizers-marquee-track {
+  animation: marquee-scroll var(--organizers-marquee-duration, 30s) linear infinite;
+}
+
+.organizers-marquee-track:hover {
+  animation-play-state: paused;
+}
+
+@keyframes marquee-scroll {
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+/* Responsive gaps */
+@media (max-width: 640px) {
+  .flex.w-max.shrink-0.flex-row {
+    gap: 1rem;
+  }
+}
+
+/* Ensure cards don't wrap text badly */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}

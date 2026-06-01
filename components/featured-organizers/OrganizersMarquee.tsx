@@ -1,25 +1,24 @@
+// OrganizersMarquee.tsx - Updated to conditionally hide heading
 "use client"
 
 import type { CSSProperties } from "react"
 import { memo, useMemo } from "react"
 import type { OrganizerListEntry } from "@/lib/organizers/types"
 import { OrganizerLogoTile } from "./OrganizerLogoTile"
-import { OrganizersViewAllTile } from "./OrganizersViewAllTile"
 import { organizersMarqueeDurationSeconds } from "./utils/organizers.helpers"
 
-/** Below this count, a duplicated strip + -50% scroll looks broken or redundant; use one row. */
 const MARQUEE_MIN_ORGANIZERS = 3
 
 export interface OrganizersMarqueeProps {
   organizers: OrganizerListEntry[]
   onOrganizerActivate: (organizerId: string) => void
-  viewAllHref?: string
+  hideHeading?: boolean  // New prop to control heading visibility
 }
 
 function OrganizersMarqueeComponent({
   organizers,
   onOrganizerActivate,
-  viewAllHref = "/organizers",
+  hideHeading = false,  // Default to showing heading for backward compatibility
 }: OrganizersMarqueeProps) {
   const durationSeconds = useMemo(
     () => organizersMarqueeDurationSeconds(organizers.length),
@@ -34,51 +33,71 @@ function OrganizersMarqueeComponent({
     [durationSeconds],
   )
 
-  const stripClass =
-    "flex w-max shrink-0 flex-row flex-nowrap items-center gap-6 sm:gap-8"
+  const stripClass = "flex w-max shrink-0 flex-row flex-nowrap items-stretch gap-6"
 
+  // If not enough organizers, show static grid
   if (organizers.length < MARQUEE_MIN_ORGANIZERS) {
     return (
-      <div className="overflow-x-auto py-6">
-        <div className={`mx-auto ${stripClass} justify-center sm:mx-0 sm:justify-start`}>
-          {organizers.map((organizer) => (
-            <OrganizerLogoTile
-              key={organizerRouteKey(organizer)}
-              organizer={organizer}
-              mode="interactive"
-              onOpenProfile={onOrganizerActivate}
-            />
-          ))}
-          <OrganizersViewAllTile href={viewAllHref} interactive />
+      <div className="py-4">
+        {!hideHeading && (
+          <div className="mb-6 border-b border-gray-200 pb-4">
+            <h2 className="text-2xl font-bold text-gray-900">Featured Organizers</h2>
+            <p className="mt-1 text-sm text-gray-600">Organizers in India</p>
+          </div>
+        )}
+        <div className="overflow-x-auto">
+          <div className={`mx-auto ${stripClass} justify-center`}>
+            {organizers.map((organizer) => (
+              <div key={organizerRouteKey(organizer)} className="flex-shrink-0">
+                <OrganizerLogoTile
+                  organizer={organizer}
+                  mode="interactive"
+                  onOpenProfile={onOrganizerActivate}
+                />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     )
   }
 
+  // Show marquee for enough organizers
   return (
-    <div className="overflow-x-hidden py-6" style={trackStyle}>
-      <div className="organizers-marquee-track flex w-max flex-row flex-nowrap items-center">
-        <div className={stripClass}>
-          {organizers.map((organizer) => (
-            <OrganizerLogoTile
-              key={organizerRouteKey(organizer)}
-              organizer={organizer}
-              mode="interactive"
-              onOpenProfile={onOrganizerActivate}
-            />
-          ))}
-          <OrganizersViewAllTile href={viewAllHref} interactive />
+    <div className="py-4">
+      {!hideHeading && (
+        <div className="mb-6 border-b border-gray-200 pb-4">
+          <h2 className="text-2xl font-bold text-gray-900">Featured Organizers</h2>
+          <p className="mt-1 text-sm text-gray-600">Organizers in India</p>
         </div>
-        <div className={stripClass} aria-hidden>
-          {organizers.map((organizer) => (
-            <OrganizerLogoTile
-              key={`marquee-dup-${organizerRouteKey(organizer)}`}
-              organizer={organizer}
-              mode="decorative"
-              onOpenProfile={onOrganizerActivate}
-            />
-          ))}
-          <OrganizersViewAllTile href={viewAllHref} interactive={false} />
+      )}
+      <div className="overflow-x-hidden" style={trackStyle}>
+        <div className="organizers-marquee-track flex w-max flex-row flex-nowrap items-stretch">
+          {/* First strip */}
+          <div className={stripClass}>
+            {organizers.map((organizer) => (
+              <div key={organizerRouteKey(organizer)} className="flex-shrink-0">
+                <OrganizerLogoTile
+                  organizer={organizer}
+                  mode="interactive"
+                  onOpenProfile={onOrganizerActivate}
+                />
+              </div>
+            ))}
+          </div>
+
+          {/* Duplicate strip for seamless scrolling */}
+          <div className={stripClass} aria-hidden>
+            {organizers.map((organizer) => (
+              <div key={`marquee-dup-${organizerRouteKey(organizer)}`} className="flex-shrink-0">
+                <OrganizerLogoTile
+                  organizer={organizer}
+                  mode="decorative"
+                  onOpenProfile={onOrganizerActivate}
+                />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
