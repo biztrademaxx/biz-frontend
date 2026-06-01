@@ -5,6 +5,8 @@ export interface HeroVenue {
 }
 
 export interface HeroSlideshowEvent {
+  videoUrl: any
+  description: any
   id: string
   title: string
   subTitle: string | null
