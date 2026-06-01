@@ -3,7 +3,7 @@ import { resolveHomeLocation } from "@/lib/home-location-server"
 import { fetchAllVenuesServer } from "./fetch-all-venues-server"
 import type { ExploreVenueCard } from "./types"
 
-const HOME_VENUE_CARD_LIMIT = 6
+const HOME_VENUE_CARD_LIMIT = 8
 
 const venueLocationGetters = {
   getCity: (v: ExploreVenueCard) => v.locationHay || v.city,

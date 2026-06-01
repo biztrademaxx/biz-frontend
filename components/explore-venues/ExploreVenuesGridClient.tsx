@@ -26,7 +26,7 @@ function VenueCard({ venue, onNavigate }: { venue: ExploreVenueCard; onNavigate:
           src={venue.imageUrl}
           alt={venue.name}
           fill
-          sizes="(max-width: 768px) 100vw, 33vw"
+          sizes="(max-width: 768px) 100vw, 25vw"
           fallbackSrc={DEFAULT_VENUE_IMAGE}
           className="object-cover transition-transform duration-300 ease-out group-hover:scale-[1.02]"
         />
@@ -89,8 +89,16 @@ export default function ExploreVenuesGridClient({
       : `Discover event spaces and venues in ${homeCountry}`
     : "Discover event spaces and venues worldwide"
   const router = useRouter()
-  const row1 = venues.slice(0, 3)
-  const row2 = venues.slice(3, 6)
+
+  // Debug log to see how many venues are being received
+  console.log("Total venues received:", venues.length)
+
+  // Only take up to 8 venues
+  const displayVenues = venues.slice(0, 8)
+  console.log("Display venues (first 8):", displayVenues.length)
+
+  const row1 = displayVenues.slice(0, 4)
+  const row2 = displayVenues.slice(4, 8)
 
   return (
     <section className="home-tt-section mx-auto mb-12 w-full min-w-0 max-w-7xl px-3 sm:px-4 lg:px-6">
@@ -117,17 +125,19 @@ export default function ExploreVenuesGridClient({
           />
         ) : (
           <>
-            <div className="mb-6 grid grid-cols-1 gap-5 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {row1.map((venue) => (
-                <VenueCard
-                  key={venue.id}
-                  venue={venue}
-                  onNavigate={() => router.push(getVenuePublicPath(venue.id, venue.name))}
-                />
-              ))}
-            </div>
-            {row2.length > 0 ? (
-              <div className="grid grid-cols-1 gap-5 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {row1.length > 0 && (
+              <div className="mb-6 grid grid-cols-1 gap-5 sm:gap-6 md:grid-cols-2 lg:grid-cols-4">
+                {row1.map((venue) => (
+                  <VenueCard
+                    key={venue.id}
+                    venue={venue}
+                    onNavigate={() => router.push(getVenuePublicPath(venue.id, venue.name))}
+                  />
+                ))}
+              </div>
+            )}
+            {row2.length > 0 && (
+              <div className="grid grid-cols-1 gap-5 sm:gap-6 md:grid-cols-2 lg:grid-cols-4">
                 {row2.map((venue) => (
                   <VenueCard
                     key={venue.id}
@@ -136,7 +146,7 @@ export default function ExploreVenuesGridClient({
                   />
                 ))}
               </div>
-            ) : null}
+            )}
             <div className="mt-10 flex justify-center">
               <Link
                 href="/venues"

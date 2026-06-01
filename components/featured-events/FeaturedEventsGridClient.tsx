@@ -47,24 +47,28 @@ function FeaturedEventCard({ event }: { event: FeaturedEventPayload }) {
   const labels = featuredEventCategoryLabels(event).slice(0, 3)
 
   return (
-    <div className="flex h-full min-h-[220px] flex-col overflow-hidden rounded-lg border border-[#2563EB] bg-white p-3 shadow-[0_8px_16px_-10px_rgba(0,0,0,0.18)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_12px_22px_-10px_rgba(0,0,0,0.22)]">      <Link href={href} className="block cursor-pointer">
+    <div className="flex h-full flex-col overflow-hidden rounded-lg border border-[#2563EB] bg-white p-3 shadow-[0_8px_16px_-10px_rgba(0,0,0,0.18)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_12px_22px_-10px_rgba(0,0,0,0.22)]">
+      {/* Clickable top section */}
+      <Link href={href} className="flex cursor-pointer flex-col">
+        {/* Date */}
         <div className="text-sm font-medium leading-snug text-gray-800">{formattedDate}</div>
-        <div className="mt-1 flex w-full justify-between gap-2">
+
+        {/* Title + image row — flex-1 so image fills remaining card height */}
+        <div className="mt-0.5 flex items-start justify-between gap-2">
           <div className="flex min-w-0 flex-1 flex-col">
-            <div className="min-h-[3rem]">
-              <span className="line-clamp-2 font-bold text-gray-900">{event.title}</span>
-            </div>
-            <div className="mt-0.5 line-clamp-2 text-sm text-gray-800">
+            <span className="line-clamp-2 font-bold text-gray-900">{event.title}</span>
+            <div className="line-clamp-2 text-sm text-gray-800">
               {featuredEventLocationLine(event)}
             </div>
           </div>
-          <div className="relative mt-0.5 h-28 w-28 flex-shrink-0 overflow-hidden rounded-sm border border-gray-200 bg-white bg-gray-50 sm:h-32 sm:w-32">
+          {/* Thumbnail — grows with card height, min 112px */}
+          <div className="relative w-28 h-[112px] flex-shrink-0 overflow-hidden rounded-sm border border-gray-200 bg-gray-50 sm:w-32 sm:h-[128px] self-start">
             <AppImage
               src={thumb}
               alt={event.title}
               fill
               sizes="128px"
-              className="object-cover"
+              className="object-cover top-0"
               onLoad={(e) => {
                 const img = e.currentTarget
                 const ratio = img.naturalWidth / img.naturalHeight
@@ -74,7 +78,9 @@ function FeaturedEventCard({ event }: { event: FeaturedEventPayload }) {
           </div>
         </div>
       </Link>
-      <div className="mt-3 flex items-center justify-between gap-2">
+
+      {/* Bottom row: tags + share */}
+      <div className="mt-2.5 flex items-center justify-between gap-2">
         <div className="flex min-w-0 flex-wrap items-center gap-1.5">
           {labels.length > 0 ? (
             labels.map((label) => (
