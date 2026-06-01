@@ -125,7 +125,7 @@ const Footer: React.FC<FooterProps> = ({ categories }) => {
               </svg>
             </div>
             <div className="leading-tight">
-              <p className="text-[22px] font-bold text-[#6EAAFF]">10,000+</p>
+              <p className="text-[22px] font-bold text-white">10,000+</p>
               <p className="mt-1 text-[12px] text-white/50">Events Listed</p>
             </div>
           </div>
@@ -140,7 +140,7 @@ const Footer: React.FC<FooterProps> = ({ categories }) => {
               </svg>
             </div>
             <div className="leading-tight">
-              <p className="text-[22px] font-bold text-[#6EAAFF]">5,000+</p>
+              <p className="text-[22px] font-bold text-white">5,000+</p>
               <p className="mt-1 text-[12px] text-white/50">Verified Organizers</p>
             </div>
           </div>
@@ -158,7 +158,7 @@ const Footer: React.FC<FooterProps> = ({ categories }) => {
               </svg>
             </div>
             <div className="leading-tight">
-              <p className="text-[22px] font-bold text-[#6EAAFF]">120+</p>
+              <p className="text-[22px] font-bold text-white">120+</p>
               <p className="mt-1 text-[12px] text-white/50">Countries Covered</p>
             </div>
           </div>

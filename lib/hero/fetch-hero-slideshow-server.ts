@@ -50,6 +50,12 @@ function normalizeEvent(event: Record<string, unknown>): HeroSlideshowEvent {
     (event as { sub_title?: unknown }).sub_title
   const subTitle = typeof subRaw === "string" && subRaw.trim() ? subRaw.trim() : null
 
+  const descRaw = event.description ?? event.desc ?? event.about ?? null
+  const description = typeof descRaw === "string" && descRaw.trim() ? descRaw.trim() : null
+
+  const videoRaw = event.videoUrl ?? event.video_url ?? event.video ?? null
+  const videoUrl = typeof videoRaw === "string" && videoRaw.trim() ? videoRaw.trim() : null
+
   return {
     id: String(event.id ?? ""),
     title: typeof event.title === "string" ? event.title : "Event",
@@ -64,18 +70,20 @@ function normalizeEvent(event: Record<string, unknown>): HeroSlideshowEvent {
     vipImage: typeof event.vipImage === "string" ? event.vipImage.trim() || null : null,
     bannerImage: firstImageUrl(event),
     images: imageStrings?.length ? imageStrings : null,
+    description,
+    videoUrl,
     venue:
       venue != null
         ? {
-            venueName: typeof venue.venueName === "string" ? venue.venueName : null,
-            venueCity: typeof venue.venueCity === "string" ? venue.venueCity : null,
-            venueCountry: typeof venue.venueCountry === "string" ? venue.venueCountry : null,
-          }
+          venueName: typeof venue.venueName === "string" ? venue.venueName : null,
+          venueCity: typeof venue.venueCity === "string" ? venue.venueCity : null,
+          venueCountry: typeof venue.venueCountry === "string" ? venue.venueCountry : null,
+        }
         : {
-            venueName: typeof event.venueName === "string" ? event.venueName : null,
-            venueCity: typeof event.city === "string" ? event.city : null,
-            venueCountry: typeof event.country === "string" ? event.country : null,
-          },
+          venueName: typeof event.venueName === "string" ? event.venueName : null,
+          venueCity: typeof event.city === "string" ? event.city : null,
+          venueCountry: typeof event.country === "string" ? event.country : null,
+        },
   }
 }
 

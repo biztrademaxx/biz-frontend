@@ -23,6 +23,7 @@ import {
   FeaturedSpeakersSkeleton,
   TrendingEventsSkeleton,
 } from "@/components/home-skeletons";
+import HeroSection from "@/components/Herosection";
 
 export default function Home() {
   return (
@@ -30,6 +31,7 @@ export default function Home() {
       <HomeScrollSignupRedirect />
       <div className="bg-white pb-1">
         <div className="mx-auto px-4">
+          {/* <HeroSection/> */}
           <Suspense fallback={<HeroSlideshowSkeleton />}>
             <HeroSlideshow />
           </Suspense>
