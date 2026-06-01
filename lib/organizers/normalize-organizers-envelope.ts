@@ -1,3 +1,4 @@
+// normalize-organizers-envelope.ts
 import type { OrganizerListEntry } from "./types"
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -22,6 +23,7 @@ function normalizeOne(raw: unknown): OrganizerListEntry | null {
   const country = readString(raw.country)
   let headquarters = readString(raw.headquarters)
   let location = readString(raw.location)
+
   if (isPlaceholderLocation(headquarters)) headquarters = ""
   if (isPlaceholderLocation(location)) location = ""
 

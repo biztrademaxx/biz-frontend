@@ -1,3 +1,4 @@
+// FeaturedOrganizersSectionHeading.tsx
 "use client"
 
 import { memo } from "react"
