@@ -51,24 +51,28 @@ function FeaturedEventCard({ event }: { event: FeaturedEventPayload }) {
       {/* Clickable top section */}
       <Link href={href} className="flex cursor-pointer flex-col">
         {/* Date */}
-        <div className="text-sm font-medium leading-snug text-gray-800">{formattedDate}</div>
-
-        {/* Title + image row — flex-1 so image fills remaining card height */}
-        <div className="mt-0.5 flex items-start justify-between gap-2">
+        <div className="flex items-start justify-between gap-2">
           <div className="flex min-w-0 flex-1 flex-col">
-            <span className="line-clamp-2 font-bold text-gray-900">{event.title}</span>
+            <div className="text-sm font-medium leading-snug text-gray-800">
+              {formattedDate}
+            </div>
+
+            <span className="mt-1 line-clamp-2 font-bold text-gray-900">
+              {event.title}
+            </span>
+
             <div className="line-clamp-2 text-sm text-gray-800">
               {featuredEventLocationLine(event)}
             </div>
           </div>
-          {/* Thumbnail — grows with card height, min 112px */}
-          <div className="relative w-28 h-[112px] flex-shrink-0 overflow-hidden rounded-sm border border-gray-200 bg-gray-50 sm:w-32 sm:h-[128px] self-start">
+
+          <div className="relative w-28 h-[112px] flex-shrink-0 overflow-hidden rounded-sm border border-gray-200 bg-gray-50 sm:w-32 sm:h-[128px]">
             <AppImage
               src={thumb}
               alt={event.title}
               fill
               sizes="128px"
-              className="object-cover top-0"
+              className="object-cover"
               onLoad={(e) => {
                 const img = e.currentTarget
                 const ratio = img.naturalWidth / img.naturalHeight
