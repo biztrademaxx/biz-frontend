@@ -8,16 +8,16 @@ export default async function HeroSection() {
     return (
         <section
             aria-label="Featured VIP trade events"
-            className="flex w-full min-h-[520px] bg-gray-100 rounded-lg overflow-hidden mt-8"
+            className="mt-8 overflow-hidden rounded-[32px] border border-slate-200 bg-white shadow-sm"
         >
-            {/* LEFT */}
-            <div className="flex w-[52%] shrink-0 flex-col justify-center ">
-                <HeroBrandContent />
-            </div>
+            <div className="grid min-h-[650px] grid-cols-1 lg:grid-cols-[48%_52%]">
 
-            {/* RIGHT */}
-            <div className="w-[48%]">
-                <HeroVipSlider initialEvents={events} />
+                <HeroBrandContent />
+
+                <div className="p-6 lg:p-8">
+                    <HeroVipSlider initialEvents={events} />
+                </div>
+
             </div>
         </section>
     )

@@ -1,57 +1,81 @@
 export default function HeroBrandContent() {
     return (
-        <div className="flex flex-col px-10 py-12 lg:px-14 lg:py-16">
-            {/* Eyebrow badge */}
-            <div className="mb-7 flex w-fit items-center gap-2 rounded-full bg-blue-50 px-3 py-1.5">
-                <span className="h-1.5 w-1.5 rounded-full bg-blue-600" />
-                <span className="text-[11px] font-medium uppercase tracking-widest text-blue-600">
+        <div className="flex h-full flex-col justify-center px-8 py-10 lg:px-14">
+
+            {/* Badge */}
+            <div className="mb-6 flex w-fit items-center gap-2 rounded-full bg-blue-50 px-4 py-2">
+                <span className="h-2 w-2 rounded-full bg-blue-600" />
+                <span className="text-xs font-semibold uppercase tracking-[0.2em] text-blue-600">
                     Global Trade Network
                 </span>
             </div>
 
-            {/* Brand name */}
-            <h1 className="mb-3 font-['Syne',sans-serif] text-[2.75rem] font-extrabold leading-[1.04] tracking-tight text-gray-900 lg:text-5xl">
-                Biz<span className="text-blue-600">Trade</span>
-                <br />Fairs
+            {/* Main Heading */}
+            <h1 className="max-w-[650px] font-['Syne',sans-serif] text-[3rem] font-extrabold leading-[1.05] tracking-tight text-slate-900 lg:text-[5rem]">
+                Global Trade
+                <br />
+                Shows &
+                <br />
+                Exhibitions
             </h1>
 
-            {/* Tagline */}
-            <p className="mb-8 max-w-[300px] text-sm font-light leading-relaxed text-gray-500">
-                The world's most comprehensive B2B trade fair platform — connecting
-                buyers, exhibitors &amp; industry leaders across 180+ countries.
+            {/* Description */}
+            <p className="mt-6 max-w-[620px] text-lg leading-8 text-slate-600">
+                Discover 12,000+ trade shows and exhibitions across
+                180+ countries. Connect with buyers, exhibitors,
+                investors and industry leaders worldwide.
             </p>
-
             {/* Stats */}
-            <div className="mb-9 flex overflow-hidden rounded-xl border border-gray-100">
-                <div className="flex-1 border-r border-gray-100 px-4 py-3 text-center">
-                    <p className="font-['Syne',sans-serif] text-lg font-bold text-gray-900">12K+</p>
-                    <p className="mt-1 text-[10px] uppercase tracking-wider text-gray-400">Events</p>
+            <div className="mt-10 flex gap-10">
+
+                <div>
+                    <h3 className="text-4xl font-bold text-slate-900">
+                        12K+
+                    </h3>
+                    <p className="mt-1 text-slate-500">
+                        Events
+                    </p>
                 </div>
-                <div className="flex-1 border-r border-gray-100 px-4 py-3 text-center">
-                    <p className="font-['Syne',sans-serif] text-lg font-bold text-gray-900">180+</p>
-                    <p className="mt-1 text-[10px] uppercase tracking-wider text-gray-400">Countries</p>
+
+                <div>
+                    <h3 className="text-4xl font-bold text-slate-900">
+                        180+
+                    </h3>
+                    <p className="mt-1 text-slate-500">
+                        Countries
+                    </p>
                 </div>
-                <div className="flex-1 px-4 py-3 text-center">
-                    <p className="font-['Syne',sans-serif] text-lg font-bold text-gray-900">4.2M</p>
-                    <p className="mt-1 text-[10px] uppercase tracking-wider text-gray-400">Visitors</p>
+
+                <div>
+                    <h3 className="text-4xl font-bold text-slate-900">
+                        4.2M+
+                    </h3>
+                    <p className="mt-1 text-slate-500">
+                        Visitors
+                    </p>
                 </div>
+
             </div>
 
-            {/* CTAs */}
-            <div className="flex flex-wrap gap-3">
+            {/* Buttons */}
+            <div className="mt-10 flex gap-4">
+
                 <a
                     href="/event"
-                    className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+                    className="rounded-xl bg-blue-600 px-8 py-4 font-semibold text-white transition hover:bg-blue-700"
                 >
                     Browse Events
                 </a>
+
                 <a
                     href="/organizer-signup"
-                    className="rounded-lg border border-gray-200 bg-white px-5 py-2.5 text-sm font-normal text-gray-600 transition-colors hover:border-gray-400 hover:text-gray-900"
+                    className="rounded-xl border border-slate-300 bg-white px-8 py-4 font-semibold text-slate-700 transition hover:border-slate-400"
                 >
                     List Your Event
                 </a>
+
             </div>
+
         </div>
     )
 }

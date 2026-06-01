@@ -24,6 +24,7 @@ import {
   TrendingEventsSkeleton,
 } from "@/components/home-skeletons";
 import HeroSection from "@/components/Herosection";
+import AboutBizTrade from "@/components/aboutBiztradefairs";
 
 export default function Home() {
   return (
@@ -37,6 +38,7 @@ export default function Home() {
           </Suspense>
         </div>
       </div>
+      <AboutBizTrade/>
 
       <Suspense fallback={<CategoryBrowseSkeleton />}>
         <CategoryGrid />
