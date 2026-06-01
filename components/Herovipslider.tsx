@@ -3,10 +3,16 @@
 import { AppImage } from "@/components/app-image"
 import Link from "next/link"
 import { useCallback, useEffect, useRef, useState } from "react"
-import { ChevronLeft, ChevronRight } from "lucide-react"
+import { ChevronLeft, ChevronRight  } from "lucide-react"
 import { eventPublicPath } from "@/lib/event-path"
 import { hasDisplayableEventImage } from "@/lib/event-card-meta"
 import type { HeroSlideshowEvent } from "@/lib/hero/types"
+import {
+   
+    CalendarDays,
+    MapPin,
+    Users,
+} from "lucide-react"
 
 export type Event = HeroSlideshowEvent
 
@@ -53,8 +59,11 @@ function orgAbbr(title: string): string {
 }
 
 function vipTitle(event: Event): string {
-    const t =  event.title
-    return t.replace(/\s+(?:19|20)\d{2}$/, "").trim() || t
+    const t = event.subTitle || event.title || ""
+
+    return t
+        .replace(/\s+(?:19|20)\d{2}$/, "")
+        .trim()
 }
 
 function isComingSoon(event: Event): boolean {
@@ -72,98 +81,120 @@ function EventSlide({
 }) {
     const imageUrl = cardImageUrl(event)
     const dateLine = formatDateVenueLine(event)
-    const orgName = event.title.split(/[—–-]/)[0].trim()
 
     return (
         <div className="absolute inset-0">
-            {/* Background image */}
-            {imageUrl ? (
-                <AppImage
-                    src={imageUrl}
-                    alt={event.title}
-                    fill
-                    sizes="48vw"
-                    className="object-cover"
-                    priority
-                />
-            ) : (
-                <div className="absolute inset-0 bg-slate-700" />
-            )}
+            <div className="grid h-full grid-cols-[58%_42%] overflow-hidden rounded-[28px] bg-white">
 
-            {/* Bottom gradient for text legibility */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-black/05" />
+                {/* LEFT IMAGE */}
+                <div className="relative h-full">
+                    {imageUrl ? (
+                        <AppImage
+                            src={imageUrl}
+                            alt={event.title}
+                            fill
+                            priority
+                            sizes="40vw"
+                            className="object-cover"
+                        />
+                    ) : (
+                        <div className="absolute inset-0 bg-slate-300" />
+                    )}
 
-            {/* "Show Coming Soon" — top right */}
-            {isComingSoon(event) && (
-                <div className="absolute right-3 top-3 z-10 rounded bg-black/55 px-2.5 py-1 text-[10px] font-medium text-white/90">
-                    Show Coming Soon
-                </div>
-            )}
-
-            {/* Content pinned to bottom */}
-            {/* Strong overlay */}
-            {/* Dark overlay */}
-            <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/65 to-black/30" />
-
-            {/* Content */}
-            <div className="absolute inset-0 z-10 flex items-center">
-                <div className="absolute inset-0 bg-black/45" />
-
-                <div className="absolute inset-0 z-10 flex flex-col items-center justify-center px-8 text-center">
-
-                    {/* Top Row */}
-                    <div className="mb-8 flex items-center gap-5">
-                        {/* BizTrade */}
-                        <div className="text-left">
-                            <p className="text-sm font-medium text-white/80">
-                                BizTrade
-                            </p>
-
-                            <h4 className="text-3xl font-bold leading-none text-white">
-                                Fairs
-                            </h4>
-                        </div>
-
-                        {/* Vertical Divider */}
-                        <div className="h-14 w-px bg-white/40" />
-
-                        {/* Date + Venue */}
-                        <div className="text-left">
-                            <p className="text-xl font-bold text-white">
-                                {dateLine?.split("·")[0]}
-                            </p>
-
-                            <p className="text-lg text-white/85">
-                                {event.venue?.venueName}
-                            </p>
-                        </div>
+                    {/* VIP Badge */}
+                    <div className="absolute left-5 top-5 z-10">
+                        <span className="rounded-full bg-blue-600 px-4 py-2 text-xs font-semibold uppercase tracking-wider text-white">
+                            VIP / Featured
+                        </span>
                     </div>
 
-                    {/* Main Heading */}
-                    <h2 className="max-w-[500px] text-center text-[22px] font-extrabold uppercase leading-[1.1] text-white">
+                    {/* Mega Event */}
+                    <div className="absolute bottom-5 left-5 z-10">
+                        <span className="rounded-xl border border-white/20 bg-black/40 px-4 py-2 text-xs font-semibold text-white backdrop-blur">
+                            ⭐ Mega Event
+                        </span>
+                    </div>
+                </div>
+
+                {/* RIGHT CONTENT */}
+                <div className="relative flex flex-col bg-white p-8 lg:p-10">
+
+                    {/* Arrows */}
+                    <div className="absolute right-8 top-6 flex gap-3">
+                        <button
+                            onClick={onPrev}
+                            className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white shadow-sm transition hover:bg-slate-50"
+                        >
+                            <ChevronLeft size={18} />
+                        </button>
+
+                        <button
+                            onClick={onNext}
+                            className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white shadow-sm transition hover:bg-slate-50"
+                        >
+                            <ChevronRight size={18} />
+                        </button>
+                    </div>
+
+                    {/* Title */}
+                    <h2 className="mt-10 text-[30px] font-bold leading-[1.15] text-slate-900">
                         {vipTitle(event)}
                     </h2>
 
                     {/* Description */}
-                    <p className="mt-6 max-w-[750px] text-center text-[20px] leading-relaxed text-white/90">
-                        {event.description}
+                    <p className="mt-3 text-sm leading-6 text-slate-500">
+                        {event.description
+                            ? `${event.description.slice(0, 120)}...`
+                            : "Discover one of the leading international trade exhibitions."}
                     </p>
 
-                    {/* Buttons */}
-                    <div className="mt-10 flex items-center justify-center gap-4">
-                        <Link
-                            href={eventPublicPath(event)}
-                            className="rounded-md bg-red-600 px-12 py-4 text-lg font-bold text-white hover:bg-red-700"
-                        >
-                            Register Now
-                        </Link>
+                    <div className="mt-5 space-y-4">
 
-                        <Link
-                            href={eventPublicPath(event)}
-                            className="rounded-md bg-white px-12 py-4 text-lg font-semibold text-gray-900 hover:bg-gray-100"
-                        >
-                            Show Info
-                        </Link>
+                        <div className="flex items-start gap-3">
+                            <span className="text-blue-600">📅</span>
+
+                            <div>
+                                <p className="text-sm font-medium text-slate-900">
+                                    {dateLine?.split("·")[0]}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="flex items-start gap-3">
+                            <span className="text-blue-600">📍</span>
+
+                            <div>
+                                <p className="text-sm font-medium text-slate-900">
+                                    {event.venue?.venueName}
+                                </p>
+
+                                <p className="text-xs text-slate-500">
+                                    {event.venue?.venueCity},{" "}
+                                    {event.venue?.venueCountry}
+                                </p>
+                            </div>
+                        </div>
+
+                    </div>
+                    {/* Buttons */}
+                    <div className="mt-auto pt-8">
+                        <div className="flex flex-col gap-4">
+
+                            <Link
+                                href={eventPublicPath(event)}
+                                className="flex h-12 items-center justify-center rounded-xl bg-blue-600 font-semibold text-white transition hover:bg-blue-700"
+                            >
+                                Register Now
+                            </Link>
+
+                            <Link
+                                href={eventPublicPath(event)}
+                                className="flex h-12 items-center justify-center rounded-xl border border-blue-200 bg-white font-semibold text-blue-600 transition hover:bg-blue-50"
+                            >
+                                View Details
+                            </Link>
+
+                        </div>
                     </div>
                 </div>
             </div>
@@ -208,7 +239,7 @@ export default function HeroVipSlider({ initialEvents }: { initialEvents: Event[
     if (!events.length) return null
 
     return (
-        <div className="relative h-[370px] w-[100%] overflow-hidden mt-12 rounded-lg">
+        <div className="relative h-[540px] w-full overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-lg">
              {events.map((event, i) => (
                 <div
                     key={event.id}
