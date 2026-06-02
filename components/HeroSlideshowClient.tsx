@@ -365,7 +365,7 @@ export default function HeroSlideshowClient({
       {/* Content */}
       <div className="relative z-10 mx-auto max-w-7xl px-3 sm:px-4 lg:px-6">
 
-        <div className="relative z-10 flex flex-col lg:flex-row lg:items-start gap-12 lg:gap-16 py-8">
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-start gap-12 lg:gap-16 pt-23 pb-8">
           {/* ── LEFT PANEL ── */}
           <div className="w-full lg:w-[35%] flex-shrink-0">
             {/* Headline */}
@@ -411,7 +411,7 @@ export default function HeroSlideshowClient({
             </div>
 
             {/* CTA buttons */}
-            <div className="flex gap-4 mt-6 max-w-[360px]">
+            <div className="flex gap-4 mt-17 max-w-[360px]">
               <Link
                 href="/event"
                 className="flex-1 text-center bg-blue-600 hover:bg-blue-700 transition-colors text-white text-[0.9rem] font-bold h-12 rounded-sm flex items-center justify-center"
@@ -546,7 +546,7 @@ export default function HeroSlideshowClient({
             </div>
 
             {/* Bottom 3 preview cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 w-full">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mt-5 w-full">
               {previews.map((event, i) => {
                 const pImg = cardImageUrl(event)
                 const pDate = shortDate(event.startDate, event.endDate)
