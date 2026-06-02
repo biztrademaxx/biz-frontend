@@ -363,18 +363,22 @@ export default function HeroSlideshowClient({
       <div className="absolute inset-0 bg-white/85" />
 
       {/* Content */}
-      <div className="relative z-10 mx-auto max-w-7xl px-3 sm:px-4 lg:px-6">
+      <div className="relative z-10 w-full max-w-7xl mx-auto px-8 lg:px-12">
 
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-start gap-12 lg:gap-16 pt-23 pb-8">
           {/* ── LEFT PANEL ── */}
-          <div className="w-full lg:w-[35%] flex-shrink-0">
+          <div className="w-full lg:w-[32%] flex-shrink-0">
             {/* Headline */}
             <h1 className="max-w-[340px] text-[65px] font-light leading-[0.9] tracking-[-0.05em] text-[#0B132B]">
-              Discover
-              <br />
-              <span className="text-[#2563EB]">Trade Shows</span>
-              <br />
-              Worldwide
+              <span className="block">Discover</span>
+
+              <span className="block mt-2 text-[#2563EB]">
+                Trade Shows
+              </span>
+
+              <span className="block mt-2">
+                Worldwide
+              </span>
             </h1>
 
             {/* Description */}
@@ -384,7 +388,7 @@ export default function HeroSlideshowClient({
             </p>
 
             {/* Stats */}
-            <div className="flex gap-8 mt-8 mb-12">
+            <div className="flex gap-8 mt-12 mb-12">
               <div className="flex items-center gap-3">
                 <CalendarDays className="h-6 w-6 text-blue-500 shrink-0" strokeWidth={1.5} />
                 <div>
@@ -430,8 +434,8 @@ export default function HeroSlideshowClient({
           {/* ── RIGHT PANEL ── */}
           <div className="w-full lg:w-[65%] flex flex-col gap-5">
             {/* Featured card — with blue light shadow added */}
-            <div className="relative w-full rounded-xl shadow-[0_15px_80px_-10px_rgba(0,74,150,0.95)] overflow-visible">
-              <div className="relative overflow-hidden rounded-xl" style={{ height: "360px" }}>
+            <div className="relative w-full min-h-[380px] rounded-xl shadow-[0_15px_80px_-10px_rgba(0,74,150,0.95)] overflow-visible">
+              <div className="relative overflow-hidden rounded-xl" style={{ height: "400px" }}>
                 {imgUrl && (
                   <AppImage
                     src={imgUrl}
@@ -479,10 +483,10 @@ export default function HeroSlideshowClient({
                     {/* Event info */}
                     <div className="flex-1 min-w-0 max-w-[400px]">
                       <h2 className="text-[1.7rem] font-extrabold text-white mb-2 leading-tight line-clamp-2">
-                        {featured.title}
+                        {featured.subTitle}
                       </h2>
                       {loc && (
-                        <div className="flex items-center gap-1.5 text-white text-[0.8rem] mb-1">
+                        <div className="flex items-center gap-3 text-white text-[0.8rem] mb-3">
                           <MapPin className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
                           <span className="truncate drop-shadow-sm">{loc}</span>
                         </div>
