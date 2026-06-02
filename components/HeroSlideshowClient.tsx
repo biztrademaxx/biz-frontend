@@ -430,7 +430,7 @@ export default function HeroSlideshowClient({
           {/* ── RIGHT PANEL ── */}
           <div className="w-full lg:w-[65%] flex flex-col gap-5">
             {/* Featured card — with blue light shadow added */}
-            <div className="relative w-full rounded-xl shadow-[0_30px_100px_-10px_rgba(37,99,235,0.75)] overflow-visible">
+            <div className="relative w-full rounded-xl shadow-[0_35px_120px_-5px_rgba(0,74,150,0.9)] overflow-visible">
               <div className="relative overflow-hidden rounded-xl" style={{ height: "360px" }}>
                 {imgUrl && (
                   <AppImage
