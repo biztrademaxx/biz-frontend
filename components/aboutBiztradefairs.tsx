@@ -8,175 +8,379 @@ import {
     ShieldCheck,
     TrendingUp,
     HeadphonesIcon,
+    Sparkles,
+    Clock3,
 } from "lucide-react"
 import Link from "next/link"
 
+const stats = [
+    { value: "12K+", label: "Events", sub: "Across all industries" },
+    { value: "180+", label: "Countries", sub: "Global coverage" },
+    { value: "4.2M+", label: "Visitors", sub: "Every year" },
+]
+
+// Define types for the card structure
+interface Card {
+    icon?: any;
+    title: string;
+    sub?: string;
+    avatars?: string[] | null;
+    bg?: string;
+    iconColor?: string;
+    avatarLetters?: string[];
+}
+
+const topCards: Card[] = [
+    {
+        icon: Globe,
+        title: "Global Network",
+        avatars: null,
+        bg: "bg-blue-100",
+        iconColor: "text-blue-600",
+    },
+    {
+        icon: null,
+        title: "320K",
+        sub: "Users worldwide",
+        avatars: ["bg-red-200 text-red-800", "bg-green-200 text-green-800", "bg-violet-200 text-violet-800"],
+        avatarLetters: ["A", "B", "C"],
+    },
+    {
+        icon: CalendarDays,
+        title: "15ms",
+        sub: "Avg. response",
+        bg: "bg-slate-100",
+        iconColor: "text-slate-500",
+    },
+]
+
+const bottomCards: Card[] = [
+    {
+        icon: Building2,
+        title: "Verified Exhibitors",
+        bg: "bg-blue-100",
+        iconColor: "text-blue-600",
+    },
+    {
+        icon: null,
+        title: "99%",
+        sub: "Sound clarity",
+        avatars: ["bg-yellow-200 text-yellow-800", "bg-blue-200 text-blue-800", "bg-pink-200 text-pink-800"],
+        avatarLetters: ["D", "E", "F"],
+    },
+    {
+        icon: Handshake,
+        title: "Quality Events",
+        bg: "bg-slate-100",
+        iconColor: "text-slate-500",
+    },
+]
+
+// Add proper type for the props
+interface StatRowProps {
+    cards: Card[];
+}
+
+function StatRow({ cards }: StatRowProps) {
+    return (
+        <div className="grid grid-cols-3 gap-5">
+            {cards.map((card, i) => (
+                <div
+                    key={i}
+                    className="rounded-3xl border border-slate-200 bg-white p-6 min-h-[140px] flex items-center"
+                >
+                    {card.avatars ? (
+                        <div>
+                            <div className="flex mb-4">
+                                {card.avatars.map((cls, j) => (
+                                    <div
+                                        key={j}
+                                        className={`h-10 w-10 rounded-full border-2 border-white flex items-center justify-center text-sm font-semibold ${cls} ${j > 0 ? "-ml-3" : ""
+                                            }`}
+                                    >
+                                        {card.avatarLetters?.[j]}
+                                    </div>
+                                ))}
+                            </div>
+
+                            <h3 className="text-[42px] font-semibold leading-none text-slate-900">
+                                {card.title}
+                            </h3>
+
+                            {card.sub && (
+                                <p className="mt-2 text-[15px] text-slate-500">
+                                    {card.sub}
+                                </p>
+                            )}
+                        </div>
+                    ) : (
+                        <div className="flex items-center gap-5">
+                            <div
+                                className={`flex h-16 w-16 items-center justify-center rounded-full ${card.bg}`}
+                            >
+                                {card.icon && (
+                                    <card.icon
+                                        size={28}
+                                        className={card.iconColor}
+                                    />
+                                )}
+                            </div>
+
+                            <div>
+                                <h3 className="text-[28px] font-semibold text-slate-900">
+                                    {card.title}
+                                </h3>
+
+                                {card.sub && (
+                                    <p className="mt-1 text-[15px] text-slate-500">
+                                        {card.sub}
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            ))}
+        </div>
+    );
+}
+
 export default function AboutBizTrade() {
     return (
-        <section className="relative overflow-hidden bg-white py-20">
-
-            <div className="relative mx-auto max-w-[1400px] px-6 lg:px-10">
-
-                {/* ── MAIN GRID: Globe left, Content right ── */}
-                <div className="grid items-center gap-10 lg:grid-cols-[52%_48%]">
-
-                    {/* ── LEFT: Globe (no background) ── */}
-                    <div className="relative flex min-h-[560px] items-center justify-center">
-
-                        {/* Globe image — no background, no rings */}
-                        <img
-                            src="/images/globe.png"
-                            alt="Global Network Globe"
-                            className="relative z-10 h-[440px] w-[440px] select-none object-contain"
-                        />
-
-                        {/* Floating badge: Global Network */}
-                        <div className="absolute left-4 top-16 z-20 flex flex-col items-center gap-1.5 rounded-2xl border border-blue-100 bg-white px-5 py-4 shadow-[0_4px_24px_rgba(59,130,246,0.12)] transition-transform duration-300 hover:-translate-y-1 sm:left-10">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50">
-                                <Users className="text-blue-600" size={22} />
-                            </div>
-                            <p className="text-center text-[12px] font-semibold text-slate-700">
-                                Global<br />Network
-                            </p>
-                        </div>
-
-                        {/* Floating badge: Verified Exhibitors */}
-                        <div className="absolute right-4 top-16 z-20 flex flex-col items-center gap-1.5 rounded-2xl border border-blue-100 bg-white px-5 py-4 shadow-[0_4px_24px_rgba(59,130,246,0.12)] transition-transform duration-300 hover:-translate-y-1 sm:right-10">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50">
-                                <Building2 className="text-blue-600" size={22} />
-                            </div>
-                            <p className="text-center text-[12px] font-semibold text-slate-700">
-                                Verified<br />Exhibitors
-                            </p>
-                        </div>
-
-                        {/* Floating badge: Quality Events */}
-                        <div className="absolute bottom-16 left-4 z-20 flex flex-col items-center gap-1.5 rounded-2xl border border-blue-100 bg-white px-5 py-4 shadow-[0_4px_24px_rgba(59,130,246,0.12)] transition-transform duration-300 hover:-translate-y-1 sm:left-10">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50">
-                                <CalendarDays className="text-blue-600" size={22} />
-                            </div>
-                            <p className="text-center text-[12px] font-semibold text-slate-700">
-                                Quality<br />Events
-                            </p>
-                        </div>
-
-                        {/* Floating badge: Business Connections */}
-                        <div className="absolute bottom-16 right-4 z-20 flex flex-col items-center gap-1.5 rounded-2xl border border-blue-100 bg-white px-5 py-4 shadow-[0_4px_24px_rgba(59,130,246,0.12)] transition-transform duration-300 hover:-translate-y-1 sm:right-10">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50">
-                                <Handshake className="text-blue-600" size={22} />
-                            </div>
-                            <p className="text-center text-[12px] font-semibold text-slate-700">
-                                Business<br />Connections
-                            </p>
-                        </div>
-                    </div>
-
-                    {/* ── RIGHT: Content ── */}
-                    <div className="flex flex-col">
-
+        <section className="bg-[#f8f9fc] py-16">
+            <div className="mx-auto w-full min-w-0 max-w-7xl px-3 sm:px-4 lg:px-6">
+                <div className="grid grid-cols-1 lg:grid-cols-[55%_45%] gap-16 items-center">
+                    {/* ── LEFT ── */}
+                    <div>
                         {/* Label */}
-                        <div className="mb-5 flex items-center gap-3">
-                            <div className="h-[2px] w-10 bg-blue-700" />
-                            <span className="text-[11px] font-bold uppercase tracking-[0.22em] text-blue-700">
-                                About BizTrade Fairs
+                        <div className="mb-8 flex items-center gap-3">
+                            <Sparkles size={14} className="text-[#111]" />
+                            <span className="text-[13px] font-medium uppercase tracking-[0.35em] text-[#111]">
+                                ABOUT BIZTRADE FAIRS
                             </span>
                         </div>
 
                         {/* Heading */}
-                        <h2 className="text-[36px] font-extrabold leading-[1.1] tracking-tight text-slate-900 lg:text-[44px]">
-                            Connecting Buyers,<br />
-                            Exhibitors &amp; Industry<br />
+                        <h2 className="max-w-[720px] text-[52px] md:text-[64px] lg:text-[78px] font-[300] leading-[0.95] tracking-[-0.05em] text-[#0A0A0A]">
+                            Connecting{" "}
+                            <span className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-[#4AA8FF] align-middle">
+                                <Globe size={28} className="text-white" />
+                            </span>{" "}
+                            Buyers,
+                            <br />
+                            Exhibitors & Industry
+                            <br />
+                            <span className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-[#4AA8FF] align-middle">
+                                <Users size={28} className="text-white" />
+                            </span>{" "}
                             Leaders Worldwide
                         </h2>
 
-                        {/* Blue underline accent */}
-                        <div className="mt-4 h-[3px] w-10 rounded-full bg-blue-600" />
+                        {/* Accent line */}
+                        <div className="mt-6 h-[4px] w-12 rounded-full bg-[#2563EB]" />
 
                         {/* Description */}
-                        <p className="mt-6 text-[15.5px] leading-[1.75] text-slate-500">
+                        <p className="mt-8 max-w-[520px] text-[18px] leading-[1.8] text-[#7B8794]">
                             BizTrade Fairs is the world's most comprehensive platform for
-                            discovering trade shows, exhibitions and business events.
-                            We connect businesses with the right opportunities to
-                            grow, network and expand globally.
+                            discovering trade shows, exhibitions and business events. We connect
+                            businesses with the right opportunities to grow, network and expand
+                            globally.
                         </p>
 
-                        {/* Stats */}
-                        <div className="mt-10 grid grid-cols-3 gap-4">
-                            {[
-                                { icon: CalendarDays, value: "12K+", label: "Events", sub: "Across all industries" },
-                                { icon: Globe, value: "180+", label: "Countries", sub: "Global coverage" },
-                                { icon: Users, value: "4.2M+", label: "Visitors", sub: "Every year" },
-                            ].map(({ icon: Icon, value, label, sub }) => (
-                                <div
-                                    key={label}
-                                    className="flex flex-col items-start gap-2 rounded-2xl border border-blue-100 bg-white px-4 py-5 shadow-sm"
-                                >
-                                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50">
-                                        <Icon className="text-blue-600" size={20} />
-                                    </div>
-                                    <p className="text-[28px] font-extrabold leading-none tracking-tight text-blue-600">
-                                        {value}
-                                    </p>
-                                    <div>
-                                        <p className="text-[13px] font-bold text-slate-800">{label}</p>
-                                        <p className="text-[11.5px] text-slate-400">{sub}</p>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-
-                        {/* CTA — right side only */}
-                        <div className="mt-8">
+                        {/* Buttons */}
+                        <div className="mt-10 flex flex-wrap gap-4">
                             <Link
                                 href="/event"
-                                className="inline-flex items-center gap-3 rounded-xl bg-blue-700 px-8 py-4 text-[15px] font-semibold text-white shadow-md transition-all duration-200 hover:bg-blue-800 hover:shadow-lg"
+                                className="inline-flex items-center gap-3 rounded-full bg-[#18337C] px-8 py-4 text-[16px] font-medium text-white transition-all hover:bg-[#10245A]"
                             >
                                 Explore Events
                                 <ArrowRight size={18} />
                             </Link>
+
+                            <Link
+                                href="/about"
+                                className="inline-flex items-center rounded-full border border-[#D6DCE5] bg-white px-8 py-4 text-[16px] font-medium text-[#0A0A0A] transition-all hover:border-[#B8C2CF]"
+                            >
+                                Learn more
+                            </Link>
                         </div>
                     </div>
-                </div>
 
-                {/* ── TRUST STRIP — full width below both columns ── */}
-                <div className="mt-12 grid grid-cols-2 gap-3 rounded-2xl border border-blue-100 bg-white p-5 shadow-sm sm:grid-cols-4">
-                    {[
-                        {
-                            icon: ShieldCheck,
-                            title: "Trusted Platform",
-                            sub: "Verified events and reliable information",
-                        },
-                        {
-                            icon: Users,
-                            title: "Global Reach",
-                            sub: "Connect with businesses across 180+ countries",
-                        },
-                        {
-                            icon: TrendingUp,
-                            title: "Business Growth",
-                            sub: "Find new opportunities and grow your network",
-                        },
-                        {
-                            icon: HeadphonesIcon,
-                            title: "Dedicated Support",
-                            sub: "Our team is here to help you succeed",
-                        },
-                    ].map(({ icon: Icon, title, sub }, i, arr) => (
-                        <div
-                            key={title}
-                            className={`flex items-start gap-3 ${i < arr.length - 1 ? "border-r border-blue-50 pr-4" : ""}`}
-                        >
-                            <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-50">
-                                <Icon className="text-blue-600" size={17} />
-                            </div>
+                    {/* ── RIGHT ── */}
+                    {/* ── RIGHT ── */}
+                    <div className="flex flex-col justify-center gap-16">
+
+                        {/* Row 1 */}
+                        <div className="grid grid-cols-3 gap-10">
+
+                            {/* Stat 1 */}
                             <div>
-                                <p className="text-[13px] font-bold text-slate-800">{title}</p>
-                                <p className="mt-0.5 text-[11.5px] leading-[1.5] text-slate-400">{sub}</p>
-                            </div>
-                        </div>
-                    ))}
-                </div>
+                                <div className="mb-5 flex">
+                                    <div className="h-10 w-10 rounded-full bg-[#E9E7FF]" />
+                                    <div className="-ml-2 h-10 w-10 rounded-full bg-[#D6ECFF]" />
+                                    <div className="-ml-2 flex h-10 w-10 items-center justify-center rounded-full bg-[#63B6FF]">
+                                        <Globe size={16} className="text-white" />
+                                    </div>
+                                </div>
 
+                                <div className="flex gap-4">
+                                    <div className="w-[3px] rounded-full bg-[#9AC8FF]" />
+                                    <div>
+                                        <h3 className="text-[48px] font-medium leading-none tracking-[-0.04em] text-black">
+                                            99%
+                                        </h3>
+                                        <p className="mt-2 text-[18px] text-[#444]">
+                                            Global reach
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Stat 2 */}
+                            <div>
+                                <div className="mb-5 flex">
+                                    <img
+                                        src="https://i.pravatar.cc/40?img=1"
+                                        className="h-10 w-10 rounded-full border-2 border-white"
+                                        alt=""
+                                    />
+                                    <img
+                                        src="https://i.pravatar.cc/40?img=2"
+                                        className="-ml-3 h-10 w-10 rounded-full border-2 border-white"
+                                        alt=""
+                                    />
+                                    <img
+                                        src="https://i.pravatar.cc/40?img=3"
+                                        className="-ml-3 h-10 w-10 rounded-full border-2 border-white"
+                                        alt=""
+                                    />
+                                </div>
+
+                                <div className="flex gap-4">
+                                    <div className="w-[3px] rounded-full bg-[#9AC8FF]" />
+                                    <div>
+                                        <h3 className="text-[48px] font-medium leading-none tracking-[-0.04em] text-black">
+                                            320K
+                                        </h3>
+                                        <p className="mt-2 text-[18px] text-[#444]">
+                                            Number of users
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Stat 3 */}
+                            <div>
+                                <div className="mb-5 flex">
+                                    <div className="h-10 w-10 rounded-full bg-[#E9E7FF]" />
+                                    <div className="-ml-2 h-10 w-10 rounded-full bg-[#D6ECFF]" />
+                                    <div className="-ml-2 flex h-10 w-10 items-center justify-center rounded-full bg-[#63B6FF]">
+                                        <Clock3 size={16} className="text-white" />
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-4">
+                                    <div className="w-[3px] rounded-full bg-[#9AC8FF]" />
+                                    <div>
+                                        <h3 className="text-[48px] font-medium leading-none tracking-[-0.04em] text-black">
+                                            15ms
+                                        </h3>
+                                        <p className="mt-2 text-[18px] text-[#444]">
+                                            Avg. response time
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        {/* Row 2 */}
+                        <div className="grid grid-cols-3 gap-10">
+
+                            {/* Stat 4 */}
+                            <div>
+                                <div className="mb-5 flex">
+                                    <div className="h-10 w-10 rounded-full bg-[#E9E7FF]" />
+                                    <div className="-ml-2 h-10 w-10 rounded-full bg-[#D6ECFF]" />
+                                    <div className="-ml-2 flex h-10 w-10 items-center justify-center rounded-full bg-[#63B6FF]">
+                                        <Building2 size={16} className="text-white" />
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-4">
+                                    <div className="w-[3px] rounded-full bg-[#9AC8FF]" />
+                                    <div>
+                                        <h3 className="text-[48px] font-medium leading-none tracking-[-0.04em] text-black">
+                                            12K+
+                                        </h3>
+                                        <p className="mt-2 text-[18px] text-[#444]">
+                                            Events listed
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Stat 5 */}
+                            <div>
+                                <div className="mb-5 flex">
+                                    <img
+                                        src="https://i.pravatar.cc/40?img=4"
+                                        className="h-10 w-10 rounded-full border-2 border-white"
+                                        alt=""
+                                    />
+                                    <img
+                                        src="https://i.pravatar.cc/40?img=5"
+                                        className="-ml-3 h-10 w-10 rounded-full border-2 border-white"
+                                        alt=""
+                                    />
+                                    <img
+                                        src="https://i.pravatar.cc/40?img=6"
+                                        className="-ml-3 h-10 w-10 rounded-full border-2 border-white"
+                                        alt=""
+                                    />
+                                </div>
+
+                                <div className="flex gap-4">
+                                    <div className="w-[3px] rounded-full bg-[#9AC8FF]" />
+                                    <div>
+                                        <h3 className="text-[48px] font-medium leading-none tracking-[-0.04em] text-black">
+                                            180+
+                                        </h3>
+                                        <p className="mt-2 text-[18px] text-[#444]">
+                                            Countries
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Stat 6 */}
+                            <div>
+                                <div className="mb-5 flex">
+                                    <div className="h-10 w-10 rounded-full bg-[#E9E7FF]" />
+                                    <div className="-ml-2 h-10 w-10 rounded-full bg-[#D6ECFF]" />
+                                    <div className="-ml-2 flex h-10 w-10 items-center justify-center rounded-full bg-[#63B6FF]">
+                                        <Handshake size={16} className="text-white" />
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-4">
+                                    <div className="w-[3px] rounded-full bg-[#9AC8FF]" />
+                                    <div>
+                                        <h3 className="text-[48px] font-medium leading-none tracking-[-0.04em] text-black">
+                                            4.2M+
+                                        </h3>
+                                        <p className="mt-2 text-[18px] text-[#444]">
+                                            Annual visitors
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
             </div>
         </section>
     )
