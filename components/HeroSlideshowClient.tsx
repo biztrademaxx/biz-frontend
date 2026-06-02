@@ -450,7 +450,7 @@ export default function HeroSlideshowClient({
             </h1>
 
             {/* Description */}
-            <p className="mt-20 max-w-[340px] text-[14px] leading-[1.7] text-[#64748B] ">
+            <p className="mt-22 max-w-[340px] text-[14px] leading-[1.7] text-[#64748B] ">
               Connect with buyers, exhibitors & industry
               leaders at the world's best trade fairs.
             </p>
@@ -486,13 +486,13 @@ export default function HeroSlideshowClient({
             <div className="flex gap-4 mt-6 max-w-[360px]">
               <Link
                 href="/event"
-                className="flex-1 text-center bg-blue-600 hover:bg-blue-700 transition-colors text-white text-[0.9rem] font-bold h-12 rounded-xl flex items-center justify-center"
+                className="flex-1 text-center bg-blue-600 hover:bg-blue-700 transition-colors text-white text-[0.9rem] font-bold h-12 rounded-sm flex items-center justify-center"
               >
                 Find Events
               </Link>
               <Link
                 href="/organizer-signup"
-                className="flex-1 text-center bg-white border-2 border-gray-300 hover:border-blue-400 hover:text-blue-600 transition-colors text-gray-800 text-[0.9rem] font-bold h-12 rounded-xl flex items-center justify-center"
+                className="flex-1 text-center bg-white border-2 border-gray-300 hover:border-blue-400 hover:text-blue-600 transition-colors text-gray-800 text-[0.9rem] font-bold h-12 rounded-sm flex items-center justify-center"
               >
                 List Your Event
               </Link>
