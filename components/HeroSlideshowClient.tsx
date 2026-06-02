@@ -339,7 +339,8 @@ export default function HeroSlideshowClient({
   const featured = events[activeIdx]
   const { dayRange, monthYear } = heroDateParts(featured.startDate, featured.endDate)
   const loc = locationLine(featured)
-  const imgUrl = cardImageUrl(featured)
+  //const imgUrl = cardImageUrl(featured)
+  const imgUrl = '/images/heroImage.png'
   const previews = [1, 2, 3].map((o) => events[(activeIdx + o) % events.length])
 
   return (
@@ -429,8 +430,8 @@ export default function HeroSlideshowClient({
           {/* ── RIGHT PANEL ── */}
           <div className="w-full lg:w-[65%] flex flex-col gap-5">
             {/* Featured card — with blue light shadow added */}
-            <div className="relative w-full rounded-sm shadow-[0_20px_60px_-15px_rgba(59,130,246,0.4)] overflow-visible">
-              <div className="relative overflow-hidden rounded-sm" style={{ height: "360px" }}>
+            <div className="relative w-full rounded-xl shadow-[0_20px_60px_-15px_rgba(59,130,246,0.4)] overflow-visible">
+              <div className="relative overflow-hidden rounded-xl" style={{ height: "360px" }}>
                 {imgUrl && (
                   <AppImage
                     src={imgUrl}
@@ -441,8 +442,20 @@ export default function HeroSlideshowClient({
                   />
                 )}
 
-                <div className="absolute inset-0 bg-black/45 z-[1]" />
-
+                <div
+                  className="
+    absolute
+    bottom-0
+    left-0
+    right-0
+    h-[50%]
+    bg-gradient-to-t
+    from-black/70
+    via-black/35
+    to-transparent
+    z-[1]
+  "
+                />
                 {!imgUrl && (
                   <div className="absolute inset-0 bg-gradient-to-br from-blue-200 to-blue-400" />
                 )}
