@@ -369,7 +369,7 @@ function WorldMapDots() {
           <circle key={i} cx={cx} cy={cy} r="2.4" />
         ))}
       </g>
-      {/* Soft center glow so dots don't compete with text */}    </svg>
+    </svg>
   )
 }
 
@@ -437,13 +437,12 @@ export default function HeroSlideshowClient({
       <WorldMapDots />
 
       <div className="mx-auto max-w-7xl px-3 sm:px-4 lg:px-6">
-        <div className="relative z-10 flex flex-col lg:flex-row items-center gap-8 py-8">
-
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-start gap-12 lg:gap-16 py-8">
           {/* ── LEFT PANEL ── */}
-          <div className="w-full lg:w-[30%] flex-shrink-0">
-
+          <div className="w-full lg:w-[35%] flex-shrink-0">
             {/* Headline */}
-            <h1 className="max-w-[340px] text-[65px] font-light leading-[0.9] tracking-[-0.05em] text-[#0B132B]">            Discover
+            <h1 className="max-w-[340px] text-[65px] font-light leading-[0.9] tracking-[-0.05em] text-[#0B132B]">
+              Discover
               <br />
               <span className="text-[#2563EB]">Trade Shows</span>
               <br />
@@ -451,13 +450,13 @@ export default function HeroSlideshowClient({
             </h1>
 
             {/* Description */}
-            <p className="mt-8 max-w-[340px] text-[14px] leading-[1.7] text-[#64748B]">
+            <p className="mt-20 max-w-[340px] text-[14px] leading-[1.7] text-[#64748B] ">
               Connect with buyers, exhibitors & industry
               leaders at the world's best trade fairs.
             </p>
 
             {/* Stats */}
-            <div className="flex gap-8 mt-8 mb-8">
+            <div className="flex gap-8 mt-8 mb-10">
               <div className="flex items-center gap-3">
                 <CalendarDays className="h-6 w-6 text-blue-500 shrink-0" strokeWidth={1.5} />
                 <div>
@@ -483,26 +482,6 @@ export default function HeroSlideshowClient({
               </div>
             </div>
 
-            {/* Search */}
-            {/* <div className="flex items-center gap-2 mb-4 max-w-[420px]">
-            <div className="flex flex-1 items-center gap-2 bg-white border border-gray-200 rounded-xl px-3.5 h-12 shadow-sm">
-              <Search className="h-4 w-4 text-gray-400 shrink-0" strokeWidth={2} />
-              <input
-                type="text"
-                placeholder="Search events, industries, venues..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="flex-1 text-[0.85rem] text-gray-700 placeholder:text-gray-400 bg-transparent outline-none"
-              />
-            </div>
-            <Link
-              href={`/event${searchQuery ? `?q=${encodeURIComponent(searchQuery)}` : ""}`}
-              className="flex-shrink-0 bg-blue-600 hover:bg-blue-700 text-white text-[0.85rem] font-bold px-5 h-12 rounded-xl flex items-center whitespace-nowrap transition-colors"
-            >
-              Search Events
-            </Link>
-          </div> */}
-
             {/* CTA buttons */}
             <div className="flex gap-4 mt-6 max-w-[360px]">
               <Link
@@ -521,9 +500,9 @@ export default function HeroSlideshowClient({
           </div>
 
           {/* ── RIGHT PANEL ── */}
-          <div className="w-full lg:w-[70%] flex flex-col gap-5 items-start">
+          <div className="w-full lg:w-[65%] flex flex-col gap-5">
             {/* Featured card — with full visibility arrows outside */}
-            <div className="relative w-full max-w-[750px] rounded-sm shadow-[0_20px_60px_rgba(0,0,0,0.15)] overflow-visible">
+            <div className="relative w-full rounded-sm shadow-[0_20px_60px_rgba(0,0,0,0.15)] overflow-visible">
               {/* Card inner container with overflow hidden for border radius */}
               <div className="relative overflow-hidden rounded-sm" style={{ height: "360px" }}>
                 {imgUrl && (
@@ -560,7 +539,7 @@ export default function HeroSlideshowClient({
 
                     {/* Event info */}
                     <div className="flex-1 min-w-0 max-w-[400px]">
-                      <h2 className="text-[1.7rem] font-extrabold text-white mb-2 leading-tight">
+                      <h2 className="text-[1.7rem] font-extrabold text-white mb-2 leading-tight line-clamp-2">
                         {featured.title}
                       </h2>
                       {loc && (
@@ -614,7 +593,7 @@ export default function HeroSlideshowClient({
             </div>
 
             {/* Dot indicators */}
-            <div className="flex max-w-[760px] w-full justify-center items-center gap-2">
+            <div className="flex w-full justify-center items-center gap-2">
               {events.slice(0, Math.min(events.length, 8)).map((_, i) => (
                 <button
                   key={i}
@@ -628,7 +607,7 @@ export default function HeroSlideshowClient({
             </div>
 
             {/* Bottom 3 preview cards — thumbnails fully visible, no darkening */}
-            <div className="grid grid-cols-3 gap-6 max-w-[760px] w-full">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 w-full">
               {previews.map((event, i) => {
                 const pImg = cardImageUrl(event)
                 const pDate = shortDate(event.startDate, event.endDate)
@@ -666,7 +645,6 @@ export default function HeroSlideshowClient({
               })}
             </div>
           </div>
-
         </div>
       </div>
     </section>
