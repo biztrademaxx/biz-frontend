@@ -287,92 +287,6 @@ function locationLine(event: Event) {
   return [v.venueName, v.venueCity, v.venueCountry].filter(Boolean).join(", ")
 }
 
-/** Full-section world map dots — covers entire hero including bottom preview area */
-function WorldMapDots() {
-  // Dense dot clusters covering the full 1200×500 viewBox
-  const dots: [number, number][] = [
-    // North America
-    [30, 40], [48, 35], [66, 32], [84, 30], [102, 28], [120, 30], [138, 33], [156, 37], [174, 42],
-    [30, 58], [48, 53], [66, 50], [84, 48], [102, 46], [120, 48], [138, 51], [156, 55], [174, 60], [192, 65],
-    [48, 76], [66, 73], [84, 71], [102, 69], [120, 71], [138, 74], [156, 78], [174, 83], [192, 88], [210, 93],
-    [66, 94], [84, 91], [102, 89], [120, 91], [138, 94], [156, 98], [174, 103], [192, 108],
-    [84, 112], [102, 110], [120, 112], [138, 115], [156, 119], [174, 124],
-    [102, 130], [120, 132], [138, 135], [156, 139],
-    [120, 148], [138, 151], [156, 155],
-    [138, 166], [156, 170],
-    // South America
-    [138, 198], [156, 194], [174, 192], [192, 194], [210, 198],
-    [138, 216], [156, 212], [174, 210], [192, 212], [210, 216], [228, 212],
-    [156, 230], [174, 228], [192, 230], [210, 234], [228, 230],
-    [174, 248], [192, 246], [210, 250], [228, 254],
-    [192, 266], [210, 268], [228, 272],
-    [210, 284], [228, 288],
-    [210, 302],
-    // Europe
-    [318, 28], [336, 25], [354, 23], [372, 25], [390, 28], [408, 30],
-    [318, 46], [336, 43], [354, 41], [372, 43], [390, 46], [408, 48], [426, 44],
-    [318, 64], [336, 61], [354, 59], [372, 61], [390, 64], [408, 66], [426, 62], [444, 58],
-    [336, 79], [354, 77], [372, 79], [390, 82], [408, 84], [426, 80], [444, 76],
-    [354, 94], [372, 96], [390, 99], [408, 96], [426, 92],
-    [372, 111], [390, 114], [408, 111],
-    // Africa
-    [354, 129], [372, 127], [390, 129], [408, 132], [426, 128], [444, 124],
-    [336, 147], [354, 145], [372, 143], [390, 145], [408, 148], [426, 144], [444, 140], [462, 136],
-    [336, 162], [354, 160], [372, 158], [390, 160], [408, 163], [426, 159], [444, 155],
-    [354, 177], [372, 175], [390, 177], [408, 180], [426, 176], [444, 172],
-    [372, 192], [390, 194], [408, 197], [426, 193], [444, 189],
-    [372, 207], [390, 209], [408, 212], [426, 208],
-    [390, 224], [408, 227], [426, 223],
-    [390, 239], [408, 242],
-    [408, 257],
-    // Asia
-    [462, 28], [480, 25], [498, 23], [516, 25], [534, 28], [552, 25], [570, 28], [588, 31], [606, 34], [624, 37], [642, 33], [660, 36], [678, 38],
-    [462, 46], [480, 43], [498, 41], [516, 43], [534, 46], [552, 43], [570, 46], [588, 49], [606, 52], [624, 55], [642, 51], [660, 54], [678, 56], [696, 52], [714, 48],
-    [462, 64], [480, 61], [498, 59], [516, 61], [534, 64], [552, 61], [570, 64], [588, 67], [606, 70], [624, 73], [642, 69], [660, 72], [678, 74], [696, 70], [714, 66], [732, 62],
-    [480, 79], [498, 77], [516, 79], [534, 82], [552, 79], [570, 82], [588, 85], [606, 88], [624, 91], [642, 87], [660, 90], [678, 92], [696, 88], [714, 84], [732, 80],
-    [498, 94], [516, 96], [534, 99], [552, 96], [570, 99], [588, 102], [606, 105], [624, 108], [642, 104], [660, 107], [678, 109], [696, 105], [714, 101],
-    [516, 111], [534, 114], [552, 111], [570, 114], [588, 117], [606, 120], [624, 123], [642, 119], [660, 122], [678, 124], [696, 120],
-    [534, 126], [552, 129], [570, 132], [588, 135], [606, 138], [624, 141], [642, 137], [660, 140], [678, 142], [696, 138], [714, 134], [732, 130],
-    [552, 144], [570, 147], [588, 150], [606, 153], [624, 156], [642, 152], [660, 155], [678, 157], [696, 153], [714, 149],
-    [570, 162], [588, 165], [606, 168], [624, 171], [642, 167], [660, 170], [678, 172],
-    // Australia
-    [606, 252], [624, 248], [642, 246], [660, 248], [678, 252], [696, 248],
-    [606, 270], [624, 266], [642, 264], [660, 266], [678, 270], [696, 266], [714, 262],
-    [606, 288], [624, 284], [642, 282], [660, 284], [678, 288], [696, 284], [714, 280],
-    [624, 304], [642, 300], [660, 302], [678, 306], [696, 302],
-    [642, 320], [660, 318], [678, 322],
-    [660, 336], [678, 338],
-    // Extra dots in bottom region to cover preview cards area
-    [30, 340], [66, 336], [102, 340], [138, 344], [174, 340], [210, 344], [246, 340], [282, 344],
-    [30, 358], [66, 354], [102, 358], [138, 362], [174, 358], [210, 362], [246, 358], [282, 362], [318, 358], [354, 354], [390, 358], [426, 362], [462, 358], [498, 354], [534, 358], [570, 362], [606, 358], [642, 354], [678, 358], [714, 362], [750, 358], [786, 354], [822, 358],
-    [30, 376], [66, 372], [102, 376], [138, 380], [174, 376], [210, 380], [246, 376], [282, 380], [318, 376], [354, 372], [390, 376], [426, 380], [462, 376], [498, 372], [534, 376], [570, 380], [606, 376], [642, 372], [678, 376], [714, 380], [750, 376], [786, 372], [822, 376], [858, 372], [894, 376],
-    [30, 394], [66, 390], [102, 394], [138, 398], [174, 394], [210, 398], [246, 394], [282, 398], [318, 394], [354, 390], [390, 394], [426, 398], [462, 394], [498, 390], [534, 394], [570, 398], [606, 394], [642, 390], [678, 394], [714, 398], [750, 394], [786, 390], [822, 394], [858, 390], [894, 394],
-    [30, 412], [66, 408], [102, 412], [138, 416], [174, 412], [210, 416], [246, 412], [282, 416], [318, 412], [354, 408], [390, 412], [426, 416], [462, 412], [498, 408], [534, 412], [570, 416], [606, 412], [642, 408], [678, 412], [714, 416], [750, 412], [786, 408], [822, 412], [858, 408], [894, 412],
-    [30, 430], [66, 426], [102, 430], [138, 434], [174, 430], [210, 434], [246, 430], [282, 434], [318, 430], [354, 426], [390, 430], [426, 434], [462, 430], [498, 426], [534, 430], [570, 434], [606, 430], [642, 426], [678, 430], [714, 434], [750, 430], [786, 426], [822, 430], [858, 426], [894, 430], [930, 426], [960, 430],
-    [30, 448], [66, 444], [102, 448], [138, 452], [174, 448], [210, 452], [246, 448], [282, 452], [318, 448], [354, 444], [390, 448], [426, 452], [462, 448], [498, 444], [534, 448], [570, 452], [606, 448], [642, 444], [678, 448], [714, 452], [750, 448], [786, 444], [822, 448], [858, 444], [894, 448], [930, 444], [960, 448], [990, 444], [1020, 448],
-  ]
-  return (
-    <svg
-      aria-hidden
-      className="absolute inset-0 w-full h-full pointer-events-none select-none"
-      viewBox="0 0 1100 480"
-      preserveAspectRatio="xMidYMid slice"
-    >
-      <defs>
-        <radialGradient id="map-center-fade" cx="50%" cy="40%" r="65%">
-          <stop offset="0%" stopColor="#c5d9f5" stopOpacity="0.15" />
-          <stop offset="100%" stopColor="#c5d9f5" stopOpacity="0.7" />
-        </radialGradient>
-      </defs>
-      <g fill="#E6EDF7" opacity="0.45">
-        {dots.map(([cx, cy], i) => (
-          <circle key={i} cx={cx} cy={cy} r="2.4" />
-        ))}
-      </g>
-    </svg>
-  )
-}
-
 const AUTO_ADVANCE_MS = 5000
 
 export default function HeroSlideshowClient({
@@ -431,12 +345,25 @@ export default function HeroSlideshowClient({
   return (
     <section
       aria-label="Discover Trade Shows"
-      className="relative w-full overflow-hidden rounded-[28px] bg-white"
+      className="relative w-full overflow-hidden rounded-[28px] "
     >
-      {/* World map dots — single layer covering the ENTIRE section */}
-      <WorldMapDots />
+      {/* Background Image */}
+      <div
+        className="absolute inset-0 pointer-events-none opacity-[0.30]"
+        style={{
+          backgroundImage: "url('/images/glob.jpeg')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat",
+        }}
+      />
 
-      <div className="mx-auto max-w-7xl px-3 sm:px-4 lg:px-6">
+      {/* Optional white overlay */}
+      <div className="absolute inset-0 bg-white/85" />
+
+      {/* Content */}
+      <div className="relative z-10 mx-auto max-w-7xl px-3 sm:px-4 lg:px-6">
+
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-start gap-12 lg:gap-16 py-8">
           {/* ── LEFT PANEL ── */}
           <div className="w-full lg:w-[35%] flex-shrink-0">
@@ -450,13 +377,13 @@ export default function HeroSlideshowClient({
             </h1>
 
             {/* Description */}
-            <p className="mt-22 max-w-[340px] text-[14px] leading-[1.7] text-[#64748B] ">
+            <p className="mt-20 max-w-[340px] text-[14px] leading-[1.7] text-[#64748B]">
               Connect with buyers, exhibitors & industry
               leaders at the world's best trade fairs.
             </p>
 
             {/* Stats */}
-            <div className="flex gap-8 mt-8 mb-10">
+            <div className="flex gap-8 mt-8 mb-12">
               <div className="flex items-center gap-3">
                 <CalendarDays className="h-6 w-6 text-blue-500 shrink-0" strokeWidth={1.5} />
                 <div>
@@ -501,9 +428,8 @@ export default function HeroSlideshowClient({
 
           {/* ── RIGHT PANEL ── */}
           <div className="w-full lg:w-[65%] flex flex-col gap-5">
-            {/* Featured card — with full visibility arrows outside */}
-            <div className="relative w-full rounded-sm shadow-[0_20px_60px_rgba(0,0,0,0.15)] overflow-visible">
-              {/* Card inner container with overflow hidden for border radius */}
+            {/* Featured card — with blue light shadow added */}
+            <div className="relative w-full rounded-sm shadow-[0_20px_60px_-15px_rgba(59,130,246,0.4)] overflow-visible">
               <div className="relative overflow-hidden rounded-sm" style={{ height: "360px" }}>
                 {imgUrl && (
                   <AppImage
@@ -528,7 +454,7 @@ export default function HeroSlideshowClient({
                   </span>
                 </div>
 
-                {/* Bottom info bar — white frosted panel, no dark overlay */}
+                {/* Bottom info bar */}
                 <div className="absolute bottom-0 left-0 right-0 z-20 p-6">
                   <div className="flex items-end gap-5">
                     {/* White date box */}
@@ -573,7 +499,7 @@ export default function HeroSlideshowClient({
                 </div>
               </div>
 
-              {/* Prev / Next arrows positioned absolutely relative to the card but outside */}
+              {/* Prev / Next arrows */}
               <button
                 type="button"
                 aria-label="Previous event"
@@ -606,7 +532,7 @@ export default function HeroSlideshowClient({
               ))}
             </div>
 
-            {/* Bottom 3 preview cards — thumbnails fully visible, no darkening */}
+            {/* Bottom 3 preview cards */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 w-full">
               {previews.map((event, i) => {
                 const pImg = cardImageUrl(event)
@@ -617,7 +543,6 @@ export default function HeroSlideshowClient({
                     href={eventPublicPath(event)}
                     className="flex items-center gap-3 group"
                   >
-                    {/* Square thumbnail — fully visible */}
                     <div className="relative w-[68px] h-[68px] rounded-sm overflow-hidden flex-shrink-0 bg-gray-100 shadow-sm">
                       {pImg ? (
                         <AppImage
@@ -633,7 +558,6 @@ export default function HeroSlideshowClient({
                         </div>
                       )}
                     </div>
-                    {/* Text */}
                     <div className="flex-1 min-w-0">
                       <p className="text-[0.82rem] font-bold text-gray-900 leading-tight line-clamp-2 group-hover:text-blue-600 transition-colors">
                         {event.title}
