@@ -431,57 +431,60 @@ export default function HeroSlideshowClient({
   return (
     <section
       aria-label="Discover Trade Shows"
-      className="relative w-full overflow-hidden rounded-[28px] border border-[#E9EEF5] bg-white"
+      className="relative w-full overflow-hidden rounded-[28px] bg-white"
     >
       {/* World map dots — single layer covering the ENTIRE section */}
       <WorldMapDots />
 
-      <div className="relative z-10 flex flex-col lg:flex-row items-center gap-10 px-10 py-10">
+      <div className="mx-auto max-w-7xl px-3 sm:px-4 lg:px-6">
+        <div className="relative z-10 flex flex-col lg:flex-row items-center gap-8 py-8">
 
-        {/* ── LEFT PANEL ── */}
-        <div className="w-full lg:w-[36%] flex-shrink-0">
+          {/* ── LEFT PANEL ── */}
+          <div className="w-full lg:w-[30%] flex-shrink-0">
 
-          {/* Headline */}
-          <h1 className="max-w-[340px] text-[65px] font-light leading-[0.9] tracking-[-0.05em] text-[#0B132B]">            Discover
-            <br />
-            <span className="text-[#2563EB]">Trade Shows</span>
-            <br />
-            Worldwide
-          </h1>
+            {/* Headline */}
+            <h1 className="max-w-[340px] text-[65px] font-light leading-[0.9] tracking-[-0.05em] text-[#0B132B]">            Discover
+              <br />
+              <span className="text-[#2563EB]">Trade Shows</span>
+              <br />
+              Worldwide
+            </h1>
 
-          {/* Description */}
-          <p className="mt-8 max-w-[340px] text-[14px] leading-[1.7] text-[#64748B]">
-            Connect with buyers, exhibitors & industry
-            leaders at the world's best trade fairs.
-          </p>
+            {/* Description */}
+            <p className="mt-8 max-w-[340px] text-[14px] leading-[1.7] text-[#64748B]">
+              Connect with buyers, exhibitors & industry
+              leaders at the world's best trade fairs.
+            </p>
 
-          {/* Stats */}
-          <div className="flex gap-8 mt-8 mb-8">
-            <div className="flex items-center gap-3">
-              <CalendarDays className="h-6 w-6 text-blue-500 shrink-0" strokeWidth={1.5} />
-              <div>
-                <p className="text-[28px] font-extrabold text-[#0F172A] leading-none">12K+</p>
-                <p className="text-[12px] text-[#64748B] mt-1">Events Listed</p>
+            {/* Stats */}
+            <div className="flex gap-8 mt-8 mb-8">
+              <div className="flex items-center gap-3">
+                <CalendarDays className="h-6 w-6 text-blue-500 shrink-0" strokeWidth={1.5} />
+                <div>
+                  <p className="text-[28px] font-extrabold text-[#0F172A] leading-none">12K+</p>
+                  <p className="text-[10px] text-[#64748B] mt-1">Events Listed</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2.5">
+                <Users className="h-6 w-6 text-blue-500 shrink-0" strokeWidth={2} />
+                <div>
+                  <p className="text-[28px] font-extrabold text-[#0F172A] leading-none">320K+</p>
+                  <p className="text-[10px] text-[#64748B] mt-1 whitespace-nowrap">
+                    Industry Professionals
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2.5">
+                <Globe className="h-6 w-6 text-blue-500 shrink-0" strokeWidth={1.5} />
+                <div>
+                  <p className="text-[28px] font-extrabold text-[#0F172A] leading-none">180+</p>
+                  <p className="text-[10px] text-[#64748B] mt-1">Countries</p>
+                </div>
               </div>
             </div>
-            <div className="flex items-center gap-2.5">
-              <Users className="h-6 w-6 text-blue-500 shrink-0" strokeWidth={1.5} />
-              <div>
-                <p className="text-[28px] font-extrabold text-[#0F172A] leading-none">320K+</p>
-                <p className="text-[12px] text-[#64748B] mt-1">Industry Professionals</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2.5">
-              <Globe className="h-6 w-6 text-blue-500 shrink-0" strokeWidth={1.5} />
-              <div>
-                <p className="text-[28px] font-extrabold text-[#0F172A] leading-none">180+</p>
-                <p className="text-[12px] text-[#64748B] mt-1">Countries</p>
-              </div>
-            </div>
-          </div>
 
-          {/* Search */}
-          {/* <div className="flex items-center gap-2 mb-4 max-w-[420px]">
+            {/* Search */}
+            {/* <div className="flex items-center gap-2 mb-4 max-w-[420px]">
             <div className="flex flex-1 items-center gap-2 bg-white border border-gray-200 rounded-xl px-3.5 h-12 shadow-sm">
               <Search className="h-4 w-4 text-gray-400 shrink-0" strokeWidth={2} />
               <input
@@ -500,204 +503,170 @@ export default function HeroSlideshowClient({
             </Link>
           </div> */}
 
-          {/* CTA buttons */}
-          <div className="flex gap-4 mt-6 max-w-[360px]">
-            <Link
-              href="/event"
-              className="flex-1 text-center bg-blue-600 hover:bg-blue-700 transition-colors text-white text-[0.9rem] font-bold h-12 rounded-xl flex items-center justify-center"
-            >
-              Find Events
-            </Link>
-            <Link
-              href="/organizer-signup"
-              className="flex-1 text-center bg-white border-2 border-gray-300 hover:border-blue-400 hover:text-blue-600 transition-colors text-gray-800 text-[0.9rem] font-bold h-12 rounded-xl flex items-center justify-center"
-            >
-              List Your Event
-            </Link>
-          </div>
-        </div>
-
-        {/* ── RIGHT PANEL ── */}
-        <div className="flex-1 min-w-0">
-
-          {/* Featured card — NO dark gradient, image fully visible */}
-          <div
-            className="
-    relative
-    overflow-hidden
-    rounded-[28px]
-    shadow-[0_20px_60px_rgba(0,0,0,0.15)]
-    border border-white
-  "
-            style={{
-              height: "360px",
-            }}
-          >
-
-            {/* Full bright image */}
-            {imgUrl && (
-              <AppImage
-                src={imgUrl}
-                alt={featured.title}
-                fill
-                sizes="(max-width: 1024px) 100vw, 55vw"
-                className="object-cover"
-                priority
-              />
-            )}
-            <div className="absolute inset-0 bg-black/45 z-[1]" />
-            {!imgUrl && (
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-200 to-blue-400" />
-            )}
-
-            {/* FEATURED EVENT badge */}
-            <div className="absolute top-4 left-4 z-10">
-              <span className="bg-blue-600 text-white text-[0.62rem] font-extrabold uppercase tracking-[0.14em] px-3 py-1.5 rounded-md shadow">
-                Featured Event
-              </span>
+            {/* CTA buttons */}
+            <div className="flex gap-4 mt-6 max-w-[360px]">
+              <Link
+                href="/event"
+                className="flex-1 text-center bg-blue-600 hover:bg-blue-700 transition-colors text-white text-[0.9rem] font-bold h-12 rounded-xl flex items-center justify-center"
+              >
+                Find Events
+              </Link>
+              <Link
+                href="/organizer-signup"
+                className="flex-1 text-center bg-white border-2 border-gray-300 hover:border-blue-400 hover:text-blue-600 transition-colors text-gray-800 text-[0.9rem] font-bold h-12 rounded-xl flex items-center justify-center"
+              >
+                List Your Event
+              </Link>
             </div>
+          </div>
 
-            {/* Prev / Next arrows */}
-            <button
-              type="button"
-              aria-label="Previous event"
-              onClick={() => advance("prev")}
-              className="
-absolute
-left-[-22px]
-top-1/2
--translate-y-1/2
-z-20
-w-12
-h-12
-rounded-full
-bg-white
-shadow-xl
-flex
-items-center
-justify-center
-"            >
-              <ChevronLeft className="h-5 w-5 text-gray-600" strokeWidth={2.5} />
-            </button>
-            <button
-              type="button"
-              aria-label="Next event"
-              onClick={() => advance("next")}
-              className="
-absolute
-right-[-22px]
-top-1/2
--translate-y-1/2
-z-20
-w-12
-h-12
-rounded-full
-bg-white
-shadow-xl
-flex
-items-center
-justify-center
-"            >
-              <ChevronRight className="h-5 w-5 text-gray-600" strokeWidth={2.5} />
-            </button>
+          {/* ── RIGHT PANEL ── */}
+          <div className="w-full lg:w-[70%] flex flex-col gap-5 items-start">
+            {/* Featured card — with full visibility arrows outside */}
+            <div className="relative w-full max-w-[750px] rounded-sm shadow-[0_20px_60px_rgba(0,0,0,0.15)] overflow-visible">
+              {/* Card inner container with overflow hidden for border radius */}
+              <div className="relative overflow-hidden rounded-sm" style={{ height: "360px" }}>
+                {imgUrl && (
+                  <AppImage
+                    src={imgUrl}
+                    alt={featured.title}
+                    fill
+                    className="object-cover"
+                    priority
+                  />
+                )}
 
-            {/* Bottom info bar — white frosted panel, no dark overlay */}
-            <div className="absolute bottom-0 left-0 right-0 z-20 p-6">
-              <div className="flex items-end gap-5">
-                {/* White date box */}
-                <div className="flex-shrink-0 bg-white rounded-xl px-4 py-3 text-center w-[110px] h-[100px] shadow">
-                  <p className="text-[1.4rem] font-black text-gray-900 leading-none tracking-tight mt-5">{dayRange}</p>
-                  <p className="text-[0.68rem] font-semibold text-gray-500 mt-1.5 uppercase tracking-wider">{monthYear}</p>
+                <div className="absolute inset-0 bg-black/45 z-[1]" />
+
+                {!imgUrl && (
+                  <div className="absolute inset-0 bg-gradient-to-br from-blue-200 to-blue-400" />
+                )}
+
+                {/* FEATURED EVENT badge */}
+                <div className="absolute top-4 left-4 z-10">
+                  <span className="bg-blue-600 text-white text-[0.62rem] font-extrabold uppercase tracking-[0.14em] px-3 py-1.5 rounded-md shadow">
+                    Featured Event
+                  </span>
                 </div>
 
-                {/* Event info */}
-                <div className="flex-1 min-w-0">
-                  <h2 className="text-[1.7rem] font-extrabold text-white mb-2 leading-tight">
-                    {featured.title}
-                  </h2>
-                  {loc && (
-                    <div className="flex items-center gap-1.5 text-white text-[0.8rem] mb-1">
-                      <MapPin className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
-                      <span className="truncate drop-shadow-sm">{loc}</span>
+                {/* Bottom info bar — white frosted panel, no dark overlay */}
+                <div className="absolute bottom-0 left-0 right-0 z-20 p-6">
+                  <div className="flex items-end gap-5">
+                    {/* White date box */}
+                    <div className="flex-shrink-0 bg-white rounded-xl px-4 py-3 text-center w-[110px] h-[100px] shadow">
+                      <p className="text-[1.4rem] font-black text-gray-900 leading-none tracking-tight mt-5">{dayRange}</p>
+                      <p className="text-[0.68rem] font-semibold text-gray-500 mt-1.5 uppercase tracking-wider">{monthYear}</p>
                     </div>
-                  )}
-                  {featured.organizerName && (
-                    <div className="flex items-center gap-1.5 text-white text-[0.8rem] mb-3">
-                      <Building2 className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
-                      <span className="truncate drop-shadow-sm">{featured.organizerName}</span>
+
+                    {/* Event info */}
+                    <div className="flex-1 min-w-0 max-w-[400px]">
+                      <h2 className="text-[1.7rem] font-extrabold text-white mb-2 leading-tight">
+                        {featured.title}
+                      </h2>
+                      {loc && (
+                        <div className="flex items-center gap-1.5 text-white text-[0.8rem] mb-1">
+                          <MapPin className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
+                          <span className="truncate drop-shadow-sm">{loc}</span>
+                        </div>
+                      )}
+                      {featured.organizerName && (
+                        <div className="flex items-center gap-1.5 text-white text-[0.8rem] mb-3">
+                          <Building2 className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
+                          <span className="truncate drop-shadow-sm">{featured.organizerName}</span>
+                        </div>
+                      )}
+                      <div className="flex gap-2.5">
+                        <Link
+                          href={eventPublicPath(featured)}
+                          className="bg-blue-600 hover:bg-blue-700 text-white text-[0.8rem] font-bold px-5 py-2 rounded-lg transition-colors shadow"
+                        >
+                          Register Now
+                        </Link>
+                        <Link
+                          href={`${eventPublicPath(featured)}?tab=exhibit`}
+                          className="bg-white hover:bg-gray-50 text-gray-900 text-[0.8rem] font-bold px-5 py-2 rounded-lg border border-white/60 transition-colors shadow"
+                        >
+                          Exhibit Now
+                        </Link>
+                      </div>
                     </div>
-                  )}
-                  <div className="flex gap-2.5">
-                    <Link
-                      href={eventPublicPath(featured)}
-                      className="bg-blue-600 hover:bg-blue-700 text-white text-[0.8rem] font-bold px-5 py-2 rounded-lg transition-colors shadow"
-                    >
-                      Register Now
-                    </Link>
-                    <Link
-                      href={`${eventPublicPath(featured)}?tab=exhibit`}
-                      className="bg-white hover:bg-gray-50 text-gray-900 text-[0.8rem] font-bold px-5 py-2 rounded-lg border border-white/60 transition-colors shadow"
-                    >
-                      Exhibit Now
-                    </Link>
                   </div>
                 </div>
               </div>
+
+              {/* Prev / Next arrows positioned absolutely relative to the card but outside */}
+              <button
+                type="button"
+                aria-label="Previous event"
+                onClick={() => advance("prev")}
+                className="absolute left-[-20px] top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-white shadow-xl flex items-center justify-center hover:bg-gray-50 transition-colors"
+              >
+                <ChevronLeft className="h-5 w-5 text-gray-600" strokeWidth={2.5} />
+              </button>
+              <button
+                type="button"
+                aria-label="Next event"
+                onClick={() => advance("next")}
+                className="absolute right-[-20px] top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-white shadow-xl flex items-center justify-center hover:bg-gray-50 transition-colors"
+              >
+                <ChevronRight className="h-5 w-5 text-gray-600" strokeWidth={2.5} />
+              </button>
+            </div>
+
+            {/* Dot indicators */}
+            <div className="flex max-w-[760px] w-full justify-center items-center gap-2">
+              {events.slice(0, Math.min(events.length, 8)).map((_, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  aria-label={`Event ${i + 1}`}
+                  onClick={() => setActiveIdx(i)}
+                  className={`rounded-full transition-all duration-300 ${i === activeIdx ? "w-6 h-2 bg-blue-600" : "w-2 h-2 bg-blue-200 hover:bg-blue-400"
+                    }`}
+                />
+              ))}
+            </div>
+
+            {/* Bottom 3 preview cards — thumbnails fully visible, no darkening */}
+            <div className="grid grid-cols-3 gap-6 max-w-[760px] w-full">
+              {previews.map((event, i) => {
+                const pImg = cardImageUrl(event)
+                const pDate = shortDate(event.startDate, event.endDate)
+                return (
+                  <Link
+                    key={`${event.id}-${i}`}
+                    href={eventPublicPath(event)}
+                    className="flex items-center gap-3 group"
+                  >
+                    {/* Square thumbnail — fully visible */}
+                    <div className="relative w-[68px] h-[68px] rounded-sm overflow-hidden flex-shrink-0 bg-gray-100 shadow-sm">
+                      {pImg ? (
+                        <AppImage
+                          src={pImg}
+                          alt={event.title}
+                          fill
+                          sizes="56px"
+                          className="object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                      ) : (
+                        <div className="absolute inset-0 bg-gradient-to-br from-blue-300 to-blue-500 flex items-center justify-center">
+                          <CalendarDays className="h-5 w-5 text-white" />
+                        </div>
+                      )}
+                    </div>
+                    {/* Text */}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[0.82rem] font-bold text-gray-900 leading-tight line-clamp-2 group-hover:text-blue-600 transition-colors">
+                        {event.title}
+                      </p>
+                      <p className="text-[0.7rem] text-gray-500 mt-0.5">{pDate}</p>
+                    </div>
+                  </Link>
+                )
+              })}
             </div>
           </div>
 
-          {/* Dot indicators */}
-          <div className="flex justify-center items-center gap-2">
-            {events.slice(0, Math.min(events.length, 8)).map((_, i) => (
-              <button
-                key={i}
-                type="button"
-                aria-label={`Event ${i + 1}`}
-                onClick={() => setActiveIdx(i)}
-                className={`rounded-full transition-all duration-300 ${i === activeIdx ? "w-6 h-2 bg-blue-600" : "w-2 h-2 bg-blue-200 hover:bg-blue-400"
-                  }`}
-              />
-            ))}
-          </div>
-
-          {/* Bottom 3 preview cards — thumbnails fully visible, no darkening */}
-          <div className="grid grid-cols-3 gap-6">
-            {previews.map((event, i) => {
-              const pImg = cardImageUrl(event)
-              const pDate = shortDate(event.startDate, event.endDate)
-              return (
-                <Link
-                  key={`${event.id}-${i}`}
-                  href={eventPublicPath(event)}
-                  className="flex items-center gap-3 group"
-                >
-                  {/* Square thumbnail — fully visible */}
-                  <div className="relative w-[68px] h-[68px] rounded-xl overflow-hidden flex-shrink-0 bg-gray-100 shadow-sm">
-                    {pImg ? (
-                      <AppImage
-                        src={pImg}
-                        alt={event.title}
-                        fill
-                        sizes="56px"
-                        className="object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                    ) : (
-                      <div className="absolute inset-0 bg-gradient-to-br from-blue-300 to-blue-500 flex items-center justify-center">
-                        <CalendarDays className="h-5 w-5 text-white" />
-                      </div>
-                    )}
-                  </div>
-                  {/* Text */}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[0.82rem] font-bold text-gray-900 leading-tight line-clamp-2 group-hover:text-blue-600 transition-colors">
-                      {event.title}
-                    </p>
-                    <p className="text-[0.7rem] text-gray-500 mt-0.5">{pDate}</p>
-                  </div>
-                </Link>
-              )
-            })}
-          </div>
         </div>
       </div>
     </section>
