@@ -38,7 +38,7 @@ export default function Home() {
           </Suspense>
         </div>
       </div>
-      <AboutBizTrade/>
+      {/* <AboutBizTrade/> */}
 
       <Suspense fallback={<CategoryBrowseSkeleton />}>
         <CategoryGrid />
