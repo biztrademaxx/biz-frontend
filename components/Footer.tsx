@@ -16,6 +16,8 @@ import {
   RefreshCw,
   Headphones,
   ShieldCheck,
+  Verified,
+  Clock,
 } from "lucide-react"
 
 import FooterChatBot from "@/components/footer-chat-bot"
@@ -78,7 +80,7 @@ const Footer: React.FC<FooterProps> = ({ categories }) => {
             actively searching for exhibitions, conferences and trade fairs.
           </p>
 
-          <div className="mt-8 flex flex-wrap justify-center gap-4">
+          {/* <div className="mt-8 flex flex-wrap justify-center gap-4">
             <Link
               href="/organizer-signup"
               className="rounded-md bg-[#FFC107] px-6 py-3 text-sm font-semibold text-[#001B44] transition hover:bg-[#FFD54A]"
@@ -92,74 +94,67 @@ const Footer: React.FC<FooterProps> = ({ categories }) => {
             >
               View Premium Plans
             </Link>
-          </div>
+          </div> */}
         </div>
-        <div className="mx-auto mt-14 h-px max-w-5xl bg-white/15" />
-        <div className="mx-auto mt-10 grid max-w-6xl grid-cols-1 gap-10 px-8 md:grid-cols-4">
-          
+        <div className="mx-auto mt-14 h-px max-w-7xl bg-white/15" />
+        <div className="mx-auto mt-10 flex min-w-max items-center justify-center gap-10 px-8">          
 
           {/* Trusted */}
           <div className="flex items-center justify-center gap-4">
             <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/[0.06] border border-white/[0.12]">
-              <svg className="h-5 w-5 text-[#6EAAFF]" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                <path d="M9 12l2 2 4-4" />
-              </svg>
+              <Globe className="h-5 w-5 text-[#6EAAFF]" strokeWidth={1.8} />
             </div>
             <div className="leading-tight">
-              <p className="text-[14px] font-semibold text-white">Trusted by Organizers</p>
-              <p className="mt-1 text-[12px] text-white/50">Worldwide</p>
+              <p className="text-[14px] font-semibold text-white">Global Reach</p>
+              <p className="mt-1 text-[12px] text-white/50">Events in 120+ countries</p>
             </div>
           </div>
 
-          {/* <div className="hidden h-9 w-px bg-white/[0.08] lg:block" /> */}
+          
 
           {/* Events */}
           <div className="flex items-center justify-center gap-4">
             <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/[0.06] border border-white/[0.12]">
-              <svg className="h-5 w-5 text-[#6EAAFF]" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
-                <rect x="3" y="4" width="18" height="18" rx="2" />
-                <line x1="8" y1="2" x2="8" y2="6" />
-                <line x1="16" y1="2" x2="16" y2="6" />
-                <line x1="3" y1="10" x2="21" y2="10" />
-              </svg>
+              <Verified className="h-5 w-5 text-[#6EAAFF]" strokeWidth={1.8} />
             </div>
             <div className="leading-tight">
-              <p className="text-[22px] font-bold text-white">10,000+</p>
-              <p className="mt-1 text-[12px] text-white/50">Events Listed</p>
+              <p className="text-[22px] font-bold text-white">Verified & Trusted</p>
+              <p className="mt-1 text-[12px] text-white/50">Authentic events & organizers</p>
             </div>
           </div>
 
-          {/* <div className="hidden h-9 w-px bg-white/[0.08] lg:block" /> */}
+
 
           {/* Organizers */}
           <div className="flex items-center justify-center gap-4">
             <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/[0.06] border border-white/[0.12]">
-              <svg className="h-5 w-5 text-[#6EAAFF]" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
-                <path d="M4 20V10" /><path d="M10 20V4" /><path d="M16 20v-8" /><path d="M22 20V7" />
-              </svg>
+              <Clock className="h-5 w-5 text-[#6EAAFF]" strokeWidth={1.8} />
             </div>
             <div className="leading-tight">
-              <p className="text-[22px] font-bold text-white">5,000+</p>
-              <p className="mt-1 text-[12px] text-white/50">Verified Organizers</p>
+              <p className="text-[22px] font-bold text-white">Always Updated</p>
+              <p className="mt-1 text-[12px] text-white/50">Real-time event information</p>
             </div>
           </div>
 
-          {/* <div className="hidden h-9 w-px bg-white/[0.08] lg:block" /> */}
+
 
           {/* Countries */}
           <div className="flex items-center justify-center gap-4">
             <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/[0.06] border border-white/[0.12]">
-              <svg className="h-5 w-5 text-[#6EAAFF]" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="9" />
-                <path d="M3 12h18" />
-                <path d="M12 3c3 3 3 15 0 18" />
-                <path d="M12 3c-3 3-3 15 0 18" />
-              </svg>
+              <Headphones className="h-5 w-5 text-[#6EAAFF]" strokeWidth={1.8} />
             </div>
             <div className="leading-tight">
-              <p className="text-[22px] font-bold text-white">120+</p>
-              <p className="mt-1 text-[12px] text-white/50">Countries Covered</p>
+              <p className="text-[22px] font-bold text-white">Dedicated Support</p>
+              <p className="mt-1 text-[12px] text-white/50">Here to help you anytime</p>
+            </div>
+          </div>
+          <div className="flex items-center justify-center gap-4">
+            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/[0.06] border border-white/[0.12]">
+              <ShieldCheck className="h-5 w-5 text-[#6EAAFF]" strokeWidth={1.8} />
+            </div>
+            <div className="leading-tight">
+              <p className="text-[22px] font-bold text-white">Secure & Reliable</p>
+              <p className="mt-1 text-[12px] text-white/50">Your data is always safe</p>
             </div>
           </div>
         </div>
@@ -318,7 +313,7 @@ const Footer: React.FC<FooterProps> = ({ categories }) => {
           </div>
 
           {/* ── TRUST STRIP ── */}
-          <div style={{ borderTop: "1px solid rgba(255,255,255,0.07)", backgroundColor: "rgba(0,0,0,0.25)" }}>
+          {/* <div style={{ borderTop: "1px solid rgba(255,255,255,0.07)", backgroundColor: "rgba(0,0,0,0.25)" }}>
             <div className="mx-auto max-w-7xl px-6 lg:px-10">
               <div className="flex flex-wrap items-stretch">
                 {[
@@ -355,7 +350,7 @@ const Footer: React.FC<FooterProps> = ({ categories }) => {
                 })}
               </div>
             </div>
-          </div>
+          </div> */}
 
           {/* ── REGISTERED ADDRESS ── */}
           <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", backgroundColor: "rgba(0,0,0,0.30)" }}>
@@ -369,7 +364,7 @@ const Footer: React.FC<FooterProps> = ({ categories }) => {
           </div>
 
           {/* ── COPYRIGHT ── */}
-          <div style={{ borderTop: "1px solid rgba(255,255,255,0.05)", backgroundColor: "rgba(0,0,0,0.40)" }}>
+          <div style={{ backgroundColor: "rgba(0,0,0,0.40)" }}>
             <div className="mx-auto max-w-7xl px-6 py-4 lg:px-10">
               <p className="text-[12.5px] text-white/45">
                 BizTradeFairs.com provides verified information on trade fairs, expos, conferences, and industrial events worldwide.
