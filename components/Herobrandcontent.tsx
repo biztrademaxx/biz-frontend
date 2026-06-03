@@ -11,7 +11,7 @@ export default function HeroBrandContent() {
             </div>
 
             {/* Main Heading */}
-            <h1 className="max-w-[650px] font-['Syne',sans-serif] text-[3rem] font-extrabold leading-[1.05] tracking-tight text-slate-900 lg:text-[5rem]">
+            <h1 className="max-w-[650px] font-display text-[3rem] font-extrabold leading-[1.05] tracking-tight text-slate-900 lg:text-[5rem]">
                 Global Trade
                 <br />
                 Shows &

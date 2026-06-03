@@ -24,7 +24,7 @@ export function EventsListingEventCard({ event }: { event: Event }) {
             {event.timings.endDate && <> - {formatListingDateShort(event.timings.endDate)}</>} {formatListingYear(event.timings.startDate)}
           </p>
           <div className="flex flex-wrap items-start gap-2">
-            <h3 className="min-w-0 flex-1 text-left text-[17px] font-bold leading-tight text-[#1F5D84] break-words sm:text-[19px] group-hover:underline">
+            <h3 className="type-event-card-title min-w-0 flex-1 text-left text-[17px] leading-tight text-[#1F5D84] break-words sm:text-[19px] group-hover:underline">
               {event.title}
             </h3>
             {event.isVerified ? (

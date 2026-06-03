@@ -28,7 +28,7 @@ export function EventsListingFeaturedSection({
   return (
     <section className="py-10 mt-10">
       <div className="flex items-center justify-between mb-8">
-        <h2 className="text-2xl sm:text-3xl font-black text-gray-900 underline decoration-blue-600 decoration-4">
+        <h2 className="type-section-heading text-2xl sm:text-3xl text-gray-900 underline decoration-blue-600 decoration-4">
           ✨ Featured Events
         </h2>
         <div className="flex items-center gap-2">
@@ -87,7 +87,7 @@ export function EventsListingFeaturedSection({
                 </div>
                 <CardContent className="p-5">
                   <div className="flex items-start justify-between mb-2">
-                    <h3 className="text-2xl font-black text-gray-900 line-clamp-2 flex-1">{event.title}</h3>
+                    <h3 className="type-event-card-title text-2xl text-gray-900 line-clamp-2 flex-1">{event.title}</h3>
                     {badgeImgUrl ? (
                       <AppImage src={badgeImgUrl} alt="Verified" width={40} height={40} className="ml-1 h-10 w-10 object-contain" />
                     ) : null}

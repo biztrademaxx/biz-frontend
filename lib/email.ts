@@ -20,7 +20,7 @@ export async function sendVerificationEmail(email: string, otp: string) {
       to: email,
       subject: "Your OTP Verification Code",
       html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto;">
+        <div style="font-family: Inter, Arial, sans-serif; max-width: 600px; margin: auto;">
           <h2 style="color: #2563eb;">BizTradeFairs Email Verification</h2>
           <p>Hello,</p>
           <p>Your OTP code for email verification is:</p>

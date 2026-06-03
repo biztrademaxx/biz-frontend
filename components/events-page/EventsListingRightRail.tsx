@@ -26,7 +26,7 @@ export function EventsListingRightRail({ trendingSidebarEvents, featuredFirst, o
         </div>
 
         <div className="flex items-center justify-between">
-          <h3 className="text-2xl font-semibold font-black text-gray-900">🔥 Trending Events</h3>
+          <h3 className="type-section-heading text-2xl text-gray-900">🔥 Trending Events</h3>
         </div>
 
         <div className="hidden lg:block">
@@ -82,7 +82,7 @@ export function EventsListingRightRail({ trendingSidebarEvents, featuredFirst, o
             </div>
             <CardContent className="p-5">
               <div className="flex items-start justify-between mb-3">
-                <h3 className="text-xl font-black text-gray-900 flex-1">{featuredFirst.title}</h3>
+                <h3 className="type-event-card-title text-xl text-gray-900 flex-1">{featuredFirst.title}</h3>
                 {(() => {
                   const url = resolvedVerifiedBadgeImageUrl(
                     featuredFirst.isVerified,

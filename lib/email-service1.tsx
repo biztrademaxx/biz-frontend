@@ -92,7 +92,7 @@ const html = `
   margin:0;
   padding:0;
   background:#f1f5f9;
-  font-family: Roboto, Arial, sans-serif;
+  font-family: Inter, Montserrat, Arial, sans-serif;
 ">
 
 <!-- Wrapper -->

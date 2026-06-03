@@ -147,8 +147,9 @@
 }
 
 @theme inline {
-  --font-sans: var(--font-roboto), ui-sans-serif, sans-serif;
-  --font-mono: var(--font-roboto-mono), ui-monospace, monospace;
+  --font-sans: var(--font-inter), ui-sans-serif, sans-serif;
+  --font-display: var(--font-montserrat), var(--font-inter), ui-sans-serif, sans-serif;
+  --font-mono: var(--font-inter), ui-monospace, monospace;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -192,8 +193,64 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans font-normal antialiased;
   }
+  h1 {
+    @apply font-display font-extrabold tracking-tight;
+  }
+  h2 {
+    @apply font-display font-bold tracking-tight;
+  }
+  nav,
+  nav a,
+  nav button {
+    @apply font-sans font-medium;
+  }
+  label,
+  small,
+  figcaption {
+    @apply font-sans font-normal;
+  }
+}
+
+/* Semantic typography utilities (Montserrat + Inter only) */
+@utility font-display {
+  font-family: var(--font-display);
+}
+
+.type-hero-heading {
+  font-family: var(--font-display);
+  font-weight: 800;
+}
+
+.type-section-heading {
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+
+.type-event-card-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+}
+
+.type-nav {
+  font-family: var(--font-sans);
+  font-weight: 500;
+}
+
+.type-body {
+  font-family: var(--font-sans);
+  font-weight: 400;
+}
+
+.type-label {
+  font-family: var(--font-sans);
+  font-weight: 400;
+}
+
+.type-button {
+  font-family: var(--font-display);
+  font-weight: 600;
 }
 
 @keyframes scratch {
@@ -264,6 +321,7 @@
 .home-tt-section .home-tt-sub {
   display: block;
   margin-top: 0.15rem;
+  font-family: var(--font-sans);
   font-size: 0.8125rem;
   font-weight: 400;
   line-height: 1.45;

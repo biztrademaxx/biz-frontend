@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import { Roboto, Roboto_Mono } from "next/font/google"
+import { Inter, Montserrat } from "next/font/google"
 import { ReactQueryProvider } from "@/components/react-query-provider";
 import ClientLayout from "./client-layout";
 import ConditionalLayout from "./conditional-layout";
@@ -66,18 +66,18 @@ export const metadata: Metadata = {
   },
 };
 
-const roboto = Roboto({
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "700"],
-  display: "swap",
-  variable: "--font-roboto",
-})
-
-const robotoMono = Roboto_Mono({
+const inter = Inter({
   subsets: ["latin"],
   weight: ["400", "500"],
   display: "swap",
-  variable: "--font-roboto-mono",
+  variable: "--font-inter",
+})
+
+const montserrat = Montserrat({
+  subsets: ["latin"],
+  weight: ["600", "700", "800"],
+  display: "swap",
+  variable: "--font-montserrat",
 })
 
 export default async function RootLayout({
@@ -95,8 +95,8 @@ export default async function RootLayout({
   }
 
   return (
-    <html lang="en" suppressHydrationWarning className={`${roboto.variable} ${robotoMono.variable}`}>
-      <body className={`${roboto.className} font-sans antialiased`}>
+    <html lang="en" suppressHydrationWarning className={`${inter.variable} ${montserrat.variable}`}>
+      <body className={`${inter.className} font-sans antialiased`}>
         <JsonLd data={[organizationJsonLd(), websiteJsonLd()]} />
 
         <ReactQueryProvider>

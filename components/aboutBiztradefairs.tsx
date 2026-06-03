@@ -161,7 +161,7 @@ export default function AboutBizTrade() {
                         </div>
 
                         {/* Heading */}
-                        <h2 className="max-w-[720px] text-[52px] md:text-[64px] lg:text-[78px] font-[300] leading-[0.95] tracking-[-0.05em] text-[#0A0A0A]">
+                        <h1 className="max-w-[720px] font-display text-[52px] font-extrabold leading-[0.95] tracking-[-0.05em] text-[#0A0A0A] md:text-[64px] lg:text-[78px]">
                             Connecting{" "}
                             <span className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-[#4AA8FF] align-middle">
                                 <Globe size={28} className="text-white" />

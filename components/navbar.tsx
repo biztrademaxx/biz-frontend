@@ -245,7 +245,7 @@ export default function Navbar() {
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [mobileMenuOpen])
 
-  const navLinkClass = "text-gray-700 transition-colors hover:text-gray-900"
+  const navLinkClass = "font-sans font-medium text-gray-700 transition-colors hover:text-gray-900"
 
   const renderSearchHits = (compact: boolean) => (
     <>

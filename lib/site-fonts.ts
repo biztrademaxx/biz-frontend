@@ -1,9 +1,9 @@
 /**
- * Site typography — Roboto (UI) + Roboto Mono (IDs, stats, code).
- * Loaded in app/layout.tsx via next/font; wired in app/globals.css.
+ * @deprecated Import from `@/lib/typography` instead.
+ * Kept for backward compatibility with existing imports.
  */
-export const SITE_FONT_SANS = "Roboto"
-export const SITE_FONT_MONO = "Roboto Mono"
-
-/** Tailwind utility for tabular stats in admin tables */
-export const siteMonoClass = "font-mono tabular-nums"
+export {
+  SITE_FONT_BODY as SITE_FONT_SANS,
+  SITE_FONT_DISPLAY,
+  siteTabularClass as siteMonoClass,
+} from "@/lib/typography"

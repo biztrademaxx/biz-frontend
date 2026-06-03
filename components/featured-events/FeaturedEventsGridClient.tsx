@@ -57,7 +57,7 @@ function FeaturedEventCard({ event }: { event: FeaturedEventPayload }) {
               {formattedDate}
             </div>
 
-            <span className="mt-1 line-clamp-2 font-bold text-gray-900">
+            <span className="type-event-card-title mt-1 line-clamp-2 text-gray-900">
               {event.title}
             </span>
 
