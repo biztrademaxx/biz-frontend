@@ -9,8 +9,7 @@ import { BrowseByCitySkeleton } from "@/components/home-skeletons";
 import ExploreVenues from "../components/ExploreVenues";
 import FeaturedEvents from "../components/FeaturedEvents";
 import FeaturedOrganizers from "../components/FeaturedOrganizers";
-import { PageBanner } from "@/components/page-banner";
-import { InlineBanner } from "@/components/inline-banner";
+import { HomePageBannerSlot } from "@/components/page-banner/HomePageBannerSlot";
 import FeaturedSpeakers from "@/components/FeaturedSpeaker";
 import CategoryGrid from "@/components/catagories";
 import HeroSlideshow from "@/components/HeroSlideshow";
@@ -52,34 +51,18 @@ export default function Home() {
         <BrowseEventsByCity />
       </Suspense>
 
-      <div className="mx-auto w-full min-w-0 max-w-7xl px-3 py-6 sm:px-4 lg:px-6">
-        <Suspense
-          fallback={
-            <div
-              className="home-shimmer relative min-h-[88px] w-full rounded-sm"
-              style={{ height: 150 }}
-              aria-hidden
-            />
-          }
-        >
-          <PageBanner
-            page="homepage"
-            position="hero"
-            fallbackPosition="middle"
-            height={150}
-            fixedHeight
-            autoplay={true}
-            autoplayInterval={5000}
-            showControls={true}
-          />
-        </Suspense>
-      </div>
+      <HomePageBannerSlot position="after_city" fallbackPosition="middle" />
 
       <Suspense fallback={<BrowseByCountrySkeleton />}>
         <BrowseByCountry />
       </Suspense>
+
+      <HomePageBannerSlot position="after_country" />
+
       <ExploreVenues />
       <FeaturedOrganizers />
+
+      <HomePageBannerSlot position="after_featured_organizers" />
       <Suspense fallback={<TrendingEventsSkeleton />}>
         <EventReviews />
       </Suspense>

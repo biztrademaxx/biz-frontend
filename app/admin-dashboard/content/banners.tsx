@@ -24,6 +24,10 @@ import { Badge } from "@/components/ui/badge"
 import { Upload, Trash2, Eye, Search, ImageIcon, Plus, Pencil } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Skeleton } from "@/components/ui/skeleton"
+import {
+  getBannerPositionLabel,
+  getBannerPositionOptionsForPage,
+} from "@/lib/banners/banner-positions"
 
 interface Banner {
   id: string
@@ -60,13 +64,6 @@ const PAGE_OPTIONS = [
   { value: "venue-detail", label: "Venue Detail Page" },
   { value: "about", label: "About Page" },
   { value: "contact", label: "Contact Page" },
-]
-
-const POSITION_OPTIONS = [
-  { value: "hero", label: "Hero Banner (Top)" },
-  { value: "middle", label: "Middle Section" },
-  { value: "bottom", label: "Bottom Section" },
-  { value: "sidebar", label: "Sidebar" },
 ]
 
 export default function BannersPage() {
@@ -521,7 +518,15 @@ export default function BannersPage() {
               <select
                 id="page"
                 value={uploadForm.page}
-                onChange={(e) => setUploadForm({ ...uploadForm, page: e.target.value })}
+                onChange={(e) => {
+                  const page = e.target.value
+                  const allowed = getBannerPositionOptionsForPage(page).map((p) => p.value)
+                  setUploadForm((prev) => ({
+                    ...prev,
+                    page,
+                    position: allowed.includes(prev.position) ? prev.position : "hero",
+                  }))
+                }}
                 className="border-input bg-background w-full rounded-md border px-3 py-2 text-sm shadow-xs outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
               >
                 <option value="" disabled>
@@ -543,12 +548,18 @@ export default function BannersPage() {
                 onChange={(e) => setUploadForm({ ...uploadForm, position: e.target.value })}
                 className="border-input bg-background w-full rounded-md border px-3 py-2 text-sm shadow-xs outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
               >
-                {POSITION_OPTIONS.map((pos) => (
+                {getBannerPositionOptionsForPage(uploadForm.page || "homepage").map((pos) => (
                   <option key={pos.value} value={pos.value}>
                     {pos.label}
                   </option>
                 ))}
               </select>
+              {uploadForm.page === "homepage" ? (
+                <p className="mt-1 text-sm text-gray-500">
+                  Use After City / After Country / After Featured Organizers to place banners between
+                  homepage sections.
+                </p>
+              ) : null}
             </div>
 
             <div>
@@ -671,7 +682,7 @@ export default function BannersPage() {
                 onChange={(e) => setEditForm({ ...editForm, position: e.target.value })}
                 className="border-input bg-background w-full rounded-md border px-3 py-2 text-sm shadow-xs outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
               >
-                {POSITION_OPTIONS.map((pos) => (
+                {getBannerPositionOptionsForPage(editForm.page || "homepage").map((pos) => (
                   <option key={pos.value} value={pos.value}>
                     {pos.label}
                   </option>
@@ -773,7 +784,7 @@ export default function BannersPage() {
             <DialogTitle>{selectedBanner?.title}</DialogTitle>
             <DialogDescription>
               {PAGE_OPTIONS.find((p) => p.value === selectedBanner?.page)?.label} -{" "}
-              {POSITION_OPTIONS.find((p) => p.value === selectedBanner?.position)?.label}
+              {getBannerPositionLabel(selectedBanner?.position ?? "")}
             </DialogDescription>
           </DialogHeader>
 
