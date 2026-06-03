@@ -364,13 +364,13 @@ export default function HeroSlideshowClient({
       <div className="absolute inset-0 bg-white/85" />
 
       {/* Content */}
-      <div className="relative z-10 w-full max-w-7xl mx-auto px-8 lg:px-12">
+      <div className="relative z-10 w-full max-w-[1300px] mx-auto px-6 xl:px-10">
 
-        <div className="relative z-10 flex flex-col lg:flex-row lg:items-start gap-8 lg:gap-10 xl:gap-16 pt-12 lg:pt-16 xl:pt-20 pb-8">
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-start gap-8 lg:gap-10 xl:gap-16 pt-12 lg:pt-16 xl:pt-20 pb-2">
           {/* ── LEFT PANEL ── */}
           <div className="w-full lg:w-[32%] flex-shrink-0">
             {/* Headline */}
-            <h1 className="max-w-[340px] text-[42px] lg:text-[52px] xl:text-[65px] font-light leading-[0.9] tracking-[-0.05em] text-[#0B132B]">
+            <h1 className="max-w-[340px] text-[32px] lg:text-[42px] xl:text-[55px] font-light leading-[0.9] tracking-[-0.05em] text-[#0B132B]">
               <span className="block">Discover</span>
 
               <span className="block mt-2 text-[#2563EB]">
@@ -433,7 +433,7 @@ export default function HeroSlideshowClient({
           </div>
 
           {/* ── RIGHT PANEL ── */}
-          <div className="w-full lg:w-[65%] flex flex-col gap-5">
+          <div className="w-full lg:w-[65%] flex flex-col gap-2">
             {/* Featured card — with blue light shadow added */}
             <div className="relative w-full min-h-[380px] rounded-xl shadow-[0_15px_80px_-10px_rgba(0,74,150,0.95)] overflow-visible">
               <div className="relative overflow-hidden rounded-xl h-[300px] lg:h-[360px] xl:h-[400px]">
@@ -551,7 +551,7 @@ export default function HeroSlideshowClient({
             </div>
 
             {/* Bottom 3 preview cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mt-5 w-full">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mt-2 w-full">
               {previews.map((event, i) => {
                 const pImg = cardImageUrl(event)
                 const pDate = shortDate(event.startDate, event.endDate)
