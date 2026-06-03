@@ -32,6 +32,7 @@ import { formatOrganizerLocationLine } from "@/lib/organizer-location-display"
 import OrganizerPageSkeleton from "@/components/OrganizerPageSkeleton"
 import { PublicApiErrorPanel } from "@/components/public/PublicApiErrorPanel"
 import { getEventDisplayImageUrl } from "@/lib/default-event-image"
+import { hasUsableProfileImage } from "@/lib/has-usable-profile-image"
 
 interface Organizer {
   id: string
@@ -429,15 +430,24 @@ export default function OrganizerPage() {
       <div className="bg-[#002C71] text-white">
         <div className="max-w-7xl mx-auto px-4 py-12">
           <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
-            {/* Organizer Avatar */}
-            <div className="relative">
-              <Avatar className="w-32 h-32 border-4 border-white shadow-lg">
-                <AvatarImage src={organizer.avatar } alt={organizer.company} />
-                <AvatarFallback className="text-2xl font-bold bg-white text-blue-600">
+            {/* Organizer Avatar — contain logo so wide/tall assets are not cropped */}
+            <div className="relative shrink-0">
+              <Avatar className="h-32 w-32 border-4 border-white bg-white shadow-lg">
+                <AvatarImage
+                  src={
+                    hasUsableProfileImage(organizer.avatar) ? organizer.avatar : undefined
+                  }
+                  alt={organizer.company}
+                  className="object-contain object-center p-3"
+                />
+                <AvatarFallback className="bg-white text-2xl font-bold text-[#002C71]">
                   {organizer.company
                     .split(" ")
+                    .filter(Boolean)
                     .map((n) => n[0])
-                    .join("")}
+                    .join("")
+                    .slice(0, 2)
+                    .toUpperCase()}
                 </AvatarFallback>
               </Avatar>
               <div className="absolute -bottom-2 -right-2 bg-green-500 rounded-full p-2">
