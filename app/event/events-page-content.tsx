@@ -776,7 +776,7 @@ export default function EventsPageContent({
             clearAllFilters={clearAllFilters}
           />
 
-          <div className="lg:col-span-5 order-1 lg:order-2 w-full">
+          <div className="lg:col-span-5 order-1 lg:order-2 w-full min-w-0">
             <EventsListingListBanner
               surfaceStyle={listingBannerSurfaceStyle}
               title={getBannerTitle()}

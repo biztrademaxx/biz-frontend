@@ -1,6 +1,7 @@
 "use client"
 
 import type { NameCount } from "./listing-types"
+import { EVENTS_LISTING_STICKY_TOP_CLASS } from "./listing-constants"
 import { SidebarCheckboxRow, SidebarSection } from "./EventsListingSidebarPrimitives"
 
 export type EventsListingDesktopFiltersSidebarProps = {
@@ -60,7 +61,7 @@ export function EventsListingDesktopFiltersSidebar({
 }: EventsListingDesktopFiltersSidebarProps) {
   return (
     <div className="lg:col-span-3 hidden lg:block">
-      <div className="sticky top-6">
+      <div className={`sticky ${EVENTS_LISTING_STICKY_TOP_CLASS} z-10 self-start`}>
         <div className="border border-gray-200 bg-white">
           <SidebarSection
             title="📅 Date"
