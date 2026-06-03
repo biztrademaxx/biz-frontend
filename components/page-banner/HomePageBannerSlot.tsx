@@ -1,5 +1,10 @@
 import { Suspense } from "react"
 import { PageBanner } from "@/components/page-banner"
+import { cn } from "@/lib/utils"
+
+/** Compact inline promos between homepage sections (not full-bleed hero size). */
+export const HOME_PAGE_BANNER_HEIGHT = 96
+export const HOME_PAGE_BANNER_MAX_WIDTH_CLASS = "max-w-4xl"
 
 type HomePageBannerSlotProps = {
   position: string
@@ -11,14 +16,19 @@ type HomePageBannerSlotProps = {
 export function HomePageBannerSlot({
   position,
   fallbackPosition,
-  height = 150,
+  height = HOME_PAGE_BANNER_HEIGHT,
 }: HomePageBannerSlotProps) {
   return (
-    <div className="mx-auto w-full min-w-0 max-w-7xl px-3 py-6 sm:px-4 lg:px-6">
+    <div
+      className={cn(
+        "mx-auto w-full min-w-0 px-3 py-3 sm:px-4 sm:py-4",
+        HOME_PAGE_BANNER_MAX_WIDTH_CLASS,
+      )}
+    >
       <Suspense
         fallback={
           <div
-            className="home-shimmer relative min-h-[88px] w-full rounded-sm"
+            className="home-shimmer relative w-full rounded-lg"
             style={{ height }}
             aria-hidden
           />
@@ -33,6 +43,7 @@ export function HomePageBannerSlot({
           autoplay
           autoplayInterval={5000}
           showControls
+          className="rounded-lg shadow-sm"
         />
       </Suspense>
     </div>
