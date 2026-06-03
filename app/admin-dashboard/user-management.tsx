@@ -29,6 +29,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
+import { AdminTableAvatar } from "@/components/admin-dashboard/admin-table-avatar"
 
 interface User {
   id: number
@@ -61,10 +62,6 @@ const avatarColors = [
 
 function getAvatarColor(name: string) {
   return avatarColors[name.charCodeAt(0) % avatarColors.length]
-}
-
-function getInitials(name: string) {
-  return name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
 }
 
 export default function UserManagement({ users }: UserManagementProps) {
@@ -164,7 +161,6 @@ export default function UserManagement({ users }: UserManagementProps) {
         </thead>
         <tbody className="divide-y divide-gray-50">
           {users.map((user) => {
-            const initials = getInitials(user.name)
             const colorClass = getAvatarColor(user.name)
             return (
               <tr key={user.id} className="hover:bg-gray-50/60 transition-colors">
@@ -173,9 +169,11 @@ export default function UserManagement({ users }: UserManagementProps) {
                 </td>
                 <td className="px-4 py-4">
                   <div className="flex items-center gap-3">
-                    <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0 ${colorClass}`}>
-                      {initials}
-                    </div>
+                    <AdminTableAvatar
+                      src={user.avatar}
+                      name={user.name}
+                      colorClass={colorClass}
+                    />
                     <div>
                       <p className="text-sm font-medium text-gray-900">{user.name}</p>
                       <p className="text-xs text-gray-400">{user.email}</p>
@@ -314,9 +312,12 @@ export default function UserManagement({ users }: UserManagementProps) {
           {selectedUser && (
             <div className="space-y-5">
               <div className="flex items-center gap-4">
-                <div className={`w-14 h-14 rounded-full flex items-center justify-center text-lg font-semibold ${getAvatarColor(selectedUser.name)}`}>
-                  {getInitials(selectedUser.name)}
-                </div>
+                <AdminTableAvatar
+                  src={selectedUser.avatar}
+                  name={selectedUser.name}
+                  colorClass={getAvatarColor(selectedUser.name)}
+                  size="md"
+                />
                 <div>
                   <h3 className="text-lg font-semibold">{selectedUser.name}</h3>
                   <p className="text-sm text-gray-500">{selectedUser.email}</p>

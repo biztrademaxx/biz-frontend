@@ -31,6 +31,8 @@ import { adminApi } from "@/lib/admin-api"
 import { useToast } from "@/components/ui/use-toast"
 import EntityBulkImport from "./entity-bulk-import"
 import { uploadVenueLogo } from "@/lib/upload-utils"
+import { AdminTableAvatar } from "@/components/admin-dashboard/admin-table-avatar"
+import { hasUsableProfileImage } from "@/lib/has-usable-profile-image"
 
 interface Organizer {
   company: string | null
@@ -710,7 +712,6 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
                   const isVerified = organizer.originalData.isVerified
                   const isActive = organizer.originalData.isActive
                   const isPremium = isVerified && isActive
-                  const initials = getInitials(organizer.name)
                   const colorClass = getAvatarColor(organizer.name)
 
                   return (
@@ -726,9 +727,11 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
                       </td>
                       <td className="px-4 py-4">
                         <div className="flex items-center gap-3">
-                          <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0 ${colorClass}`}>
-                            {initials}
-                          </div>
+                          <AdminTableAvatar
+                            src={organizer.avatar}
+                            name={organizer.name}
+                            colorClass={colorClass}
+                          />
                           <div>
                             <p className="text-sm font-medium text-gray-900">{organizer.name}</p>
                             <p className="text-xs text-gray-400">{organizer.email}</p>
@@ -802,9 +805,12 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
                               </DialogHeader>
                               <div className="space-y-6">
                                 <div className="flex items-center gap-4">
-                                  <div className={`w-14 h-14 rounded-full flex items-center justify-center text-lg font-semibold ${colorClass}`}>
-                                    {initials}
-                                  </div>
+                                  <AdminTableAvatar
+                                    src={organizer.avatar}
+                                    name={organizer.name}
+                                    colorClass={colorClass}
+                                    size="md"
+                                  />
                                   <div>
                                     <h3 className="text-lg font-semibold">{organizer.name}</h3>
                                     <p className="text-gray-500 text-sm">{organizer.category}</p>
@@ -948,7 +954,13 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
               <div className="flex items-center gap-3">
                 <Avatar className="h-14 w-14 border">
                   <AvatarImage
-                    src={avatarFile ? URL.createObjectURL(avatarFile) : editingOrganizer.avatar || undefined}
+                    src={
+                      avatarFile
+                        ? URL.createObjectURL(avatarFile)
+                        : hasUsableProfileImage(editingOrganizer.avatar)
+                          ? editingOrganizer.avatar || undefined
+                          : undefined
+                    }
                     alt={editingOrganizer.organizationName || "Organizer"}
                   />
                   <AvatarFallback>{getInitials(editingOrganizer.organizationName || editingOrganizer.company)}</AvatarFallback>

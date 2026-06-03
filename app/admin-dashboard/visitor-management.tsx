@@ -1,6 +1,6 @@
 "use client"
 
-import { AppImage } from "@/components/app-image"
+import { AdminTableAvatar } from "@/components/admin-dashboard/admin-table-avatar"
 import { devLog } from "@/lib/dev-log"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
@@ -74,8 +74,6 @@ const avatarColors = [
   "bg-cyan-100 text-cyan-700",
 ]
 function getAvatarColor(name: string) { return avatarColors[name.charCodeAt(0) % avatarColors.length] }
-function getInitials(name: string) { return name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) }
-
 export default function VisitorManagement() {
   const router = useRouter()
   const [visitors, setVisitors] = useState<Visitor[]>([])
@@ -295,7 +293,6 @@ export default function VisitorManagement() {
           </thead>
           <tbody className="divide-y divide-gray-50">
             {visitors.map((visitor) => {
-              const initials = getInitials(visitor.name)
               const colorClass = getAvatarColor(visitor.name)
               return (
                 <tr key={visitor.id} className="hover:bg-gray-50/60 transition-colors">
@@ -304,13 +301,11 @@ export default function VisitorManagement() {
                   </td>
                   <td className="px-4 py-4">
                     <div className="flex items-center gap-3">
-                      {visitor.avatar ? (
-                        <AppImage src={visitor.avatar} alt={visitor.name} width={36} height={36} className="w-9 h-9 rounded-full object-cover flex-shrink-0" />
-                      ) : (
-                        <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0 ${colorClass}`}>
-                          {initials}
-                        </div>
-                      )}
+                      <AdminTableAvatar
+                        src={visitor.avatar}
+                        name={visitor.name}
+                        colorClass={colorClass}
+                      />
                       <div>
                         <div className="flex items-center gap-1.5">
                           <p className="text-sm font-medium text-gray-900">{visitor.name}</p>
@@ -443,13 +438,12 @@ export default function VisitorManagement() {
             </div>
             <div className="p-6 space-y-6">
               <div className="flex items-center gap-4">
-                {selectedVisitor.avatar ? (
-                  <AppImage src={selectedVisitor.avatar} alt={selectedVisitor.name} width={64} height={64} className="w-16 h-16 rounded-full object-cover" />
-                ) : (
-                  <div className={`w-16 h-16 rounded-full flex items-center justify-center text-xl font-semibold ${getAvatarColor(selectedVisitor.name)}`}>
-                    {getInitials(selectedVisitor.name)}
-                  </div>
-                )}
+                <AdminTableAvatar
+                  src={selectedVisitor.avatar}
+                  name={selectedVisitor.name}
+                  colorClass={getAvatarColor(selectedVisitor.name)}
+                  size="lg"
+                />
                 <div>
                   <div className="flex items-center gap-2">
                     <h3 className="text-lg font-semibold text-gray-900">{selectedVisitor.name}</h3>
