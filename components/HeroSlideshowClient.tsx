@@ -373,11 +373,11 @@ export default function HeroSlideshowClient({
             <h1 className="max-w-[340px] text-[32px] lg:text-[42px] xl:text-[55px] font-light leading-[0.9] tracking-[-0.05em] text-[#0B132B]">
               <span className="block">Discover</span>
 
-              <span className="block mt-2 text-[#2563EB]">
+              <span className="block mt-4 text-[#2563EB]">
                 Trade Shows
               </span>
 
-              <span className="block mt-2">
+              <span className="block mt-4">
                 Worldwide
               </span>
             </h1>
@@ -433,7 +433,7 @@ export default function HeroSlideshowClient({
           </div>
 
           {/* ── RIGHT PANEL ── */}
-          <div className="w-full lg:w-[65%] flex flex-col gap-2">
+          <div className="w-full lg:w-[55%] lg:ml-25 flex flex-col gap-5">
             {/* Featured card — with blue light shadow added */}
             <div className="relative w-full min-h-[380px] rounded-xl shadow-[0_15px_80px_-10px_rgba(0,74,150,0.95)] overflow-visible">
               <div className="relative overflow-hidden rounded-xl h-[300px] lg:h-[360px] xl:h-[400px]">
