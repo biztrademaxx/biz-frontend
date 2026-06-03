@@ -247,16 +247,10 @@ import { eventPublicPath } from "@/lib/event-path"
 import HomeSectionEmptyState, { homeEmptyDescription } from "@/components/home/HomeSectionEmptyState"
 import { hasDisplayableEventImage } from "@/lib/event-card-meta"
 import type { HeroSlideshowEvent } from "@/lib/hero/types"
+import { getHeroFeaturedImageUrl, getHeroPreviewImageUrl } from "@/lib/hero/hero-featured-image"
 import { AppImage } from "@/components/app-image"
 
 export type Event = HeroSlideshowEvent
-
-function cardImageUrl(event: Event): string {
-  if (event.bannerImage?.trim()) return event.bannerImage.trim()
-  const first = event.images?.[0]
-  if (typeof first === "string" && first.trim()) return first.trim()
-  return ""
-}
 
 function heroDateParts(startIso: string, endIso?: string | null) {
   const start = new Date(startIso)
@@ -339,8 +333,7 @@ export default function HeroSlideshowClient({
   const featured = events[activeIdx]
   const { dayRange, monthYear } = heroDateParts(featured.startDate, featured.endDate)
   const loc = locationLine(featured)
-  //const imgUrl = cardImageUrl(featured)
-  const imgUrl = '/images/heroImage.png'
+  const featuredImageUrl = getHeroFeaturedImageUrl(featured)
   const previews = [1, 2, 3].map((o) => events[(activeIdx + o) % events.length])
 
   return (
@@ -436,15 +429,17 @@ export default function HeroSlideshowClient({
             {/* Featured card — with blue light shadow added */}
             <div className="relative w-full min-h-[380px] rounded-xl shadow-[0_15px_80px_-10px_rgba(0,74,150,0.95)] overflow-visible">
               <div className="relative overflow-hidden rounded-xl h-[300px] lg:h-[360px] xl:h-[400px]">
-                {imgUrl && (
+                {featuredImageUrl ? (
                   <AppImage
-                    src={imgUrl}
+                    key={featured.id}
+                    src={featuredImageUrl}
                     alt={featured.title}
                     fill
+                    sizes="(max-width: 1024px) 100vw, 55vw"
                     className="object-cover"
                     priority
                   />
-                )}
+                ) : null}
 
                 <div
                   className="
@@ -460,7 +455,7 @@ export default function HeroSlideshowClient({
     z-[1]
   "
                 />
-                {!imgUrl && (
+                {!featuredImageUrl && (
                   <div className="absolute inset-0 bg-gradient-to-br from-blue-200 to-blue-400" />
                 )}
 
@@ -552,7 +547,7 @@ export default function HeroSlideshowClient({
             {/* Bottom 3 preview cards */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mt-2 w-full">
               {previews.map((event, i) => {
-                const pImg = cardImageUrl(event)
+                const pImg = getHeroPreviewImageUrl(event)
                 const pDate = shortDate(event.startDate, event.endDate)
                 return (
                   <Link
