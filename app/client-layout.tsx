@@ -4,6 +4,7 @@ import type React from "react";
 import { Providers } from "./providers";
 import { Suspense } from "react";
 import AppSuspenseFallback from "@/components/AppSuspenseFallback";
+import HomeScrollSignupRedirect from "@/components/home-scroll-signup-redirect";
 import type { HomeLocationClientSeed } from "@/lib/home-location-seed";
 
 export default function ClientLayout({
@@ -16,7 +17,10 @@ export default function ClientLayout({
   return (
     <>
       <Suspense fallback={<AppSuspenseFallback />}>
-        <Providers locationSeed={locationSeed}>{children}</Providers>
+        <Providers locationSeed={locationSeed}>
+          <HomeScrollSignupRedirect />
+          {children}
+        </Providers>
       </Suspense>
     </>
   );

@@ -14,7 +14,6 @@ import FeaturedSpeakers from "@/components/FeaturedSpeaker";
 import CategoryGrid from "@/components/catagories";
 import HeroSlideshow from "@/components/HeroSlideshow";
 import HeroSlideshowSkeleton from "@/components/HeroSlideshowSkeleton";
-import HomeScrollSignupRedirect from "@/components/home-scroll-signup-redirect";
 import EventReviews from "@/components/EventReviews";
 import {
   CategoryBrowseSkeleton,
@@ -28,7 +27,6 @@ import AboutBizTrade from "@/components/aboutBiztradefairs";
 export default function Home() {
   return (
     <div className="min-h-screen w-full min-w-0 overflow-x-hidden bg-white">
-      <HomeScrollSignupRedirect />
       <div className="bg-white pb-1">
         <div className="mx-auto px-4">
           {/* <HeroSection/> */}

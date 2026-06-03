@@ -459,10 +459,15 @@ export default function SignupFormCard({ variant, onRegistrationSuccess }: Signu
     { feature: "Support", basic: "Email", premium: "Email + Chat", enterprise: "24/7 Priority" },
   ]
 
+  const dialogCardClass =
+    variant === "dialog"
+      ? "border-white/60 bg-white/45 shadow-[0_8px_32px_rgba(15,23,42,0.12)] backdrop-blur-xl"
+      : "shadow-lg"
+
   const content = (
     <div className="w-full">
       <div>
-        <Card className="w-full max-w-md mx-auto shadow-lg">
+        <Card className={`w-full max-w-md mx-auto ${dialogCardClass}`}>
           <CardHeader className="text-center pb-4">
             <h1 className="text-2xl font-semibold text-gray-900">
               {step === "form" ? "Welcome" : step === "otp" ? "Verify OTP" : "Create Password"}
