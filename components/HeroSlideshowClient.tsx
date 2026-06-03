@@ -384,8 +384,7 @@ export default function HeroSlideshowClient({
 
             {/* Description */}
             <p className="mt-20 max-w-[340px] text-[14px] leading-[1.7] text-[#64748B]">
-              Connect with buyers, exhibitors & industry
-              leaders at the world's best trade fairs.
+              Connect with buyers, exhibitors, and industry leaders at the world's leading trade fairs.
             </p>
 
             {/* Stats */}
