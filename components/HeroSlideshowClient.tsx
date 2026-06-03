@@ -350,13 +350,14 @@ export default function HeroSlideshowClient({
     >
       {/* Background Image */}
       <div
-        className="absolute inset-0 pointer-events-none opacity-[0.30]"
-        style={{
-          backgroundImage: "url('/images/glob.jpeg')",
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          backgroundRepeat: "no-repeat",
-        }}
+        className="
+    absolute inset-0 pointer-events-none opacity-[0.30]
+    bg-[url('/images/glob.jpeg')]
+    bg-cover
+    bg-no-repeat
+    bg-top
+    lg:bg-center
+  "
       />
 
       {/* Optional white overlay */}
@@ -365,11 +366,11 @@ export default function HeroSlideshowClient({
       {/* Content */}
       <div className="relative z-10 w-full max-w-7xl mx-auto px-8 lg:px-12">
 
-        <div className="relative z-10 flex flex-col lg:flex-row lg:items-start gap-12 lg:gap-16 pt-23 pb-8">
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-start gap-8 lg:gap-10 xl:gap-16 pt-12 lg:pt-16 xl:pt-20 pb-8">
           {/* ── LEFT PANEL ── */}
           <div className="w-full lg:w-[32%] flex-shrink-0">
             {/* Headline */}
-            <h1 className="max-w-[340px] text-[65px] font-light leading-[0.9] tracking-[-0.05em] text-[#0B132B]">
+            <h1 className="max-w-[340px] text-[42px] lg:text-[52px] xl:text-[65px] font-light leading-[0.9] tracking-[-0.05em] text-[#0B132B]">
               <span className="block">Discover</span>
 
               <span className="block mt-2 text-[#2563EB]">
@@ -435,7 +436,7 @@ export default function HeroSlideshowClient({
           <div className="w-full lg:w-[65%] flex flex-col gap-5">
             {/* Featured card — with blue light shadow added */}
             <div className="relative w-full min-h-[380px] rounded-xl shadow-[0_15px_80px_-10px_rgba(0,74,150,0.95)] overflow-visible">
-              <div className="relative overflow-hidden rounded-xl" style={{ height: "400px" }}>
+              <div className="relative overflow-hidden rounded-xl h-[300px] lg:h-[360px] xl:h-[400px]">
                 {imgUrl && (
                   <AppImage
                     src={imgUrl}
@@ -517,7 +518,7 @@ export default function HeroSlideshowClient({
               </div>
 
               {/* Prev / Next arrows */}
-              <button
+              {/* <button
                 type="button"
                 aria-label="Previous event"
                 onClick={() => advance("prev")}
@@ -532,7 +533,7 @@ export default function HeroSlideshowClient({
                 className="absolute right-[-20px] top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-white shadow-xl flex items-center justify-center hover:bg-gray-50 transition-colors"
               >
                 <ChevronRight className="h-5 w-5 text-gray-600" strokeWidth={2.5} />
-              </button>
+              </button> */}
             </div>
 
             {/* Dot indicators */}
