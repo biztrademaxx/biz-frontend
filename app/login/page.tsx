@@ -122,7 +122,7 @@ export default function LoginPage() {
         <CardHeader className="text-center pb-4">
           <div className="flex justify-center mb-4">
             <Image
-              src="/logo/logo.png"
+                src="/logo/biztradefairs_new2.png"
               alt="TradeFairs.com Logo"
               width={150}
               height={150}
