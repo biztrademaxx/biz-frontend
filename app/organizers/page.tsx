@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import {
   Search,
@@ -27,8 +27,12 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet"
 import { apiFetch } from "@/lib/api"
+import { fetchGeoHint, type GeoHint } from "@/lib/browse-geo"
 import { getPublicProfilePath } from "@/lib/profile-path"
-import { cn } from "@/lib/utils"
+import {
+  OrganizersFilterSidebar,
+  type OrganizerFacets,
+} from "@/components/organizers/organizers-filter-sidebar"
 
 const PAGE_SIZE = 20
 
@@ -63,16 +67,50 @@ function organizerLocationLine(o: Organizer): string {
   return "Location not specified"
 }
 
-/** Build filter chips from API facets (directory-wide, not just the current page). */
-function useOrganizerFilterOptions(facets: { cities: string[]; countries: string[]; categories: string[] }) {
-  return useMemo(
-    () => ({
-      cities: facets.cities,
-      countries: facets.countries,
-      categories: facets.categories,
-    }),
-    [facets],
-  )
+const EMPTY_FACETS: OrganizerFacets = {
+  cities: [],
+  countries: [],
+  eventBuckets: [],
+  followerBuckets: [],
+}
+
+function normalizeFacetsPayload(data: unknown): OrganizerFacets {
+  if (!data || typeof data !== "object") return EMPTY_FACETS
+  const raw = data as Record<string, unknown>
+
+  const toCountItems = (arr: unknown): OrganizerFacets["cities"] => {
+    if (!Array.isArray(arr)) return []
+    return arr.map((item) => {
+      if (typeof item === "string") return { value: item, label: item, count: 0 }
+      const row = item as { value?: string; label?: string; count?: number }
+      const value = String(row.value ?? row.label ?? "").trim()
+      return {
+        value,
+        label: String(row.label ?? value).trim(),
+        count: Number(row.count) || 0,
+      }
+    }).filter((x) => x.value)
+  }
+
+  const toBuckets = (arr: unknown): OrganizerFacets["eventBuckets"] => {
+    if (!Array.isArray(arr)) return []
+    return arr.map((item) => {
+      const row = item as { id?: string; label?: string; count?: number }
+      const id = String(row.id ?? "").trim()
+      return {
+        id,
+        label: String(row.label ?? id).trim(),
+        count: Number(row.count) || 0,
+      }
+    }).filter((x) => x.id)
+  }
+
+  return {
+    cities: toCountItems(raw.cities),
+    countries: toCountItems(raw.countries),
+    eventBuckets: toBuckets(raw.eventBuckets),
+    followerBuckets: toBuckets(raw.followerBuckets),
+  }
 }
 
 function buildOrganizersQuery(params: {
@@ -80,7 +118,9 @@ function buildOrganizersQuery(params: {
   search: string
   cities: string[]
   countries: string[]
-  categories: string[]
+  eventBuckets: string[]
+  followerBuckets: string[]
+  visitorGeo: GeoHint | null
 }) {
   const qs = new URLSearchParams()
   qs.set("page", String(params.page))
@@ -89,57 +129,20 @@ function buildOrganizersQuery(params: {
   if (q) qs.set("search", q)
   if (params.countries.length) qs.set("country", params.countries.join(","))
   if (params.cities.length) qs.set("city", params.cities.join(","))
-  if (params.categories.length) qs.set("category", params.categories.join(","))
-  return qs.toString()
-}
-
-function FilterChipGroup({
-  title,
-  items,
-  selected,
-  onToggle,
-  emptyHint,
-}: {
-  title: string
-  items: string[]
-  selected: string[]
-  onToggle: (value: string) => void
-  emptyHint?: string
-}) {
-  if (items.length === 0) {
-    return (
-      <div className="mb-8">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">{title}</h3>
-        <p className="text-sm text-muted-foreground">{emptyHint ?? "No values in current results."}</p>
-      </div>
-    )
+  if (params.eventBuckets.length) qs.set("eventsBucket", params.eventBuckets.join(","))
+  if (params.followerBuckets.length) qs.set("followersBucket", params.followerBuckets.join(","))
+  if (params.countries.length === 0 && params.visitorGeo) {
+    if (params.visitorGeo.countryName?.trim()) {
+      qs.set("prioritizeCountry", params.visitorGeo.countryName.trim())
+    }
+    if (params.visitorGeo.countryCode?.trim()) {
+      qs.set("prioritizeCountryCode", params.visitorGeo.countryCode.trim())
+    }
+    if (params.visitorGeo.city?.trim()) {
+      qs.set("prioritizeCity", params.visitorGeo.city.trim())
+    }
   }
-
-  return (
-    <div className="mb-8">
-      <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">{title}</h3>
-      <div className="flex flex-wrap gap-2">
-        {items.map((item) => {
-          const on = selected.includes(item)
-          return (
-            <button
-              key={item}
-              type="button"
-              onClick={() => onToggle(item)}
-              className={cn(
-                "rounded-full border px-3 py-1.5 text-left text-sm transition-colors",
-                on
-                  ? "border-[#004A96] bg-[#004A96]/10 text-[#003a75] font-medium"
-                  : "border-border bg-background text-muted-foreground hover:bg-muted/60 hover:text-foreground",
-              )}
-            >
-              {item}
-            </button>
-          )
-        })}
-      </div>
-    </div>
-  )
+  return qs.toString()
 }
 
 export default function OrganizersPage() {
@@ -150,31 +153,24 @@ export default function OrganizersPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedCities, setSelectedCities] = useState<string[]>([])
   const [selectedCountries, setSelectedCountries] = useState<string[]>([])
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([])
+  const [selectedEventBuckets, setSelectedEventBuckets] = useState<string[]>([])
+  const [visitorGeo, setVisitorGeo] = useState<GeoHint | null>(null)
+  const [selectedFollowerBuckets, setSelectedFollowerBuckets] = useState<string[]>([])
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(0)
   const [totalPages, setTotalPages] = useState(1)
-  const [facets, setFacets] = useState<{ cities: string[]; countries: string[]; categories: string[] }>({
-    cities: [],
-    countries: [],
-    categories: [],
-  })
+  const [facets, setFacets] = useState<OrganizerFacets>(EMPTY_FACETS)
 
-  const filterOptions = useOrganizerFilterOptions(facets)
+  useEffect(() => {
+    fetchGeoHint().then(setVisitorGeo).catch(() => setVisitorGeo(null))
+  }, [])
 
   useEffect(() => {
     const fetchFacets = async () => {
       try {
-        const data = await apiFetch<{ cities: string[]; countries: string[]; categories: string[] }>(
-          "/api/organizers/facets",
-          { auth: false },
-        )
-        setFacets({
-          cities: data.cities ?? [],
-          countries: data.countries ?? [],
-          categories: data.categories ?? [],
-        })
+        const data = await apiFetch<unknown>("/api/organizers/facets", { auth: false })
+        setFacets(normalizeFacetsPayload(data))
       } catch (error) {
         console.error("Error fetching organizer facets:", error)
       }
@@ -192,7 +188,9 @@ export default function OrganizersPage() {
           search: searchTerm,
           cities: selectedCities,
           countries: selectedCountries,
-          categories: selectedCategories,
+          eventBuckets: selectedEventBuckets,
+          followerBuckets: selectedFollowerBuckets,
+          visitorGeo,
         })
         const data = await apiFetch<{
           organizers: Organizer[]
@@ -216,7 +214,15 @@ export default function OrganizersPage() {
     }
 
     fetchOrganizers()
-  }, [page, searchTerm, selectedCities, selectedCountries, selectedCategories])
+  }, [
+    page,
+    searchTerm,
+    selectedCities,
+    selectedCountries,
+    selectedEventBuckets,
+    selectedFollowerBuckets,
+    visitorGeo,
+  ])
 
   const handleCardClick = (organizer: Organizer) => {
     router.push(
@@ -245,42 +251,45 @@ export default function OrganizersPage() {
     setPage(1)
     setSelectedCities([])
     setSelectedCountries([])
-    setSelectedCategories([])
+    setSelectedEventBuckets([])
+    setSelectedFollowerBuckets([])
     setSearchTerm("")
   }, [])
 
-  const activeFilterCount =
-    selectedCities.length + selectedCountries.length + selectedCategories.length + (searchTerm.trim() ? 1 : 0)
+  const toggleEventBucket = useCallback((id: string) => {
+    setPage(1)
+    setSelectedEventBuckets((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    )
+  }, [])
 
-  const filterBody = (
-    <>
-      <FilterChipGroup
-        title="Location (city / area)"
-        items={filterOptions.cities}
-        selected={selectedCities}
-        onToggle={(v) => toggleFilter(v, selectedCities, setSelectedCities)}
-        emptyHint="Load organizers to see location filters."
-      />
-      <FilterChipGroup
-        title="Country / region"
-        items={filterOptions.countries}
-        selected={selectedCountries}
-        onToggle={(v) => toggleFilter(v, selectedCountries, setSelectedCountries)}
-        emptyHint="No country field on listings yet."
-      />
-      <FilterChipGroup
-        title="Categories & specialties"
-        items={filterOptions.categories}
-        selected={selectedCategories}
-        onToggle={(v) => toggleFilter(v, selectedCategories, setSelectedCategories)}
-        emptyHint="No categories on current organizers."
-      />
-      {activeFilterCount > 0 && (
-        <Button variant="outline" size="sm" onClick={clearAllFilters} className="w-full">
-          Clear all filters
-        </Button>
-      )}
-    </>
+  const toggleFollowerBucket = useCallback((id: string) => {
+    setPage(1)
+    setSelectedFollowerBuckets((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    )
+  }, [])
+
+  const activeFilterCount =
+    selectedCities.length +
+    selectedCountries.length +
+    selectedEventBuckets.length +
+    selectedFollowerBuckets.length +
+    (searchTerm.trim() ? 1 : 0)
+
+  const filterSidebar = (
+    <OrganizersFilterSidebar
+      facets={facets}
+      selectedCities={selectedCities}
+      selectedCountries={selectedCountries}
+      selectedEventBuckets={selectedEventBuckets}
+      selectedFollowerBuckets={selectedFollowerBuckets}
+      onToggleCity={(v) => toggleFilter(v, selectedCities, setSelectedCities)}
+      onToggleCountry={(v) => toggleFilter(v, selectedCountries, setSelectedCountries)}
+      onToggleEventBucket={toggleEventBucket}
+      onToggleFollowerBucket={toggleFollowerBucket}
+      preferredCountryLabel={visitorGeo?.countryName}
+    />
   )
 
   if (initialLoad) {
@@ -314,9 +323,16 @@ export default function OrganizersPage() {
           <SheetContent side="left" className="flex w-[min(100vw-1rem,22rem)] flex-col gap-0 p-0 sm:max-w-sm">
             <SheetHeader className="border-b px-4 py-4 text-left">
               <SheetTitle className="text-lg">Discover organizers</SheetTitle>
-              <p className="text-sm font-normal text-muted-foreground">Narrow by location, country, or specialty.</p>
+              <p className="text-sm font-normal text-muted-foreground">Narrow by location, events, or followers.</p>
             </SheetHeader>
-            <ScrollArea className="min-h-0 flex-1 px-4 py-4">{filterBody}</ScrollArea>
+            <ScrollArea className="min-h-0 flex-1 px-4 py-4">
+              {filterSidebar}
+              {activeFilterCount > 0 ? (
+                <Button variant="outline" size="sm" onClick={clearAllFilters} className="mt-4 w-full">
+                  Clear all filters
+                </Button>
+              ) : null}
+            </ScrollArea>
             <SheetFooter className="border-t bg-muted/30 p-4 sm:flex-col sm:gap-2">
               <Button className="w-full bg-[#004A96] hover:bg-[#003a75]" onClick={() => setMobileFiltersOpen(false)}>
                 Show {total} result{total !== 1 ? "s" : ""}
@@ -349,7 +365,14 @@ export default function OrganizersPage() {
               <h2 className="text-lg font-semibold text-gray-900">Discover organizers</h2>
               <p className="mt-1 text-xs text-muted-foreground">Filters use your current directory data.</p>
             </div>
-            <ScrollArea className="h-[calc(100dvh-5.5rem)] px-5 py-4">{filterBody}</ScrollArea>
+            <ScrollArea className="h-[calc(100dvh-5.5rem)] px-5 py-2">
+              {filterSidebar}
+              {activeFilterCount > 0 ? (
+                <Button variant="outline" size="sm" onClick={clearAllFilters} className="mb-4 mt-2 w-full">
+                  Clear all filters
+                </Button>
+              ) : null}
+            </ScrollArea>
           </div>
         </aside>
 
@@ -358,6 +381,11 @@ export default function OrganizersPage() {
             <h1 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">Find expert organizers</h1>
             <p className="mt-2 max-w-2xl text-sm text-muted-foreground sm:text-base">
               Connect with verified teams for trade shows, conferences, and corporate events.
+              {visitorGeo?.countryName ? (
+                <span className="block mt-1 text-[#004A96]">
+                  Showing organizers in {visitorGeo.countryName} first.
+                </span>
+              ) : null}
             </p>
 
             <div className="mt-6 max-w-xl">
@@ -418,19 +446,40 @@ export default function OrganizersPage() {
                     </button>
                   </Badge>
                 ))}
-                {selectedCategories.map((category) => (
-                  <Badge key={category} variant="secondary" className="gap-1 pr-1 font-normal">
-                    {category}
-                    <button
-                      type="button"
-                      className="ml-1 rounded p-0.5 hover:bg-muted"
-                      aria-label={`Remove ${category}`}
-                      onClick={() => toggleFilter(category, selectedCategories, setSelectedCategories)}
-                    >
-                      ×
-                    </button>
-                  </Badge>
-                ))}
+                {selectedEventBuckets.map((bucketId) => {
+                  const label =
+                    facets.eventBuckets.find((b) => b.id === bucketId)?.label ?? bucketId
+                  return (
+                    <Badge key={bucketId} variant="secondary" className="gap-1 pr-1 font-normal">
+                      Events: {label}
+                      <button
+                        type="button"
+                        className="ml-1 rounded p-0.5 hover:bg-muted"
+                        aria-label={`Remove ${label}`}
+                        onClick={() => toggleEventBucket(bucketId)}
+                      >
+                        ×
+                      </button>
+                    </Badge>
+                  )
+                })}
+                {selectedFollowerBuckets.map((bucketId) => {
+                  const label =
+                    facets.followerBuckets.find((b) => b.id === bucketId)?.label ?? bucketId
+                  return (
+                    <Badge key={bucketId} variant="secondary" className="gap-1 pr-1 font-normal">
+                      Followers: {label}
+                      <button
+                        type="button"
+                        className="ml-1 rounded p-0.5 hover:bg-muted"
+                        aria-label={`Remove ${label}`}
+                        onClick={() => toggleFollowerBucket(bucketId)}
+                      >
+                        ×
+                      </button>
+                    </Badge>
+                  )
+                })}
                 <Button variant="ghost" size="sm" className="h-7 text-xs text-muted-foreground" onClick={clearAllFilters}>
                   Clear all
                 </Button>
@@ -496,13 +545,13 @@ export default function OrganizersPage() {
                     className="group flex h-full cursor-pointer flex-col overflow-hidden border-gray-200/80 bg-white p-0 shadow-sm transition-shadow hover:shadow-md"
                     onClick={() => handleCardClick(organizer)}
                   >
-                    <div className="relative h-28 w-full shrink-0 overflow-hidden bg-gradient-to-br from-slate-100 to-slate-200">
+                    <div className="relative aspect-[5/4] w-full shrink-0 overflow-hidden bg-gradient-to-br from-slate-50 to-slate-100">
                       <AppImage
                         src={organizer.image}
                         alt={title}
                         fill
                         sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
-                        className="object-cover transition duration-300 group-hover:scale-[1.02]"
+                        className="object-contain object-center p-2"
                       />
                       {organizer.featured && (
                         <Badge className="absolute left-1.5 top-1.5 px-1.5 py-0 text-[10px] bg-orange-500 text-white hover:bg-orange-600">

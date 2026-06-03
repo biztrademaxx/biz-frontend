@@ -30,6 +30,7 @@ import { eventPublicPath } from "@/lib/event-path"
 import { getPublicProfilePath } from "@/lib/profile-path"
 import { formatOrganizerLocationLine } from "@/lib/organizer-location-display"
 import OrganizerPageSkeleton from "@/components/OrganizerPageSkeleton"
+import { PublicApiErrorPanel } from "@/components/public/PublicApiErrorPanel"
 import { getEventDisplayImageUrl } from "@/lib/default-event-image"
 
 interface Organizer {
@@ -135,7 +136,8 @@ export default function OrganizerPage() {
   const [reviews, setReviews] = useState<Review[]>([])
   const [loading, setLoading] = useState(true)
   const [reviewsLoading, setReviewsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [loadError, setLoadError] = useState<unknown>(null)
+  const [retryKey, setRetryKey] = useState(0)
 
   // Contact modal states
   const [isContactModalOpen, setIsContactModalOpen] = useState(false)
@@ -178,16 +180,18 @@ export default function OrganizerPage() {
         )
         setEvents(eventsData.events || [])
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load organizer")
+        setLoadError(err)
+        setOrganizer(null)
       } finally {
         setLoading(false)
       }
     }
 
     if (organizerId) {
+      setLoadError(null)
       fetchOrganizerData()
     }
-  }, [organizerId])
+  }, [organizerId, retryKey])
 
   // Fetch reviews when reviews tab is active
   useEffect(() => {
@@ -384,14 +388,16 @@ export default function OrganizerPage() {
     return <OrganizerPageSkeleton />
   }
 
-  if (error || !organizer) {
+  if (loadError || !organizer) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Organizer Not Found</h1>
-          <p className="text-gray-600 mb-4">{error || "The organizer you're looking for doesn't exist."}</p>
-          <Button onClick={() => router.push("/organizers")}>Back to Organizers</Button>
-        </div>
+      <div className="min-h-screen bg-[#f1f7fb]">
+        <PublicApiErrorPanel
+          error={loadError ?? new Error("not_found")}
+          kind={loadError ? undefined : "not_found"}
+          backHref="/organizers"
+          backLabel="Back to organizers"
+          onRetry={() => setRetryKey((k) => k + 1)}
+        />
       </div>
     )
   }
