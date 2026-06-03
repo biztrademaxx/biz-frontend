@@ -37,3 +37,6 @@ export const EVENTS_LISTING_INLINE_FEATURED_AUTO_MS = 5500
  * curated cards (verified + rating + followers) so the promo slot is never empty.
  */
 export const EVENTS_LISTING_INLINE_PROMO_FALLBACK_MAX = 15
+
+/** Pin side rails under the site nav (`navbar` uses h-[5.5rem]). */
+export const EVENTS_LISTING_STICKY_TOP_CLASS = "top-[5.5rem]"

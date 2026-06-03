@@ -9,6 +9,7 @@ import { EVENT_VENUE_LOCATION_PENDING } from "@/lib/event-location-copy"
 import { resolvedVerifiedBadgeImageUrl } from "@/lib/verified-event-badge"
 import type { Event } from "./listing-types"
 import { TrendingEventsSideCard } from "./TrendingEventsSideCard"
+import { EVENTS_LISTING_STICKY_TOP_CLASS } from "./listing-constants"
 import { getListingEventPrimaryImage } from "./listing-utils"
 
 export type EventsListingRightRailProps = {
@@ -20,7 +21,7 @@ export type EventsListingRightRailProps = {
 export function EventsListingRightRail({ trendingSidebarEvents, featuredFirst, onVisit }: EventsListingRightRailProps) {
   return (
     <div className="lg:col-span-4 order-3 w-full">
-      <div className="lg:sticky lg:top-6 self-start space-y-6">
+      <div className={`lg:sticky ${EVENTS_LISTING_STICKY_TOP_CLASS} z-10 space-y-6 self-start`}>
         <div className="w-full">
           <AdCard />
         </div>
