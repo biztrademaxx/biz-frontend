@@ -24,6 +24,7 @@ import {
   persistInterestLocalStorage,
   postEventLeadThroughNext,
   readInterestLocalStorage,
+  saveEventToInterestedList,
 } from "@/lib/event-leads-client"
 import { apiFetch, getCurrentUserEmail, getCurrentUserId, isAuthenticated, getCurrentUserRole } from "@/lib/api"
 import { brochureFriendlyFilename, downloadUrlAsFile, resolveBrochureUrl } from "@/lib/utils"
@@ -269,11 +270,13 @@ export default function EventPageContent({ event, session: _session, router, toa
         eventId: event.id,
       })
       if (!ok) throw new Error("Lead request failed")
+      await saveEventToInterestedList(event.id)
       persistInterestLocalStorage(event.id, "visit")
       setInterestVisit(true)
+      setIsSaved(true)
       toast({
         title: "You’re visiting",
-        description: "Your interest has been recorded. The organizer may follow up with details.",
+        description: "Added to your interested events. The organizer may follow up with details.",
       })
     } catch {
       const flags = await refreshInterestFromServer()

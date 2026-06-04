@@ -151,6 +151,11 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
   const [interestedEventsCount, setInterestedEventsCount] = useState<number>(0)
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
 
+  const displayLocation = useMemo(
+    () => formatProfileLocationLine(getProfileLocationFromUser(localUserData)),
+    [localUserData],
+  )
+
   const userDataSyncKey = useMemo(
     () =>
       JSON.stringify({

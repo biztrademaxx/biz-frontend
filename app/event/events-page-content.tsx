@@ -254,9 +254,13 @@ export default function EventsPageContent({
         body: { type: "attendee", eventId },
         auth: true,
       })
+      await apiFetch(`/api/events/${eventId}/save`, {
+        method: "POST",
+        auth: true,
+      }).catch(() => undefined)
       toast({
         title: "Visit recorded",
-        description: `Thanks for visiting "${eventTitle}".`,
+        description: `"${eventTitle}" was added to your interested events.`,
       })
     } catch (visitErr) {
       console.error("[v0] Visit lead error:", visitErr)

@@ -176,3 +176,34 @@ export async function postEventLeadThroughNext(
   })
   return { ok: res.ok, status: res.status }
 }
+
+/** Adds event to visitor dashboard “interested events” (saved_events). */
+export async function saveEventToInterestedList(eventId: string): Promise<boolean> {
+  const token = getAccessToken()
+  if (!token) return false
+  try {
+    const res = await fetch(`/api/events/${encodeURIComponent(eventId)}/save`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    })
+    return res.ok
+  } catch {
+    return false
+  }
+}
+
+/** Visit = attendee lead + interested-events list. */
+export async function recordVisitInterest(
+  eventId: string,
+  userId: string,
+): Promise<{ ok: boolean }> {
+  const { ok } = await postEventLeadThroughNext(eventId, {
+    type: "attendee",
+    userId,
+    eventId,
+  })
+  if (!ok) return { ok: false }
+  await saveEventToInterestedList(eventId)
+  return { ok: true }
+}
