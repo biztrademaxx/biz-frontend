@@ -13,6 +13,7 @@ import {
   type SubAdminActivityPoint,
   type SubAdminActivityUpdatedCounts,
 } from "@/lib/sub-admin-activity-types"
+import { formatLocalDateKey, parseLocalDateKey } from "@/lib/format-local-date-key"
 
 const EMPTY_UPDATED: SubAdminActivityUpdatedCounts = {
   eventsUpdated: 0,
@@ -88,11 +89,11 @@ export default function SubAdminTrackingPage() {
     () =>
       Array.from(dailyMap.entries())
         .filter(([, row]) => row.total > 0 || (row.totalUpdated ?? 0) > 0)
-        .map(([day]) => new Date(`${day}T00:00:00`)),
+        .map(([day]) => parseLocalDateKey(day)),
     [dailyMap],
   )
   const selectedDayKey = useMemo(
-    () => (selectedDay ? new Date(selectedDay.getFullYear(), selectedDay.getMonth(), selectedDay.getDate()).toISOString().slice(0, 10) : ""),
+    () => (selectedDay ? formatLocalDateKey(selectedDay) : ""),
     [selectedDay],
   )
   const selectedDayStats = useMemo(() => dailyMap.get(selectedDayKey), [dailyMap, selectedDayKey])
