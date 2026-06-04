@@ -1,4 +1,6 @@
 // lib/api.ts
+import { getVisitorDashboardPath } from "./profile-path";
+
 const DEFAULT_BACKEND_API_ORIGIN = "http://localhost:4000";
 
 function trimmedNextPublicApiUrl(): string {
@@ -186,6 +188,17 @@ export function getCurrentUserEmail(): string | null {
   if (!token) return null;
   const payload = decodeJwtPayload(token);
   return payload?.email ?? null;
+}
+
+/** Visitor dashboard URL using name slug from JWT when available (falls back to UUID). */
+export function getCurrentVisitorDashboardPath(): string | null {
+  const userId = getCurrentUserId();
+  if (!userId) return null;
+  const payload = decodeJwtPayload(getAccessToken() ?? "");
+  return getVisitorDashboardPath(userId, {
+    firstName: typeof payload?.firstName === "string" ? payload.firstName : undefined,
+    lastName: typeof payload?.lastName === "string" ? payload.lastName : undefined,
+  });
 }
 
 /** Current user permissions from stored access token (backend sets for ADMIN domain). */

@@ -20,7 +20,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { loginWithEmailPassword, consumeLogoutSuccessBanner } from "@/lib/api"
+import { loginWithEmailPassword, consumeLogoutSuccessBanner, getCurrentVisitorDashboardPath } from "@/lib/api"
 import {
   clearOAuthSignupIntentRole,
   clearOAuthSignupIntentRoleServer,
@@ -70,7 +70,7 @@ export default function LoginPage() {
       const userId = user?.sub ?? (user as any)?.id
 
       if (role === "ATTENDEE") {
-        router.push(`/dashboard/${userId}`)
+        router.push(getCurrentVisitorDashboardPath() ?? `/dashboard/${userId}`)
       } else if (role === "ORGANIZER") {
         router.push(`/organizer-dashboard/${userId}`)
       } else if (role === "SUPER_ADMIN" || role === "SUPERADMIN" || role === "SUB_ADMIN") {

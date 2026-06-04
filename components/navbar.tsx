@@ -12,6 +12,7 @@ import {
   getCurrentUserEmail,
   getCurrentUserId,
   getCurrentUserRole,
+  getCurrentVisitorDashboardPath,
   isAuthenticated,
 } from "@/lib/api"
 import { NAVBAR_LOGO_LINK_CLASSNAME, getNavbarLogoImageProps } from "@/lib/brand-logo"
@@ -190,7 +191,7 @@ export default function Navbar() {
     } else if (roleUpper === "SUPER_ADMIN" || roleUpper === "SUB_ADMIN") {
       router.push("/admin-dashboard")
     } else if (roleUpper === "ATTENDEE") {
-      router.push(userId ? `/dashboard/${userId}` : "/login")
+      router.push(getCurrentVisitorDashboardPath() ?? (userId ? `/dashboard/${userId}` : "/login"))
     } else if (roleUpper === "VENUE_MANAGER") {
       router.push("/venue-dashboard")
     } else {
