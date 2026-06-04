@@ -3,7 +3,7 @@
 import { useEvents } from "./hooks/useEvents"
 import { EventTable } from "./components/EventTable"
 import { VerifyEventDialog } from "./components/VerifyEventDialog"
-import { EditEventForm } from "../event-management"
+import { EditEventForm } from "./components/EditEventForm"
 
 export default function EventManagementPage() {
   const {
