@@ -6,45 +6,21 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
-import { RefreshCw, Users, Activity, Upload, Globe2, MousePointerClick } from "lucide-react"
+import { RefreshCw, Users, Activity, Upload, Globe2, MousePointerClick, Pencil } from "lucide-react"
+import {
+  formatCreatedUpdated,
+  type SubAdminActivityData,
+  type SubAdminActivityPoint,
+  type SubAdminActivityUpdatedCounts,
+} from "@/lib/sub-admin-activity-types"
 
-type ActivityPoint = {
-  period: string
-  events: number
-  organizers: number
-  exhibitors: number
-  speakers: number
-  bulkImports: number
-  total: number
-}
-
-type SubAdminActivityData = {
-  generatedAt: string
-  totals: {
-    events: number
-    organizers: number
-    exhibitors: number
-    speakers: number
-    bulkImports: number
-    total: number
-  }
-  bySubAdmin: Array<{
-    adminId: string
-    name: string
-    email: string
-    onlineStatus: "ONLINE" | "OFFLINE"
-    lastLogin: string | null
-    lastActivityAt: string | null
-    events: number
-    organizers: number
-    exhibitors: number
-    speakers: number
-    bulkImports: number
-    total: number
-  }>
-  daily?: ActivityPoint[]
-  weekly?: ActivityPoint[]
-  monthly?: ActivityPoint[]
+const EMPTY_UPDATED: SubAdminActivityUpdatedCounts = {
+  eventsUpdated: 0,
+  organizersUpdated: 0,
+  exhibitorsUpdated: 0,
+  speakersUpdated: 0,
+  bulkImportsUpdated: 0,
+  totalUpdated: 0,
 }
 
 export default function SubAdminTrackingPage() {
@@ -94,20 +70,24 @@ export default function SubAdminTrackingPage() {
     () => (data?.bySubAdmin ?? []).filter((a) => a.onlineStatus === "ONLINE").length,
     [data],
   )
-  const maxUploads = useMemo(() => Math.max(...topAdmins.map((a) => a.total), 1), [topAdmins])
+  const totalsUpdated = data?.totalsUpdated ?? EMPTY_UPDATED
+  const maxUploads = useMemo(
+    () => Math.max(...topAdmins.map((a) => a.total + (a.totalUpdated ?? 0)), 1),
+    [topAdmins],
+  )
   const selectedAdmin = useMemo(
     () => (data?.bySubAdmin ?? []).find((x) => x.adminId === selectedAdminId) ?? null,
     [data, selectedAdminId],
   )
   const dailyMap = useMemo(() => {
-    const map = new Map<string, ActivityPoint>()
+    const map = new Map<string, SubAdminActivityPoint>()
     for (const row of detail?.daily ?? []) map.set(row.period, row)
     return map
   }, [detail])
   const activeDays = useMemo(
     () =>
       Array.from(dailyMap.entries())
-        .filter(([, row]) => row.total > 0)
+        .filter(([, row]) => row.total > 0 || (row.totalUpdated ?? 0) > 0)
         .map(([day]) => new Date(`${day}T00:00:00`)),
     [dailyMap],
   )
@@ -132,9 +112,10 @@ export default function SubAdminTrackingPage() {
         <div>
           <h2 className="text-2xl font-semibold tracking-tight">Sub Admin Tracking</h2>
           <p className="text-sm text-muted-foreground mt-1">
-            Only sub-admin analytics in one place
-            {data?.generatedAt ? ` · Updated ${new Date(data.generatedAt).toLocaleString()}` : ""}
+            Created vs updated counts per sub-admin (last 90 days)
+            {data?.generatedAt ? ` · Refreshed ${new Date(data.generatedAt).toLocaleString()}` : ""}
           </p>
+          <p className="text-xs text-muted-foreground mt-0.5">Table format: created / updated</p>
         </div>
         <Button variant="outline" size="sm" onClick={load} className="gap-2">
           <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
@@ -142,11 +123,22 @@ export default function SubAdminTrackingPage() {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-        <MetricCard title="Total Uploads" value={data?.totals.total ?? 0} icon={<Upload className="h-4 w-4 text-blue-600" />} />
-        <MetricCard title="Events Uploaded" value={data?.totals.events ?? 0} icon={<Activity className="h-4 w-4 text-emerald-600" />} />
-        <MetricCard title="Bulk Imports" value={data?.totals.bulkImports ?? 0} icon={<Globe2 className="h-4 w-4 text-indigo-600" />} />
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <MetricCard title="Total Created" value={data?.totals.total ?? 0} icon={<Upload className="h-4 w-4 text-blue-600" />} />
+        <MetricCard title="Total Updated" value={totalsUpdated.totalUpdated} icon={<Pencil className="h-4 w-4 text-violet-600" />} />
         <MetricCard title="Sub Admins Online" value={onlineCount} icon={<Users className="h-4 w-4 text-orange-600" />} />
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+        <MetricCard title="Events" value={formatCreatedUpdated(data?.totals.events ?? 0, totalsUpdated.eventsUpdated)} compact />
+        <MetricCard title="Organizers" value={formatCreatedUpdated(data?.totals.organizers ?? 0, totalsUpdated.organizersUpdated)} compact />
+        <MetricCard title="Exhibitors" value={formatCreatedUpdated(data?.totals.exhibitors ?? 0, totalsUpdated.exhibitorsUpdated)} compact />
+        <MetricCard title="Speakers" value={formatCreatedUpdated(data?.totals.speakers ?? 0, totalsUpdated.speakersUpdated)} compact />
+        <MetricCard
+          title="Bulk Imports"
+          value={formatCreatedUpdated(data?.totals.bulkImports ?? 0, totalsUpdated.bulkImportsUpdated)}
+          compact
+        />
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
@@ -178,8 +170,8 @@ export default function SubAdminTrackingPage() {
                         <p className="text-xs text-muted-foreground">{admin.email}</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm font-semibold">{admin.total}</p>
-                        <p className="text-[11px] text-muted-foreground">uploads</p>
+                        <p className="text-sm font-semibold">{formatCreatedUpdated(admin.total, admin.totalUpdated ?? 0)}</p>
+                        <p className="text-[11px] text-muted-foreground">created / updated</p>
                       </div>
                     </div>
                     <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
@@ -232,13 +224,14 @@ export default function SubAdminTrackingPage() {
                   <th className="py-2 pr-3 text-right">Exhibitors</th>
                   <th className="py-2 pr-3 text-right">Speakers</th>
                   <th className="py-2 pr-3 text-right">Bulk</th>
-                  <th className="py-2 pr-3 text-right">Total</th>
+                  <th className="py-2 pr-3 text-right">Created</th>
+                  <th className="py-2 pr-3 text-right">Updated</th>
                 </tr>
               </thead>
               <tbody>
                 {(data?.bySubAdmin ?? []).length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="py-3 text-muted-foreground">
+                    <td colSpan={9} className="py-3 text-muted-foreground">
                       No sub-admin activity yet.
                     </td>
                   </tr>
@@ -266,12 +259,15 @@ export default function SubAdminTrackingPage() {
                           {row.onlineStatus}
                         </Badge>
                       </td>
-                      <td className="py-2 pr-3 text-right">{row.events}</td>
-                      <td className="py-2 pr-3 text-right">{row.organizers}</td>
-                      <td className="py-2 pr-3 text-right">{row.exhibitors}</td>
-                      <td className="py-2 pr-3 text-right">{row.speakers}</td>
-                      <td className="py-2 pr-3 text-right">{row.bulkImports}</td>
-                      <td className="py-2 pr-3 text-right font-semibold">{row.total}</td>
+                      <td className="py-2 pr-3 text-right">{formatCreatedUpdated(row.events, row.eventsUpdated ?? 0)}</td>
+                      <td className="py-2 pr-3 text-right">{formatCreatedUpdated(row.organizers, row.organizersUpdated ?? 0)}</td>
+                      <td className="py-2 pr-3 text-right">{formatCreatedUpdated(row.exhibitors, row.exhibitorsUpdated ?? 0)}</td>
+                      <td className="py-2 pr-3 text-right">{formatCreatedUpdated(row.speakers, row.speakersUpdated ?? 0)}</td>
+                      <td className="py-2 pr-3 text-right">
+                        {formatCreatedUpdated(row.bulkImports, row.bulkImportsUpdated ?? 0)}
+                      </td>
+                      <td className="py-2 pr-3 text-right font-medium">{row.total}</td>
+                      <td className="py-2 pr-3 text-right font-semibold text-violet-700">{row.totalUpdated ?? 0}</td>
                     </tr>
                   ))
                 )}
@@ -320,12 +316,20 @@ export default function SubAdminTrackingPage() {
 
               <div className="lg:col-span-2 space-y-4">
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                  <MetricCard title="Events" value={detail?.totals.events ?? 0} icon={<Activity className="h-4 w-4 text-emerald-600" />} />
-                  <MetricCard title="Organizers" value={detail?.totals.organizers ?? 0} icon={<Users className="h-4 w-4 text-blue-600" />} />
-                  <MetricCard title="Exhibitors" value={detail?.totals.exhibitors ?? 0} icon={<Users className="h-4 w-4 text-violet-600" />} />
-                  <MetricCard title="Speakers" value={detail?.totals.speakers ?? 0} icon={<Users className="h-4 w-4 text-orange-600" />} />
-                  <MetricCard title="Bulk Imports" value={detail?.totals.bulkImports ?? 0} icon={<Upload className="h-4 w-4 text-indigo-600" />} />
-                  <MetricCard title="Total Uploads" value={detail?.totals.total ?? 0} icon={<Globe2 className="h-4 w-4 text-slate-600" />} />
+                  <MetricCard title="Events" value={formatCreatedUpdated(detail?.totals.events ?? 0, detail?.totalsUpdated?.eventsUpdated ?? 0)} icon={<Activity className="h-4 w-4 text-emerald-600" />} />
+                  <MetricCard title="Organizers" value={formatCreatedUpdated(detail?.totals.organizers ?? 0, detail?.totalsUpdated?.organizersUpdated ?? 0)} icon={<Users className="h-4 w-4 text-blue-600" />} />
+                  <MetricCard title="Exhibitors" value={formatCreatedUpdated(detail?.totals.exhibitors ?? 0, detail?.totalsUpdated?.exhibitorsUpdated ?? 0)} icon={<Users className="h-4 w-4 text-violet-600" />} />
+                  <MetricCard title="Speakers" value={formatCreatedUpdated(detail?.totals.speakers ?? 0, detail?.totalsUpdated?.speakersUpdated ?? 0)} icon={<Users className="h-4 w-4 text-orange-600" />} />
+                  <MetricCard
+                    title="Bulk Imports"
+                    value={formatCreatedUpdated(
+                      detail?.totals.bulkImports ?? 0,
+                      detail?.totalsUpdated?.bulkImportsUpdated ?? 0,
+                    )}
+                    icon={<Upload className="h-4 w-4 text-indigo-600" />}
+                  />
+                  <MetricCard title="Total Created" value={detail?.totals.total ?? 0} icon={<Globe2 className="h-4 w-4 text-slate-600" />} />
+                  <MetricCard title="Total Updated" value={detail?.totalsUpdated?.totalUpdated ?? 0} icon={<Pencil className="h-4 w-4 text-violet-600" />} />
                 </div>
 
                 <Card className="border-slate-200 shadow-none">
@@ -335,15 +339,24 @@ export default function SubAdminTrackingPage() {
                   <CardContent>
                     {selectedDayStats ? (
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm">
-                        <div>Events: <span className="font-semibold">{selectedDayStats.events}</span></div>
-                        <div>Organizers: <span className="font-semibold">{selectedDayStats.organizers}</span></div>
-                        <div>Exhibitors: <span className="font-semibold">{selectedDayStats.exhibitors}</span></div>
-                        <div>Speakers: <span className="font-semibold">{selectedDayStats.speakers}</span></div>
-                        <div>Bulk: <span className="font-semibold">{selectedDayStats.bulkImports}</span></div>
-                        <div>Total: <span className="font-semibold">{selectedDayStats.total}</span></div>
+                        <div>Events: <span className="font-semibold">{formatCreatedUpdated(selectedDayStats.events, selectedDayStats.eventsUpdated ?? 0)}</span></div>
+                        <div>Organizers: <span className="font-semibold">{formatCreatedUpdated(selectedDayStats.organizers, selectedDayStats.organizersUpdated ?? 0)}</span></div>
+                        <div>Exhibitors: <span className="font-semibold">{formatCreatedUpdated(selectedDayStats.exhibitors, selectedDayStats.exhibitorsUpdated ?? 0)}</span></div>
+                        <div>Speakers: <span className="font-semibold">{formatCreatedUpdated(selectedDayStats.speakers, selectedDayStats.speakersUpdated ?? 0)}</span></div>
+                        <div>
+                          Bulk:{" "}
+                          <span className="font-semibold">
+                            {formatCreatedUpdated(
+                              selectedDayStats.bulkImports,
+                              selectedDayStats.bulkImportsUpdated ?? 0,
+                            )}
+                          </span>
+                        </div>
+                        <div>Created: <span className="font-semibold">{selectedDayStats.total}</span></div>
+                        <div>Updated: <span className="font-semibold text-violet-700">{selectedDayStats.totalUpdated ?? 0}</span></div>
                       </div>
                     ) : (
-                      <p className="text-sm text-muted-foreground">No updates on this date.</p>
+                      <p className="text-sm text-muted-foreground">No activity on this date.</p>
                     )}
                   </CardContent>
                 </Card>
@@ -356,17 +369,27 @@ export default function SubAdminTrackingPage() {
   )
 }
 
-function MetricCard({ title, value, icon }: { title: string; value: number; icon: ReactNode }) {
+function MetricCard({
+  title,
+  value,
+  icon,
+  compact,
+}: {
+  title: string
+  value: number | string
+  icon?: ReactNode
+  compact?: boolean
+}) {
   return (
     <Card className="border-slate-200 shadow-sm">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-medium text-slate-600 flex items-center justify-between">
+      <CardHeader className={compact ? "pb-1 pt-3 px-3" : "pb-2"}>
+        <CardTitle className={`font-medium text-slate-600 flex items-center justify-between ${compact ? "text-xs" : "text-sm"}`}>
           {title}
           {icon}
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="text-3xl font-bold text-slate-900">{value}</div>
+      <CardContent className={compact ? "px-3 pb-3 pt-0" : undefined}>
+        <div className={`font-bold text-slate-900 ${compact ? "text-lg" : "text-3xl"}`}>{value}</div>
       </CardContent>
     </Card>
   )

@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { RefreshCw, BarChart3, Users, DollarSign, Activity, Calendar } from "lucide-react"
+import { formatCreatedUpdated, type SubAdminActivityData } from "@/lib/sub-admin-activity-types"
 
 export type ReportsView = "events" | "engagement" | "revenue" | "system"
 
@@ -54,33 +55,6 @@ export interface ReportsOverviewData {
     pendingDeactivationRequests: number
     totalEvents: number
   }
-}
-
-type SubAdminActivityData = {
-  generatedAt: string
-  totals: {
-    events: number
-    organizers: number
-    exhibitors: number
-    speakers: number
-    bulkImports: number
-    total: number
-  }
-  bySubAdmin: Array<{
-    adminId: string
-    name: string
-    email: string
-    isActive: boolean
-    lastLogin: string | null
-    lastActivityAt: string | null
-    onlineStatus: "ONLINE" | "OFFLINE"
-    events: number
-    organizers: number
-    exhibitors: number
-    speakers: number
-    bulkImports: number
-    total: number
-  }>
 }
 
 function formatMoney(n: number) {
@@ -528,16 +502,22 @@ export default function ReportsAnalyticsPage({ view = "events" }: { view?: Repor
           <Card>
             <CardHeader>
               <CardTitle>Sub-admin upload tracking</CardTitle>
-              <CardDescription>Track who uploaded events, organizers, exhibitors, speakers and bulk imports.</CardDescription>
+              <CardDescription>Created / updated counts per sub-admin (last 90 days).</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-                <Metric label="Events" value={subAdminActivity?.totals.events ?? 0} />
-                <Metric label="Organizers" value={subAdminActivity?.totals.organizers ?? 0} />
-                <Metric label="Exhibitors" value={subAdminActivity?.totals.exhibitors ?? 0} />
-                <Metric label="Speakers" value={subAdminActivity?.totals.speakers ?? 0} />
-                <Metric label="Bulk Imports" value={subAdminActivity?.totals.bulkImports ?? 0} />
-                <Metric label="Total" value={subAdminActivity?.totals.total ?? 0} />
+                <Metric label="Events" value={formatCreatedUpdated(subAdminActivity?.totals.events ?? 0, subAdminActivity?.totalsUpdated?.eventsUpdated ?? 0)} />
+                <Metric label="Organizers" value={formatCreatedUpdated(subAdminActivity?.totals.organizers ?? 0, subAdminActivity?.totalsUpdated?.organizersUpdated ?? 0)} />
+                <Metric label="Exhibitors" value={formatCreatedUpdated(subAdminActivity?.totals.exhibitors ?? 0, subAdminActivity?.totalsUpdated?.exhibitorsUpdated ?? 0)} />
+                <Metric label="Speakers" value={formatCreatedUpdated(subAdminActivity?.totals.speakers ?? 0, subAdminActivity?.totalsUpdated?.speakersUpdated ?? 0)} />
+                <Metric
+                  label="Bulk Imports"
+                  value={formatCreatedUpdated(
+                    subAdminActivity?.totals.bulkImports ?? 0,
+                    subAdminActivity?.totalsUpdated?.bulkImportsUpdated ?? 0,
+                  )}
+                />
+                <Metric label="Updated total" value={subAdminActivity?.totalsUpdated?.totalUpdated ?? 0} />
               </div>
               <Table>
                 <TableHeader>
@@ -549,13 +529,14 @@ export default function ReportsAnalyticsPage({ view = "events" }: { view?: Repor
                     <TableHead className="text-right">Exhibitors</TableHead>
                     <TableHead className="text-right">Speakers</TableHead>
                     <TableHead className="text-right">Bulk</TableHead>
-                    <TableHead className="text-right">Total</TableHead>
+                    <TableHead className="text-right">Created</TableHead>
+                    <TableHead className="text-right">Updated</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {(subAdminActivity?.bySubAdmin ?? []).length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={8} className="text-muted-foreground">
+                      <TableCell colSpan={9} className="text-muted-foreground">
                         No sub-admin activity yet.
                       </TableCell>
                     </TableRow>
@@ -582,12 +563,15 @@ export default function ReportsAnalyticsPage({ view = "events" }: { view?: Repor
                             </span>
                           </div>
                         </TableCell>
-                        <TableCell className="text-right">{row.events}</TableCell>
-                        <TableCell className="text-right">{row.organizers}</TableCell>
-                        <TableCell className="text-right">{row.exhibitors}</TableCell>
-                        <TableCell className="text-right">{row.speakers}</TableCell>
-                        <TableCell className="text-right">{row.bulkImports}</TableCell>
+                        <TableCell className="text-right">{formatCreatedUpdated(row.events, row.eventsUpdated ?? 0)}</TableCell>
+                        <TableCell className="text-right">{formatCreatedUpdated(row.organizers, row.organizersUpdated ?? 0)}</TableCell>
+                        <TableCell className="text-right">{formatCreatedUpdated(row.exhibitors, row.exhibitorsUpdated ?? 0)}</TableCell>
+                        <TableCell className="text-right">{formatCreatedUpdated(row.speakers, row.speakersUpdated ?? 0)}</TableCell>
+                        <TableCell className="text-right">
+                          {formatCreatedUpdated(row.bulkImports, row.bulkImportsUpdated ?? 0)}
+                        </TableCell>
                         <TableCell className="text-right font-medium">{row.total}</TableCell>
+                        <TableCell className="text-right font-semibold text-violet-700">{row.totalUpdated ?? 0}</TableCell>
                       </TableRow>
                     ))
                   )}
@@ -601,7 +585,7 @@ export default function ReportsAnalyticsPage({ view = "events" }: { view?: Repor
   )
 }
 
-function Metric({ label, value }: { label: string; value: number }) {
+function Metric({ label, value }: { label: string; value: number | string }) {
   return (
     <Card>
       <CardHeader className="pb-2">
