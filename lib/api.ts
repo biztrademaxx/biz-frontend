@@ -202,6 +202,16 @@ export function isAuthenticated(): boolean {
   return !!getAccessToken();
 }
 
+/** True when a non-expired access token is stored (guest prompts should stay hidden). */
+export function hasActiveAccessToken(): boolean {
+  const token = getAccessToken();
+  if (!token) return false;
+  const payload = decodeJwtPayload(token);
+  if (!payload) return false;
+  if (typeof payload.exp === "number" && payload.exp * 1000 <= Date.now()) return false;
+  return true;
+}
+
 async function refreshAccessToken(): Promise<string | null> {
   if (typeof window === "undefined") return null;
 
