@@ -339,85 +339,82 @@ export default function HeroSlideshowClient({
   return (
     <section
       aria-label="Discover Trade Shows"
-      className="relative w-full overflow-hidden rounded-[28px] "
+      className="relative w-full overflow-hidden rounded-[28px]"
     >
       {/* Background Image */}
       <div
         className="
-    absolute inset-0 pointer-events-none opacity-[0.30]
-    bg-[url('/images/glob.jpeg')]
-    bg-cover
-    bg-no-repeat
-    bg-top
-    lg:bg-center
-  "
+          absolute inset-0 pointer-events-none opacity-[0.30]
+          bg-[url('/images/glob.jpeg')]
+          bg-cover bg-no-repeat bg-top lg:bg-center
+        "
       />
 
-      {/* Optional white overlay */}
+      {/* White overlay */}
       <div className="absolute inset-0 bg-white/85" />
 
       {/* Content */}
-      <div className="relative z-10 w-full max-w-[1300px] mx-auto px-6 xl:px-10">
+      <div className="relative z-10 w-full max-w-[1300px] mx-auto px-4 sm:px-6 xl:px-10">
 
-        <div className="relative z-10 flex flex-col lg:flex-row lg:items-start gap-8 lg:gap-10 xl:gap-16 pt-12 lg:pt-16 xl:pt-20 pb-2">
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-start gap-6 lg:gap-10 xl:gap-16 pt-8 sm:pt-10 lg:pt-16 xl:pt-20 pb-6 lg:pb-2">
+
           {/* ── LEFT PANEL ── */}
           <div className="w-full lg:w-[32%] flex-shrink-0">
-            {/* Headline */}
-            <h1 className="max-w-[340px] text-[32px] lg:text-[42px] xl:text-[55px] font-light leading-[0.9] tracking-[-0.05em] text-[#0B132B]">
+
+            {/* Headline — tighter on mobile */}
+            <h1 className="text-[28px] sm:text-[34px] lg:text-[42px] xl:text-[55px] font-light leading-[0.9] tracking-[-0.05em] text-[#0B132B]">
               <span className="block">Discover</span>
-
-              <span className="block mt-4 text-[#2563EB]">
-                Trade Shows
-              </span>
-
-              <span className="block mt-4">
-                Worldwide
-              </span>
+              <span className="block mt-3 lg:mt-4 text-[#2563EB]">Trade Shows</span>
+              <span className="block mt-3 lg:mt-4">Worldwide</span>
             </h1>
 
-            {/* Description */}
-            <p className="mt-20 max-w-[340px] text-[14px] leading-[1.7] text-[#64748B]">
+            {/* Description — hidden on very small to save space, shown sm+ */}
+            <p className="hidden sm:block mt-5 lg:mt-7 max-w-[340px] text-[15px] sm:text-[16px] lg:text-[18px] leading-[1.7] text-[#64748B]">
               Connect with buyers, exhibitors, and industry leaders at the world's leading trade fairs.
             </p>
 
-            {/* Stats */}
-            <div className="flex gap-8 mt-12 mb-12">
-              <div className="flex items-center gap-3">
-                <CalendarDays className="h-6 w-6 text-blue-500 shrink-0" strokeWidth={1.5} />
+            {/* Stats — 3 columns on mobile, row on desktop */}
+            <div className="grid grid-cols-3 gap-3 mt-5 lg:mt-8 mb-5 lg:mb-8 lg:flex lg:gap-8">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-1.5 sm:gap-3">
+                <CalendarDays className="h-5 w-5 lg:h-6 lg:w-6 text-blue-500 shrink-0" strokeWidth={1.5} />
                 <div>
-                  <p className="text-[28px] font-extrabold text-[#0F172A] leading-none">12K+</p>
-                  <p className="text-[10px] text-[#64748B] mt-1">Events Listed</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2.5">
-                <Users className="h-6 w-6 text-blue-500 shrink-0" strokeWidth={2} />
-                <div>
-                  <p className="text-[28px] font-extrabold text-[#0F172A] leading-none">320K+</p>
-                  <p className="text-[10px] text-[#64748B] mt-1 whitespace-nowrap">
-                    Industry Professionals
+                  <p className="text-[20px] sm:text-[24px] lg:text-[28px] font-extrabold text-[#0F172A] leading-none">12K+</p>
+                  <p className="text-[11px] sm:text-[12px] lg:text-[14px] font-medium text-[#64748B] mt-0.5 sm:mt-1 whitespace-nowrap">
+                    Events Listed
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-2.5">
-                <Globe className="h-6 w-6 text-blue-500 shrink-0" strokeWidth={1.5} />
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-1.5 sm:gap-3">
+                <Users className="h-5 w-5 lg:h-6 lg:w-6 text-blue-500 shrink-0" strokeWidth={2} />
                 <div>
-                  <p className="text-[28px] font-extrabold text-[#0F172A] leading-none">180+</p>
-                  <p className="text-[10px] text-[#64748B] mt-1">Countries</p>
+                  <p className="text-[20px] sm:text-[24px] lg:text-[28px] font-extrabold text-[#0F172A] leading-none">320K+</p>
+                  <p className="text-[11px] sm:text-[12px] lg:text-[14px] font-medium text-[#64748B] mt-0.5 sm:mt-1 whitespace-nowrap">
+                    Professionals
+                  </p>
+                </div>
+              </div>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-1.5 sm:gap-3">
+                <Globe className="h-5 w-5 lg:h-6 lg:w-6 text-blue-500 shrink-0" strokeWidth={1.5} />
+                <div>
+                  <p className="text-[20px] sm:text-[24px] lg:text-[28px] font-extrabold text-[#0F172A] leading-none">180+</p>
+                  <p className="text-[11px] sm:text-[12px] lg:text-[14px] font-medium text-[#64748B] mt-0.5 sm:mt-1 whitespace-nowrap">
+                    Countries
+                  </p>
                 </div>
               </div>
             </div>
 
             {/* CTA buttons */}
-            <div className="flex gap-4 mt-17 max-w-[360px]">
+            <div className="flex gap-3 sm:gap-4 max-w-[360px]">
               <Link
                 href="/event"
-                className="flex-1 text-center bg-blue-600 hover:bg-blue-700 transition-colors text-white text-[0.9rem] font-bold h-12 rounded-sm flex items-center justify-center"
+                className="flex-1 text-center bg-blue-600 hover:bg-blue-700 transition-colors text-white text-[0.85rem] sm:text-[0.9rem] font-bold h-11 sm:h-12 rounded-sm flex items-center justify-center"
               >
                 Find Events
               </Link>
               <Link
                 href="/organizer-signup"
-                className="flex-1 text-center bg-white border-2 border-gray-300 hover:border-blue-400 hover:text-blue-600 transition-colors text-gray-800 text-[0.9rem] font-bold h-12 rounded-sm flex items-center justify-center"
+                className="flex-1 text-center bg-white border-2 border-gray-300 hover:border-blue-400 hover:text-blue-600 transition-colors text-gray-800 text-[0.85rem] sm:text-[0.9rem] font-bold h-11 sm:h-12 rounded-sm flex items-center justify-center"
               >
                 List Your Event
               </Link>
@@ -425,10 +422,11 @@ export default function HeroSlideshowClient({
           </div>
 
           {/* ── RIGHT PANEL ── */}
-          <div className="w-full lg:w-[55%] lg:ml-25 flex flex-col gap-5">
-            {/* Featured card — with blue light shadow added */}
-            <div className="relative w-full min-h-[380px] rounded-xl shadow-[0_15px_80px_-10px_rgba(0,74,150,0.95)] overflow-visible">
-              <div className="relative overflow-hidden rounded-xl h-[300px] lg:h-[360px] xl:h-[400px]">
+          <div className="w-full lg:w-[55%] lg:ml-25 flex flex-col gap-4 lg:gap-5">
+
+            {/* Featured card */}
+            <div className="relative w-full rounded-xl shadow-[0_15px_80px_-10px_rgba(0,74,150,0.95)] overflow-visible">
+              <div className="relative overflow-hidden rounded-xl h-[260px] sm:h-[300px] lg:h-[360px] xl:h-[400px]">
                 {featuredImageUrl ? (
                   <AppImage
                     key={featured.id}
@@ -441,67 +439,56 @@ export default function HeroSlideshowClient({
                   />
                 ) : null}
 
-                <div
-                  className="
-    absolute
-    bottom-0
-    left-0
-    right-0
-    h-[50%]
-    bg-gradient-to-t
-    from-black/70
-    via-black/35
-    to-transparent
-    z-[1]
-  "
-                />
+                <div className="absolute bottom-0 left-0 right-0 h-[55%] bg-gradient-to-t from-black/75 via-black/40 to-transparent z-[1]" />
+
                 {!featuredImageUrl && (
                   <div className="absolute inset-0 bg-gradient-to-br from-blue-200 to-blue-400" />
                 )}
 
-                {/* FEATURED EVENT badge */}
-                <div className="absolute top-4 left-4 z-10">
-                  <span className="bg-blue-600 text-white text-[0.62rem] font-extrabold uppercase tracking-[0.14em] px-3 py-1.5 rounded-md shadow">
-                    Featured Event
+                {/* VIP badge */}
+                <div className="absolute top-3 left-3 sm:top-4 sm:left-4 z-10">
+                  <span className="bg-blue-600 text-white text-[0.58rem] sm:text-[0.62rem] font-extrabold uppercase tracking-[0.14em] px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-md shadow">
+                    VIP Event
                   </span>
                 </div>
 
                 {/* Bottom info bar */}
-                <div className="absolute bottom-0 left-0 right-0 z-20 p-6">
-                  <div className="flex items-end gap-5">
-                    {/* White date box */}
-                    <div className="flex-shrink-0 bg-white rounded-xl px-4 py-3 text-center w-[110px] h-[100px] shadow">
-                      <p className="text-[1.4rem] font-black text-gray-900 leading-none tracking-tight mt-5">{dayRange}</p>
-                      <p className="text-[0.68rem] font-semibold text-gray-500 mt-1.5 uppercase tracking-wider">{monthYear}</p>
+                <div className="absolute bottom-0 left-0 right-0 z-20 p-3 sm:p-5 lg:p-6">
+                  <div className="flex items-end gap-3 sm:gap-4 lg:gap-5">
+
+                    {/* Date box — smaller on mobile */}
+                    <div className="flex-shrink-0 bg-white rounded-lg sm:rounded-xl px-2 py-2 sm:px-4 sm:py-3 text-center w-[58px] h-[58px] sm:w-[80px] sm:h-[80px] lg:w-[110px] lg:h-[100px] shadow flex flex-col items-center justify-center">
+                      <p className="text-[1.1rem] sm:text-[1.3rem] lg:text-[1.4rem] font-black text-gray-900 leading-none tracking-tight">{dayRange}</p>
+                      <p className="text-[0.65rem] sm:text-[0.85rem] font-semibold text-gray-500 mt-1 uppercase tracking-wider">{monthYear}</p>
                     </div>
 
                     {/* Event info */}
-                    <div className="flex-1 min-w-0 max-w-[400px]">
-                      <h2 className="text-[1.7rem] font-extrabold text-white mb-2 leading-tight line-clamp-2">
+                    <div className="flex-1 min-w-0">
+                      <h2 className="text-[1.1rem] sm:text-[1.35rem] lg:text-[1.7rem] font-extrabold text-white mb-1 sm:mb-2 leading-tight line-clamp-2">
                         {featured.subTitle}
                       </h2>
                       {loc && (
-                        <div className="flex items-center gap-3 text-white text-[0.8rem] mb-3">
-                          <MapPin className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
+                        <div className="flex items-center gap-1.5 sm:gap-2 text-white text-[0.72rem] sm:text-[0.78rem] mb-1.5 sm:mb-2">
+                          <MapPin className="h-3 w-3 sm:h-3.5 sm:w-3.5 shrink-0" strokeWidth={2} />
                           <span className="truncate drop-shadow-sm">{loc}</span>
                         </div>
                       )}
                       {featured.organizerName && (
-                        <div className="flex items-center gap-1.5 text-white text-[0.8rem] mb-3">
+                        <div className="hidden sm:flex items-center gap-1.5 text-white text-[0.78rem] mb-2">
                           <Building2 className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
                           <span className="truncate drop-shadow-sm">{featured.organizerName}</span>
                         </div>
                       )}
-                      <div className="flex gap-2.5">
+                      <div className="flex gap-2 flex-wrap">
                         <Link
                           href={eventPublicPath(featured)}
-                          className="bg-blue-600 hover:bg-blue-700 text-white text-[0.8rem] font-bold px-5 py-2 rounded-lg transition-colors shadow"
+                          className="bg-blue-600 hover:bg-blue-700 text-white text-[0.72rem] sm:text-[0.8rem] font-bold px-3 sm:px-5 py-1.5 sm:py-2 rounded-md sm:rounded-lg transition-colors shadow"
                         >
                           Register Now
                         </Link>
                         <Link
                           href={`${eventPublicPath(featured)}?tab=exhibit`}
-                          className="bg-white hover:bg-gray-50 text-gray-900 text-[0.8rem] font-bold px-5 py-2 rounded-lg border border-white/60 transition-colors shadow"
+                          className="bg-white hover:bg-gray-50 text-gray-900 text-[0.72rem] sm:text-[0.8rem] font-bold px-3 sm:px-5 py-1.5 sm:py-2 rounded-md sm:rounded-lg border border-white/60 transition-colors shadow"
                         >
                           Exhibit Now
                         </Link>
@@ -510,24 +497,6 @@ export default function HeroSlideshowClient({
                   </div>
                 </div>
               </div>
-
-              {/* Prev / Next arrows */}
-              {/* <button
-                type="button"
-                aria-label="Previous event"
-                onClick={() => advance("prev")}
-                className="absolute left-[-20px] top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-white shadow-xl flex items-center justify-center hover:bg-gray-50 transition-colors"
-              >
-                <ChevronLeft className="h-5 w-5 text-gray-600" strokeWidth={2.5} />
-              </button>
-              <button
-                type="button"
-                aria-label="Next event"
-                onClick={() => advance("next")}
-                className="absolute right-[-20px] top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-white shadow-xl flex items-center justify-center hover:bg-gray-50 transition-colors"
-              >
-                <ChevronRight className="h-5 w-5 text-gray-600" strokeWidth={2.5} />
-              </button> */}
             </div>
 
             {/* Dot indicators */}
@@ -544,18 +513,21 @@ export default function HeroSlideshowClient({
               ))}
             </div>
 
-            {/* Bottom 3 preview cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mt-2 w-full">
-              {previews.map((event, i) => {
+            {/* Bottom 3 preview cards — shown on mobile too (2 cols), 3 cols on md+ */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 lg:gap-6 mt-1 lg:mt-2 w-full pb-2">
+              {previews.slice(0, 3).map((event, i) => {
                 const pImg = getHeroPreviewImageUrl(event)
                 const pDate = shortDate(event.startDate, event.endDate)
                 return (
                   <Link
                     key={`${event.id}-${i}`}
                     href={eventPublicPath(event)}
-                    className="flex items-center gap-3 group"
+                    className={`flex items-center gap-2.5 sm:gap-3 group ${
+                      // Hide 3rd card on mobile (2-col grid) so it doesn't orphan
+                      i === 2 ? "hidden sm:flex" : ""
+                      }`}
                   >
-                    <div className="relative w-[68px] h-[68px] rounded-sm overflow-hidden flex-shrink-0 bg-gray-100 shadow-sm">
+                    <div className="relative w-[56px] h-[56px] sm:w-[64px] sm:h-[64px] rounded-sm overflow-hidden flex-shrink-0 bg-gray-100 shadow-sm">
                       {pImg ? (
                         <AppImage
                           src={pImg}
@@ -571,15 +543,16 @@ export default function HeroSlideshowClient({
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-[0.82rem] font-bold text-gray-900 leading-tight line-clamp-2 group-hover:text-blue-600 transition-colors">
+                      <p className="text-[0.76rem] sm:text-[0.82rem] font-bold text-gray-900 leading-tight line-clamp-2 group-hover:text-blue-600 transition-colors">
                         {event.title}
                       </p>
-                      <p className="text-[0.7rem] text-gray-500 mt-0.5">{pDate}</p>
+                      <p className="text-[0.72rem] sm:text-[0.8rem] text-gray-500 mt-0.5">{pDate}</p>
                     </div>
                   </Link>
                 )
               })}
             </div>
+
           </div>
         </div>
       </div>

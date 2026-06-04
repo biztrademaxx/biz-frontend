@@ -117,13 +117,13 @@ export default function CategoryGridClient({ categories, variant = "home" }: Cat
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#efefef] text-gray-800">
                   <Icon className="h-4 w-4" strokeWidth={2} aria-hidden />
                 </div>
-                <div className="mt-3 w-full min-w-0 overflow-hidden text-xs font-medium leading-snug text-gray-900">
+                <div className="mt-3 w-full min-w-0 overflow-hidden text-sm font-medium leading-snug text-gray-900">
                   {category.name}
                 </div>
                 {sub ? (
-                  <div className="mt-1 text-[11px] leading-tight text-gray-500">{sub}</div>
+                  <div className="mt-1 text-[15px] leading-tight text-gray-500">{sub}</div>
                 ) : (
-                  <div className="mt-1 text-[11px] leading-tight text-gray-500">Explore events</div>
+                  <div className="mt-1 text-[15px] leading-tight text-gray-500">Explore events</div>
                 )}
               </Link>
             )
