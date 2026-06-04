@@ -21,6 +21,7 @@ import {
 } from "lucide-react"
 
 import FooterChatBot from "@/components/footer-chat-bot"
+import { usePathname } from "next/navigation"
 import { getFooterLogoSrc, isBrandLogoRemoteUrl } from "@/lib/brand-logo"
 
 interface FooterCategory {
@@ -34,6 +35,7 @@ interface FooterProps {
 }
 
 const Footer: React.FC<FooterProps> = ({ categories }) => {
+  const pathname = usePathname()
   const footerLogoSrc = getFooterLogoSrc()
   const footerLogoUnoptimized = isBrandLogoRemoteUrl(footerLogoSrc)
 
@@ -43,6 +45,7 @@ const Footer: React.FC<FooterProps> = ({ categories }) => {
     { id: "3", name: "Building & Construction", eventCount: 1000 },
     { id: "4", name: "IT & Technology", eventCount: 950 },
   ]
+  const footerchatbotmobileviewonlyinfooter = true;
 
   const topCategories =
     categories && categories.length > 0
@@ -79,22 +82,6 @@ const Footer: React.FC<FooterProps> = ({ categories }) => {
             List your event today and reach thousands of industry professionals
             actively searching for exhibitions, conferences and trade fairs.
           </p>
-
-          {/* <div className="mt-8 flex flex-wrap justify-center gap-4">
-            <Link
-              href="/organizer-signup"
-              className="rounded-md bg-[#FFC107] px-6 py-3 text-sm font-semibold text-[#001B44] transition hover:bg-[#FFD54A]"
-            >
-              List Your Event Free →
-            </Link>
-
-            <Link
-              href="/pricing"
-              className="rounded-md border border-white/20 bg-white/5 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
-            >
-              View Premium Plans
-            </Link>
-          </div> */}
         </div>
         <div className="mx-auto mt-14 h-px max-w-7xl bg-white/15" />
         <div className="mx-auto mt-10 flex min-w-max items-center justify-center gap-10 px-8">          
@@ -311,47 +298,6 @@ const Footer: React.FC<FooterProps> = ({ categories }) => {
               </div>
             </div>
           </div>
-
-          {/* ── TRUST STRIP ── */}
-          {/* <div style={{ borderTop: "1px solid rgba(255,255,255,0.07)", backgroundColor: "rgba(0,0,0,0.25)" }}>
-            <div className="mx-auto max-w-7xl px-6 lg:px-10">
-              <div className="flex flex-wrap items-stretch">
-                {[
-                  { title: "Global Reach", sub: "Events in 120+ countries", icon: Globe },
-                  { title: "Verified & Trusted", sub: "Authentic events & organizers", icon: BadgeCheck },
-                  { title: "Always Updated", sub: "Real-time event information", icon: RefreshCw },
-                  { title: "Dedicated Support", sub: "Here to help you anytime", icon: Headphones },
-                  { title: "Secure & Reliable", sub: "Your data is always safe", icon: ShieldCheck },
-                ].map((item, i, arr) => {
-                  const Icon = item.icon
-                  return (
-                    <div
-                      key={item.title}
-                      className="group"
-                      style={{
-                        flex: 1,
-                        minWidth: 200,
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 12,
-                        padding: "18px 20px",
-                        borderRight: i < arr.length - 1 ? "1px solid rgba(255,255,255,0.06)" : "none",
-                      }}
-                    >
-                      <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border border-white/[0.10] bg-white/[0.05] transition-all duration-200 group-hover:bg-white/[0.10]">
-                        <Icon className="h-4 w-4 text-white/75" strokeWidth={1.7} />
-                      </div>
-                      <div>
-                        <p className="m-0 text-[12.5px] font-semibold text-white">{item.title}</p>
-                        <p className="m-0 mt-0.5 text-[11px] leading-[1.4] text-white/45">{item.sub}</p>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          </div> */}
-
           {/* ── REGISTERED ADDRESS ── */}
           <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", backgroundColor: "rgba(0,0,0,0.30)" }}>
             <div className="mx-auto max-w-7xl px-6 py-4 lg:px-10">
@@ -378,7 +324,7 @@ const Footer: React.FC<FooterProps> = ({ categories }) => {
           </div>
         </div>
 
-        <FooterChatBot />
+        {pathname === "/" && <FooterChatBot />}
       </footer>
     </>
   )
