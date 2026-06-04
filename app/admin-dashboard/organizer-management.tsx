@@ -32,7 +32,9 @@ import { useToast } from "@/components/ui/use-toast"
 import EntityBulkImport from "./entity-bulk-import"
 import { uploadVenueLogo } from "@/lib/upload-utils"
 import { AdminTableAvatar } from "@/components/admin-dashboard/admin-table-avatar"
+import { OrganizerLocationSelects } from "@/components/admin-dashboard/organizer-location-selects"
 import { hasUsableProfileImage } from "@/lib/has-usable-profile-image"
+import { resolveOrganizerLocationFields } from "@/lib/organizer-location-resolve"
 
 interface Organizer {
   company: string | null
@@ -70,6 +72,9 @@ interface Organizer {
   organizerCountry: string | null
   organizerState: string | null
   organizerCity: string | null
+  profileCountry?: string | null
+  profileState?: string | null
+  profileCity?: string | null
   website: string | null
   linkedin: string | null
   twitter: string | null
@@ -452,13 +457,13 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
     }
   }
 
-  const handleOpenEdit = (organizer: TransformedOrganizer) => {
-    const source = organizer.originalData
+  const buildEditFormFromOrganizer = (source: Organizer): OrganizerEditFormData => {
+    const loc = resolveOrganizerLocationFields(source)
     const normalizedCompany =
       source.company?.trim() ||
       source.organizationName?.trim() ||
       `${source.firstName || ""} ${source.lastName || ""}`.trim()
-    setEditingOrganizer({
+    return {
       id: source.id,
       firstName: source.firstName || "",
       lastName: source.lastName || "",
@@ -476,12 +481,25 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
       businessPhone: source.businessPhone || "",
       businessAddress: source.businessAddress || "",
       taxId: source.taxId || "",
-      organizerCountry: source.organizerCountry || "",
-      organizerState: source.organizerState || "",
-      organizerCity: source.organizerCity || "",
-    })
+      organizerCountry: loc.organizerCountry,
+      organizerState: loc.organizerState,
+      organizerCity: loc.organizerCity,
+    }
+  }
+
+  const handleOpenEdit = async (organizer: TransformedOrganizer) => {
     setAvatarFile(null)
     setIsEditDialogOpen(true)
+    setEditingOrganizer(buildEditFormFromOrganizer(organizer.originalData))
+
+    try {
+      const detail = await adminApi<{ data?: Organizer }>(`/organizers/${organizer.id}`)
+      if (detail?.data) {
+        setEditingOrganizer(buildEditFormFromOrganizer(detail.data))
+      }
+    } catch {
+      /* keep list row data */
+    }
   }
 
   const handleEditField = (field: keyof OrganizerEditFormData, value: string) => {
@@ -1012,22 +1030,24 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
                   <label className="text-xs text-gray-500">Website</label>
                   <input value={editingOrganizer.website} onChange={(e) => handleEditField("website", e.target.value)} className="w-full mt-1 px-3 py-2 text-sm border border-gray-200 rounded-lg" />
                 </div>
-                <div>
+                <div className="col-span-2">
                   <label className="text-xs text-gray-500">Headquarters</label>
                   <input value={editingOrganizer.headquarters} onChange={(e) => handleEditField("headquarters", e.target.value)} className="w-full mt-1 px-3 py-2 text-sm border border-gray-200 rounded-lg" />
                 </div>
-                <div>
-                  <label className="text-xs text-gray-500">Country</label>
-                  <input value={editingOrganizer.organizerCountry} onChange={(e) => handleEditField("organizerCountry", e.target.value)} className="w-full mt-1 px-3 py-2 text-sm border border-gray-200 rounded-lg" />
-                </div>
-                <div>
-                  <label className="text-xs text-gray-500">State</label>
-                  <input value={editingOrganizer.organizerState} onChange={(e) => handleEditField("organizerState", e.target.value)} className="w-full mt-1 px-3 py-2 text-sm border border-gray-200 rounded-lg" />
-                </div>
-                <div>
-                  <label className="text-xs text-gray-500">City</label>
-                  <input value={editingOrganizer.organizerCity} onChange={(e) => handleEditField("organizerCity", e.target.value)} className="w-full mt-1 px-3 py-2 text-sm border border-gray-200 rounded-lg" />
-                </div>
+              </div>
+
+              <OrganizerLocationSelects
+                labelClassName="text-xs text-gray-500"
+                country={editingOrganizer.organizerCountry}
+                state={editingOrganizer.organizerState}
+                city={editingOrganizer.organizerCity}
+                onCountryChange={(name) => handleEditField("organizerCountry", name)}
+                onStateChange={(name) => handleEditField("organizerState", name)}
+                onCityChange={(name) => handleEditField("organizerCity", name)}
+                disabled={savingEdit}
+              />
+
+              <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs text-gray-500">Founded</label>
                   <input value={editingOrganizer.founded} onChange={(e) => handleEditField("founded", e.target.value)} className="w-full mt-1 px-3 py-2 text-sm border border-gray-200 rounded-lg" />
