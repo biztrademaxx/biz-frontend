@@ -250,7 +250,7 @@ export default function EventParticipation({ exhibitorId }: EventParticipationPr
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 text-sm">
             <div className="space-y-2">
               <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-[#4776E6]" />
+                <Clock className="w-4 h-4 text-[#004A96]" />
                 <span className="font-medium">Setup:</span>
               </div>
               <p className="text-gray-600 ml-6">{event.setupTime}</p>
@@ -266,16 +266,16 @@ export default function EventParticipation({ exhibitorId }: EventParticipationPr
         )}
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 text-sm">
-          <div className="text-center rounded-lg bg-[#4776E6]/10 p-3">
-            <div className="font-semibold text-[#4776E6]">{event.passes}</div>
+          <div className="text-center rounded-lg bg-[#004A96]/10 p-3">
+            <div className="font-semibold text-[#004A96]">{event.passes}</div>
             <div className="text-gray-600">Total Passes</div>
           </div>
           <div className="text-center p-3 bg-green-50 rounded-lg">
             <div className="font-semibold text-green-600">{event.passesUsed}</div>
             <div className="text-gray-600">Used Passes</div>
           </div>
-          <div className="text-center p-3 bg-purple-50 rounded-lg">
-            <div className="font-semibold text-purple-600">
+          <div className="text-center p-3 bg-blue-50 rounded-lg">
+            <div className="font-semibold text-[#004A96]">
               {event.currency === "USD" ? "$" : "₹"}{event.invoiceAmount}
             </div>
             <div className="text-gray-600">Invoice Amount</div>

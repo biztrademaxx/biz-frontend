@@ -172,8 +172,8 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
   }
 
   const socialLinks = [
-    { name: "Facebook", icon: Facebook, url: "https://facebook.com/company", color: "text-[#4776E6]" },
-    { name: "LinkedIn", icon: Linkedin, url: formData.linkedin || "", color: "text-[#4776E6]" },
+    { name: "Facebook", icon: Facebook, url: "https://facebook.com/company", color: "text-[#004A96]" },
+    { name: "LinkedIn", icon: Linkedin, url: formData.linkedin || "", color: "text-[#004A96]" },
     { name: "Twitter", icon: Twitter, url: formData.twitter || "", color: "text-sky-500" },
     { name: "Instagram", icon: Instagram, url: "https://instagram.com/company", color: "text-pink-500" },
   ]
@@ -214,16 +214,16 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
           <Card className={exGlassCardPremium}>
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-slate-800">
-                <Building2 className="h-5 w-5 text-[#4776E6]" />
+                <Building2 className="h-5 w-5 text-[#004A96]" />
                 Company Logo & Banner
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className={cn(exGlassNested, "p-4 text-center")}>
                 <div className="relative inline-block">
-                  <Avatar className="mx-auto mb-4 h-32 w-32 ring-2 ring-[#4776E6]/20 ring-offset-2 ring-offset-white/50">
+                  <Avatar className="mx-auto mb-4 h-32 w-32 ring-2 ring-[#004A96]/20 ring-offset-2 ring-offset-white/50">
                     <AvatarImage src={formData.avatar } />
-                    <AvatarFallback className="bg-[#4776E6]/10 text-2xl font-semibold text-[#4776E6]">
+                    <AvatarFallback className="bg-[#004A96]/10 text-2xl font-semibold text-[#004A96]">
                       {formData.firstName?.[0]}
                       {formData.lastName?.[0]}
                     </AvatarFallback>
@@ -231,7 +231,7 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
                   {isEditing && (
                     <label
                       htmlFor="avatar-upload"
-                      className="absolute bottom-4 right-1/2 flex translate-x-16 cursor-pointer rounded-full bg-[#4776E6] p-2 text-white transition-colors hover:bg-[#3556b8]"
+                      className="absolute bottom-4 right-1/2 flex translate-x-16 cursor-pointer rounded-full bg-[#004A96] p-2 text-white transition-colors hover:bg-[#003d7a]"
                     >
                       {uploading ? (
                         <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
@@ -253,11 +253,11 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
 
               <div className="space-y-2">
               <Label>Company Banner</Label>
-              <div className="flex min-h-[5.5rem] items-center justify-center rounded-2xl bg-gradient-to-br from-[#8E54E9] via-[#7c3aed] to-[#4776E6] px-4 text-center font-semibold text-white shadow-[0_12px_40px_rgba(142,84,233,0.35)]">
+              <div className="flex min-h-[5.5rem] items-center justify-center rounded-2xl bg-gradient-to-br from-[#004A96] via-[#003d7a] to-[#002f5e] px-4 text-center font-semibold text-white shadow-[0_12px_40px_rgba(0,74,150,0.25)]">
                 <span className="drop-shadow-sm">{formData.company || "Company Name"}</span>
               </div>
               {isEditing && (
-                <Button variant="outline" size="sm" className="w-full border-[#4776E6]/30 bg-white/40 backdrop-blur-sm">
+                <Button variant="outline" size="sm" className="w-full border-[#004A96]/30 bg-white/40 backdrop-blur-sm">
                   <Upload className="w-4 h-4" />
                   Upload Banner
                 </Button>
@@ -270,7 +270,7 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
         <Card className={exGlassCardPremium}>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-slate-800">
-              <User className="h-5 w-5 text-[#4776E6]" />
+              <User className="h-5 w-5 text-[#004A96]" />
               Contact Information
             </CardTitle>
           </CardHeader>
@@ -325,7 +325,7 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-3 h-4 w-4 text-[#4776E6]/60" />
+                <Mail className="absolute left-3 top-3 h-4 w-4 text-[#004A96]/60" />
                 <div className="flex items-center justify-between rounded-md border border-white/60 bg-white/45 p-2 backdrop-blur-sm">
                   <span className="text-sm pl-7">{formData.email}</span>
                   {!isEditing && (
@@ -344,7 +344,7 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
             <div className="space-y-2">
               <Label htmlFor="phone">Phone</Label>
               <div className="relative">
-                <Phone className="absolute left-3 top-3 h-4 w-4 text-[#4776E6]/60" />
+                <Phone className="absolute left-3 top-3 h-4 w-4 text-[#004A96]/60" />
                 <div className="flex items-center justify-between rounded-md border border-white/60 bg-white/45 p-2 backdrop-blur-sm">
                   <span className="text-sm pl-7">{formData.phone || "Not provided"}</span>
                   {!isEditing && formData.phone && (
@@ -362,7 +362,7 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
             <div className="space-y-2">
               <Label htmlFor="website">Website</Label>
               <div className="relative">
-                <Globe className="absolute left-3 top-3 h-4 w-4 text-[#4776E6]/60" />
+                <Globe className="absolute left-3 top-3 h-4 w-4 text-[#004A96]/60" />
                 <Input
                   id="website"
                   value={formData.website || ""}
@@ -421,12 +421,12 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
                 <Badge
                   key={category}
                   variant="secondary"
-                  className="flex items-center gap-1 border-[#4776E6]/20 bg-[#4776E6]/10 text-[#4776E6]"
+                  className="flex items-center gap-1 border-[#004A96]/20 bg-[#004A96]/10 text-[#004A96]"
                 >
                   {category}
                   {isEditing && (
                     <X
-                      className="h-3 w-3 cursor-pointer hover:text-[#8E54E9]"
+                      className="h-3 w-3 cursor-pointer hover:text-[#004A96]"
                       onClick={() => handleRemoveCategory(category)}
                     />
                   )}
@@ -489,7 +489,7 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
         <div className="flex justify-end gap-3">
           <Button
             variant="outline"
-            className="rounded-2xl border-[#4776E6]/35 bg-white/50 backdrop-blur-sm"
+            className="rounded-2xl border-[#004A96]/35 bg-white/50 backdrop-blur-sm"
             onClick={() => {
               setIsEditing(false)
               setFormData(exhibitorData)

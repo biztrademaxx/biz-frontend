@@ -117,7 +117,7 @@ export function ExhibitorHelpSupport() {
             {/* FAQs Section */}
             <section className={cn(exGlassCard, "p-8")}>
                 <h2 className="mb-6 flex items-center gap-2 text-2xl font-bold text-slate-800">
-                    <HelpCircle className="text-[#4776E6]" size={28} />
+                    <HelpCircle className="text-[#004A96]" size={28} />
                     Frequently Asked Questions
                 </h2>
                 <div className="space-y-4">
@@ -151,7 +151,7 @@ export function ExhibitorHelpSupport() {
             {/* Contact Support Section */}
             <div className={cn(exGlassCard, "space-y-6 p-8")}>
                 <h2 className="flex items-center gap-2 text-2xl font-bold text-slate-800">
-                    <MessageCircle className="text-[#4776E6]" size={28} />
+                    <MessageCircle className="text-[#004A96]" size={28} />
                     Contact Support
                 </h2>
                 <p className="text-slate-700">
@@ -160,9 +160,9 @@ export function ExhibitorHelpSupport() {
                 </p>
 
                 <div className="space-y-4">
-                    <div className="rounded-lg border border-[#4776E6]/20 bg-[#4776E6]/10 p-4">
+                    <div className="rounded-lg border border-[#004A96]/20 bg-[#004A96]/10 p-4">
                         <div className="flex items-start gap-3">
-                            <Mail className="mt-1 flex-shrink-0 text-[#4776E6]" size={20} />
+                            <Mail className="mt-1 flex-shrink-0 text-[#004A96]" size={20} />
                             <div>
                                 <h3 className="font-semibold text-slate-900">Email Support</h3>
                                 <p className="mt-1 text-sm text-slate-700">For exhibitor queries, booth management, and documentation support:</p>
@@ -186,9 +186,9 @@ export function ExhibitorHelpSupport() {
                         </div>
                     </div>
 
-                    <div className="p-4 bg-purple-50 rounded-lg border border-purple-100">
+                    <div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
                         <div className="flex items-start gap-3">
-                            <Building className="text-purple-600 mt-1 flex-shrink-0" size={20} />
+                            <Building className="text-[#004A96] mt-1 flex-shrink-0" size={20} />
                             <div>
                                 <h3 className="font-semibold text-slate-900">Corporate Office</h3>
                                 <p className="text-sm text-slate-700">BizTradeFairs.com</p>
@@ -237,8 +237,8 @@ export function ExhibitorHelpSupport() {
                         <p className="text-sm text-gray-600 mt-1">Track visitor inquiries</p>
                     </a>
                     
-                    <a href="#" className="p-4 border border-gray-200 rounded-lg hover:bg-purple-50 hover:border-purple-200 transition flex flex-col items-center text-center">
-                        <Package className="text-purple-600 mb-2" size={32} />
+                    <a href="#" className="p-4 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-200 transition flex flex-col items-center text-center">
+                        <Package className="text-[#004A96] mb-2" size={32} />
                         <h3 className="font-semibold text-gray-900">Products & Brochures</h3>
                         <p className="text-sm text-gray-600 mt-1">Upload product catalogues</p>
                     </a>

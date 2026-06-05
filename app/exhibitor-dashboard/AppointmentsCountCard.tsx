@@ -32,8 +32,8 @@ export function AppointmentsCountCard({ exhibitorId }: AppointmentsCountCardProp
   }, [exhibitorId])
 
   if (loading) {
-    return <Skeleton className="h-8 w-14 rounded-md bg-[#4776E6]/10" />
+    return <Skeleton className="h-8 w-14 rounded-md bg-blue-100" />
   }
 
-  return <div className="text-2xl font-bold text-[#4776E6]">{count}</div>
+  return <div className="text-2xl font-bold text-[#004A96]">{count}</div>
 }

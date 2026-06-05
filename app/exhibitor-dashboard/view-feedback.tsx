@@ -129,7 +129,7 @@ export default function ViewFeedback({ exhibitorId }: { exhibitorId: string }) {
             {(review.replies?.length ?? 0) > 0 && (
               <div className="mt-4 space-y-2">
                 {(review.replies ?? []).map((rep) => (
-                  <div key={rep.id} className="border-l-2 border-[#4776E6]/35 pl-4">
+                  <div key={rep.id} className="border-l-2 border-[#004A96]/35 pl-4">
                     <p className="text-sm text-gray-800">
                       <span className="font-semibold">
                         {rep.isOrganizerReply ? "You" : ([rep.user?.firstName, rep.user?.lastName].filter(Boolean).join(" ").trim() || "Anonymous")}

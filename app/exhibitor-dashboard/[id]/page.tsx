@@ -7,7 +7,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ id: 
   const { id } = await params
   return (
     <DashboardProvider>
-      <div>
+      <div className="flex h-screen flex-col overflow-hidden bg-[#f8fafc]">
         <Navbar />
         <ExhibitorLayout routeSegment={id} />
       </div>

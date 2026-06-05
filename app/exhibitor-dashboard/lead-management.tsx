@@ -128,7 +128,7 @@ export default function LeadManagement({ exhibitorId }: LeadManagementProps) {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "NEW":
-        return "bg-[#4776E6]"
+        return "bg-[#004A96]"
       case "CONTACTED":
         return "bg-yellow-500"
       case "QUALIFIED":
@@ -286,7 +286,7 @@ export default function LeadManagement({ exhibitorId }: LeadManagementProps) {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             {lead.followUpDate && (
-              <Badge variant="outline" className="border-[#4776E6]/30 text-[#4776E6]">
+              <Badge variant="outline" className="border-[#004A96]/30 text-[#004A96]">
                 Follow-up: {new Date(lead.followUpDate).toLocaleDateString()}
               </Badge>
             )}
@@ -347,7 +347,7 @@ export default function LeadManagement({ exhibitorId }: LeadManagementProps) {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card className={exGlassCard}>
           <CardContent className="p-6 text-center">
-            <div className="text-3xl font-bold text-[#4776E6]">{leads.length}</div>
+            <div className="text-3xl font-bold text-[#004A96]">{leads.length}</div>
             <div className="text-gray-600">Total Leads</div>
           </CardContent>
         </Card>
@@ -369,7 +369,7 @@ export default function LeadManagement({ exhibitorId }: LeadManagementProps) {
         </Card>
         <Card className={exGlassCard}>
           <CardContent className="p-6 text-center">
-            <div className="text-3xl font-bold text-purple-600">
+            <div className="text-3xl font-bold text-[#004A96]">
               {leads.length > 0
                 ? Math.round((leads.filter((l) => l.status === "QUALIFIED").length / leads.length) * 100)
                 : 0}

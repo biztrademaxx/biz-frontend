@@ -47,7 +47,7 @@ export default function Navbar() {
 
   return (
     <DashboardResponsiveNavbar
-      navClassName="border-b border-white/50 bg-white/45 shadow-[0_4px_24px_rgba(71,118,230,0.06)] backdrop-blur-md sticky top-0 z-50"
+      navClassName="border-b border-slate-200 bg-white shadow-sm sticky top-0 z-50 shrink-0"
       exploreLinks={EXPLORE_LINKS}
       onAddEvent={handleAddevent}
       actions={
@@ -57,7 +57,7 @@ export default function Navbar() {
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="flex items-center gap-2 rounded-full bg-[#4776E6] p-2 text-white transition-colors hover:bg-[#3556b8] focus:outline-none"
+                className="flex items-center gap-2 rounded-full bg-[#004A96] p-2 text-white transition-colors hover:bg-[#003d7a] focus:outline-none"
                 aria-label="Account menu"
               >
                 <User className="h-4 w-4" />

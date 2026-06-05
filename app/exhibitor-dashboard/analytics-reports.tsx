@@ -89,7 +89,7 @@ export default function AnalyticsReports({ exhibitorId }: AnalyticsReportsProps)
     }
   }
 
-  const COLORS = ["#8E54E9", "#4776E6", "#10B981", "#F59E0B", "#ec4899"]
+  const COLORS = ["#004A96", "#0066cc", "#10B981", "#F59E0B", "#0ea5e9"]
 
   if (loading) {
     return (
@@ -179,7 +179,7 @@ export default function AnalyticsReports({ exhibitorId }: AnalyticsReportsProps)
   : "0"}
 </p>
                   </div>
-                  <Eye className="h-8 w-8 text-[#4776E6]" />
+                  <Eye className="h-8 w-8 text-[#004A96]" />
                 </div>
                 <p className="text-xs text-green-600 mt-2">+15% from last month</p>
               </CardContent>
@@ -203,7 +203,7 @@ export default function AnalyticsReports({ exhibitorId }: AnalyticsReportsProps)
                     <p className="text-sm font-medium text-gray-600">Leads Generated</p>
                     <p className="text-2xl font-bold">{analytics.overview.leadsGenerated}</p>
                   </div>
-                  <Users className="w-8 h-8 text-purple-500" />
+                  <Users className="w-8 h-8 text-[#004A96]" />
                 </div>
                 <p className="text-xs text-green-600 mt-2">+18% from last month</p>
               </CardContent>
@@ -235,7 +235,7 @@ export default function AnalyticsReports({ exhibitorId }: AnalyticsReportsProps)
                     <XAxis dataKey="date" />
                     <YAxis />
                     <Tooltip />
-                    <Area type="monotone" dataKey="views" stroke="#4776E6" fill="#4776E6" fillOpacity={0.3} />
+                    <Area type="monotone" dataKey="views" stroke="#004A96" fill="#004A96" fillOpacity={0.3} />
                   </AreaChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -282,7 +282,7 @@ export default function AnalyticsReports({ exhibitorId }: AnalyticsReportsProps)
                   <XAxis dataKey="date" />
                   <YAxis />
                   <Tooltip />
-                  <Line type="monotone" dataKey="views" stroke="#4776E6" strokeWidth={2} />
+                  <Line type="monotone" dataKey="views" stroke="#004A96" strokeWidth={2} />
                 </LineChart>
               </ResponsiveContainer>
             </CardContent>
@@ -291,7 +291,7 @@ export default function AnalyticsReports({ exhibitorId }: AnalyticsReportsProps)
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <Card className={exGlassCard}>
               <CardContent className="p-6 text-center">
-                <div className="text-3xl font-bold text-[#4776E6]">{analytics.overview.totalProfileViews}</div>
+                <div className="text-3xl font-bold text-[#004A96]">{analytics.overview.totalProfileViews}</div>
                 <div className="text-gray-600">Total Views</div>
               </CardContent>
             </Card>
@@ -305,7 +305,7 @@ export default function AnalyticsReports({ exhibitorId }: AnalyticsReportsProps)
             </Card>
             <Card className={exGlassCard}>
               <CardContent className="p-6 text-center">
-                <div className="text-3xl font-bold text-purple-600">
+                <div className="text-3xl font-bold text-[#004A96]">
                   {Math.max(...analytics.profileViewsData.map((d) => d.views))}
                 </div>
                 <div className="text-gray-600">Peak Day</div>
@@ -324,7 +324,7 @@ export default function AnalyticsReports({ exhibitorId }: AnalyticsReportsProps)
                 {analytics.brochureDownloadsData.map((item, index) => (
                   <div key={index} className="flex items-center justify-between rounded-lg border border-white/50 bg-white/30 p-4 backdrop-blur-sm">
                     <div className="flex items-center gap-3">
-                      <FileText className="h-5 w-5 text-[#4776E6]" />
+                      <FileText className="h-5 w-5 text-[#004A96]" />
                       <div>
                         <div className="font-medium">{item.name}</div>
                         <div className="text-sm text-gray-600">{item.downloads} downloads</div>
@@ -332,7 +332,7 @@ export default function AnalyticsReports({ exhibitorId }: AnalyticsReportsProps)
                     </div>
                     <div className="flex items-center gap-4">
                       <div className="h-2 w-32 rounded-full bg-white/60">
-                        <div className="h-2 rounded-full bg-[#4776E6]" style={{ width: `${item.percentage}%` }} />
+                        <div className="h-2 rounded-full bg-[#004A96]" style={{ width: `${item.percentage}%` }} />
                       </div>
                       <div className="text-sm font-medium">{item.percentage.toFixed(1)}%</div>
                     </div>
@@ -351,13 +351,13 @@ export default function AnalyticsReports({ exhibitorId }: AnalyticsReportsProps)
             </Card>
             <Card className={exGlassCard}>
               <CardContent className="p-6 text-center">
-                <div className="text-3xl font-bold text-[#4776E6]">{analytics.brochureDownloadsData.length}</div>
+                <div className="text-3xl font-bold text-[#004A96]">{analytics.brochureDownloadsData.length}</div>
                 <div className="text-gray-600">Active Brochures</div>
               </CardContent>
             </Card>
             <Card className={exGlassCard}>
               <CardContent className="p-6 text-center">
-                <div className="text-3xl font-bold text-purple-600">
+                <div className="text-3xl font-bold text-[#004A96]">
                   {Math.round(
                     (analytics.overview.brochureDownloads / Math.max(analytics.overview.totalProfileViews, 1)) * 100,
                   )}
@@ -388,7 +388,7 @@ export default function AnalyticsReports({ exhibitorId }: AnalyticsReportsProps)
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div>
                         <div className="text-gray-600">Current Period</div>
-                        <div className="text-2xl font-bold text-[#4776E6]">{item.current.toLocaleString()}</div>
+                        <div className="text-2xl font-bold text-[#004A96]">{item.current.toLocaleString()}</div>
                       </div>
                       <div>
                         <div className="text-gray-600">Previous Period</div>

@@ -3,23 +3,6 @@ export type MessageSurface = "default" | "exhibitor" | "visitor" | "venue"
 export function getMessageTheme(surface: MessageSurface) {
   switch (surface) {
     case "exhibitor":
-      return {
-        shell: "border-white/60 bg-white/50 shadow-[0_8px_40px_rgba(142,84,233,0.12)] backdrop-blur-xl",
-        sidebar: "border-white/50 bg-white/40",
-        panel: "border-white/50 bg-white/35 backdrop-blur-sm",
-        chatBg: "bg-[linear-gradient(180deg,rgba(142,84,233,0.04)_0%,rgba(255,255,255,0.2)_48%)]",
-        accentText: "text-[#5b21b6]",
-        accentIcon: "bg-gradient-to-br from-[#8E54E9] to-[#4776E6] text-white shadow-md shadow-violet-500/25",
-        activeConv: "bg-[#8E54E9]/12 ring-1 ring-[#8E54E9]/25",
-        activeBorder: "border-[#8E54E9]",
-        sentBubble: "bg-gradient-to-br from-[#8E54E9] to-[#4776E6] text-white shadow-md shadow-violet-500/20",
-        receivedBubble: "bg-white/80 text-slate-800 ring-1 ring-white/80 shadow-sm backdrop-blur-sm",
-        unreadBadge: "bg-gradient-to-r from-[#8E54E9] to-[#4776E6]",
-        btnPrimary: "bg-gradient-to-r from-[#8E54E9] to-[#4776E6] text-white hover:opacity-95 shadow-md shadow-violet-500/25",
-        composer: "border-white/60 bg-white/50 backdrop-blur-sm",
-        emptyBg: "bg-white/25",
-        hoverRow: "hover:bg-white/45",
-      }
     case "visitor":
     case "venue":
       return {
@@ -71,7 +54,9 @@ export function roleBadgeClass(role: string, surface: MessageSurface): string {
     case "speaker":
       return `${base} bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200`
     case "exhibitor":
-      return `${base} bg-purple-100 text-purple-800 dark:bg-purple-950/50 dark:text-purple-200`
+      return surface === "exhibitor" || surface === "visitor" || surface === "venue"
+        ? `${base} bg-blue-100 text-blue-800`
+        : `${base} bg-purple-100 text-purple-800 dark:bg-purple-950/50 dark:text-purple-200`
     case "venue_manager":
       return `${base} bg-orange-100 text-orange-800`
     case "admin":

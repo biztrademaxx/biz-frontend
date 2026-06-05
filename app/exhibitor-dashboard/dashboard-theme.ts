@@ -1,57 +1,46 @@
 import { cn } from "@/lib/utils"
 
-/** Reference palette: purple → blue-violet (glass dashboard). */
-export const exGradientFrom = "#8E54E9"
-export const exGradientTo = "#4776E6"
+/** Exhibitor dashboard — aligned with visitor / organizer blue palette. */
+export const EX_PRIMARY = "#004A96"
+export const EX_PRIMARY_HOVER = "#003d7a"
 
-/** Glass panel for primary cards. */
-export const exGlassCard =
-  "rounded-2xl border border-white/70 bg-white/55 shadow-[0_4px_24px_rgba(142,84,233,0.1)] backdrop-blur-md"
+export const exPageBg = "bg-[#f8fafc]"
+export const exSidebarSurface = "border-r border-slate-200 bg-white"
+export const exCardShell = "rounded-2xl border border-slate-100 bg-white shadow-sm"
+export const exPrimaryBtn = "bg-[#004A96] text-white shadow-sm hover:bg-[#003d7a]"
+export const exNavActive =
+  "rounded-lg bg-[#004A96] pl-2.5 font-medium text-white shadow-sm [&_svg]:text-white"
+export const exNavInactive =
+  "rounded-lg pl-2.5 text-slate-700 hover:bg-slate-100 hover:text-[#004A96] [&_svg]:text-slate-500"
+export const exNavGroupLabel =
+  "px-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400"
+export const exUpgradeCard =
+  "rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 to-sky-50 p-4"
+export const exAccentText = "text-[#004A96]"
+export const exAccentMuted = "text-[#004A96]/80"
 
-/** Stronger glass: larger radius, softer frosted panel. */
-export const exGlassCardPremium =
-  "rounded-[1.75rem] border border-white/65 bg-white/40 shadow-[0_8px_40px_rgba(142,84,233,0.12)] backdrop-blur-xl"
-
-/** Nested “sub-card” inside a premium glass panel. */
-export const exGlassNested =
-  "rounded-2xl border border-white/55 bg-white/35 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] backdrop-blur-md"
-
-/** CTA: purple → blue-violet (sidebar promo, featured actions). */
-export const exCtaGradient =
-  "bg-gradient-to-r from-[#8E54E9] to-[#4776E6] text-white shadow-[0_8px_24px_rgba(142,84,233,0.35)] hover:opacity-[0.96] hover:shadow-lg"
-
-/** Absolute layer: soft violet / pink blobs (place inside `relative` wrapper). */
-export const exCompanyGlowLayer =
-  "pointer-events-none absolute inset-0 -z-10 rounded-[2rem] bg-[radial-gradient(ellipse_85%_55%_at_0%_-10%,rgba(142,84,233,0.22),transparent_55%),radial-gradient(ellipse_75%_50%_at_100%_110%,rgba(236,72,153,0.16),transparent_52%)]"
-
-/** Lighter inset panels, list rows, dialogs. */
-export const exGlassInset =
-  "rounded-xl border border-white/60 bg-white/45 shadow-sm backdrop-blur-sm"
-
-export const exPageTitle = "text-2xl font-bold tracking-tight text-slate-800 md:text-3xl"
+/** Backward-compatible aliases used across exhibitor sections. */
+export const exGradientFrom = EX_PRIMARY
+export const exGradientTo = EX_PRIMARY_HOVER
+export const exGlassCard = exCardShell
+export const exGlassCardPremium = exCardShell
+export const exGlassNested = "rounded-2xl border border-slate-100 bg-slate-50"
+export const exGlassInset = "rounded-xl border border-slate-100 bg-slate-50"
+export const exCtaGradient = exPrimaryBtn
+export const exCompanyGlowLayer = "pointer-events-none absolute inset-0 -z-10"
+export const exPageTitle = "text-2xl font-bold tracking-tight text-slate-900 md:text-3xl"
 export const exPageSubtitle = "text-slate-600"
-
-export const exBtnPrimary = "bg-[#4776E6] text-white hover:bg-[#3556b8]"
+export const exBtnPrimary = exPrimaryBtn
 export const exBtnDestructive = "text-white hover:opacity-95"
-export const exDestructiveBg = "#8E54E9"
-
-export const exLink = "font-medium text-[#4776E6] hover:underline"
-
-/** Shadcn Input / Textarea — use with cn(exInput, className). */
-export const exInput =
-  "border-white/60 bg-white/50 backdrop-blur-sm focus-visible:ring-[#8E54E9]/25"
-
-/** TabsList root — pass as className on TabsList */
-export const exTabsList = "border border-white/50 bg-white/40 p-1 backdrop-blur-sm"
-
-/** Active tab trigger */
+export const exDestructiveBg = EX_PRIMARY
+export const exLink = "font-medium text-[#004A96] hover:underline"
+export const exInput = "border-slate-200 bg-white focus-visible:ring-[#004A96]/25"
+export const exTabsList = "border border-slate-200 bg-slate-50 p-1"
 export const exTabsTriggerActive =
-  "data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#8E54E9] data-[state=active]:to-[#4776E6] data-[state=active]:text-white data-[state=active]:shadow-sm"
+  "data-[state=active]:bg-[#004A96] data-[state=active]:text-white data-[state=active]:shadow-sm"
+export const exBadgeBlue = "border-[#004A96]/25 bg-blue-50 text-[#004A96]"
+export const exBadgeRed = "border-red-200 bg-red-50 text-red-700"
 
 export function exCardTitle(className?: string) {
-  return cn("text-slate-800", className)
+  return cn("text-slate-900", className)
 }
-
-/** Badge variant helpers */
-export const exBadgeBlue = "border-[#4776E6]/25 bg-[#4776E6]/10 text-[#3556b8]"
-export const exBadgeRed = "border-[#8E54E9]/25 bg-[#8E54E9]/10 text-[#7c3aed]"

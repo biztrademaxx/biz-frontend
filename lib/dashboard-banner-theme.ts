@@ -26,11 +26,11 @@ export const DASHBOARD_BANNER_THEMES: Record<DashboardBannerPage, DashboardBanne
     badgeLink: "bg-[#004A96] hover:bg-[#003d7a] shadow-md shadow-[#004A96]/30",
   },
   "exhibitor-dashboard": {
-    backdrop: "bg-gradient-to-br from-[#8E54E9] via-[#6B4FCC] to-[#4776E6]",
-    overlay: "bg-gradient-to-r from-[#5b21b6]/75 via-[#4c1d95]/45 to-transparent",
-    descriptionText: "text-purple-100",
-    badge: "bg-gradient-to-r from-[#8E54E9] to-[#4776E6]",
-    badgeLink: "bg-gradient-to-r from-[#8E54E9] to-[#4776E6] hover:opacity-95 shadow-md shadow-[#8E54E9]/25",
+    backdrop: "bg-gradient-to-b from-[#004A96] via-[#003d7a] to-[#002f5e]",
+    overlay: "bg-gradient-to-r from-[#002f5e]/85 via-[#004A96]/55 to-transparent",
+    descriptionText: "text-sky-100",
+    badge: "bg-[#004A96]",
+    badgeLink: "bg-[#004A96] hover:bg-[#003d7a] shadow-md shadow-[#004A96]/30",
   },
   "organizer-dashboard": {
     backdrop: "bg-gradient-to-b from-[#004A96] via-[#003d7a] to-[#002f5e]",

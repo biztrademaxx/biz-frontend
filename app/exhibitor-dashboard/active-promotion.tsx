@@ -85,7 +85,7 @@ export default function ActivePromotions({ exhibitorId, refetchTrigger }: Active
   if (loading) {
     return (
       <div className="flex items-center justify-center h-40">
-        <Loader2 className="h-6 w-6 animate-spin text-[#4776E6]" />
+        <Loader2 className="h-6 w-6 animate-spin text-[#004A96]" />
         <span className="ml-2 text-gray-500">Loading promotions...</span>
       </div>
     )
@@ -114,7 +114,7 @@ export default function ActivePromotions({ exhibitorId, refetchTrigger }: Active
           {promotions.map((promotion) => (
             <Card
               key={promotion.id}
-              className={cn(exGlassCard, "border-[#4776E6]/25 bg-[#4776E6]/10 p-4 hover:border-[#4776E6]/40")}
+              className={cn(exGlassCard, "border-[#004A96]/25 bg-[#004A96]/10 p-4 hover:border-[#004A96]/40")}
             >
               <div className="flex items-center justify-between mb-3">
                 <Badge variant={getStatusVariant(promotion.status)}>
@@ -153,7 +153,7 @@ export default function ActivePromotions({ exhibitorId, refetchTrigger }: Active
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-gray-600">CTR</span>
-                  <span className="font-medium text-[#4776E6]">
+                  <span className="font-medium text-[#004A96]">
                     {calculateCTR(promotion.clicks, promotion.impressions).toFixed(2)}%
                   </span>
                 </div>
@@ -195,7 +195,7 @@ export default function ActivePromotions({ exhibitorId, refetchTrigger }: Active
                 {promotion.amount > 0 && (
                   <div className="flex items-center justify-between border-t pt-2">
                     <span className="text-gray-600 font-medium">Investment</span>
-                    <span className="font-bold text-purple-600">
+                    <span className="font-bold text-[#004A96]">
                       ${promotion.amount.toLocaleString()}
                     </span>
                   </div>

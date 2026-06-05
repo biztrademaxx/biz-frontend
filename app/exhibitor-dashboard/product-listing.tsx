@@ -656,11 +656,11 @@ export default function ProductListing({ exhibitorId }: ProductListingProps) {
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
             <div className="text-center">
-              <div className="text-3xl font-bold text-[#4776E6]">{products.length}</div>
+              <div className="text-3xl font-bold text-[#004A96]">{products.length}</div>
               <div className="text-muted-foreground">Total Products</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold text-purple-600">
+              <div className="text-3xl font-bold text-[#004A96]">
                 {products.reduce((sum, p) => sum + (p.images?.length || 0), 0)}
               </div>
               <div className="text-muted-foreground">Total Images</div>

@@ -46,18 +46,14 @@ function PlanCard({
   onCta: (planId: string) => void
 }) {
   const borderPopular =
-    accent === "visitor"
+    accent === "visitor" || accent === "exhibitor" || accent === "organizer"
       ? "ring-2 ring-[#004A96] shadow-lg shadow-[#004A96]/12"
-      : accent === "exhibitor"
-        ? "ring-2 ring-[#8E54E9] shadow-lg shadow-[#8E54E9]/12"
-        : "ring-2 ring-[#8E54E9] shadow-lg shadow-[#8E54E9]/12"
+      : ""
 
   const ctaClass =
-    accent === "visitor"
-      ? "bg-[#004A96] hover:bg-[#003471]"
-      : accent === "exhibitor"
-        ? "bg-gradient-to-r from-[#8E54E9] to-[#4776E6] hover:opacity-[0.96]"
-        : "bg-gradient-to-r from-[#8E54E9] to-[#4776E6] hover:opacity-[0.96]"
+    accent === "visitor" || accent === "exhibitor" || accent === "organizer"
+      ? "bg-[#004A96] hover:bg-[#003d7a]"
+      : ""
 
   return (
     <div
@@ -70,8 +66,7 @@ function PlanCard({
         <div
           className={cn(
             "absolute right-3 top-3",
-            accent === "visitor" && "text-[#004A96]",
-            (accent === "exhibitor" || accent === "organizer") && "text-[#8E54E9]",
+            (accent === "visitor" || accent === "exhibitor" || accent === "organizer") && "text-[#004A96]",
           )}
         >
           <Badge className="border-0 bg-amber-100 text-amber-900 hover:bg-amber-100">Most popular</Badge>
