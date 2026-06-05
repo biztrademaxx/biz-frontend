@@ -26,6 +26,8 @@ import {
   TrendingUp,
   ChevronLeft,
   ChevronRight,
+  Building2,
+  Globe,
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import Image from "next/image"
@@ -44,11 +46,14 @@ interface Appointment {
   status: "PENDING" | "CONFIRMED" | "CANCELLED" | "COMPLETED"
   notes?: string
   createdAt: string
+  eventId?: string
   eventTitle?: string
   eventStartDate?: string
   eventEndDate?: string
   eventVenue?: string
   eventCity?: string
+  eventCountry?: string
+  eventState?: string
 }
 
 interface MyAppointmentsProps {
@@ -80,7 +85,7 @@ const STATUS_CONFIG = {
     emptyMsg: "No confirmed meetings",
     emptySubMsg: "",
   },
-  
+
   CANCELLED: {
     label: "Cancelled",
     pill: "text-red-500 bg-red-50 border border-red-200",
@@ -111,6 +116,26 @@ function formatDateTime(dateStr?: string) {
   }
 }
 
+function formatEventDateRange(startDate?: string, endDate?: string): string {
+  if (!startDate) return "Date TBD"
+  const start = new Date(startDate)
+  const opts: Intl.DateTimeFormatOptions = { month: "short", day: "numeric", year: "numeric" }
+  if (!endDate) return start.toLocaleDateString("en-US", opts)
+  const end = new Date(endDate)
+  const sameYear = start.getFullYear() === end.getFullYear()
+  const startStr = start.toLocaleDateString("en-US", { month: "short", day: "numeric" })
+  const endStr = end.toLocaleDateString("en-US", sameYear ? { month: "short", day: "numeric", year: "numeric" } : opts)
+  return `${startStr} – ${endStr}`
+}
+
+function getEventLocation(event: Appointment): string {
+  const parts = []
+  if (event.eventCity) parts.push(event.eventCity)
+  if (event.eventState) parts.push(event.eventState)
+  if (event.eventCountry) parts.push(event.eventCountry)
+  return parts.length > 0 ? parts.join(", ") : event.eventVenue || "Location TBD"
+}
+
 function AvatarFallback({ name, size = "lg" }: { name: string; size?: "sm" | "lg" }) {
   const initials = name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()
   return (
@@ -132,10 +157,9 @@ function AppointmentCard({
   onCancel?: (id: string) => void
   onViewDetails: (appt: Appointment) => void
 }) {
-  // const cfg = STATUS_CONFIG[appt.status]
-  // const StatusIcon = cfg.icon
   const { date, time } = formatDateTime(appt.scheduledAt)
-  const requestedDate = formatDate(appt.createdAt)
+  const eventDateRange = formatEventDateRange(appt.eventStartDate, appt.eventEndDate)
+  const eventLocation = getEventLocation(appt)
 
   return (
     <div className="flex flex-col sm:flex-row items-start gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:shadow-md">
@@ -160,9 +184,24 @@ function AppointmentCard({
           <p className="text-xs text-slate-500 mt-0.5">{appt.exhibitorCompany}</p>
         )}
         {appt.eventTitle && (
-          <span className="mt-1.5 inline-block rounded-full border border-slate-200 px-2.5 py-0.5 text-[11px] font-medium text-slate-600">
-            {appt.eventTitle}
-          </span>
+          <div className="mt-1.5 space-y-1">
+            <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-2.5 py-0.5 text-[11px] font-medium text-slate-600">
+              <Building2 className="h-3 w-3" />
+              {appt.eventTitle}
+            </span>
+            {eventDateRange !== "Date TBD" && (
+              <p className="text-[10px] text-slate-400 flex items-center gap-1">
+                <CalendarDays className="h-3 w-3" />
+                {eventDateRange}
+              </p>
+            )}
+            {eventLocation !== "Location TBD" && (
+              <p className="text-[10px] text-slate-400 flex items-center gap-1">
+                <Globe className="h-3 w-3" />
+                {eventLocation}
+              </p>
+            )}
+          </div>
         )}
       </div>
 
@@ -175,32 +214,18 @@ function AppointmentCard({
         </div>
       </div>
 
-      {/* Location */}
+      {/* Location (Booth) */}
       <div className="flex items-start gap-2 text-sm text-slate-600 flex-1 min-w-[140px]">
         <MapPin className="h-4 w-4 mt-0.5 shrink-0 text-slate-400" />
         <div>
-          <p className="font-medium text-slate-800">{appt.eventCity || appt.eventVenue || "TBD"}</p>
-          {appt.boothNumber && <p className="text-xs text-slate-500">Hall 2, Booth {appt.boothNumber}</p>}
+          <p className="font-medium text-slate-800">
+            {appt.boothNumber ? `Booth ${appt.boothNumber}` : "Booth TBD"}
+          </p>
+          {appt.eventVenue && appt.eventVenue !== eventLocation && (
+            <p className="text-xs text-slate-500">{appt.eventVenue}</p>
+          )}
         </div>
       </div>
-
-      {/* Status + meta */}
-      {/* <div className="flex flex-col items-start gap-1 min-w-[110px]">
-        <span className={cn("inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold border", cfg.pill)}>
-          <StatusIcon className="h-3.5 w-3.5" />
-          {cfg.label}
-        </span>
-        {appt.status === "PENDING" && (
-          <p className="text-[11px] text-slate-400 leading-tight">
-            Requested on<br />{requestedDate}
-          </p>
-        )}
-        {appt.status === "CONFIRMED" && (
-          <p className="text-[11px] text-slate-400 leading-tight">
-            Confirmed on<br />{requestedDate}
-          </p>
-        )}
-      </div> */}
 
       {/* Actions */}
       <div className="flex flex-col gap-1.5 ml-auto shrink-0 min-w-[130px]">
@@ -330,8 +355,24 @@ export function MyAppointments({ userId }: MyAppointmentsProps) {
         `/api/appointments?requesterId=${userId}`,
         { auth: true }
       )
-      setAppointments(data.appointments ?? [])
+
+      // The API should return appointments with event details including city/country
+      // Make sure your backend API includes event.city, event.country, event.state
+      const appointmentsWithEventDetails = (data.appointments ?? []).map((appt: any) => ({
+        ...appt,
+        // If the API returns event object with location details, map them
+        eventCity: appt.event?.city || appt.eventCity,
+        eventState: appt.event?.state || appt.eventState,
+        eventCountry: appt.event?.country || appt.eventCountry,
+        eventVenue: appt.event?.venue?.venueName || appt.eventVenue,
+        eventStartDate: appt.event?.startDate || appt.eventStartDate,
+        eventEndDate: appt.event?.endDate || appt.eventEndDate,
+        eventTitle: appt.event?.title || appt.eventTitle,
+      }))
+
+      setAppointments(appointmentsWithEventDetails)
     } catch (err) {
+      console.error("Error fetching appointments:", err)
       setError("Failed to load appointments")
     } finally {
       setLoading(false)
@@ -364,7 +405,9 @@ export function MyAppointments({ userId }: MyAppointmentsProps) {
     const matchSearch = !q ||
       (a.exhibitorName || "").toLowerCase().includes(q) ||
       (a.exhibitorCompany || "").toLowerCase().includes(q) ||
-      (a.eventTitle || "").toLowerCase().includes(q)
+      (a.eventTitle || "").toLowerCase().includes(q) ||
+      (a.eventCity || "").toLowerCase().includes(q) ||
+      (a.eventCountry || "").toLowerCase().includes(q)
     const matchStatus = statusFilter === "all" || a.status === statusFilter.toUpperCase()
     return matchSearch && matchStatus
   })
@@ -457,7 +500,7 @@ export function MyAppointments({ userId }: MyAppointmentsProps) {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <Input
-            placeholder="Search by event, exhibitor, or company..."
+            placeholder="Search by event, exhibitor, company, or location..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-9 border-slate-200 text-sm"
@@ -543,14 +586,11 @@ export function MyAppointments({ userId }: MyAppointmentsProps) {
                   <span className={cn("text-xs font-bold mb-1", isToday ? "text-[#004A96]" : "text-slate-500")}>
                     {day}
                   </span>
-                  {/* {dayAppts.slice(0, 2).map((a) => {
-                    // const cfg = STATUS_CONFIG[a.status]
-                    // return (
-                    //   // <span key={a.id} className={cn("truncate rounded px-1 py-0.5 text-[9px] font-semibold border mb-0.5", cfg.pill)}>
-                    //   //   {a.exhibitorName}
-                    //   // </span>
-                    // )
-                  })} */}
+                  {dayAppts.slice(0, 2).map((a) => (
+                    <div key={a.id} className="text-[9px] truncate text-slate-600 mb-0.5">
+                      {a.exhibitorName}
+                    </div>
+                  ))}
                   {dayAppts.length > 2 && <span className="text-[9px] text-slate-400">+{dayAppts.length - 2}</span>}
                 </div>
               )
@@ -566,9 +606,10 @@ export function MyAppointments({ userId }: MyAppointmentsProps) {
             <DialogTitle>Appointment Details</DialogTitle>
           </DialogHeader>
           {selectedAppointment && (() => {
-            // const cfg = STATUS_CONFIG[selectedAppointment.status]
-            // const StatusIcon = cfg.icon
             const { date, time } = formatDateTime(selectedAppointment.scheduledAt)
+            const eventDateRange = formatEventDateRange(selectedAppointment.eventStartDate, selectedAppointment.eventEndDate)
+            const eventLocation = getEventLocation(selectedAppointment)
+
             return (
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
@@ -578,29 +619,50 @@ export function MyAppointments({ userId }: MyAppointmentsProps) {
                   ) : (
                     <AvatarFallback name={selectedAppointment.exhibitorName} size="sm" />
                   )}
-                  {/* <div>
+                  <div>
                     <p className="font-bold text-slate-900">{selectedAppointment.exhibitorName}</p>
                     <p className="text-xs text-slate-500">{selectedAppointment.exhibitorCompany}</p>
-                    <span className={cn("mt-1 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-semibold", cfg.pill)}>
-                      <StatusIcon className="h-3 w-3" />
-                      {cfg.label}
-                    </span>
-                  </div> */}
+                  </div>
                 </div>
+
+                {/* Event Information Section */}
+                {selectedAppointment.eventTitle && (
+                  <div className="rounded-xl border border-slate-100 bg-gradient-to-r from-blue-50 to-slate-50 p-3">
+                    <p className="text-xs font-semibold text-slate-700 mb-2 uppercase tracking-wide flex items-center gap-1">
+                      <Building2 className="h-3.5 w-3.5" />
+                      Exhibition Details
+                    </p>
+                    <div className="space-y-2">
+                      <p className="font-medium text-slate-800">{selectedAppointment.eventTitle}</p>
+                      {eventDateRange !== "Date TBD" && (
+                        <div className="flex items-center gap-2 text-sm text-slate-600">
+                          <CalendarDays className="h-3.5 w-3.5 text-blue-500 shrink-0" />
+                          <span>{eventDateRange}</span>
+                        </div>
+                      )}
+                      {eventLocation !== "Location TBD" && (
+                        <div className="flex items-center gap-2 text-sm text-slate-600">
+                          <Globe className="h-3.5 w-3.5 text-blue-500 shrink-0" />
+                          <span>{eventLocation}</span>
+                        </div>
+                      )}
+                      {selectedAppointment.eventVenue && selectedAppointment.eventVenue !== eventLocation && (
+                        <div className="flex items-center gap-2 text-sm text-slate-600">
+                          <MapPin className="h-3.5 w-3.5 text-red-400 shrink-0" />
+                          <span>{selectedAppointment.eventVenue}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 <div className="grid grid-cols-2 gap-3 rounded-xl border border-slate-100 bg-slate-50 p-3 text-sm">
                   <div className="space-y-2">
-                    <p className="font-semibold text-slate-700 text-xs uppercase tracking-wide">Appointment</p>
+                    <p className="font-semibold text-slate-700 text-xs uppercase tracking-wide">Meeting Details</p>
                     <div className="flex items-center gap-1.5 text-slate-600">
                       <CalendarDays className="h-3.5 w-3.5 text-blue-500" />
                       <span>{date} {time}</span>
                     </div>
-                    {selectedAppointment.eventTitle && (
-                      <div className="flex items-center gap-1.5 text-slate-600">
-                        <Users className="h-3.5 w-3.5 text-slate-400" />
-                        <span>{selectedAppointment.eventTitle}</span>
-                      </div>
-                    )}
                     {selectedAppointment.boothNumber && (
                       <div className="flex items-center gap-1.5 text-slate-600">
                         <MapPin className="h-3.5 w-3.5 text-red-400" />
@@ -645,7 +707,6 @@ export function MyAppointments({ userId }: MyAppointmentsProps) {
                 )}
               </div>
             )
-
           })()}
         </DialogContent>
       </Dialog>
