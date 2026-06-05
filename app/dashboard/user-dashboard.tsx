@@ -18,10 +18,14 @@ import {
   Store,
   List,
   Menu,
-  Bell,
   Crown,
   TrendingUp,
   Headphones,
+  User,
+  X,
+  MessageSquare,
+  Heart,
+  type LucideIcon,
 } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useToast } from "@/hooks/use-toast"
@@ -48,8 +52,67 @@ import { DashboardManagedBanner } from "@/components/dashboard-managed-banner"
 import { cn } from "@/lib/utils"
 import { DashboardOverview } from "./dashboard-overview"
 import { DashboardPricingPlansView } from "@/components/dashboard-packages"
+import { AppImage } from "@/components/app-image"
+import {
+  orgNavActive,
+  orgNavGroupLabel,
+  orgNavInactive,
+  orgPrimaryBtn,
+  orgSidebarSurface,
+} from "@/app/organizer-dashboard/organizer-dashboard-theme"
 
-const VISITOR_ACCENT = "#FF131C"
+type SidebarNavItem = { id: string; title: string; icon: LucideIcon }
+
+const VISITOR_SIDEBAR_GROUPS: { id: string; label: string; items: SidebarNavItem[] }[] = [
+  {
+    id: "dashboard",
+    label: "Main",
+    items: [
+      { id: "dashboard", title: "Dashboard Overview", icon: LayoutDashboard },
+      { id: "profile", title: "Profile", icon: User },
+    ],
+  },
+  {
+    id: "event",
+    label: "My Events",
+    items: [
+      { id: "events", title: "Interested Events", icon: Calendar },
+      { id: "past-events", title: "Past Events", icon: Calendar },
+      { id: "wishlist", title: "Saved Events", icon: Heart },
+    ],
+  },
+  {
+    id: "networking",
+    label: "Networking",
+    items: [
+      { id: "connections", title: "My Connections", icon: Network },
+      { id: "messages", title: "Messages", icon: MessageSquare },
+    ],
+  },
+  {
+    id: "exhibitor",
+    label: "My Exhibitors",
+    items: [
+      { id: "my-appointments", title: "Exhibitor Appointments", icon: Store },
+      { id: "Suggested", title: "Suggested", icon: TrendingUp },
+    ],
+  },
+  {
+    id: "tools",
+    label: "Event Planning",
+    items: [
+      { id: "travel", title: "Travel & Stay", icon: List },
+      { id: "schedule", title: "Schedule", icon: Calendar },
+    ],
+  },
+]
+
+const VISITOR_INDIVIDUAL_ITEMS: SidebarNavItem[] = [
+  { id: "recommended-events", title: "Recommendations", icon: TrendingUp },
+  { id: "upgrade-plan", title: "Upgrade Plan", icon: Crown },
+  { id: "Help & Support", title: "Help & Support", icon: Headphones },
+  { id: "settings", title: "Settings", icon: Settings },
+]
 
 function visitorGreeting(): string {
   const h = new Date().getHours()
@@ -69,7 +132,13 @@ export function UserDashboard({ userId }: UserDashboardProps) {
   const { toast } = useToast()
   const { activeSection, setActiveSection } = useDashboard()
 
-  const [openMenus, setOpenMenus] = useState<string[]>(["dashboard"])
+  const [openMenus, setOpenMenus] = useState<string[]>([
+    "dashboard",
+    "event",
+    "networking",
+    "exhibitor",
+    "tools",
+  ])
   const [userData, setUserData] = useState<UserData | null>(null)
   const [userInterests, setUserInterests] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
@@ -106,6 +175,13 @@ export function UserDashboard({ userId }: UserDashboardProps) {
   useEffect(() => {
     if (isMobileSidebarOpen) {
       setIsMobileSidebarOpen(false)
+    }
+  }, [activeSection])
+
+  useEffect(() => {
+    const groupId = getVisitorGroupForSection(activeSection)
+    if (groupId) {
+      setOpenMenus((prev) => (prev.includes(groupId) ? prev : [...prev, groupId]))
     }
   }, [activeSection])
 
@@ -250,246 +326,117 @@ export function UserDashboard({ userId }: UserDashboardProps) {
   }
 
   const renderSidebar = () => {
+    const sidebarName =
+      userData?.displayName?.trim() ||
+      [userData?.firstName, userData?.lastName].filter(Boolean).join(" ").trim() ||
+      "Visitor"
+    const sidebarInitial = (userData?.firstName?.[0] || userData?.lastName?.[0] || "V").toUpperCase()
+
     const sidebarContent = (
-      <div className="flex h-full w-[260px] flex-col justify-between border-r border-slate-200 bg-white py-4 text-slate-700 overflow-hidden">
-        {/* Nav scroll area */}
-        <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden no-scrollbar">
-          <nav className="space-y-1 px-2 text-sm">
+      <div className={cn("flex h-full w-[260px] flex-col overflow-hidden", orgSidebarSurface)}>
+        <div className="flex items-center justify-between border-b border-slate-200 p-4 md:hidden">
+          <h2 className="text-lg font-semibold text-slate-900">Menu</h2>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsMobileSidebarOpen(false)}
+            className="text-slate-600"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
 
-            {/* Dashboard */}
-            <div>
-              <button
-                type="button"
-                className={cn(
-                  "flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm font-medium transition",
-                  isMenuGroupActive(activeSection, "dashboard") || activeSection === "dashboard"
-                    ? "bg-[#004A96] text-white shadow-sm"
-                    : "text-slate-700 hover:bg-slate-100"
+        {!loading && userData && (
+          <div className="border-b border-slate-100 px-4 py-4">
+            <div className="flex items-center gap-3">
+              <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full bg-blue-50 ring-2 ring-blue-100">
+                {userData.avatar ? (
+                  <AppImage
+                    src={userData.avatar}
+                    alt={sidebarName}
+                    fill
+                    className="object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-sm font-bold text-[#004A96]">
+                    {sidebarInitial}
+                  </div>
                 )}
-                onClick={() => toggleMenu("dashboard")}
-              >
-                <span className="flex items-center gap-3">
-                  <LayoutDashboard className="h-[18px] w-[18px] shrink-0" />
-                  <span className="truncate">Dashboard</span>
-                </span>
-                {openMenus.includes("dashboard") ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-              </button>
-              {openMenus.includes("dashboard") && (
-                <ul className="ml-3 mt-1 space-y-0.5 border-l border-slate-200 pl-1">
-                  <li onClick={() => setActiveSection("dashboard")} className={menuItemClass(activeSection, "dashboard")}>
-                    Dashboard Overview
-                  </li>
-                  <li onClick={() => setActiveSection("profile")} className={menuItemClass(activeSection, "profile")}>
-                    Profile
-                  </li>
-                </ul>
-              )}
+              </div>
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-slate-900">{sidebarName}</p>
+                <p className="text-xs text-slate-500">Visitor Dashboard</p>
+              </div>
             </div>
+          </div>
+        )}
 
-            {/* My Events */}
-            <div>
-              <button
-                type="button"
-                className={cn(
-                  "flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm font-medium transition",
-                  isMenuGroupActive(activeSection, "event")
-                    ? "bg-[#004A96] text-white shadow-sm"
-                    : "text-slate-700 hover:bg-slate-100"
+        <div className="scrollbar-hover min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-3 py-4">
+          <nav className="text-sm">
+            {VISITOR_SIDEBAR_GROUPS.map((group) => (
+              <div key={group.id} className="mb-5">
+                <button
+                  type="button"
+                  className={cn(
+                    "mb-1 flex w-full cursor-pointer items-center justify-between rounded-md px-2 py-1.5",
+                    orgNavGroupLabel,
+                  )}
+                  onClick={() => toggleMenu(group.id)}
+                >
+                  <span>{group.label}</span>
+                  {openMenus.includes(group.id) ? (
+                    <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
+                  ) : (
+                    <ChevronRight className="h-3.5 w-3.5 text-slate-400" />
+                  )}
+                </button>
+                {openMenus.includes(group.id) && (
+                  <div className="space-y-0.5">
+                    {group.items.map((item) => (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => setActiveSection(item.id)}
+                        className={cn(
+                          "flex w-full items-center gap-3 py-2.5 pr-3 text-sm transition-colors",
+                          activeSection === item.id ? orgNavActive : orgNavInactive,
+                        )}
+                      >
+                        <item.icon className="h-4 w-4 shrink-0" />
+                        <span className="truncate">{item.title}</span>
+                      </button>
+                    ))}
+                  </div>
                 )}
-                onClick={() => toggleMenu("event")}
-              >
-                <span className="flex items-center gap-3">
-                  <Calendar className="h-[18px] w-[18px] shrink-0" />
-                  <span className="truncate">My Events</span>
-                </span>
-                {openMenus.includes("event") ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-              </button>
-              {openMenus.includes("event") && (
-                <ul className="ml-3 mt-1 space-y-0.5 border-l border-slate-200 pl-1">
-                  <li onClick={() => setActiveSection("events")} className={menuItemClass(activeSection, "events")}>
-                    Interested Events
-                  </li>
-                  <li onClick={() => setActiveSection("past-events")} className={menuItemClass(activeSection, "past-events")}>
-                    Past Events
-                  </li>
-                  <li onClick={() => setActiveSection("wishlist")} className={menuItemClass(activeSection, "wishlist")}>
-                    Saved Events
-                  </li>
-                </ul>
-              )}
-            </div>
+              </div>
+            ))}
 
-            {/* Networking */}
-            <div>
-              <button
-                type="button"
-                className={cn(
-                  "flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm font-medium transition",
-                  isMenuGroupActive(activeSection, "networking")
-                    ? "bg-[#004A96] text-white shadow-sm"
-                    : "text-slate-700 hover:bg-slate-100"
-                )}
-                onClick={() => toggleMenu("networking")}
-              >
-                <span className="flex items-center gap-3">
-                  <Network className="h-[18px] w-[18px] shrink-0" />
-                  <span className="truncate">Networking</span>
-                </span>
-                {openMenus.includes("networking") ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-              </button>
-              {openMenus.includes("networking") && (
-                <ul className="ml-3 mt-1 space-y-0.5 border-l border-slate-200 pl-1">
-                  <li onClick={() => setActiveSection("connections")} className={menuItemClass(activeSection, "connections")}>
-                    My Connections
-                  </li>
-                  <li onClick={() => setActiveSection("messages")} className={menuItemClass(activeSection, "messages")}>
-                    Messages
-                  </li>
-                </ul>
-              )}
+            <div className="mt-2 space-y-0.5 border-t border-slate-200 pt-4">
+              {VISITOR_INDIVIDUAL_ITEMS.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => setActiveSection(item.id)}
+                  className={cn(
+                    "flex w-full items-center gap-3 py-2.5 pr-3 text-sm transition-colors",
+                    activeSection === item.id ? orgNavActive : orgNavInactive,
+                  )}
+                >
+                  <item.icon className="h-4 w-4 shrink-0" />
+                  <span className="truncate">{item.title}</span>
+                </button>
+              ))}
             </div>
-
-            {/* My Exhibitors */}
-            <div>
-              <button
-                type="button"
-                className={cn(
-                  "flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm font-medium transition",
-                  isMenuGroupActive(activeSection, "exhibitor")
-                    ? "bg-[#004A96] text-white shadow-sm"
-                    : "text-slate-700 hover:bg-slate-100"
-                )}
-                onClick={() => toggleMenu("exhibitor")}
-              >
-                <span className="flex items-center gap-3">
-                  <Store className="h-[18px] w-[18px] shrink-0" />
-                  <span className="truncate">My Exhibitors</span>
-                </span>
-                {openMenus.includes("exhibitor") ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-              </button>
-              {openMenus.includes("exhibitor") && (
-                <ul className="ml-3 mt-1 space-y-0.5 border-l border-slate-200 pl-1">
-                  <li onClick={() => setActiveSection("my-appointments")} className={menuItemClass(activeSection, "my-appointments")}>
-                    Exhibitor Appointments
-                  </li>
-                  <li onClick={() => setActiveSection("Suggested")} className={menuItemClass(activeSection, "Suggested")}>
-                    Suggested
-                  </li>
-                </ul>
-              )}
-            </div>
-
-            {/* Event Planning Tools */}
-            <div>
-              <button
-                type="button"
-                className={cn(
-                  "flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm font-medium transition",
-                  isMenuGroupActive(activeSection, "tools")
-                    ? "bg-[#004A96] text-white shadow-sm"
-                    : "text-slate-700 hover:bg-slate-100"
-                )}
-                onClick={() => toggleMenu("tools")}
-              >
-                <span className="flex items-center gap-3">
-                  <List className="h-[18px] w-[18px] shrink-0" />
-                  <span className="truncate">Event Planning Tools</span>
-                </span>
-                {openMenus.includes("tools") ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-              </button>
-              {openMenus.includes("tools") && (
-                <ul className="ml-3 mt-1 space-y-0.5 border-l border-slate-200 pl-1">
-                  <li onClick={() => setActiveSection("travel")} className={menuItemClass(activeSection, "travel")}>
-                    Travel & Stay
-                  </li>
-                  <li onClick={() => setActiveSection("schedule")} className={menuItemClass(activeSection, "schedule")}>
-                    Schedule
-                  </li>
-                </ul>
-              )}
-            </div>
-
-            {/* Recommendations */}
-            <div>
-              <button
-                type="button"
-                className={cn(
-                  "flex w-full items-center justify-start gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition",
-                  activeSection === "recommended-events"
-                    ? "bg-[#004A96] text-white shadow-sm"
-                    : "text-slate-700 hover:bg-slate-100"
-                )}
-                onClick={() => setActiveSection("recommended-events")}
-              >
-                <TrendingUp className="h-[18px] w-[18px] shrink-0" />
-                <span className="truncate">Recommendations</span>
-              </button>
-            </div>
-
-            {/* Upgrade Plan */}
-            <div>
-              <button
-                type="button"
-                className={cn(
-                  "flex w-full items-center justify-start gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition",
-                  activeSection === "upgrade-plan"
-                    ? "bg-[#004A96] text-white shadow-sm"
-                    : "text-slate-700 hover:bg-slate-100"
-                )}
-                onClick={() => setActiveSection("upgrade-plan")}
-              >
-                <Crown className="h-[18px] w-[18px] shrink-0" />
-                <span className="truncate">Upgrade Plan</span>
-              </button>
-            </div>
-
-            {/* Help & Support */}
-            <div>
-              <button
-                type="button"
-                className={cn(
-                  "flex w-full items-center justify-start gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition",
-                  activeSection === "Help & Support"
-                    ? "bg-[#004A96] text-white shadow-sm"
-                    : "text-slate-700 hover:bg-slate-100"
-                )}
-                onClick={() => setActiveSection("Help & Support")}
-              >
-                <Headphones className="h-[18px] w-[18px] shrink-0" />
-                <span className="truncate">Help & Support</span>
-              </button>
-            </div>
-
-            {/* Settings */}
-            <div>
-              <button
-                type="button"
-                className={cn(
-                  "flex w-full items-center justify-start gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition",
-                  activeSection === "settings"
-                    ? "bg-[#004A96] text-white shadow-sm"
-                    : "text-slate-700 hover:bg-slate-100"
-                )}
-                onClick={() => setActiveSection("settings")}
-              >
-                <Settings className="h-[18px] w-[18px] shrink-0" />
-                <span className="truncate">Settings</span>
-              </button>
-            </div>
-
           </nav>
         </div>
 
-        {/* Footer: Logout */}
-        <div className="mt-2 shrink-0 border-t border-slate-100 px-3 pt-4">
+        <div className="shrink-0 border-t border-slate-200 p-4">
           <Button
             type="button"
             onClick={handleSignOut}
-            className="flex w-full items-center justify-center gap-2 text-white hover:opacity-95"
-            style={{ backgroundColor: VISITOR_ACCENT }}
-            size="sm"
+            className={cn("h-10 w-full rounded-lg", orgPrimaryBtn)}
           >
-            <LogOut size={16} className="shrink-0" />
+            <LogOut className="mr-2 h-4 w-4" />
             <span>Logout</span>
           </Button>
         </div>
@@ -575,25 +522,11 @@ export function UserDashboard({ userId }: UserDashboardProps) {
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-function menuItemClass(activeSection: string, id: string) {
-  return cn(
-    "cursor-pointer border-l-4 py-1.5 pl-3 text-sm transition-colors",
-    activeSection === id
-      ? "border-[#004A96] font-semibold text-[#004A96]"
-      : "border-transparent text-slate-600 hover:text-[#004A96]"
-  )
-}
-
-const MENU_SECTIONS: Record<string, string[]> = {
-  dashboard: ["profile"],
-  event: ["events", "past-events", "wishlist", "upcoming-events", "favourites", "recommended-events"],
-  networking: ["connections", "messages"],
-  exhibitor: ["my-appointments", "exhibitor-schedule", "Suggested"],
-  tools: ["travel", "schedule"],
-  recommendations: ["recommended-events"],
-  settings: ["settings", "upgrade-plan"],
-}
-
-function isMenuGroupActive(activeSection: string, menuId: string): boolean {
-  return MENU_SECTIONS[menuId]?.includes(activeSection) ?? false
+function getVisitorGroupForSection(section: string): string | null {
+  for (const group of VISITOR_SIDEBAR_GROUPS) {
+    if (group.items.some((item) => item.id === section)) {
+      return group.id
+    }
+  }
+  return null
 }

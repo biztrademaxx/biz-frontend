@@ -2,7 +2,7 @@
 
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { CalendarDays, Users, Heart, TrendingUp, MapPin, Store } from "lucide-react"
+import { CalendarDays, Users, Heart, TrendingUp, MapPin, Store, ChevronRight } from "lucide-react"
 import { DynamicCalendar } from "./DynamicCalander"
 import Link from "next/link"
 import { eventPublicPath } from "@/lib/event-path"
@@ -46,6 +46,50 @@ const CATEGORY_BADGE_STYLES = [
   "bg-orange-500",
   "bg-purple-600",
 ]
+
+function formatEventDateBadge(dateString?: string) {
+  if (!dateString) return { month: "TBD", day: "—", year: "" }
+  const d = new Date(dateString)
+  if (Number.isNaN(d.getTime())) return { month: "TBD", day: "—", year: "" }
+  return {
+    month: d.toLocaleDateString("en-US", { month: "short" }).toUpperCase(),
+    day: String(d.getDate()),
+    year: String(d.getFullYear()),
+  }
+}
+
+function formatFullEventDate(start?: string): string {
+  if (!start) return "Date TBD"
+  const d = new Date(start)
+  if (Number.isNaN(d.getTime())) return "Date TBD"
+  return d.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })
+}
+
+function getDaysUntilEvent(startDate?: string): number | null {
+  if (!startDate) return null
+  const start = new Date(startDate)
+  if (Number.isNaN(start.getTime())) return null
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  start.setHours(0, 0, 0, 0)
+  const diff = Math.ceil((start.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+  return diff >= 0 ? diff : 0
+}
+
+function getUpcomingEventLocation(event: {
+  city?: string
+  country?: string
+  venue?: string | { venueCity?: string; venueCountry?: string } | null
+}): string {
+  const city =
+    event.city ||
+    (typeof event.venue === "object" && event.venue?.venueCity ? event.venue.venueCity : undefined)
+  const country =
+    (typeof event.country === "string" ? event.country : "") ||
+    (typeof event.venue === "object" && event.venue?.venueCountry ? event.venue.venueCountry : "")
+  const parts = [city, country].filter(Boolean)
+  return parts.length > 0 ? parts.join(", ") : "Location TBD"
+}
 
 function formatEventDateRange(start?: string, end?: string): string {
   if (!start) return "Date TBD"
@@ -297,61 +341,92 @@ export function DashboardOverview({ userId, events, userName, interests = [] }: 
 
         <Card className="h-full border border-slate-100 shadow-sm">
           <CardContent className="p-6">
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-slate-900">Upcoming Events</h3>
+            <div className="mb-5 flex items-center justify-between gap-3">
+              <div className="flex min-w-0 items-center gap-3">
+                <span className="h-7 w-1 shrink-0 rounded-full bg-[#004A96]" aria-hidden />
+                <h3 className="text-lg font-bold text-slate-900">Upcoming Events</h3>
+              </div>
               <button
                 type="button"
-                className="text-sm font-medium text-[#004A96] hover:underline"
+                className="inline-flex shrink-0 items-center gap-1 text-sm font-medium text-[#004A96] hover:underline"
                 onClick={() => handleNavigation("upcoming-events", false)}
               >
-                View All
+                View All Events
+                <ChevronRight className="h-4 w-4" />
               </button>
             </div>
 
             {upcomingEvents.length > 0 ? (
-              <div className="space-y-3">
-                {upcomingEvents.map((event) => (
-                  <Link
-                    key={event.id}
-                    href={eventPublicPath(event)}
-                    className="group block"
-                  >
-                    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white transition-all hover:shadow-md">
-                      <div className="flex items-start gap-3 p-3">
-                        {/* Event Image */}
-                        <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-lg">
-                          <AppImage
-                            src={getEventCardImageUrl(event)}
-                            alt={event.title}
-                            fill
-                            fallbackSrc={EVENT_CARD_PLACEHOLDER_IMAGE}
-                            className="object-cover"
-                          />
+              <div className="scrollbar-hover max-h-[480px] space-y-3 overflow-y-auto pr-1">
+                {upcomingEvents.map((event) => {
+                  const badge = formatEventDateBadge(event.startDate)
+                  const daysToGo = getDaysUntilEvent(event.startDate)
+                  const location = getUpcomingEventLocation(event)
+
+                  return (
+                    <div
+                      key={event.id}
+                      className="overflow-hidden rounded-xl border border-slate-200 bg-white transition-shadow hover:shadow-md"
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-stretch">
+                        <div className="shrink-0 pt-3 pr-3 pb-0 pl-2 sm:w-[155px] sm:pb-3 md:w-[165px]">
+                          <div className="relative h-[112px] w-full overflow-hidden rounded-lg sm:h-[104px]">
+                            <AppImage
+                              src={getEventCardImageUrl(event)}
+                              alt={event.title}
+                              fill
+                              sizes="(max-width: 640px) 100vw, 156px"
+                              fallbackSrc={EVENT_CARD_PLACEHOLDER_IMAGE}
+                              className="rounded-lg object-cover"
+                            />
+                            <div className="absolute bottom-2 left-2 rounded-md bg-white px-2 py-1 text-center shadow-md">
+                              <p className="text-[9px] font-bold uppercase text-[#004A96]">{badge.month}</p>
+                              <p className="text-lg font-bold leading-none text-slate-900">{badge.day}</p>
+                              <p className="text-[9px] text-slate-500">{badge.year}</p>
+                            </div>
+                          </div>
                         </div>
 
-                        {/* Content */}
-                        <div className="flex flex-1 flex-col justify-between min-w-0">
-                          <h4 className="line-clamp-2 text-sm font-bold text-slate-900 leading-snug">
+                        <div className="flex min-w-0 flex-1 flex-col justify-center gap-1.5 px-3 pt-1 pb-3 sm:py-3 sm:pl-2 sm:pr-3">
+                          <span className="w-fit rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-[#004A96]">
+                            Upcoming
+                          </span>
+                          <h4 className="line-clamp-2 text-sm font-bold leading-snug text-slate-900">
                             {event.title}
                           </h4>
-                          <div className="mt-1.5 flex items-center gap-1.5 text-xs text-slate-500">
-                            <CalendarDays className="h-3.5 w-3.5 text-blue-600 shrink-0" />
-                            {new Date(event.startDate).toLocaleDateString()}
-                          </div>
-                          {event.city && (
-                            <div className="mt-1 flex items-center gap-1.5 text-xs text-slate-500">
-                              <MapPin className="h-3.5 w-3.5 text-red-500 shrink-0" />
-                              {event.city}
+                          <p className="flex items-center gap-1.5 text-xs text-slate-500">
+                            <CalendarDays className="h-3.5 w-3.5 shrink-0 text-[#004A96]" />
+                            {formatFullEventDate(event.startDate)}
+                          </p>
+                          <p className="flex items-center gap-1.5 text-xs text-slate-500">
+                            <MapPin className="h-3.5 w-3.5 shrink-0 text-red-500" />
+                            <span className="line-clamp-1">{location}</span>
+                          </p>
+                        </div>
+
+                        <div className="flex flex-row items-center justify-between gap-3 border-t border-slate-100 p-3 sm:w-[130px] sm:shrink-0 sm:flex-col sm:justify-center sm:border-l sm:border-t-0 md:w-[140px]">
+                          {daysToGo !== null ? (
+                            <div className="rounded-lg bg-emerald-50 px-3 py-2 text-center">
+                              <CalendarDays className="mx-auto h-4 w-4 text-emerald-600" />
+                              <p className="mt-0.5 text-xl font-bold leading-none text-emerald-700">{daysToGo}</p>
+                              <p className="mt-0.5 text-[10px] font-medium text-emerald-600">Days to go</p>
                             </div>
-                          )}
-                          <Button size="sm" className="mt-2 h-7 w-fit bg-[#004A96] text-xs px-3">
-                            View Event
+                          ) : null}
+                          <Button
+                            size="sm"
+                            className="h-8 shrink-0 bg-[#004A96] px-3 text-xs hover:bg-[#003d7a] sm:w-full"
+                            asChild
+                          >
+                            <Link href={eventPublicPath(event)} className="inline-flex items-center gap-1">
+                              View Event
+                              <ChevronRight className="h-4 w-4" />
+                            </Link>
                           </Button>
                         </div>
                       </div>
                     </div>
-                  </Link>
-                ))}
+                  )
+                })}
               </div>
             ) : (
               <div className="py-12 text-center">

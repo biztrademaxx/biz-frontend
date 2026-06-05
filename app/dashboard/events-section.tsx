@@ -16,6 +16,13 @@ import { format } from "date-fns"
 import { apiFetch, getCurrentUserId } from "@/lib/api"
 import { eventPublicPath } from "@/lib/event-path"
 import { formatEventEntryFeeDisplay, type TicketPriceRow } from "@/lib/ticket-price-display"
+import {
+  DEFAULT_EVENT_IMAGE,
+  eventCardImageClassName,
+  eventUsesWatermarkImage,
+  getEventDisplayImageUrl,
+} from "@/lib/default-event-image"
+import { cn } from "@/lib/utils"
 
 /**
  * Full EventsSection component
@@ -381,14 +388,19 @@ export function EventsSection({ userId }: EventsSectionProps) {
                       className="flex w-full min-w-0 border border-gray-200 bg-white rounded-lg hover:shadow-md transition-shadow overflow-hidden cursor-pointer"
                     >
                       {/* Left Image Section - Keep exact same styling */}
-                      <div className="relative mx-3 mt-3 h-32 w-40 shrink-0 overflow-hidden rounded-2xl">
+                      <div
+                        className={cn(
+                          "relative mx-3 mt-3 h-32 w-40 shrink-0 overflow-hidden rounded-2xl",
+                          showWatermark && "bg-slate-50",
+                        )}
+                      >
                         <AppImage
-                          src={event.thumbnailImage || event.bannerImage || "https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=400&h=300&fit=crop"}
+                          src={getEventDisplayImageUrl(event)}
                           alt={event.title}
                           fill
                           sizes="160px"
-                          fallbackSrc="https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=400&h=300&fit=crop"
-                          className="object-cover"
+                          fallbackSrc={DEFAULT_EVENT_IMAGE}
+                          className={eventCardImageClassName(event)}
                         />
                       </div>
 

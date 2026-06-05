@@ -13,9 +13,15 @@ import { Heart, Calendar as CalendarIcon, MapPin } from "lucide-react"
 import { Event } from "./events-section" // reusing Event type
 import { TicketType } from "@prisma/client"
 import { apiFetch, getCurrentUserId } from "@/lib/api"
+import {
+  DEFAULT_EVENT_IMAGE,
+  eventCardImageClassName,
+  eventUsesWatermarkImage,
+  getEventDisplayImageUrl,
+} from "@/lib/default-event-image"
+import { cn } from "@/lib/utils"
 
 /* ---------- Helpers ---------- */
-const DEFAULT_IMAGE = "/image/download2.jpg"
 const DEFAULT_ADDRESS = "Address not specified"
 
 const formatDate = (dateString: string) =>
@@ -190,7 +196,9 @@ export function PastEvents({ userId }: PastEventsProps) {
   return (
     <div className="space-y-6">
       <div className="relative border-l-2 border-gray-200 ml-6">
-        {pastEvents.map((event) => (
+        {pastEvents.map((event) => {
+          const showWatermark = eventUsesWatermarkImage(event)
+          return (
           <div key={event.id} className="mb-10 ml-6 relative">
             {/* Timeline Dot */}
             <span
@@ -207,14 +215,19 @@ export function PastEvents({ userId }: PastEventsProps) {
             {/* Event Card */}
            <div className="flex w-full border border-gray-200 bg-white rounded-lg hover:shadow-md transition-shadow overflow-hidden">
              {/* Left Image Section - Keep exact same styling */}
-             <div className="relative mx-3 mt-3 h-32 w-40 shrink-0 overflow-hidden rounded-2xl">
+             <div
+               className={cn(
+                 "relative mx-3 mt-3 h-32 w-40 shrink-0 overflow-hidden rounded-2xl",
+                 showWatermark && "bg-slate-50",
+               )}
+             >
                <AppImage
-                 src={event.thumbnailImage || event.bannerImage || "https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=400&h=300&fit=crop"}
+                 src={getEventDisplayImageUrl(event)}
                  alt={event.title}
                  fill
                  sizes="160px"
-                 fallbackSrc="https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=400&h=300&fit=crop"
-                 className="object-cover"
+                 fallbackSrc={DEFAULT_EVENT_IMAGE}
+                 className={eventCardImageClassName(event)}
                />
              </div>
            
@@ -302,7 +315,7 @@ export function PastEvents({ userId }: PastEventsProps) {
              </div>
            </div>
           </div>
-        ))}
+        )})}
       </div>
     </div>
   )

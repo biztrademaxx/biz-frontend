@@ -35,7 +35,7 @@ export default async function EventDashboardPage({ params }: EventDashboardPageP
   const eventTitle = data?.title?.trim() || null
 
   return (
-    <div>
+    <div className="flex h-screen flex-col overflow-hidden bg-white">
       <Navbar />
       <EventSidebar
         dashboardRef={ref}

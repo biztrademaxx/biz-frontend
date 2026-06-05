@@ -1,7 +1,26 @@
 import { sanitizeImageUrl } from "@/lib/placeholder"
 
-/** Fallback when an event has no banner / gallery image (dashboards, listing, etc.). */
+/** Watermark logo when an event has no banner / gallery image (dashboards, listing, etc.). */
 export const DEFAULT_EVENT_IMAGE = "/logo/default-user.png"
+
+/** `true` when the event has no real thumbnail/banner to show. */
+export function eventUsesWatermarkImage(event: {
+  thumbnailImage?: string | null
+  bannerImage?: string | null
+  image?: string | null
+  images?: unknown
+}): boolean {
+  return getEventDisplayImageUrl(event) === DEFAULT_EVENT_IMAGE
+}
+
+/** Cover for real photos; centered watermark logo on a light panel when missing. */
+export function eventCardImageClassName(
+  event: Parameters<typeof getEventDisplayImageUrl>[0],
+): string {
+  return eventUsesWatermarkImage(event)
+    ? "object-contain object-center p-3"
+    : "object-cover"
+}
 
 export function eventImageOrDefault(url: string | null | undefined): string {
   const clean = url ? sanitizeImageUrl(url) : undefined
