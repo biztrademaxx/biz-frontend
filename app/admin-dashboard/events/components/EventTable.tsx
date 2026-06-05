@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState, type CSSProperties } from "react"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Trash2, Download, Search, Mail, Loader2 } from "lucide-react"
+import { Trash2, Download, Search, Mail, Loader2, BadgeCheck } from "lucide-react"
 import { EventRow } from "./EventRow"
 import type { Event, Category } from "../types/event.types"
 import { getOrganizerDisplay, getCategoryDisplay } from "../types/event.types"
@@ -190,12 +190,35 @@ export function EventTable({
     setLocalSearch(searchTerm)
   }, [searchTerm])
 
-  const groupedMail = useMemo(() => groupMailCandidates(mailCandidates), [mailCandidates])
+  const isMailTab = activeTab === "send-email" || activeTab === "email-verified"
+
+  const tabMailCandidates = useMemo(() => {
+    if (activeTab === "send-email") {
+      return mailCandidates.filter((c) => !c.emailVerified)
+    }
+    if (activeTab === "email-verified") {
+      return mailCandidates.filter((c) => c.emailVerified)
+    }
+    return []
+  }, [mailCandidates, activeTab])
+
+  const groupedMail = useMemo(() => groupMailCandidates(tabMailCandidates), [tabMailCandidates])
+
+  const verifiedOrganizerEmails = useMemo(
+    () =>
+      new Set(
+        mailCandidates
+          .filter((c) => c.emailVerified)
+          .map((c) => (c.organizerEmail || "").trim().toLowerCase())
+          .filter(Boolean),
+      ),
+    [mailCandidates],
+  )
 
   const filteredEvents = useMemo(() => {
-    if (activeTab === "send-email") return []
+    if (isMailTab) return []
     return sortEventsClient(events, localSort)
-  }, [events, activeTab, localSort])
+  }, [events, isMailTab, localSort])
 
   const allSelected = filteredEvents.length > 0 && filteredEvents.every((e) => selectedEvents.has(e.id))
   const selectedCount = selectedEvents.size
@@ -231,12 +254,17 @@ export function EventTable({
       const raw = (e.organizerEmail || "").trim()
       if (!raw) continue
       const k = raw.toLowerCase()
+      if (verifiedOrganizerEmails.has(k)) continue
       if (!by.has(k)) by.set(k, { organizerEmail: raw, eventTitles: [] })
       by.get(k)!.eventTitles.push(e.title)
     }
     const items = [...by.values()].map((x) => ({ organizerEmail: x.organizerEmail, eventTitles: [...new Set(x.eventTitles)] }))
     if (items.length === 0) {
-      toast({ title: "No organizer email", description: "None of the selected events have an organizer email.", variant: "destructive" })
+      toast({
+        title: "No unverified organizers",
+        description: "Selected events have no organizer email, or all organizers already verified their email.",
+        variant: "destructive",
+      })
       return
     }
     void onSendListingEmailBulk(items)
@@ -261,18 +289,17 @@ export function EventTable({
     setSelectedMailKeys(new Set())
   }
 
-  const mailTabCount = eventCounts.mail ?? groupedMail.length
-
   const tabs = [
-    { id: "all", label: "All", count: eventCounts.all ?? pagination.total, dot: null, star: false, vip: false, mail: false },
-    { id: "live", label: "Live", count: eventCounts.live ?? 0, dot: "#22C55E", star: false, vip: false, mail: false },
-    { id: "upcoming", label: "Upcoming", count: eventCounts.upcoming ?? 0, dot: "#3B82F6", star: false, vip: false, mail: false },
-    { id: "ended", label: "Ended", count: eventCounts.ended ?? 0, dot: "#71717A", star: false, vip: false, mail: false },
-    { id: "pending", label: "Pending", count: eventCounts.pending ?? 0, dot: "#EAB308", star: false, vip: false, mail: false },
-    { id: "approved", label: "Approved", count: eventCounts.approved ?? 0, dot: "#8B5CF6", star: false, vip: false, mail: false },
-    { id: "featured", label: "Featured", count: eventCounts.featured ?? 0, dot: null, star: true, vip: false, mail: false },
-    { id: "vip", label: "VIP", count: eventCounts.vip ?? 0, dot: null, star: false, vip: true, mail: false },
-    { id: "send-email", label: "Send email", count: mailTabCount, dot: null, star: false, vip: false, mail: true },
+    { id: "all", label: "All", count: eventCounts.all ?? pagination.total, dot: null, star: false, vip: false, mail: false, verified: false },
+    { id: "live", label: "Live", count: eventCounts.live ?? 0, dot: "#22C55E", star: false, vip: false, mail: false, verified: false },
+    { id: "upcoming", label: "Upcoming", count: eventCounts.upcoming ?? 0, dot: "#3B82F6", star: false, vip: false, mail: false, verified: false },
+    { id: "ended", label: "Ended", count: eventCounts.ended ?? 0, dot: "#71717A", star: false, vip: false, mail: false, verified: false },
+    { id: "pending", label: "Pending", count: eventCounts.pending ?? 0, dot: "#EAB308", star: false, vip: false, mail: false, verified: false },
+    { id: "approved", label: "Approved", count: eventCounts.approved ?? 0, dot: "#8B5CF6", star: false, vip: false, mail: false, verified: false },
+    { id: "featured", label: "Featured", count: eventCounts.featured ?? 0, dot: null, star: true, vip: false, mail: false, verified: false },
+    { id: "vip", label: "VIP", count: eventCounts.vip ?? 0, dot: null, star: false, vip: true, mail: false, verified: false },
+    { id: "send-email", label: "Send email", count: eventCounts.mail ?? 0, dot: null, star: false, vip: false, mail: true, verified: false },
+    { id: "email-verified", label: "Email verified", count: eventCounts.emailVerified ?? 0, dot: null, star: false, vip: false, mail: false, verified: true },
   ]
 
   const thStyle: CSSProperties = {
@@ -348,7 +375,7 @@ export function EventTable({
                     display: "inline-flex", alignItems: "center", gap: "5px",
                     padding: "6px 14px", borderRadius: "999px", fontSize: "13px", fontWeight: 500,
                     border: isActive ? "none" : "1.5px solid #E5E5E5",
-                    background: isActive ? (tab.mail ? "#2563EB" : "#22C55E") : "#fff",
+                    background: isActive ? (tab.mail ? "#2563EB" : tab.verified ? "#059669" : "#22C55E") : "#fff",
                     color: isActive ? "#fff" : "#374151",
                     cursor: "pointer", whiteSpace: "nowrap", transition: "all 0.15s",
                     boxShadow: isActive ? "0 1px 4px rgba(34,197,94,0.18)" : "none",
@@ -371,7 +398,7 @@ export function EventTable({
 
             <div style={{ flex: 1 }} />
 
-            {activeTab !== "send-email" && (
+            {!isMailTab && (
               <>
                 <select
                   value={selectedCategory}
@@ -413,14 +440,18 @@ export function EventTable({
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 20px", borderBottom: "1px solid #F0F0F0", flexWrap: "wrap", gap: "8px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
                 <span style={{ fontSize: "15px", fontWeight: 600, color: "#18181B" }}>
-                  {activeTab === "send-email" ? "Send listing email" : "Event Listings"}
+                  {activeTab === "send-email"
+                    ? "Send listing email"
+                    : activeTab === "email-verified"
+                      ? "Email verified organizers"
+                      : "Event Listings"}
                 </span>
                 <span style={{ fontSize: "13px", color: "#A1A1AA" }}>
-                  {activeTab === "send-email"
+                  {isMailTab
                     ? `${groupedMail.length} organizer mail groups`
                     : `${filteredEvents.length.toLocaleString()} events found`}
                 </span>
-                {activeTab !== "send-email" && selectedCount > 0 && (
+                {!isMailTab && selectedCount > 0 && (
                   <span style={{ fontSize: "11px", fontWeight: 600, padding: "2px 8px", borderRadius: "999px", background: "#DBEAFE", color: "#2563EB" }}>
                     {selectedCount} selected
                   </span>
@@ -439,7 +470,7 @@ export function EventTable({
                     {sendingMail ? "Sending…" : `Send to ${mailSelectedCount} organizer(s)`}
                   </Button>
                 )}
-                {activeTab !== "send-email" && selectedCount > 0 && (
+                {!isMailTab && selectedCount > 0 && (
                   <>
                     <Button
                       type="button" variant="outline" size="sm"
@@ -459,7 +490,7 @@ export function EventTable({
                     </button>
                   </>
                 )}
-                {activeTab !== "send-email" && (
+                {!isMailTab && (
                   <button
                     type="button" onClick={() => exportToCSV(filteredEvents)}
                     style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "6px 12px", borderRadius: "8px", fontSize: "13px", fontWeight: 500, border: "1.5px solid #E5E5E5", background: "#fff", color: "#374151", cursor: "pointer" }}
@@ -471,27 +502,34 @@ export function EventTable({
             </div>
 
             {/* ── Table content ── */}
-            {activeTab === "send-email" ? (
+            {isMailTab ? (
 
-              /* Mail table */
+              /* Mail / verified organizer table */
               <div style={{ padding: "0 20px 20px" }}>
                 <p style={{ fontSize: "13px", color: "#71717A", margin: "14px 0" }}>
-                  Emails are grouped by organizer. Select rows and send event listing messages.
+                  {activeTab === "email-verified"
+                    ? "Organizers who verified their email (OTP or password setup). These organizers are excluded from Send email."
+                    : "Unverified organizers only. Select rows and send event listing emails with password setup links."}
                 </p>
                 <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed" }}>
                   <colgroup>
-                    <col style={{ width: "44px" }} />
+                    {activeTab === "send-email" && <col style={{ width: "44px" }} />}
                     <col style={{ width: "22%" }} />
                     <col style={{ width: "28%" }} />
                     <col />
-                    <col style={{ width: "90px" }} />
+                    {activeTab === "send-email" ? <col style={{ width: "90px" }} /> : <col style={{ width: "110px" }} />}
                   </colgroup>
                   <thead>
                     <tr style={{ borderBottom: "1px solid #F0F0F0", background: "#FAFAFA" }}>
-                      <th style={{ padding: "10px 0 10px 16px" }}>
-                        <Checkbox checked={allMailSelected} onCheckedChange={(c) => handleSelectAllMail(c === true)} />
-                      </th>
-                      {["Organizer", "Email", "Events", ""].map((label, i) => (
+                      {activeTab === "send-email" && (
+                        <th style={{ padding: "10px 0 10px 16px" }}>
+                          <Checkbox checked={allMailSelected} onCheckedChange={(c) => handleSelectAllMail(c === true)} />
+                        </th>
+                      )}
+                      {(activeTab === "send-email"
+                        ? ["Organizer", "Email", "Events", ""]
+                        : ["Organizer", "Email", "Events", "Status"]
+                      ).map((label, i) => (
                         <th key={i} style={thStyle}>{label}</th>
                       ))}
                     </tr>
@@ -499,16 +537,20 @@ export function EventTable({
                   <tbody>
                     {groupedMail.length === 0 ? (
                       <tr>
-                        <td colSpan={5} style={{ textAlign: "center", padding: "56px", color: "#A1A1AA", fontSize: "14px" }}>
-                          No pending mail candidates. New sub-admin or bulk-import listings will appear here.
+                        <td colSpan={activeTab === "send-email" ? 5 : 4} style={{ textAlign: "center", padding: "56px", color: "#A1A1AA", fontSize: "14px" }}>
+                          {activeTab === "email-verified"
+                            ? "No verified organizers yet. Organizers appear here after they complete email OTP or password setup."
+                            : "No unverified organizers pending email. All listing organizers have verified their email."}
                         </td>
                       </tr>
                     ) : (
                       groupedMail.map((row) => (
                         <tr key={row.key} style={{ borderBottom: "1px solid #F5F5F5" }}>
-                          <td style={{ padding: "12px 0 12px 16px" }}>
-                            <Checkbox checked={selectedMailKeys.has(row.key)} onCheckedChange={(c) => handleSelectMailRow(row.key, c === true)} />
-                          </td>
+                          {activeTab === "send-email" && (
+                            <td style={{ padding: "12px 0 12px 16px" }}>
+                              <Checkbox checked={selectedMailKeys.has(row.key)} onCheckedChange={(c) => handleSelectMailRow(row.key, c === true)} />
+                            </td>
+                          )}
                           <td style={{ padding: "12px 8px", fontSize: "13px", fontWeight: 500, color: "#18181B", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 0 }}>
                             {row.organizerName || "—"}
                           </td>
@@ -521,14 +563,21 @@ export function EventTable({
                             </ul>
                           </td>
                           <td style={{ padding: "12px 8px" }}>
-                            <Button
-                              type="button" size="sm" variant="outline"
-                              className="whitespace-nowrap"
-                              disabled={sendingMail && sendingMailFor === row.organizerEmail.toLowerCase()}
-                              onClick={() => onSendListingEmail(row.organizerEmail, row.eventTitles)}
-                            >
-                              {sendingMail && sendingMailFor === row.organizerEmail.toLowerCase() ? "Sending…" : "Send"}
-                            </Button>
+                            {activeTab === "send-email" ? (
+                              <Button
+                                type="button" size="sm" variant="outline"
+                                className="whitespace-nowrap"
+                                disabled={sendingMail && sendingMailFor === row.organizerEmail.toLowerCase()}
+                                onClick={() => onSendListingEmail(row.organizerEmail, row.eventTitles)}
+                              >
+                                {sendingMail && sendingMailFor === row.organizerEmail.toLowerCase() ? "Sending…" : "Send"}
+                              </Button>
+                            ) : (
+                              <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", fontSize: "12px", fontWeight: 600, color: "#059669", background: "#ECFDF5", padding: "4px 10px", borderRadius: "999px" }}>
+                                <BadgeCheck style={{ width: "13px", height: "13px" }} />
+                                Verified
+                              </span>
+                            )}
                           </td>
                         </tr>
                       ))
@@ -623,7 +672,7 @@ export function EventTable({
               </div>
             )}
 
-            {activeTab !== "send-email" && !loading && pagination.totalPages > 1 && (
+            {!isMailTab && !loading && pagination.totalPages > 1 && (
               <div style={{ borderTop: "1px solid #F0F0F0", padding: "0 16px" }}>
                 <Pagination page={page} totalPages={pagination.totalPages} onPageChange={onPageChange} />
               </div>

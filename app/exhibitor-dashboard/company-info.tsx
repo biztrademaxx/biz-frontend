@@ -33,6 +33,10 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import {
+  ProfileLocationFields,
+  profileLocationFromLegacy,
+} from "@/components/location/ProfileLocationFields"
+import {
   exGlassCardPremium,
   exGlassNested,
   exCompanyGlowLayer,
@@ -53,7 +57,10 @@ interface ExhibitorData {
   linkedin?: string
   twitter?: string
   avatar?: string
-  location?: any
+  location?: string
+  profileCity?: string
+  profileState?: string
+  profileCountry?: string
 }
 
 interface CompanyInfoProps {
@@ -372,6 +379,27 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
                 />
               </div>
             </div>
+
+            <div className="space-y-2">
+              <Label>Location</Label>
+              <ProfileLocationFields
+                value={{
+                  city: formData.profileCity ?? "",
+                  state: formData.profileState ?? "",
+                  country: formData.profileCountry ?? "",
+                }}
+                onChange={(next) =>
+                  setFormData({
+                    ...formData,
+                    profileCity: next.city,
+                    profileState: next.state,
+                    profileCountry: next.country,
+                  })
+                }
+                disabled={!isEditing}
+                className="mt-1"
+              />
+            </div>
             </div>
           </CardContent>
         </Card>
@@ -492,7 +520,17 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
             className="rounded-2xl border-[#004A96]/35 bg-white/50 backdrop-blur-sm"
             onClick={() => {
               setIsEditing(false)
-              setFormData(exhibitorData)
+              const loc = profileLocationFromLegacy(exhibitorData.location, {
+                city: exhibitorData.profileCity,
+                state: exhibitorData.profileState,
+                country: exhibitorData.profileCountry,
+              })
+              setFormData({
+                ...exhibitorData,
+                profileCity: loc.city,
+                profileState: loc.state,
+                profileCountry: loc.country,
+              })
             }}
             disabled={loading}
           >

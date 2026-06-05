@@ -111,6 +111,20 @@ export type EventMailCandidate = {
   organizerEmail: string
   organizerName: string
   createdAt: string
+  emailVerified: boolean
+}
+
+/** Unique organizer counts by email verification (for tab badges). */
+export function countMailOrganizersByVerification(candidates: EventMailCandidate[]) {
+  const unverified = new Set<string>()
+  const verified = new Set<string>()
+  for (const row of candidates) {
+    const email = (row.organizerEmail || "").trim().toLowerCase()
+    if (!email) continue
+    if (row.emailVerified) verified.add(email)
+    else unverified.add(email)
+  }
+  return { unverified: unverified.size, verified: verified.size }
 }
 
 export async function getEventMailCandidates() {

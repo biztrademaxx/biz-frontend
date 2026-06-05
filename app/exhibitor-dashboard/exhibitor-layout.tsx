@@ -126,6 +126,9 @@ interface ExhibitorData {
   website?: string
   twitter?: string
   location?: string
+  profileCity?: string
+  profileState?: string
+  profileCountry?: string
   jobTitle?: string
   company?: string | null
   totalEvents: number
@@ -254,6 +257,9 @@ export function ExhibitorLayout({ routeSegment }: UserDashboardProps) {
     jobTitle: e?.jobTitle,
     company: e?.company ?? e?.companyName,
     linkedin: e?.linkedin,
+    profileCity: e?.profileCity,
+    profileState: e?.profileState,
+    profileCountry: e?.profileCountry,
     location: e?.location,
     totalProducts: productCount,
     totalEvents: e?.totalEvents ?? 0,

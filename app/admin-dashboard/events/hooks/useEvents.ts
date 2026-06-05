@@ -167,7 +167,7 @@ export function useEvents() {
   }, [])
 
   useEffect(() => {
-    if (activeTab === "send-email") {
+    if (activeTab === "send-email" || activeTab === "email-verified") {
       setLoading(false)
       return
     }
@@ -185,7 +185,14 @@ export function useEvents() {
   const fetchMailCandidates = useCallback(async () => {
     try {
       const res = await api.getEventMailCandidates()
-      setMailCandidates(Array.isArray(res?.data) ? res.data : [])
+      setMailCandidates(
+        Array.isArray(res?.data)
+          ? res.data.map((row) => ({
+              ...row,
+              emailVerified: !!row.emailVerified,
+            }))
+          : [],
+      )
     } catch (error) {
       console.error("Error fetching mail candidates:", error)
       setMailCandidates([])
@@ -196,6 +203,8 @@ export function useEvents() {
     void fetchMailCandidates()
   }, [fetchMailCandidates])
 
+  const mailOrganizerCounts = api.countMailOrganizersByVerification(mailCandidates)
+
   const eventCounts = {
     all: stats.total,
     pending: stats.pending,
@@ -204,7 +213,8 @@ export function useEvents() {
     featured: stats.featured,
     vip: stats.vip,
     verified: 0,
-    mail: mailCandidates.length,
+    mail: mailOrganizerCounts.unverified,
+    emailVerified: mailOrganizerCounts.verified,
     live: stats.live,
     upcoming: stats.upcoming,
     ended: stats.ended,
