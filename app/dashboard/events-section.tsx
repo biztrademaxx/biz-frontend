@@ -391,7 +391,7 @@ export function EventsSection({ userId }: EventsSectionProps) {
                       <div
                         className={cn(
                           "relative mx-3 mt-3 h-32 w-40 shrink-0 overflow-hidden rounded-2xl",
-                          showWatermark && "bg-slate-50",
+                          // showWatermark && "bg-slate-50",
                         )}
                       >
                         <AppImage

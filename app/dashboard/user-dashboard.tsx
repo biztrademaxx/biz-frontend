@@ -44,7 +44,7 @@ import { MyAppointments } from "./my-appointments"
 import { ExhibitorSchedule } from "./ExhibitorSchedule"
 import { Favourites } from "./Favourites"
 import { Recommendations } from "./Recommendations"
-import RecommendedEvents from "./recommended-events"
+// import RecommendedEvents from "./recommended-events"
 import Schedule from "./Schedule"
 import { HelpSupport } from "@/components/HelpSupport"
 import { useDashboard } from "@/contexts/dashboard-context"
@@ -297,8 +297,8 @@ export function UserDashboard({ userId }: UserDashboardProps) {
         return <Schedule userId={resolvedUserId} />
       case "favourites":
         return <Favourites />
-      case "recommended-events":
-        return <RecommendedEvents userId={resolvedUserId} interests={userInterests} />
+      // case "recommended-events":
+      //   return <RecommendedEvents userId={resolvedUserId} interests={userInterests} />
       case "Suggested":
         return <Recommendations />
       case "connections":
@@ -434,7 +434,7 @@ export function UserDashboard({ userId }: UserDashboardProps) {
           <Button
             type="button"
             onClick={handleSignOut}
-            className={cn("h-10 w-full rounded-lg", orgPrimaryBtn)}
+            className={cn("h-10 w-full rounded-lg bg-red-600 text-white hover:bg-red-700")}
           >
             <LogOut className="mr-2 h-4 w-4" />
             <span>Logout</span>
