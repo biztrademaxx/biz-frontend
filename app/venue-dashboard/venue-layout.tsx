@@ -27,6 +27,7 @@ import {
 } from "lucide-react"
 import { useRouter, usePathname } from "next/navigation"
 import { useAuth } from "@/hooks/use-auth"
+import { AppImage } from "@/components/app-image"
 
 import VenueProfile from "./venue-profile"
 import EventManagement from "./event-management"
@@ -42,6 +43,14 @@ import { useDashboard } from "@/contexts/dashboard-context"
 import { DashboardManagedBanner } from "@/components/dashboard-managed-banner"
 import { getVenueDashboardPath } from "@/lib/venue-dashboard-path"
 import { VenueDashboardVenueIdProvider } from "@/contexts/venue-dashboard-venue-id"
+import {
+  venueNavActive,
+  venueNavGroupLabel,
+  venueNavInactive,
+  venuePageBg,
+  venuePageHeader,
+  venueSidebarSurface,
+} from "./venue-dashboard-theme"
 
 // Type definitions for nested objects
 interface CapacityObject {
@@ -236,7 +245,7 @@ export default function VenueDashboardPage({ routeSegment }: UserDashboardProps)
       const merged: VenueData = {
         id: raw.id || "",
         venueName: (mgr?.venueName ?? raw.name ?? "") as string,
-        logo: (raw.logo || (raw.images?.[0]) ) as string,
+        logo: (raw.logo || raw.images?.[0] || mgr?.avatar || "") as string,
         contactPerson: (mgr?.name ?? raw.contactPerson ?? "") as string,
         email: (mgr?.email ?? raw.email ?? "") as string,
         mobile: (mgr?.phone ?? raw.mobile ?? "") as string,
@@ -287,18 +296,15 @@ export default function VenueDashboardPage({ routeSegment }: UserDashboardProps)
     cn(
       "flex items-center gap-3 w-full rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-150 text-left",
       activeSection === sectionId
-        ? "bg-[#4F46E5] text-white shadow-sm"
+        ? "bg-[#004A96] text-white shadow-sm"
         : "text-[#64748B] hover:bg-[#F1F5F9] hover:text-[#1E293B]"
     )
-
-  const navIconClass = (sectionId: string) =>
-    cn("w-4 h-4 shrink-0", activeSection === sectionId ? "text-white" : "text-[#94A3B8]")
 
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#F8FAFC]">
         <div className="text-center">
-          <div className="w-10 h-10 border-2 border-[#4F46E5] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+          <div className="w-10 h-10 border-2 border-[#004A96] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
           <p className="text-sm text-[#64748B]">Loading dashboard…</p>
         </div>
       </div>
@@ -312,7 +318,7 @@ export default function VenueDashboardPage({ routeSegment }: UserDashboardProps)
           <CardHeader><CardTitle className="text-red-600">Error</CardTitle></CardHeader>
           <CardContent>
             <p className="mb-4 text-slate-600">{error}</p>
-            <Button onClick={fetchVenueData} className="w-full bg-[#4F46E5] hover:bg-[#4338CA] text-white">Try Again</Button>
+            <Button onClick={fetchVenueData} className="w-full bg-[#004A96] hover:bg-[#003d7a] text-white">Try Again</Button>
           </CardContent>
         </Card>
       </div>
@@ -350,62 +356,62 @@ export default function VenueDashboardPage({ routeSegment }: UserDashboardProps)
     const navigate = (section: string) => { setActiveSection(section); onNavigate?.() }
     return (
       <div className="flex flex-col h-full">
-        <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-0.5">
+        <nav className="scrollbar-hover flex-1 space-y-0.5 overflow-y-auto px-3 py-4">
           <button onClick={() => navigate("dashboard")} className={navItemClass("dashboard")}>
-            <LayoutDashboard className={navIconClass("dashboard")} />
+            <LayoutDashboard className="h-4 w-4 shrink-0" />
             Dashboard
           </button>
 
           <div className="pt-4 pb-1">
-            <p className="px-3 text-[10px] font-semibold text-[#94A3B8] uppercase tracking-widest">Venue Management</p>
+            <p className={venueNavGroupLabel}>Venue Management</p>
           </div>
           <button onClick={() => navigate("venue-profile")} className={navItemClass("venue-profile")}>
-            <Building2 className={navIconClass("venue-profile")} />
+            <Building2 className="h-4 w-4 shrink-0" />
             Venue Profile
           </button>
           <button onClick={() => navigate("event-management")} className={navItemClass("event-management")}>
-            <CalendarDays className={navIconClass("event-management")} />
+            <CalendarDays className="h-4 w-4 shrink-0" />
             Event Management
           </button>
           <button onClick={() => navigate("booking-system")} className={navItemClass("booking-system")}>
-            <BookmarkCheck className={navIconClass("booking-system")} />
+            <BookmarkCheck className="h-4 w-4 shrink-0" />
             Booking System
           </button>
 
           <div className="pt-4 pb-1">
-            <p className="px-3 text-[10px] font-semibold text-[#94A3B8] uppercase tracking-widest">Communication</p>
+            <p className={venueNavGroupLabel}>Communication</p>
           </div>
           <button onClick={() => navigate("communication")} className={navItemClass("communication")}>
-            <MessageSquare className={navIconClass("communication")} />
+            <MessageSquare className="h-4 w-4 shrink-0" />
             Messages
           </button>
           <button onClick={() => navigate("connection")} className={navItemClass("connection")}>
-            <Users className={navIconClass("connection")} />
+            <Users className="h-4 w-4 shrink-0" />
             Connections
           </button>
 
           <div className="pt-4 pb-1">
-            <p className="px-3 text-[10px] font-semibold text-[#94A3B8] uppercase tracking-widest">Reviews & Legal</p>
+            <p className={venueNavGroupLabel}>Reviews & Legal</p>
           </div>
           <button onClick={() => navigate("ratings-reviews")} className={navItemClass("ratings-reviews")}>
-            <Star className={navIconClass("ratings-reviews")} />
+            <Star className="h-4 w-4 shrink-0" />
             Reviews & Ratings
           </button>
 
           <div className="pt-4 pb-1">
-            <p className="px-3 text-[10px] font-semibold text-[#94A3B8] uppercase tracking-widest">Account</p>
+            <p className={venueNavGroupLabel}>Account</p>
           </div>
           <button onClick={() => navigate("help-support")} className={navItemClass("help-support")}>
-            <HelpCircle className={navIconClass("help-support")} />
+            <HelpCircle className="h-4 w-4 shrink-0" />
             Help & Support
           </button>
           <button onClick={() => navigate("settings")} className={navItemClass("settings")}>
-            <Settings className={navIconClass("settings")} />
+            <Settings className="h-4 w-4 shrink-0" />
             Settings
           </button>
         </nav>
 
-        <div className="p-3 border-t border-[#E2E8F0]">
+        <div className="border-t border-slate-200 p-3">
           <button
             onClick={() => logout()}
             className="flex items-center gap-3 w-full rounded-xl px-3 py-2.5 text-sm font-medium text-[#EF4444] hover:bg-[#FEF2F2] transition-colors"
@@ -420,15 +426,16 @@ export default function VenueDashboardPage({ routeSegment }: UserDashboardProps)
 
   return (
     <VenueDashboardVenueIdProvider venueUserId={venueData.id}>
-      <div className="flex min-h-screen bg-[#F8FAFC]">
+      <div className={cn("relative flex min-h-0 flex-1 w-full overflow-hidden", venuePageBg)}>
         {sidebarOpen && (
           <div className="fixed inset-0 z-40 bg-black/40 md:hidden" onClick={() => setSidebarOpen(false)} />
         )}
 
         <aside
           className={cn(
-            "fixed z-50 top-0 left-0 h-full w-[220px] bg-white border-r border-[#E2E8F0] flex flex-col transition-transform duration-300",
-            "md:translate-x-0 md:sticky md:top-0 md:h-screen md:shrink-0",
+            "fixed z-50 top-0 left-0 flex h-full w-[260px] flex-col transition-transform duration-300",
+            venueSidebarSurface,
+            "md:static md:translate-x-0 md:shrink-0",
             sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
           )}
         >
@@ -441,9 +448,9 @@ export default function VenueDashboardPage({ routeSegment }: UserDashboardProps)
           <SidebarNav onNavigate={() => setSidebarOpen(false)} />
         </aside>
 
-        <div className="flex-1 flex flex-col min-w-0">
-          <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-auto">
-            <DashboardManagedBanner page="venue-dashboard" />
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+          <main className="min-h-0 flex-1 overflow-auto p-0">
+            <div className="min-h-0 w-full px-6 py-6">
             {accountUnderReview && (
               <Alert className="mb-5 border-amber-200 bg-amber-50" role="status">
                 <AlertCircle className="h-4 w-4 text-amber-600" />
@@ -454,11 +461,22 @@ export default function VenueDashboardPage({ routeSegment }: UserDashboardProps)
               </Alert>
             )}
             {renderContent()}
+            </div>
           </main>
         </div>
       </div>
     </VenueDashboardVenueIdProvider>
   )
+}
+
+function getVenueThumbUrl(venueData: VenueData): string | null {
+  const fromGallery = venueData.venueImages?.map((img) => img?.trim()).find((img) => img && img.length > 0)
+  if (fromGallery) return fromGallery
+
+  const logo = venueData.logo?.trim()
+  if (logo && logo !== "/placeholder.svg") return logo
+
+  return null
 }
 
 /* ─────────────────────────────────────────────
@@ -515,7 +533,7 @@ function VenueDashboardHome({ venueData, setActiveSection }: { venueData: VenueD
       value: venueData.totalEvents ?? 0,
       change: `${venueData.totalEvents ?? 0} total events hosted`,
       icon: CalendarDays,
-      color: "bg-[#EEF2FF] text-[#4F46E5]"
+      color: "bg-[#EFF6FF] text-[#004A96]"
     },
     {
       label: "Active Bookings",
@@ -585,7 +603,7 @@ function VenueDashboardHome({ venueData, setActiveSection }: { venueData: VenueD
       case 'CONFIRMED':
         return 'bg-[#F0FDF4] text-[#15803D] border border-[#BBF7D0]'
       case 'COMPLETED':
-        return 'bg-[#EDE9FE] text-[#6D28D9] border border-[#DDD6FE]'
+        return 'bg-[#dbeafe] text-[#004A96] border border-[#bfdbfe]'
       case 'CANCELLED':
         return 'bg-[#FEF2F2] text-[#DC2626] border border-[#FECACA]'
       default:
@@ -593,14 +611,26 @@ function VenueDashboardHome({ venueData, setActiveSection }: { venueData: VenueD
     }
   }
 
+  const welcomeName = venueData.contactPerson || venueData.venueName
+  const venueThumbUrl = getVenueThumbUrl(venueData)
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-[#1E293B]">Dashboard</h1>
-        <p className="text-sm text-[#64748B] mt-0.5">
-          Welcome back, {venueData.contactPerson || venueData.venueName} 👋
-        </p>
-      </div>
+      <header className={cn(venuePageHeader, "lg:items-center lg:gap-6")}>
+        <div className="min-w-0 shrink-0 lg:max-w-[280px] xl:max-w-xs">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Dashboard</h1>
+          <p className="mt-1 text-sm text-slate-600">
+            Welcome back, <span className="font-medium text-slate-800">{welcomeName}</span> 👋
+          </p>
+        </div>
+        <div className="flex min-w-0 flex-1 sm:justify-end">
+          <DashboardManagedBanner
+            page="venue-dashboard"
+            variant="compact"
+            className="!h-14 w-full min-w-[360px] sm:!h-16 sm:flex-1 sm:max-w-3xl lg:-ml-2"
+          />
+        </div>
+      </header>
 
       {/* Stats Cards - Row of 4 */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -633,7 +663,7 @@ function VenueDashboardHome({ venueData, setActiveSection }: { venueData: VenueD
                 className={cn(
                   "px-3 py-1 text-xs font-medium rounded-lg transition-colors",
                   selectedPeriod === "thisMonth"
-                    ? "bg-[#4F46E5] text-white"
+                    ? "bg-[#004A96] text-white"
                     : "bg-[#F1F5F9] text-[#64748B] hover:bg-[#E2E8F0]"
                 )}
               >
@@ -644,7 +674,7 @@ function VenueDashboardHome({ venueData, setActiveSection }: { venueData: VenueD
                 className={cn(
                   "px-3 py-1 text-xs font-medium rounded-lg transition-colors",
                   selectedPeriod === "lastMonth"
-                    ? "bg-[#4F46E5] text-white"
+                    ? "bg-[#004A96] text-white"
                     : "bg-[#F1F5F9] text-[#64748B] hover:bg-[#E2E8F0]"
                 )}
               >
@@ -659,7 +689,7 @@ function VenueDashboardHome({ venueData, setActiveSection }: { venueData: VenueD
               <div key={index} className="flex-1 flex flex-col items-center gap-2">
                 <div className="relative w-full flex justify-center">
                   <div
-                    className="w-full max-w-[40px] bg-gradient-to-t from-[#4F46E5] to-[#818CF8] rounded-t-lg transition-all duration-300 hover:from-[#4338CA] hover:to-[#6366F1] cursor-pointer"
+                    className="w-full max-w-[40px] bg-gradient-to-t from-[#004A96] to-[#3b82f6] rounded-t-lg transition-all duration-300 hover:from-[#003d7a] hover:to-[#2563eb] cursor-pointer"
                     style={{ height: `${item.scaledHeight}px` }}
                   />
                 </div>
@@ -702,7 +732,7 @@ function VenueDashboardHome({ venueData, setActiveSection }: { venueData: VenueD
             <h2 className="text-base font-semibold text-[#1E293B]">Booking Status</h2>
             <button
               onClick={() => setActiveSection("booking-system")}
-              className="text-xs text-[#4F46E5] font-medium hover:underline"
+              className="text-xs text-[#004A96] font-medium hover:underline"
             >
               View All
             </button>
@@ -711,7 +741,7 @@ function VenueDashboardHome({ venueData, setActiveSection }: { venueData: VenueD
           <div className="space-y-3">
             {loadingBookings ? (
               <div className="text-center py-6">
-                <div className="w-6 h-6 border-2 border-[#4F46E5] border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+                <div className="w-6 h-6 border-2 border-[#004A96] border-t-transparent rounded-full animate-spin mx-auto mb-2" />
                 <p className="text-xs text-[#94A3B8]">Loading bookings...</p>
               </div>
             ) : bookingsData.length > 0 ? (
@@ -735,7 +765,7 @@ function VenueDashboardHome({ venueData, setActiveSection }: { venueData: VenueD
                         className="flex items-start gap-3 p-3 cursor-pointer hover:bg-[#F8FAFC] transition-colors"
                         onClick={() => setExpandedBookingId(isExpanded ? null : bookingId)}
                       >
-                        <div className="w-8 h-8 rounded-full bg-[#EEF2FF] flex items-center justify-center text-[#4F46E5] text-xs font-semibold shrink-0">
+                        <div className="w-8 h-8 rounded-full bg-[#EFF6FF] flex items-center justify-center text-[#004A96] text-xs font-semibold shrink-0">
                           {visitorName.charAt(0).toUpperCase()}
                         </div>
                         <div className="flex-1 min-w-0">
@@ -792,7 +822,7 @@ function VenueDashboardHome({ venueData, setActiveSection }: { venueData: VenueD
                 {bookingsData.length > 2 && (
                   <button
                     onClick={() => setShowAllBookings(!showAllBookings)}
-                    className="w-full text-center py-2 text-xs font-medium text-[#4F46E5] hover:text-[#4338CA] hover:bg-[#EEF2FF] rounded-lg transition-colors flex items-center justify-center gap-1"
+                    className="w-full text-center py-2 text-xs font-medium text-[#004A96] hover:text-[#003d7a] hover:bg-[#EFF6FF] rounded-lg transition-colors flex items-center justify-center gap-1"
                   >
                     {showAllBookings ? (
                       <>Show Less <ChevronRight className="w-3 h-3 rotate-90" /></>
@@ -819,11 +849,23 @@ function VenueDashboardHome({ venueData, setActiveSection }: { venueData: VenueD
         <div className="bg-white rounded-2xl border border-[#E2E8F0] p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-base font-semibold text-[#1E293B]">Venue Details</h2>
-            <button onClick={() => setActiveSection("venue-profile")} className="text-xs text-[#4F46E5] font-medium hover:underline">Edit</button>
+            <button onClick={() => setActiveSection("venue-profile")} className="text-xs text-[#004A96] font-medium hover:underline">Edit</button>
           </div>
           <div className="flex items-start gap-3 p-3 bg-[#F8FAFC] rounded-xl">
-            <div className="w-10 h-10 rounded-lg bg-[#EEF2FF] flex items-center justify-center shrink-0">
-              <Building2 className="w-5 h-5 text-[#4F46E5]" />
+            <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-[#EFF6FF]">
+              {venueThumbUrl ? (
+                <AppImage
+                  src={venueThumbUrl}
+                  alt={venueData.venueName}
+                  fill
+                  sizes="48px"
+                  className="object-cover"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center">
+                  <Building2 className="h-5 w-5 text-[#004A96]" />
+                </div>
+              )}
             </div>
             <div className="flex-1">
               <p className="text-sm font-medium text-[#1E293B]">{venueData.venueName}</p>
@@ -855,7 +897,7 @@ function VenueDashboardHome({ venueData, setActiveSection }: { venueData: VenueD
         <div className="bg-white rounded-2xl border border-[#E2E8F0] p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-base font-semibold text-[#1E293B]">Customer Reviews</h2>
-            <button onClick={() => setActiveSection("ratings-reviews")} className="text-xs text-[#4F46E5] font-medium hover:underline">View All</button>
+            <button onClick={() => setActiveSection("ratings-reviews")} className="text-xs text-[#004A96] font-medium hover:underline">View All</button>
           </div>
           <div className="text-center py-2">
             <p className="text-4xl font-bold text-[#1E293B]">
@@ -882,19 +924,19 @@ function VenueDashboardHome({ venueData, setActiveSection }: { venueData: VenueD
         <div className="bg-white rounded-2xl border border-[#E2E8F0] p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-base font-semibold text-[#1E293B]">Contact Information</h2>
-            <button onClick={() => setActiveSection("venue-profile")} className="text-xs text-[#4F46E5] font-medium hover:underline">Edit</button>
+            <button onClick={() => setActiveSection("venue-profile")} className="text-xs text-[#004A96] font-medium hover:underline">Edit</button>
           </div>
           <div className="space-y-3">
             <div className="flex items-center gap-3 text-sm text-[#64748B]">
-              <Building2 className="w-4 h-4 text-[#4F46E5]" />
+              <Building2 className="w-4 h-4 text-[#004A96]" />
               <span>{venueData.contactPerson || "Not provided"}</span>
             </div>
             <div className="flex items-center gap-3 text-sm text-[#64748B]">
-              <MessageSquare className="w-4 h-4 text-[#4F46E5]" />
+              <MessageSquare className="w-4 h-4 text-[#004A96]" />
               <span className="truncate">{venueData.email || "Not provided"}</span>
             </div>
             <div className="flex items-center gap-3 text-sm text-[#64748B]">
-              <BookmarkCheck className="w-4 h-4 text-[#4F46E5]" />
+              <BookmarkCheck className="w-4 h-4 text-[#004A96]" />
               <span>{venueData.mobile || "Not provided"}</span>
             </div>
           </div>

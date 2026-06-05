@@ -22,6 +22,7 @@ import { getCityOptions, getCountryOptions, getStateOptions } from "@/lib/locati
 import { getIanaTimeZoneOptions } from "@/lib/iana-timezones"
 import { safeResponseJson } from "@/lib/api"
 import { cn } from "@/lib/utils"
+import { venueTabsList, venueTabsTrigger } from "./venue-dashboard-theme"
 import Link from "next/link"
 
 interface VenueData {
@@ -279,7 +280,7 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <div className="w-10 h-10 border-2 border-[#4F46E5] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+          <div className="w-10 h-10 border-2 border-[#004A96] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
           <p className="text-sm text-[#64748B]">Loading venue data...</p>
         </div>
       </div>
@@ -303,13 +304,13 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
                 <Button variant="outline" onClick={() => setIsEditing(false)} disabled={isLoading} className="rounded-xl border-[#E2E8F0] text-[#64748B]">
                   Cancel
                 </Button>
-                <Button onClick={handleSave} disabled={isLoading} className="rounded-xl bg-[#4F46E5] hover:bg-[#4338CA] text-white flex items-center gap-2">
+                <Button onClick={handleSave} disabled={isLoading} className="rounded-xl bg-[#004A96] hover:bg-[#003d7a] text-white flex items-center gap-2">
                   <Save className="w-4 h-4" />
                   {isLoading ? "Saving..." : "Save Changes"}
                 </Button>
               </>
             ) : (
-              <Button onClick={() => setIsEditing(true)} className="rounded-xl bg-[#4F46E5] hover:bg-[#4338CA] text-white flex items-center gap-2">
+              <Button onClick={() => setIsEditing(true)} className="rounded-xl bg-[#004A96] hover:bg-[#003d7a] text-white flex items-center gap-2">
                 <Edit className="w-4 h-4" />
                 Edit Profile
               </Button>
@@ -358,7 +359,7 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
 
               <div className="flex flex-wrap items-center gap-4 text-sm text-[#64748B]">
                 <span className="flex items-center gap-1">
-                  <MapPin className="w-4 h-4 text-[#4F46E5]" />
+                  <MapPin className="w-4 h-4 text-[#004A96]" />
                   {profileData?.city || venueData.city},{" "}
                   {profileData?.country || venueData.country}
                 </span>
@@ -372,7 +373,7 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
             </div>
 
             {/* Rating Card */}
-            <div className="bg-gradient-to-br from-[#4F46E5] to-[#4338CA] text-white rounded-2xl shadow-lg p-5 flex flex-col justify-center">
+            <div className="bg-gradient-to-br from-[#004A96] to-[#003d7a] text-white rounded-2xl shadow-lg p-5 flex flex-col justify-center">
               <p className="text-sm font-medium opacity-90">
                 Customer Rating
               </p>
@@ -439,7 +440,7 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
                 const Icon = AMENITY_ICONS[amenity] || CheckCircle
                 return (
                   <div key={i} className="flex items-center gap-1.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg px-3 py-1.5 text-sm text-[#475569]">
-                    <Icon className="w-3.5 h-3.5 text-[#4F46E5]" />
+                    <Icon className="w-3.5 h-3.5 text-[#004A96]" />
                     {amenity}
                     {isEditing && (
                       <button onClick={() => handleRemoveAmenity(i)} className="ml-1 text-[#EF4444] hover:text-red-700">
@@ -450,7 +451,7 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
                 )
               })}
               {((amenities.length > 5) || (venueData.amenities.length > 5)) && (
-                <div className="flex items-center gap-1.5 bg-[#EEF2FF] rounded-lg px-3 py-1.5 text-sm text-[#4F46E5]">
+                <div className="flex items-center gap-1.5 bg-[#EFF6FF] rounded-lg px-3 py-1.5 text-sm text-[#004A96]">
                   +{(amenities.length || venueData.amenities.length) - 5} More
                 </div>
               )}
@@ -464,7 +465,7 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
                   onKeyPress={(e) => e.key === "Enter" && handleAddAmenity()}
                   className="rounded-xl border-[#E2E8F0] text-sm"
                 />
-                <Button onClick={handleAddAmenity} size="sm" className="rounded-xl bg-[#4F46E5] text-white">
+                <Button onClick={handleAddAmenity} size="sm" className="rounded-xl bg-[#004A96] text-white">
                   <Plus className="w-4 h-4" />
                 </Button>
               </div>
@@ -476,15 +477,15 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
             <h4 className="text-sm font-semibold text-[#1E293B] mb-2">Contact Information</h4>
             <div className="space-y-1.5">
               <div className="flex items-center gap-2 text-sm text-[#64748B]">
-                <Users className="w-4 h-4 text-[#4F46E5]" />
+                <Users className="w-4 h-4 text-[#004A96]" />
                 {profileData?.contactPerson || venueData.contactPerson}
               </div>
               <div className="flex items-center gap-2 text-sm text-[#64748B]">
-                <Phone className="w-4 h-4 text-[#4F46E5]" />
+                <Phone className="w-4 h-4 text-[#004A96]" />
                 {profileData?.mobile || venueData.mobile}
               </div>
               <div className="flex items-center gap-2 text-sm text-[#64748B]">
-                <Mail className="w-4 h-4 text-[#4F46E5]" />
+                <Mail className="w-4 h-4 text-[#004A96]" />
                 {profileData?.email || venueData.email}
               </div>
             </div>
@@ -495,7 +496,7 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             {[
-              { label: "Total Events", value: profileData?.totalEvents ?? venueData.totalEvents, icon: Calendar, color: "text-[#4F46E5] bg-[#EEF2FF]" },
+              { label: "Total Events", value: profileData?.totalEvents ?? venueData.totalEvents, icon: Calendar, color: "text-[#004A96] bg-[#EFF6FF]" },
               { label: "Active Bookings", value: profileData?.activeBookings ?? venueData.activeBookings, icon: BookmarkCheck, color: "text-[#16A34A] bg-[#F0FDF4]" },
               { label: "Max Capacity", value: (profileData?.maxCapacity ?? venueData.maxCapacity)?.toLocaleString() || "0", icon: Users, color: "text-[#0284C7] bg-[#F0F9FF]" },
               { label: "Total Halls", value: profileData?.totalHalls ?? venueData.totalHalls, icon: Building2, color: "text-[#EA580C] bg-[#FFF7ED]" },
@@ -515,20 +516,20 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
 
       {/* Tabs for Images / Halls / Floor Plans - rest remains same */}
       <Tabs defaultValue="images" className="w-full">
-        <TabsList className="bg-[#F1F5F9] rounded-xl p-1 mb-5 inline-flex">
-          <TabsTrigger value="images" className="rounded-lg text-sm data-[state=active]:bg-white data-[state=active]:text-[#1E293B] data-[state=active]:shadow-sm text-[#64748B]">
+        <TabsList className={cn(venueTabsList, "mb-5")}>
+          <TabsTrigger value="images" className={venueTabsTrigger}>
             Images
           </TabsTrigger>
-          <TabsTrigger value="amenities" className="rounded-lg text-sm data-[state=active]:bg-white data-[state=active]:text-[#1E293B] data-[state=active]:shadow-sm text-[#64748B]">
+          <TabsTrigger value="amenities" className={venueTabsTrigger}>
             Amenities
           </TabsTrigger>
-          <TabsTrigger value="spaces" className="rounded-lg text-sm data-[state=active]:bg-white data-[state=active]:text-[#1E293B] data-[state=active]:shadow-sm text-[#64748B]">
+          <TabsTrigger value="spaces" className={venueTabsTrigger}>
             Halls
           </TabsTrigger>
-          <TabsTrigger value="floorplan" className="rounded-lg text-sm data-[state=active]:bg-white data-[state=active]:text-[#1E293B] data-[state=active]:shadow-sm text-[#64748B]">
+          <TabsTrigger value="floorplan" className={venueTabsTrigger}>
             Floor Plans
           </TabsTrigger>
-          <TabsTrigger value="details" className="rounded-lg text-sm data-[state=active]:bg-white data-[state=active]:text-[#1E293B] data-[state=active]:shadow-sm text-[#64748B]">
+          <TabsTrigger value="details" className={venueTabsTrigger}>
             Details
           </TabsTrigger>
         </TabsList>
@@ -560,7 +561,7 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
                 <Upload className="w-8 h-8 text-[#94A3B8] mx-auto mb-2" />
                 <p className="text-sm text-[#64748B] mb-3">Drop images here or click to upload</p>
                 <Input type="file" accept="image/*" multiple onChange={async (e) => { for (const f of Array.from(e.target.files || [])) await handleImageUpload(f, "venue") }} className="hidden" id="venue-img-upload" />
-                <Button asChild size="sm" className="rounded-xl bg-[#4F46E5] text-white">
+                <Button asChild size="sm" className="rounded-xl bg-[#004A96] text-white">
                   <label htmlFor="venue-img-upload" className="cursor-pointer"><Plus className="w-4 h-4 mr-1" />Add Images</label>
                 </Button>
               </div>
@@ -578,7 +579,7 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
                 return (
                   <div key={index} className="flex items-center justify-between p-3 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0]">
                     <div className="flex items-center gap-2">
-                      <Icon className="w-4 h-4 text-[#4F46E5]" />
+                      <Icon className="w-4 h-4 text-[#004A96]" />
                       <span className="text-sm text-[#475569]">{amenity}</span>
                     </div>
                     {isEditing && (
@@ -593,7 +594,7 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
             {isEditing && (
               <div className="flex gap-2">
                 <Input placeholder="Add new amenity..." value={newAmenity} onChange={(e) => setNewAmenity(e.target.value)} onKeyPress={(e) => e.key === "Enter" && handleAddAmenity()} className="rounded-xl border-[#E2E8F0]" />
-                <Button onClick={handleAddAmenity} className="rounded-xl bg-[#4F46E5] text-white"><Plus className="w-4 h-4 mr-1" />Add</Button>
+                <Button onClick={handleAddAmenity} className="rounded-xl bg-[#004A96] text-white"><Plus className="w-4 h-4 mr-1" />Add</Button>
               </div>
             )}
           </div>
@@ -619,7 +620,7 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
                   {space.features?.length > 0 && (
                     <div className="flex flex-wrap gap-1">
                       {space.features.map((f: string, i: number) => (
-                        <Badge key={i} variant="secondary" className="text-xs bg-[#EEF2FF] text-[#4F46E5] border-0">{f}</Badge>
+                        <Badge key={i} variant="secondary" className="text-xs bg-[#EFF6FF] text-[#004A96] border-0">{f}</Badge>
                       ))}
                     </div>
                   )}
@@ -635,7 +636,7 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
                   <Input placeholder="Area (sq ft)" type="number" value={newSpace.area} onChange={(e) => setNewSpace({ ...newSpace, area: e.target.value })} className="rounded-xl border-[#E2E8F0]" />
                   <Input placeholder="Features (comma separated)" value={newSpace.features} onChange={(e) => setNewSpace({ ...newSpace, features: e.target.value })} className="rounded-xl border-[#E2E8F0]" />
                 </div>
-                <Button onClick={handleAddSpace} className="rounded-xl bg-[#4F46E5] text-white"><Plus className="w-4 h-4 mr-1" />Add Hall</Button>
+                <Button onClick={handleAddSpace} className="rounded-xl bg-[#004A96] text-white"><Plus className="w-4 h-4 mr-1" />Add Hall</Button>
               </div>
             )}
           </div>
@@ -653,7 +654,7 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
                   ) : (
                     <div className="absolute inset-0 bg-slate-50" aria-hidden />
                   )}
-                  <div className="absolute top-2 left-2"><Badge className="bg-[#EEF2FF] text-[#4F46E5] border-0 text-xs">Floor {index + 1}</Badge></div>
+                  <div className="absolute top-2 left-2"><Badge className="bg-[#EFF6FF] text-[#004A96] border-0 text-xs">Floor {index + 1}</Badge></div>
                   {isEditing && (
                     <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                       <button onClick={() => handleImageDelete(plan, "floorplan")} className="bg-red-500 text-white p-2 rounded-lg">
@@ -669,7 +670,7 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
                 <Building2 className="w-8 h-8 text-[#94A3B8] mx-auto mb-2" />
                 <p className="text-sm text-[#64748B] mb-3">Upload floor plans</p>
                 <Input type="file" accept="image/*" onChange={async (e) => { const f = e.target.files?.[0]; if (f) await handleImageUpload(f, "floorplan") }} className="hidden" id="floor-upload" />
-                <Button asChild size="sm" className="rounded-xl bg-[#4F46E5] text-white">
+                <Button asChild size="sm" className="rounded-xl bg-[#004A96] text-white">
                   <label htmlFor="floor-upload" className="cursor-pointer"><Plus className="w-4 h-4 mr-1" />Upload</label>
                 </Button>
               </div>
@@ -719,7 +720,7 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
                 {isEditing ? (
                   <Input value={profileData?.website || ""} onChange={(e) => setProfileData((prev) => prev ? { ...prev, website: e.target.value } : prev)} className="mt-1 rounded-xl border-[#E2E8F0]" />
                 ) : (
-                  <p className="mt-1 text-sm text-[#4F46E5] font-medium">{profileData?.website}</p>
+                  <p className="mt-1 text-sm text-[#004A96] font-medium">{profileData?.website}</p>
                 )}
               </div>
               <div className="md:col-span-2">

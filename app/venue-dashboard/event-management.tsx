@@ -5,6 +5,7 @@ import Image from "next/image"
 import { useVenueDashboardVenueUserId } from "@/contexts/venue-dashboard-venue-id"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { venueTabsList, venueTabsTrigger } from "./venue-dashboard-theme"
 import { Button } from "@/components/ui/button"
 import { CalendarIcon, MapPin, Users, Building, Plus, MoreHorizontal } from "lucide-react"
 import { apiFetch } from "@/lib/api"
@@ -74,7 +75,7 @@ export default function EventManagement() {
     if (["CANCELLED", "CANCELED", "REJECTED"].some((k) => s.includes(k)))
       return "bg-[#FEE2E2] text-[#DC2626] border-0"
     if (["COMPLETED", "ENDED", "CLOSED"].some((k) => s.includes(k)))
-      return "bg-[#EDE9FE] text-[#7C3AED] border-0"
+      return "bg-[#dbeafe] text-[#7C3AED] border-0"
     return "bg-[#F1F5F9] text-[#64748B] border-0"
   }
 
@@ -113,12 +114,12 @@ export default function EventManagement() {
 
         {/* Content */}
         <div className="p-4">
-          <p className="text-[11px] font-medium text-[#4F46E5] mb-1">{formatCategory(event.category)}</p>
+          <p className="text-[11px] font-medium text-[#004A96] mb-1">{formatCategory(event.category)}</p>
           <h3 className="text-sm font-semibold text-[#1E293B] leading-snug line-clamp-2 mb-2">{title}</h3>
 
           <div className="space-y-1.5 mb-3">
             <div className="flex items-center gap-1.5 text-xs text-[#64748B]">
-              <CalendarIcon className="w-3.5 h-3.5 text-[#4F46E5] shrink-0" />
+              <CalendarIcon className="w-3.5 h-3.5 text-[#004A96] shrink-0" />
               <span>{shortDate(startDate)} – {shortDate(endDate)}</span>
             </div>
             <div className="flex items-center gap-1.5 text-xs text-[#64748B]">
@@ -175,22 +176,16 @@ export default function EventManagement() {
         </div>
       ) : (
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="bg-[#F1F5F9] rounded-xl p-1 inline-flex mb-5">
-            <TabsTrigger
-              value="upcoming"
-              className="rounded-lg px-4 text-sm data-[state=active]:bg-white data-[state=active]:text-[#1E293B] data-[state=active]:shadow-sm text-[#64748B]"
-            >
+          <TabsList className={cn(venueTabsList, "mb-5")}>
+            <TabsTrigger value="upcoming" className={venueTabsTrigger}>
               Upcoming Events
               {upcomingEvents.length > 0 && (
-                <span className="ml-1.5 bg-[#4F46E5] text-white text-[10px] px-1.5 py-0.5 rounded-full">
+                <span className="ml-1.5 bg-[#004A96] text-white text-[10px] px-1.5 py-0.5 rounded-full">
                   {upcomingEvents.length}
                 </span>
               )}
             </TabsTrigger>
-            <TabsTrigger
-              value="past"
-              className="rounded-lg px-4 text-sm data-[state=active]:bg-white data-[state=active]:text-[#1E293B] data-[state=active]:shadow-sm text-[#64748B]"
-            >
+            <TabsTrigger value="past" className={venueTabsTrigger}>
               Past Events
             </TabsTrigger>
           </TabsList>
@@ -207,7 +202,7 @@ export default function EventManagement() {
                 <CalendarIcon className="w-12 h-12 text-[#CBD5E1] mx-auto mb-3" />
                 <p className="text-base font-semibold text-[#94A3B8]">No upcoming events</p>
                 <p className="text-sm text-[#CBD5E1] mt-1">Events scheduled for future dates will appear here</p>
-                {/* <Button className="mt-4 rounded-xl bg-[#4F46E5] text-white">
+                {/* <Button className="mt-4 rounded-xl bg-[#004A96] text-white">
                   <Plus className="w-4 h-4 mr-1" />Add Event
                 </Button> */}
               </div>

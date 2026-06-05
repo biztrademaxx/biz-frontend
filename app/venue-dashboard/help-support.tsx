@@ -118,7 +118,7 @@ export function VenueHelpSupport() {
             {/* FAQs Section */}
             <section className="bg-white p-8 rounded-xl shadow-lg border border-gray-100">
                 <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-                    <HelpCircle className="text-violet-600" size={28} />
+                    <HelpCircle className="text-[#004A96]" size={28} />
                     Frequently Asked Questions
                 </h2>
                 <div className="space-y-4">
@@ -152,22 +152,22 @@ export function VenueHelpSupport() {
             {/* Contact Support Section */}
             <div className="bg-white p-8 rounded-xl shadow-lg space-y-6 border border-gray-100">
                 <h2 className="text-2xl font-bold flex items-center gap-2">
-                    <MessageCircle className="text-violet-600" size={28} />
+                    <MessageCircle className="text-[#004A96]" size={28} />
                     Contact Support
                 </h2>
                 <p className="text-gray-700">
-                    Welcome to the Venue Support Center of <span className="font-semibold text-violet-600">BizTradeFairs.com</span>.
+                    Welcome to the Venue Support Center of <span className="font-semibold text-[#004A96]">BizTradeFairs.com</span>.
                     We're here to help you maximize your venue's potential and streamline your event management process.
                 </p>
 
                 <div className="space-y-4">
-                    <div className="p-4 bg-violet-50 rounded-lg border border-violet-100">
+                    <div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
                         <div className="flex items-start gap-3">
-                            <Mail className="text-violet-600 mt-1 flex-shrink-0" size={20} />
+                            <Mail className="text-[#004A96] mt-1 flex-shrink-0" size={20} />
                             <div>
                                 <h3 className="font-semibold text-gray-900">Venue Email Support</h3>
                                 <p className="text-gray-700 text-sm mt-1">For venue listings, booking management, and partnership queries:</p>
-                                <p className="text-violet-600 font-medium mt-2">venue-support@biztradefairs.com</p>
+                                <p className="text-[#004A96] font-medium mt-2">venue-support@biztradefairs.com</p>
                             </div>
                         </div>
                     </div>
@@ -187,9 +187,9 @@ export function VenueHelpSupport() {
                         </div>
                     </div>
 
-                    <div className="p-4 bg-purple-50 rounded-lg border border-purple-100">
+                    <div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
                         <div className="flex items-start gap-3">
-                            <Building className="text-purple-600 mt-1 flex-shrink-0" size={20} />
+                            <Building className="text-blue-600 mt-1 flex-shrink-0" size={20} />
                             <div>
                                 <h3 className="font-semibold text-gray-900">Corporate Office</h3>
                                 <p className="text-gray-700 text-sm mt-1">BizTradeFairs.com</p>
@@ -222,12 +222,12 @@ export function VenueHelpSupport() {
             {/* Quick Help Resources Section */}
             {/* <section className="bg-white p-8 rounded-xl shadow-lg border border-gray-100">
                 <h2 className="text-2xl font-bold mb-8 flex items-center gap-2">
-                    <HelpCircle className="text-violet-600" size={28} />
+                    <HelpCircle className="text-[#004A96]" size={28} />
                     Quick Help Resources
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <a href="#" className="p-4 border border-gray-200 rounded-lg hover:bg-violet-50 hover:border-violet-200 transition flex flex-col items-center text-center">
-                        <MapPin className="text-violet-600 mb-2" size={32} />
+                    <a href="#" className="p-4 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-200 transition flex flex-col items-center text-center">
+                        <MapPin className="text-[#004A96] mb-2" size={32} />
                         <h3 className="font-semibold text-gray-900">Venue Listing</h3>
                         <p className="text-sm text-gray-600 mt-1">Manage your venue profile</p>
                     </a>
@@ -238,8 +238,8 @@ export function VenueHelpSupport() {
                         <p className="text-sm text-gray-600 mt-1">Manage event bookings</p>
                     </a>
                     
-                    <a href="#" className="p-4 border border-gray-200 rounded-lg hover:bg-purple-50 hover:border-purple-200 transition flex flex-col items-center text-center">
-                        <Image className="text-purple-600 mb-2" size={32} />
+                    <a href="#" className="p-4 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-200 transition flex flex-col items-center text-center">
+                        <Image className="text-blue-600 mb-2" size={32} />
                         <h3 className="font-semibold text-gray-900">Floor Plans</h3>
                         <p className="text-sm text-gray-600 mt-1">Upload venue layouts</p>
                     </a>
@@ -255,7 +255,7 @@ export function VenueHelpSupport() {
             {/* Contact Form Section */}
             {/* <section className="bg-white p-8 rounded-xl shadow-lg border border-gray-100">
                 <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-                    <Send className="text-violet-600" size={28} />
+                    <Send className="text-[#004A96]" size={28} />
                     Send Us a Message
                 </h2> */}
                 {/* <form onSubmit={handleSubmit} className="space-y-6">
@@ -270,7 +270,7 @@ export function VenueHelpSupport() {
                                     value={formData.name}
                                     onChange={handleChange}
                                     placeholder="Your Name"
-                                    className="w-full border border-gray-300 rounded-md pl-10 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition"
+                                    className="w-full border border-gray-300 rounded-md pl-10 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#004A96] focus:border-[#004A96] transition"
                                     required
                                 />
                             </div>
@@ -285,7 +285,7 @@ export function VenueHelpSupport() {
                                     value={formData.email}
                                     onChange={handleChange}
                                     placeholder="Your Email"
-                                    className="w-full border border-gray-300 rounded-md pl-10 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition"
+                                    className="w-full border border-gray-300 rounded-md pl-10 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#004A96] focus:border-[#004A96] transition"
                                     required
                                 />
                             </div>
@@ -302,7 +302,7 @@ export function VenueHelpSupport() {
                                 value={formData.subject}
                                 onChange={handleChange}
                                 placeholder="Subject of your inquiry"
-                                className="w-full border border-gray-300 rounded-md pl-10 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition"
+                                className="w-full border border-gray-300 rounded-md pl-10 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#004A96] focus:border-[#004A96] transition"
                                 required
                             />
                         </div>
@@ -316,14 +316,14 @@ export function VenueHelpSupport() {
                             onChange={handleChange}
                             placeholder="Please describe your issue or question in detail..."
                             rows={5}
-                            className="w-full border border-gray-300 rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition"
+                            className="w-full border border-gray-300 rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-[#004A96] focus:border-[#004A96] transition"
                             required
                         />
                     </div>
 
                     <button
                         type="submit"
-                        className="rounded-xl bg-gradient-to-r from-violet-600 to-sky-500 px-6 py-3 font-medium text-white transition hover:from-violet-500 hover:to-sky-400 flex items-center justify-center gap-2 w-full"
+                        className="rounded-xl bg-gradient-to-r from-[#004A96] to-[#003d7a] px-6 py-3 font-medium text-white transition hover:from-[#003d7a] hover:to-[#002f5e] flex items-center justify-center gap-2 w-full"
                     >
                         <Send size={20} />
                         Send Message

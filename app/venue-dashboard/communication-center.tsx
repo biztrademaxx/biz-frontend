@@ -12,6 +12,14 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { useToast } from "@/hooks/use-toast"
 import { safeResponseJson } from "@/lib/api"
 import { Send, Bell, CheckCircle, Clock, MessageSquare, Calendar, Megaphone, Loader2 } from "lucide-react"
+import { cn } from "@/lib/utils"
+import {
+  venueAccentText,
+  venueCardShell,
+  venuePrimaryBtn,
+  venueTabsList,
+  venueTabsTrigger,
+} from "./venue-dashboard-theme"
 
 interface Conversation {
   id: string
@@ -319,13 +327,13 @@ export default function CommunicationCenter({ params }: CommunicationCenterProps
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case "booking":
-        return <Calendar className="h-4 w-4 text-violet-500" />
+        return <Calendar className="h-4 w-4 text-blue-600" />
       case "payment":
         return <CheckCircle className="h-4 w-4 text-green-500" />
       case "reminder":
         return <Clock className="h-4 w-4 text-orange-500" />
       case "inquiry":
-        return <MessageSquare className="h-4 w-4 text-purple-500" />
+        return <MessageSquare className="h-4 w-4 text-blue-500" />
       default:
         return <Bell className="h-4 w-4 text-gray-500" />
     }
@@ -359,15 +367,15 @@ export default function CommunicationCenter({ params }: CommunicationCenterProps
 
         <TabsContent value="messages" className="space-y-6">
           <div className="">
-            <MessagesCenter organizerId={id} />
+            <MessagesCenter organizerId={id} surface="venue" />
           </div>
         </TabsContent>
 
         <TabsContent value="notifications" className="space-y-6">
-          <Card>
+          <Card className={venueCardShell}>
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
-                <Bell className="h-5 w-5" />
+                <Bell className={cn("h-5 w-5", venueAccentText)} />
                 <span>Notification Logs</span>
                 {notifications.filter((n) => !n.read).length > 0 && (
                   <Badge variant="destructive">{notifications.filter((n) => !n.read).length}</Badge>
@@ -377,14 +385,14 @@ export default function CommunicationCenter({ params }: CommunicationCenterProps
             <CardContent className="space-y-3">
               {loadingNotifications ? (
                 <div className="flex items-center justify-center p-8">
-                  <Loader2 className="h-6 w-6 animate-spin" />
+                  <Loader2 className={cn("h-6 w-6 animate-spin", venueAccentText)} />
                 </div>
               ) : (
                 notifications.map((notification) => (
                   <div
                     key={notification.id}
                     className={`p-4 rounded-lg border ${
-                      !notification.read ? "bg-violet-50 border-violet-200" : "bg-gray-50 border-gray-200"
+                      !notification.read ? "bg-blue-50 border-blue-200" : "bg-gray-50 border-gray-200"
                     }`}
                   >
                     <div className="flex items-start space-x-3">
@@ -400,7 +408,7 @@ export default function CommunicationCenter({ params }: CommunicationCenterProps
                         <p className="text-xs text-gray-400 mt-2">{notification.timestamp}</p>
                       </div>
                       {!notification.read && (
-                        <div className="w-2 h-2 bg-violet-600 rounded-full flex-shrink-0 mt-1"></div>
+                        <div className="w-2 h-2 bg-[#004A96] rounded-full flex-shrink-0 mt-1"></div>
                       )}
                     </div>
                   </div>
@@ -411,10 +419,10 @@ export default function CommunicationCenter({ params }: CommunicationCenterProps
         </TabsContent>
 
         <TabsContent value="broadcast" className="space-y-6">
-          <Card>
+          <Card className={venueCardShell}>
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
-                <Megaphone className="h-5 w-5" />
+                <Megaphone className={cn("h-5 w-5", venueAccentText)} />
                 <span>Broadcast to Organizers</span>
               </CardTitle>
             </CardHeader>
@@ -426,7 +434,7 @@ export default function CommunicationCenter({ params }: CommunicationCenterProps
                     <div className="space-y-2 max-h-48 overflow-y-auto border rounded-lg p-3">
                       {loadingOrganizers ? (
                         <div className="flex items-center justify-center p-4">
-                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <Loader2 className={cn("h-4 w-4 animate-spin", venueAccentText)} />
                         </div>
                       ) : (
                         <>
@@ -458,7 +466,7 @@ export default function CommunicationCenter({ params }: CommunicationCenterProps
                               <label htmlFor={organizer.id} className="text-sm flex-1">
                                 <div className="font-medium">{organizer.name}</div>
                                 <div className="text-gray-600">{organizer.company}</div>
-                                <div className="text-violet-600 text-xs">{organizer.event}</div>
+                                <div className="text-[#004A96] text-xs">{organizer.event}</div>
                               </label>
                             </div>
                           ))}
@@ -516,7 +524,7 @@ export default function CommunicationCenter({ params }: CommunicationCenterProps
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <Button
                     variant="outline"
-                    className="text-left h-auto p-3 bg-transparent"
+                    className="h-auto bg-transparent p-3 text-left hover:border-[#004A96]/30 hover:bg-blue-50"
                     onClick={() =>
                       setBroadcastMessage(
                         "Reminder: Please confirm your event setup requirements by [date]. Contact us if you need any assistance.",
@@ -531,7 +539,7 @@ export default function CommunicationCenter({ params }: CommunicationCenterProps
                   </Button>
                   <Button
                     variant="outline"
-                    className="text-left h-auto p-3 bg-transparent"
+                    className="h-auto bg-transparent p-3 text-left hover:border-[#004A96]/30 hover:bg-blue-50"
                     onClick={() =>
                       setBroadcastMessage(
                         "Important: Due to maintenance work, parking will be limited on [date]. Please inform your attendees about alternative parking options.",
@@ -546,7 +554,7 @@ export default function CommunicationCenter({ params }: CommunicationCenterProps
                   </Button>
                   <Button
                     variant="outline"
-                    className="text-left h-auto p-3 bg-transparent"
+                    className="h-auto bg-transparent p-3 text-left hover:border-[#004A96]/30 hover:bg-blue-50"
                     onClick={() =>
                       setBroadcastMessage(
                         "Payment reminder: Your event payment is due on [date]. Please complete the payment to confirm your booking.",
@@ -561,7 +569,7 @@ export default function CommunicationCenter({ params }: CommunicationCenterProps
                   </Button>
                   <Button
                     variant="outline"
-                    className="text-left h-auto p-3 bg-transparent"
+                    className="h-auto bg-transparent p-3 text-left hover:border-[#004A96]/30 hover:bg-blue-50"
                     onClick={() =>
                       setBroadcastMessage(
                         "Thank you for choosing our venue for your event. We look forward to making your event a great success!",

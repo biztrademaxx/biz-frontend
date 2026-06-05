@@ -82,12 +82,10 @@ const faqList: FAQ[] = [
 
 export function HelpSupport({ variant = "default" }: { variant?: "default" | "venue" }) {
     const venue = variant === "venue"
-    const accentIcon = venue ? "text-violet-600" : "text-blue-600"
-    const accentSoft = venue
-        ? "bg-violet-50 rounded-lg border border-violet-100"
-        : "bg-blue-50 rounded-lg border border-blue-100"
+    const accentIcon = "text-[#004A96]"
+    const accentSoft = "bg-blue-50 rounded-lg border border-blue-100"
     const sectionShell = venue
-        ? "rounded-[28px] border border-white/90 bg-white/90 p-8 shadow-[0_20px_60px_-15px_rgba(79,70,229,0.08)] backdrop-blur-sm"
+        ? "rounded-2xl border border-slate-100 bg-white p-8 shadow-sm"
         : "rounded-xl border border-gray-100 bg-white p-8 shadow-lg"
     const faqItemRadius = venue ? "rounded-2xl" : "rounded-lg"
 

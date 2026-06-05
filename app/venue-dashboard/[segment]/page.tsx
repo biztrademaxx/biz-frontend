@@ -7,7 +7,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ segm
   const { segment } = await params
   return (
     <DashboardProvider>
-      <div className="min-h-screen bg-gradient-to-br from-slate-100 via-[#eef1fb] to-sky-50/40">
+      <div className="flex h-screen flex-col overflow-hidden bg-[#f8fafc]">
         <Navbar />
         <VenueDashboardPage routeSegment={segment} />
       </div>

@@ -12,6 +12,8 @@ import { Star, Filter, Calendar, User, MessageSquare, Reply, Send, ChevronDown, 
 import { useToast } from "@/hooks/use-toast"
 import { Skeleton } from "@/components/ui/skeleton"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { venuePrimaryBtn } from "./venue-dashboard-theme"
+import { cn } from "@/lib/utils"
 
 interface Review {
   id: string
@@ -541,7 +543,7 @@ export default function VenueFeedbackManagement({ venueId }: { venueId: string }
                               className="mb-2"
                             />
                             <div className="flex space-x-2">
-                              <Button onClick={() => handleSendReply(review.id)}>
+                              <Button onClick={() => handleSendReply(review.id)} className={cn(venuePrimaryBtn)}>
                                 <Send className="w-4 h-4 mr-2" />
                                 Send Reply
                               </Button>

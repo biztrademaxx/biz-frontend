@@ -1,4 +1,4 @@
-export type MessageSurface = "default" | "exhibitor" | "visitor"
+export type MessageSurface = "default" | "exhibitor" | "visitor" | "venue"
 
 export function getMessageTheme(surface: MessageSurface) {
   switch (surface) {
@@ -21,6 +21,7 @@ export function getMessageTheme(surface: MessageSurface) {
         hoverRow: "hover:bg-white/45",
       }
     case "visitor":
+    case "venue":
       return {
         shell: "border-slate-200/80 bg-white shadow-[0_8px_32px_rgba(0,74,150,0.08)]",
         sidebar: "border-slate-100 bg-slate-50/80",
@@ -64,7 +65,7 @@ export function roleBadgeClass(role: string, surface: MessageSurface): string {
   const base = "border-0 font-medium capitalize"
   switch (r) {
     case "organizer":
-      return surface === "visitor"
+      return surface === "visitor" || surface === "venue"
         ? `${base} bg-blue-100 text-blue-800`
         : `${base} bg-violet-100 text-violet-800 dark:bg-violet-950/60 dark:text-violet-200`
     case "speaker":

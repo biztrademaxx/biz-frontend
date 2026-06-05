@@ -19,12 +19,11 @@ export type DashboardBannerTheme = {
 
 export const DASHBOARD_BANNER_THEMES: Record<DashboardBannerPage, DashboardBannerTheme> = {
   "venue-dashboard": {
-    backdrop: "bg-gradient-to-br from-[#4F46E5] via-[#6366F1] to-[#0EA5E9]",
-    overlay: "bg-gradient-to-r from-indigo-950/70 via-violet-900/45 to-transparent",
-    descriptionText: "text-violet-100",
-    badge: "bg-gradient-to-r from-violet-600 to-sky-500",
-    badgeLink:
-      "bg-gradient-to-r from-violet-600 to-sky-500 hover:from-violet-500 hover:to-sky-400 shadow-md shadow-violet-500/25",
+    backdrop: "bg-gradient-to-b from-[#004A96] via-[#003d7a] to-[#002f5e]",
+    overlay: "bg-gradient-to-r from-[#002f5e]/85 via-[#004A96]/55 to-transparent",
+    descriptionText: "text-sky-100",
+    badge: "bg-[#004A96]",
+    badgeLink: "bg-[#004A96] hover:bg-[#003d7a] shadow-md shadow-[#004A96]/30",
   },
   "exhibitor-dashboard": {
     backdrop: "bg-gradient-to-br from-[#8E54E9] via-[#6B4FCC] to-[#4776E6]",

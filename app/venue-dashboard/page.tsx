@@ -33,10 +33,10 @@ export default function VenueDashboardRoot() {
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#eef1f8]">
       <div className="pointer-events-none fixed inset-0 overflow-hidden" aria-hidden>
-        <div className="absolute -top-24 -left-20 h-[28rem] w-[28rem] rounded-full bg-violet-400/30 blur-3xl" />
+        <div className="absolute -top-24 -left-20 h-[28rem] w-[28rem] rounded-full bg-blue-400/20 blur-3xl" />
         <div className="absolute top-1/3 -right-16 h-[24rem] w-[24rem] rounded-full bg-sky-300/40 blur-3xl" />
       </div>
-      <div className="relative z-10 h-12 w-12 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600" />
+      <div className="relative z-10 h-12 w-12 animate-spin rounded-full border-2 border-blue-200 border-t-[#004A96]" />
     </div>
   )
 }

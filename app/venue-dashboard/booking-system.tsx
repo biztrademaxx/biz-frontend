@@ -139,7 +139,7 @@ export default function AppointmentScheduling({ venueId, onCountChange }: Appoin
     switch (status) {
       case "PENDING": return "bg-[#FFF7ED] text-[#C2410C] border border-[#FED7AA]"
       case "CONFIRMED": return "bg-[#F0FDF4] text-[#15803D] border border-[#BBF7D0]"
-      case "COMPLETED": return "bg-[#EDE9FE] text-[#6D28D9] border border-[#DDD6FE]"
+      case "COMPLETED": return "bg-[#dbeafe] text-[#004A96] border border-[#bfdbfe]"
       case "CANCELLED": return "bg-[#FEF2F2] text-[#DC2626] border border-[#FECACA]"
       default: return "bg-[#F1F5F9] text-[#64748B] border border-[#E2E8F0]"
     }
@@ -171,7 +171,7 @@ export default function AppointmentScheduling({ venueId, onCountChange }: Appoin
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-start gap-3">
-          <div className="w-10 h-10 rounded-full bg-[#EEF2FF] flex items-center justify-center text-[#4F46E5] font-semibold text-sm shrink-0">
+          <div className="w-10 h-10 rounded-full bg-[#EFF6FF] flex items-center justify-center text-[#004A96] font-semibold text-sm shrink-0">
             {appointment.visitorName.charAt(0)}
           </div>
           <div>
@@ -201,7 +201,7 @@ export default function AppointmentScheduling({ venueId, onCountChange }: Appoin
                 </div>
               )}
               <div className="flex items-center gap-1.5 text-xs text-[#64748B]">
-                <CalendarIcon className="w-3.5 h-3.5 text-[#4F46E5]" />
+                <CalendarIcon className="w-3.5 h-3.5 text-[#004A96]" />
                 {appointment.requestedDate} at {appointment.requestedTime} ({appointment.duration})
               </div>
               {appointment.location && (
@@ -218,7 +218,7 @@ export default function AppointmentScheduling({ venueId, onCountChange }: Appoin
           <DialogTrigger asChild>
             <button
               onClick={() => setSelectedAppointment(appointment)}
-              className="text-xs text-[#4F46E5] hover:underline font-medium whitespace-nowrap"
+              className="text-xs text-[#004A96] hover:underline font-medium whitespace-nowrap"
             >
               View Details
             </button>
@@ -226,7 +226,7 @@ export default function AppointmentScheduling({ venueId, onCountChange }: Appoin
           <DialogContent className="max-w-xl rounded-2xl">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 text-base">
-                <User className="w-4 h-4 text-[#4F46E5]" />
+                <User className="w-4 h-4 text-[#004A96]" />
                 Appointment — {appointment.visitorName}
               </DialogTitle>
             </DialogHeader>
@@ -286,7 +286,7 @@ export default function AppointmentScheduling({ venueId, onCountChange }: Appoin
                 <div className="flex justify-end gap-2 pt-2">
                   <Button variant="outline" className="rounded-xl" onClick={() => setSelectedAppointment(null)}>Cancel</Button>
                   <Button
-                    className="rounded-xl bg-[#4F46E5] text-white"
+                    className="rounded-xl bg-[#004A96] text-white"
                     onClick={() => {
                       if (selectedAppointment) {
                         updateAppointment(selectedAppointment.id, { status: selectedAppointment.status, notes: selectedAppointment.notes })
@@ -311,8 +311,8 @@ export default function AppointmentScheduling({ venueId, onCountChange }: Appoin
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3 mb-4">
-        <div className="text-center bg-[#EEF2FF] rounded-xl p-2">
-          <p className="text-base font-bold text-[#4F46E5]">{appointment.profileViews}</p>
+        <div className="text-center bg-[#EFF6FF] rounded-xl p-2">
+          <p className="text-base font-bold text-[#004A96]">{appointment.profileViews}</p>
           <p className="text-[10px] text-[#64748B]">Profile Views</p>
         </div>
         <div className="text-center bg-[#F0FDF4] rounded-xl p-2">
@@ -377,7 +377,7 @@ export default function AppointmentScheduling({ venueId, onCountChange }: Appoin
       <div className="flex items-center justify-center h-64 bg-white rounded-2xl border border-[#E2E8F0]">
         <div className="text-center">
           <p className="text-[#EF4444] mb-3 text-sm">{error}</p>
-          <Button onClick={fetchAppointments} className="rounded-xl bg-[#4F46E5] text-white">Try Again</Button>
+          <Button onClick={fetchAppointments} className="rounded-xl bg-[#004A96] text-white">Try Again</Button>
         </div>
       </div>
     )
@@ -409,10 +409,10 @@ export default function AppointmentScheduling({ venueId, onCountChange }: Appoin
       {venueId && venueId !== "undefined" && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
-            { label: "Total Requests", value: appointments.length, color: "text-[#4F46E5] bg-[#EEF2FF]", icon: "📋" },
+            { label: "Total Requests", value: appointments.length, color: "text-[#004A96] bg-[#EFF6FF]", icon: "📋" },
             { label: "Pending", value: appointments.filter((a) => a.status === "PENDING").length, color: "text-[#D97706] bg-[#FEF3C7]", icon: "⏳" },
             { label: "Confirmed", value: appointments.filter((a) => a.status === "CONFIRMED").length, color: "text-[#16A34A] bg-[#DCFCE7]", icon: "✅" },
-            { label: "Completed", value: appointments.filter((a) => a.status === "COMPLETED").length, color: "text-[#7C3AED] bg-[#EDE9FE]", icon: "🏁" },
+            { label: "Completed", value: appointments.filter((a) => a.status === "COMPLETED").length, color: "text-[#004A96] bg-[#EFF6FF]", icon: "🏁" },
           ].map((stat) => (
             <div key={stat.label} className="bg-white rounded-2xl border border-[#E2E8F0] p-4 flex items-center gap-3">
               <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center text-lg", stat.color.split(" ")[1])}>
@@ -431,7 +431,7 @@ export default function AppointmentScheduling({ venueId, onCountChange }: Appoin
         {/* Calendar */}
         <div className="bg-white rounded-2xl border border-[#E2E8F0] p-4">
           <h3 className="text-sm font-semibold text-[#1E293B] mb-3 flex items-center gap-2">
-            <CalendarIcon className="w-4 h-4 text-[#4F46E5]" />
+            <CalendarIcon className="w-4 h-4 text-[#004A96]" />
             Calendar
           </h3>
           <Calendar
@@ -482,7 +482,7 @@ export default function AppointmentScheduling({ venueId, onCountChange }: Appoin
                               <Button
                                 variant={currentPage === p ? "default" : "outline"}
                                 size="icon"
-                                className={cn("h-8 w-8 rounded-xl text-xs", currentPage === p ? "bg-[#4F46E5] border-[#4F46E5] text-white" : "border-[#E2E8F0]")}
+                                className={cn("h-8 w-8 rounded-xl text-xs", currentPage === p ? "bg-[#004A96] border-[#004A96] text-white" : "border-[#E2E8F0]")}
                                 onClick={() => setCurrentPage(p as number)}
                               >
                                 {p}
