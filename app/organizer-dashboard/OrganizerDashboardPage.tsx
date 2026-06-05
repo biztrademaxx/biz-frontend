@@ -561,7 +561,7 @@ export default function OrganizerDashboardSimplified({ organizerId }: OrganizerD
               clearTokens()
               router.push("/login")
             }}
-            className={cn("h-10 w-full rounded-lg", orgPrimaryBtn)}
+            className={cn("h-10 w-full rounded-lg bg-red-600")}
           >
             <LogOut className="mr-2 h-4 w-4" />
             <span>Logout</span>
