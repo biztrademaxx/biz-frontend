@@ -14,7 +14,7 @@ import {
 
 // Increased height for better text accommodation
 const TILE_CLASS =
-  "group flex h-[140px] w-[200px] shrink-0 cursor-pointer flex-col items-center justify-center rounded-lg border border-[#2563EB] bg-white p-3 shadow-[0_8px_16px_-10px_rgba(0,0,0,0.18)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_12px_22px_-10px_rgba(0,0,0,0.22)]"
+  "group flex h-[148px] w-[200px] shrink-0 cursor-pointer flex-col items-center justify-between rounded-lg border border-[#2563EB] bg-white px-3 pt-3 pb-4 shadow-[0_8px_16px_-10px_rgba(0,0,0,0.18)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_12px_22px_-10px_rgba(0,0,0,0.22)]"
 
 export interface OrganizerLogoTileProps {
   organizer: OrganizerListEntry
@@ -70,8 +70,8 @@ function OrganizerLogoTileComponent({
             <span className="text-2xl font-bold text-gray-400">{companyName.charAt(0)}</span>
           </div>
         )}
-        <div className="mt-2 text-center">
-          <p className="line-clamp-2 text-xs font-medium text-gray-600">{companyName}</p>
+        <div className="mt-1 w-full min-h-0 flex-1 text-center">
+          <p className="line-clamp-2 text-xs font-medium leading-snug text-gray-600">{companyName}</p>
         </div>
       </div>
     )

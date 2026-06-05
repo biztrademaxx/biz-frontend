@@ -45,8 +45,8 @@ function OrganizersMarqueeComponent({
             <p className="mt-1 text-sm text-gray-600">Organizers in India</p>
           </div>
         )}
-        <div className="overflow-x-auto">
-          <div className={`mx-auto ${stripClass} justify-center`}>
+        <div className="overflow-x-auto pb-1">
+          <div className={`mx-auto ${stripClass} justify-center px-2`}>
             {organizers.map((organizer) => (
               <div key={organizerRouteKey(organizer)} className="flex-shrink-0">
                 <OrganizerLogoTile
@@ -72,7 +72,7 @@ function OrganizersMarqueeComponent({
         </div>
       )}
       <div className="overflow-x-hidden" style={trackStyle}>
-        <div className="organizers-marquee-track flex w-max flex-row flex-nowrap items-stretch">
+        <div className="organizers-marquee-track flex w-max flex-row flex-nowrap items-stretch gap-6">
           {/* First strip */}
           <div className={stripClass}>
             {organizers.map((organizer) => (
