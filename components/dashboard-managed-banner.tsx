@@ -23,7 +23,7 @@ type PublicBanner = {
 
 type DashboardManagedBannerProps = {
   page: DashboardBannerPage
-  /** Applied only while the banner is visible (hidden → `null`, no layout gap). */
+  /** Layout/sizing classes on the outer wrapper (compact keeps this space when dismissed). */
   className?: string
   /** Shorter inline strip (e.g. organizer overview header). */
   variant?: "default" | "compact"
@@ -182,7 +182,17 @@ export function DashboardManagedBanner({
     </div>
   )
 
-  if (isHidden) return null
+  if (isHidden) {
+    if (isCompact) {
+      return (
+        <div
+          className={cn("relative h-24 w-full max-sm:hidden md:h-32 lg:h-36", className)}
+          aria-hidden
+        />
+      )
+    }
+    return null
+  }
 
   return (
     <div className={cn("relative h-24 w-full md:h-32 lg:h-36", className)}>

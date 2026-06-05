@@ -21,6 +21,8 @@ import {
   Users,
   Star,
   Crown,
+  LogOut,
+  ChevronLeft,
 } from "lucide-react"
 import { clearTokens, markLogoutSuccessBanner } from "@/lib/api"
 import DashboardOverview from "./dashboard-overview"
@@ -40,11 +42,13 @@ import { getOrganizerDashboardPath } from "@/lib/profile-path"
 import { DashboardPricingPlansView } from "@/components/dashboard-packages"
 import { cn } from "@/lib/utils"
 import {
-  orgBlobLayer,
   orgNavActive,
   orgNavInactive,
+  orgNavGroupLabel,
+  orgPageBg,
   orgPrimaryBtn,
   orgSidebarSurface,
+  orgUpgradeCard,
 } from "./organizer-dashboard-theme"
 
 interface OrganizerDashboardPageProps {
@@ -103,6 +107,8 @@ interface Event {
   slug?: string
   images?: string[]
   currency?: string
+  city?: string
+  state?: string
 }
 
 interface SidebarGroup {
@@ -348,7 +354,7 @@ export default function OrganizerDashboardSimplified({ organizerId }: OrganizerD
     if (loading) {
       return (
         <div className="flex items-center justify-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin text-[#8E54E9]" />
+          <Loader2 className="h-8 w-8 animate-spin text-[#004A96]" />
           <span className="ml-2 text-gray-600">Loading...</span>
         </div>
       )
@@ -384,12 +390,10 @@ export default function OrganizerDashboardSimplified({ organizerId }: OrganizerD
               const ref = ev.slug || ev.id
               window.location.href = `/event-dashboard/${ref}?section=analytics`
             }}
-            onSendMessageClick={() => {
-              const ev = events?.[0]
-              if (!ev) return
-              const ref = ev.slug || ev.id
-              window.location.href = `/event-dashboard/${ref}?section=messages`
-            }}
+            onSendMessageClick={() => setActiveSection("messages")}
+            onVenueBookingClick={() => setActiveSection("venue-booking")}
+            onProfileClick={() => setActiveSection("info")}
+            onUpgradeClick={() => setActiveSection("subscription-plans")}
           />
         )
       case "info":
@@ -436,9 +440,7 @@ export default function OrganizerDashboardSimplified({ organizerId }: OrganizerD
   // }
 
   return (
-    <div className={cn("relative flex min-h-screen w-full overflow-x-hidden", "bg-[#f5f3f9]")}>
-      <div className={orgBlobLayer} aria-hidden />
-
+    <div className={cn("relative flex min-h-0 flex-1 w-full overflow-hidden", orgPageBg)}>
       {/* Mobile Overlay */}
       {sidebarOpen && (
         <div
@@ -451,25 +453,25 @@ export default function OrganizerDashboardSimplified({ organizerId }: OrganizerD
       {/* Sidebar */}
       <div
         className={cn(
-          "fixed z-50 flex min-h-screen w-64 flex-col transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0",
+          "fixed z-50 flex h-full w-[260px] shrink-0 flex-col transform transition-transform duration-300 ease-in-out md:static md:translate-x-0",
           orgSidebarSurface,
           sidebarOpen ? "translate-x-0" : "-translate-x-full",
         )}
       >
         {/* Mobile Header */}
-        <div className="flex items-center justify-between border-b border-[#e8e4f0] p-4 md:hidden">
-          <h2 className="text-lg font-semibold text-gray-900">Menu</h2>
+        <div className="flex items-center justify-between border-b border-slate-200 p-4 md:hidden">
+          <h2 className="text-lg font-semibold text-slate-900">Menu</h2>
           <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(false)} className="text-gray-600">
             <X className="h-4 w-4" />
           </Button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4">
+        <div className="scrollbar-hover flex-1 overflow-y-auto px-3 py-4">
           {/* Sidebar Groups */}
           {sidebarGroups.map((group) => (
-            <div key={group.id} className="mb-6">
+            <div key={group.id} className="mb-5">
               <div
-                className="flex cursor-pointer items-center justify-between rounded-lg px-2 py-2 text-sm font-medium text-gray-700 transition hover:bg-[#8E54E9]/8"
+                className={cn("mb-1 flex cursor-pointer items-center justify-between px-2 py-1.5", orgNavGroupLabel)}
                 onClick={() => toggleGroup(group.id)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" || e.key === " ") {
@@ -480,15 +482,15 @@ export default function OrganizerDashboardSimplified({ organizerId }: OrganizerD
                 role="button"
                 tabIndex={0}
               >
-                <span>{group.label}</span>
+                <span className="normal-case tracking-normal text-[11px] font-semibold uppercase text-slate-400">{group.label}</span>
                 {expandedGroups.includes(group.id) ? (
-                  <ChevronDown className="h-4 w-4 text-[#8E54E9]/70" />
+                  <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
                 ) : (
-                  <ChevronRight className="h-4 w-4 text-[#8E54E9]/70" />
+                  <ChevronRight className="h-3.5 w-3.5 text-slate-400" />
                 )}
               </div>
               {expandedGroups.includes(group.id) && (
-                <div className="mt-2 space-y-1">
+                <div className="space-y-0.5">
                   {group.items.map((item) => (
                     <button
                       key={item.id}
@@ -498,7 +500,7 @@ export default function OrganizerDashboardSimplified({ organizerId }: OrganizerD
                         setSidebarOpen(false)
                       }}
                       className={cn(
-                        "flex w-full items-center gap-3 px-3 py-2.5 text-sm transition-colors",
+                        "flex w-full items-center gap-3 py-2.5 pr-3 text-sm transition-colors",
                         activeSection === item.id ? orgNavActive : orgNavInactive,
                       )}
                     >
@@ -512,7 +514,7 @@ export default function OrganizerDashboardSimplified({ organizerId }: OrganizerD
           ))}
 
           {/* Individual Sidebar Items */}
-          <div className="mt-8 space-y-1">
+          <div className="mt-4 space-y-0.5 border-t border-slate-200 pt-4">
             {individualSidebarItems.map((item) => (
               <button
                 key={item.id}
@@ -522,7 +524,7 @@ export default function OrganizerDashboardSimplified({ organizerId }: OrganizerD
                   setSidebarOpen(false)
                 }}
                 className={cn(
-                  "flex w-full items-center gap-3 px-3 py-2.5 text-sm transition-colors",
+                  "flex w-full items-center gap-3 py-2.5 pr-3 text-sm transition-colors",
                   activeSection === item.id ? orgNavActive : orgNavInactive,
                 )}
               >
@@ -533,33 +535,52 @@ export default function OrganizerDashboardSimplified({ organizerId }: OrganizerD
           </div>
         </div>
 
-        {/* Footer with Logout */}
-        <div className="flex-shrink-0 border-t border-[#e8e4f0] p-4">
-          <Button onClick={() => { markLogoutSuccessBanner(); clearTokens(); router.push("/login"); }} className={cn("w-full", orgPrimaryBtn)}>
-            <User className="mr-2 h-4 w-4" />
+        {/* Footer */}
+        <div className="flex-shrink-0 space-y-3 border-t border-slate-200 p-4">
+          <div className={orgUpgradeCard}>
+            <div className="flex items-start gap-2">
+              <Crown className="mt-0.5 h-5 w-5 shrink-0 text-amber-500" />
+              <div>
+                <p className="text-sm font-bold text-[#004A96]">Upgrade to Pro</p>
+                <p className="mt-0.5 text-xs text-slate-600">Unlock advanced features and visibility.</p>
+              </div>
+            </div>
+            <Button
+              type="button"
+              size="sm"
+              className={cn("mt-3 h-9 w-full rounded-lg", orgPrimaryBtn)}
+              onClick={() => setActiveSection("subscription-plans")}
+            >
+              Upgrade Now
+              <ChevronRight className="ml-1 h-4 w-4" />
+            </Button>
+          </div>
+          <Button
+            onClick={() => {
+              markLogoutSuccessBanner()
+              clearTokens()
+              router.push("/login")
+            }}
+            className={cn("h-10 w-full rounded-lg", orgPrimaryBtn)}
+          >
+            <LogOut className="mr-2 h-4 w-4" />
             <span>Logout</span>
           </Button>
         </div>
       </div>
 
       {/* Main Content Area */}
-      <div className="flex min-h-screen min-w-0 flex-1 flex-col">
-        {/* Mobile Top Bar */}
-        <div className="flex items-center justify-between border-b border-white/60 bg-white/70 p-4 shadow-sm backdrop-blur-md md:hidden">
-          <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(true)} className="text-[#5b21b6]">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+        <div className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3 md:hidden">
+          <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(true)} className="text-[#004A96]">
             <Menu className="h-5 w-5" />
           </Button>
-          <span className="text-sm font-semibold bg-gradient-to-r from-[#8E54E9] to-[#4776E6] bg-clip-text text-transparent">
-            Organizer
-          </span>
+          <span className="text-sm font-semibold text-[#004A96]">Organizer</span>
           <div className="w-9" />
         </div>
 
-        {/* Main Content */}
-        <main className="flex-1 overflow-auto p-4 sm:p-6">
-          <div className="mx-auto max-w-7xl space-y-5">
-            <div className="min-h-0 w-full">{renderContent()}</div>
-          </div>
+        <main className="min-h-0 flex-1 overflow-auto p-0">
+          <div className="min-h-0 w-full px-6 py-6">{renderContent()}</div>
         </main>
       </div>
     </div>

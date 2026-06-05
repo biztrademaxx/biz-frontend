@@ -535,7 +535,7 @@ export default function AddVenue({ organizerId, onVenueChange, selectedVenueId }
                           </div>
 
                           {venue.basePrice && (
-                            <div className="text-lg font-semibold text-[#5b21b6]">${venue.basePrice}/day</div>
+                            <div className="text-lg font-semibold text-[#004A96]">${venue.basePrice}/day</div>
                           )}
                         </div>
                       </div>

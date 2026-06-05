@@ -140,7 +140,7 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
 
   const getTimelineStatusColor = (status: string) => {
     const colors: Record<string, { bg: string; text: string; border: string }> = {
-      upcoming: { bg: "#EDE9FE", text: "#5b21b6", border: "#C4B5FD" },
+      upcoming: { bg: "#dbeafe", text: "#004A96", border: "#bfdbfe" },
       ongoing: { bg: "#F0FDF4", text: "#166534", border: "#BBF7D0" },
       past: { bg: "#F3F4F6", text: "#6B7280", border: "#E5E7EB" },
     }
@@ -342,7 +342,7 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
                     <div className="flex flex-col justify-between h-full">
                       <div className="space-y-3">
                         {/* Title */}
-                        <h3 className="font-bold text-lg text-gray-900 line-clamp-1 hover:text-[#7c3aed] transition-colors">
+                        <h3 className="font-bold text-lg text-gray-900 line-clamp-1 hover:text-[#004A96] transition-colors">
                           {event.title}
                         </h3>
 
@@ -386,7 +386,7 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
                         </span>
 
                         {/* View Details Link */}
-                        <span className="text-xs text-[#5b21b6] hover:text-[#6d28d9] font-medium">
+                        <span className="text-xs text-[#004A96] hover:text-[#003d7a] font-medium">
                           View Details →
                         </span>
                       </div>

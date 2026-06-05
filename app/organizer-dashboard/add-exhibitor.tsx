@@ -320,7 +320,7 @@ export default function AddExhibitor({ organizerId }: AddExhibitorProps) {
                   <Card
                     key={exhibitor.id}
                     className={`cursor-pointer transition-colors ${
-                      selectedExhibitor?.id === exhibitor.id ? "ring-2 ring-[#8E54E9] bg-[#8E54E9]/10" : "hover:bg-gray-50"
+                      selectedExhibitor?.id === exhibitor.id ? "ring-2 ring-[#004A96] bg-[#004A96]/10" : "hover:bg-gray-50"
                     }`}
                     onClick={() => setSelectedExhibitor(exhibitor)}
                   >
@@ -573,7 +573,7 @@ export default function AddExhibitor({ organizerId }: AddExhibitorProps) {
 
           {/* Booth Details Form */}
           {selectedExhibitor && (
-            <Card className="border-[#c4b5fd] bg-[#8E54E9]/10 mt-6">
+            <Card className="border-[#bfdbfe] bg-[#004A96]/10 mt-6">
               <CardHeader>
                 <CardTitle className="text-lg">
                   Booth Details for{" "}

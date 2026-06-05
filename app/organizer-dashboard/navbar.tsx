@@ -62,7 +62,7 @@ export default function Navbar() {
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="flex items-center gap-2 rounded-full bg-gradient-to-r from-[#4776E6] to-[#8E54E9] p-2 text-white transition-opacity hover:opacity-95 focus:outline-none"
+                className="flex items-center gap-2 rounded-full bg-[#004A96] p-2 text-white transition-colors hover:bg-[#003d7a] focus:outline-none"
                 aria-label="Account menu"
               >
                 <User className="h-4 w-4" />

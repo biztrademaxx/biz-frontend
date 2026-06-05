@@ -54,8 +54,8 @@ export default function RevenueManagement({ revenueData }: RevenueManagementProp
                 <p className="text-2xl font-bold">{monthlyRevenue}</p>
                 <p className="text-sm text-green-600">+15% from last month</p>
               </div>
-              <div className="p-3 bg-[#8E54E9]/15 rounded-full">
-                <TrendingUp className="w-6 h-6 text-[#5b21b6]" />
+              <div className="p-3 bg-[#004A96]/15 rounded-full">
+                <TrendingUp className="w-6 h-6 text-[#004A96]" />
               </div>
             </div>
           </CardContent>
@@ -69,8 +69,8 @@ export default function RevenueManagement({ revenueData }: RevenueManagementProp
                 <p className="text-2xl font-bold">{averagePerEvent}</p>
                 <p className="text-sm text-green-600">+8% from last quarter</p>
               </div>
-              <div className="p-3 bg-purple-100 rounded-full">
-                <BarChart3 className="w-6 h-6 text-purple-600" />
+              <div className="p-3 bg-blue-100 rounded-full">
+                <BarChart3 className="w-6 h-6 text-blue-600" />
               </div>
             </div>
           </CardContent>

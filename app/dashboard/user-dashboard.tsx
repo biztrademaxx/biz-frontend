@@ -292,14 +292,14 @@ export function UserDashboard({ userId }: UserDashboardProps) {
         className={cn(
           "visitor-sidebar-shell flex h-full flex-col justify-between border-r border-slate-200 bg-white py-4 text-slate-700 transition-[width] duration-300 ease-out",
           isSidebarCollapsed
-            ? "visitor-sidebar-shell--collapsed no-scrollbar w-[5.25rem] min-w-0 overflow-x-hidden overflow-y-auto"
+            ? "visitor-sidebar-shell--collapsed scrollbar-hover w-[5.25rem] min-w-0 overflow-x-hidden overflow-y-auto"
             : "w-[260px] overflow-hidden",
         )}
       >
         <div
           className={cn(
             "visitor-sidebar-nav-scroll min-w-0",
-            isSidebarCollapsed ? "overflow-visible" : "min-h-0 flex-1 overflow-x-hidden overflow-y-auto no-scrollbar",
+            isSidebarCollapsed ? "overflow-visible" : "scrollbar-hover min-h-0 flex-1 overflow-x-hidden overflow-y-auto",
           )}
         >
           <nav className={cn("min-w-0 max-w-full space-y-1 text-sm", isSidebarCollapsed ? "space-y-1.5 px-0" : "px-2")}>

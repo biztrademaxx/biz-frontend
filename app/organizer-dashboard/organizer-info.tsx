@@ -349,7 +349,7 @@ export default function OrganizerInfo({ organizerData: initialData, onOrganizerU
               className="w-full h-full object-cover"
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#4776E6] to-[#8E54E9]">
+            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#004A96] to-[#004A96]">
               <span className="text-4xl font-bold text-white">
                 {organizerData.firstName?.[0] || ''}{organizerData.lastName?.[0] || ''}
               </span>
@@ -360,7 +360,7 @@ export default function OrganizerInfo({ organizerData: initialData, onOrganizerU
         {/* Camera Button */}
         <Dialog open={showImageUpload} onOpenChange={setShowImageUpload}>
           <DialogTrigger asChild>
-            <Button size="sm" className="absolute -bottom-2 -right-2 rounded-full w-8 h-8 p-0 bg-[#4776E6] hover:bg-[#3556b8]">
+            <Button size="sm" className="absolute -bottom-2 -right-2 rounded-full w-8 h-8 p-0 bg-[#004A96] hover:bg-[#003d7a]">
               <Camera className="w-4 h-4" />
             </Button>
           </DialogTrigger>
@@ -372,7 +372,7 @@ export default function OrganizerInfo({ organizerData: initialData, onOrganizerU
               <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
                 {uploading ? (
                   <div className="flex flex-col items-center">
-                    <Loader2 className="w-12 h-12 mx-auto text-[#5b21b6] mb-4 animate-spin" />
+                    <Loader2 className="w-12 h-12 mx-auto text-[#004A96] mb-4 animate-spin" />
                     <p className="text-gray-600">Uploading avatar...</p>
                   </div>
                 ) : (
@@ -644,7 +644,7 @@ export default function OrganizerInfo({ organizerData: initialData, onOrganizerU
                 <Globe className="w-5 h-5 text-gray-400" />
                 <div>
                   <p className="text-sm text-gray-600">Website</p>
-                  <p className="font-medium text-[#5b21b6]">{organizerData.website}</p>
+                  <p className="font-medium text-[#004A96]">{organizerData.website}</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
@@ -840,7 +840,7 @@ export default function OrganizerInfo({ organizerData: initialData, onOrganizerU
           <div className="space-y-3 mb-4">
             {organizerData.achievements.map((achievement, index) => (
               <div key={index} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-                <div className="w-2 h-2 bg-[#4776E6] rounded-full mt-2" />
+                <div className="w-2 h-2 bg-[#004A96] rounded-full mt-2" />
                 <div className="flex-1">
                   <p className="text-gray-800">{achievement}</p>
                 </div>

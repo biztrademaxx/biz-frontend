@@ -120,13 +120,13 @@ export function AdditionalFurnitureForm({ eventId, organizerId }: AdditionalFurn
 
   return (
     <Card className="w-full max-w-6xl mx-auto">
-      <CardHeader className="bg-gradient-to-r from-[#4776E6] to-[#8E54E9] text-white">
+      <CardHeader className="bg-gradient-to-r from-[#004A96] to-[#004A96] text-white">
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="text-xl font-bold">FORM 8 - ADDITIONAL FURNITURE</CardTitle>
             <p className="text-white/85 mt-1">(OPTIONAL)</p>
           </div>
-          <Badge variant="secondary" className="bg-[#5b21b6]">
+          <Badge variant="secondary" className="bg-[#004A96]">
             Deadline: 7 November 2025
           </Badge>
         </div>
@@ -214,7 +214,7 @@ export function AdditionalFurnitureForm({ eventId, organizerId }: AdditionalFurn
           </div>
 
           <div className="flex gap-4 pt-4">
-            <Button type="submit" className="bg-[#4776E6] hover:bg-[#3556b8]">
+            <Button type="submit" className="bg-[#004A96] hover:bg-[#003d7a]">
               <Send className="w-4 h-4 mr-2" />
               Submit Form
             </Button>

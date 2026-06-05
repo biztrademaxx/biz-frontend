@@ -261,7 +261,7 @@ export default function BookVenue({ organizerId }: BookVenueProps) {
                 <Card
                   key={venue.id}
                   className={`cursor-pointer transition-colors ${
-                    selectedVenue?.id === venue.id ? "ring-2 ring-[#8E54E9] bg-[#8E54E9]/10" : "hover:bg-gray-50"
+                    selectedVenue?.id === venue.id ? "ring-2 ring-[#004A96] bg-[#004A96]/10" : "hover:bg-gray-50"
                   }`}
                   onClick={() => setSelectedVenue(venue)}
                 >
@@ -329,7 +329,7 @@ export default function BookVenue({ organizerId }: BookVenueProps) {
                           <div className="text-sm text-gray-500">
                             {venue.meetingSpaces.length} meeting spaces available
                           </div>
-                          <div className="text-lg font-semibold text-[#5b21b6]">${venue.basePrice || 0}/day</div>
+                          <div className="text-lg font-semibold text-[#004A96]">${venue.basePrice || 0}/day</div>
                         </div>
                       </div>
                     </div>
@@ -340,7 +340,7 @@ export default function BookVenue({ organizerId }: BookVenueProps) {
 
             {/* Booking Form */}
             {selectedVenue && (
-              <Card className="border-[#c4b5fd] bg-[#8E54E9]/10">
+              <Card className="border-[#bfdbfe] bg-[#004A96]/10">
                 <CardHeader>
                   <CardTitle className="text-lg">
                     Book {selectedVenue.venueName || `${selectedVenue.firstName} ${selectedVenue.lastName}'s Venue`}
@@ -405,7 +405,7 @@ export default function BookVenue({ organizerId }: BookVenueProps) {
                             key={space.id}
                             className={`p-3 border rounded-lg cursor-pointer transition-colors ${
                               selectedSpaces.includes(space.id)
-                                ? "border-[#8E54E9] bg-[#8E54E9]/10"
+                                ? "border-[#004A96] bg-[#004A96]/10"
                                 : "border-gray-200 hover:border-gray-300"
                             } ${!space.isAvailable ? "opacity-50 cursor-not-allowed" : ""}`}
                             onClick={() => space.isAvailable && handleSpaceSelect(space.id)}

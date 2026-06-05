@@ -528,6 +528,39 @@
 .hide-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
+/* Scrollbar hidden until the scrollable area is hovered */
+.scrollbar-hover {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scrollbar-hover::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+.scrollbar-hover:hover {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(203 213 225) transparent;
+}
+
+.scrollbar-hover:hover::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollbar-hover:hover::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-hover:hover::-webkit-scrollbar-thumb {
+  border-radius: 9999px;
+  background: rgb(203 213 225 / 0.75);
+}
+
+.scrollbar-hover:hover::-webkit-scrollbar-thumb:hover {
+  background: rgb(148 163 184 / 0.85);
+}
 /* Add to your globals.css */
 .organizers-marquee-track {
   animation: marquee-scroll var(--organizers-marquee-duration, 30s) linear infinite;

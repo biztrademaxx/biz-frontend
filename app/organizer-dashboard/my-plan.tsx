@@ -237,8 +237,8 @@ export default function MyPlan({ organizerId }: MyPlanProps) {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="text-center p-4 bg-[#8E54E9]/10 rounded-lg">
-                  <Calendar className="w-8 h-8 text-[#7c3aed] mx-auto mb-2" />
+                <div className="text-center p-4 bg-[#004A96]/10 rounded-lg">
+                  <Calendar className="w-8 h-8 text-[#004A96] mx-auto mb-2" />
                   <p className="text-2xl font-bold">{usage?.events.limit === -1 ? "∞" : usage?.events.limit || "25"}</p>
                   <p className="text-sm text-gray-600">Events per month</p>
                   {usage && <p className="text-xs text-gray-500 mt-1">{usage.events.used} used this month</p>}
@@ -251,8 +251,8 @@ export default function MyPlan({ organizerId }: MyPlanProps) {
                   <p className="text-sm text-gray-600">Attendees per event</p>
                   {usage && <p className="text-xs text-gray-500 mt-1">{usage.attendees.used} total attendees</p>}
                 </div>
-                <div className="text-center p-4 bg-purple-50 rounded-lg">
-                  <Headphones className="w-8 h-8 text-purple-500 mx-auto mb-2" />
+                <div className="text-center p-4 bg-blue-50 rounded-lg">
+                  <Headphones className="w-8 h-8 text-blue-500 mx-auto mb-2" />
                   <p className="text-2xl font-bold">Priority</p>
                   <p className="text-sm text-gray-600">Support level</p>
                   <p className="text-xs text-gray-500 mt-1">{daysLeft} days until renewal</p>
@@ -285,10 +285,10 @@ export default function MyPlan({ organizerId }: MyPlanProps) {
         <TabsContent value="upgrade" className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {plans.map((plan) => (
-              <Card key={plan.name} className={`relative ${plan.popular ? "border-[#8E54E9] border-2" : ""}`}>
+              <Card key={plan.name} className={`relative ${plan.popular ? "border-[#004A96] border-2" : ""}`}>
                 {plan.popular && (
                   <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                    <Badge className="bg-[#8E54E9]">Most Popular</Badge>
+                    <Badge className="bg-[#004A96]">Most Popular</Badge>
                   </div>
                 )}
                 <CardHeader className="text-center">

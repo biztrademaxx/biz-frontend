@@ -161,11 +161,11 @@ export default function ExhibitorsManagement({ organizerId }: ExhibitorsManageme
       case "CONFIRMED":
         return "bg-green-100 text-green-800"
       case "BOOKED":
-        return "bg-[#8E54E9]/15 text-[#4c1d95]"
+        return "bg-[#004A96]/15 text-[#003d7a]"
       case "SETUP":
         return "bg-yellow-100 text-yellow-800"
       case "ACTIVE":
-        return "bg-purple-100 text-purple-800"
+        return "bg-blue-100 text-blue-800"
       case "COMPLETED":
         return "bg-gray-100 text-gray-800"
       case "CANCELLED":
@@ -205,7 +205,7 @@ export default function ExhibitorsManagement({ organizerId }: ExhibitorsManageme
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#4776E6]"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#004A96]"></div>
         <span className="ml-2">Loading exhibitors...</span>
       </div>
     )
@@ -230,7 +230,7 @@ export default function ExhibitorsManagement({ organizerId }: ExhibitorsManageme
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
-              <Building className="w-5 h-5 text-[#5b21b6]" />
+              <Building className="w-5 h-5 text-[#004A96]" />
               <div>
                 <p className="text-sm text-gray-600">Total Exhibitors</p>
                 <p className="text-2xl font-bold">{totalExhibitors}</p>
@@ -266,7 +266,7 @@ export default function ExhibitorsManagement({ organizerId }: ExhibitorsManageme
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-purple-600" />
+              <Calendar className="w-5 h-5 text-blue-600" />
               <div>
                 <p className="text-sm text-gray-600">Active Events</p>
                 <p className="text-2xl font-bold">{uniqueEvents}</p>

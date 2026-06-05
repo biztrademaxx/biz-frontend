@@ -460,7 +460,7 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
           <span className="text-sm font-medium">Form Completion</span>
           <span className="text-sm text-muted-foreground">{completionPercentage}%</span>
         </div>
-        <Progress value={completionPercentage} className="h-2 bg-gray-200 [&>div]:bg-gradient-to-r [&>div]:from-[#8E54E9] [&>div]:to-[#4776E6]" />
+        <Progress value={completionPercentage} className="h-2 bg-gray-200 [&>div]:bg-gradient-to-r [&>div]:from-[#004A96] [&>div]:to-[#003d7a]" />
         <p className="text-xs text-muted-foreground mt-1">
           {completionPercentage < 80 ? "Complete required fields to publish your event" : "Ready to publish!"}
         </p>
@@ -476,7 +476,7 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
             type="button"
             onClick={() => void handlePublishEvent()}
             disabled={isPublishing || completionPercentage < 80}
-            className="flex items-center gap-2 bg-[#4776E6] hover:bg-[#3556b8] text-white"
+            className="flex items-center gap-2 bg-[#004A96] hover:bg-[#003d7a] text-white"
           >
             {isPublishing ? (
               <>
@@ -499,7 +499,7 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
             <TabsTrigger
               key={tab.id}
               value={tab.id}
-              className="rounded-lg text-gray-600 transition-all duration-200 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#8E54E9] data-[state=active]:to-[#4776E6] data-[state=active]:text-white data-[state=active]:shadow-md"
+              className="rounded-lg text-gray-600 transition-all duration-200 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#004A96] data-[state=active]:to-[#004A96] data-[state=active]:text-white data-[state=active]:shadow-md"
             >
               {tab.label}
             </TabsTrigger>

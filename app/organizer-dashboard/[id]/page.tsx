@@ -11,8 +11,10 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
   const { id } = await params
   return (
     <DashboardProvider>
-      <Navbar />
-      <OrganizerDashboardPage organizerId={id} />
+      <div className="flex h-screen flex-col overflow-hidden bg-white">
+        <Navbar />
+        <OrganizerDashboardPage organizerId={id} />
+      </div>
     </DashboardProvider>
   )
 }

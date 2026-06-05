@@ -141,7 +141,7 @@ export default function AttendeesManagement({ organizerId }: AttendeesManagement
       case "CANCELLED":
         return "bg-red-100 text-red-800"
       case "WAITLISTED":
-        return "bg-[#8E54E9]/15 text-[#4c1d95]"
+        return "bg-[#004A96]/15 text-[#003d7a]"
       default:
         return "bg-gray-100 text-gray-800"
     }
@@ -177,7 +177,7 @@ export default function AttendeesManagement({ organizerId }: AttendeesManagement
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#4776E6]"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#004A96]"></div>
         <span className="ml-2">Loading attendees...</span>
       </div>
     )
@@ -202,7 +202,7 @@ export default function AttendeesManagement({ organizerId }: AttendeesManagement
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
-              <Users className="w-5 h-5 text-[#5b21b6]" />
+              <Users className="w-5 h-5 text-[#004A96]" />
               <div>
                 <p className="text-sm text-gray-600">Total Attendees</p>
                 <p className="text-2xl font-bold">{totalAttendees}</p>
@@ -238,7 +238,7 @@ export default function AttendeesManagement({ organizerId }: AttendeesManagement
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-purple-600" />
+              <Calendar className="w-5 h-5 text-blue-600" />
               <div>
                 <p className="text-sm text-gray-600">Active Events</p>
                 <p className="text-2xl font-bold">{uniqueEvents}</p>
