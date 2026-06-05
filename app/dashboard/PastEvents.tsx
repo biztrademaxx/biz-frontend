@@ -76,13 +76,20 @@ const formatTicketPrice = (ticketTypes: TicketType[]) => {
 }
 
 // Helper function to get address with fallback
-const getEventAddress = (event: Event) => {
-  if (event.address && event.address.trim() !== "") return event.address
-  if (event.location && event.location.trim() !== "") return event.location
-  if (event.city && event.state) return `${event.city}, ${event.state}`
-  if (event.city) return event.city
-  if (event.state) return event.state
-  return DEFAULT_ADDRESS
+const getEventLocation = (event: Event) => {
+  const country =
+    event.venue?.venueCountry ||
+    ""
+
+  if (event.city && country) {
+    return `${event.city}, ${country}`
+  }
+
+  if (event.city) {
+    return event.city
+  }
+
+  return "Location TBD"
 }
 
 /* ---------- Component ---------- */
@@ -247,9 +254,7 @@ export function PastEvents({ userId }: PastEventsProps) {
     line-clamp-2
   "
 >
-  {event.address
-    ? event.address.replace(/(.{14})/g, "$1\n")
-    : "Location TBD"}
+                            {getEventLocation(event)}
 </span>
                        </div>
                        <div className="flex items-center">

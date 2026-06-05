@@ -45,7 +45,7 @@ const Footer: React.FC<FooterProps> = ({ categories }) => {
     { id: "3", name: "Building & Construction", eventCount: 1000 },
     { id: "4", name: "IT & Technology", eventCount: 950 },
   ]
-  const footerchatbotmobileviewonlyinfooter = true;
+
 
   const topCategories =
     categories && categories.length > 0

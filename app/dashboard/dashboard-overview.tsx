@@ -35,6 +35,9 @@ interface SuggestedEvent {
   thumbnailImage?: string | null
   tags?: string[]
   categories?: string[]
+  category?: string
+  eventCategory?: string
+  type?: string
 }
 
 const CATEGORY_BADGE_STYLES = [
@@ -81,32 +84,70 @@ export function DashboardOverview({ userId, events, userName, interests = [] }: 
     return ""
   }
 
+  const getCategoryLabel = (event: SuggestedEvent): string => {
+    const tag =
+      event.tags?.[0] ??
+      event.categories?.[0] ??
+      (event as any).category ??
+      (event as any).eventCategory ??
+      (event as any).type
+    if (tag) return String(tag).toUpperCase()
+    return "EVENT"
+  }
+
+  // Helper: check if an event matches any of the user's interests
+  const matchesInterests = (event: SuggestedEvent, userInterests: string[]): boolean => {
+    if (!userInterests || userInterests.length === 0) return true
+    const normalised = userInterests.map((i) => i.toLowerCase())
+
+    const eventLabels = [
+      ...(event.tags ?? []),
+      ...(event.categories ?? []),
+      (event as any).category,
+      (event as any).eventCategory,
+      (event as any).type,
+      event.title,
+      event.description,
+      event.shortDescription,
+    ]
+      .filter((v) => v !== null && v !== undefined && typeof v === "string")
+      .map((v) => (v as string).toLowerCase())
+
+    return normalised.some((interest) =>
+      eventLabels.some((label) => label.includes(interest) || interest.includes(label))
+    )
+  }
+
   useEffect(() => {
     const fetchSuggestedEvents = async () => {
       try {
         setLoadingSuggested(true)
-        const response = await fetch(`/api/events/recommended?userId=${userId}&limit=8`)
-        if (response.ok) {
-          const data = await response.json()
-          setSuggestedEvents(Array.isArray(data) ? data : [])
-        } else {
-          const fallbackResponse = await fetch(`/api/events/recent?limit=8`)
-          if (fallbackResponse.ok) {
-            const fallbackData = await fallbackResponse.json()
-            setSuggestedEvents(Array.isArray(fallbackData) ? fallbackData : [])
+
+        // Fetch a larger pool so filtering still yields enough results
+        const response = await fetch(`/api/events/recent?limit=50`)
+        if (!response.ok) throw new Error("Failed to fetch recent events")
+
+        const data: SuggestedEvent[] = await response.json()
+        const allEvents = Array.isArray(data) ? data : []
+
+        if (interests && interests.length > 0) {
+          // First pass: strict match against user interests
+          const matched = allEvents.filter((e) => matchesInterests(e, interests))
+          // If we have enough matched events use them, otherwise pad with recents
+          if (matched.length >= 4) {
+            setSuggestedEvents(matched.slice(0, 8))
+          } else {
+            const matchedIds = new Set(matched.map((e) => e.id))
+            const rest = allEvents.filter((e) => !matchedIds.has(e.id))
+            setSuggestedEvents([...matched, ...rest].slice(0, 8))
           }
+        } else {
+          // No interests set — just show recent events
+          setSuggestedEvents(allEvents.slice(0, 8))
         }
       } catch (error) {
         console.error("Error fetching suggested events:", error)
-        try {
-          const fallbackResponse = await fetch(`/api/events/recent?limit=8`)
-          if (fallbackResponse.ok) {
-            const fallbackData = await fallbackResponse.json()
-            setSuggestedEvents(Array.isArray(fallbackData) ? fallbackData : [])
-          }
-        } catch (fallbackError) {
-          console.error("Error fetching fallback events:", fallbackError)
-        }
+        setSuggestedEvents([])
       } finally {
         setLoadingSuggested(false)
       }
@@ -115,7 +156,7 @@ export function DashboardOverview({ userId, events, userName, interests = [] }: 
     if (userId) {
       fetchSuggestedEvents()
     }
-  }, [userId])
+  }, [userId, interests])
 
   const stats = [
     {
@@ -190,12 +231,6 @@ export function DashboardOverview({ userId, events, userName, interests = [] }: 
   const timeGreeting =
     greetingHour < 12 ? "Good morning" : greetingHour < 17 ? "Good afternoon" : "Good evening"
 
-  const getCategoryLabel = (event: SuggestedEvent, index: number): string => {
-    const tag = event.tags?.[0] ?? event.categories?.[0]
-    if (tag) return String(tag).toUpperCase()
-    return "EVENT"
-  }
-
   return (
     <div className="space-y-6">
       <p className="text-xl font-bold text-[#004A96] md:text-2xl">
@@ -254,7 +289,9 @@ export function DashboardOverview({ userId, events, userName, interests = [] }: 
                 View Full →
               </Button>
             </div>
-            <DynamicCalendar userId={userId} className="w-full" />
+            {/* <div className="max-h-[300px] overflow-hidden"> */}
+              <DynamicCalendar userId={userId} className="w-full scale-95 origin-top" />
+            {/* </div> */}
           </CardContent>
         </Card>
 
@@ -272,31 +309,44 @@ export function DashboardOverview({ userId, events, userName, interests = [] }: 
             </div>
 
             {upcomingEvents.length > 0 ? (
-              <div className="max-h-[400px] space-y-4 overflow-y-auto hide-scrollbar">
+              <div className="space-y-3">
                 {upcomingEvents.map((event) => (
-                  <Link key={event.id} href={eventPublicPath(event)} className="group block">
-                    <div className="rounded-lg border border-slate-100 p-3 transition hover:border-blue-200 hover:bg-blue-50/50">
-                      <div className="flex items-start gap-3">
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-100 group-hover:bg-blue-200">
-                          <CalendarDays className="h-5 w-5 text-blue-600" />
+                  <Link
+                    key={event.id}
+                    href={eventPublicPath(event)}
+                    className="group block"
+                  >
+                    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white transition-all hover:shadow-md">
+                      <div className="flex items-start gap-3 p-3">
+                        {/* Event Image */}
+                        <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-lg">
+                          <AppImage
+                            src={getEventCardImageUrl(event)}
+                            alt={event.title}
+                            fill
+                            fallbackSrc={EVENT_CARD_PLACEHOLDER_IMAGE}
+                            className="object-cover"
+                          />
                         </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate font-medium text-slate-900 group-hover:text-[#004A96]">
+
+                        {/* Content */}
+                        <div className="flex flex-1 flex-col justify-between min-w-0">
+                          <h4 className="line-clamp-2 text-sm font-bold text-slate-900 leading-snug">
                             {event.title}
-                          </p>
-                          <p className="mt-1 text-sm text-slate-500">
-                            {new Date(event.startDate).toLocaleDateString("en-US", {
-                              month: "short",
-                              day: "numeric",
-                              year: "numeric",
-                            })}
-                          </p>
-                          {event.city ? (
-                            <p className="mt-1 flex items-center gap-1 truncate text-xs text-slate-400">
-                              <MapPin className="h-3 w-3" />
+                          </h4>
+                          <div className="mt-1.5 flex items-center gap-1.5 text-xs text-slate-500">
+                            <CalendarDays className="h-3.5 w-3.5 text-blue-600 shrink-0" />
+                            {new Date(event.startDate).toLocaleDateString()}
+                          </div>
+                          {event.city && (
+                            <div className="mt-1 flex items-center gap-1.5 text-xs text-slate-500">
+                              <MapPin className="h-3.5 w-3.5 text-red-500 shrink-0" />
                               {event.city}
-                            </p>
-                          ) : null}
+                            </div>
+                          )}
+                          <Button size="sm" className="mt-2 h-7 w-fit bg-[#004A96] text-xs px-3">
+                            View Event
+                          </Button>
                         </div>
                       </div>
                     </div>
@@ -362,14 +412,16 @@ export function DashboardOverview({ userId, events, userName, interests = [] }: 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
             {suggestedPreview.map((event, index) => {
               const location = getLocation(event)
-              const categoryLabel = getCategoryLabel(event, index)
+              const categoryLabel = getCategoryLabel(event)
               const badgeColor = CATEGORY_BADGE_STYLES[index % CATEGORY_BADGE_STYLES.length]
 
               return (
+                // FIX: p-0 ensures no padding pushes the image down; overflow-hidden clips radius
                 <Card
                   key={event.id}
-                  className="overflow-hidden border border-slate-100 shadow-sm transition hover:shadow-md"
+                  className="overflow-hidden rounded-2xl border border-slate-100 shadow-sm transition hover:shadow-md p-0"
                 >
+                  {/* FIX: image sits flush at the very top, directly inside Card with no wrapper padding */}
                   <div className="relative aspect-[4/3] w-full bg-slate-100">
                     <AppImage
                       src={getEventCardImageUrl(event)}
@@ -379,6 +431,7 @@ export function DashboardOverview({ userId, events, userName, interests = [] }: 
                       fallbackSrc={EVENT_CARD_PLACEHOLDER_IMAGE}
                       className="object-cover"
                     />
+                    {/* FIX: category badge now uses getCategoryLabel which checks all possible fields */}
                     <span
                       className={cn(
                         "absolute left-3 top-3 rounded px-2 py-0.5 text-[10px] font-bold tracking-wide text-white",

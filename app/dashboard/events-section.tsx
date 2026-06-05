@@ -43,6 +43,7 @@ interface TicketType {
 }
 
 export interface Event {
+  country: any
   expectedExhibitors: string
   id: string
   title: string
@@ -50,6 +51,11 @@ export interface Event {
   endDate: string
   location?: string
   city?: string
+  venue?:{
+    venueCountry: string
+    venueCity: string
+    venueName: string
+  }
   state?: string
   status?: "pending" | "confirmed" | "rejected" | string
   type?: string
@@ -415,10 +421,19 @@ export function EventsSection({ userId }: EventsSectionProps) {
                               <div className="flex flex-col gap-4 text-sm text-gray-500 ml-4 min-w-[200px] max-w-[250px]">
                                 <div className="flex items-start min-w-0 overflow-hidden">
                                   <MapPin className="w-4 h-4 mr-2 flex-shrink-0 mt-0.5" />
-                                  <span className="truncate block" title={event.address || event.location || (event.city && event.state ? `${event.city}, ${event.state}` : "Location TBD")}>
-                                    {event.address || event.location || (event.city && event.state ? `${event.city}, ${event.state}` : "Location TBD")}
-                                  </span>
-                                </div>
+                                  <span
+                                    className="truncate block"
+                                    title={
+                                      event.city
+                                        ? `${event.city}${event.venue?.venueCountry ? `, ${event.venue.venueCountry}` : ""}`
+                                        : "Location TBD"
+                                    }
+                                  >
+                                    {event.city
+                                      ? `${event.city}${event.venue?.venueCountry ? `, ${event.venue.venueCountry}` : ""}`
+                                      : "Location TBD"}
+                                  </span> 
+                                  </div>
 
                                 <div className="flex items-center">
                                   <CalendarIcon className="w-4 h-4 mr-2 flex-shrink-0" />
