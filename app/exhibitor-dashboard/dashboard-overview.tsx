@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import {
   Area,
   AreaChart,
@@ -14,17 +14,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import {
   Calendar,
   CalendarDays,
   ChevronRight,
-  Eye,
   Mail,
   MapPin,
   Package,
@@ -33,6 +25,14 @@ import {
   Users,
 } from "lucide-react"
 import { apiFetch } from "@/lib/api"
+import {
+  buildExhibitorLeadChartData,
+  filterExhibitorLeadsByPeriod,
+  mergeExhibitorLeads,
+  summarizeExhibitorLeads,
+  type ExhibitorLeadPeriod,
+  type ExhibitorLeadRow,
+} from "@/lib/exhibitor-leads"
 import { cn } from "@/lib/utils"
 import { exAccentText, exCardShell, exPrimaryBtn } from "./dashboard-theme"
 
@@ -56,15 +56,6 @@ interface ExhibitorOverviewProps {
   onNavigate: (section: string) => void
 }
 
-interface LeadRow {
-  id: string
-  name: string
-  company?: string
-  jobTitle?: string
-  timestamp: string
-  status: string
-}
-
 interface AppointmentRow {
   id: string
   visitorName: string
@@ -77,17 +68,8 @@ interface AppointmentRow {
 interface ProductRow {
   id: string
   name: string
-  views?: number
+  category?: string
 }
-
-const LEAD_CHART_DATA = [
-  { label: "Week 1", leads: 12 },
-  { label: "Week 2", leads: 18 },
-  { label: "Week 3", leads: 15 },
-  { label: "Week 4", leads: 24 },
-  { label: "Week 5", leads: 28 },
-  { label: "Week 6", leads: 22 },
-]
 
 function MiniSparkline({ stroke = "#004A96" }: { stroke?: string }) {
   return (
@@ -173,10 +155,22 @@ function formatAppointmentDate(date: string) {
 export function ExhibitorDashboardOverview({ exhibitor, onNavigate }: ExhibitorOverviewProps) {
   const [leadsCount, setLeadsCount] = useState<number | null>(null)
   const [appointmentsCount, setAppointmentsCount] = useState<number | null>(null)
-  const [recentLeads, setRecentLeads] = useState<LeadRow[]>([])
+  const [allLeads, setAllLeads] = useState<ExhibitorLeadRow[]>([])
+  const [leadPeriod, setLeadPeriod] = useState<ExhibitorLeadPeriod>("this-month")
   const [upcomingAppointments, setUpcomingAppointments] = useState<AppointmentRow[]>([])
   const [topProducts, setTopProducts] = useState<ProductRow[]>([])
   const [loading, setLoading] = useState(true)
+
+  const periodLeads = useMemo(
+    () => filterExhibitorLeadsByPeriod(allLeads, leadPeriod),
+    [allLeads, leadPeriod],
+  )
+  const leadChartData = useMemo(
+    () => buildExhibitorLeadChartData(allLeads, leadPeriod),
+    [allLeads, leadPeriod],
+  )
+  const leadSummary = useMemo(() => summarizeExhibitorLeads(periodLeads), [periodLeads])
+  const recentLeads = useMemo(() => allLeads.slice(0, 4), [allLeads])
 
   const displayName =
     exhibitor.displayName?.trim() ||
@@ -194,30 +188,69 @@ export function ExhibitorDashboardOverview({ exhibitor, onNavigate }: ExhibitorO
     let cancelled = false
     const load = async () => {
       try {
-        const [leadsRes, apptRes, productsRes] = await Promise.all([
-          apiFetch<{ count?: number; totalLeads?: number; leads?: LeadRow[] }>(
-            `/api/exhibitors/${exhibitor.id}/leads-count`,
-            { auth: true },
-          ).catch(() => ({ count: 0 })),
-          fetch(`/api/appointments?exhibitorId=${encodeURIComponent(exhibitor.id)}`).then((r) =>
-            r.ok ? r.json() : { appointments: [] },
-          ),
-          apiFetch<{ products?: ProductRow[] }>(
-            `/api/exhibitors/${encodeURIComponent(exhibitor.id)}/products`,
-            { auth: true },
-          ).catch(() => ({ products: [] })),
-        ])
+        const [leadsRes, followersRes, connectionsRes, requestsRes, apptRes, productsRes] =
+          await Promise.all([
+            apiFetch<{ count?: number; totalLeads?: number }>(
+              `/api/exhibitors/${exhibitor.id}/leads-count`,
+              { auth: true },
+            ).catch(() => ({ count: 0 })),
+            apiFetch<{
+              success?: boolean
+              followers?: {
+                id: string
+                firstName: string
+                lastName: string
+                company?: string | null
+                jobTitle?: string | null
+                followedAt: string
+              }[]
+            }>(`/api/follow/followers/${exhibitor.id}`, { auth: true }).catch(() => ({
+              followers: [],
+            })),
+            apiFetch<{
+              connections?: {
+                id: string
+                firstName: string
+                lastName: string
+                company?: string | null
+                jobTitle?: string | null
+                status: string
+                createdAt?: string
+                updatedAt?: string
+              }[]
+            }>("/api/connections", { auth: true }).catch(() => ({ connections: [] })),
+            apiFetch<{
+              connections?: {
+                id: string
+                firstName: string
+                lastName: string
+                company?: string | null
+                jobTitle?: string | null
+                status: string
+                createdAt?: string
+              }[]
+            }>("/api/connections/requests", { auth: true }).catch(() => ({ connections: [] })),
+            apiFetch<{ appointments?: AppointmentRow[] }>(
+              `/api/appointments?exhibitorId=${encodeURIComponent(exhibitor.id)}`,
+              { auth: true },
+            ).catch(() => ({ appointments: [] })),
+            apiFetch<{ products?: ProductRow[] }>(
+              `/api/exhibitors/${encodeURIComponent(exhibitor.id)}/products`,
+              { auth: true },
+            ).catch(() => ({ products: [] })),
+          ])
 
         if (cancelled) return
 
         setLeadsCount(Number(leadsRes?.count ?? leadsRes?.totalLeads ?? 0))
 
-        const leadsList = await fetch(`/api/exhibitors/${exhibitor.id}/leads`)
-          .then((r) => (r.ok ? r.json() : { leads: [] }))
-          .catch(() => ({ leads: [] }))
-        if (!cancelled) {
-          setRecentLeads((leadsList.leads ?? []).slice(0, 4))
-        }
+        const mergedLeads = mergeExhibitorLeads(
+          followersRes?.followers ?? [],
+          connectionsRes?.connections ?? [],
+          requestsRes?.connections ?? [],
+          exhibitor.id,
+        )
+        setAllLeads(mergedLeads)
 
         const appts: AppointmentRow[] = apptRes?.appointments ?? []
         const today = new Date()
@@ -227,17 +260,13 @@ export function ExhibitorDashboardOverview({ exhibitor, onNavigate }: ExhibitorO
             const d = new Date(a.requestedDate)
             return !Number.isNaN(d.getTime()) && d >= today
           })
+          .sort((a, b) => new Date(a.requestedDate).getTime() - new Date(b.requestedDate).getTime())
           .slice(0, 3)
         setAppointmentsCount(appts.length)
         setUpcomingAppointments(upcoming)
 
         const products = productsRes?.products ?? []
-        setTopProducts(
-          products.slice(0, 3).map((p, i) => ({
-            ...p,
-            views: Math.max(exhibitor.profileViews - i * 12, 1),
-          })),
-        )
+        setTopProducts(products.slice(0, 3))
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -246,7 +275,7 @@ export function ExhibitorDashboardOverview({ exhibitor, onNavigate }: ExhibitorO
     return () => {
       cancelled = true
     }
-  }, [exhibitor.id, exhibitor.profileViews])
+  }, [exhibitor.id])
 
   return (
     <div className="space-y-6">
@@ -319,28 +348,35 @@ export function ExhibitorDashboardOverview({ exhibitor, onNavigate }: ExhibitorO
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <Card className={cn(exCardShell, "lg:col-span-2")}>
           <CardHeader className="flex flex-row items-center justify-between gap-3 pb-2">
-            <CardTitle className="text-lg font-bold text-slate-900">Lead Overview</CardTitle>
-            <div className="flex items-center gap-2">
-              <Button size="sm" variant="outline" className="h-8 border-slate-200 text-xs">
-                This Month
-              </Button>
-              <Button size="sm" variant="ghost" className="h-8 text-xs text-slate-500">
-                Last Month
-              </Button>
-              <Select defaultValue="all">
-                <SelectTrigger className="h-8 w-[120px] border-slate-200 text-xs">
-                  <SelectValue placeholder="All Events" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Events</SelectItem>
-                </SelectContent>
-              </Select>
+            <CardTitle className="text-lg font-bold text-slate-900">Exhibitor Leads Overview</CardTitle>
+            <div className="flex flex-wrap items-center gap-2">
+              {(
+                [
+                  { id: "this-month" as const, label: "This Month" },
+                  { id: "3-months" as const, label: "3 Months" },
+                  { id: "1-year" as const, label: "1 Year" },
+                ] as const
+              ).map((option) => (
+                <Button
+                  key={option.id}
+                  type="button"
+                  size="sm"
+                  variant={leadPeriod === option.id ? "outline" : "ghost"}
+                  className={cn(
+                    "h-8 text-xs",
+                    leadPeriod === option.id ? "border-slate-200" : "text-slate-500",
+                  )}
+                  onClick={() => setLeadPeriod(option.id)}
+                >
+                  {option.label}
+                </Button>
+              ))}
             </div>
           </CardHeader>
           <CardContent>
             <div className="h-[220px] w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={LEAD_CHART_DATA} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
+                <AreaChart data={leadChartData} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
                   <defs>
                     <linearGradient id="exLeadFill" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="0%" stopColor="#004A96" stopOpacity={0.35} />
@@ -363,10 +399,10 @@ export function ExhibitorDashboardOverview({ exhibitor, onNavigate }: ExhibitorO
             </div>
             <div className="mt-4 grid grid-cols-2 gap-3 border-t border-slate-100 pt-4 sm:grid-cols-4">
               {[
-                { label: "Total Leads", value: leadsCount ?? 0 },
-                { label: "Qualified", value: Math.max(Math.floor((leadsCount ?? 0) * 0.6), 0) },
-                { label: "Contacted", value: Math.max(Math.floor((leadsCount ?? 0) * 0.4), 0) },
-                { label: "Converted", value: Math.max(Math.floor((leadsCount ?? 0) * 0.15), 0) },
+                { label: "Total Leads", value: loading ? "—" : leadSummary.total },
+                { label: "New Leads", value: loading ? "—" : leadSummary.new },
+                { label: "Connected", value: loading ? "—" : leadSummary.connected },
+                { label: "Followers", value: loading ? "—" : leadSummary.followers },
               ].map((item) => (
                 <div key={item.label} className="rounded-lg bg-slate-50 px-3 py-2 text-center">
                   <p className="text-lg font-bold text-slate-900">{item.value}</p>
@@ -434,7 +470,9 @@ export function ExhibitorDashboardOverview({ exhibitor, onNavigate }: ExhibitorO
             </button>
           </CardHeader>
           <CardContent className="space-y-3">
-            {upcomingAppointments.length === 0 ? (
+            {loading ? (
+              <p className="py-6 text-center text-sm text-slate-500">Loading appointments…</p>
+            ) : upcomingAppointments.length === 0 ? (
               <p className="py-6 text-center text-sm text-slate-500">No upcoming appointments</p>
             ) : (
               upcomingAppointments.map((appt) => {
@@ -476,7 +514,9 @@ export function ExhibitorDashboardOverview({ exhibitor, onNavigate }: ExhibitorO
             </button>
           </CardHeader>
           <CardContent className="space-y-3">
-            {topProducts.length === 0 ? (
+            {loading ? (
+              <p className="py-6 text-center text-sm text-slate-500">Loading products…</p>
+            ) : topProducts.length === 0 ? (
               <p className="py-6 text-center text-sm text-slate-500">No products listed yet</p>
             ) : (
               topProducts.map((product) => (
@@ -486,11 +526,10 @@ export function ExhibitorDashboardOverview({ exhibitor, onNavigate }: ExhibitorO
                   </span>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold text-slate-900">{product.name}</p>
+                    {product.category ? (
+                      <p className="truncate text-xs text-slate-500">{product.category}</p>
+                    ) : null}
                   </div>
-                  <span className="flex shrink-0 items-center gap-1 text-xs font-medium text-slate-500">
-                    <Eye className="h-3.5 w-3.5" />
-                    {product.views ?? 0}
-                  </span>
                 </div>
               ))
             )}
