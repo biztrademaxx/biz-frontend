@@ -331,13 +331,13 @@ export default function HeroSlideshowClient({
       className="relative w-full overflow-hidden rounded-[28px]"
     >
       {/* Background Image */}
-      <div
+      {/* <div
         className="
           absolute inset-0 pointer-events-none opacity-[0.30]
           bg-[url('/images/glob.jpeg')]
           bg-cover bg-no-repeat bg-top lg:bg-center
         "
-      />
+      /> */}
 
       {/* White overlay */}
       <div className="absolute inset-0 bg-white/85" />
@@ -414,7 +414,7 @@ export default function HeroSlideshowClient({
           <div className="w-full lg:w-[55%] lg:ml-25 flex flex-col gap-4 lg:gap-5">
 
             {/* Featured card */}
-            <div className="relative w-full rounded-xl shadow-[0_15px_80px_-10px_rgba(0,74,150,0.95)] overflow-visible">
+            <div className="relative w-full rounded-xl shadow-[0_5px_20px_-4px_rgba(0,0,0,0.95)]  overflow-visible">
               <div className="relative overflow-hidden rounded-xl h-[260px] sm:h-[300px] lg:h-[360px] xl:h-[400px]">
                 {featuredImageUrl ? (
                   <AppImage

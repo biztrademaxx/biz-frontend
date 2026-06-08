@@ -58,6 +58,7 @@ export default function ExhibitorAppointmentsPage() {
   const [statusFilter, setStatusFilter] = useState<string>("all")
   const [meetingTypeFilter, setMeetingTypeFilter] = useState<string>("all")
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null)
+  const [selectedAppointmentIndex, setSelectedAppointmentIndex] = useState<number>(0)
   const [detailsOpen, setDetailsOpen] = useState(false)
   const [actionDialog, setActionDialog] = useState<{
     open: boolean
@@ -81,7 +82,15 @@ export default function ExhibitorAppointmentsPage() {
         "/api/admin/exhibitors/exhibitor-appointments",
         { auth: true }
       )
-      setAppointments(Array.isArray(data?.appointments) ? data.appointments : [])
+      const list = Array.isArray(data?.appointments) ? data.appointments : []
+
+      // Sort by createdAt date (newest first)
+      const sortedList = [...list].sort((a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      )
+
+      setAppointments(sortedList)
+      setFilteredAppointments(sortedList)
     } catch (error) {
       console.error("Error fetching appointments:", error)
       setAppointments([])
@@ -90,18 +99,25 @@ export default function ExhibitorAppointmentsPage() {
     }
   }
 
+  // Generate sequential appointment ID (e.g., APT0001, APT0002, APT0010, APT0100)
+  const getSequentialAppointmentId = (index: number): string => {
+    return `APT${String(index + 1).padStart(4, '0')}`
+  }
+
   const filterAppointments = () => {
     let filtered = [...appointments]
 
     if (searchTerm) {
-      const search = searchTerm.toLowerCase()
-      filtered = filtered.filter(
-        (apt) =>
-          apt.exhibitor.companyName.toLowerCase().includes(search) ||
-          apt.visitor.name.toLowerCase().includes(search) ||
-          apt.event.name.toLowerCase().includes(search) ||
-          apt.id.toLowerCase().includes(search),
-      )
+      const q = searchTerm.toLowerCase()
+      filtered = filtered.filter((apt, idx) => {
+        const sequentialId = getSequentialAppointmentId(idx)
+        return (
+          apt.exhibitor.companyName.toLowerCase().includes(q) ||
+          apt.visitor.name.toLowerCase().includes(q) ||
+          apt.event.name.toLowerCase().includes(q) ||
+          sequentialId.toLowerCase().includes(q)
+        )
+      })
     }
 
     if (statusFilter !== "all") {
@@ -149,6 +165,12 @@ export default function ExhibitorAppointmentsPage() {
     }
 
     handleUpdateStatus(appointment.id, newStatus, type === "cancel" ? cancelReason : undefined)
+  }
+
+  const handleViewDetails = (appointment: Appointment, index: number) => {
+    setSelectedAppointment(appointment)
+    setSelectedAppointmentIndex(index)
+    setDetailsOpen(true)
   }
 
   const getStatusBadge = (status: string) => {
@@ -270,7 +292,7 @@ export default function ExhibitorAppointmentsPage() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <Input
-              placeholder="Search by exhibitor, visitor, event, or ID..."
+              placeholder="Search by exhibitor, visitor, event, or appointment ID..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
@@ -309,6 +331,7 @@ export default function ExhibitorAppointmentsPage() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>#</TableHead>
                 <TableHead>Appointment ID</TableHead>
                 <TableHead>Exhibitor</TableHead>
                 <TableHead>Visitor</TableHead>
@@ -323,107 +346,116 @@ export default function ExhibitorAppointmentsPage() {
             <TableBody>
               {filteredAppointments.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center py-8 text-gray-500">
+                  <TableCell colSpan={10} className="text-center py-8 text-gray-500">
                     No appointments found
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredAppointments.map((appointment) => (
-                  <TableRow key={appointment.id}>
-                    <TableCell className="font-mono text-xs">{appointment.id.slice(0, 8)}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Building2 className="w-4 h-4 text-gray-400" />
-                        <div>
-                          <div className="font-medium">{appointment.exhibitor.companyName}</div>
-                          <div className="text-xs text-gray-500">{appointment.exhibitor.email}</div>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Users className="w-4 h-4 text-gray-400" />
-                        <div>
-                          <div className="font-medium">{appointment.visitor.name}</div>
-                          <div className="text-xs text-gray-500">{appointment.visitor.email}</div>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="font-medium">{appointment.event.name}</div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-sm">{format(new Date(appointment.scheduledAt), "MMM dd, yyyy")}</div>
-                      <div className="text-xs text-gray-500">
-                        {format(new Date(appointment.scheduledAt), "hh:mm a")}
-                      </div>
-                    </TableCell>
-                    <TableCell>{appointment.duration} min</TableCell>
-                    <TableCell>{getMeetingTypeBadge(appointment.meetingType)}</TableCell>
-                    <TableCell>{getStatusBadge(appointment.status)}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setSelectedAppointment(appointment)
-                            setDetailsOpen(true)
-                          }}
-                        >
-                          <Eye className="w-4 h-4" />
-                        </Button>
+                filteredAppointments.map((appointment, idx) => {
+                  const originalIndex = appointments.findIndex(a => a.id === appointment.id)
+                  const sequentialId = getSequentialAppointmentId(originalIndex)
 
-                        {appointment.status === "PENDING" && (
-                          <>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() =>
-                                setActionDialog({
-                                  open: true,
-                                  type: "confirm",
-                                  appointment,
-                                })
-                              }
-                            >
-                              <CheckCircle className="w-4 h-4 text-green-600" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() =>
-                                setActionDialog({
-                                  open: true,
-                                  type: "cancel",
-                                  appointment,
-                                })
-                              }
-                            >
-                              <XCircle className="w-4 h-4 text-red-600" />
-                            </Button>
-                          </>
-                        )}
-
-                        {appointment.status === "CONFIRMED" && (
+                  return (
+                    <TableRow key={appointment.id}>
+                      <TableCell className="font-medium text-gray-500">
+                        {originalIndex + 1}
+                      </TableCell>
+                      <TableCell>
+                        <code className="text-sm font-mono font-semibold text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                          {sequentialId}
+                        </code>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Building2 className="w-4 h-4 text-gray-400" />
+                          <div>
+                            <div className="font-medium">{appointment.exhibitor.companyName}</div>
+                            <div className="text-xs text-gray-500">{appointment.exhibitor.email}</div>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Users className="w-4 h-4 text-gray-400" />
+                          <div>
+                            <div className="font-medium">{appointment.visitor.name}</div>
+                            <div className="text-xs text-gray-500">{appointment.visitor.email}</div>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="font-medium">{appointment.event.name}</div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm">{format(new Date(appointment.scheduledAt), "MMM dd, yyyy")}</div>
+                        <div className="text-xs text-gray-500">
+                          {format(new Date(appointment.scheduledAt), "hh:mm a")}
+                        </div>
+                      </TableCell>
+                      <TableCell>{appointment.duration} min</TableCell>
+                      <TableCell>{getMeetingTypeBadge(appointment.meetingType)}</TableCell>
+                      <TableCell>{getStatusBadge(appointment.status)}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() =>
-                              setActionDialog({
-                                open: true,
-                                type: "complete",
-                                appointment,
-                              })
-                            }
+                            onClick={() => handleViewDetails(appointment, originalIndex)}
                           >
-                            <CheckCircle className="w-4 h-4 text-blue-600" />
+                            <Eye className="w-4 h-4" />
                           </Button>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
+
+                          {appointment.status === "PENDING" && (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() =>
+                                  setActionDialog({
+                                    open: true,
+                                    type: "confirm",
+                                    appointment,
+                                  })
+                                }
+                              >
+                                <CheckCircle className="w-4 h-4 text-green-600" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() =>
+                                  setActionDialog({
+                                    open: true,
+                                    type: "cancel",
+                                    appointment,
+                                  })
+                                }
+                              >
+                                <XCircle className="w-4 h-4 text-red-600" />
+                              </Button>
+                            </>
+                          )}
+
+                          {appointment.status === "CONFIRMED" && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() =>
+                                setActionDialog({
+                                  open: true,
+                                  type: "complete",
+                                  appointment,
+                                })
+                              }
+                            >
+                              <CheckCircle className="w-4 h-4 text-blue-600" />
+                            </Button>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )
+                })
               )}
             </TableBody>
           </Table>
@@ -443,7 +475,9 @@ export default function ExhibitorAppointmentsPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label className="text-gray-600">Appointment ID</Label>
-                  <p className="font-mono text-sm">{selectedAppointment.id}</p>
+                  <code className="text-base font-mono font-bold text-blue-600 bg-blue-50 px-3 py-1.5 rounded inline-block">
+                    {getSequentialAppointmentId(selectedAppointmentIndex)}
+                  </code>
                 </div>
                 <div>
                   <Label className="text-gray-600">Status</Label>

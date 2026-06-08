@@ -50,7 +50,6 @@ import {
   Eye,
   Star,
   Calendar,
-  DollarSign,
   UserCheck,
   UserX,
   Mail,
@@ -60,6 +59,7 @@ import {
   CheckCircle,
   XCircle,
   Clock,
+  DollarSign,
 } from "lucide-react"
 
 // Types based on your API response
@@ -87,7 +87,6 @@ interface Speaker {
     linkedin: string
     twitter: string
   }
-  speakingFee: number
   availability: string
   languages: string[]
   experience: string
@@ -135,11 +134,11 @@ export default function SpeakerManagement() {
       const params = new URLSearchParams()
       if (search) params.append("search", search)
       if (status !== "all") params.append("status", status)
-      
+
       const data = await apiFetch(`/api/admin/speakers?${params.toString()}`, { auth: true })
       const list = Array.isArray(data?.data) ? data.data : []
       const pagination = data?.pagination ?? { page: 1, limit: 20, total: 0, totalPages: 0 }
-      
+
       const safeSpeakers: Speaker[] = list.map((s: Record<string, unknown>) => {
         const name = ((s.name as string) ?? [s.firstName, s.lastName].filter(Boolean).join(" ").trim()) || "Unknown Speaker"
         const isActive = s.isActive !== false
@@ -148,7 +147,7 @@ export default function SpeakerManagement() {
           name,
           email: (s.email as string) ?? "",
           phone: (s.phone as string) ?? "",
-          avatar: (s.avatar as string) ,
+          avatar: (s.avatar as string),
           title: (s.title as string) ?? "",
           company: (s.company as string) ?? "",
           location: (s.location as string) ?? "",
@@ -164,7 +163,6 @@ export default function SpeakerManagement() {
           joinedDate: (s.createdAt as string)?.toString().split("T")[0] ?? "",
           website: "",
           socialMedia: { linkedin: "", twitter: "" },
-          speakingFee: 0,
           availability: "unknown",
           languages: ["English"],
           experience: "",
@@ -173,7 +171,7 @@ export default function SpeakerManagement() {
         }
       })
       setSpeakers(safeSpeakers)
-      
+
       setStatistics({
         totalSpeakers: pagination.total ?? safeSpeakers.length,
         activeSpeakers: safeSpeakers.filter(s => s.status === "active").length,
@@ -217,7 +215,7 @@ export default function SpeakerManagement() {
       (speaker.company && speaker.company.toLowerCase().includes(searchLower)) ||
       (speaker.title && speaker.title.toLowerCase().includes(searchLower)) ||
       (speaker.location && speaker.location.toLowerCase().includes(searchLower))
-    
+
     const matchesStatus = statusFilter === "all" || speaker.status === statusFilter
     return matchesSearch && matchesStatus
   })
@@ -225,7 +223,7 @@ export default function SpeakerManagement() {
   const handleStatusChange = async (speakerId: string, newStatus: string) => {
     try {
       const isActive = newStatus === "active";
-      
+
       await apiFetch(`/api/admin/speakers/${speakerId}`, {
         method: "PATCH",
         body: { isActive },
@@ -233,10 +231,10 @@ export default function SpeakerManagement() {
       });
       {
         // Update locally for immediate feedback
-        setSpeakers(speakers.map((speaker) => 
+        setSpeakers(speakers.map((speaker) =>
           speaker.id === speakerId ? { ...speaker, status: newStatus as any } : speaker
         ))
-        
+
         // Refresh statistics
         fetchSpeakers(searchTerm, statusFilter);
       }
@@ -364,7 +362,7 @@ export default function SpeakerManagement() {
       </div>
 
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Speakers</CardTitle>
@@ -397,7 +395,7 @@ export default function SpeakerManagement() {
             <p className="text-xs text-muted-foreground">Awaiting approval</p>
           </CardContent>
         </Card>
-        <Card>
+        {/* <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
@@ -406,7 +404,7 @@ export default function SpeakerManagement() {
             <div className="text-2xl font-bold">${statistics.totalRevenue.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">All speaker earnings</p>
           </CardContent>
-        </Card>
+        </Card> */}
       </div>
 
       {/* Filters and Search */}
@@ -501,8 +499,8 @@ export default function SpeakerManagement() {
             <DialogDescription>Update speaker information</DialogDescription>
           </DialogHeader>
           {selectedSpeaker && (
-            <EditSpeakerForm 
-              speaker={selectedSpeaker} 
+            <EditSpeakerForm
+              speaker={selectedSpeaker}
               onSave={() => {
                 setIsEditDialogOpen(false)
                 fetchSpeakers(searchTerm, statusFilter)
@@ -515,6 +513,7 @@ export default function SpeakerManagement() {
     </div>
   )
 }
+
 // Component for Add Speaker Form
 function AddSpeakerForm({ onSubmit, onCancel }: { onSubmit: (formData: any) => void, onCancel: () => void }) {
   const [formData, setFormData] = useState({
@@ -524,7 +523,6 @@ function AddSpeakerForm({ onSubmit, onCancel }: { onSubmit: (formData: any) => v
     title: "",
     company: "",
     location: "",
-    fee: "",
     experience: "",
     bio: "",
     expertise: "",
@@ -544,9 +542,9 @@ function AddSpeakerForm({ onSubmit, onCancel }: { onSubmit: (formData: any) => v
       <div className="grid grid-cols-2 gap-4 py-4">
         <div className="space-y-2">
           <Label htmlFor="name">Full Name *</Label>
-          <Input 
-            id="name" 
-            placeholder="Enter speaker name" 
+          <Input
+            id="name"
+            placeholder="Enter speaker name"
             value={formData.name}
             onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
             required
@@ -554,10 +552,10 @@ function AddSpeakerForm({ onSubmit, onCancel }: { onSubmit: (formData: any) => v
         </div>
         <div className="space-y-2">
           <Label htmlFor="email">Email *</Label>
-          <Input 
-            id="email" 
-            type="email" 
-            placeholder="Enter email address" 
+          <Input
+            id="email"
+            type="email"
+            placeholder="Enter email address"
             value={formData.email}
             onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
             required
@@ -565,45 +563,45 @@ function AddSpeakerForm({ onSubmit, onCancel }: { onSubmit: (formData: any) => v
         </div>
         <div className="space-y-2">
           <Label htmlFor="phone">Phone</Label>
-          <Input 
-            id="phone" 
-            placeholder="Enter phone number" 
+          <Input
+            id="phone"
+            placeholder="Enter phone number"
             value={formData.phone}
             onChange={(e) => setFormData((prev) => ({ ...prev, phone: e.target.value }))}
           />
         </div>
         <div className="space-y-2">
           <Label htmlFor="title">Professional Title</Label>
-          <Input 
-            id="title" 
-            placeholder="Enter job title" 
+          <Input
+            id="title"
+            placeholder="Enter job title"
             value={formData.title}
             onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
           />
         </div>
         <div className="space-y-2">
           <Label htmlFor="company">Company</Label>
-          <Input 
-            id="company" 
-            placeholder="Enter company name" 
+          <Input
+            id="company"
+            placeholder="Enter company name"
             value={formData.company}
             onChange={(e) => setFormData((prev) => ({ ...prev, company: e.target.value }))}
           />
         </div>
         <div className="space-y-2">
           <Label htmlFor="location">Location</Label>
-          <Input 
-            id="location" 
-            placeholder="Enter location" 
+          <Input
+            id="location"
+            placeholder="Enter location"
             value={formData.location}
             onChange={(e) => setFormData((prev) => ({ ...prev, location: e.target.value }))}
           />
         </div>
         <div className="space-y-2">
           <Label htmlFor="website">Website</Label>
-          <Input 
-            id="website" 
-            placeholder="Enter website URL" 
+          <Input
+            id="website"
+            placeholder="Enter website URL"
             value={formData.website}
             onChange={(e) => setFormData((prev) => ({ ...prev, website: e.target.value }))}
           />
@@ -654,9 +652,9 @@ function AddSpeakerForm({ onSubmit, onCancel }: { onSubmit: (formData: any) => v
         </div>
         <div className="col-span-2 space-y-2">
           <Label htmlFor="bio">Biography</Label>
-          <Textarea 
-            id="bio" 
-            placeholder="Enter speaker biography" 
+          <Textarea
+            id="bio"
+            placeholder="Enter speaker biography"
             value={formData.bio}
             onChange={(e) => setFormData((prev) => ({ ...prev, bio: e.target.value }))}
             rows={4}
@@ -664,9 +662,9 @@ function AddSpeakerForm({ onSubmit, onCancel }: { onSubmit: (formData: any) => v
         </div>
         <div className="col-span-2 space-y-2">
           <Label htmlFor="expertise">Expertise (comma-separated)</Label>
-          <Input 
-            id="expertise" 
-            placeholder="e.g., AI, Machine Learning, Data Science" 
+          <Input
+            id="expertise"
+            placeholder="e.g., AI, Machine Learning, Data Science"
             value={formData.expertise}
             onChange={(e) => setFormData((prev) => ({ ...prev, expertise: e.target.value }))}
           />
@@ -683,15 +681,15 @@ function AddSpeakerForm({ onSubmit, onCancel }: { onSubmit: (formData: any) => v
 }
 
 // Component for Speaker Card
-function SpeakerCard({ 
-  speaker, 
-  onView, 
-  onEdit, 
-  onStatusChange, 
-  onVerificationToggle, 
-  onDelete, 
-  getStatusBadge, 
-  getAvailabilityBadge 
+function SpeakerCard({
+  speaker,
+  onView,
+  onEdit,
+  onStatusChange,
+  onVerificationToggle,
+  onDelete,
+  getStatusBadge,
+  getAvailabilityBadge
 }: any) {
   return (
     <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
@@ -729,9 +727,6 @@ function SpeakerCard({
             <div className="flex items-center gap-1">
               <Calendar className="w-3 h-3" />
               {speaker.totalSessions} sessions
-            </div>
-            <div className="flex items-center gap-1">
-              <DollarSign className="w-3 h-3" />${speaker.speakingFee.toLocaleString()}
             </div>
           </div>
         </div>
@@ -820,10 +815,10 @@ function SpeakerCard({
 function SpeakerDetails({ speaker, getStatusBadge }: any) {
   return (
     <Tabs defaultValue="profile" className="w-full">
-      <TabsList className="grid w-full grid-cols-4">
+      <TabsList className="grid w-full grid-cols-3">
         <TabsTrigger value="profile">Profile</TabsTrigger>
         <TabsTrigger value="sessions">Sessions</TabsTrigger>
-        <TabsTrigger value="earnings">Earnings</TabsTrigger>
+        {/* <TabsTrigger value="earnings">Earnings</TabsTrigger> */}
         <TabsTrigger value="reviews">Reviews</TabsTrigger>
       </TabsList>
 
@@ -890,14 +885,10 @@ function SpeakerDetails({ speaker, getStatusBadge }: any) {
             </div>
           )}
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 gap-4">
             <div>
               <h4 className="font-medium text-sm text-gray-600">Experience</h4>
               <p className="font-semibold">{speaker.experience}</p>
-            </div>
-            <div>
-              <h4 className="font-medium text-sm text-gray-600">Speaking Fee</h4>
-              <p className="font-semibold">${speaker.speakingFee.toLocaleString()}</p>
             </div>
             <div>
               <h4 className="font-medium text-sm text-gray-600">Languages</h4>
@@ -983,9 +974,8 @@ function SpeakerDetails({ speaker, getStatusBadge }: any) {
             {Array.from({ length: 5 }).map((_, i) => (
               <Star
                 key={i}
-                className={`w-5 h-5 ${
-                  i < Math.floor(speaker.rating) ? "text-yellow-400 fill-current" : "text-gray-300"
-                }`}
+                className={`w-5 h-5 ${i < Math.floor(speaker.rating) ? "text-yellow-400 fill-current" : "text-gray-300"
+                  }`}
               />
             ))}
           </div>
@@ -1027,7 +1017,6 @@ function EditSpeakerForm({ speaker, onSave, onCancel }: any) {
     jobTitle: speaker.title || '',
     company: speaker.company || '',
     location: speaker.location || '',
-    speakingFee: speaker.speakingFee || 0,
     status: speaker.status || 'inactive',
     bio: speaker.bio || '',
     website: speaker.website || '',
@@ -1071,100 +1060,91 @@ function EditSpeakerForm({ speaker, onSave, onCancel }: any) {
       <div className="grid grid-cols-2 gap-4 py-4">
         <div className="space-y-2">
           <Label htmlFor="firstName">First Name *</Label>
-          <Input 
-            id="firstName" 
-            value={formData.firstName} 
-            onChange={(e) => setFormData({...formData, firstName: e.target.value})}
+          <Input
+            id="firstName"
+            value={formData.firstName}
+            onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
             required
           />
         </div>
         <div className="space-y-2">
           <Label htmlFor="lastName">Last Name *</Label>
-          <Input 
-            id="lastName" 
-            value={formData.lastName} 
-            onChange={(e) => setFormData({...formData, lastName: e.target.value})}
+          <Input
+            id="lastName"
+            value={formData.lastName}
+            onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
             required
           />
         </div>
         <div className="space-y-2">
           <Label htmlFor="email">Email *</Label>
-          <Input 
-            id="email" 
-            type="email" 
-            value={formData.email} 
-            onChange={(e) => setFormData({...formData, email: e.target.value})}
+          <Input
+            id="email"
+            type="email"
+            value={formData.email}
+            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
             required
           />
         </div>
         <div className="space-y-2">
           <Label htmlFor="phone">Phone</Label>
-          <Input 
-            id="phone" 
-            value={formData.phone} 
-            onChange={(e) => setFormData({...formData, phone: e.target.value})}
+          <Input
+            id="phone"
+            value={formData.phone}
+            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
           />
         </div>
         <div className="space-y-2">
           <Label htmlFor="jobTitle">Professional Title</Label>
-          <Input 
-            id="jobTitle" 
-            value={formData.jobTitle} 
-            onChange={(e) => setFormData({...formData, jobTitle: e.target.value})}
+          <Input
+            id="jobTitle"
+            value={formData.jobTitle}
+            onChange={(e) => setFormData({ ...formData, jobTitle: e.target.value })}
           />
         </div>
         <div className="space-y-2">
           <Label htmlFor="company">Company</Label>
-          <Input 
-            id="company" 
-            value={formData.company} 
-            onChange={(e) => setFormData({...formData, company: e.target.value})}
+          <Input
+            id="company"
+            value={formData.company}
+            onChange={(e) => setFormData({ ...formData, company: e.target.value })}
           />
         </div>
         <div className="space-y-2">
           <Label htmlFor="location">Location</Label>
-          <Input 
-            id="location" 
-            value={formData.location} 
-            onChange={(e) => setFormData({...formData, location: e.target.value})}
+          <Input
+            id="location"
+            value={formData.location}
+            onChange={(e) => setFormData({ ...formData, location: e.target.value })}
           />
         </div>
         <div className="space-y-2">
           <Label htmlFor="website">Website</Label>
-          <Input 
-            id="website" 
-            value={formData.website} 
-            onChange={(e) => setFormData({...formData, website: e.target.value})}
+          <Input
+            id="website"
+            value={formData.website}
+            onChange={(e) => setFormData({ ...formData, website: e.target.value })}
           />
         </div>
         <div className="space-y-2">
           <Label htmlFor="linkedin">LinkedIn</Label>
-          <Input 
-            id="linkedin" 
-            value={formData.linkedin} 
-            onChange={(e) => setFormData({...formData, linkedin: e.target.value})}
+          <Input
+            id="linkedin"
+            value={formData.linkedin}
+            onChange={(e) => setFormData({ ...formData, linkedin: e.target.value })}
           />
         </div>
         <div className="space-y-2">
           <Label htmlFor="twitter">Twitter</Label>
-          <Input 
-            id="twitter" 
-            value={formData.twitter} 
-            onChange={(e) => setFormData({...formData, twitter: e.target.value})}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="speakingFee">Speaking Fee ($)</Label>
-          <Input 
-            id="speakingFee" 
-            type="number" 
-            value={formData.speakingFee} 
-            onChange={(e) => setFormData({...formData, speakingFee: Number(e.target.value)})}
+          <Input
+            id="twitter"
+            value={formData.twitter}
+            onChange={(e) => setFormData({ ...formData, twitter: e.target.value })}
           />
         </div>
         <div className="space-y-2">
           <Label htmlFor="status">Status</Label>
-          <Select value={formData.status} onValueChange={(value) => setFormData({...formData, status: value})}>
+          <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value })}>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
@@ -1176,29 +1156,29 @@ function EditSpeakerForm({ speaker, onSave, onCancel }: any) {
         </div>
         <div className="col-span-2 space-y-2">
           <Label htmlFor="specialties">Expertise (comma-separated)</Label>
-          <Input 
-            id="specialties" 
+          <Input
+            id="specialties"
             placeholder="e.g., AI, Machine Learning, Data Science"
-            value={formData.specialties} 
-            onChange={(e) => setFormData({...formData, specialties: e.target.value})}
+            value={formData.specialties}
+            onChange={(e) => setFormData({ ...formData, specialties: e.target.value })}
           />
         </div>
         <div className="col-span-2 space-y-2">
           <Label htmlFor="speakingExperience">Speaking Experience</Label>
-          <Textarea 
-            id="speakingExperience" 
+          <Textarea
+            id="speakingExperience"
             placeholder="Describe the speaker's experience"
-            value={formData.speakingExperience} 
-            onChange={(e) => setFormData({...formData, speakingExperience: e.target.value})}
+            value={formData.speakingExperience}
+            onChange={(e) => setFormData({ ...formData, speakingExperience: e.target.value })}
             rows={3}
           />
         </div>
         <div className="col-span-2 space-y-2">
           <Label htmlFor="bio">Biography</Label>
-          <Textarea 
-            id="bio" 
-            value={formData.bio} 
-            onChange={(e) => setFormData({...formData, bio: e.target.value})}
+          <Textarea
+            id="bio"
+            value={formData.bio}
+            onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
             rows={4}
           />
         </div>

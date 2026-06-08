@@ -382,7 +382,7 @@ export default function EventSidebar({
             type="button"
             onClick={() => router.back()}
             variant="outline"
-            className="h-10 w-full rounded-lg border-slate-200 text-slate-700 hover:border-[#004A96]/30 hover:bg-blue-50 hover:text-[#004A96]"
+            className="h-10 w-full rounded-lg border-slate-200 text-slate-700 hover:border-[#004A96]/30 hover:bg-blue-50 hover:text-[#004A96] bg-red-500 border-red-200 text-white hover:bg-red-100 hover:border-red-300 hover:text-red-800"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back

@@ -16,6 +16,7 @@ import {
 import { useVenueManagement } from "./hooks/useVenueManagement"
 import type { VenueTab } from "./types/venue.types"
 
+// Add default export here
 export default function VenueManagementPage({
   initialTab = "all",
 }: {

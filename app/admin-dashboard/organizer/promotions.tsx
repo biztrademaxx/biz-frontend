@@ -79,36 +79,34 @@ export default function OrganizerPromotionsPage() {
         }
     }
 
- 
-  // Filter promotions safely
-useEffect(() => {
-  let filtered = promotions
+    // Filter promotions safely
+    useEffect(() => {
+        let filtered = promotions
 
-  // ✅ Search filter (with null-safe checks)
-  if (searchTerm) {
-    const search = searchTerm.toLowerCase()
-    filtered = filtered.filter((promo) => {
-      const orgName = promo.organizer?.organizationName?.toLowerCase() || ""
-      const email = promo.organizer?.email?.toLowerCase() || ""
-      const eventTitle = promo.event?.title?.toLowerCase() || ""
-      const id = promo.id?.toLowerCase() || ""
-      return orgName.includes(search) || email.includes(search) || eventTitle.includes(search) || id.includes(search)
-    })
-  }
+        // Search filter (with null-safe checks)
+        if (searchTerm) {
+            const search = searchTerm.toLowerCase()
+            filtered = filtered.filter((promo) => {
+                const orgName = promo.organizer?.organizationName?.toLowerCase() || ""
+                const email = promo.organizer?.email?.toLowerCase() || ""
+                const eventTitle = promo.event?.title?.toLowerCase() || ""
+                const id = promo.id?.toLowerCase() || ""
+                return orgName.includes(search) || email.includes(search) || eventTitle.includes(search) || id.includes(search)
+            })
+        }
 
-  // ✅ Status filter
-  if (statusFilter !== "all") {
-    filtered = filtered.filter((promo) => promo.status === statusFilter)
-  }
+        // Status filter
+        if (statusFilter !== "all") {
+            filtered = filtered.filter((promo) => promo.status === statusFilter)
+        }
 
-  // ✅ Package filter
-  if (packageFilter !== "all") {
-    filtered = filtered.filter((promo) => promo.packageType === packageFilter)
-  }
+        // Package filter
+        if (packageFilter !== "all") {
+            filtered = filtered.filter((promo) => promo.packageType === packageFilter)
+        }
 
-  setFilteredPromotions(filtered)
-}, [searchTerm, statusFilter, packageFilter, promotions])
-
+        setFilteredPromotions(filtered)
+    }, [searchTerm, statusFilter, packageFilter, promotions])
 
     const handleViewPromotion = (promotion: Promotion) => {
         setSelectedPromotion(promotion)
@@ -176,7 +174,8 @@ useEffect(() => {
         pending: promotions.filter((p) => p.status === "PENDING").length,
         approved: promotions.filter((p) => p.status === "APPROVED").length,
         active: promotions.filter((p) => p.status === "ACTIVE").length,
-        totalRevenue: promotions.reduce((sum, p) => sum + p.amount, 0),
+        expired: promotions.filter((p) => p.status === "EXPIRED").length,
+        rejected: promotions.filter((p) => p.status === "REJECTED").length,
     }
 
     return (
@@ -184,11 +183,11 @@ useEffect(() => {
             {/* Header */}
             <div>
                 <h1 className="text-3xl font-bold tracking-tight">Organizer Promotions</h1>
-                <p className="text-muted-foreground mt-2">{"Manage and review promotion requests from event organizers"}</p>
+                <p className="text-muted-foreground mt-2">Manage and review promotion requests from event organizers</p>
             </div>
 
             {/* Stats Cards */}
-            <div className="grid gap-4 md:grid-cols-5">
+            <div className="grid gap-4 md:grid-cols-6">
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Total Promotions</CardTitle>
@@ -231,11 +230,21 @@ useEffect(() => {
 
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-                        <DollarSign className="h-4 w-4 text-green-500" />
+                        <CardTitle className="text-sm font-medium">Expired</CardTitle>
+                        <Clock className="h-4 w-4 text-gray-500" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">${stats.totalRevenue.toLocaleString()}</div>
+                        <div className="text-2xl font-bold">{stats.expired}</div>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Rejected</CardTitle>
+                        <XCircle className="h-4 w-4 text-red-500" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{stats.rejected}</div>
                     </CardContent>
                 </Card>
             </div>
@@ -305,7 +314,6 @@ useEffect(() => {
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    {/* <TableHead>ID</TableHead> */}
                                     <TableHead>Organizer</TableHead>
                                     <TableHead>Event</TableHead>
                                     <TableHead>Package</TableHead>
@@ -320,20 +328,19 @@ useEffect(() => {
                             <TableBody>
                                 {loading ? (
                                     <TableRow>
-                                        <TableCell colSpan={10} className="text-center py-8">
+                                        <TableCell colSpan={9} className="text-center py-8">
                                             Loading promotions...
                                         </TableCell>
                                     </TableRow>
                                 ) : filteredPromotions.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={10} className="text-center py-8">
+                                        <TableCell colSpan={9} className="text-center py-8">
                                             No promotions found
                                         </TableCell>
                                     </TableRow>
                                 ) : (
                                     filteredPromotions.map((promotion) => (
                                         <TableRow key={promotion.id}>
-                                            {/* <TableCell className="font-mono text-xs">{promotion.id.slice(0, 8)}...</TableCell> */}
                                             <TableCell>
                                                 <div className="flex flex-col">
                                                     <span className="font-medium">

@@ -277,9 +277,7 @@ export function DashboardOverview({ userId, events, userName, interests = [] }: 
 
   return (
     <div className="space-y-6">
-      <p className="text-xl font-bold text-[#004A96] md:text-2xl">
-        {timeGreeting}, {userName}!
-      </p>
+      
 
       <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm md:p-6">
         <h2 className="text-lg font-bold text-slate-900 md:text-xl">

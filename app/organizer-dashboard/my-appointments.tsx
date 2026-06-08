@@ -96,7 +96,6 @@ const STATUS_CONFIG = {
     sectionIconColor: "text-amber-500",
     badgeBg: "bg-amber-50 text-amber-600 border-amber-200",
     emptyMsg: "No pending meetings",
-    emptySubMsg: "",
   },
   CONFIRMED: {
     label: "Confirmed",
@@ -108,7 +107,6 @@ const STATUS_CONFIG = {
     sectionIconColor: "text-emerald-500",
     badgeBg: "bg-emerald-50 text-emerald-600 border-emerald-200",
     emptyMsg: "No confirmed meetings",
-    emptySubMsg: "",
   },
   CANCELLED: {
     label: "Cancelled",
@@ -120,7 +118,6 @@ const STATUS_CONFIG = {
     sectionIconColor: "text-red-400",
     badgeBg: "bg-red-50 text-red-500 border-red-200",
     emptyMsg: "No cancelled meetings",
-    emptySubMsg: "",
   },
   COMPLETED: {
     label: "Completed",
@@ -132,7 +129,6 @@ const STATUS_CONFIG = {
     sectionIconColor: "text-gray-500",
     badgeBg: "bg-gray-50 text-gray-500 border-gray-200",
     emptyMsg: "No completed meetings",
-    emptySubMsg: "",
   },
 }
 
@@ -169,7 +165,8 @@ function AvatarFallback({ name, size = "lg" }: { name: string; size?: "sm" | "lg
   )
 }
 
-function AppointmentCard({
+// Compact Appointment Card for grid layout
+function CompactAppointmentCard({
   appt,
   onCancel,
   onViewDetails,
@@ -190,73 +187,72 @@ function AppointmentCard({
   }
 
   return (
-    <div className="flex flex-col sm:flex-row items-start gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:shadow-md">
-      {/* Venue Name on top - shown on mobile */}
-      <div className="w-full sm:hidden mb-2">
-        <div className="flex items-center gap-2">
-          <Building2 className="h-4 w-4 text-[#004A96]" />
-          <p className="font-semibold text-slate-900">{appt.venue.venueName || `${appt.venue.firstName} ${appt.venue.lastName}`}</p>
+    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:shadow-md flex flex-col h-full">
+      {/* Header with Avatar and Name */}
+      <div className="flex items-start gap-3 mb-3">
+        <div className="shrink-0">
+          {appt.venue.avatar ? (
+            <img
+              src={appt.venue.avatar}
+              alt={`${appt.venue.firstName} ${appt.venue.lastName}`}
+              className="h-10 w-10 rounded-full object-cover"
+              onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }}
+            />
+          ) : (
+            <AvatarFallback name={`${appt.venue.firstName} ${appt.venue.lastName}`} size="sm" />
+          )}
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-semibold text-slate-900 text-sm truncate">{appt.title}</p>
+          <p className="text-xs text-slate-500 truncate">
+            with {appt.venue.firstName} {appt.venue.lastName}
+          </p>
         </div>
       </div>
 
-      {/* Avatar */}
-      <div className="shrink-0">
-        {appt.venue.avatar ? (
-          <img
-            src={appt.venue.avatar}
-            alt={`${appt.venue.firstName} ${appt.venue.lastName}`}
-            className="h-14 w-14 rounded-full object-cover"
-            onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }}
-          />
-        ) : (
-          <AvatarFallback name={`${appt.venue.firstName} ${appt.venue.lastName}`} />
-        )}
+      {/* Type Badge */}
+      <div className="mb-2">
+        <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-medium text-blue-700">
+          {getTypeLabel(appt.type)}
+        </span>
       </div>
 
-      {/* Name + venue info */}
-      <div className="min-w-[180px] shrink-0">
-        {/* Venue Name - hidden on mobile, shown on desktop */}
-        <div className="hidden sm:flex items-center gap-2 mb-1">
-          <Building2 className="h-4 w-4 text-[#004A96]" />
-          <p className="font-semibold text-slate-900">{appt.venue.venueName || `${appt.venue.firstName} ${appt.venue.lastName}`}</p>
-        </div>
-        <p className="font-bold text-slate-900 text-base leading-tight">{appt.title}</p>
-        <p className="text-xs text-slate-500 mt-0.5">
-          with {appt.venue.firstName} {appt.venue.lastName}
-        </p>
-        {appt.requesterCompany && (
-          <p className="text-xs text-slate-400 mt-1">{appt.requesterCompany}</p>
-        )}
-        <div className="mt-1.5 flex flex-wrap gap-1">
-          <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-2 py-0.5 text-[10px] font-medium text-slate-600">
-            {getTypeLabel(appt.type)}
-          </span>
-          <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-2 py-0.5 text-[10px] font-medium text-slate-600">
-            {appt.meetingType === "IN_PERSON" ? "In Person" : appt.meetingType === "VIRTUAL" ? "Virtual" : "Phone"}
-          </span>
-        </div>
-      </div>
-
-      {/* Date/time */}
-      <div className="flex items-start gap-2 text-sm text-slate-600 min-w-[130px]">
-        <CalendarDays className="h-4 w-4 mt-0.5 shrink-0 text-slate-400" />
+      {/* Date & Time */}
+      <div className="flex items-center gap-2 text-sm text-slate-600 mb-2">
+        <CalendarDays className="h-3.5 w-3.5 shrink-0 text-slate-400" />
         <div>
-          <p className="font-medium text-slate-800">{date}</p>
+          <p className="font-medium text-slate-800 text-xs">{date}</p>
           <p className="text-xs text-slate-500">{time}</p>
         </div>
       </div>
 
-      {/* Duration & Location */}
-      <div className="flex items-start gap-2 text-sm text-slate-600 flex-1 min-w-[140px]">
-        <MapPin className="h-4 w-4 mt-0.5 shrink-0 text-red-400" />
-        <div>
-          <p className="font-medium text-slate-800">{locationDisplay}</p>
-          <p className="text-xs text-slate-500">{appt.duration} minutes</p>
-        </div>
+      {/* Duration */}
+      <div className="flex items-center gap-2 text-sm text-slate-600 mb-2">
+        <Clock className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+        <p className="text-xs text-slate-500">{appt.duration} minutes</p>
+      </div>
+
+      {/* Location */}
+      <div className="flex items-start gap-2 text-sm text-slate-600 mb-3">
+        <MapPin className="h-3.5 w-3.5 mt-0.5 shrink-0 text-red-400" />
+        <p className="text-xs text-slate-500 line-clamp-2">{locationDisplay}</p>
+      </div>
+
+      {/* Status Badge */}
+      <div className="mb-3">
+        <span className={cn(
+          "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium",
+          appt.status === "PENDING" && "bg-amber-50 text-amber-600",
+          appt.status === "CONFIRMED" && "bg-emerald-50 text-emerald-600",
+          appt.status === "CANCELLED" && "bg-red-50 text-red-600",
+          appt.status === "COMPLETED" && "bg-gray-50 text-gray-600"
+        )}>
+          {appt.status}
+        </span>
       </div>
 
       {/* Actions */}
-      <div className="flex flex-col gap-1.5 ml-auto shrink-0 min-w-[130px]">
+      <div className="flex flex-col gap-2 mt-auto pt-3 border-t border-slate-100">
         <Button
           variant="outline"
           size="sm"
@@ -283,38 +279,56 @@ function AppointmentCard({
   )
 }
 
-function SectionBlock({
-  status,
+// Venue Section Component
+function VenueSection({
+  venueId,
+  venueName,
+  venueFirstName,
+  venueLastName,
+  venueAvatar,
   appointments,
   onCancel,
   onViewDetails,
 }: {
-  status: keyof typeof STATUS_CONFIG
+  venueId: string
+  venueName: string
+  venueFirstName: string
+  venueLastName: string
+  venueAvatar?: string
   appointments: Appointment[]
   onCancel?: (id: string) => void
   onViewDetails: (appt: Appointment) => void
 }) {
-  const cfg = STATUS_CONFIG[status]
-  const Icon = cfg.sectionIcon
-
-  if (appointments.length === 0) return null
+  const displayName = venueName || `${venueFirstName} ${venueLastName}`
 
   return (
-    <div>
-      <div className="flex items-center gap-2 mb-3">
-        <Icon className={cn("h-5 w-5", cfg.sectionIconColor)} />
-        <h3 className="text-base font-bold text-slate-800">{cfg.sectionTitle}</h3>
-        <span className={cn("rounded-full border px-2 py-0.5 text-xs font-bold", cfg.pill)}>
-          {appointments.length}
-        </span>
+    <div className="mb-8">
+      {/* Venue Header */}
+      <div className="flex items-center gap-3 mb-4 pb-2 border-b border-slate-200">
+        {venueAvatar ? (
+          <img
+            src={venueAvatar}
+            alt={displayName}
+            className="h-10 w-10 rounded-full object-cover"
+          />
+        ) : (
+          <AvatarFallback name={displayName} size="sm" />
+        )}
+        <div>
+          <h3 className="text-lg font-semibold text-slate-800">{displayName}</h3>
+          <p className="text-xs text-slate-500">
+            {appointments.length} {appointments.length === 1 ? "meeting" : "meetings"}
+          </p>
+        </div>
       </div>
 
-      <div className="space-y-3">
+      {/* Cards Grid - 4 columns */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {appointments.map((appt) => (
-          <AppointmentCard
+          <CompactAppointmentCard
             key={appt.id}
             appt={appt}
-            onCancel={status === "PENDING" || status === "CONFIRMED" ? onCancel : undefined}
+            onCancel={onCancel}
             onViewDetails={onViewDetails}
           />
         ))}
@@ -348,7 +362,6 @@ export function MyAppointments({ userId }: MyAppointmentsProps) {
       }
 
       const result = await response.json()
-      console.log("Appointments data:", result.data) // Debug log
       setAppointments(result.data || [])
     } catch (err) {
       console.error("Error fetching appointments:", err)
@@ -386,21 +399,59 @@ export function MyAppointments({ userId }: MyAppointmentsProps) {
     completed: appointments.filter((a) => a.status === "COMPLETED").length,
   }), [appointments])
 
-  const filtered = appointments.filter((a) => {
-    const q = searchTerm.toLowerCase()
-    const matchSearch = !q ||
-      (a.title || "").toLowerCase().includes(q) ||
-      (a.venue?.firstName || "").toLowerCase().includes(q) ||
-      (a.venue?.lastName || "").toLowerCase().includes(q) ||
-      (a.venue?.venueName || "").toLowerCase().includes(q) ||
-      (a.requesterCompany || "").toLowerCase().includes(q) ||
-      (a.purpose || "").toLowerCase().includes(q) ||
-      (a.location || "").toLowerCase().includes(q)
-    const matchStatus = statusFilter === "all" || a.status === statusFilter.toUpperCase()
-    return matchSearch && matchStatus
-  })
+  // Group appointments by venue
+  const groupedByVenue = useMemo(() => {
+    const groups = new Map<string, {
+      venueId: string
+      venueName: string
+      venueFirstName: string
+      venueLastName: string
+      venueAvatar?: string
+      appointments: Appointment[]
+    }>()
 
-  const byStatus = (s: Appointment["status"]) => filtered.filter((a) => a.status === s)
+    appointments.forEach((appt) => {
+      const venueId = appt.venueId
+      const displayName = appt.venue.venueName || `${appt.venue.firstName} ${appt.venue.lastName}`
+
+      if (!groups.has(venueId)) {
+        groups.set(venueId, {
+          venueId,
+          venueName: appt.venue.venueName || "",
+          venueFirstName: appt.venue.firstName,
+          venueLastName: appt.venue.lastName,
+          venueAvatar: appt.venue.avatar,
+          appointments: [],
+        })
+      }
+      groups.get(venueId)!.appointments.push(appt)
+    })
+
+    return Array.from(groups.values())
+  }, [appointments])
+
+  // Filter appointments based on search and status
+  const filteredGroups = useMemo(() => {
+    if (!searchTerm && statusFilter === "all") return groupedByVenue
+
+    return groupedByVenue
+      .map(group => ({
+        ...group,
+        appointments: group.appointments.filter((appt) => {
+          const q = searchTerm.toLowerCase()
+          const matchSearch = !q ||
+            (appt.title || "").toLowerCase().includes(q) ||
+            (appt.venue.venueName || "").toLowerCase().includes(q) ||
+            `${appt.venue.firstName} ${appt.venue.lastName}`.toLowerCase().includes(q) ||
+            (appt.requesterCompany || "").toLowerCase().includes(q) ||
+            (appt.purpose || "").toLowerCase().includes(q) ||
+            (appt.location || "").toLowerCase().includes(q)
+          const matchStatus = statusFilter === "all" || appt.status === statusFilter.toUpperCase()
+          return matchSearch && matchStatus
+        })
+      }))
+      .filter(group => group.appointments.length > 0)
+  }, [groupedByVenue, searchTerm, statusFilter])
 
   // Calendar
   const startOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1)
@@ -516,19 +567,19 @@ export function MyAppointments({ userId }: MyAppointmentsProps) {
         </div>
       ) : view === "list" ? (
         <div className="space-y-8">
-          {(["PENDING", "CONFIRMED", "COMPLETED", "CANCELLED"] as const).map((status) => {
-            const statusAppointments = byStatus(status)
-            if (statusAppointments.length === 0) return null
-            return (
-              <SectionBlock
-                key={status}
-                status={status}
-                appointments={statusAppointments}
-                onCancel={cancelAppointment}
-                onViewDetails={(appt) => { setSelectedAppointment(appt); setDetailsOpen(true) }}
-              />
-            )
-          })}
+          {filteredGroups.map((group) => (
+            <VenueSection
+              key={group.venueId}
+              venueId={group.venueId}
+              venueName={group.venueName}
+              venueFirstName={group.venueFirstName}
+              venueLastName={group.venueLastName}
+              venueAvatar={group.venueAvatar}
+              appointments={group.appointments}
+              onCancel={cancelAppointment}
+              onViewDetails={(appt) => { setSelectedAppointment(appt); setDetailsOpen(true) }}
+            />
+          ))}
         </div>
       ) : (
         /* Calendar View */
@@ -581,7 +632,7 @@ export function MyAppointments({ userId }: MyAppointmentsProps) {
         </div>
       )}
 
-      {/* Detail Dialog */}
+      {/* Detail Dialog - Same as before */}
       <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
