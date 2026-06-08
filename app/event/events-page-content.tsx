@@ -73,6 +73,8 @@ export default function EventsPageContent({
   const [searchQuery, setSearchQuery] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
   const [selectedDateRange, setSelectedDateRange] = useState("")
+  const [customFromDate, setCustomFromDate] = useState("")
+  const [customToDate, setCustomToDate] = useState("")
   const [priceRange, setPriceRange] = useState("")
   const [rating, setRating] = useState("")
 
