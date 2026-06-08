@@ -414,7 +414,7 @@ export default function VenueDashboardPage({ routeSegment }: UserDashboardProps)
         <div className="border-t border-slate-200 p-3">
           <button
             onClick={() => logout()}
-            className="flex items-center gap-3 w-full rounded-xl px-3 py-2.5 text-sm font-medium text-[#EF4444] hover:bg-[#FEF2F2] transition-colors"
+            className="flex items-center gap-3 w-full rounded-xl px-3 py-2.5 text-sm font-medium text-[#EF4444] hover:bg-[#FEF2F2] transition-colors bg-red-500 border border-red-200 hover:border-red-300 hover:text-red-800 text-white items-center justify-center"
           >
             <LogOut className="w-4 h-4" />
             Logout

@@ -108,7 +108,7 @@ const VISITOR_SIDEBAR_GROUPS: { id: string; label: string; items: SidebarNavItem
 ]
 
 const VISITOR_INDIVIDUAL_ITEMS: SidebarNavItem[] = [
-  { id: "recommended-events", title: "Recommendations", icon: TrendingUp },
+  // { id: "recommended-events", title: "Recommendations", icon: TrendingUp },
   { id: "upgrade-plan", title: "Upgrade Plan", icon: Crown },
   { id: "Help & Support", title: "Help & Support", icon: Headphones },
   { id: "settings", title: "Settings", icon: Settings },
@@ -299,8 +299,8 @@ export function UserDashboard({ userId }: UserDashboardProps) {
         return <Favourites />
       // case "recommended-events":
       //   return <RecommendedEvents userId={resolvedUserId} interests={userInterests} />
-      case "Suggested":
-        return <Recommendations />
+      // case "Suggested":
+      //   return <Recommendations />
       case "connections":
         return <ConnectionsSection userId={resolvedUserId} />
       case "messages":
@@ -503,11 +503,7 @@ export function UserDashboard({ userId }: UserDashboardProps) {
         </div>
 
         <main className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden p-0">
-          {showShellHeader && (
-            <p className="border-b border-slate-100 px-6 py-4 text-xl font-bold text-[#004A96] md:text-2xl">
-              {visitorGreeting()}, {displayName || "there"}!
-            </p>
-          )}
+          {/* Removed the greeting header */}
 
           {!loading && !error && userData && activeSection === "dashboard" && (
             <DashboardManagedBanner page="visitor-dashboard" className="w-full" />

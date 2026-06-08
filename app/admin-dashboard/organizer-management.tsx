@@ -1002,7 +1002,7 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <div>
+                {/* <div>
                   <label className="text-xs text-gray-500">First Name</label>
                   <input value={editingOrganizer.firstName} onChange={(e) => handleEditField("firstName", e.target.value)} className="w-full mt-1 px-3 py-2 text-sm border border-gray-200 rounded-lg" />
                 </div>
@@ -1021,7 +1021,7 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
                 <div>
                   <label className="text-xs text-gray-500">Organization Name</label>
                   <input value={editingOrganizer.organizationName} onChange={(e) => handleEditField("organizationName", e.target.value)} className="w-full mt-1 px-3 py-2 text-sm border border-gray-200 rounded-lg" />
-                </div>
+                </div> */}
                 <div>
                   <label className="text-xs text-gray-500">Company</label>
                   <input value={editingOrganizer.company} onChange={(e) => handleEditField("company", e.target.value)} className="w-full mt-1 px-3 py-2 text-sm border border-gray-200 rounded-lg" />

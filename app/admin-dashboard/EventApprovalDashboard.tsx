@@ -588,7 +588,7 @@ export default function EventApprovalDashboard() {
 
                       <td style={{ paddingTop: "14px", paddingBottom: "14px", paddingRight: "20px", textAlign: "right" }}>
                         <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "6px" }}>
-                          <button
+                          {/* <button
                             onClick={() => handleViewEvent(event.id)}
                             title="View Details"
                             style={{
@@ -598,7 +598,7 @@ export default function EventApprovalDashboard() {
                             }}
                           >
                             <Eye size={14} />
-                          </button>
+                          </button> */}
 
                           {activeTab === "pending" && (
                             <>

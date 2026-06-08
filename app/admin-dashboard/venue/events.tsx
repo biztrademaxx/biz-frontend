@@ -141,7 +141,6 @@ export default function VenuesEventsPage() {
     totalVenues: venueEvents.length,
     totalEvents: venueEvents.reduce((sum, v) => sum + v.totalEvents, 0),
     activeEvents: venueEvents.reduce((sum, v) => sum + v.activeEvents, 0),
-    totalRevenue: venueEvents.reduce((sum, v) => sum + v.totalRevenue, 0),
   }
 
   if (loading) {
@@ -162,7 +161,7 @@ export default function VenuesEventsPage() {
         <p className="text-gray-600 mt-2">Manage and view all events organized by venues</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">Total Venues</CardTitle>
@@ -190,18 +189,6 @@ export default function VenuesEventsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">{totalStats.activeEvents}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Total Revenue</CardTitle>
-            <TrendingUp className="w-4 h-4 text-blue-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">
-              ${totalStats.totalRevenue.toLocaleString()}
-            </div>
           </CardContent>
         </Card>
       </div>
@@ -245,7 +232,6 @@ export default function VenuesEventsPage() {
                   <TableHead>Active</TableHead>
                   <TableHead>Upcoming</TableHead>
                   <TableHead>Completed</TableHead>
-                  <TableHead>Revenue</TableHead>
                   <TableHead>Rating</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
@@ -253,7 +239,7 @@ export default function VenuesEventsPage() {
               <TableBody>
                 {filteredData.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={9} className="text-center py-8 text-gray-500">
+                    <TableCell colSpan={8} className="text-center py-8 text-gray-500">
                       No venue events found
                     </TableCell>
                   </TableRow>
@@ -283,9 +269,6 @@ export default function VenuesEventsPage() {
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline">{venue.completedEvents}</Badge>
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        ${venue.totalRevenue.toLocaleString()}
                       </TableCell>
                       <TableCell>
                         {(() => {
@@ -347,12 +330,6 @@ export default function VenuesEventsPage() {
                 <div>
                   <p className="text-sm text-gray-600">Location</p>
                   <p className="font-medium">{selectedVenue.venueCity || "N/A"}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Total Revenue</p>
-                  <p className="font-medium text-blue-600">
-                    ${selectedVenue.totalRevenue.toLocaleString()}
-                  </p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Average Rating</p>
