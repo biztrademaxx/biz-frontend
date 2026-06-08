@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Search, Users, UserPlus, UserCheck, UserX, Send, Inbox } from "lucide-react"
 import { apiFetch, getCurrentUserId } from "@/lib/api"
 import { cn } from "@/lib/utils"
+import { formatCityCountryLine } from "@/lib/location-data"
 import { exGlassCard, exGlassInset, exBtnPrimary } from "@/app/exhibitor-dashboard/dashboard-theme"
 
 interface Connection {
@@ -369,6 +370,9 @@ export function ConnectionsSection({ userId: _userId, surface = "default" }: Con
                             )}
                             {c.jobTitle && (
                               <p className="text-xs text-gray-400 truncate">{c.jobTitle}</p>
+                            )}
+                            {formatCityCountryLine(c) && (
+                              <p className="text-xs text-gray-400 truncate">{formatCityCountryLine(c)}</p>
                             )}
                           </div>
                           <div className="flex justify-center sm:justify-end gap-2 shrink-0">

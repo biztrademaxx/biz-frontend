@@ -31,6 +31,7 @@ import {
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
+import { formatCityCountryLine } from "@/lib/location-data"
 
 interface Appointment {
   id: string
@@ -55,6 +56,9 @@ interface Appointment {
   eventDate?: string
   meetingSpacesInterested: string[]
   location?: string
+  city?: string
+  country?: string
+  locationDisplay?: string
   agenda: string[]
   reminderSent: boolean
   followUpRequired: boolean
@@ -148,20 +152,9 @@ function formatDateTime(dateStr?: string) {
   }
 }
 
-// Extract city and country from location string
-function getLocationCityCountry(locationStr?: string): string {
-  if (!locationStr) return "Location TBD"
-
-  // If location is like "East Godavari, Andhra Pradesh, India" - extract city and country
-  const parts = locationStr.split(',').map(p => p.trim())
-  if (parts.length >= 3) {
-    // Return city and country (first and last parts)
-    return `${parts[0]}, ${parts[parts.length - 1]}`
-  }
-  if (parts.length === 2) {
-    return locationStr
-  }
-  return locationStr
+function getAppointmentLocationDisplay(appt: Pick<Appointment, "location" | "city" | "country" | "locationDisplay">): string {
+  const display = formatCityCountryLine(appt)
+  return display || "Location TBD"
 }
 
 function AvatarFallback({ name, size = "lg" }: { name: string; size?: "sm" | "lg" }) {
@@ -186,7 +179,7 @@ function AppointmentCard({
   onViewDetails: (appt: Appointment) => void
 }) {
   const { date, time } = formatDateTime(appt.requestedDate)
-  const locationDisplay = getLocationCityCountry(appt.location)
+  const locationDisplay = getAppointmentLocationDisplay(appt)
   const getTypeLabel = (type: string) => {
     switch (type) {
       case "VENUE_TOUR": return "Venue Tour"
@@ -596,7 +589,7 @@ export function MyAppointments({ userId }: MyAppointmentsProps) {
           </DialogHeader>
           {selectedAppointment && (() => {
             const { date, time } = formatDateTime(selectedAppointment.requestedDate)
-            const locationDisplay = getLocationCityCountry(selectedAppointment.location)
+            const locationDisplay = getAppointmentLocationDisplay(selectedAppointment)
             const getTypeLabel = (type: string) => {
               switch (type) {
                 case "VENUE_TOUR": return "Venue Tour"

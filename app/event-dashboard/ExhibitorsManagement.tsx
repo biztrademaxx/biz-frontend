@@ -13,6 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Search, Download, Mail, Phone, MoreHorizontal, Users, Calendar, DollarSign, Eye, Briefcase } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { formatCityCountryLine } from "@/lib/location-data"
 
 interface Exhibitor {
   id: string
@@ -23,6 +24,9 @@ interface Exhibitor {
   company?: string
   jobTitle?: string
   avatar?: string
+  locationDisplay?: string
+  city?: string
+  country?: string
   event: {
     id: string
     title: string
@@ -92,6 +96,11 @@ export default function ExhibitorManagement({ eventId }: ExhibitorManagementProp
             company: user.company || "No company",
             jobTitle: user.jobTitle || "",
             avatar: user.avatar,
+            locationDisplay: user.locationDisplay,
+            city: user.city,
+            country: user.country,
+            profileCity: user.profileCity,
+            profileCountry: user.profileCountry,
             event: {
               id: event.id || eventId,
               title: event.title || "Event",
@@ -310,6 +319,7 @@ export default function ExhibitorManagement({ eventId }: ExhibitorManagementProp
                 <TableHead>Contact</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Company</TableHead>
+                <TableHead>Location</TableHead>
                 <TableHead>Registered</TableHead>
                 {/* <TableHead>Actions</TableHead> */}
               </TableRow>
@@ -347,6 +357,9 @@ export default function ExhibitorManagement({ eventId }: ExhibitorManagementProp
                   </TableCell>
                   <TableCell>
                     <p className="text-sm">{exhibitor.company || "N/A"}</p>
+                  </TableCell>
+                  <TableCell>
+                    <p className="text-sm">{formatCityCountryLine(exhibitor) || "—"}</p>
                   </TableCell>
                   <TableCell>
                     <p className="text-sm">{new Date(exhibitor.registration.registeredAt).toLocaleDateString()}</p>

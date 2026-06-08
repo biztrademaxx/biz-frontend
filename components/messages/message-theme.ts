@@ -1,27 +1,30 @@
-export type MessageSurface = "default" | "exhibitor" | "visitor" | "venue"
+export type MessageSurface = "default" | "exhibitor" | "visitor" | "venue" | "organizer"
+
+const blueMessageTheme = {
+  shell: "border-slate-200/80 bg-white shadow-[0_8px_32px_rgba(0,74,150,0.08)]",
+  sidebar: "border-slate-100 bg-slate-50/80",
+  panel: "border-slate-100 bg-white",
+  chatBg: "bg-[linear-gradient(180deg,rgba(0,74,150,0.03)_0%,#f8fafc_40%)]",
+  accentText: "text-[#004A96]",
+  accentIcon: "bg-gradient-to-br from-[#004A96] to-[#0066cc] text-white shadow-md shadow-blue-900/20",
+  activeConv: "bg-blue-50 ring-1 ring-blue-200/80",
+  activeBorder: "border-[#004A96]",
+  sentBubble: "bg-gradient-to-br from-[#004A96] to-[#0066cc] text-white shadow-md shadow-blue-900/15",
+  receivedBubble: "bg-white text-slate-800 ring-1 ring-slate-200/90 shadow-sm",
+  unreadBadge: "bg-[#FF131C]",
+  btnPrimary: "bg-[#004A96] text-white hover:bg-[#003d7a] shadow-md shadow-blue-900/15",
+  composer: "border-slate-100 bg-white",
+  emptyBg: "bg-slate-50/60",
+  hoverRow: "hover:bg-slate-100/90",
+} as const
 
 export function getMessageTheme(surface: MessageSurface) {
   switch (surface) {
     case "exhibitor":
     case "visitor":
     case "venue":
-      return {
-        shell: "border-slate-200/80 bg-white shadow-[0_8px_32px_rgba(0,74,150,0.08)]",
-        sidebar: "border-slate-100 bg-slate-50/80",
-        panel: "border-slate-100 bg-white",
-        chatBg: "bg-[linear-gradient(180deg,rgba(0,74,150,0.03)_0%,#f8fafc_40%)]",
-        accentText: "text-[#004A96]",
-        accentIcon: "bg-gradient-to-br from-[#004A96] to-[#0066cc] text-white shadow-md shadow-blue-900/20",
-        activeConv: "bg-blue-50 ring-1 ring-blue-200/80",
-        activeBorder: "border-[#004A96]",
-        sentBubble: "bg-gradient-to-br from-[#004A96] to-[#0066cc] text-white shadow-md shadow-blue-900/15",
-        receivedBubble: "bg-white text-slate-800 ring-1 ring-slate-200/90 shadow-sm",
-        unreadBadge: "bg-[#FF131C]",
-        btnPrimary: "bg-[#004A96] text-white hover:bg-[#003d7a] shadow-md shadow-blue-900/15",
-        composer: "border-slate-100 bg-white",
-        emptyBg: "bg-slate-50/60",
-        hoverRow: "hover:bg-slate-100/90",
-      }
+    case "organizer":
+      return blueMessageTheme
     default:
       return {
         shell: "border-border bg-card shadow-lg shadow-slate-200/50 dark:shadow-none",
@@ -48,13 +51,13 @@ export function roleBadgeClass(role: string, surface: MessageSurface): string {
   const base = "border-0 font-medium capitalize"
   switch (r) {
     case "organizer":
-      return surface === "visitor" || surface === "venue"
+      return surface === "visitor" || surface === "venue" || surface === "organizer"
         ? `${base} bg-blue-100 text-blue-800`
         : `${base} bg-violet-100 text-violet-800 dark:bg-violet-950/60 dark:text-violet-200`
     case "speaker":
       return `${base} bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200`
     case "exhibitor":
-      return surface === "exhibitor" || surface === "visitor" || surface === "venue"
+      return surface === "exhibitor" || surface === "visitor" || surface === "venue" || surface === "organizer"
         ? `${base} bg-blue-100 text-blue-800`
         : `${base} bg-purple-100 text-purple-800 dark:bg-purple-950/50 dark:text-purple-200`
     case "venue_manager":

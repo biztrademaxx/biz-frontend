@@ -15,6 +15,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { BadgeGeneratorDialog } from "./badge-generator-dialog"
 import { BulkBadgeSenderDialog } from "./bulk-badge-sender-dialog"
 import { ScannerDialog } from "./scanner-dialog"
+import { formatCityCountryLine } from "@/lib/location-data"
 
 interface Attendee {
   id: string
@@ -25,6 +26,9 @@ interface Attendee {
   company?: string
   jobTitle?: string
   avatar?: string
+  locationDisplay?: string
+  city?: string
+  country?: string
   event: {
     id: string
     title: string
@@ -77,6 +81,11 @@ export default function AttendeesManagement({ eventId }: AttendeesManagementProp
           company: lead.user.company,
           jobTitle: lead.user.jobTitle,
           avatar: lead.user.avatar,
+          locationDisplay: lead.user.locationDisplay,
+          city: lead.user.city,
+          country: lead.user.country,
+          profileCity: lead.user.profileCity,
+          profileCountry: lead.user.profileCountry,
           event: {
             id: lead.event.id,
             title: lead.event.title,
@@ -399,6 +408,9 @@ export default function AttendeesManagement({ eventId }: AttendeesManagementProp
                   </TableCell>
                   <TableCell>
                     <p className="text-sm">{attendee.company || "N/A"}</p>
+                  </TableCell>
+                  <TableCell>
+                    <p className="text-sm">{formatCityCountryLine(attendee) || "—"}</p>
                   </TableCell>
                   <TableCell>
                     <p className="text-sm">{new Date(attendee.registration.registeredAt).toLocaleDateString()}</p>

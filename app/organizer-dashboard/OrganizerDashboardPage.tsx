@@ -418,7 +418,7 @@ export default function OrganizerDashboardSimplified({ organizerId }: OrganizerD
       case "connect":
         return <ConnectionsSection userId={organizerData.id} />
       case "messages":
-        return <MessagesCenter organizerId={organizerData.id} />
+        return <MessagesCenter organizerId={organizerData.id} surface="organizer" />
       case "feed-back":
         return <FeedbackSection organizerId={organizerData.id} />
       case "subscription-plans":

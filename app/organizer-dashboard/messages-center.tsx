@@ -71,7 +71,7 @@ interface Conversation {
 
 interface MessagesCenterProps {
   organizerId: string
-  /** Brand accents: exhibitor (violet glass), visitor/venue (blue), default (violet). */
+  /** Brand accents: organizer/visitor/venue/exhibitor (blue), default (violet). */
   surface?: MessageSurface
 }
 

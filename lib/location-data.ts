@@ -40,6 +40,31 @@ export function getCityOptions(countryCode: string, stateCode: string): CityOpti
     .sort((a, b) => a.name.localeCompare(b.name))
 }
 
+/** City and country only (e.g. connection cards, event tables). */
+export function formatCityCountryLine(input: {
+  city?: string | null
+  country?: string | null
+  locationDisplay?: string | null
+  profileCity?: string | null
+  profileCountry?: string | null
+  location?: string | null
+} | null | undefined): string {
+  if (!input) return ""
+  const fromApi = String(input.locationDisplay ?? "").trim()
+  if (fromApi) return fromApi
+  const city = String(input.city ?? input.profileCity ?? "").trim()
+  const country = String(input.country ?? input.profileCountry ?? "").trim()
+  const fromParts = [city, country].filter(Boolean).join(", ")
+  if (fromParts) return fromParts
+  const raw = String(input.location ?? "").trim()
+  if (!raw) return ""
+  const segments = raw.split(",").map((s) => s.trim()).filter(Boolean)
+  if (segments.length >= 2) {
+    return [segments[0], segments[segments.length - 1]].filter(Boolean).join(", ")
+  }
+  return raw
+}
+
 /** Profile / speaker / visitor location line. */
 export function formatProfileLocationLine(user: {
   profileCity?: string | null
