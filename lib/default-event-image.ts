@@ -36,6 +36,7 @@ function firstCleanUrl(raw: unknown): string | undefined {
 export function getEventDisplayImageUrl(event: {
   thumbnailImage?: string | null
   bannerImage?: string | null
+  vipImage?: string | null
   image?: string | null
   images?: unknown
 }): string {
@@ -44,6 +45,9 @@ export function getEventDisplayImageUrl(event: {
 
   const banner = firstCleanUrl(event.bannerImage)
   if (banner) return banner
+
+  const vip = firstCleanUrl(event.vipImage)
+  if (vip) return vip
 
   const single = firstCleanUrl(event.image)
   if (single) return single
@@ -68,6 +72,7 @@ export function getEventDisplayImageFromRecord(event: Record<string, unknown>): 
   return getEventDisplayImageUrl({
     thumbnailImage: event.thumbnailImage,
     bannerImage: event.bannerImage,
+    vipImage: event.vipImage,
     image: event.image,
     images: event.images,
   })

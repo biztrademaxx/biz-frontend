@@ -27,6 +27,7 @@ import {
   type EditEventCategory,
   type EditEventRecord,
   fileToBase64,
+  mapPatchedEventToEditRecord,
   normalizeEventCategoryNames,
   scalarEventType,
   slugifyTitle,
@@ -203,12 +204,15 @@ export function EditEventForm({ event, onSave, onCancel, categories }: EditEvent
         youtubeVideoUrl: values.youtubeVideoUrl?.trim() ? values.youtubeVideoUrl.trim() : null,
       }
 
-      const result = await apiFetch<{ event?: EditEventRecord; data?: EditEventRecord }>(
+      const result = await apiFetch<{ event?: Record<string, unknown>; data?: Record<string, unknown> }>(
         `/api/admin/events/${event.id}`,
         { method: "PATCH", body: updateData, auth: true },
       )
-      const savedEvent = result.event ?? result.data
-      if (savedEvent) {
+      const savedRaw = result.event ?? result.data
+      if (savedRaw && typeof savedRaw === "object") {
+        const savedEvent = mapPatchedEventToEditRecord(savedRaw, event)
+        setVipImageFile(null)
+        form.setValue("vipImage", savedEvent.vipImage || "")
         onSave(savedEvent)
       } else {
         throw new Error("No event data returned from server")
@@ -755,7 +759,7 @@ export function EditEventForm({ event, onSave, onCancel, categories }: EditEvent
                             <div className="min-w-0 flex-1">
                               <AdminEventFileUpload
                                 label="Upload VIP Image"
-                                accept="image/*"
+                                accept="image/jpeg,image/jpg,image/png,image/webp,image/gif,image/avif,image/svg+xml,.jpg,.jpeg,.png,.webp,.gif,.avif,.svg"
                                 error={form.formState.errors.vipImage?.message}
                                 onFileUpload={(files) => {
                                   const f = files[0]

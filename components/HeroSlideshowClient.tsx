@@ -247,7 +247,7 @@ import { eventPublicPath } from "@/lib/event-path"
 import HomeSectionEmptyState, { homeEmptyDescription } from "@/components/home/HomeSectionEmptyState"
 import { hasDisplayableEventImage } from "@/lib/event-card-meta"
 import type { HeroSlideshowEvent } from "@/lib/hero/types"
-import { getHeroFeaturedImageUrl, getHeroPreviewImageUrl } from "@/lib/hero/hero-featured-image"
+import { getHeroFeaturedImageUrl } from "@/lib/hero/hero-featured-image"
 import { AppImage } from "@/components/app-image"
 
 export type Event = HeroSlideshowEvent
@@ -263,16 +263,6 @@ function heroDateParts(startIso: string, endIso?: string | null) {
     dayRange: e ? `${s} - ${e}` : `${s}`,
     monthYear: `${mon} ${start.getFullYear()}`,
   }
-}
-
-function shortDate(startIso: string, endIso?: string | null) {
-  const start = new Date(startIso)
-  const end = endIso ? new Date(endIso) : null
-  if (Number.isNaN(start.getTime())) return ""
-  const s = start.getDate()
-  const e = end && !Number.isNaN(end.getTime()) ? end.getDate() : null
-  const mon = start.toLocaleString("en-GB", { month: "short" })
-  return e ? `${s}-${e} ${mon} ${start.getFullYear()}` : `${s} ${mon} ${start.getFullYear()}`
 }
 
 function locationLine(event: Event) {
@@ -334,7 +324,6 @@ export default function HeroSlideshowClient({
   const { dayRange, monthYear } = heroDateParts(featured.startDate, featured.endDate)
   const loc = locationLine(featured)
   const featuredImageUrl = getHeroFeaturedImageUrl(featured)
-  const previews = [1, 2, 3].map((o) => events[(activeIdx + o) % events.length])
 
   return (
     <section
@@ -511,46 +500,6 @@ export default function HeroSlideshowClient({
                     }`}
                 />
               ))}
-            </div>
-
-            {/* Bottom 3 preview cards — shown on mobile too (2 cols), 3 cols on md+ */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 lg:gap-6 mt-1 lg:mt-2 w-full pb-2">
-              {previews.slice(0, 3).map((event, i) => {
-                const pImg = getHeroPreviewImageUrl(event)
-                const pDate = shortDate(event.startDate, event.endDate)
-                return (
-                  <Link
-                    key={`${event.id}-${i}`}
-                    href={eventPublicPath(event)}
-                    className={`flex items-center gap-2.5 sm:gap-3 group ${
-                      // Hide 3rd card on mobile (2-col grid) so it doesn't orphan
-                      i === 2 ? "hidden sm:flex" : ""
-                      }`}
-                  >
-                    <div className="relative w-[56px] h-[56px] sm:w-[64px] sm:h-[64px] rounded-sm overflow-hidden flex-shrink-0 bg-gray-100 shadow-sm">
-                      {pImg ? (
-                        <AppImage
-                          src={pImg}
-                          alt={event.title}
-                          fill
-                          sizes="56px"
-                          className="object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                      ) : (
-                        <div className="absolute inset-0 bg-gradient-to-br from-blue-300 to-blue-500 flex items-center justify-center">
-                          <CalendarDays className="h-5 w-5 text-white" />
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[0.76rem] sm:text-[0.82rem] font-bold text-gray-900 leading-tight line-clamp-2 group-hover:text-blue-600 transition-colors">
-                        {event.title}
-                      </p>
-                      <p className="text-[0.72rem] sm:text-[0.8rem] text-gray-500 mt-0.5">{pDate}</p>
-                    </div>
-                  </Link>
-                )
-              })}
             </div>
 
           </div>

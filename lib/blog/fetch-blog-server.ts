@@ -21,22 +21,32 @@ export type PublicBlogPost = PublicBlogListItem & {
 }
 
 export async function fetchPublishedBlogs(): Promise<PublicBlogListItem[]> {
-  const res = await fetch(`${apiBase()}/api/content/blog`, {
-    next: { revalidate: 60 },
-  })
-  if (!res.ok) return []
-  const json: { data?: PublicBlogListItem[] } = await res.json()
-  return Array.isArray(json.data) ? json.data : []
+  try {
+    const res = await fetch(`${apiBase()}/api/content/blog`, {
+      next: { revalidate: 60 },
+    })
+    if (!res.ok) return []
+    const json: { data?: PublicBlogListItem[] } = await res.json()
+    return Array.isArray(json.data) ? json.data : []
+  } catch (e) {
+    console.error("fetchPublishedBlogs:", e)
+    return []
+  }
 }
 
 export async function fetchPublishedBlogBySlug(slug: string): Promise<PublicBlogPost | null> {
   const s = encodeURIComponent(slug.trim())
   if (!s) return null
-  const res = await fetch(`${apiBase()}/api/content/blog/${s}`, {
-    next: { revalidate: 60 },
-  })
-  if (res.status === 404) return null
-  if (!res.ok) return null
-  const json: { data?: PublicBlogPost } = await res.json()
-  return json.data ?? null
+  try {
+    const res = await fetch(`${apiBase()}/api/content/blog/${s}`, {
+      next: { revalidate: 60 },
+    })
+    if (res.status === 404) return null
+    if (!res.ok) return null
+    const json: { data?: PublicBlogPost } = await res.json()
+    return json.data ?? null
+  } catch (e) {
+    console.error("fetchPublishedBlogBySlug:", e)
+    return null
+  }
 }

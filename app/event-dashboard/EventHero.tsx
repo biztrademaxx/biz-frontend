@@ -212,17 +212,8 @@ export default function EventHero({ event, onImagesUpdate, onScheduleUpdate }: E
     setIsUploading(true)
 
     try {
-      const formData = new FormData()
-      formData.append("file", file)
-
-      const uploadData = await apiFetch<{ url?: string }>("/api/upload/cloudinary", {
-        method: "POST",
-        body: formData,
-        auth: true,
-      })
-
-      const imageUrl = uploadData?.url
-      if (!imageUrl) throw new Error("No URL returned from upload")
+      const { uploadFileViaProxy } = await import("@/components/organizer-create-event/upload-backend")
+      const imageUrl = await uploadFileViaProxy(file, "image")
 
       const updatedImages = [...images, imageUrl]
 

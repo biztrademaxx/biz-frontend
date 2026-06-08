@@ -7,8 +7,13 @@ import { X, ShieldCheck } from "lucide-react"
 export type EventsListingActiveFilterBadgesProps = {
   selectedDate: Date | null
   onClearDate: () => void
+  selectedCountry?: string
+  onClearCountry?: () => void
   selectedLocation: string
   onClearLocation: () => void
+  customFromDate?: string
+  customToDate?: string
+  onClearCustomDateRange?: () => void
   selectedFormat: string
   onClearFormat: () => void
   selectedCategory: string
@@ -24,8 +29,13 @@ export type EventsListingActiveFilterBadgesProps = {
 export function EventsListingActiveFilterBadges({
   selectedDate,
   onClearDate,
+  selectedCountry,
+  onClearCountry,
   selectedLocation,
   onClearLocation,
+  customFromDate,
+  customToDate,
+  onClearCustomDateRange,
   selectedFormat,
   onClearFormat,
   selectedCategory,
@@ -45,10 +55,27 @@ export function EventsListingActiveFilterBadges({
           <X className="w-3 h-3 sm:w-4 sm:h-4 cursor-pointer ml-1" onClick={onClearDate} />
         </Badge>
       )}
+      {selectedCountry && (
+        <Badge variant="secondary" className="flex items-center gap-1 px-3 py-1 text-xs sm:text-sm font-medium">
+          <span className="font-bold">Country:</span> {selectedCountry}
+          <X className="w-3 h-3 sm:w-4 sm:h-4 cursor-pointer ml-1" onClick={onClearCountry} />
+        </Badge>
+      )}
       {selectedLocation && (
         <Badge variant="secondary" className="flex items-center gap-1 px-3 py-1 text-xs sm:text-sm font-medium">
           <span className="font-bold">Location:</span> {selectedLocation}
           <X className="w-3 h-3 sm:w-4 sm:h-4 cursor-pointer ml-1" onClick={onClearLocation} />
+        </Badge>
+      )}
+      {(customFromDate || customToDate) && (
+        <Badge variant="secondary" className="flex items-center gap-1 px-3 py-1 text-xs sm:text-sm font-medium">
+          <span className="font-bold">Dates:</span>{" "}
+          {customFromDate && customToDate
+            ? `${customFromDate} – ${customToDate}`
+            : customFromDate
+              ? `From ${customFromDate}`
+              : `Until ${customToDate}`}
+          <X className="w-3 h-3 sm:w-4 sm:h-4 cursor-pointer ml-1" onClick={onClearCustomDateRange} />
         </Badge>
       )}
       {selectedFormat !== "All Formats" && (

@@ -231,17 +231,8 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
       setUploadingAvatar(true)
       devLog("[v0] Uploading avatar to Cloudinary...")
 
-      const uploadFormData = new FormData()
-      uploadFormData.append("file", file)
-      uploadFormData.append("type", "image")
-
-      const uploadData = await apiFetch<{ url: string }>("/api/upload/cloudinary", {
-        method: "POST",
-        body: uploadFormData,
-        auth: true,
-      })
-
-      const avatarUrl = uploadData.url
+      const { uploadFileViaProxy } = await import("@/components/organizer-create-event/upload-backend")
+      const avatarUrl = await uploadFileViaProxy(file, "image")
       devLog("[v0] Avatar uploaded successfully:", avatarUrl)
 
       devLog("[v0] Updating user profile with new avatar...")

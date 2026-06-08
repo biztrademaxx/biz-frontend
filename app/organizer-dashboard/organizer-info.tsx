@@ -259,30 +259,17 @@ export default function OrganizerInfo({ organizerData: initialData, onOrganizerU
     try {
       setUploading(true)
 
-      // Upload to Cloudinary
-      const formData = new FormData()
-      formData.append("file", file)
-      formData.append("type", "image")
+      const { uploadFileViaProxy } = await import("@/components/organizer-create-event/upload-backend")
+      const avatarUrl = await uploadFileViaProxy(file, "image")
 
-      const uploadData = await apiFetch<{ success: boolean; url: string; publicId?: string }>(
-        "/api/upload/cloudinary",
-        {
-          method: "POST",
-          body: formData,
-          auth: true,
-        },
-      )
-
-      // Update local state with Cloudinary URL
       setOrganizerData((prev) => ({
         ...prev,
-        avatar: uploadData.url,
+        avatar: avatarUrl,
       }))
 
-      // Save to database via backend
       await apiFetch(`/api/organizers/${organizerData.id}`, {
         method: "PATCH",
-        body: { avatar: uploadData.url },
+        body: { avatar: avatarUrl },
         auth: true,
       })
 
@@ -290,7 +277,7 @@ export default function OrganizerInfo({ organizerData: initialData, onOrganizerU
       setShowImageUpload(false)
       onOrganizerUpdated?.({
         ...organizerData,
-        avatar: uploadData.url,
+        avatar: avatarUrl,
       })
     } catch (error: any) {
       console.error("Avatar upload error:", error)

@@ -250,6 +250,7 @@ export function EventRow({
               src={getEventDisplayImageUrl({
                 thumbnailImage: event.thumbnailImage,
                 bannerImage: event.bannerImage,
+                vipImage: event.vipImage,
                 images: event.images,
               })}
               alt={eventDisplayTitle}

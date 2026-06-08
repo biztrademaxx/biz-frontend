@@ -30,6 +30,10 @@ import {
   isEventInTab,
   isEventOnDate,
   isEventInDateRange,
+  isEventInCustomDateRange,
+  eventMatchesCountry,
+  eventMatchesCity,
+  eventMatchesSearchQuery,
 } from "@/components/events-page/listing-utils"
 import { EventsListingDesktopFiltersSidebar } from "@/components/events-page/EventsListingDesktopFiltersSidebar"
 import { EventsListingTabs } from "@/components/events-page/EventsListingTabs"
@@ -50,6 +54,7 @@ export default function EventsPageContent({
   const [activeTab, setActiveTab] = useState("All Events")
   const [selectedFormat, setSelectedFormat] = useState("All Formats")
   const [selectedLocation, setSelectedLocation] = useState("")
+  const [selectedCountry, setSelectedCountry] = useState("")
   const searchParams = useSearchParams()
   const categoryFromUrl = searchParams.get("category")
   const typeFromUrl = searchParams.get("type")
@@ -57,6 +62,8 @@ export default function EventsPageContent({
   const countryQ = searchParams.get("country")
   const venueQ = searchParams.get("venue")
   const searchQ = searchParams.get("search")
+  const fromQ = searchParams.get("from")
+  const toQ = searchParams.get("to")
   const [selectedCategory, setSelectedCategory] = useState(categoryFromUrl || "All Events")
 
   const [events, setEvents] = useState<Event[]>(() => initialEventsProp)
@@ -206,21 +213,24 @@ export default function EventsPageContent({
     }
     if (locationQ) {
       setSelectedLocation(locationQ)
-    }
-    if (countryQ) {
-      setSelectedLocation(countryQ)
-    }
-    if (venueQ) {
+    } else if (venueQ) {
       setSelectedLocation(venueQ)
+    } else {
+      setSelectedLocation("")
     }
+    setSelectedCountry(countryQ ?? "")
     if (searchQ) {
       setSearchQuery(searchQ)
+    } else {
+      setSearchQuery("")
     }
+    setCustomFromDate(fromQ ?? "")
+    setCustomToDate(toQ ?? "")
     const exploreKey = exploreKeyFromQueryParam(typeFromUrl)
     if (exploreKey) {
       setSelectedFormat(formatNameFromExploreKey(exploreKey))
     }
-  }, [categoryFromUrl, typeFromUrl, locationQ, countryQ, venueQ, searchQ])
+  }, [categoryFromUrl, typeFromUrl, locationQ, countryQ, venueQ, searchQ, fromQ, toQ])
 
   const handleVisitClick = async (eventId: string, eventTitle: string) => {
     if (!eventId) {
@@ -388,18 +398,8 @@ export default function EventsPageContent({
       filtered = filtered.filter((event) => isEventInDateRange(event, selectedDateRange))
     }
 
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase()
-      filtered = filtered.filter(
-        (event) =>
-          event.title.toLowerCase().includes(query) ||
-          event.description.toLowerCase().includes(query) ||
-          event.tags.some((tag) => tag.toLowerCase().includes(query)) ||
-          event.categories.some((cat) => cat.toLowerCase().includes(query)) ||
-          (event.venue?.venueCity?.toLowerCase() ?? "").includes(query) ||
-          (event.venue?.venueCountry?.toLowerCase() ?? "").includes(query) ||
-          (event.location?.city?.toLowerCase() ?? "").includes(query),
-      )
+    if (searchQuery.trim()) {
+      filtered = filtered.filter((event) => eventMatchesSearchQuery(event, searchQuery))
     }
 
     if (selectedCategories.length > 0) {
@@ -419,20 +419,18 @@ export default function EventsPageContent({
       filtered = filtered.filter((event) => event.categories.some((cat) => relatedCats.includes(cat)))
     }
 
-    if (selectedLocation) {
-      filtered = filtered.filter((event) => {
-        const searchTerm = selectedLocation.toLowerCase()
-        const venueCity = event.venue?.venueCity?.toLowerCase() || ""
-        const venueCountry = event.venue?.venueCountry?.toLowerCase() || ""
-        const eventCity = event.location?.city?.toLowerCase() || ""
-        const eventAddress = event.location?.address?.toLowerCase() || ""
-        return (
-          venueCity.includes(searchTerm) ||
-          venueCountry.includes(searchTerm) ||
-          eventCity.includes(searchTerm) ||
-          eventAddress.includes(searchTerm)
-        )
-      })
+    if (selectedCountry.trim()) {
+      filtered = filtered.filter((event) => eventMatchesCountry(event, selectedCountry))
+    }
+
+    if (selectedLocation.trim()) {
+      filtered = filtered.filter((event) => eventMatchesCity(event, selectedLocation))
+    }
+
+    if (customFromDate || customToDate) {
+      filtered = filtered.filter((event) =>
+        isEventInCustomDateRange(event, customFromDate || undefined, customToDate || undefined),
+      )
     }
 
     if (selectedFormat && selectedFormat !== "All Formats") {
@@ -481,10 +479,13 @@ export default function EventsPageContent({
     selectedCategory,
     selectedCategories,
     selectedRelatedTopics,
+    selectedCountry,
     selectedLocation,
     selectedFormat,
     priceRange,
     rating,
+    customFromDate,
+    customToDate,
   ])
 
   const categoryBannerImageUrl = useMemo(() => {
@@ -523,20 +524,33 @@ export default function EventsPageContent({
   }, [categoryBannerImageUrl])
 
   const getBannerTitle = () => {
+    if (searchQuery.trim()) {
+      return `Search Results for "${searchQuery.trim()}"`
+    }
     if (selectedDate) {
       return `Events on ${selectedDate.toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}`
     }
     if (selectedCategories.length > 0) {
       return `${selectedCategories.join(", ")} Events`
     }
-    if (selectedCategory) {
+    if (selectedCategory && selectedCategory !== "All Events") {
       return `${selectedCategory}`
+    }
+    if (selectedLocation && selectedCountry) {
+      return `Events in ${selectedLocation}, ${selectedCountry}`
     }
     if (selectedLocation) {
       return `Events in ${selectedLocation}`
     }
-    if (searchQuery) {
-      return `Search Results for "${searchQuery}"`
+    if (selectedCountry) {
+      return `Events in ${selectedCountry}`
+    }
+    if (customFromDate || customToDate) {
+      if (customFromDate && customToDate) {
+        return `Events from ${customFromDate} to ${customToDate}`
+      }
+      if (customFromDate) return `Events from ${customFromDate}`
+      return `Events until ${customToDate}`
     }
     if (activeTab === "Verified") {
       return "Verified Events"
@@ -615,6 +629,8 @@ export default function EventsPageContent({
     const hasSelectedDate = selectedDate !== null
     const hasSelectedDateRange = selectedDateRange.trim().length > 0
     const hasSelectedLocation = selectedLocation.trim().length > 0
+    const hasSelectedCountry = selectedCountry.trim().length > 0
+    const hasCustomDateRange = customFromDate.trim().length > 0 || customToDate.trim().length > 0
     const hasSelectedFormat = selectedFormat !== "All Formats"
     const hasSelectedCategory = selectedCategory !== "All Events" && selectedCategory.trim().length > 0
     const hasSelectedCategories = selectedCategories.length > 0
@@ -628,6 +644,8 @@ export default function EventsPageContent({
       hasSelectedDate ||
       hasSelectedDateRange ||
       hasSelectedLocation ||
+      hasSelectedCountry ||
+      hasCustomDateRange ||
       hasSelectedFormat ||
       hasSelectedCategory ||
       hasSelectedCategories ||
@@ -640,6 +658,7 @@ export default function EventsPageContent({
     searchQuery,
     selectedDate,
     selectedDateRange,
+    selectedCountry,
     selectedLocation,
     selectedFormat,
     selectedCategory,
@@ -648,6 +667,8 @@ export default function EventsPageContent({
     priceRange,
     rating,
     activeTab,
+    customFromDate,
+    customToDate,
   ])
 
   const tabs = ["All Events", "Upcoming", "This Week", "This Month", "Verified"]
@@ -668,6 +689,9 @@ export default function EventsPageContent({
     setSelectedCategories([])
     setSelectedRelatedTopics([])
     setSelectedLocation("")
+    setSelectedCountry("")
+    setCustomFromDate("")
+    setCustomToDate("")
     setSelectedDate(null)
     setSelectedDateRange("")
     setSelectedFormat("All Formats")
@@ -686,12 +710,15 @@ export default function EventsPageContent({
     selectedCategory,
     selectedCategories,
     selectedRelatedTopics,
+    selectedCountry,
     selectedLocation,
     selectedFormat,
     selectedDate,
     selectedDateRange,
     priceRange,
     rating,
+    customFromDate,
+    customToDate,
   ])
 
   const handleListingShare = async () => {
@@ -737,8 +764,16 @@ export default function EventsPageContent({
             setSelectedDate(null)
             setSelectedDateRange("")
           }}
+          selectedCountry={selectedCountry}
+          onClearCountry={() => setSelectedCountry("")}
           selectedLocation={selectedLocation}
           onClearLocation={() => setSelectedLocation("")}
+          customFromDate={customFromDate}
+          customToDate={customToDate}
+          onClearCustomDateRange={() => {
+            setCustomFromDate("")
+            setCustomToDate("")
+          }}
           selectedFormat={selectedFormat}
           onClearFormat={() => setSelectedFormat("All Formats")}
           selectedCategory={selectedCategory}

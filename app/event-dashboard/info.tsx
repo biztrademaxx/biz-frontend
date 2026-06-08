@@ -329,18 +329,8 @@ export default function EventPage({ params }: EventPageProps) {
     setUpdatingBrochure(true)
 
     try {
-      const formData = new FormData()
-      formData.append('file', file)
-
-      // Backend upload → Cloudinary "documents" folder (same as other working PDF uploads)
-      const uploadData = await apiFetch<{ url?: string; publicId?: string }>('/api/upload/brochure', {
-        method: 'POST',
-        body: formData,
-        auth: true,
-      })
-
-      const brochureUrl = uploadData?.url
-      if (!brochureUrl) throw new Error('No URL returned from upload')
+      const { uploadFileViaProxy } = await import("@/components/organizer-create-event/upload-backend")
+      const brochureUrl = await uploadFileViaProxy(file, "brochure")
 
       await apiFetch(`/api/events/${event.id}`, {
         method: 'PATCH',
@@ -435,21 +425,8 @@ export default function EventPage({ params }: EventPageProps) {
     }
 
     try {
-      const formData = new FormData()
-      formData.append("file", file)
-
-      // Backend uploads (same JWT as brochure) — not Next.js :3000 /api/upload/cloudinary (NextAuth)
-      const uploadData = await apiFetch<{ url?: string }>(
-        isPdf ? "/api/upload/brochure" : "/api/upload/cloudinary",
-        {
-          method: "POST",
-          body: formData,
-          auth: true,
-        },
-      )
-
-      const layoutUrl = uploadData?.url
-      if (!layoutUrl) throw new Error("No URL returned from upload")
+      const { uploadFileViaProxy } = await import("@/components/organizer-create-event/upload-backend")
+      const layoutUrl = await uploadFileViaProxy(file, isPdf ? "brochure" : "image")
 
       await apiFetch(`/api/events/${event.id}`, {
         method: "PATCH",

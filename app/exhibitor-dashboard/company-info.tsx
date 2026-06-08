@@ -108,25 +108,12 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
     try {
       setUploading(true)
 
-      const formData = new FormData()
-      formData.append("file", file)
-      formData.append("type", "image")
+      const { uploadFileViaProxy } = await import("@/components/organizer-create-event/upload-backend")
+      const avatarUrl = await uploadFileViaProxy(file, "image")
 
-      const data = await apiFetch<{ success: boolean; url: string; publicId?: string }>(
-        "/api/upload/cloudinary",
-        {
-          method: "POST",
-          body: formData,
-          auth: true,
-        },
-      )
-
-      if (data.success && data.url) {
-        // Update local state
-        setFormData((prev) => ({ ...prev, avatar: data.url }))
-
-        // Save to database immediately
-        await onUpdate({ avatar: data.url })
+      if (avatarUrl) {
+        setFormData((prev) => ({ ...prev, avatar: avatarUrl }))
+        await onUpdate({ avatar: avatarUrl })
 
         toast({
           title: "Success",

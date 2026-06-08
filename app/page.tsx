@@ -23,6 +23,8 @@ import {
 } from "@/components/home-skeletons";
 import HeroSection from "@/components/Herosection";
 import AboutBizTrade from "@/components/aboutBiztradefairs";
+import HomeTradeFairsSearch from "@/components/home/HomeTradeFairsSearch";
+import UpcomingVipEvents from "@/components/home/UpcomingVipEvents";
 
 export default function Home() {
   return (
@@ -33,6 +35,23 @@ export default function Home() {
           <Suspense fallback={<HeroSlideshowSkeleton />}>
             <HeroSlideshow />
           </Suspense>
+          <Suspense
+            fallback={
+              <div className="mx-auto mt-4 max-w-[1300px] space-y-4 sm:mt-6" aria-hidden>
+                <div className="home-shimmer h-6 w-56 rounded" />
+                <div className="flex gap-4 overflow-hidden">
+                  <div className="home-shimmer h-28 w-[300px] shrink-0 rounded-xl" />
+                  <div className="home-shimmer h-28 w-[300px] shrink-0 rounded-xl" />
+                  <div className="home-shimmer h-28 w-[300px] shrink-0 rounded-xl" />
+                </div>
+              </div>
+            }
+          >
+            <UpcomingVipEvents />
+          </Suspense>
+          <div className="mx-auto mt-4 mb-6 max-w-[1300px] sm:mt-6 sm:mb-8">
+            <HomeTradeFairsSearch />
+          </div>
         </div>
       </div>
       {/* <AboutBizTrade/> */}

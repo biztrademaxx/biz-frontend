@@ -216,6 +216,64 @@ export function formatListingYear(dateString: string): number {
   return new Date(dateString).getFullYear()
 }
 
+function normalizeLocationToken(value: string): string {
+  return value.toLowerCase().trim().replace(/\s+/g, " ")
+}
+
+const CITY_ALIASES: Record<string, string[]> = {
+  bengaluru: ["bangalore"],
+  bangalore: ["bengaluru"],
+  mumbai: ["bombay"],
+  bombay: ["mumbai"],
+}
+
+function locationTokensMatch(term: string, candidate: string): boolean {
+  const t = normalizeLocationToken(term)
+  const c = normalizeLocationToken(candidate)
+  if (!t || !c) return false
+  if (c.includes(t) || t.includes(c)) return true
+  const aliases = CITY_ALIASES[t] ?? []
+  return aliases.some((alias) => c.includes(alias))
+}
+
+export function eventMatchesCountry(event: Event, countryTerm: string): boolean {
+  if (!countryTerm.trim()) return true
+  const fields = [event.venue?.venueCountry, event.location?.country].map((v) =>
+    v ? String(v) : "",
+  )
+  return fields.some((f) => locationTokensMatch(countryTerm, f))
+}
+
+export function eventMatchesCity(event: Event, cityTerm: string): boolean {
+  if (!cityTerm.trim()) return true
+  const fields = [
+    event.venue?.venueCity,
+    event.location?.city,
+    event.location?.address,
+  ].map((v) => (v ? String(v) : ""))
+  return fields.some((f) => locationTokensMatch(cityTerm, f))
+}
+
+export function eventMatchesSearchQuery(event: Event, query: string): boolean {
+  if (!query.trim()) return true
+  const q = normalizeLocationToken(query)
+  const haystack = [
+    event.title,
+    event.description,
+    event.subTitle,
+    ...(event.tags ?? []),
+    ...(event.categories ?? []),
+    event.venue?.venueCity,
+    event.venue?.venueCountry,
+    event.location?.city,
+    event.location?.country,
+    event.location?.address,
+  ]
+    .filter(Boolean)
+    .map((v) => normalizeLocationToken(String(v)))
+  return haystack.some((h) => h.includes(q))
+}
+
 export function isEventOnDate(event: Event, date: Date): boolean {
   const eventStartDate = new Date(event.timings.startDate)
   const eventEndDate = new Date(event.timings.endDate)
@@ -223,6 +281,28 @@ export function isEventOnDate(event: Event, date: Date): boolean {
     date >= new Date(eventStartDate.getFullYear(), eventStartDate.getMonth(), eventStartDate.getDate()) &&
     date <= new Date(eventEndDate.getFullYear(), eventEndDate.getMonth(), eventEndDate.getDate())
   )
+}
+
+/** True when the event overlaps [from, to] (inclusive calendar days). Either bound may be omitted. */
+export function isEventInCustomDateRange(event: Event, from?: string, to?: string): boolean {
+  if (!from && !to) return true
+
+  const eventStart = new Date(event.timings.startDate)
+  const eventEnd = new Date(event.timings.endDate)
+  const eventStartDay = new Date(eventStart.getFullYear(), eventStart.getMonth(), eventStart.getDate())
+  const eventEndDay = new Date(eventEnd.getFullYear(), eventEnd.getMonth(), eventEnd.getDate())
+
+  if (from) {
+    const [y, m, d] = from.split("-").map(Number)
+    const fromDay = new Date(y, m - 1, d)
+    if (eventEndDay < fromDay) return false
+  }
+  if (to) {
+    const [y, m, d] = to.split("-").map(Number)
+    const toDay = new Date(y, m - 1, d)
+    if (eventStartDay > toDay) return false
+  }
+  return true
 }
 
 export function isEventInDateRange(event: Event, dateRange: string): boolean {
@@ -342,11 +422,19 @@ export function mapApiEventToListingEvent(event: any): Event {
   const subTitleRaw = e.subTitle ?? e.subtitle ?? e.shortDescription
   const subTitle = typeof subTitleRaw === "string" && subTitleRaw.trim() ? subTitleRaw.trim() : null
 
+  const description =
+    typeof e.description === "string"
+      ? e.description
+      : typeof e.shortDescription === "string"
+        ? e.shortDescription
+        : ""
+
   return {
     ...e,
     id: String(resolvedId || ""),
     slug: typeof e.slug === "string" ? e.slug : null,
     subTitle,
+    description,
     eventType: e.eventType || categories?.[0] || "Other",
     timings: {
       startDate: e.startDate,

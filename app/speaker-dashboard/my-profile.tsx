@@ -55,13 +55,9 @@ export default function MyProfile({ speakerId }: { speakerId: string }) {
     }
     try {
       setUploadingAvatar(true)
-      const formData = new FormData()
-      formData.append("file", file)
-      formData.append("folder", "avatars")
-      const data = await apiFetch<{ success: boolean; url: string; publicId?: string }>("/api/upload/cloudinary", {
-        method: "POST", body: formData, auth: true,
-      })
-      setProfile((prev) => (prev ? { ...prev, avatar: data.url } : null))
+      const { uploadFileViaProxy } = await import("@/components/organizer-create-event/upload-backend")
+      const avatarUrl = await uploadFileViaProxy(file, "image")
+      setProfile((prev) => (prev ? { ...prev, avatar: avatarUrl } : null))
       toast({ title: "Success", description: "Avatar uploaded successfully" })
     } catch (error) {
       toast({ title: "Error", description: error instanceof Error ? error.message : "Failed to upload avatar", variant: "destructive" })

@@ -58,6 +58,7 @@ export interface Event {
   reviews?: number
   image?: string
   bannerImage?: string
+  vipImage?: string | null
   thumbnailImage?: string
   images?: string[]
   videos?: string[]
