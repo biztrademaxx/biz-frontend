@@ -30,6 +30,9 @@ import { toast } from "sonner"
 import { adminApi } from "@/lib/admin-api"
 import { uploadVenueImages, uploadVenueLogo, uploadVenueDocuments } from "@/lib/upload-utils"
 import { getCityOptions, getCountryOptions, getStateOptions } from "@/lib/location-data"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { addVenueFormSchema, type AddVenueFormValues } from "./schemas/venue-schema"
 import {
   Select,
   SelectContent,
@@ -87,6 +90,31 @@ const LOCATION_NONE = "__none__"
 export default function AddVenueComponent() {
   const [activeTab, setActiveTab] = useState("profile")
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const validationForm = useForm<AddVenueFormValues>({
+    resolver: zodResolver(addVenueFormSchema),
+    defaultValues: {
+      venueName: "",
+      contactPerson: "",
+      email: "",
+      mobile: "",
+      address: "",
+      city: "",
+      state: "",
+      country: "",
+      website: "",
+      googleMapLink: "",
+      description: "",
+      minCapacity: 40,
+      maxCapacity: 1000,
+      totalHalls: 1,
+      emergencyExits: 4,
+      safetyInfo: "",
+      managerName: "",
+      managerPhone: "",
+      isVerified: false,
+      status: "active",
+    },
+  })
   const [formData, setFormData] = useState<VenueFormData>({
     venueName: "",
     contactPerson: "",
@@ -215,15 +243,48 @@ export default function AddVenueComponent() {
     })
   }
 
-  const handleSubmit = async () => {
-    // Validate required fields
-    if (!formData.venueName || !formData.contactPerson || !formData.email || !formData.address) {
-      toast.error("Please fill in all required fields (Venue Name, Contact Person, Email, and Address)")
-      return
-    }
+  const venueFieldError = (name: keyof AddVenueFormValues) =>
+    validationForm.formState.errors[name]?.message as string | undefined
 
-    if (!formData.email.includes('@')) {
-      toast.error("Please enter a valid email address")
+  const syncValidationForm = () => {
+    validationForm.reset({
+      venueName: formData.venueName,
+      contactPerson: formData.contactPerson,
+      email: formData.email,
+      mobile: formData.mobile,
+      address: formData.address,
+      city: formData.city,
+      state: formData.state,
+      country: formData.country,
+      website: formData.website,
+      googleMapLink: formData.googleMapLink,
+      description: formData.description,
+      minCapacity: formData.minCapacity,
+      maxCapacity: formData.maxCapacity,
+      totalHalls: formData.totalHalls,
+      emergencyExits: formData.emergencyExits,
+      safetyInfo: formData.safetyInfo,
+      managerName: formData.managerName,
+      managerPhone: formData.managerPhone,
+      isVerified: formData.isVerified,
+      status: formData.status,
+    })
+  }
+
+  const handleSubmit = async () => {
+    syncValidationForm()
+    const valid = await validationForm.trigger()
+    if (!valid) {
+      const firstError = Object.keys(validationForm.formState.errors)[0] as keyof AddVenueFormValues | undefined
+      if (firstError === "description") setActiveTab("description")
+      else if (["minCapacity", "maxCapacity", "totalHalls", "emergencyExits"].includes(String(firstError))) {
+        setActiveTab("spaces")
+      } else if (firstError === "safetyInfo") setActiveTab("safety")
+      else setActiveTab("profile")
+      toast.error(
+        (firstError && validationForm.formState.errors[firstError]?.message) ||
+          "Please fix the highlighted fields before submitting."
+      )
       return
     }
 
@@ -451,6 +512,9 @@ export default function AddVenueComponent() {
                     value={formData.venueName}
                     onChange={(e) => setFormData({ ...formData, venueName: e.target.value })}
                   />
+                  {venueFieldError("venueName") && (
+                    <p className="text-sm text-red-500">{venueFieldError("venueName")}</p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="contactPerson" className="text-sm font-medium flex items-center gap-2">
@@ -463,6 +527,9 @@ export default function AddVenueComponent() {
                     value={formData.contactPerson}
                     onChange={(e) => setFormData({ ...formData, contactPerson: e.target.value })}
                   />
+                  {venueFieldError("contactPerson") && (
+                    <p className="text-sm text-red-500">{venueFieldError("contactPerson")}</p>
+                  )}
                 </div>
               </div>
 
@@ -479,6 +546,9 @@ export default function AddVenueComponent() {
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   />
+                  {venueFieldError("email") && (
+                    <p className="text-sm text-red-500">{venueFieldError("email")}</p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="mobile" className="text-sm font-medium flex items-center gap-2">
@@ -506,6 +576,9 @@ export default function AddVenueComponent() {
                   onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                   rows={3}
                 />
+                {venueFieldError("address") && (
+                  <p className="text-sm text-red-500">{venueFieldError("address")}</p>
+                )}
               </div>
 
               <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50/50 p-4 space-y-4">
@@ -674,6 +747,9 @@ export default function AddVenueComponent() {
                   rows={8}
                   className="resize-none"
                 />
+                {venueFieldError("description") && (
+                  <p className="text-sm text-red-500">{venueFieldError("description")}</p>
+                )}
                 
                 <div className="p-4 bg-blue-50 rounded-lg border">
                   <p className="text-sm text-blue-700">

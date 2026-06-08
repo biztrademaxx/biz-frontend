@@ -119,8 +119,12 @@ export interface ValidationErrors {
   slug?: string
   description?: string
   eventType?: string
+  categories?: string
   startDate?: string
   endDate?: string
+  city?: string
+  country?: string
+  organizerId?: string
   tags?: string
 }
 

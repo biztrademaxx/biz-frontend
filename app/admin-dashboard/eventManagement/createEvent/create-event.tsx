@@ -18,9 +18,12 @@ import { SelectOrganizer } from "./select-organizer"
 import { SelectVenue } from "./select-venue"
 import { SelectSpeakers } from "./select-speakers"
 import { SelectExhibitors } from "./select-exhibitors"
-import type { EventFormData, SpaceCost, ExhibitorBooth } from "./types"
+import type { EventFormData, SpaceCost, ExhibitorBooth, ValidationErrors } from "./types"
 import { apiFetch } from "@/lib/api"
 import { getCountryTimezoneByName } from "@/lib/location-data"
+import { createEventFormSchema, createEventErrorTab } from "@/app/admin-dashboard/schemas/create-event-schema"
+import { zodFieldErrors } from "@/app/admin-dashboard/schemas/common"
+import { useToast } from "@/hooks/use-toast"
 
 const slugifyTitle = (value: string): string =>
   value
@@ -286,20 +289,47 @@ export function CreateEventForm() {
 
   const handlePublish = async () => {
     devLog("Publishing event:", formData)
-    
-    // Validate required fields
-    const errors: any = {}
-    if (!formData.title) errors.title = "Title is required"
-    if (!formData.description) errors.description = "Description is required"
-    if (!formData.startDate) errors.startDate = "Start date is required"
-    if (!formData.endDate) errors.endDate = "End date is required"
-    
-    if (Object.keys(errors).length > 0) {
-      setValidationErrors(errors)
-      setActiveTab("basic")
+
+    const parsed = createEventFormSchema.safeParse({
+      title: formData.title,
+      slug: formData.slug,
+      description: formData.description,
+      eventType: formData.eventType,
+      categories: formData.categories,
+      subTitle: formData.subTitle,
+      edition: formData.edition,
+      startDate: formData.startDate,
+      endDate: formData.endDate,
+      timezone: formData.timezone,
+      venueId: formData.venueId,
+      venue: formData.venue,
+      city: formData.city,
+      state: formData.state,
+      country: formData.country,
+      address: formData.address,
+      registrationStart: formData.registrationStart,
+      registrationEnd: formData.registrationEnd,
+      organizerId,
+    })
+
+    if (!parsed.success) {
+      const fieldErrors = zodFieldErrors(parsed.error) as ValidationErrors
+      setValidationErrors(fieldErrors)
+      const firstField = parsed.error.issues[0]?.path[0]
+      if (typeof firstField === "string") {
+        setActiveTab(createEventErrorTab(firstField))
+      } else {
+        setActiveTab("basic")
+      }
+      toast({
+        title: "Validation error",
+        description: "Please fix the highlighted fields before publishing.",
+        variant: "destructive",
+      })
       return
     }
 
+    setValidationErrors({})
     setIsSubmitting(true)
 
     try {

@@ -26,6 +26,7 @@ import {
   Menu,
   Star,
   Inbox,
+  Tag,
 } from "lucide-react"
 
 // Import all section components
@@ -378,10 +379,20 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
       id: "content",
       subItems: [
         { title: "News & Announcements", id: "content-news" },
-        { title: "Blog & Articles", id: "content-blog" },
-        { title: "Banner & Ads Manager", id: "content-banners" },
+        
+        
         // { title: "Featured Events", id: "content-featured" },
         // { title: "Media Library", id: "content-media" },
+      ],
+    },
+    {
+      title: "Promotions",
+      icon: Tag,
+      id: "promotions",
+      subItems: [
+        { title: " Event Promotions", id: "admin-promotions" },
+        { title: "Banner & Ads Manager", id: "content-banners" },
+        { title: "Blog & Articles", id: "content-blog" },
       ],
     },
     {
@@ -495,6 +506,20 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
     })
   }
 
+  const navigateToSubSection = (parentId: string, subId: string) => {
+    setActiveSection(parentId)
+    setActiveSubSection(subId)
+    setOpenMenus((prev) => {
+      const next = new Set(prev)
+      next.add(parentId)
+      return next
+    })
+  }
+
+  const navigateToEventPromotions = () => {
+    navigateToSubSection("promotions", "admin-promotions")
+  }
+
   const renderContent = () => {
     const section = activeSection
     const subSection = activeSubSection
@@ -516,7 +541,7 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
         case "events-create":
           return <CreateEventForm />
         case "events-all":
-          return <EventManagement />
+          return <EventManagement onPromote={navigateToEventPromotions} />
         case "events-categories":
           return <EventCategories />
         case "bulk-data":
@@ -693,7 +718,7 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
       case "dashboard":
         return userRole === "SUB_ADMIN" ? <SubAdminAnalyticsPanel /> : <DashboardPage onNavigate={navigateFromDashboard} />
       case "events":
-        return <EventManagement />
+        return <EventManagement onPromote={navigateToEventPromotions} />
       case "locations":
         return <CountriesManagement activeTab="countries" /> 
       case "organizers":
@@ -764,7 +789,7 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
               className={`${NAVBAR_LOGO_COMPACT_CLASSNAME} dark:brightness-110 dark:contrast-95`}
               unoptimized={sidebarLogo.unoptimized}
             />
-            {/* <span className="truncate text-sm font-semibold tracking-tight text-foreground">BizTradeFairs</span> */}
+            <span className="truncate text-sm font-semibold tracking-tight text-foreground">BizTradeFairs</span>
           </div>
         </div>
 

@@ -125,7 +125,7 @@ export function BasicInfoTab({
             </div>
 
             <div className="md:col-span-2">
-              <Label>Event Categories</Label>
+              <Label>Event Categories *</Label>
               {isLoadingCategories ? (
                 <div className="flex items-center space-x-2 mt-2">
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -151,6 +151,9 @@ export function BasicInfoTab({
                     </div>
                   ))}
                 </div>
+              )}
+              {validationErrors.categories && (
+                <p className="text-sm text-red-500 mt-1">{validationErrors.categories}</p>
               )}
             </div>
 
@@ -191,13 +194,16 @@ export function BasicInfoTab({
             </div>
 
             <div>
-              <Label htmlFor="city">City</Label>
+              <Label htmlFor="city">City *</Label>
               <Input
                 id="city"
                 value={formData.city}
                 onChange={(e) => onFormChange({ city: e.target.value })}
                 placeholder="Enter city"
               />
+              {validationErrors.city && (
+                <p className="text-sm text-red-500 mt-1">{validationErrors.city}</p>
+              )}
             </div>
 
             <div>
@@ -211,13 +217,16 @@ export function BasicInfoTab({
             </div>
 
             <div>
-              <Label htmlFor="country">Country</Label>
+              <Label htmlFor="country">Country *</Label>
               <Input
                 id="country"
                 value={formData.country}
                 onChange={(e) => onFormChange({ country: e.target.value })}
                 placeholder="Enter country"
               />
+              {validationErrors.country && (
+                <p className="text-sm text-red-500 mt-1">{validationErrors.country}</p>
+              )}
             </div>
 
             <div className="md:col-span-2">

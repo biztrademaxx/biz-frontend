@@ -2,15 +2,26 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { X, Plus, Loader2, Building2, User, Mail, Phone, MapPin, Calendar, Users, AlertTriangle, CheckCircle, Key } from "lucide-react"
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
+import { X, Plus, Loader2, Building2, User, Mail, AlertTriangle, CheckCircle, Key } from "lucide-react"
 import { adminApi } from "@/lib/admin-api"
 import { OrganizerLocationSelects } from "@/components/admin-dashboard/organizer-location-selects"
+import { addOrganizerFormSchema, type AddOrganizerFormValues } from "./schemas/organizer-schema"
 
 interface AddOrganizerFormProps {
   onSuccess?: () => void
@@ -47,101 +58,9 @@ export default function AddOrganizerForm({ onSuccess, onCancel }: AddOrganizerFo
   const [error, setError] = useState<string | null>(null)
   const [tempPassword, setTempPassword] = useState<string | null>(null)
 
-  const [formData, setFormData] = useState({
-    // Personal Information
-    firstName: "",
-    lastName: "",
-    email: "",
-    phone: "",
-    
-    // Organization Information
-    organizationName: "",
-    description: "",
-    headquarters: "",
-    country: "",
-    state: "",
-    city: "",
-    founded: "",
-    teamSize: "",
-    specialties: [] as string[],
-    
-    // Business Information
-    businessEmail: "",
-    businessPhone: "",
-    businessAddress: "",
-    taxId: ""
-  })
-
-  const [newSpecialty, setNewSpecialty] = useState("")
-
-  const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }))
-    setError(null)
-  }
-
-  const handleAddSpecialty = () => {
-    if (newSpecialty.trim() && !formData.specialties.includes(newSpecialty.trim())) {
-      setFormData(prev => ({
-        ...prev,
-        specialties: [...prev.specialties, newSpecialty.trim()]
-      }))
-      setNewSpecialty("")
-    }
-  }
-
-  const handleRemoveSpecialty = (specialtyToRemove: string) => {
-    setFormData(prev => ({
-      ...prev,
-      specialties: prev.specialties.filter(s => s !== specialtyToRemove)
-    }))
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setError(null)
-
-    try {
-      const data = await adminApi<{ success?: boolean; data?: unknown; error?: string; tempPassword?: string }>("/organizers", {
-        method: "POST",
-        body: {
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          email: formData.email,
-          phone: formData.phone || undefined,
-          company: formData.organizationName || undefined,
-          organizationName: formData.organizationName || undefined,
-          description: formData.description || undefined,
-          headquarters: [formData.city, formData.state, formData.country].filter(Boolean).join(", ") || undefined,
-          organizerCountry: formData.country.trim() || undefined,
-          organizerState: formData.state.trim() || undefined,
-          organizerCity: formData.city.trim() || undefined,
-          founded: formData.founded || undefined,
-          teamSize: formData.teamSize || undefined,
-          specialties: formData.specialties,
-          businessEmail: formData.businessEmail || undefined,
-          businessPhone: formData.businessPhone || undefined,
-          businessAddress: formData.businessAddress || undefined,
-          taxId: formData.taxId || undefined,
-        },
-      })
-      if ((data as any)?.error) throw new Error((data as any).error)
-      setTempPassword((data as any)?.tempPassword ?? null)
-      router.refresh()
-      if (onSuccess) onSuccess()
-    } catch (err) {
-      console.error('Error creating organizer:', err)
-      setError(err instanceof Error ? err.message : 'Failed to create organizer')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const resetForm = () => {
-    setFormData({
+  const form = useForm<AddOrganizerFormValues>({
+    resolver: zodResolver(addOrganizerFormSchema),
+    defaultValues: {
       firstName: "",
       lastName: "",
       email: "",
@@ -158,8 +77,72 @@ export default function AddOrganizerForm({ onSuccess, onCancel }: AddOrganizerFo
       businessEmail: "",
       businessPhone: "",
       businessAddress: "",
-      taxId: ""
-    })
+      taxId: "",
+    },
+  })
+
+  const [newSpecialty, setNewSpecialty] = useState("")
+
+  const handleAddSpecialty = () => {
+    const trimmed = newSpecialty.trim()
+    const current = form.getValues("specialties") ?? []
+    if (trimmed && !current.includes(trimmed)) {
+      form.setValue("specialties", [...current, trimmed], { shouldValidate: true })
+      setNewSpecialty("")
+    }
+  }
+
+  const handleRemoveSpecialty = (specialtyToRemove: string) => {
+    const current = form.getValues("specialties") ?? []
+    form.setValue(
+      "specialties",
+      current.filter((s) => s !== specialtyToRemove),
+      { shouldValidate: true }
+    )
+  }
+
+  const onSubmit = async (values: AddOrganizerFormValues) => {
+    setLoading(true)
+    setError(null)
+
+    try {
+      const data = await adminApi<{ success?: boolean; data?: unknown; error?: string; tempPassword?: string }>("/organizers", {
+        method: "POST",
+        body: {
+          firstName: values.firstName,
+          lastName: values.lastName,
+          email: values.email,
+          phone: values.phone || undefined,
+          company: values.organizationName || undefined,
+          organizationName: values.organizationName || undefined,
+          description: values.description || undefined,
+          headquarters: [values.city, values.state, values.country].filter(Boolean).join(", ") || undefined,
+          organizerCountry: values.country.trim() || undefined,
+          organizerState: values.state.trim() || undefined,
+          organizerCity: values.city.trim() || undefined,
+          founded: values.founded || undefined,
+          teamSize: values.teamSize || undefined,
+          specialties: values.specialties,
+          businessEmail: values.businessEmail || undefined,
+          businessPhone: values.businessPhone || undefined,
+          businessAddress: values.businessAddress || undefined,
+          taxId: values.taxId || undefined,
+        },
+      })
+      if ((data as any)?.error) throw new Error((data as any).error)
+      setTempPassword((data as any)?.tempPassword ?? null)
+      router.refresh()
+      if (onSuccess) onSuccess()
+    } catch (err) {
+      console.error("Error creating organizer:", err)
+      setError(err instanceof Error ? err.message : "Failed to create organizer")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const resetForm = () => {
+    form.reset()
     setTempPassword(null)
     setError(null)
   }
@@ -226,7 +209,8 @@ export default function AddOrganizerForm({ onSuccess, onCancel }: AddOrganizerFo
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           {error && (
             <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
               <p className="text-sm text-red-800">{error}</p>
@@ -241,60 +225,61 @@ export default function AddOrganizerForm({ onSuccess, onCancel }: AddOrganizerFo
             </h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label htmlFor="firstName" className="text-sm font-medium">
-                  First Name *
-                </label>
-                <Input
-                  id="firstName"
-                  value={formData.firstName}
-                  onChange={(e) => handleInputChange('firstName', e.target.value)}
-                  placeholder="Enter first name"
-                  required
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <label htmlFor="lastName" className="text-sm font-medium">
-                  Last Name *
-                </label>
-                <Input
-                  id="lastName"
-                  value={formData.lastName}
-                  onChange={(e) => handleInputChange('lastName', e.target.value)}
-                  placeholder="Enter last name"
-                  required
-                />
-              </div>
+              <FormField
+                control={form.control}
+                name="firstName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>First Name *</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Enter first name" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="lastName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Last Name *</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Enter last name" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label htmlFor="email" className="text-sm font-medium">
-                  Email Address *
-                </label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => handleInputChange('email', e.target.value)}
-                  placeholder="Enter email address"
-                  required
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <label htmlFor="phone" className="text-sm font-medium">
-                  Phone Number
-                </label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  value={formData.phone}
-                  onChange={(e) => handleInputChange('phone', e.target.value)}
-                  placeholder="Enter phone number"
-                />
-              </div>
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email Address *</FormLabel>
+                    <FormControl>
+                      <Input type="email" placeholder="Enter email address" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Phone Number</FormLabel>
+                    <FormControl>
+                      <Input type="tel" placeholder="Enter phone number" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
           </div>
 
@@ -305,76 +290,90 @@ export default function AddOrganizerForm({ onSuccess, onCancel }: AddOrganizerFo
               Organization Information
             </h3>
             
-            <div className="space-y-2">
-              <label htmlFor="organizationName" className="text-sm font-medium">
-                Organization Name *
-              </label>
-              <Input
-                id="organizationName"
-                value={formData.organizationName}
-                onChange={(e) => handleInputChange('organizationName', e.target.value)}
-                placeholder="Enter organization name"
-                required
-              />
-            </div>
+            <FormField
+              control={form.control}
+              name="organizationName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Organization Name *</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter organization name" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-            <div className="space-y-2">
-              <label htmlFor="description" className="text-sm font-medium">
-                Description
-              </label>
-              <Textarea
-                id="description"
-                value={formData.description}
-                onChange={(e) => handleInputChange('description', e.target.value)}
-                placeholder="Describe the organization and its services"
-                rows={3}
-              />
-            </div>
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Description</FormLabel>
+                  <FormControl>
+                    <Textarea placeholder="Describe the organization and its services" rows={3} {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <OrganizerLocationSelects
-              country={formData.country}
-              state={formData.state}
-              city={formData.city}
-              onCountryChange={(name) => handleInputChange("country", name)}
-              onStateChange={(name) => handleInputChange("state", name)}
-              onCityChange={(name) => handleInputChange("city", name)}
+              country={form.watch("country")}
+              state={form.watch("state")}
+              city={form.watch("city")}
+              onCountryChange={(name) => form.setValue("country", name, { shouldValidate: true })}
+              onStateChange={(name) => form.setValue("state", name, { shouldValidate: true })}
+              onCityChange={(name) => form.setValue("city", name, { shouldValidate: true })}
               disabled={loading}
             />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label htmlFor="founded" className="text-sm font-medium">
-                  Year Founded
-                </label>
-                <Input
-                  id="founded"
-                  type="number"
-                  value={formData.founded}
-                  onChange={(e) => handleInputChange('founded', e.target.value)}
-                  placeholder="e.g., 2020"
-                  min="1900"
-                  max={new Date().getFullYear()}
-                />
-              </div>
+              <FormField
+                control={form.control}
+                name="founded"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Year Founded</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        placeholder="e.g., 2020"
+                        min="1900"
+                        max={new Date().getFullYear()}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
 
-            <div className="space-y-2">
-              <label htmlFor="teamSize" className="text-sm font-medium">
-                Team Size
-              </label>
-              <Select value={formData.teamSize} onValueChange={(value) => handleInputChange('teamSize', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select team size" />
-                </SelectTrigger>
-                <SelectContent>
-                  {TEAM_SIZE_OPTIONS.map((size) => (
-                    <SelectItem key={size} value={size}>
-                      {size} employees
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <FormField
+              control={form.control}
+              name="teamSize"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Team Size</FormLabel>
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select team size" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {TEAM_SIZE_OPTIONS.map((size) => (
+                        <SelectItem key={size} value={size}>
+                          {size} employees
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <div className="space-y-2">
               <label className="text-sm font-medium">Specialties</label>
@@ -397,11 +396,9 @@ export default function AddOrganizerForm({ onSuccess, onCancel }: AddOrganizerFo
                 </div>
                 
                 <Select onValueChange={(value) => {
-                  if (!formData.specialties.includes(value)) {
-                    setFormData(prev => ({
-                      ...prev,
-                      specialties: [...prev.specialties, value]
-                    }))
+                  const current = form.getValues("specialties") ?? []
+                  if (!current.includes(value)) {
+                    form.setValue("specialties", [...current, value], { shouldValidate: true })
                   }
                 }}>
                   <SelectTrigger>
@@ -417,7 +414,7 @@ export default function AddOrganizerForm({ onSuccess, onCancel }: AddOrganizerFo
                 </Select>
 
                 <div className="flex flex-wrap gap-2 mt-2">
-                  {formData.specialties.map((specialty) => (
+                  {(form.watch("specialties") ?? []).map((specialty) => (
                     <Badge key={specialty} variant="secondary" className="flex items-center gap-1">
                       {specialty}
                       <button
@@ -442,57 +439,61 @@ export default function AddOrganizerForm({ onSuccess, onCancel }: AddOrganizerFo
             </h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label htmlFor="businessEmail" className="text-sm font-medium">
-                  Business Email
-                </label>
-                <Input
-                  id="businessEmail"
-                  type="email"
-                  value={formData.businessEmail}
-                  onChange={(e) => handleInputChange('businessEmail', e.target.value)}
-                  placeholder="Business email address"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <label htmlFor="businessPhone" className="text-sm font-medium">
-                  Business Phone
-                </label>
-                <Input
-                  id="businessPhone"
-                  type="tel"
-                  value={formData.businessPhone}
-                  onChange={(e) => handleInputChange('businessPhone', e.target.value)}
-                  placeholder="Business phone number"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label htmlFor="businessAddress" className="text-sm font-medium">
-                Business Address
-              </label>
-              <Textarea
-                id="businessAddress"
-                value={formData.businessAddress}
-                onChange={(e) => handleInputChange('businessAddress', e.target.value)}
-                placeholder="Full business address"
-                rows={2}
+              <FormField
+                control={form.control}
+                name="businessEmail"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Business Email</FormLabel>
+                    <FormControl>
+                      <Input type="email" placeholder="Business email address" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="businessPhone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Business Phone</FormLabel>
+                    <FormControl>
+                      <Input type="tel" placeholder="Business phone number" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
             </div>
 
-            <div className="space-y-2">
-              <label htmlFor="taxId" className="text-sm font-medium">
-                Tax ID / GST Number
-              </label>
-              <Input
-                id="taxId"
-                value={formData.taxId}
-                onChange={(e) => handleInputChange('taxId', e.target.value)}
-                placeholder="Enter tax identification number"
-              />
-            </div>
+            <FormField
+              control={form.control}
+              name="businessAddress"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Business Address</FormLabel>
+                  <FormControl>
+                    <Textarea placeholder="Full business address" rows={2} {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="taxId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Tax ID / GST Number</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter tax identification number" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           </div>
 
           {/* Form Actions */}
@@ -516,6 +517,7 @@ export default function AddOrganizerForm({ onSuccess, onCancel }: AddOrganizerFo
             </Button>
           </div>
         </form>
+        </Form>
       </CardContent>
     </Card>
   )

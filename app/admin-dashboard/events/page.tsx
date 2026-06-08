@@ -4,8 +4,13 @@ import { useEvents } from "./hooks/useEvents"
 import { EventTable } from "./components/EventTable"
 import { VerifyEventDialog } from "./components/VerifyEventDialog"
 import { EditEventForm } from "./components/EditEventForm"
+import type { Event } from "./types/event.types"
 
-export default function EventManagementPage() {
+interface EventManagementPageProps {
+  onPromote?: (event: Event) => void
+}
+
+export default function EventManagementPage({ onPromote }: EventManagementPageProps = {}) {
   const {
     events,
     categories,
@@ -90,7 +95,7 @@ export default function EventManagementPage() {
         onVipToggle={handleVipToggle}
         onPublicToggle={handlePublicToggle}
         onDelete={handleDeleteEvent}
-        onPromote={() => {}}
+        onPromote={onPromote ?? (() => {})}
         onVerify={handleVerifyEvent}
         onSearchChange={setSearchTerm}
         onStatusFilterChange={setSelectedStatus}

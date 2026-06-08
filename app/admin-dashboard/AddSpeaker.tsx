@@ -3,10 +3,14 @@
 import Image from "next/image";
 import { Facebook, Linkedin, Twitter, Instagram, Upload, X } from "lucide-react";
 import { useState, useCallback, useMemo } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { apiFetch } from "@/lib/api";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { getCityOptions, getCountryOptions, getStateOptions } from "@/lib/location-data";
+import { addSpeakerFormSchema, type AddSpeakerFormValues } from "./schemas/speaker-schema";
+import { useToast } from "@/hooks/use-toast";
 
 const emptyForm = {
   firstName: "",
@@ -124,15 +128,10 @@ export default function AddSpeaker() {
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  }, []);
+    form.setValue(name as keyof AddSpeakerFormValues, value, { shouldValidate: true });
+  }, [form]);
 
-  const handleSaveSpeaker = async () => {
-    if (!formData.firstName?.trim() || !formData.lastName?.trim() || !formData.email?.trim()) {
-      alert("Please fill in all required fields: First Name, Last Name, and Email");
-      return;
-    }
-
+  const onSubmit = async (values: AddSpeakerFormValues) => {
     const achievements = achievementsText
       .split(",")
       .map((s) => s.trim())
@@ -145,24 +144,24 @@ export default function AddSpeaker() {
     try {
       setSaving(true);
       const speakerData = {
-        firstName: formData.firstName.trim(),
-        lastName: formData.lastName.trim(),
-        email: formData.email.trim(),
-        phone: formData.phone.trim() || undefined,
-        bio: formData.bio.trim() || undefined,
-        company: formData.company.trim() || undefined,
-        jobTitle: formData.jobTitle.trim() || undefined,
-        location: [formData.city, formData.state, formData.country].filter(Boolean).join(", ") || formData.location.trim() || undefined,
-        website: formData.website.trim() || undefined,
-        linkedin: formData.linkedin.trim() || undefined,
-        twitter: formData.twitter.trim() || undefined,
-        instagram: formData.instagram.trim() || undefined,
+        firstName: values.firstName.trim(),
+        lastName: values.lastName.trim(),
+        email: values.email.trim(),
+        phone: values.phone.trim() || undefined,
+        bio: values.bio.trim() || undefined,
+        company: values.company.trim() || undefined,
+        jobTitle: values.jobTitle.trim() || undefined,
+        location: [values.city, values.state, values.country].filter(Boolean).join(", ") || values.location.trim() || undefined,
+        website: values.website.trim() || undefined,
+        linkedin: values.linkedin.trim() || undefined,
+        twitter: values.twitter.trim() || undefined,
+        instagram: values.instagram.trim() || undefined,
         // No `facebook` column on User — omit (or add schema later)
         avatar: profileImage || undefined,
         specialties: categories,
         achievements,
         certifications,
-        speakingExperience: formData.speakingExperience.trim() || undefined,
+        speakingExperience: values.speakingExperience.trim() || undefined,
       };
 
       const result = await apiFetch<{ success?: boolean; error?: string }>("/api/admin/speakers", {
@@ -172,8 +171,8 @@ export default function AddSpeaker() {
       });
 
       if (result?.success) {
-        alert("Speaker created successfully!");
-        setFormData(emptyForm);
+        toast({ title: "Success", description: "Speaker created successfully!" });
+        form.reset(emptyForm);
         setCountryPick(LOCATION_NONE);
         setStatePick(LOCATION_NONE);
         setCityPick(LOCATION_NONE);
@@ -187,13 +186,29 @@ export default function AddSpeaker() {
       }
     } catch (error) {
       console.error("Error saving speaker:", error);
-      alert(`Error saving speaker: ${error instanceof Error ? error.message : "Unknown error"}`);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Unknown error",
+        variant: "destructive",
+      });
     } finally {
       setSaving(false);
     }
   };
 
+  const handleSaveSpeaker = () => {
+    void form.handleSubmit(onSubmit, () => {
+      toast({
+        title: "Validation error",
+        description: "Please fill in all required fields: First Name, Last Name, and Email.",
+        variant: "destructive",
+      });
+    })();
+  };
+
   const busy = uploading || saving;
+  const fieldError = (name: keyof AddSpeakerFormValues) =>
+    form.formState.errors[name]?.message as string | undefined;
 
   return (
     <div className="w-full p-8 border border-[#00AEEF] rounded-lg bg-white">
@@ -260,18 +275,20 @@ export default function AddSpeaker() {
             name="firstName"
             value={formData.firstName}
             onChange={handleInputChange}
-            className="text-lg font-semibold text-center border border-gray-200 rounded px-2 py-1 mb-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className="text-lg font-semibold text-center border border-gray-200 rounded px-2 py-1 mb-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-400"
             placeholder="First Name *"
             autoComplete="given-name"
           />
+          {fieldError("firstName") && <p className="text-xs text-red-500 mb-2">{fieldError("firstName")}</p>}
           <input
             name="lastName"
             value={formData.lastName}
             onChange={handleInputChange}
-            className="text-lg font-semibold text-center border border-gray-200 rounded px-2 py-1 mb-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className="text-lg font-semibold text-center border border-gray-200 rounded px-2 py-1 mb-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-400"
             placeholder="Last Name *"
             autoComplete="family-name"
           />
+          {fieldError("lastName") && <p className="text-xs text-red-500 mb-2">{fieldError("lastName")}</p>}
           <input
             name="jobTitle"
             value={formData.jobTitle}
@@ -299,15 +316,18 @@ export default function AddSpeaker() {
               className="input border border-gray-200 rounded px-3 py-2"
               placeholder="Company Name"
             />
-            <input
-              name="email"
-              value={formData.email}
-              onChange={handleInputChange}
-              type="email"
-              className="input border border-gray-200 rounded px-3 py-2"
-              placeholder="Email *"
-              autoComplete="email"
-            />
+            <div>
+              <input
+                name="email"
+                value={formData.email}
+                onChange={handleInputChange}
+                type="email"
+                className="input border border-gray-200 rounded px-3 py-2 w-full"
+                placeholder="Email *"
+                autoComplete="email"
+              />
+              {fieldError("email") && <p className="text-xs text-red-500 mt-1">{fieldError("email")}</p>}
+            </div>
             <input
               name="jobTitle"
               value={formData.jobTitle}
@@ -338,7 +358,10 @@ export default function AddSpeaker() {
                       if (!row) return;
                       setStatePick(LOCATION_NONE);
                       setCityPick(LOCATION_NONE);
-                      setFormData((prev) => ({ ...prev, country: row.name, state: "", city: "", location: row.name }));
+                      form.setValue("country", row.name, { shouldValidate: true });
+                      form.setValue("state", "", { shouldValidate: true });
+                      form.setValue("city", "", { shouldValidate: true });
+                      form.setValue("location", row.name, { shouldValidate: true });
                     }}
                   >
                     <SelectTrigger className="bg-white">
@@ -364,7 +387,8 @@ export default function AddSpeaker() {
                       const row = stateOptions.find((s) => s.code === value);
                       if (!row) return;
                       setCityPick(LOCATION_NONE);
-                      setFormData((prev) => ({ ...prev, state: row.name, city: "" }));
+                      form.setValue("state", row.name, { shouldValidate: true });
+                      form.setValue("city", "", { shouldValidate: true });
                     }}
                     disabled={!resolvedCountryCode}
                   >
@@ -390,11 +414,12 @@ export default function AddSpeaker() {
                       if (value === LOCATION_NONE) return;
                       const row = cityOptions.find((c) => c.name === value);
                       if (!row) return;
-                      setFormData((prev) => ({
-                        ...prev,
-                        city: row.name,
-                        location: [row.name, prev.state, prev.country].filter(Boolean).join(", "),
-                      }));
+                      form.setValue("city", row.name, { shouldValidate: true });
+                      form.setValue(
+                        "location",
+                        [row.name, form.getValues("state"), form.getValues("country")].filter(Boolean).join(", "),
+                        { shouldValidate: true }
+                      );
                     }}
                     disabled={!resolvedCountryCode || !resolvedStateCode}
                   >
