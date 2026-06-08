@@ -272,13 +272,13 @@ export default function LoginPage() {
     </div>
 
     <Dialog open={logoutDialogOpen} onOpenChange={setLogoutDialogOpen}>
-      <DialogContent className="overflow-hidden border-[#e8e4f0] bg-white shadow-[0_20px_50px_rgba(142,84,233,0.18)] sm:max-w-md">
+      <DialogContent className="overflow-hidden border-slate-200 bg-white shadow-[0_20px_50px_rgba(0,74,150,0.15)] sm:max-w-md">
         <DialogHeader className="items-center space-y-0 text-center sm:text-center">
           <motion.div
             initial={{ scale: 0, rotate: -25 }}
             animate={{ scale: 1, rotate: 0 }}
             transition={{ type: "spring", stiffness: 260, damping: 18 }}
-            className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-[#8E54E9]/20 to-[#4776E6]/15 text-[#5b21b6] ring-2 ring-[#8E54E9]/20"
+            className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-[#004A96]/20 to-[#0066cc]/15 text-[#004A96] ring-2 ring-[#004A96]/20"
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.5 }}
@@ -302,7 +302,7 @@ export default function LoginPage() {
         <DialogFooter className="mt-2 sm:justify-center">
           <Button
             type="button"
-            className="w-full bg-gradient-to-r from-[#8E54E9] to-[#4776E6] text-white hover:opacity-[0.96] sm:w-auto sm:min-w-[140px]"
+            className="w-full bg-[#004A96] text-white hover:bg-[#003d7a] sm:w-auto sm:min-w-[140px]"
             onClick={() => setLogoutDialogOpen(false)}
           >
             Got it

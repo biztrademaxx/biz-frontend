@@ -32,6 +32,7 @@ import {
 import { useToast } from "@/hooks/use-toast"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
+import { formatCityCountryLine } from "@/lib/location-data"
 
 interface Appointment {
   id: string
@@ -54,6 +55,9 @@ interface Appointment {
   eventCity?: string
   eventCountry?: string
   eventState?: string
+  locationDisplay?: string
+  city?: string
+  country?: string
 }
 
 interface MyAppointmentsProps {
@@ -129,11 +133,21 @@ function formatEventDateRange(startDate?: string, endDate?: string): string {
 }
 
 function getEventLocation(event: Appointment): string {
-  const parts = []
-  if (event.eventCity) parts.push(event.eventCity)
-  if (event.eventState) parts.push(event.eventState)
-  if (event.eventCountry) parts.push(event.eventCountry)
-  return parts.length > 0 ? parts.join(", ") : event.eventVenue || "Location TBD"
+  const display = formatCityCountryLine({
+    city: event.eventCity ?? event.city,
+    country: event.eventCountry ?? event.country,
+    locationDisplay: event.locationDisplay,
+  })
+  return display || event.eventVenue || "Location TBD"
+}
+
+function getMeetingLocationDisplay(appt: Appointment): string {
+  const display = formatCityCountryLine({
+    city: appt.eventCity ?? appt.city,
+    country: appt.eventCountry ?? appt.country,
+    locationDisplay: appt.locationDisplay,
+  })
+  return display || "Location TBD"
 }
 
 function AvatarFallback({ name, size = "lg" }: { name: string; size?: "sm" | "lg" }) {
@@ -160,6 +174,11 @@ function AppointmentCard({
   const { date, time } = formatDateTime(appt.scheduledAt)
   const eventDateRange = formatEventDateRange(appt.eventStartDate, appt.eventEndDate)
   const eventLocation = getEventLocation(appt)
+  const meetingLocation = getMeetingLocationDisplay(appt)
+  const boothLabel =
+    appt.boothNumber && appt.boothNumber !== "TBD"
+      ? `Booth ${appt.boothNumber}`
+      : null
 
   return (
     <div className="flex flex-col sm:flex-row items-start gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:shadow-md">
@@ -214,14 +233,13 @@ function AppointmentCard({
         </div>
       </div>
 
-      {/* Location (Booth) */}
+      {/* Location */}
       <div className="flex items-start gap-2 text-sm text-slate-600 flex-1 min-w-[140px]">
         <MapPin className="h-4 w-4 mt-0.5 shrink-0 text-slate-400" />
         <div>
-          <p className="font-medium text-slate-800">
-            {appt.boothNumber ? `Booth ${appt.boothNumber}` : "Booth TBD"}
-          </p>
-          {appt.eventVenue && appt.eventVenue !== eventLocation && (
+          <p className="font-medium text-slate-800">{meetingLocation}</p>
+          {boothLabel && <p className="text-xs text-slate-500">{boothLabel}</p>}
+          {appt.eventVenue && appt.eventVenue !== meetingLocation && (
             <p className="text-xs text-slate-500">{appt.eventVenue}</p>
           )}
         </div>
@@ -356,18 +374,17 @@ export function MyAppointments({ userId }: MyAppointmentsProps) {
         { auth: true }
       )
 
-      // The API should return appointments with event details including city/country
-      // Make sure your backend API includes event.city, event.country, event.state
       const appointmentsWithEventDetails = (data.appointments ?? []).map((appt: any) => ({
         ...appt,
-        // If the API returns event object with location details, map them
-        eventCity: appt.event?.city || appt.eventCity,
-        eventState: appt.event?.state || appt.eventState,
-        eventCountry: appt.event?.country || appt.eventCountry,
-        eventVenue: appt.event?.venue?.venueName || appt.eventVenue,
-        eventStartDate: appt.event?.startDate || appt.eventStartDate,
-        eventEndDate: appt.event?.endDate || appt.eventEndDate,
-        eventTitle: appt.event?.title || appt.eventTitle,
+        eventCity: appt.eventCity ?? appt.city ?? appt.event?.city,
+        eventState: appt.eventState ?? appt.event?.state,
+        eventCountry: appt.eventCountry ?? appt.country ?? appt.event?.country,
+        locationDisplay: appt.locationDisplay,
+        eventVenue: appt.eventVenue ?? appt.event?.venue?.venueName,
+        eventStartDate: appt.eventStartDate ?? appt.event?.startDate,
+        eventEndDate: appt.eventEndDate ?? appt.event?.endDate,
+        eventTitle: appt.eventTitle ?? appt.event?.title,
+        boothNumber: appt.boothNumber,
       }))
 
       setAppointments(appointmentsWithEventDetails)
