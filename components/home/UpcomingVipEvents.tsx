@@ -6,7 +6,7 @@ export default async function UpcomingVipEvents() {
   if (events.length === 0) return null
 
   return (
-    <div className="mx-auto mt-6 max-w-[1300px] sm:mt-8">
+    <div className="mt-5 min-w-0 sm:mt-8">
       <UpcomingVipEventsClient events={events} />
     </div>
   )

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { getBackendApiBaseUrl } from "@/lib/api"
+import { maybeCompressImageServer } from "@/lib/compress-image-server"
 
 /**
  * Forward multipart uploads from the browser to Express (server-to-server, no CORS).
@@ -26,11 +27,28 @@ export async function proxyUploadToBackend(
     return NextResponse.json({ success: false, message: "File is required" }, { status: 400 })
   }
 
-  // Re-append with filename so Express/multer can validate extension + MIME (Node fetch drops these otherwise).
-  const forward = new FormData()
   const filename =
     file instanceof File && file.name.trim() ? file.name.trim() : "upload.bin"
-  forward.append("file", file, filename)
+
+  let uploadBlob: Blob = file
+  const isImageRoute =
+    backendPath.includes("cloudinary") || backendPath.endsWith("/upload/image")
+  if (isImageRoute && file instanceof File) {
+    try {
+      uploadBlob = await maybeCompressImageServer(file)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Image is too large"
+      return NextResponse.json({ success: false, message }, { status: 413 })
+    }
+  }
+
+  // Re-append with filename so Express/multer can validate extension + MIME (Node fetch drops these otherwise).
+  const forward = new FormData()
+  forward.append(
+    "file",
+    uploadBlob,
+    uploadBlob instanceof File && uploadBlob.name ? uploadBlob.name : filename,
+  )
 
   const target = `${getBackendApiBaseUrl()}${backendPath}`
   const upstream = await fetch(target, {

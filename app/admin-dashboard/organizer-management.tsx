@@ -572,7 +572,9 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
   const allVisibleSelected =
     visibleOrganizers.length > 0 && visibleOrganizers.every((o) => selectedIds.has(o.id))
 
-  if (loading) {
+  const showFullPageLoader = loading && organizers.length === 0
+
+  if (showFullPageLoader) {
     return (
       <div className="flex justify-center items-center py-20">
         <div className="text-center space-y-3">
@@ -583,7 +585,7 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
     )
   }
 
-  if (error) {
+  if (error && organizers.length === 0) {
     return (
       <div className="flex justify-center items-center py-20">
         <div className="text-center space-y-3">
@@ -703,7 +705,7 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
 
         <TabsContent value="all">
           {/* Table */}
-          <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+          <div className={`bg-white rounded-xl border border-gray-100 overflow-hidden ${loading ? "opacity-60" : ""}`}>
             <table className="w-full">
               <thead>
                 <tr className="border-b border-gray-100">

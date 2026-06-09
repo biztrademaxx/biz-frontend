@@ -19,6 +19,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { apiFetch } from "@/lib/api"
+import { IMAGE_UPLOAD_HINT } from "@/lib/prepare-image-upload"
 import {
   Download,
   Edit,
@@ -342,7 +343,11 @@ function FileUpload({
           Drag & drop files here or click to upload
         </p>
         <p className="text-xs text-gray-500 mt-1">
-          {accept.includes("image") ? "Images" : accept.includes("video") ? "Videos" : "Documents"} accepted
+          {accept.includes("image")
+            ? IMAGE_UPLOAD_HINT
+            : accept.includes("video")
+              ? "Video files"
+              : "Documents — max 15 MB"}
         </p>
         <input
           id={`file-upload-${label}`}

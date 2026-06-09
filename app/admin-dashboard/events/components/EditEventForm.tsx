@@ -776,7 +776,7 @@ export function EditEventForm({ event, onSave, onCancel, categories }: EditEvent
                       )}
                     />
                     <div className="flex items-center rounded-lg border border-dashed border-violet-200 bg-white/60 p-4 text-sm text-muted-foreground">
-                      Recommended: high-quality landscape image. Shown only when this event is marked VIP.
+                      Landscape image recommended. Large photos are auto-compressed — max 1 MB per file.
                     </div>
                   </div>
                 ) : (

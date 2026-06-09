@@ -6,7 +6,7 @@ import {
 } from "@/lib/home-location"
 import { resolveHomeLocation } from "@/lib/home-location-server"
 import type { HeroSlideshowEvent } from "./types"
-import { fetchHeroSlideshowEventsServer } from "./fetch-hero-slideshow-server"
+import { filterVipEventRows } from "./vip-event-filter"
 
 const UPCOMING_VIP_LIMIT = 12
 
@@ -85,21 +85,20 @@ export async function fetchUpcomingVipEventsServer(): Promise<HeroSlideshowEvent
     if (vipRes.ok) {
       const data = await vipRes.json()
       const raw = Array.isArray(data) ? data : data?.events ?? []
-      pool = (raw as Record<string, unknown>[]).map(normalizeEvent).filter((e) => e.id)
+      pool = filterVipEventRows(raw as Record<string, unknown>[])
+        .map(normalizeEvent)
+        .filter((e) => e.id)
     }
 
     if (pool.length < UPCOMING_VIP_LIMIT) {
-      const listRes = await fetch(`${getApiBaseUrl()}/api/events?limit=60`, {
+      const listRes = await fetch(`${getApiBaseUrl()}/api/events?limit=60&vip=true`, {
         next: { revalidate: 60 },
       })
       if (listRes.ok) {
         const data = await listRes.json()
-        const rawList = (data?.events ?? []) as Record<string, unknown>[]
-        const vipOnly = rawList.filter(
-          (e) => e?.isVIP === true || e?.is_vip === true || e?.vip === true,
-        )
+        const rawList = filterVipEventRows((data?.events ?? []) as Record<string, unknown>[])
         const seen = new Set(pool.map((e) => e.id))
-        for (const row of vipOnly) {
+        for (const row of rawList) {
           const e = normalizeEvent(row)
           if (e.id && !seen.has(e.id)) {
             seen.add(e.id)
@@ -110,10 +109,6 @@ export async function fetchUpcomingVipEventsServer(): Promise<HeroSlideshowEvent
     }
   } catch (err) {
     console.error("Upcoming VIP events fetch error:", err)
-  }
-
-  if (pool.length === 0) {
-    pool = await fetchHeroSlideshowEventsServer()
   }
 
   return filterByHomeCountryPrioritizeCity(

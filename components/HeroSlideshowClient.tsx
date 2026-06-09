@@ -303,7 +303,7 @@ export default function HeroSlideshowClient({
 
   if (!events.length) {
     return (
-      <div className="w-full px-3 sm:px-4 lg:px-6">
+      <div className="w-full">
         <HomeSectionEmptyState
           icon="trending"
           title="No VIP events in this region"
@@ -328,7 +328,7 @@ export default function HeroSlideshowClient({
   return (
     <section
       aria-label="Discover Trade Shows"
-      className="relative w-full overflow-hidden rounded-[28px]"
+      className="relative w-full min-w-0 overflow-hidden rounded-2xl sm:rounded-3xl lg:rounded-[28px]"
     >
       {/* Background Image */}
       {/* <div
@@ -343,58 +343,56 @@ export default function HeroSlideshowClient({
       <div className="absolute inset-0 bg-white/85" />
 
       {/* Content */}
-      <div className="relative z-10 w-full max-w-[1300px] mx-auto px-4 sm:px-6 xl:px-10">
+      <div className="relative z-10 w-full mx-auto">
 
-        <div className="relative z-10 flex flex-col lg:flex-row lg:items-start gap-6 lg:gap-10 xl:gap-16 pt-8 sm:pt-10 lg:pt-16 xl:pt-20 pb-6 lg:pb-2">
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-start gap-5 sm:gap-6 lg:gap-10 xl:gap-16 pt-6 sm:pt-8 lg:pt-16 xl:pt-20 pb-4 sm:pb-6 lg:pb-2">
 
           {/* ── LEFT PANEL ── */}
-          <div className="w-full lg:w-[32%] flex-shrink-0">
+          <div className="w-full min-w-0 lg:w-[32%] flex-shrink-0">
 
-            {/* Headline — tighter on mobile */}
-            <h1 className="text-[28px] sm:text-[34px] lg:text-[42px] xl:text-[55px] font-light leading-[0.9] tracking-[-0.05em] text-[#0B132B]">
-              <span className="block">Discover</span>
-              <span className="block mt-3 lg:mt-4 text-[#2563EB]">Trade Shows</span>
-              <span className="block mt-3 lg:mt-4">Worldwide</span>
+            <h1 className="text-[clamp(1.375rem,4.2vw,2.625rem)] font-light leading-[0.95] tracking-[-0.05em] text-[#0B132B]">
+              <span className="block sm:whitespace-nowrap">
+                Discover{" "}
+                <span className="text-[#2563EB]">Trade Shows</span>
+              </span>
+              <span className="mt-2 block sm:mt-3 lg:mt-4">Worldwide</span>
             </h1>
 
-            {/* Description — hidden on very small to save space, shown sm+ */}
-            <p className="hidden sm:block mt-5 lg:mt-7 max-w-[340px] text-[15px] sm:text-[16px] lg:text-[18px] leading-[1.7] text-[#64748B]">
-              Connect with buyers, exhibitors, and industry leaders at the world's leading trade fairs.
+            <p className="mt-3 max-w-[340px] text-[14px] leading-[1.65] text-[#64748B] sm:mt-5 sm:text-[16px] lg:mt-7 lg:text-[18px] lg:leading-[1.7]">
+              Connect with buyers, exhibitors, and industry leaders at the world&apos;s leading trade fairs.
             </p>
 
-            {/* Stats — 3 columns on mobile, row on desktop */}
-            <div className="grid grid-cols-3 gap-3 mt-5 lg:mt-8 mb-5 lg:mb-8 lg:flex lg:gap-8">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-1.5 sm:gap-3">
-                <CalendarDays className="h-5 w-5 lg:h-6 lg:w-6 text-blue-500 shrink-0" strokeWidth={1.5} />
-                <div>
-                  <p className="text-[20px] sm:text-[24px] lg:text-[28px] font-extrabold text-[#0F172A] leading-none">12K+</p>
-                  <p className="text-[11px] sm:text-[12px] lg:text-[14px] font-medium text-[#64748B] mt-0.5 sm:mt-1 whitespace-nowrap">
+            <div className="mt-4 grid grid-cols-3 gap-2 sm:gap-3 lg:mt-8 lg:mb-8 lg:flex lg:gap-8 mb-4 sm:mb-5">
+              <div className="flex min-w-0 flex-col items-center gap-1 text-center sm:flex-row sm:items-center sm:gap-3 sm:text-left">
+                <CalendarDays className="h-4 w-4 shrink-0 text-blue-500 sm:h-5 sm:w-5 lg:h-6 lg:w-6" strokeWidth={1.5} />
+                <div className="min-w-0">
+                  <p className="text-[17px] font-extrabold leading-none text-[#0F172A] sm:text-[24px] lg:text-[28px]">12K+</p>
+                  <p className="mt-0.5 text-[10px] font-medium leading-tight text-[#64748B] sm:text-[12px] lg:text-[14px]">
                     Events Listed
                   </p>
                 </div>
               </div>
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-1.5 sm:gap-3">
-                <Users className="h-5 w-5 lg:h-6 lg:w-6 text-blue-500 shrink-0" strokeWidth={2} />
-                <div>
-                  <p className="text-[20px] sm:text-[24px] lg:text-[28px] font-extrabold text-[#0F172A] leading-none">320K+</p>
-                  <p className="text-[11px] sm:text-[12px] lg:text-[14px] font-medium text-[#64748B] mt-0.5 sm:mt-1 whitespace-nowrap">
+              <div className="flex min-w-0 flex-col items-center gap-1 text-center sm:flex-row sm:items-center sm:gap-3 sm:text-left">
+                <Users className="h-4 w-4 shrink-0 text-blue-500 sm:h-5 sm:w-5 lg:h-6 lg:w-6" strokeWidth={2} />
+                <div className="min-w-0">
+                  <p className="text-[17px] font-extrabold leading-none text-[#0F172A] sm:text-[24px] lg:text-[28px]">320K+</p>
+                  <p className="mt-0.5 text-[10px] font-medium leading-tight text-[#64748B] sm:text-[12px] lg:text-[14px]">
                     Professionals
                   </p>
                 </div>
               </div>
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-1.5 sm:gap-3">
-                <Globe className="h-5 w-5 lg:h-6 lg:w-6 text-blue-500 shrink-0" strokeWidth={1.5} />
-                <div>
-                  <p className="text-[20px] sm:text-[24px] lg:text-[28px] font-extrabold text-[#0F172A] leading-none">180+</p>
-                  <p className="text-[11px] sm:text-[12px] lg:text-[14px] font-medium text-[#64748B] mt-0.5 sm:mt-1 whitespace-nowrap">
+              <div className="flex min-w-0 flex-col items-center gap-1 text-center sm:flex-row sm:items-center sm:gap-3 sm:text-left">
+                <Globe className="h-4 w-4 shrink-0 text-blue-500 sm:h-5 sm:w-5 lg:h-6 lg:w-6" strokeWidth={1.5} />
+                <div className="min-w-0">
+                  <p className="text-[17px] font-extrabold leading-none text-[#0F172A] sm:text-[24px] lg:text-[28px]">180+</p>
+                  <p className="mt-0.5 text-[10px] font-medium leading-tight text-[#64748B] sm:text-[12px] lg:text-[14px]">
                     Countries
                   </p>
                 </div>
               </div>
             </div>
 
-            {/* CTA buttons */}
-            <div className="flex gap-3 sm:gap-4 max-w-[360px]">
+            <div className="flex w-full max-w-[360px] flex-col gap-2.5 min-[400px]:flex-row sm:gap-4">
               <Link
                 href="/event"
                 className="flex-1 text-center bg-blue-600 hover:bg-blue-700 transition-colors text-white text-[0.85rem] sm:text-[0.9rem] font-bold h-11 sm:h-12 rounded-sm flex items-center justify-center"
@@ -411,11 +409,10 @@ export default function HeroSlideshowClient({
           </div>
 
           {/* ── RIGHT PANEL ── */}
-          <div className="w-full lg:w-[55%] lg:ml-25 flex flex-col gap-4 lg:gap-5">
+          <div className="flex w-full min-w-0 flex-col gap-3 sm:gap-4 lg:w-[55%] lg:gap-5">
 
-            {/* Featured card */}
-            <div className="relative w-full rounded-xl shadow-[0_5px_20px_-4px_rgba(0,0,0,0.95)]  overflow-visible">
-              <div className="relative overflow-hidden rounded-xl h-[260px] sm:h-[300px] lg:h-[360px] xl:h-[400px]">
+            <div className="relative w-full min-w-0 overflow-hidden rounded-xl shadow-[0_5px_20px_-4px_rgba(0,0,0,0.95)]">
+              <div className="relative h-[220px] overflow-hidden rounded-xl min-[400px]:h-[240px] sm:h-[300px] lg:h-[360px] xl:h-[400px]">
                 {featuredImageUrl ? (
                   <AppImage
                     key={featured.id}
@@ -441,43 +438,39 @@ export default function HeroSlideshowClient({
                   </span>
                 </div>
 
-                {/* Bottom info bar */}
-                <div className="absolute bottom-0 left-0 right-0 z-20 p-3 sm:p-5 lg:p-6">
-                  <div className="flex items-end gap-3 sm:gap-4 lg:gap-5">
-
-                    {/* Date box — smaller on mobile */}
-                    <div className="flex-shrink-0 bg-white rounded-lg sm:rounded-xl px-2 py-2 sm:px-4 sm:py-3 text-center w-[58px] h-[58px] sm:w-[80px] sm:h-[80px] lg:w-[110px] lg:h-[100px] shadow flex flex-col items-center justify-center">
-                      <p className="text-[1.1rem] sm:text-[1.3rem] lg:text-[1.4rem] font-black text-gray-900 leading-none tracking-tight">{dayRange}</p>
-                      <p className="text-[0.65rem] sm:text-[0.85rem] font-semibold text-gray-500 mt-1 uppercase tracking-wider">{monthYear}</p>
+                <div className="absolute bottom-0 left-0 right-0 z-20 p-2.5 sm:p-5 lg:p-6">
+                  <div className="flex flex-col gap-2.5 min-[400px]:flex-row min-[400px]:items-end sm:gap-4 lg:gap-5">
+                    <div className="flex w-fit shrink-0 flex-col items-center justify-center rounded-lg bg-white px-2.5 py-2 text-center shadow min-[400px]:h-[72px] min-[400px]:w-[72px] sm:rounded-xl sm:px-4 sm:py-3 sm:h-[80px] sm:w-[80px] lg:h-[100px] lg:w-[110px]">
+                      <p className="text-[1rem] font-black leading-none tracking-tight text-gray-900 sm:text-[1.3rem] lg:text-[1.4rem]">{dayRange}</p>
+                      <p className="mt-0.5 text-[0.6rem] font-semibold uppercase tracking-wider text-gray-500 sm:mt-1 sm:text-[0.85rem]">{monthYear}</p>
                     </div>
 
-                    {/* Event info */}
-                    <div className="flex-1 min-w-0">
-                      <h2 className="text-[1.1rem] sm:text-[1.35rem] lg:text-[1.7rem] font-extrabold text-white mb-1 sm:mb-2 leading-tight line-clamp-2">
-                        {featured.subTitle}
+                    <div className="min-w-0 flex-1">
+                      <h2 className="mb-1 line-clamp-2 text-[1rem] font-extrabold leading-tight text-white sm:mb-2 sm:text-[1.35rem] lg:text-[1.7rem]">
+                        {featured.subTitle || featured.title}
                       </h2>
-                      {loc && (
-                        <div className="flex items-center gap-1.5 sm:gap-2 text-white text-[0.72rem] sm:text-[0.78rem] mb-1.5 sm:mb-2">
-                          <MapPin className="h-3 w-3 sm:h-3.5 sm:w-3.5 shrink-0" strokeWidth={2} />
-                          <span className="truncate drop-shadow-sm">{loc}</span>
+                      {loc ? (
+                        <div className="mb-1.5 flex items-start gap-1.5 text-[0.7rem] text-white sm:mb-2 sm:items-center sm:text-[0.78rem]">
+                          <MapPin className="mt-0.5 h-3 w-3 shrink-0 sm:mt-0 sm:h-3.5 sm:w-3.5" strokeWidth={2} />
+                          <span className="line-clamp-2 drop-shadow-sm sm:truncate">{loc}</span>
                         </div>
-                      )}
-                      {featured.organizerName && (
-                        <div className="hidden sm:flex items-center gap-1.5 text-white text-[0.78rem] mb-2">
+                      ) : null}
+                      {featured.organizerName ? (
+                        <div className="mb-2 hidden items-center gap-1.5 text-[0.78rem] text-white sm:flex">
                           <Building2 className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
                           <span className="truncate drop-shadow-sm">{featured.organizerName}</span>
                         </div>
-                      )}
-                      <div className="flex gap-2 flex-wrap">
+                      ) : null}
+                      <div className="flex flex-col gap-2 min-[400px]:flex-row min-[400px]:flex-wrap">
                         <Link
                           href={eventPublicPath(featured)}
-                          className="bg-blue-600 hover:bg-blue-700 text-white text-[0.72rem] sm:text-[0.8rem] font-bold px-3 sm:px-5 py-1.5 sm:py-2 rounded-md sm:rounded-lg transition-colors shadow"
+                          className="rounded-md bg-blue-600 px-3 py-2 text-center text-[0.72rem] font-bold text-white shadow transition-colors hover:bg-blue-700 sm:rounded-lg sm:px-5 sm:py-2 sm:text-[0.8rem]"
                         >
                           Register Now
                         </Link>
                         <Link
                           href={`${eventPublicPath(featured)}?tab=exhibit`}
-                          className="bg-white hover:bg-gray-50 text-gray-900 text-[0.72rem] sm:text-[0.8rem] font-bold px-3 sm:px-5 py-1.5 sm:py-2 rounded-md sm:rounded-lg border border-white/60 transition-colors shadow"
+                          className="rounded-md border border-white/60 bg-white px-3 py-2 text-center text-[0.72rem] font-bold text-gray-900 shadow transition-colors hover:bg-gray-50 sm:rounded-lg sm:px-5 sm:py-2 sm:text-[0.8rem]"
                         >
                           Exhibit Now
                         </Link>

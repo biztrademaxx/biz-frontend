@@ -30,14 +30,14 @@ export default function Home() {
   return (
     <div className="min-h-screen w-full min-w-0 overflow-x-hidden bg-white">
       <div className="bg-white pb-1">
-        <div className="mx-auto px-4">
+        <div className="mx-auto w-full min-w-0 max-w-7xl px-3 sm:px-4 lg:px-6">
           {/* <HeroSection/> */}
           <Suspense fallback={<HeroSlideshowSkeleton />}>
             <HeroSlideshow />
           </Suspense>
           <Suspense
             fallback={
-              <div className="mx-auto mt-4 max-w-[1300px] space-y-4 sm:mt-6" aria-hidden>
+              <div className="mt-4 space-y-4 sm:mt-6" aria-hidden>
                 <div className="home-shimmer h-6 w-56 rounded" />
                 <div className="flex gap-4 overflow-hidden">
                   <div className="home-shimmer h-28 w-[300px] shrink-0 rounded-xl" />
@@ -49,7 +49,7 @@ export default function Home() {
           >
             <UpcomingVipEvents />
           </Suspense>
-          <div className="mx-auto mt-4 mb-6 max-w-[1300px] sm:mt-6 sm:mb-8">
+          <div className="mt-4 mb-5 min-w-0 sm:mt-6 sm:mb-8">
             <HomeTradeFairsSearch />
           </div>
         </div>

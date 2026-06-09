@@ -5,6 +5,7 @@ import { Upload, X, Image as ImageIcon, Video, FileText } from "lucide-react"
 import { Label } from "@/components/ui/label"
 import { AppImage } from "@/components/app-image"
 import { cn } from "@/lib/utils"
+import { IMAGE_UPLOAD_HINT } from "@/lib/prepare-image-upload"
 
 type AdminEventFileUploadProps = {
   label: string
@@ -62,7 +63,11 @@ export function AdminEventFileUpload({
         <Upload className="mx-auto mb-2 h-7 w-7 text-gray-400" />
         <p className="text-sm text-gray-600">Drag & drop or click to upload</p>
         <p className="mt-1 text-xs text-gray-500">
-          {accept.includes("image") ? "Images" : accept.includes("video") ? "Videos" : "Documents"}
+          {accept.includes("image")
+            ? IMAGE_UPLOAD_HINT
+            : accept.includes("video")
+              ? "Video files"
+              : "Documents — max 15 MB"}
         </p>
         <input
           id={inputId}

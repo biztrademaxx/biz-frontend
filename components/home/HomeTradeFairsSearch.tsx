@@ -64,15 +64,14 @@ export default function HomeTradeFairsSearch() {
   return (
     <section
       aria-label="Find trade fairs worldwide"
-      className="w-full rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5 md:p-6"
+      className="w-full min-w-0 rounded-xl border border-slate-200 bg-white p-3 shadow-sm sm:rounded-2xl sm:p-5 md:p-6"
     >
-      <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-        <h2 className="text-lg font-bold text-[#004A96] sm:text-xl">Find Trade Fairs Worldwide</h2>
+      <div className="mb-3 flex flex-col gap-1 sm:mb-4 sm:flex-row sm:items-center sm:justify-between">
+        <h2 className="text-base font-bold text-[#004A96] sm:text-lg md:text-xl">Find Trade Fairs Worldwide</h2>
         <p className="text-xs text-slate-500 sm:text-sm">Search across events and summits worldwide</p>
       </div>
 
-      {/* Search row */}
-      <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-stretch">
+      <div className="mb-3 flex flex-col gap-2 sm:mb-4 sm:flex-row sm:items-stretch">
         <div className="relative flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <Input
@@ -86,7 +85,7 @@ export default function HomeTradeFairsSearch() {
         <Button
           type="button"
           onClick={handleSearch}
-          className="h-11 shrink-0 rounded-lg bg-[#004A96] px-6 text-sm font-semibold text-white hover:bg-[#003d7a]"
+          className="h-11 w-full shrink-0 rounded-lg bg-[#004A96] px-6 text-sm font-semibold text-white hover:bg-[#003d7a] sm:w-auto"
         >
           <Search className="mr-2 h-4 w-4" />
           Search
@@ -143,7 +142,7 @@ export default function HomeTradeFairsSearch() {
           </SelectContent>
         </Select>
 
-        <div className="flex items-center gap-2 sm:col-span-2 lg:col-span-1">
+        <div className="flex flex-col gap-2 sm:col-span-2 sm:flex-row sm:items-center lg:col-span-1">
           <div className="relative min-w-0 flex-1">
             <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-500">
               From
@@ -153,10 +152,10 @@ export default function HomeTradeFairsSearch() {
               type="date"
               value={fromDate}
               onChange={(e) => setFromDate(e.target.value)}
-              className="h-11 rounded-lg border-slate-200 pl-12 pr-10 text-sm shadow-none [&::-webkit-calendar-picker-indicator]:opacity-0"
+              className="h-11 w-full rounded-lg border-slate-200 pl-12 pr-10 text-sm shadow-none [&::-webkit-calendar-picker-indicator]:opacity-0"
             />
           </div>
-          <span className="shrink-0 text-slate-400">–</span>
+          <span className="hidden shrink-0 text-slate-400 sm:inline">–</span>
           <div className="relative min-w-0 flex-1">
             <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-500">
               To
@@ -167,7 +166,7 @@ export default function HomeTradeFairsSearch() {
               value={toDate}
               min={fromDate || undefined}
               onChange={(e) => setToDate(e.target.value)}
-              className="h-11 rounded-lg border-slate-200 pl-10 pr-10 text-sm shadow-none [&::-webkit-calendar-picker-indicator]:opacity-0"
+              className="h-11 w-full rounded-lg border-slate-200 pl-10 pr-10 text-sm shadow-none [&::-webkit-calendar-picker-indicator]:opacity-0"
             />
           </div>
         </div>

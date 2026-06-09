@@ -8,7 +8,7 @@ function Shimmer({ className }: { className?: string }) {
 export default function HeroSlideshowSkeleton() {
   return (
     <section
-      className="relative w-full overflow-hidden rounded-[28px]"
+      className="relative w-full min-w-0 overflow-hidden rounded-2xl sm:rounded-3xl lg:rounded-[28px]"
       aria-busy="true"
       aria-label="Loading featured events"
     >
@@ -18,14 +18,12 @@ export default function HeroSlideshowSkeleton() {
       />
       <div className="absolute inset-0 bg-white/88" aria-hidden />
 
-      <div className="relative z-10 mx-auto w-full max-w-[1300px] px-6 xl:px-10">
-        <div className="relative z-10 flex flex-col gap-8 pb-2 pt-12 lg:flex-row lg:items-start lg:gap-10 lg:pt-16 xl:gap-16 xl:pt-20">
-          {/* Left panel — headline, copy, stats, CTAs */}
-          <div className="w-full shrink-0 lg:w-[32%]">
-            <div className="max-w-[340px] space-y-4">
-              <Shimmer className="h-8 w-[9.5rem] rounded-sm" />
-              <Shimmer className="h-10 w-[11.5rem] rounded-sm" />
-              <Shimmer className="h-8 w-[10rem] rounded-sm" />
+      <div className="relative z-10 mx-auto w-full">
+        <div className="relative z-10 flex flex-col gap-5 pb-4 pt-6 sm:gap-6 sm:pb-6 sm:pt-8 lg:flex-row lg:items-start lg:gap-10 lg:pt-16 xl:gap-16 xl:pt-20">
+          <div className="w-full min-w-0 shrink-0 lg:w-[32%]">
+            <div className="max-w-[340px] space-y-3 sm:space-y-4">
+              <Shimmer className="h-7 w-[min(100%,15rem)] rounded-sm sm:h-8" />
+              <Shimmer className="h-7 w-[min(100%,10rem)] rounded-sm sm:h-8" />
             </div>
 
             <div className="mt-16 max-w-[340px] space-y-2.5 lg:mt-20">
@@ -46,16 +44,15 @@ export default function HeroSlideshowSkeleton() {
               ))}
             </div>
 
-            <div className="flex max-w-[360px] gap-4">
-              <Shimmer className="h-12 flex-1 rounded-sm" />
-              <Shimmer className="h-12 flex-1 rounded-sm border border-slate-200/90 bg-gradient-to-b from-white to-slate-50" />
+            <div className="flex w-full max-w-[360px] flex-col gap-2.5 min-[400px]:flex-row sm:gap-4">
+              <Shimmer className="h-11 flex-1 rounded-sm sm:h-12" />
+              <Shimmer className="h-11 flex-1 rounded-sm border border-slate-200/90 bg-gradient-to-b from-white to-slate-50 sm:h-12" />
             </div>
           </div>
 
-          {/* Right panel — featured card, dots, preview row */}
-          <div className="flex w-full flex-col gap-5 lg:ml-25 lg:w-[55%]">
-            <div className="relative w-full min-h-[380px] overflow-visible rounded-xl ring-1 ring-slate-200/70">
-              <div className="relative h-[300px] overflow-hidden rounded-xl lg:h-[360px] xl:h-[400px]">
+          <div className="flex w-full min-w-0 flex-col gap-3 sm:gap-4 lg:w-[55%]">
+            <div className="relative w-full overflow-hidden rounded-xl ring-1 ring-slate-200/70">
+              <div className="relative h-[220px] overflow-hidden rounded-xl min-[400px]:h-[240px] sm:h-[300px] lg:h-[360px] xl:h-[400px]">
                 <Shimmer className="absolute inset-0 h-full w-full rounded-none" />
 
                 <div

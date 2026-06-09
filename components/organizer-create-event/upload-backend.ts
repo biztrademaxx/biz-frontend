@@ -1,4 +1,9 @@
 import { getAccessToken } from "@/lib/api"
+import {
+  IMAGE_UPLOAD_HINT,
+  prepareImageFileForUpload,
+  parseUploadErrorMessage,
+} from "@/lib/prepare-image-upload"
 
 export type UploadProxyKind = "image" | "brochure" | "layout"
 
@@ -27,15 +32,22 @@ export async function uploadFileViaProxy(file: File, kind: UploadProxyKind = "im
   return uploadEventFileToBackend(file, kind)
 }
 
+export { IMAGE_UPLOAD_HINT }
+
 /** @deprecated Prefer {@link uploadFileViaProxy} — same implementation. */
 export async function uploadEventFileToBackend(file: File, kind: UploadProxyKind): Promise<string> {
-  const formData = new FormData()
-  formData.append("file", file)
-
   const useImageRoute = kind === "image" || (kind === "layout" && file.type.startsWith("image/"))
   if (useImageRoute) {
     assertSupportedImageFile(file)
   }
+
+  let uploadFile = file
+  if (useImageRoute) {
+    uploadFile = await prepareImageFileForUpload(file)
+  }
+
+  const formData = new FormData()
+  formData.append("file", uploadFile)
   const path = useImageRoute ? "/api/upload/cloudinary" : "/api/upload/brochure"
 
   const token = getAccessToken()
@@ -55,12 +67,16 @@ export async function uploadEventFileToBackend(file: File, kind: UploadProxyKind
     try {
       data = JSON.parse(raw)
     } catch {
-      throw new Error(raw.trim().slice(0, 300) || "Failed to upload file")
+      throw new Error(parseUploadErrorMessage(response.status, raw))
     }
   }
 
   if (!response.ok) {
-    throw new Error(data.message || data.error || `Upload failed (${response.status})`)
+    throw new Error(
+      data.message ||
+        data.error ||
+        parseUploadErrorMessage(response.status, raw),
+    )
   }
 
   const url = data.url

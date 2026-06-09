@@ -6,6 +6,7 @@ import {
 import { hasDisplayableEventImage } from "@/lib/event-card-meta"
 import { resolveHomeLocation } from "@/lib/home-location-server"
 import type { HeroSlideshowEvent } from "./types"
+import { filterVipEventRows } from "./vip-event-filter"
 
 function withDisplayableImage(events: HeroSlideshowEvent[]): HeroSlideshowEvent[] {
   return events.filter((e) => e.id && hasDisplayableEventImage(e))
@@ -134,35 +135,23 @@ export async function fetchHeroSlideshowEventsServer(): Promise<HeroSlideshowEve
     if (vipRes.ok) {
       const data = await vipRes.json()
       const raw = Array.isArray(data) ? data : data?.events ?? []
-      pool = (raw as Record<string, unknown>[]).map(normalizeEvent).filter((e) => e.id)
+      pool = filterVipEventRows(raw as Record<string, unknown>[])
+        .map(normalizeEvent)
+        .filter((e) => e.id)
     }
 
     if (pool.length < SLIDE_COUNT) {
-      const listRes = await fetch(`${getApiBaseUrl()}/api/events?limit=60`, {
+      const listRes = await fetch(`${getApiBaseUrl()}/api/events?limit=60&vip=true`, {
         next: { revalidate: 60 },
       })
       if (listRes.ok) {
         const data = await listRes.json()
-        const rawList = (data?.events ?? []) as Record<string, unknown>[]
-        const vipOnly = rawList.filter(
-          (e) => e?.isVIP === true || e?.is_vip === true || e?.vip === true,
-        )
+        const rawList = filterVipEventRows((data?.events ?? []) as Record<string, unknown>[])
         pool = mergeUniqueById(
           pool,
-          vipOnly.map(normalizeEvent).filter((e) => e.id),
-          60,
+          rawList.map(normalizeEvent).filter((e) => e.id),
+          SLIDE_COUNT,
         )
-      }
-    }
-
-    if (pool.length < SLIDE_COUNT) {
-      const listRes = await fetch(`${getApiBaseUrl()}/api/events?limit=80`, {
-        next: { revalidate: 60 },
-      })
-      if (listRes.ok) {
-        const data = await listRes.json()
-        const list = ((data?.events ?? []) as Record<string, unknown>[]).map(normalizeEvent).filter((e) => e.id)
-        pool = mergeUniqueById(pool, list, 80)
       }
     }
   } catch (err) {
