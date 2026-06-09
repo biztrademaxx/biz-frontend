@@ -83,12 +83,17 @@ export default function VisitorEventsPage() {
 
   const fetchVisitors = async () => {
     try {
-      const data = await adminApi<VisitorEvent[]>("/visitors/visitor-events")
-      const list = Array.isArray(data) ? data : (data as any)?.data ?? []
+      setLoading(true)
+      const data = await adminApi<VisitorEvent[] | { data?: VisitorEvent[] }>(
+        "/visitors/visitor-events",
+      )
+      const list = Array.isArray(data) ? data : data?.data ?? []
       setVisitors(list)
       setFilteredVisitors(list)
     } catch (error) {
       console.error("Error fetching visitors:", error)
+      setVisitors([])
+      setFilteredVisitors([])
     } finally {
       setLoading(false)
     }
@@ -106,8 +111,9 @@ export default function VisitorEventsPage() {
     }
 
     if (statusFilter !== "all") {
+      const wanted = statusFilter.toUpperCase()
       filtered = filtered.filter((visitor) =>
-        visitor.registrations.some((reg) => reg.status.toLowerCase() === statusFilter.toLowerCase())
+        visitor.registrations.some((reg) => reg.status.toUpperCase() === wanted),
       )
     }
 

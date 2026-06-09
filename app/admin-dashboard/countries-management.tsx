@@ -82,6 +82,7 @@ export default function CountriesManagement({ activeTab = "countries" }: Countri
   const [countries, setCountries] = useState<Country[]>([])
   const [cities, setCities] = useState<City[]>([])
   const [loading, setLoading] = useState(true)
+  const [fetchError, setFetchError] = useState("")
   const [searchTerm, setSearchTerm] = useState("")
   const [currentActiveTab, setCurrentActiveTab] = useState<"countries" | "states" | "cities">(activeTab)
   const [selectedStateCountry, setSelectedStateCountry] = useState("")
@@ -133,22 +134,36 @@ export default function CountriesManagement({ activeTab = "countries" }: Countri
   const fetchData = async () => {
     try {
       setLoading(true)
+      setFetchError("")
       if (currentActiveTab === "countries") {
         const data = await apiFetch<Country[]>("/api/admin/countries?includeCounts=true", { auth: true })
         setCountries(Array.isArray(data) ? data : [])
       } else if (currentActiveTab === "states") {
-        const [countryData, statesData] = await Promise.all([
+        const [countriesResult, statesResult] = await Promise.allSettled([
           apiFetch<Country[]>("/api/admin/countries?includeCounts=true", { auth: true }),
           apiFetch<StateRow[]>("/api/admin/states?includeCounts=true", { auth: true }),
         ])
-        setCountries(Array.isArray(countryData) ? countryData : [])
-        setStates(Array.isArray(statesData) ? statesData : [])
+        if (countriesResult.status === "fulfilled") {
+          setCountries(Array.isArray(countriesResult.value) ? countriesResult.value : [])
+        }
+        if (statesResult.status === "fulfilled") {
+          setStates(Array.isArray(statesResult.value) ? statesResult.value : [])
+        }
+        const failed = [countriesResult, statesResult].find((r) => r.status === "rejected") as
+          | PromiseRejectedResult
+          | undefined
+        if (failed) {
+          throw failed.reason
+        }
       } else {
         const data = await apiFetch<City[]>("/api/admin/cities?includeCounts=true", { auth: true })
         setCities(Array.isArray(data) ? data : [])
       }
     } catch (error) {
       console.error("Failed to fetch data:", error)
+      const message =
+        error instanceof Error ? error.message : "Failed to load location data. Is the backend running?"
+      setFetchError(message)
     } finally {
       setLoading(false)
     }
@@ -364,6 +379,24 @@ export default function CountriesManagement({ activeTab = "countries" }: Countri
     return (
       <div className="flex justify-center items-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    )
+  }
+
+  if (fetchError) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 gap-4 text-center px-4">
+        <p className="text-red-600 max-w-xl">{fetchError}</p>
+        <p className="text-sm text-gray-500">
+          Start the API with <code className="text-xs bg-gray-100 px-1 py-0.5 rounded">cd biz-backend &amp;&amp; npm run dev</code>
+        </p>
+        <button
+          type="button"
+          onClick={() => void fetchData()}
+          className="text-sm underline text-gray-700 hover:text-gray-900"
+        >
+          Try again
+        </button>
       </div>
     )
   }

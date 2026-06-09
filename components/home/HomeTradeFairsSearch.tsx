@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
-import { CalendarDays, ChevronDown, Globe, MapPin, Search } from "lucide-react"
+import { CalendarDays, Globe, MapPin, Search } from "lucide-react"
 import { getCityOptions, getCountryOptions, getStateOptions } from "@/lib/location-data"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -106,7 +106,6 @@ export default function HomeTradeFairsSearch() {
               <Globe className="h-4 w-4 shrink-0 text-slate-400" />
               <SelectValue placeholder="All Countries" />
             </div>
-            <ChevronDown className="h-4 w-4 shrink-0 text-slate-400" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value={ALL_COUNTRIES}>All Countries</SelectItem>
@@ -130,7 +129,6 @@ export default function HomeTradeFairsSearch() {
                 placeholder={countryCode === ALL_COUNTRIES ? "Select country first" : "All Cities"}
               />
             </div>
-            <ChevronDown className="h-4 w-4 shrink-0 text-slate-400" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value={ALL_CITIES}>All Cities</SelectItem>

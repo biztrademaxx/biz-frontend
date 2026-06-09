@@ -33,6 +33,12 @@ const emptyForm = {
 };
 
 export default function AddSpeaker() {
+  const { toast } = useToast();
+  const form = useForm<AddSpeakerFormValues>({
+    resolver: zodResolver(addSpeakerFormSchema),
+    defaultValues: emptyForm,
+  });
+
   const LOCATION_NONE = "__none__";
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -129,6 +135,7 @@ export default function AddSpeaker() {
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     form.setValue(name as keyof AddSpeakerFormValues, value, { shouldValidate: true });
+    setFormData((prev) => ({ ...prev, [name]: value }));
   }, [form]);
 
   const onSubmit = async (values: AddSpeakerFormValues) => {
@@ -173,6 +180,7 @@ export default function AddSpeaker() {
       if (result?.success) {
         toast({ title: "Success", description: "Speaker created successfully!" });
         form.reset(emptyForm);
+        setFormData(emptyForm);
         setCountryPick(LOCATION_NONE);
         setStatePick(LOCATION_NONE);
         setCityPick(LOCATION_NONE);

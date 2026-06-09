@@ -27,6 +27,7 @@ import {
   Star,
   Inbox,
   Tag,
+  MessageCircle,
 } from "lucide-react"
 
 // Import all section components
@@ -299,7 +300,7 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
         { title: "Followers", id: "organizers-connections" },
         { title: "Promotions", id: "promotions" },
         { title: "Venue Bookings", id: "organizers-bookings" },
-        { title: "Event Feedback", id: "organizers-feedback" },
+       
       ],
     },
     {
@@ -312,7 +313,7 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
         { title: "Promotions", id: "exhibitors-promotions" },
         // { title: "Followers", id: "exhibitors-followers" },
         { title: "Appointments", id: "exhibitors-appointments" },
-        { title: "Feedback", id: "exhibitors-feedback" },
+       
       ],
     },
     {
@@ -324,7 +325,7 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
         { title: "Add Speaker", id: "speakers-add" },
         { title: "Followers", id: "speakers-followers" },
         // { title: "Appointments", id: "speakers-appointments" },
-        { title: "Feedback", id: "speakers-feedback" },
+        
       ],
     },
     {
@@ -337,7 +338,7 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
         { title: "Bulk Import", id: "venues-bulk-import" },
         { title: "Events by Venue", id: "venues-events" },
         { title: "Booking Enquiries", id: "venues-bookings" },
-        { title: "Feedback", id: "venues-feedback" },
+        
       ],
     },
     {
@@ -373,18 +374,18 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
         { title: "Transaction History", id: "financial-transactions" },
       ],
     },
-    {
-      title: "Content",
-      icon: FileText,
-      id: "content",
-      subItems: [
-        { title: "News & Announcements", id: "content-news" },
+    // {
+    //   title: "Content",
+    //   icon: FileText,
+    //   id: "content",
+    //   subItems: [
+       
         
         
-        // { title: "Featured Events", id: "content-featured" },
-        // { title: "Media Library", id: "content-media" },
-      ],
-    },
+    //     // { title: "Featured Events", id: "content-featured" },
+    //     // { title: "Media Library", id: "content-media" },
+    //   ],
+    // },
     {
       title: "Promotions",
       icon: Tag,
@@ -404,7 +405,8 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
         { title: "Push Notifications", id: "marketing-notifications" },
         { title: "Email Templates", id: "template-email" },
         { title: "Push Templates", id: "template-notifications" },
-        { title: "Traffic Analytics", id: "marketing-traffic" },
+        { title: "News & Announcements", id: "content-news" },
+       
         { title: "SEO & Keywords", id: "marketing-seo" },
       ],
     },
@@ -418,6 +420,7 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
         { title: "User Engagement", id: "reports-engagement" },
         { title: "Revenue Reports", id: "reports-revenue" },
         { title: "System Health", id: "reports-system" },
+        { title: "Traffic Analytics", id: "marketing-traffic" },
       ],
     },
     {
@@ -463,6 +466,19 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
         { title: "Support Tickets", id: "support-tickets" },
         // { title: "FAQ Management", id: "support-faq" },
         // { title: "Admin Notes", id: "support-notes" },
+      ],
+    },
+
+    {
+      title: "Feedback",
+      icon: MessageCircle,
+      id: "feedback",
+      subItems: [
+        { title: "Event Feedback", id: "organizers-feedback" },
+        { title: "Exhibitor Feedback", id: "exhibitors-feedback" },
+        { title: "Speaker Feedback", id: "speakers-feedback" },
+        { title: "Venue Feedback", id: "venues-feedback" },
+        // { title: "Visitor Feedback", id: "visitors-feedback" },
       ],
     },
   ]
@@ -789,7 +805,7 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
               className={`${NAVBAR_LOGO_COMPACT_CLASSNAME} dark:brightness-110 dark:contrast-95`}
               unoptimized={sidebarLogo.unoptimized}
             />
-            <span className="truncate text-sm font-semibold tracking-tight text-foreground">BizTradeFairs</span>
+            {/* <span className="truncate text-sm font-semibold tracking-tight text-foreground">BizTradeFairs</span> */}
           </div>
         </div>
 

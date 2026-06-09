@@ -29,6 +29,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Pagination } from "@/app/admin-dashboard/shared/components/Pagination"
+
+const PAGE_SIZE = 20
 
 interface VenueEvent {
   id: string
@@ -59,30 +62,59 @@ interface Event {
   organizerEmail: string
 }
 
+interface PaginationInfo {
+  page: number
+  limit: number
+  total: number
+  totalPages: number
+}
+
+interface VenueEventsStats {
+  totalVenues: number
+  totalEvents: number
+  activeEvents: number
+}
+
 export default function VenuesEventsPage() {
   const [venueEvents, setVenueEvents] = useState<VenueEvent[]>([])
-  const [filteredData, setFilteredData] = useState<VenueEvent[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [selectedVenue, setSelectedVenue] = useState<VenueEvent | null>(null)
   const [isDetailOpen, setIsDetailOpen] = useState(false)
-
-  useEffect(() => {
-    fetchVenueEvents()
-  }, [])
-
-  useEffect(() => {
-    filterData()
-  }, [searchQuery, statusFilter, venueEvents])
+  const [pagination, setPagination] = useState<PaginationInfo>({
+    page: 1,
+    limit: PAGE_SIZE,
+    total: 0,
+    totalPages: 0,
+  })
+  const [stats, setStats] = useState<VenueEventsStats>({
+    totalVenues: 0,
+    totalEvents: 0,
+    activeEvents: 0,
+  })
 
   const fetchVenueEvents = async () => {
     try {
       setLoading(true)
-      const data = await adminApi<VenueEvent[]>("/venue/venue-events")
-      const list = Array.isArray(data) ? data : []
-      setVenueEvents(list)
-      setFilteredData(list)
+      const params = new URLSearchParams({
+        page: pagination.page.toString(),
+        limit: String(PAGE_SIZE),
+        ...(searchQuery.trim() && { search: searchQuery.trim() }),
+        ...(statusFilter !== "all" && { status: statusFilter }),
+      })
+      const result = await adminApi<{
+        success?: boolean
+        data?: VenueEvent[]
+        pagination?: PaginationInfo
+        stats?: VenueEventsStats
+      }>(`/venue/venue-events?${params}`)
+
+      setVenueEvents(result.data ?? [])
+      setPagination(
+        result.pagination ?? { page: pagination.page, limit: PAGE_SIZE, total: 0, totalPages: 0 }
+      )
+      if (result.stats) setStats(result.stats)
     } catch (error) {
       console.error("Error fetching venue events:", error)
     } finally {
@@ -90,29 +122,17 @@ export default function VenuesEventsPage() {
     }
   }
 
-  const filterData = () => {
-    let filtered = venueEvents
+  useEffect(() => {
+    void fetchVenueEvents()
+  }, [pagination.page, statusFilter])
 
-    if (searchQuery) {
-      filtered = filtered.filter(
-        (venue) =>
-          venue.venueName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          venue.venueEmail.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          venue.venueCity?.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    }
-
-    if (statusFilter !== "all") {
-      filtered = filtered.filter((venue) => {
-        if (statusFilter === "active") return venue.activeEvents > 0
-        if (statusFilter === "upcoming") return venue.upcomingEvents > 0
-        if (statusFilter === "completed") return venue.completedEvents > 0
-        return true
-      })
-    }
-
-    setFilteredData(filtered)
-  }
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (pagination.page === 1) void fetchVenueEvents()
+      else setPagination((p) => ({ ...p, page: 1 }))
+    }, 500)
+    return () => clearTimeout(timer)
+  }, [searchQuery])
 
   const handleViewDetails = (venue: VenueEvent) => {
     setSelectedVenue(venue)
@@ -137,13 +157,7 @@ export default function VenuesEventsPage() {
     return <Badge variant={config.variant}>{config.label}</Badge>
   }
 
-  const totalStats = {
-    totalVenues: venueEvents.length,
-    totalEvents: venueEvents.reduce((sum, v) => sum + v.totalEvents, 0),
-    activeEvents: venueEvents.reduce((sum, v) => sum + v.activeEvents, 0),
-  }
-
-  if (loading) {
+  if (loading && venueEvents.length === 0) {
     return (
       <div className="flex items-center justify-center h-96">
         <div className="text-center">
@@ -168,7 +182,7 @@ export default function VenuesEventsPage() {
             <MapPin className="w-4 h-4 text-gray-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalStats.totalVenues}</div>
+            <div className="text-2xl font-bold">{stats.totalVenues}</div>
           </CardContent>
         </Card>
 
@@ -178,7 +192,7 @@ export default function VenuesEventsPage() {
             <Calendar className="w-4 h-4 text-gray-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalStats.totalEvents}</div>
+            <div className="text-2xl font-bold">{stats.totalEvents}</div>
           </CardContent>
         </Card>
 
@@ -188,7 +202,7 @@ export default function VenuesEventsPage() {
             <TrendingUp className="w-4 h-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{totalStats.activeEvents}</div>
+            <div className="text-2xl font-bold text-green-600">{stats.activeEvents}</div>
           </CardContent>
         </Card>
       </div>
@@ -222,7 +236,12 @@ export default function VenuesEventsPage() {
         </CardHeader>
 
         <CardContent>
-          <div className="rounded-md border">
+          <div className="rounded-md border relative">
+            {loading && venueEvents.length > 0 && (
+              <div className="absolute inset-0 bg-white/60 z-10 flex items-center justify-center">
+                <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+              </div>
+            )}
             <Table>
               <TableHeader>
                 <TableRow>
@@ -237,14 +256,14 @@ export default function VenuesEventsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredData.length === 0 ? (
+                {venueEvents.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={8} className="text-center py-8 text-gray-500">
                       No venue events found
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredData.map((venue) => (
+                  venueEvents.map((venue) => (
                     <TableRow key={venue.id}>
                       <TableCell>
                         <div>
@@ -300,6 +319,20 @@ export default function VenuesEventsPage() {
               </TableBody>
             </Table>
           </div>
+
+          {pagination.total > 0 && (
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-2 pt-2">
+              <p className="text-sm text-muted-foreground">
+                Showing {(pagination.page - 1) * pagination.limit + 1}–
+                {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} venues
+              </p>
+              <Pagination
+                page={pagination.page}
+                totalPages={pagination.totalPages}
+                onPageChange={(p) => setPagination((prev) => ({ ...prev, page: p }))}
+              />
+            </div>
+          )}
         </CardContent>
       </Card>
 
