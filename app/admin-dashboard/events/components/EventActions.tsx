@@ -41,7 +41,7 @@ export function EventActions({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+        {/* <DropdownMenuLabel>Actions</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => onStatusChange(event.id, "Approved")}>
           Approve
@@ -52,7 +52,7 @@ export function EventActions({
         <DropdownMenuItem onClick={() => onStatusChange(event.id, "Rejected")}>
           Reject
         </DropdownMenuItem>
-        <DropdownMenuSeparator />
+        <DropdownMenuSeparator /> */}
         <DropdownMenuItem onClick={() => onFeatureToggle(event.id, event.featured)}>
           <Star className="w-4 h-4 mr-2" />
           {event.featured ? "Remove Featured" : "Mark Featured"}

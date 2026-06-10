@@ -613,14 +613,14 @@ if (showAddForm) {
         {/* Exhibitors Tab */}
         <TabsContent value="exhibitors" className="space-y-4">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <TabsList className="bg-white border border-gray-200 rounded-lg p-1 gap-1 w-fit">
+            {/* <TabsList className="bg-white border border-gray-200 rounded-lg p-1 gap-1 w-fit">
               <TabsTrigger
                 value="exhibitors"
                 className="text-sm px-4 py-1.5 rounded-md data-[state=active]:bg-gray-900 data-[state=active]:text-white text-gray-500"
               >
                 All Exhibitors
               </TabsTrigger>
-            </TabsList>
+            </TabsList> */}
 
             <div className="flex flex-col sm:flex-row gap-2">
               <Select
@@ -710,8 +710,8 @@ if (showAddForm) {
                           />
                           <div className="min-w-0">
                             <p className="text-sm font-medium text-gray-900 truncate">{exhibitor.companyName}</p>
-                            <p className="text-xs text-gray-400 truncate">{exhibitor.contactPerson}</p>
-                            <p className="text-xs text-gray-400 truncate">{exhibitor.email}</p>
+                            {/* <p className="text-xs text-gray-400 truncate">{exhibitor.contactPerson}</p> */}
+                            {/* <p className="text-xs text-gray-400 truncate">{exhibitor.email}</p> */}
                           </div>
                         </div>
                       </td>
