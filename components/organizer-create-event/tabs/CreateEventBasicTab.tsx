@@ -70,13 +70,15 @@ export function CreateEventBasicTab({
                 value={formData.title}
                 onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
                 placeholder="Enter event title"
+                className={showValidationErrors && (!formData.title || formData.title.trim() === "") ? "border-red-500" : ""}
               />
               {showValidationErrors && (!formData.title || formData.title.trim() === "") && (
-                <p className="text-sm text-red-500 mt-1">This field is required for publishing</p>
+                <p className="text-sm text-red-500 mt-1">Event title is required</p>
               )}
             </div>
+
             <div className="md:col-span-2">
-              <Label htmlFor="eventSubtitle">Event subtitle</Label>
+              <Label htmlFor="eventSubtitle">Event Subtitle *</Label>
               <Input
                 id="eventSubtitle"
                 name="eventSubtitle"
@@ -90,11 +92,14 @@ export function CreateEventBasicTab({
                   }))
                 }
                 placeholder="tagline (max 10 characters)"
+                className={showValidationErrors && (!formData.subTitle || formData.subTitle.trim() === "") ? "border-red-500" : ""}
               />
               <p className="text-xs text-muted-foreground mt-1">
-                Up to 10 characters. Separate from the full description below. Leave blank if you do not need a
-                tagline.
+                Up to 10 characters. Separate from the full description below.
               </p>
+              {showValidationErrors && (!formData.subTitle || formData.subTitle.trim() === "") && (
+                <p className="text-sm text-red-500 mt-1">Event subtitle is required</p>
+              )}
             </div>
 
             <div className="md:col-span-2">
@@ -108,14 +113,15 @@ export function CreateEventBasicTab({
                   setFormData((prev) => ({ ...prev, slug: next }))
                 }}
                 placeholder="auto-generated-from-title"
+                className={showValidationErrors && (!formData.slug || formData.slug.trim() === "") ? "border-red-500" : ""}
               />
               {showValidationErrors && (!formData.slug || formData.slug.trim() === "") && (
-                <p className="text-sm text-red-500 mt-1">This field is required for publishing</p>
+                <p className="text-sm text-red-500 mt-1">Event slug is required</p>
               )}
             </div>
 
             <div>
-              <Label htmlFor="edition">Edition</Label>
+              <Label htmlFor="edition">Edition *</Label>
               <Input
                 id="edition"
                 type="number"
@@ -127,9 +133,13 @@ export function CreateEventBasicTab({
                   }))
                 }
                 placeholder="e.g., 1, 2, 3"
-                min="0"
+                min="1"
+                className={showValidationErrors && (!formData.edition || formData.edition === 0) ? "border-red-500" : ""}
               />
-              <p className="text-xs text-muted-foreground mt-1">Optional: Specify the edition number</p>
+              <p className="text-xs text-muted-foreground mt-1">Specify the edition number (e.g., 1, 2, 3)</p>
+              {showValidationErrors && (!formData.edition || formData.edition === 0) && (
+                <p className="text-sm text-red-500 mt-1">Edition number is required</p>
+              )}
             </div>
 
             <div>
@@ -138,7 +148,7 @@ export function CreateEventBasicTab({
                 value={formData.eventType}
                 onValueChange={(value) => setFormData((prev) => ({ ...prev, eventType: value }))}
               >
-                <SelectTrigger>
+                <SelectTrigger id="eventType" className={showValidationErrors && (!formData.eventType || formData.eventType.trim() === "") ? "border-red-500" : ""}>
                   <SelectValue placeholder="Select event type" />
                 </SelectTrigger>
                 <SelectContent>
@@ -150,14 +160,14 @@ export function CreateEventBasicTab({
                 </SelectContent>
               </Select>
               {showValidationErrors && (!formData.eventType || formData.eventType.trim() === "") && (
-                <p className="text-sm text-red-500 mt-1">This field is required for publishing</p>
+                <p className="text-sm text-red-500 mt-1">Event type is required</p>
               )}
             </div>
 
             <div className="md:col-span-2">
-              <Label>Event Categories</Label>
+              <Label>Event Categories *</Label>
               <p className="text-xs text-muted-foreground mt-1 mb-2">
-                Categories are managed by the admin. Select up to two.
+                Categories are managed by the admin. Select at least one category (maximum two).
               </p>
               {eventCategoriesLoading ? (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
@@ -169,25 +179,30 @@ export function CreateEventBasicTab({
                   No active categories yet. Ask your administrator to add them under Admin → Events → Event Categories.
                 </p>
               ) : (
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 mt-2">
-                  {eventCategoryNames.map((category) => (
-                    <div key={category} className="flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        id={`category-${category}`}
-                        checked={formData.categories.includes(category)}
-                        onChange={() => handleCategoryToggle(category)}
-                        className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                      />
-                      <label
-                        htmlFor={`category-${category}`}
-                        className="text-sm font-medium text-gray-700 cursor-pointer"
-                      >
-                        {category}
-                      </label>
-                    </div>
-                  ))}
-                </div>
+                <>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 mt-2">
+                    {eventCategoryNames.map((category) => (
+                      <div key={category} className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id={`category-${category}`}
+                          checked={formData.categories.includes(category)}
+                          onChange={() => handleCategoryToggle(category)}
+                          className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                        <label
+                          htmlFor={`category-${category}`}
+                          className="text-sm font-medium text-gray-700 cursor-pointer"
+                        >
+                          {category}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                  {showValidationErrors && formData.categories.length === 0 && (
+                    <p className="text-sm text-red-500 mt-1">At least one category is required</p>
+                  )}
+                </>
               )}
             </div>
 
@@ -199,9 +214,10 @@ export function CreateEventBasicTab({
                 onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
                 placeholder="Describe your event"
                 rows={4}
+                className={showValidationErrors && (!formData.description || formData.description.trim() === "") ? "border-red-500" : ""}
               />
               {showValidationErrors && (!formData.description || formData.description.trim() === "") && (
-                <p className="text-sm text-red-500 mt-1">This field is required for publishing</p>
+                <p className="text-sm text-red-500 mt-1">Event description is required</p>
               )}
             </div>
           </div>
@@ -229,9 +245,10 @@ export function CreateEventBasicTab({
                   const newStartDate = dateValue ? `${dateValue}T${timeValue}:00.000Z` : ""
                   setFormData((prevData) => ({ ...prevData, startDate: newStartDate }))
                 }}
+                className={showValidationErrors && (!formData.startDate || formData.startDate.trim() === "") ? "border-red-500" : ""}
               />
               {showValidationErrors && (!formData.startDate || formData.startDate.trim() === "") && (
-                <p className="text-sm text-red-500 mt-1">This field is required for publishing</p>
+                <p className="text-sm text-red-500 mt-1">Start date is required</p>
               )}
             </div>
 
@@ -254,10 +271,14 @@ export function CreateEventBasicTab({
                     }
                   })
                 }}
+                className={showValidationErrors && (!formData.dailyStart || formData.dailyStart.trim() === "") ? "border-red-500" : ""}
               />
               <p className="text-xs text-muted-foreground mt-1">
                 Time when the event starts each day - Display: {formatTimeTo12Hour(formData.dailyStart)}
               </p>
+              {showValidationErrors && (!formData.dailyStart || formData.dailyStart.trim() === "") && (
+                <p className="text-sm text-red-500 mt-1">Daily start time is required</p>
+              )}
             </div>
 
             <div>
@@ -272,9 +293,10 @@ export function CreateEventBasicTab({
                   const newEndDate = dateValue ? `${dateValue}T${timeValue}:00.000Z` : ""
                   setFormData((prevData) => ({ ...prevData, endDate: newEndDate }))
                 }}
+                className={showValidationErrors && (!formData.endDate || formData.endDate.trim() === "") ? "border-red-500" : ""}
               />
               {showValidationErrors && (!formData.endDate || formData.endDate.trim() === "") && (
-                <p className="text-sm text-red-500 mt-1">This field is required for publishing</p>
+                <p className="text-sm text-red-500 mt-1">End date is required</p>
               )}
             </div>
 
@@ -297,17 +319,24 @@ export function CreateEventBasicTab({
                     }
                   })
                 }}
+                className={showValidationErrors && (!formData.dailyEnd || formData.dailyEnd.trim() === "") ? "border-red-500" : ""}
               />
               <p className="text-xs text-muted-foreground mt-1">
                 Time when the event ends each day - Display: {formatTimeTo12Hour(formData.dailyEnd)}
               </p>
+              {showValidationErrors && (!formData.dailyEnd || formData.dailyEnd.trim() === "") && (
+                <p className="text-sm text-red-500 mt-1">Daily end time is required</p>
+              )}
             </div>
           </div>
         </CardContent>
       </Card>
 
-      <div>
+      <div id="venue-section">
         <AddVenue organizerId={organizerId} onVenueChange={handleVenueChange} selectedVenueId={selectedVenueId} />
+        {showValidationErrors && (!formData.venue || !formData.city || !formData.address) && (
+          <p className="text-sm text-red-500 mt-2">Venue details (Venue Name, City, and Address) are required</p>
+        )}
       </div>
     </>
   )

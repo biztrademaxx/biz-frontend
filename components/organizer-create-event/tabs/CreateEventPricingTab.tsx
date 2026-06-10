@@ -31,19 +31,22 @@ export function CreateEventPricingTab({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <IndianRupee className="w-5 h-5" />
-            Ticket Pricing
+            Ticket Pricing *
           </CardTitle>
+          <p className="text-sm text-muted-foreground">
+            At least one ticket type must have a price (can be 0 for free events)
+          </p>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
-              <Label>Currency</Label>
+              <Label htmlFor="currency">Currency *</Label>
               <Select
                 value={formData.currency}
                 onValueChange={(value) => setFormData((prev) => ({ ...prev, currency: value }))}
               >
-                <SelectTrigger>
-                  <SelectValue />
+                <SelectTrigger id="currency" className={validationErrors.currency ? "border-red-500" : ""}>
+                  <SelectValue placeholder="Select currency" />
                 </SelectTrigger>
                 <SelectContent>
                   {currencies.map((currency) => (
@@ -53,10 +56,13 @@ export function CreateEventPricingTab({
                   ))}
                 </SelectContent>
               </Select>
+              {validationErrors.currency && (
+                <p className="text-sm text-red-500 mt-1">Currency is required</p>
+              )}
             </div>
 
             <div>
-              <Label htmlFor="generalPrice">General Entry</Label>
+              <Label htmlFor="generalPrice">General Entry Price *</Label>
               <Input
                 id="generalPrice"
                 type="number"
@@ -68,11 +74,15 @@ export function CreateEventPricingTab({
                     generalPrice: e.target.value === "" ? 0 : Number(e.target.value),
                   }))
                 }
+                className={validationErrors.generalPrice ? "border-red-500" : ""}
               />
+              {validationErrors.generalPrice && (
+                <p className="text-sm text-red-500 mt-1">General entry price is required</p>
+              )}
             </div>
 
             <div>
-              <Label htmlFor="studentPrice">Student Price</Label>
+              <Label htmlFor="studentPrice">Student Price *</Label>
               <Input
                 id="studentPrice"
                 type="number"
@@ -84,11 +94,15 @@ export function CreateEventPricingTab({
                     studentPrice: e.target.value === "" ? 0 : Number(e.target.value),
                   }))
                 }
+                className={validationErrors.studentPrice ? "border-red-500" : ""}
               />
+              {validationErrors.studentPrice && (
+                <p className="text-sm text-red-500 mt-1">Student price is required</p>
+              )}
             </div>
 
             <div>
-              <Label htmlFor="vipPrice">VIP Price</Label>
+              <Label htmlFor="vipPrice">VIP Price *</Label>
               <Input
                 id="vipPrice"
                 type="number"
@@ -100,7 +114,11 @@ export function CreateEventPricingTab({
                     vipPrice: e.target.value === "" ? 0 : Number(e.target.value),
                   }))
                 }
+                className={validationErrors.vipPrice ? "border-red-500" : ""}
               />
+              {validationErrors.vipPrice && (
+                <p className="text-sm text-red-500 mt-1">VIP price is required</p>
+              )}
             </div>
           </div>
         </CardContent>
@@ -110,8 +128,7 @@ export function CreateEventPricingTab({
         <CardHeader>
           <CardTitle>Exhibitor Space Costs *</CardTitle>
           <p className="text-sm text-gray-600">
-            Configure pricing for different types of exhibition spaces and services. This section is required before
-            you can submit the event for approval.
+            Configure pricing for different types of exhibition spaces. All space cost fields are required.
           </p>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -134,8 +151,9 @@ export function CreateEventPricingTab({
 
                 <div className="space-y-4">
                   <div>
-                    <Label className="text-sm font-medium text-gray-700">Hall name</Label>
+                    <Label htmlFor={`hallName-${index}`} className="text-sm font-medium text-gray-700">Hall Name *</Label>
                     <Input
+                      id={`hallName-${index}`}
                       className="mt-1"
                       value={cost.hallName ?? ""}
                       onChange={(e) => updateSpaceCost(index, "hallName", e.target.value)}
@@ -143,21 +161,24 @@ export function CreateEventPricingTab({
                     />
                   </div>
                   <div>
-                    <Label className="text-sm font-medium text-gray-700">Description</Label>
+                    <Label htmlFor={`description-${index}`} className="text-sm font-medium text-gray-700">Description *</Label>
                     <Textarea
+                      id={`description-${index}`}
                       className="mt-1"
                       value={cost.description}
                       onChange={(e) => updateSpaceCost(index, "description", e.target.value)}
                       rows={3}
+                      placeholder="Describe the exhibition space"
                     />
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                      <Label className="text-sm font-medium">Price per sq.m</Label>
+                      <Label htmlFor={`pricePerSqm-${index}`} className="text-sm font-medium">Price per sq.m *</Label>
                       <div className="flex items-center gap-2 mt-1">
                         <span className="text-sm text-gray-500">{formData.currency}</span>
                         <Input
+                          id={`pricePerSqm-${index}`}
                           type="number"
                           value={cost.pricePerSqm || 0}
                           onChange={(e) => updateSpaceCost(index, "pricePerSqm", Number(e.target.value))}
@@ -166,8 +187,9 @@ export function CreateEventPricingTab({
                       </div>
                     </div>
                     <div>
-                      <Label className="text-sm font-medium">Minimum Area (sq.m)</Label>
+                      <Label htmlFor={`minArea-${index}`} className="text-sm font-medium">Minimum Area (sq.m) *</Label>
                       <Input
+                        id={`minArea-${index}`}
                         className="mt-1"
                         type="number"
                         value={cost.minArea || 0}

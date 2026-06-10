@@ -70,6 +70,19 @@ export function CreateEventPreviewTab({ formData }: { formData: EventFormData })
               </div>
             )}
 
+            {formData.tags.length > 0 && (
+              <div>
+                <h4 className="font-semibold mb-2">Tags:</h4>
+                <div className="flex flex-wrap gap-2">
+                  {formData.tags.map((tag, index) => (
+                    <Badge key={index} variant="outline">
+                      {tag}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {!formData.generalPrice && !formData.studentPrice && !formData.vipPrice ? (
               <div className="bg-white p-4 rounded-lg border mt-6 md:max-w-md">
                 <h4 className="font-semibold mb-2">Tickets</h4>
@@ -107,36 +120,38 @@ export function CreateEventPreviewTab({ formData }: { formData: EventFormData })
               </div>
             )}
 
-            <div className="mt-6">
-              <h4 className="font-semibold mb-4">Exhibition Space Pricing</h4>
-              <div className="grid gap-3">
-                {formData.spaceCosts.map((cost, index) => (
-                  <div
-                    key={index}
-                    className="bg-white p-4 rounded-lg border flex justify-between items-center gap-4"
-                  >
-                    <div>
-                      <h5 className="font-medium">{cost.type}</h5>
-                      {cost.hallName ? (
-                        <p className="text-sm text-gray-700 font-medium">Hall: {cost.hallName}</p>
-                      ) : null}
-                      <p className="text-sm text-gray-600">{cost.description}</p>
+            {formData.spaceCosts.length > 0 && (
+              <div className="mt-6">
+                <h4 className="font-semibold mb-4">Exhibition Space Pricing</h4>
+                <div className="grid gap-3">
+                  {formData.spaceCosts.map((cost, index) => (
+                    <div
+                      key={index}
+                      className="bg-white p-4 rounded-lg border flex justify-between items-center gap-4"
+                    >
+                      <div>
+                        <h5 className="font-medium">{cost.type}</h5>
+                        {cost.hallName ? (
+                          <p className="text-sm text-gray-700 font-medium">Hall: {cost.hallName}</p>
+                        ) : null}
+                        <p className="text-sm text-gray-600">{cost.description}</p>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className="font-semibold text-blue-600">
+                          {formData.currency}
+                          {(cost.pricePerSqm || 0).toLocaleString()} / sq.m
+                        </p>
+                        <p className="text-sm text-gray-500">Min: {cost.minArea || 0} sq.m</p>
+                        <p className="text-sm font-medium text-gray-800 mt-1">
+                          From: {formData.currency}
+                          {((cost.pricePerSqm || 0) * (cost.minArea || 0)).toLocaleString()}
+                        </p>
+                      </div>
                     </div>
-                    <div className="text-right shrink-0">
-                      <p className="font-semibold text-blue-600">
-                        {formData.currency}
-                        {(cost.pricePerSqm || 0).toLocaleString()} / sq.m
-                      </p>
-                      <p className="text-sm text-gray-500">Min: {cost.minArea || 0} sq.m</p>
-                      <p className="text-sm font-medium text-gray-800 mt-1">
-                        From: {formData.currency}
-                        {((cost.pricePerSqm || 0) * (cost.minArea || 0)).toLocaleString()}
-                      </p>
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </CardContent>
