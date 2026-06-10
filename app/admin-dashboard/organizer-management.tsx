@@ -1,12 +1,13 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import {
   Building2,
   CheckCircle,
@@ -35,9 +36,11 @@ import { AdminTableAvatar } from "@/components/admin-dashboard/admin-table-avata
 import { OrganizerLocationSelects } from "@/components/admin-dashboard/organizer-location-selects"
 import { hasUsableProfileImage } from "@/lib/has-usable-profile-image"
 import { resolveOrganizerLocationFields } from "@/lib/organizer-location-resolve"
+import { getPublicProfilePath } from "@/lib/profile-path"
 
 interface Organizer {
   company: string | null
+  publicSlug?: string | null
   id: string
   firstName: string
   lastName: string
@@ -165,6 +168,7 @@ function getInitials(company?: string) {
 
 export default function OrganizerManagement({ initialTab = "all" }: { initialTab?: "all" | "bulk-import" }) {
   const PAGE_SIZE = 10
+  const router = useRouter()
   const { toast } = useToast()
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedCountry, setSelectedCountry] = useState("all")
@@ -315,6 +319,20 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
   }
 
   const visibleOrganizers: TransformedOrganizer[] = organizers.map(transformOrganizerData)
+
+  const getOrganizerProfilePath = (organizer: TransformedOrganizer) =>
+    getPublicProfilePath("organizer", {
+      id: organizer.id,
+      publicSlug: organizer.originalData.publicSlug,
+      organizationName: organizer.originalData.organizationName || organizer.name,
+      company: organizer.originalData.company,
+      firstName: organizer.originalData.firstName,
+      lastName: organizer.originalData.lastName,
+    })
+
+  const handleOpenOrganizerProfile = (organizer: TransformedOrganizer) => {
+    router.push(getOrganizerProfilePath(organizer))
+  }
 
   const stats = {
     total: totalItems,
@@ -745,7 +763,19 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
                           aria-label={`Select ${organizer.name}`}
                         />
                       </td>
-                      <td className="px-4 py-4">
+                      <td
+                        className="px-4 py-4 cursor-pointer"
+                        onClick={() => handleOpenOrganizerProfile(organizer)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault()
+                            handleOpenOrganizerProfile(organizer)
+                          }
+                        }}
+                        role="link"
+                        tabIndex={0}
+                        title={`View ${organizer.name} profile`}
+                      >
                         <div className="flex items-center gap-3">
                           <AdminTableAvatar
                             src={organizer.avatar}
@@ -753,7 +783,9 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
                             colorClass={colorClass}
                           />
                           <div>
-                            <p className="text-sm font-medium text-gray-900">{organizer.name}</p>
+                            <p className="text-sm font-medium text-gray-900 hover:text-[#004A96] hover:underline">
+                              {organizer.name}
+                            </p>
                             <p className="text-xs text-gray-400">{organizer.email}</p>
                           </div>
                         </div>
@@ -813,81 +845,13 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
                             <Mail className="h-3.5 w-3.5" />
                             {sendingEmailFor === organizer.id ? "Sending…" : "Send email"}
                           </button>
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <button className="text-xs font-medium px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors">
-                                View
-                              </button>
-                            </DialogTrigger>
-                            <DialogContent className="max-w-2xl">
-                              <DialogHeader>
-                                <DialogTitle>Organizer Details</DialogTitle>
-                              </DialogHeader>
-                              <div className="space-y-6">
-                                <div className="flex items-center gap-4">
-                                  <AdminTableAvatar
-                                    src={organizer.avatar}
-                                    name={organizer.name}
-                                    colorClass={colorClass}
-                                    size="md"
-                                  />
-                                  <div>
-                                    <h3 className="text-lg font-semibold">{organizer.name}</h3>
-                                    <p className="text-gray-500 text-sm">{organizer.category}</p>
-                                  </div>
-                                </div>
-                                <div className="grid grid-cols-2 gap-6">
-                                  <div>
-                                    <h4 className="text-xs font-semibold tracking-widest uppercase text-gray-400 mb-3">Contact</h4>
-                                    <div className="space-y-2 text-sm">
-                                      <div className="flex items-center gap-2 text-gray-700"><Mail className="w-4 h-4 text-gray-400" />{organizer.email}</div>
-                                      <div className="flex items-center gap-2 text-gray-700"><Phone className="w-4 h-4 text-gray-400" />{organizer.phone}</div>
-                                      <div className="flex items-center gap-2 text-gray-700"><MapPin className="w-4 h-4 text-gray-400" />{organizer.location}</div>
-                                    </div>
-                                  </div>
-                                  <div>
-                                    <h4 className="text-xs font-semibold tracking-widest uppercase text-gray-400 mb-3">Performance</h4>
-                                    <div className="space-y-2 text-sm">
-                                      <div className="flex items-center gap-2 text-gray-700"><Calendar className="w-4 h-4 text-gray-400" />{organizer.totalEvents} Events</div>
-                                      <div className="flex items-center gap-2 text-gray-700"><DollarSign className="w-4 h-4 text-gray-400" />₹{organizer.totalRevenue.toLocaleString()} Revenue</div>
-                                      <div className="flex items-center gap-2 text-gray-700">
-                                        <Star className="w-4 h-4 text-amber-400" />
-                                        {organizer.totalReviews > 0 ? `${organizer.averageRating.toFixed(1)} (${organizer.totalReviews} reviews)` : "No reviews yet"}
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-                                <div>
-                                  <h4 className="text-xs font-semibold tracking-widest uppercase text-gray-400 mb-2">Description</h4>
-                                  <p className="text-sm text-gray-600">{organizer.description}</p>
-                                </div>
-                                <div>
-                                  <h4 className="text-xs font-semibold tracking-widest uppercase text-gray-400 mb-2">Documents</h4>
-                                  <div className="flex flex-wrap gap-2">
-                                    {organizer.documents.map((doc, i) => (
-                                      <span key={i} className="text-xs px-2.5 py-1 bg-gray-100 rounded-full text-gray-600">{doc}</span>
-                                    ))}
-                                  </div>
-                                </div>
-                                <div className="text-xs text-gray-400 flex gap-4">
-                                  <span>Joined: {new Date(organizer.joinDate).toLocaleDateString()}</span>
-                                  <span>Last Active: {new Date(organizer.lastActive).toLocaleDateString()}</span>
-                                </div>
-                                <div className="flex justify-end pt-2">
-                                  <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => handleSendAccountEmail(organizer)}
-                                    disabled={!organizer.email || sendingEmailFor === organizer.id}
-                                  >
-                                    <Mail className="mr-2 h-4 w-4" />
-                                    {sendingEmailFor === organizer.id ? "Sending…" : "Send account email"}
-                                  </Button>
-                                </div>
-                              </div>
-                            </DialogContent>
-                          </Dialog>
+                          <button
+                            type="button"
+                            onClick={() => handleOpenOrganizerProfile(organizer)}
+                            className="text-xs font-medium px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
+                          >
+                            View
+                          </button>
                           <button
                             type="button"
                             onClick={() => handleOpenEdit(organizer)}

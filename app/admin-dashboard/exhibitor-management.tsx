@@ -1,7 +1,9 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { apiFetch } from "@/lib/api"
+import { getPublicProfilePath } from "@/lib/profile-path"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -61,6 +63,9 @@ function getAvatarColor(company?: string) {
 
 interface Exhibitor {
   id: string
+  publicSlug?: string
+  firstName: string
+  lastName: string
   companyName: string
   contactPerson: string
   email: string
@@ -138,6 +143,7 @@ const emptyEditForm = (): ExhibitorEditForm => ({
 })
 
 export default function ExhibitorManagement() {
+  const router = useRouter()
   const [activeTab, setActiveTab] = useState("exhibitors")
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
@@ -215,6 +221,9 @@ export default function ExhibitorManagement() {
         const statusValue: Exhibitor["status"] = isActive ? "active" : "suspended"
         return {
           id: String(u.id),
+          publicSlug: u.publicSlug ? String(u.publicSlug) : undefined,
+          firstName: String(u.firstName ?? ""),
+          lastName: String(u.lastName ?? ""),
           companyName,
           contactPerson,
           email: String(u.email ?? ""),
@@ -306,6 +315,19 @@ export default function ExhibitorManagement() {
     bio: detail.bio ?? "",
     isActive: detail.isActive !== false,
   })
+
+  const getExhibitorProfilePath = (exhibitor: Exhibitor) =>
+    getPublicProfilePath("exhibitor", {
+      id: exhibitor.id,
+      publicSlug: exhibitor.publicSlug,
+      company: exhibitor.companyName,
+      firstName: exhibitor.firstName,
+      lastName: exhibitor.lastName,
+    })
+
+  const handleOpenExhibitorProfile = (exhibitor: Exhibitor) => {
+    router.push(getExhibitorProfilePath(exhibitor))
+  }
 
   const handleViewDetails = async (exhibitor: Exhibitor) => {
     setSelectedExhibitor(exhibitor)
@@ -701,7 +723,19 @@ if (showAddForm) {
                   const colorClass = getAvatarColor(exhibitor.companyName)
                   return (
                     <tr key={exhibitor.id} className="hover:bg-gray-50/60 transition-colors">
-                      <td className="px-4 py-4">
+                      <td
+                        className="px-4 py-4 cursor-pointer"
+                        onClick={() => handleOpenExhibitorProfile(exhibitor)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault()
+                            handleOpenExhibitorProfile(exhibitor)
+                          }
+                        }}
+                        role="link"
+                        tabIndex={0}
+                        title={`View ${exhibitor.companyName} profile`}
+                      >
                         <div className="flex items-center gap-3">
                           <AdminTableAvatar
                             src={exhibitor.avatar}
@@ -709,9 +743,17 @@ if (showAddForm) {
                             colorClass={colorClass}
                           />
                           <div className="min-w-0">
+<<<<<<< Updated upstream
                             <p className="text-sm font-medium text-gray-900 truncate">{exhibitor.companyName}</p>
                             {/* <p className="text-xs text-gray-400 truncate">{exhibitor.contactPerson}</p> */}
                             {/* <p className="text-xs text-gray-400 truncate">{exhibitor.email}</p> */}
+=======
+                            <p className="text-sm font-medium text-gray-900 truncate hover:text-[#004A96] hover:underline">
+                              {exhibitor.companyName}
+                            </p>
+                            <p className="text-xs text-gray-400 truncate">{exhibitor.contactPerson}</p>
+                            <p className="text-xs text-gray-400 truncate">{exhibitor.email}</p>
+>>>>>>> Stashed changes
                           </div>
                         </div>
                       </td>
@@ -745,7 +787,7 @@ if (showAddForm) {
                         <div className="flex items-center gap-2 flex-wrap justify-end">
                           <button
                             type="button"
-                            onClick={() => void handleViewDetails(exhibitor)}
+                            onClick={() => handleOpenExhibitorProfile(exhibitor)}
                             className="text-xs font-medium px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
                           >
                             View

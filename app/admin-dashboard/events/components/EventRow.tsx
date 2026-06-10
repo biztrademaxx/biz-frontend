@@ -1,5 +1,6 @@
 "use client"
 
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Edit, Star, Eye, Trash2 } from "lucide-react"
@@ -8,6 +9,7 @@ import type { Event } from "../types/event.types"
 import { EventActions } from "./EventActions"
 import { AppImage } from "@/components/app-image"
 import { getEventDisplayImageUrl } from "@/lib/default-event-image"
+import { eventPublicPath } from "@/lib/event-path"
 
 interface EventRowProps {
   event: Event
@@ -189,6 +191,7 @@ export function EventRow({
   onPromote,
   onVerify,
 }: EventRowProps) {
+  const router = useRouter()
   const organizerName = getOrganizerCompanyName(event.organizer)
   const attendees = event.attendees || event.currentAttendees || 0
   const categoryDisplay = getCategoryDisplay(event.category)
@@ -219,6 +222,14 @@ export function EventRow({
 
   const isFeatured = event.featured || event.isFeatured || false
 
+  const openEventPage = () => {
+    if (onView) {
+      onView(event)
+      return
+    }
+    router.push(eventPublicPath({ id: event.id, slug: event.slug }))
+  }
+
   return (
     <tr
       className="event-table-row"
@@ -237,7 +248,19 @@ export function EventRow({
       </td>
 
       {/* ── Event: thumbnail + title + location ── */}
-      <td style={{ padding: "10px 8px 10px 10px", verticalAlign: "middle", ...truncStyle }}>
+      <td
+        style={{ padding: "10px 8px 10px 10px", verticalAlign: "middle", cursor: "pointer", ...truncStyle }}
+        onClick={openEventPage}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault()
+            openEventPage()
+          }
+        }}
+        role="link"
+        tabIndex={0}
+        title={`View ${eventDisplayTitle}`}
+      >
         <div style={{ display: "flex", alignItems: "center", gap: "9px" }}>
           <div
             style={{
@@ -263,6 +286,7 @@ export function EventRow({
             <div
               title={eventDisplayTitle}
               style={{ fontSize: "13px", fontWeight: 600, color: "#18181B", lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+              className="hover:text-[#004A96] hover:underline"
             >
               {eventDisplayTitle}
             </div>
@@ -353,18 +377,16 @@ export function EventRow({
           }}
         >
           {/* View */}
-          {onView && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => onView(event)}
-              className="h-7 w-7 hover:bg-blue-50 hover:text-blue-600"
-              title="View event details"
-              style={{ color: "#71717A" }}
-            >
-              <Eye className="h-3.5 w-3.5" />
-            </Button>
-          )}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={openEventPage}
+            className="h-7 w-7 hover:bg-blue-50 hover:text-blue-600"
+            title="View public event page"
+            style={{ color: "#71717A" }}
+          >
+            <Eye className="h-3.5 w-3.5" />
+          </Button>
 
           {/* Edit */}
           <Button

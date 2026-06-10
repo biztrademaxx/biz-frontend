@@ -1,5 +1,7 @@
 "use client"
 
+import { useRouter } from "next/navigation"
+import { eventPublicPath } from "@/lib/event-path"
 import { useEvents } from "./hooks/useEvents"
 import { EventTable } from "./components/EventTable"
 import { VerifyEventDialog } from "./components/VerifyEventDialog"
@@ -11,6 +13,7 @@ interface EventManagementPageProps {
 }
 
 export default function EventManagementPage({ onPromote }: EventManagementPageProps = {}) {
+  const router = useRouter()
   const {
     events,
     categories,
@@ -90,6 +93,7 @@ export default function EventManagementPage({ onPromote }: EventManagementPagePr
         selectedCountry={selectedCountry}
         onCountryFilterChange={setSelectedCountry}
         onEdit={handleEditEvent}
+        onView={(event) => router.push(eventPublicPath({ id: event.id, slug: event.slug }))}
         onStatusChange={handleStatusChange}
         onFeatureToggle={handleFeatureToggle}
         onVipToggle={handleVipToggle}
