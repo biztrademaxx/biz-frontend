@@ -743,17 +743,11 @@ if (showAddForm) {
                             colorClass={colorClass}
                           />
                           <div className="min-w-0">
-<<<<<<< Updated upstream
-                            <p className="text-sm font-medium text-gray-900 truncate">{exhibitor.companyName}</p>
-                            {/* <p className="text-xs text-gray-400 truncate">{exhibitor.contactPerson}</p> */}
-                            {/* <p className="text-xs text-gray-400 truncate">{exhibitor.email}</p> */}
-=======
                             <p className="text-sm font-medium text-gray-900 truncate hover:text-[#004A96] hover:underline">
                               {exhibitor.companyName}
                             </p>
                             <p className="text-xs text-gray-400 truncate">{exhibitor.contactPerson}</p>
                             <p className="text-xs text-gray-400 truncate">{exhibitor.email}</p>
->>>>>>> Stashed changes
                           </div>
                         </div>
                       </td>
