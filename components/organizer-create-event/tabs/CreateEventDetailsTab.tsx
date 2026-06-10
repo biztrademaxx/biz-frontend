@@ -41,9 +41,9 @@ export function CreateEventDetailsTab({
     <>
       <Card>
         <CardHeader>
-          <CardTitle>Event Highlights</CardTitle>
+          <CardTitle>Event Highlights *</CardTitle>
           <p className="text-sm text-muted-foreground">
-            Only Event Tags & Keywords are required for publishing in this section.
+            Add at least one highlight to make your event stand out.
           </p>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -78,6 +78,9 @@ export function CreateEventDetailsTab({
               </Badge>
             ))}
           </div>
+          {showValidationErrors && formData.highlights.length === 0 && (
+            <p className="text-sm text-red-500 mt-1">At least one event highlight is required</p>
+          )}
         </CardContent>
       </Card>
 
@@ -87,7 +90,7 @@ export function CreateEventDetailsTab({
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div>
+            <div id="tags">
               <Label>Event Tags & Keywords *</Label>
               <div className="flex flex-wrap gap-2 mb-2">
                 {formData.tags.map((tag, index) => (
@@ -120,13 +123,14 @@ export function CreateEventDetailsTab({
                       addTag()
                     }
                   }}
+                  className={showValidationErrors && formData.tags.length === 0 ? "border-red-500" : ""}
                 />
                 <Button type="button" onClick={addTag} variant="outline">
                   Add
                 </Button>
               </div>
               {showValidationErrors && formData.tags.length === 0 && (
-                <p className="text-sm text-red-500 mt-1">This field is required for publishing</p>
+                <p className="text-sm text-red-500 mt-1">At least one tag is required</p>
               )}
             </div>
           </div>
@@ -135,18 +139,18 @@ export function CreateEventDetailsTab({
 
       <Card>
         <CardHeader>
-          <CardTitle>Event Guidelines</CardTitle>
+          <CardTitle>Event Guidelines *</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="dressCode">Dress Code</Label>
+              <Label htmlFor="dressCode">Dress Code *</Label>
               <Select
                 value={formData.dressCode}
                 onValueChange={(value) => setFormData((prev) => ({ ...prev, dressCode: value }))}
               >
-                <SelectTrigger>
-                  <SelectValue />
+                <SelectTrigger id="dressCode" className={showValidationErrors && (!formData.dressCode || formData.dressCode.trim() === "") ? "border-red-500" : ""}>
+                  <SelectValue placeholder="Select dress code" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Casual">Casual</SelectItem>
@@ -154,16 +158,19 @@ export function CreateEventDetailsTab({
                   <SelectItem value="Formal">Formal</SelectItem>
                 </SelectContent>
               </Select>
+              {showValidationErrors && (!formData.dressCode || formData.dressCode.trim() === "") && (
+                <p className="text-sm text-red-500 mt-1">Dress code is required</p>
+              )}
             </div>
 
             <div>
-              <Label htmlFor="ageLimit">Age Limit</Label>
+              <Label htmlFor="ageLimit">Age Limit *</Label>
               <Select
                 value={formData.ageLimit}
                 onValueChange={(value) => setFormData((prev) => ({ ...prev, ageLimit: value }))}
               >
-                <SelectTrigger>
-                  <SelectValue />
+                <SelectTrigger id="ageLimit" className={showValidationErrors && (!formData.ageLimit || formData.ageLimit.trim() === "") ? "border-red-500" : ""}>
+                  <SelectValue placeholder="Select age limit" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="All Ages">All Ages</SelectItem>
@@ -171,6 +178,9 @@ export function CreateEventDetailsTab({
                   <SelectItem value="21+">21+</SelectItem>
                 </SelectContent>
               </Select>
+              {showValidationErrors && (!formData.ageLimit || formData.ageLimit.trim() === "") && (
+                <p className="text-sm text-red-500 mt-1">Age limit is required</p>
+              )}
             </div>
           </div>
         </CardContent>

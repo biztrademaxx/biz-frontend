@@ -85,12 +85,6 @@ const categoryStyles: Record<string, { bg: string; text: string }> = {
   "Expo + Conference": { bg: "#e8eaf6", text: "#283593" },
 }
 
-const priorityStyles: Record<string, { bg: string; text: string }> = {
-  High: { bg: "#fce4ec", text: "#c62828" },
-  Medium: { bg: "#fff8e1", text: "#e65100" },
-  Low: { bg: "#e8f5e9", text: "#2e7d32" },
-}
-
 const orgColors = [
   { bg: "#e3f2fd", text: "#1565c0" },
   { bg: "#f3e5f5", text: "#6a1b9a" },
@@ -358,13 +352,6 @@ export default function EventApprovalDashboard() {
     return `${diffDays} days ago`
   }
 
-  const getPriority = (createdAt: string) => {
-    const hours = (Date.now() - new Date(createdAt).getTime()) / (1000 * 60 * 60)
-    if (hours < 24) return "High"
-    if (hours < 72) return "Medium"
-    return "Low"
-  }
-
   const getCategory = (event: Event) => {
     if (event.isVirtual) return "Virtual"
     if (event.exhibitionSpaces?.length > 0 && event.ticketTypes?.length > 0) return "Expo + Conference"
@@ -430,7 +417,7 @@ export default function EventApprovalDashboard() {
         {/* Card Header */}
         <div style={{ padding: "16px 20px 0", borderBottom: "0.5px solid #f0ede8" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingBottom: "14px" }}>
-            <span style={{ fontSize: "15px", fontWeight: 500 }}>Pending Submissions</span>
+            <span style={{ fontSize: "15px", fontWeight: 500 }}>Event Submissions</span>
             {selectedIds.size > 0 && activeTab === "pending" && (
               <div style={{ display: "flex", gap: "8px" }}>
                 <button
@@ -440,7 +427,7 @@ export default function EventApprovalDashboard() {
                     borderRadius: "8px", padding: "7px 16px", fontSize: "13px", cursor: "pointer",
                   }}
                 >
-                  Approve Selected
+                  Approve Selected ({selectedIds.size})
                 </button>
                 <button
                   onClick={handleBulkReject}
@@ -449,7 +436,7 @@ export default function EventApprovalDashboard() {
                     borderRadius: "8px", padding: "7px 16px", fontSize: "13px", cursor: "pointer",
                   }}
                 >
-                  Reject Selected
+                  Reject Selected ({selectedIds.size})
                 </button>
               </div>
             )}
@@ -469,7 +456,7 @@ export default function EventApprovalDashboard() {
                   cursor: "pointer", textTransform: "capitalize",
                 }}
               >
-                {tab}
+                {tab === "pending" ? "Pending" : tab === "approved" ? "Approved" : "Rejected"}
               </button>
             ))}
           </div>
@@ -490,13 +477,13 @@ export default function EventApprovalDashboard() {
                     />
                   )}
                 </th>
-                {["Event Name", "Category", "Organizer", "Submitted", "Priority", "Actions"].map((h, i) => (
+                {["Event Name", "Category", "Organizer", "Submitted", "Actions"].map((h, i) => (
                   <th
                     key={h}
                     style={{
                       padding: "12px 0",
-                      textAlign: i === 5 ? "right" : "left",
-                      paddingRight: i === 5 ? "20px" : "0",
+                      textAlign: i === 4 ? "right" : "left",
+                      paddingRight: i === 4 ? "20px" : "0",
                       fontSize: "11px", fontWeight: 500, color: "#aaa",
                       letterSpacing: "0.06em", textTransform: "uppercase",
                     }}
@@ -509,16 +496,14 @@ export default function EventApprovalDashboard() {
             <tbody>
               {events.length === 0 ? (
                 <tr>
-                  <td colSpan={7} style={{ textAlign: "center", padding: "48px 0", color: "#aaa", fontSize: "14px" }}>
+                  <td colSpan={6} style={{ textAlign: "center", padding: "48px 0", color: "#aaa", fontSize: "14px" }}>
                     No {activeTab} submissions
                   </td>
                 </tr>
               ) : (
                 events.map(event => {
-                  const priority = getPriority(event.createdAt)
                   const category = getCategory(event)
                   const cat = categoryStyles[category] ?? categoryStyles["Expo"]
-                  const pri = priorityStyles[priority]
                   const orgColor = getOrgColor(event)
 
                   return (
@@ -575,31 +560,8 @@ export default function EventApprovalDashboard() {
                         {getTimeAgo(event.createdAt)}
                       </td>
 
-                      <td style={{ paddingTop: "14px", paddingBottom: "14px" }}>
-                        <span style={{
-                          display: "inline-flex", alignItems: "center",
-                          padding: "3px 10px", borderRadius: "20px",
-                          fontSize: "12px", fontWeight: 500,
-                          background: pri.bg, color: pri.text,
-                        }}>
-                          {priority}
-                        </span>
-                      </td>
-
                       <td style={{ paddingTop: "14px", paddingBottom: "14px", paddingRight: "20px", textAlign: "right" }}>
                         <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "6px" }}>
-                          {/* <button
-                            onClick={() => handleViewEvent(event.id)}
-                            title="View Details"
-                            style={{
-                              padding: "6px", borderRadius: "7px",
-                              border: "1px solid #e0e0e0", background: "#fff",
-                              color: "#888", cursor: "pointer", display: "flex", alignItems: "center",
-                            }}
-                          >
-                            <Eye size={14} />
-                          </button> */}
-
                           {activeTab === "pending" && (
                             <>
                               <button
@@ -647,24 +609,53 @@ export default function EventApprovalDashboard() {
                             </>
                           )}
 
-                          {activeTab === "rejected" && (
+                          {activeTab === "approved" && (
                             <button
-                              onClick={() => handleReapprove(event.id)}
-                              disabled={approving === event.id}
+                              onClick={() => handleViewEvent(event.id)}
                               style={{
                                 padding: "6px 14px", borderRadius: "7px",
                                 fontSize: "12px", fontWeight: 500,
-                                border: "1px solid #bbdefb", background: "#fff", color: "#1565c0",
-                                cursor: "pointer", display: "flex", alignItems: "center", gap: "4px",
-                                opacity: approving === event.id ? 0.6 : 1,
+                                border: "1px solid #e0e0e0", background: "#fff", color: "#555",
+                                cursor: "pointer",
                               }}
                             >
-                              {approving === event.id
-                                ? <Loader2 size={12} style={{ animation: "spin 1s linear infinite" }} />
-                                : <Check size={12} />
-                              }
-                              Re-approve
+                              <Eye size={12} style={{ marginRight: "4px" }} />
+                              View
                             </button>
+                          )}
+
+                          {activeTab === "rejected" && (
+                            <>
+                              <button
+                                onClick={() => handleViewEvent(event.id)}
+                                style={{
+                                  padding: "6px 14px", borderRadius: "7px",
+                                  fontSize: "12px", fontWeight: 500,
+                                  border: "1px solid #e0e0e0", background: "#fff", color: "#555",
+                                  cursor: "pointer",
+                                }}
+                              >
+                                Review
+                              </button>
+
+                              <button
+                                onClick={() => handleReapprove(event.id)}
+                                disabled={approving === event.id}
+                                style={{
+                                  padding: "6px 14px", borderRadius: "7px",
+                                  fontSize: "12px", fontWeight: 500,
+                                  border: "1px solid #bbdefb", background: "#fff", color: "#1565c0",
+                                  cursor: "pointer", display: "flex", alignItems: "center", gap: "4px",
+                                  opacity: approving === event.id ? 0.6 : 1,
+                                }}
+                              >
+                                {approving === event.id
+                                  ? <Loader2 size={12} style={{ animation: "spin 1s linear infinite" }} />
+                                  : <Check size={12} />
+                                }
+                                Re-approve
+                              </button>
+                            </>
                           )}
                         </div>
                       </td>

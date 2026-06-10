@@ -28,6 +28,85 @@ import { CreateEventPricingTab } from "@/components/organizer-create-event/tabs/
 import { CreateEventMediaTab } from "@/components/organizer-create-event/tabs/CreateEventMediaTab"
 import { CreateEventPreviewTab } from "@/components/organizer-create-event/tabs/CreateEventPreviewTab"
 
+// Validation function for each tab
+const validateBasicTab = (formData: EventFormData): { isValid: boolean; errorField?: string } => {
+  if (!formData.title?.trim()) return { isValid: false, errorField: "title" }
+  if (!formData.subTitle?.trim()) return { isValid: false, errorField: "eventSubtitle" }
+  if (!formData.slug?.trim()) return { isValid: false, errorField: "slug" }
+  if (!formData.edition || formData.edition === 0) return { isValid: false, errorField: "edition" }
+  if (!formData.eventType?.trim()) return { isValid: false, errorField: "eventType" }
+  if (formData.categories.length === 0) return { isValid: false, errorField: "categories" }
+  if (!formData.description?.trim()) return { isValid: false, errorField: "description" }
+  if (!formData.startDate?.trim()) return { isValid: false, errorField: "startDate" }
+  if (!formData.dailyStart?.trim()) return { isValid: false, errorField: "dailyStart" }
+  if (!formData.endDate?.trim()) return { isValid: false, errorField: "endDate" }
+  if (!formData.dailyEnd?.trim()) return { isValid: false, errorField: "dailyEnd" }
+  if (!formData.venue?.trim()) return { isValid: false, errorField: "venue-section" }
+  if (!formData.city?.trim()) return { isValid: false, errorField: "venue-section" }
+  if (!formData.address?.trim()) return { isValid: false, errorField: "venue-section" }
+  return { isValid: true }
+}
+
+const validateDetailsTab = (formData: EventFormData): { isValid: boolean; errorField?: string } => {
+  if (formData.highlights.length === 0) return { isValid: false, errorField: "highlights" }
+  if (formData.tags.length === 0) return { isValid: false, errorField: "tags" }
+  if (!formData.dressCode?.trim()) return { isValid: false, errorField: "dressCode" }
+  if (!formData.ageLimit?.trim()) return { isValid: false, errorField: "ageLimit" }
+  return { isValid: true }
+}
+
+const validatePricingTab = (formData: EventFormData): { isValid: boolean; errorField?: string } => {
+  if (!formData.currency?.trim()) return { isValid: false, errorField: "currency" }
+  if (formData.generalPrice === undefined || formData.generalPrice === null)
+    return { isValid: false, errorField: "generalPrice" }
+  if (formData.studentPrice === undefined || formData.studentPrice === null)
+    return { isValid: false, errorField: "studentPrice" }
+  if (formData.vipPrice === undefined || formData.vipPrice === null)
+    return { isValid: false, errorField: "vipPrice" }
+
+  const spaceCostsValid = validateOrganizerExhibitorSpaceCosts(formData.spaceCosts) === undefined
+  if (!spaceCostsValid) return { isValid: false, errorField: "exhibitor-space-costs-section" }
+  return { isValid: true }
+}
+
+const validateMediaTab = (formData: EventFormData): { isValid: boolean; errorField?: string } => {
+  if (formData.images.length === 0) return { isValid: false, errorField: "images" }
+  if (!formData.brochure) return { isValid: false, errorField: "brochure" }
+  if (!formData.layoutPlan) return { isValid: false, errorField: "layoutPlan" }
+  return { isValid: true }
+}
+
+const validateTab = (tabId: string, formData: EventFormData): { isValid: boolean; errorField?: string } => {
+  switch (tabId) {
+    case "basic":
+      return validateBasicTab(formData)
+    case "details":
+      return validateDetailsTab(formData)
+    case "pricing":
+      return validatePricingTab(formData)
+    case "media":
+      return validateMediaTab(formData)
+    default:
+      return { isValid: true }
+  }
+}
+
+// Function to scroll to a specific field
+const scrollToField = (fieldId: string) => {
+  setTimeout(() => {
+    const element = document.getElementById(fieldId)
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth", block: "center" })
+      element.focus()
+      // Add a temporary highlight effect
+      element.classList.add("ring-2", "ring-red-500", "ring-offset-2")
+      setTimeout(() => {
+        element.classList.remove("ring-2", "ring-red-500", "ring-offset-2")
+      }, 2000)
+    }
+  }, 100)
+}
+
 export default function CreateEvent({ organizerId }: { organizerId: string }) {
   const [activeTab, setActiveTab] = useState("basic")
   const [completionPercentage, setCompletionPercentage] = useState(0)
@@ -38,12 +117,13 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
   const [isUploadingLayoutPlan, setIsUploadingLayoutPlan] = useState(false)
   const [selectedVenueId, setSelectedVenueId] = useState<string>("")
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(false)
+  const [tabValidationErrors, setTabValidationErrors] = useState<Record<string, boolean>>({})
 
   const [formData, setFormData] = useState<EventFormData>(() => getDefaultCreateEventFormData())
 
   const [newHighlight, setNewHighlight] = useState("")
   const [newTag, setNewTag] = useState("")
-  const [validationErrors, setValidationErrors] = useState<ValidationErrors>({})
+  const [validationErrors, setValidationErrors] = useState<ValidationErrors>(() => ({} as ValidationErrors))
   const [isPublishing, setIsPublishing] = useState(false)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -91,23 +171,23 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
 
   useEffect(() => {
     let cancelled = false
-    ;(async () => {
-      try {
-        setEventCategoriesLoading(true)
-        const res = await apiFetch<
-          { success?: boolean; data?: Array<{ name: string }> } | Array<{ name: string }>
-        >("/api/event-categories", { auth: false })
-        const raw = Array.isArray(res) ? res : res?.data
-        const names = (Array.isArray(raw) ? raw : [])
-          .map((c) => (typeof c?.name === "string" ? c.name.trim() : ""))
-          .filter(Boolean)
-        if (!cancelled) setEventCategoryNames(names)
-      } catch {
-        if (!cancelled) setEventCategoryNames([])
-      } finally {
-        if (!cancelled) setEventCategoriesLoading(false)
-      }
-    })()
+      ; (async () => {
+        try {
+          setEventCategoriesLoading(true)
+          const res = await apiFetch<
+            { success?: boolean; data?: Array<{ name: string }> } | Array<{ name: string }>
+          >("/api/event-categories", { auth: false })
+          const raw = Array.isArray(res) ? res : res?.data
+          const names = (Array.isArray(raw) ? raw : [])
+            .map((c) => (typeof c?.name === "string" ? c.name.trim() : ""))
+            .filter(Boolean)
+          if (!cancelled) setEventCategoryNames(names)
+        } catch {
+          if (!cancelled) setEventCategoryNames([])
+        } finally {
+          if (!cancelled) setEventCategoriesLoading(false)
+        }
+      })()
     return () => {
       cancelled = true
     }
@@ -120,6 +200,10 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
         highlights: [...prev.highlights, newHighlight.trim()],
       }))
       setNewHighlight("")
+      // Clear validation error for highlights if any
+      if (tabValidationErrors.details) {
+        setTabValidationErrors(prev => ({ ...prev, details: false }))
+      }
     }
   }
 
@@ -137,6 +221,10 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
         tags: [...prev.tags, newTag.trim()],
       }))
       setNewTag("")
+      // Clear validation error for tags if any
+      if (tabValidationErrors.details) {
+        setTabValidationErrors(prev => ({ ...prev, details: false }))
+      }
     }
   }
 
@@ -153,6 +241,10 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
       ...prev,
       spaceCosts: prev.spaceCosts.map((cost, i) => (i === index ? { ...cost, [field]: value } : cost)),
     }))
+    // Clear validation error for pricing tab if space costs become valid
+    if (validateOrganizerExhibitorSpaceCosts(formData.spaceCosts) === undefined) {
+      setTabValidationErrors(prev => ({ ...prev, pricing: false }))
+    }
   }
 
   const handleCategoryToggle = (category: string) => {
@@ -166,43 +258,59 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
       }
       return prev
     })
+    // Clear validation error for categories if any
+    if (tabValidationErrors.basic) {
+      setTabValidationErrors(prev => ({ ...prev, basic: false }))
+    }
   }
 
   const calculateCompletionPercentage = () => {
-    const spaceCostsValid = validateOrganizerExhibitorSpaceCosts(formData.spaceCosts) === undefined
-    const requiredFields = [
-      formData.title,
-      formData.slug,
-      formData.description,
-      formData.eventType,
-      formData.startDate,
-      formData.endDate,
-      formData.venue,
-      formData.city,
-      formData.address,
-      spaceCostsValid,
-    ]
-    const optionalFields = [
-      formData.categories.length > 0,
-      formData.highlights.length > 0,
-      formData.tags.length > 0,
-      formData.images.length > 0,
-    ]
-    const requiredCompleted = requiredFields.filter((field) => field && field.toString().trim() !== "").length
-    const optionalCompleted = optionalFields.filter(Boolean).length
-    const requiredPercentage = (requiredCompleted / requiredFields.length) * 80
-    const optionalPercentage = (optionalCompleted / optionalFields.length) * 20
-    return Math.round(requiredPercentage + optionalPercentage)
+    const basicValid = validateBasicTab(formData).isValid
+    const detailsValid = validateDetailsTab(formData).isValid
+    const pricingValid = validatePricingTab(formData).isValid
+    const mediaValid = validateMediaTab(formData).isValid
+
+    const totalTabs = 4
+    const completedTabs = [basicValid, detailsValid, pricingValid, mediaValid].filter(Boolean).length
+
+    return Math.round((completedTabs / totalTabs) * 100)
   }
 
   useEffect(() => {
     setCompletionPercentage(calculateCompletionPercentage())
   }, [formData])
 
+  const handleTabChange = async (newTabId: string) => {
+    // Validate current tab before allowing navigation
+    const currentTabId = activeTab
+    const validation = validateTab(currentTabId, formData)
+
+    if (!validation.isValid) {
+      setShowValidationErrors(true)
+      setTabValidationErrors(prev => ({ ...prev, [currentTabId]: true }))
+
+      toast({
+        title: "Cannot Navigate",
+        description: `Please complete all required fields in the ${currentTabId.charAt(0).toUpperCase() + currentTabId.slice(1)} tab before proceeding.`,
+        variant: "destructive",
+      })
+
+      // Scroll to the invalid field
+      if (validation.errorField) {
+        scrollToField(validation.errorField)
+      }
+      return
+    }
+
+    // Clear validation error for this tab
+    setTabValidationErrors(prev => ({ ...prev, [currentTabId]: false }))
+    setActiveTab(newTabId)
+  }
+
   const handleNextTab = () => {
     const currentIndex = tabs.findIndex((tab) => tab.id === activeTab)
     if (currentIndex < tabs.length - 1) {
-      setActiveTab(tabs[currentIndex + 1].id)
+      handleTabChange(tabs[currentIndex + 1].id)
     }
   }
 
@@ -223,7 +331,38 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
       return
     }
 
+    // Validate all tabs before publishing
+    const allTabs = ["basic", "details", "pricing", "media"]
+    let firstInvalidTab = ""
+    let firstInvalidField = ""
+
+    for (const tabId of allTabs) {
+      const validation = validateTab(tabId, formData)
+      if (!validation.isValid) {
+        firstInvalidTab = tabId
+        firstInvalidField = validation.errorField || ""
+        setTabValidationErrors(prev => ({ ...prev, [tabId]: true }))
+        break
+      }
+    }
+
+    if (firstInvalidTab) {
+      setActiveTab(firstInvalidTab)
+      setShowValidationErrors(true)
+      toast({
+        title: "Form Incomplete",
+        description: `Please complete all required fields in the ${firstInvalidTab.charAt(0).toUpperCase() + firstInvalidTab.slice(1)} tab.`,
+        variant: "destructive",
+      })
+      if (firstInvalidField) {
+        scrollToField(firstInvalidField)
+      }
+      return
+    }
+
+    // Additional validation for date/time logic
     if (!formData.dailyStart.trim()) {
+      scrollToField("dailyStart")
       toast({
         title: "Time Required",
         description: "Daily start time is required",
@@ -232,9 +371,23 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
       return
     }
     if (!formData.dailyEnd.trim()) {
+      scrollToField("dailyEnd")
       toast({
         title: "Time Required",
         description: "Daily end time is required",
+        variant: "destructive",
+      })
+      return
+    }
+
+    // Validate start date is before end date
+    const startDate = new Date(formData.startDate)
+    const endDate = new Date(formData.endDate)
+    if (startDate > endDate) {
+      scrollToField("startDate")
+      toast({
+        title: "Invalid Dates",
+        description: "Start date must be before end date",
         variant: "destructive",
       })
       return
@@ -251,18 +404,10 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
       })
       if (newValidationErrors.spaceCosts) {
         setActiveTab("pricing")
-        requestAnimationFrame(() => {
-          document.getElementById("exhibitor-space-costs-section")?.scrollIntoView({
-            behavior: "smooth",
-            block: "center",
-          })
-        })
+        scrollToField("exhibitor-space-costs-section")
       } else {
         const firstErrorField = Object.keys(newValidationErrors)[0]
-        const element = document.getElementById(firstErrorField)
-        if (element) {
-          element.scrollIntoView({ behavior: "smooth", block: "center" })
-        }
+        scrollToField(firstErrorField)
       }
       return
     }
@@ -315,11 +460,15 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
         duration: 10000,
       })
 
+      // Reset form after successful submission
       setFormData(getDefaultCreateEventFormData())
-      setValidationErrors({})
+      setValidationErrors({} as ValidationErrors)
       setSelectedVenueId("")
       setCompletionPercentage(0)
       setActiveTab("basic")
+      setTabValidationErrors({})
+      setNewHighlight("")
+      setNewTag("")
     } catch (error: unknown) {
       console.error("❌ Error submitting event:", error)
       const err = error as { message?: string }
@@ -364,6 +513,10 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
         images: [...prev.images, ...uploadedUrls],
       }))
       toast({ title: "Success", description: `${uploadedUrls.length} image(s) uploaded successfully` })
+      // Clear validation error for images
+      if (tabValidationErrors.media) {
+        setTabValidationErrors(prev => ({ ...prev, media: false }))
+      }
     } catch (error) {
       console.error("Error uploading images:", error)
       toast({
@@ -402,6 +555,10 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
       const url = await uploadEventFileToBackend(file, "brochure")
       setFormData((prev) => ({ ...prev, brochure: url }))
       toast({ title: "Success", description: "Brochure uploaded successfully" })
+      // Clear validation error for brochure
+      if (tabValidationErrors.media) {
+        setTabValidationErrors(prev => ({ ...prev, media: false }))
+      }
     } catch (error) {
       console.error("Error uploading brochure:", error)
       toast({
@@ -440,6 +597,10 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
       const url = await uploadEventFileToBackend(file, "layout")
       setFormData((prev) => ({ ...prev, layoutPlan: url }))
       toast({ title: "Success", description: "Layout plan uploaded successfully" })
+      // Clear validation error for layout plan
+      if (tabValidationErrors.media) {
+        setTabValidationErrors(prev => ({ ...prev, media: false }))
+      }
     } catch (error) {
       console.error("Error uploading layout plan:", error)
       toast({
@@ -462,20 +623,20 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
         </div>
         <Progress value={completionPercentage} className="h-2 bg-gray-200 [&>div]:bg-gradient-to-r [&>div]:from-[#004A96] [&>div]:to-[#003d7a]" />
         <p className="text-xs text-muted-foreground mt-1">
-          {completionPercentage < 80 ? "Complete required fields to publish your event" : "Ready to publish!"}
+          {completionPercentage < 100 ? `Complete all sections (${completionPercentage}% done) to publish your event` : "Ready to publish!"}
         </p>
       </div>
 
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Create New Event</h2>
-          <p className="text-gray-600">Fill in the details to create your event</p>
+          <p className="text-gray-600">Fill in all details to create your event. All fields are required.</p>
         </div>
         <div className="flex gap-3">
           <Button
             type="button"
             onClick={() => void handlePublishEvent()}
-            disabled={isPublishing || completionPercentage < 80}
+            disabled={isPublishing || completionPercentage < 100}
             className="flex items-center gap-2 bg-[#004A96] hover:bg-[#003d7a] text-white"
           >
             {isPublishing ? (
@@ -493,15 +654,19 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         <TabsList className="grid w-full grid-cols-5 rounded-xl bg-gray-100 p-1">
           {tabs.map((tab) => (
             <TabsTrigger
               key={tab.id}
               value={tab.id}
-              className="rounded-lg text-gray-600 transition-all duration-200 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#004A96] data-[state=active]:to-[#004A96] data-[state=active]:text-white data-[state=active]:shadow-md"
+              className={`rounded-lg text-gray-600 transition-all duration-200 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#004A96] data-[state=active]:to-[#004A96] data-[state=active]:text-white data-[state=active]:shadow-md ${tabValidationErrors[tab.id] ? "border-2 border-red-500 text-red-600" : ""
+                }`}
             >
               {tab.label}
+              {tabValidationErrors[tab.id] && (
+                <span className="ml-1 text-xs text-red-500">*</span>
+              )}
             </TabsTrigger>
           ))}
         </TabsList>
@@ -557,6 +722,7 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
             isUploadingImages={isUploadingImages}
             isUploadingBrochure={isUploadingBrochure}
             isUploadingLayoutPlan={isUploadingLayoutPlan}
+            showValidationErrors={showValidationErrors}
             handleImageUpload={handleImageUpload}
             handleBrochureUpload={handleBrochureUpload}
             handleLayoutPlanUpload={handleLayoutPlanUpload}
@@ -585,20 +751,20 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
             <Button
               type="button"
               onClick={() => void handlePublishEvent()}
-              disabled={isPublishing || completionPercentage < 80}
+              disabled={isPublishing || completionPercentage < 100}
+              className="bg-[#004A96] hover:bg-[#003d7a]"
             >
               <Send className="w-4 h-4 mr-2" />
-              {isPublishing ? "Publishing..." : "Publish Event"}
+              {isPublishing ? "Submitting..." : "Submit for Approval"}
             </Button>
           ) : (
-            <Button type="button" onClick={handleNextTab} className="flex items-center gap-2">
+            <Button type="button" onClick={handleNextTab} className="flex items-center gap-2 bg-[#004A96] hover:bg-[#003d7a]">
               Next
               <ChevronRight className="w-4 h-4" />
             </Button>
           )}
         </div>
       </div>
-
     </div>
   )
 }
