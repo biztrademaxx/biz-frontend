@@ -359,7 +359,7 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
       id: "inquiries-registrations",
       subItems: [
         { title: "Contact inquiry", id: "contact-inquiries" },
-        { title: "Newsletter", id: "newsletter" },
+       
       ],
     },
     {
@@ -374,18 +374,18 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
         { title: "Transaction History", id: "financial-transactions" },
       ],
     },
-    // {
-    //   title: "Content",
-    //   icon: FileText,
-    //   id: "content",
-    //   subItems: [
+    {
+      title: "Content",
+      icon: FileText,
+      id: "content",
+      subItems: [
        
         
         
-    //     // { title: "Featured Events", id: "content-featured" },
-    //     // { title: "Media Library", id: "content-media" },
-    //   ],
-    // },
+        // { title: "Featured Events", id: "content-featured" },
+        // { title: "Media Library", id: "content-media" },
+      ],
+    },
     {
       title: "Promotions",
       icon: Tag,
@@ -394,6 +394,8 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
         { title: " Event Promotions", id: "admin-promotions" },
         { title: "Banner & Ads Manager", id: "content-banners" },
         { title: "Blog & Articles", id: "content-blog" },
+        { title: "Newsletter", id: "newsletter" },
+        
       ],
     },
     {
