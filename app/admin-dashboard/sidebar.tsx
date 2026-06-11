@@ -28,6 +28,7 @@ import {
   Inbox,
   Tag,
   MessageCircle,
+  CheckCircle,
 } from "lucide-react"
 
 // Import all section components
@@ -111,6 +112,9 @@ import SubAdminAnalyticsPanel from "../sub-admin/SubAdminAnalyticsPanel"
 import SubAdminTrackingPage from "./sub-admin-tracking"
 import ContactInquiriesPage from "./contact-inquiries-page"
 import NewsletterAdminPage from "./newsletter-admin-page"
+import ExhibitorApprovals from "./approvals/components/ExhibitorApprovals"
+import OrganizerApprovals from "./approvals/components/OrganizerApprovals"
+import VenueApprovals from "./approvals/components/VenueApprovals"
 
 interface AdminDashboardProps {
   userRole: "SUPER_ADMIN" | "SUB_ADMIN"
@@ -125,6 +129,12 @@ const MENU_PERMISSIONS = {
   "events-categories": "events-categories",
   "events-approvals": "events-approvals",
   "bulk-data": "bulk-data",
+  approvals: "approvals-access",
+  "approvals-events": "approvals-events",
+  "approvals-venues": "approvals-venues",
+  "approvals-organizers": "approvals-organizers",
+  "approvals-exhibitors": "approvals-exhibitors",
+
   organizers: "organizers",
   "organizers-all": "organizers-all",
   "organizers-add": "organizers-add",
@@ -277,6 +287,17 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
         { title: "Event Categories", id: "events-categories" },
         { title: "Event Approvals", id: "events-approvals" }, 
         { title: "Bulk Data", id: "bulk-data" },
+      ],
+    },
+    {
+      title: "Approvals",
+      icon: CheckCircle,
+      id: "approvals",
+      subItems: [
+        { title: "Event Approvals", id: "approvals-events" },
+        { title: "Venue Approvals", id: "approvals-venues" },
+        { title: "Organizer Approvals", id: "approvals-organizers" },
+        { title: "Exhibitor Approvals", id: "approvals-exhibitors" },
       ],
     },
     {
@@ -616,8 +637,14 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
           return <VenueBookingsPage />
         case "venues-feedback":
           return <VenueFeedbackPage />
-        case "events-approvals":
-          return <EventApprovalDashboard />
+        case "approvals-events":
+          return <EventApprovalDashboard /> // Your existing event approval page
+        case "approvals-venues":
+          return <VenueApprovals />
+        case "approvals-organizers":
+          return <OrganizerApprovals />
+        case "approvals-exhibitors":
+          return <ExhibitorApprovals />
 
         // Visitors
         case "visitors-events":
