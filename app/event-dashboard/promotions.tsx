@@ -4,7 +4,6 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Checkbox } from "@/components/ui/checkbox"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { useToast } from "@/hooks/use-toast"
 import { apiFetch } from "@/lib/api"
@@ -31,6 +30,7 @@ import {
   Stethoscope,
   Star,
   Loader2,
+  Check,
 } from "lucide-react"
 
 interface Event {
@@ -422,16 +422,23 @@ export default function EventPromotion({ eventId }: { eventId: string }) {
                   {displayedCategories.map((category) => {
                     const isSelected = selectedCategories.includes(category.id)
                     return (
-                      <button
+                      <div
                         key={category.id}
-                        type="button"
+                        role="button"
+                        tabIndex={0}
                         className={cn(
-                          "rounded-xl border-2 p-4 text-left transition-all",
+                          "cursor-pointer rounded-xl border-2 p-4 text-left transition-all outline-none focus-visible:ring-2 focus-visible:ring-[#004A96]/40",
                           isSelected
                             ? "border-[#004A96] bg-[#004A96]/10 shadow-sm"
                             : "border-slate-200 bg-white hover:border-[#004A96]/40 hover:bg-slate-50",
                         )}
                         onClick={() => handleCategoryToggle(category.id)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault()
+                            handleCategoryToggle(category.id)
+                          }
+                        }}
                       >
                         <div className="mb-3 flex items-center gap-3">
                           <div className={cn("rounded-lg p-2", category.color)}>
@@ -440,11 +447,17 @@ export default function EventPromotion({ eventId }: { eventId: string }) {
                           <div className="min-w-0 flex-1">
                             <h3 className="truncate text-sm font-semibold text-slate-900">{category.name}</h3>
                           </div>
-                          <Checkbox
-                            checked={isSelected}
-                            onCheckedChange={() => handleCategoryToggle(category.id)}
-                            className="pointer-events-none"
-                          />
+                          <div
+                            aria-hidden
+                            className={cn(
+                              "flex h-4 w-4 shrink-0 items-center justify-center rounded border shadow-xs",
+                              isSelected
+                                ? "border-[#004A96] bg-[#004A96] text-white"
+                                : "border-slate-300 bg-white",
+                            )}
+                          >
+                            {isSelected && <Check className="h-3 w-3" />}
+                          </div>
                         </div>
                         <div className="space-y-2 text-sm">
                           <div className="flex justify-between">
@@ -456,7 +469,7 @@ export default function EventPromotion({ eventId }: { eventId: string }) {
                             <span className="font-medium">{category.avgEngagement}%</span>
                           </div>
                         </div>
-                      </button>
+                      </div>
                     )
                   })}
                 </div>

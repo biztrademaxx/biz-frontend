@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
 import { apiFetch } from "@/lib/api"
+import { trackEventMetric } from "@/lib/track-event-metric"
 import EventPageContent from "../EventPageContent"
 import EventPageSkeleton from "@/components/EventPageSkeleton"
 
@@ -34,6 +35,13 @@ export default function EventPageClient({ params, initialEvent, initialError }: 
       document.title = `${event.title} | BizTradeFairs`
     }
   }, [event])
+
+  useEffect(() => {
+    const eventId = typeof event?.id === "string" ? event.id : null
+    if (eventId) {
+      trackEventMetric(eventId, "click", "event_page")
+    }
+  }, [event?.id])
 
   const fetchEvent = async () => {
     try {

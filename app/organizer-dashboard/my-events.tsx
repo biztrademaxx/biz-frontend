@@ -10,7 +10,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Calendar, MapPin, Users, DollarSign, Search, TrendingUp } from "lucide-react"
+import { Calendar, MapPin, Search, TrendingUp, Tag } from "lucide-react"
 import Image from "next/image"
 import { getEventDisplayImageUrl } from "@/lib/default-event-image"
 
@@ -24,6 +24,7 @@ interface Event {
   city: string
   venueAddress: string
   eventType: string[]
+  category?: string[]
   images: string[]
   bannerImage?: string
   thumbnailImage?: string
@@ -48,6 +49,23 @@ interface Event {
 
 interface MyEventsProps {
   organizerId: string
+}
+
+function asStringArray(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => (typeof item === "string" ? item.trim() : ""))
+      .filter((item) => item.length > 0)
+  }
+  if (typeof value === "string" && value.trim()) {
+    return [value.trim()]
+  }
+  return []
+}
+
+function getPrimaryEventType(eventType: unknown): string {
+  const types = asStringArray(eventType)
+  return types[0] || "Event"
 }
 
 export default function MyEvents({ organizerId }: MyEventsProps) {
@@ -100,11 +118,18 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
 
   useEffect(() => {
     const filtered = events.filter((event) => {
+      const categoryLabels = asStringArray(event.category)
       const matchesSearch =
         !searchTerm ||
-        [event.title, event.description, event.location, event.city, event.venueAddress].some((field) =>
-          field?.toLowerCase().includes(searchTerm.toLowerCase()),
-        )
+        [
+          event.title,
+          event.description,
+          event.location,
+          event.city,
+          event.venueAddress,
+          ...asStringArray(event.eventType),
+          ...categoryLabels,
+        ].some((field) => field?.toLowerCase().includes(searchTerm.toLowerCase()))
 
       const matchesTimeline = timelineStatusFilter === "all" || event.timelineStatus === timelineStatusFilter
       const matchesPublication = publicationStatusFilter === "all" || event.status === publicationStatusFilter
@@ -282,10 +307,14 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
       {/* Events List - two cards per row */}
       {!loading && !error && filteredEvents.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {filteredEvents.map((event: any) => {
-            const timelineColors = getTimelineStatusColor(event.timelineStatus)
+          {filteredEvents.map((event: Event) => {
+            const timelineColors = getTimelineStatusColor(event.timelineStatus ?? "past")
             const publicationColors = getPublicationStatusColor(event.status)
             const eventImage = getEventImage(event)
+            const eventTypeLabel = getPrimaryEventType(event.eventType)
+            const categoryLabels = asStringArray(event.category)
+            const visibleCategories = categoryLabels.slice(0, 2)
+            const hiddenCategoryCount = Math.max(0, categoryLabels.length - visibleCategories.length)
 
             return (
               <Card
@@ -374,19 +403,47 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
                               {event.leads || 0} leads
                             </span>
                           </div>
+
+                          {categoryLabels.length > 0 && (
+                            <div className="flex items-start gap-2">
+                              <Tag className="mt-0.5 h-4 w-4 shrink-0 text-[#004A96]" />
+                              <div className="flex min-w-0 flex-wrap gap-1">
+                                {categoryLabels.map((label) => (
+                                  <span
+                                    key={label}
+                                    className="max-w-[10rem] truncate rounded-full bg-[#004A96]/10 px-2 py-0.5 text-[11px] font-medium text-[#004A96]"
+                                  >
+                                    {label}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
 
                       {/* Bottom Badges */}
-                      <div className="flex items-center justify-between pt-4 mt-4 border-t border-gray-100">
-                        <span className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded-full">
-                          {Array.isArray(event.eventType) && event.eventType.length > 0
-                            ? event.eventType[0]
-                            : "Event"}
-                        </span>
+                      <div className="flex items-center justify-between gap-3 pt-4 mt-4 border-t border-gray-100">
+                        <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+                          <span className="shrink-0 rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700">
+                            {eventTypeLabel}
+                          </span>
+                          {visibleCategories.map((label) => (
+                            <span
+                              key={`footer-${label}`}
+                              className="max-w-[8.5rem] truncate rounded-full border border-[#004A96]/20 bg-[#004A96]/5 px-2 py-1 text-xs font-medium text-[#004A96]"
+                            >
+                              {label}
+                            </span>
+                          ))}
+                          {hiddenCategoryCount > 0 && (
+                            <span className="shrink-0 rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-600">
+                              +{hiddenCategoryCount}
+                            </span>
+                          )}
+                        </div>
 
-                        {/* View Details Link */}
-                        <span className="text-xs text-[#004A96] hover:text-[#003d7a] font-medium">
+                        <span className="shrink-0 text-xs font-medium text-[#004A96] group-hover:text-[#003d7a]">
                           View Details →
                         </span>
                       </div>
