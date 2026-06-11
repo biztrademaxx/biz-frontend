@@ -715,7 +715,7 @@ export default function OrganizerInfo({ organizerData: initialData, onOrganizerU
                 <Calendar className="w-5 h-5 text-gray-400" />
                 <div>
                   <p className="text-sm text-gray-600">Founded</p>
-                  <p className="font-medium">{organizerData.founded}</p>
+                  <p className="font-medium">{organizerData.founded || "—"}</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">

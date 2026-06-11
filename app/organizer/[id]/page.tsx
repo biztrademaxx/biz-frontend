@@ -49,7 +49,7 @@ interface Organizer {
   activeEvents: number
   totalAttendees: number
   totalRevenue: number
-  founded: string
+  founded?: string | null
   teamSize: string
   headquarters: string
   organizerCountry?: string | null
@@ -499,7 +499,7 @@ export default function OrganizerPage() {
       {/* Stats Section - Updated */}
       <div className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-4 py-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <div className={`grid grid-cols-2 gap-6 ${organizer.founded ? "md:grid-cols-4" : "md:grid-cols-3"}`}>
             <div className="text-center">
               <div className="text-2xl font-bold text-gray-900">{organizer.totalEvents}</div>
               <div className="text-sm text-gray-600">Total Events</div>
@@ -515,10 +515,12 @@ export default function OrganizerPage() {
               </div>
               <div className="text-sm text-gray-600">Avg Rating ({stats.totalReviews})</div>
             </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-gray-900">{organizer.founded}</div>
-              <div className="text-sm text-gray-600">Founded</div>
-            </div>
+            {organizer.founded && (
+              <div className="text-center">
+                <div className="text-2xl font-bold text-gray-900">{organizer.founded}</div>
+                <div className="text-sm text-gray-600">Founded</div>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -728,10 +730,12 @@ export default function OrganizerPage() {
                 <CardContent className="p-6">
                   <h3 className="text-xl font-semibold mb-4">Company Information</h3>
                   <div className="space-y-4">
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">Founded</label>
-                      <p className="text-gray-900">{organizer.founded}</p>
-                    </div>
+                    {organizer.founded && (
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Founded</label>
+                        <p className="text-gray-900">{organizer.founded}</p>
+                      </div>
+                    )}
                     <div>
                       <label className="text-sm font-medium text-gray-500">Location</label>
                       <p className="text-gray-900">{formatOrganizerLocationLine(organizer) || "—"}</p>
