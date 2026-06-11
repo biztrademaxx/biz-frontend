@@ -27,6 +27,7 @@ import {
   adminCardShell,
   adminPrimaryBtn,
 } from "@/app/admin-dashboard/admin-dashboard-theme"
+import { ALL_CATEGORIES_LABEL } from "@/lib/promotion-package-constants"
 
 interface PromotionPackage {
   id: string
@@ -42,6 +43,8 @@ interface PromotionPackage {
   isActive: boolean
   userType: string
   order: number
+  section?: "subscription" | "on_demand"
+  ctaLabel?: string
 }
 
 interface EventCategoryOption {
@@ -71,10 +74,12 @@ export default function PromotionPackagesPage() {
     userCount: "",
     duration: "",
     durationDays: "",
-    categories: "",
+    categories: [] as string[],
     recommended: false,
     isActive: true,
     userType: "BOTH",
+    section: "subscription" as "subscription" | "on_demand",
+    ctaLabel: "",
     features: [] as string[],
   })
 
@@ -108,12 +113,6 @@ export default function PromotionPackagesPage() {
       >("/api/event-categories", { auth: false })
       const list = Array.isArray(data) ? data : data.data ?? []
       setEventCategories(list)
-      if (!editingPackage) {
-        setFormData((prev) => ({
-          ...prev,
-          categories: prev.categories || list[0]?.name || "",
-        }))
-      }
     } catch {
       setEventCategories([])
     }
@@ -126,7 +125,9 @@ export default function PromotionPackagesPage() {
         price: Number.parseFloat(formData.price),
         userCount: Number.parseInt(formData.userCount),
         durationDays: Number.parseInt(formData.durationDays),
-        categories: [formData.categories],
+        categories:
+          formData.categories.length > 0 ? formData.categories : [ALL_CATEGORIES_LABEL],
+        ctaLabel: formData.ctaLabel.trim() || undefined,
       }
 
       const url = editingPackage
@@ -193,10 +194,12 @@ export default function PromotionPackagesPage() {
       userCount: pkg.userCount.toString(),
       duration: pkg.duration,
       durationDays: pkg.durationDays.toString(),
-      categories: pkg.categories[0] || eventCategories[0]?.name || "",
+      categories: pkg.categories?.length ? pkg.categories : [ALL_CATEGORIES_LABEL],
       recommended: pkg.recommended,
       isActive: pkg.isActive,
       userType: normalizedUserType,
+      section: pkg.section === "on_demand" ? "on_demand" : "subscription",
+      ctaLabel: pkg.ctaLabel || "",
       features: pkg.features,
     })
     setIsDialogOpen(true)
@@ -211,10 +214,12 @@ export default function PromotionPackagesPage() {
       userCount: "",
       duration: "",
       durationDays: "",
-      categories: eventCategories[0]?.name || "",
+      categories: [ALL_CATEGORIES_LABEL],
       recommended: false,
       isActive: true,
       userType: "BOTH",
+      section: "subscription",
+      ctaLabel: "",
       features: [],
     })
     setFeatureInput("")
@@ -235,6 +240,18 @@ export default function PromotionPackagesPage() {
       ...formData,
       features: formData.features.filter((_, i) => i !== index),
     })
+  }
+
+  const toggleFormCategory = (categoryName: string) => {
+    if (categoryName === ALL_CATEGORIES_LABEL) {
+      setFormData({ ...formData, categories: [ALL_CATEGORIES_LABEL] })
+      return
+    }
+    const withoutAll = formData.categories.filter((c) => c !== ALL_CATEGORIES_LABEL)
+    const next = withoutAll.includes(categoryName)
+      ? withoutAll.filter((c) => c !== categoryName)
+      : [...withoutAll, categoryName]
+    setFormData({ ...formData, categories: next.length > 0 ? next : [ALL_CATEGORIES_LABEL] })
   }
 
   const stats = {
@@ -279,12 +296,12 @@ export default function PromotionPackagesPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Price (USD)</Label>
+                    <Label>Price (INR ₹)</Label>
                     <Input
                       type="number"
                       value={formData.price}
                       onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                      placeholder="2999"
+                      placeholder="9999"
                     />
                   </div>
                 </div>
@@ -334,21 +351,40 @@ export default function PromotionPackagesPage() {
               <section className="space-y-3">
                 <div>
                   <Label>Category Targeting</Label>
-                  <p className="mt-1 text-xs text-slate-500">Select the event category this package targets</p>
-                </div>
-                {eventCategories.length === 0 ? (
-                  <p className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center text-sm text-slate-500">
-                    No categories available
+                  <p className="mt-1 text-xs text-slate-500">
+                    Select one or more categories, or choose All Categories for platform-wide targeting
                   </p>
-                ) : (
-                  <div className="grid max-h-44 grid-cols-1 gap-2 overflow-y-auto rounded-xl border border-slate-200 bg-white p-2 sm:grid-cols-2">
-                    {eventCategories.map((cat) => {
-                      const selected = formData.categories === cat.name
+                </div>
+                <div className="grid max-h-52 grid-cols-1 gap-2 overflow-y-auto rounded-xl border border-slate-200 bg-white p-2 sm:grid-cols-2">
+                  <button
+                    type="button"
+                    onClick={() => toggleFormCategory(ALL_CATEGORIES_LABEL)}
+                    className={cn(
+                      "flex items-center justify-between rounded-lg border px-3 py-2.5 text-left text-sm font-medium transition-all sm:col-span-2",
+                      formData.categories.includes(ALL_CATEGORIES_LABEL)
+                        ? "border-[#004A96] bg-[#004A96]/10 text-[#004A96] shadow-sm"
+                        : "border-slate-200 bg-slate-50/50 text-slate-700 hover:border-[#004A96]/40 hover:bg-white",
+                    )}
+                  >
+                    <span>{ALL_CATEGORIES_LABEL}</span>
+                    {formData.categories.includes(ALL_CATEGORIES_LABEL) && (
+                      <Check className="h-4 w-4 shrink-0" />
+                    )}
+                  </button>
+                  {eventCategories.length === 0 ? (
+                    <p className="col-span-full px-2 py-4 text-center text-sm text-slate-500">
+                      No event categories loaded
+                    </p>
+                  ) : (
+                    eventCategories.map((cat) => {
+                      const selected =
+                        formData.categories.includes(cat.name) &&
+                        !formData.categories.includes(ALL_CATEGORIES_LABEL)
                       return (
                         <button
                           key={cat.id}
                           type="button"
-                          onClick={() => setFormData({ ...formData, categories: cat.name })}
+                          onClick={() => toggleFormCategory(cat.name)}
                           className={cn(
                             "flex items-center justify-between rounded-lg border px-3 py-2.5 text-left text-sm transition-all",
                             selected
@@ -360,9 +396,46 @@ export default function PromotionPackagesPage() {
                           {selected && <Check className="h-4 w-4 shrink-0" />}
                         </button>
                       )
-                    })}
-                  </div>
-                )}
+                    })
+                  )}
+                </div>
+              </section>
+
+              <section className="space-y-3">
+                <Label>Package Type</Label>
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  {(
+                    [
+                      { value: "subscription", label: "Subscription Plan (Starter / Pro / Enterprise)" },
+                      { value: "on_demand", label: "On-Demand Solution" },
+                    ] as const
+                  ).map((option) => {
+                    const selected = formData.section === option.value
+                    return (
+                      <button
+                        key={option.value}
+                        type="button"
+                        onClick={() => setFormData({ ...formData, section: option.value })}
+                        className={cn(
+                          "rounded-lg border px-3 py-2.5 text-left text-sm transition-all",
+                          selected
+                            ? "border-[#004A96] bg-[#004A96] font-medium text-white shadow-sm"
+                            : "border-slate-200 bg-white text-slate-700 hover:border-[#004A96]/40",
+                        )}
+                      >
+                        {option.label}
+                      </button>
+                    )
+                  })}
+                </div>
+                <div className="space-y-2">
+                  <Label>CTA Button Label (optional)</Label>
+                  <Input
+                    value={formData.ctaLabel}
+                    onChange={(e) => setFormData({ ...formData, ctaLabel: e.target.value })}
+                    placeholder="e.g., Get Featured"
+                  />
+                </div>
               </section>
 
               <section className="space-y-3">
@@ -464,8 +537,8 @@ export default function PromotionPackagesPage() {
         {[
           { label: "Total Packages", value: stats.totalPackages, icon: Package, color: "text-[#004A96]" },
           { label: "Active Packages", value: stats.activePackages, icon: TrendingUp, color: "text-emerald-600" },
-          { label: "Total Value", value: `$${stats.totalRevenue.toLocaleString()}`, icon: DollarSign, color: "text-[#004A96]" },
-          { label: "Average Price", value: `$${Math.round(stats.avgPrice).toLocaleString()}`, icon: Users, color: "text-violet-600" },
+          { label: "Total Value", value: `₹${stats.totalRevenue.toLocaleString("en-IN")}`, icon: DollarSign, color: "text-[#004A96]" },
+          { label: "Average Price", value: `₹${Math.round(stats.avgPrice).toLocaleString("en-IN")}`, icon: Users, color: "text-violet-600" },
         ].map((stat) => (
           <Card key={stat.label} className={adminCardShell}>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -518,7 +591,7 @@ export default function PromotionPackagesPage() {
                           )}
                         </div>
                       </TableCell>
-                      <TableCell className="font-medium">${pkg.price.toLocaleString()}</TableCell>
+                      <TableCell className="font-medium">₹{pkg.price.toLocaleString("en-IN")}</TableCell>
                       <TableCell>{pkg.userCount.toLocaleString()}+</TableCell>
                       <TableCell>{pkg.duration}</TableCell>
                       <TableCell>
