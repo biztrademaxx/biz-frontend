@@ -8,6 +8,8 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { useToast } from "@/hooks/use-toast"
 import { apiFetch } from "@/lib/api"
+import { cn } from "@/lib/utils"
+import { adminCardShell, adminPrimaryBtn } from "@/app/admin-dashboard/admin-dashboard-theme"
 import {
   Megaphone,
   Users,
@@ -292,193 +294,214 @@ export default function EventPromotion({ eventId }: { eventId: string }) {
   }
 
   return (
-    <div className="space-y-6 p-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-8 p-6">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Promote Your Event</h1>
-          <div className="flex items-center gap-4 mt-2 text-sm text-gray-600">
-            <span className="font-semibold">{event.title}</span>
+          <h1 className="text-3xl font-bold text-slate-900">Promote Your Event</h1>
+          <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-slate-600">
+            <span className="font-semibold text-slate-900">{event.title}</span>
             <div className="flex items-center gap-1">
-              <MapPin className="w-4 h-4" />
+              <MapPin className="h-4 w-4" />
               {event.location}
             </div>
             <Badge variant="outline">{event.status}</Badge>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Badge variant="outline" className="bg-blue-50 text-blue-700">
-            <Users className="w-4 h-4 mr-1" />
-            {userCategories.reduce((total, cat) => total + cat.userCount, 0).toLocaleString()} Platform Users
-          </Badge>
-        </div>
+        <Badge variant="outline" className="w-fit bg-[#004A96]/10 text-[#004A96]">
+          <Users className="mr-1 h-4 w-4" />
+          {userCategories.reduce((total, cat) => total + cat.userCount, 0).toLocaleString()} Platform Users
+        </Badge>
       </div>
 
-      {/* Promotion Packages */}
-      <Card className="bg-[#F5F4F0] border-none shadow-none">
+      {/* Step 1: Promotion Packages */}
+      <Card className={cn(adminCardShell, "relative z-0 overflow-visible")}>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Megaphone className="w-5 h-5" />
-            Choose Promotion Package
+          <CardTitle className="flex items-center gap-2 text-slate-900">
+            <Megaphone className="h-5 w-5 text-[#004A96]" />
+            Step 1 — Choose Promotion Package
           </CardTitle>
-          <p className="text-sm text-gray-600">
-            Select a package configured by admin. Category targeting will be shown based on the selected package.
+          <p className="text-sm text-slate-600">
+            Select a package configured by admin. Category targeting appears in the next step.
           </p>
         </CardHeader>
-        <CardContent>
+        <CardContent className="overflow-visible">
           {promotionPackages.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className="py-8 text-center text-slate-500">
               <p>No promotion packages available at the moment.</p>
-              <p className="text-sm mt-2">Please check back later or contact support.</p>
+              <p className="mt-2 text-sm">Please check back later or contact support.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {promotionPackages.map((pkg) => (
-                <div
-                  key={pkg.id}
-                  className={`relative p-6 border-2 rounded-lg ${pkg.recommended
-                      ? "border-blue-500"
-                      : "border-gray-200"
-                    } bg-white`}
-                >
-                  {pkg.recommended && (
-                    <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                      <Badge className="bg-blue-500 text-white">
-                        <Star className="w-3 h-3 mr-1" />
-                        Recommended
-                      </Badge>
-                    </div>
-                  )}
-
-                  <div className="bg-white rounded-xl p-4 text-center mb-4">
-                    <h3 className="text-xl font-bold">{pkg.name}</h3>
-                    <p className="text-sm text-gray-600 mt-1">{pkg.description}</p>
-                    <div className="mt-3">
-                      <span className="text-3xl font-bold text-blue-600">₹{pkg.price.toLocaleString()}</span>
-                      <span className="text-sm text-gray-500">/{pkg.duration}</span>
-                    </div>
-                  </div>
-
-                  <div className="space-y-3 mb-6">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">Reach:</span>
-                      <span className="font-medium">{pkg.userCount.toLocaleString()}+ users</span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">Duration:</span>
-                      <span className="font-medium">{pkg.duration}</span>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2 mb-6">
-                    {pkg.features.map((feature, index) => (
-                      <div key={index} className="flex items-center gap-2 text-sm">
-                        <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
-                        <span>{feature}</span>
-                      </div>
-                    ))}
-                  </div>
-
-                  <Button
-                    className="w-full"
-                    variant={selectedPackage === pkg.id ? "default" : pkg.recommended ? "default" : "outline"}
-                    onClick={() => handlePackageSelect(pkg.id)}
-                  >
-                    {selectedPackage === pkg.id ? "Selected" : "Select Package"}
-                  </Button>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Category Selection */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Target className="w-5 h-5" />
-            Target User Categories
-          </CardTitle>
-          <p className="text-sm text-gray-600">
-            {selectedPackageData
-              ? "These categories are configured in the selected admin package."
-              : "Select a promotion package first to see its categories."}
-          </p>
-        </CardHeader>
-        <CardContent className="bg-white">
-          {!selectedPackageData ? (
-            <div className="text-sm text-gray-500">No package selected.</div>
-          ) : displayedCategories.length === 0 ? (
-            <div className="text-sm text-gray-500">No categories configured for this package.</div>
-          ) : (
-            <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 bg-white">
-                {displayedCategories.map((category) => (
+            <div className="grid grid-cols-1 gap-6 overflow-visible pt-2 md:grid-cols-3">
+              {promotionPackages.map((pkg) => {
+                const isSelected = selectedPackage === pkg.id
+                return (
                   <div
-                    key={category.id}
-                    className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                      selectedCategories.includes(category.id)
-                        ? "border-blue-500 bg-blue-50"
-                        : "border-gray-200 hover:border-gray-300"
-                    }`}
-                    onClick={() => handleCategoryToggle(category.id)}
+                    key={pkg.id}
+                    className={cn(
+                      "relative flex flex-col rounded-2xl border-2 bg-white p-6 shadow-sm transition-all",
+                      isSelected
+                        ? "border-[#004A96] ring-2 ring-[#004A96]/20"
+                        : pkg.recommended
+                          ? "border-[#004A96]/50"
+                          : "border-slate-200 hover:border-[#004A96]/30",
+                    )}
                   >
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className={`p-2 rounded-lg ${category.color}`}>
-                        <category.icon className="w-5 h-5 text-white" />
+                    {pkg.recommended && (
+                      <div className="absolute -top-3 left-1/2 z-10 -translate-x-1/2">
+                        <Badge className="bg-[#004A96] text-white shadow-sm">
+                          <Star className="mr-1 h-3 w-3" />
+                          Recommended
+                        </Badge>
                       </div>
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-sm">{category.name}</h3>
-                      </div>
-                      <Checkbox
-                        checked={selectedCategories.includes(category.id)}
-                        onCheckedChange={() => handleCategoryToggle(category.id)}
-                      />
-                    </div>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex items-center justify-between">
-                        <span className="text-gray-600">Users:</span>
-                        <span className="font-medium">{category.userCount.toLocaleString()}</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-gray-600">Engagement:</span>
-                        <span className="font-medium">{category.avgEngagement}%</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                    )}
 
-              {selectedCategories.length > 0 && (
-                <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-                  <h3 className="font-semibold mb-2">Estimated Reach</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                    <div>
-                      <span className="text-gray-600">Total Users:</span>
-                      <div className="text-2xl font-bold text-blue-600">{calculateEstimatedReach().toLocaleString()}</div>
-                    </div>
-                    <div>
-                      <span className="text-gray-600">Avg. Engagement:</span>
-                      <div className="text-2xl font-bold text-green-600">{calculateEstimatedEngagement()}%</div>
-                    </div>
-                    <div>
-                      <span className="text-gray-600">Expected Registrations:</span>
-                      <div className="text-2xl font-bold text-purple-600">
-                        {Math.round(calculateEstimatedReach() * (calculateEstimatedEngagement() / 100) * 0.15)}
+                    <div className="mb-4 text-center">
+                      <h3 className="text-xl font-bold text-slate-900">{pkg.name}</h3>
+                      <p className="mt-1 text-sm text-slate-600">{pkg.description}</p>
+                      <div className="mt-3">
+                        <span className="text-3xl font-bold text-[#004A96]">₹{pkg.price.toLocaleString()}</span>
+                        <span className="text-sm text-slate-500">/{pkg.duration}</span>
                       </div>
                     </div>
+
+                    <div className="mb-4 space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-slate-600">Reach</span>
+                        <span className="font-medium">{pkg.userCount.toLocaleString()}+ users</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-600">Duration</span>
+                        <span className="font-medium">{pkg.duration}</span>
+                      </div>
+                    </div>
+
+                    <div className="mb-6 flex-1 space-y-2">
+                      {pkg.features.map((feature, index) => (
+                        <div key={index} className="flex items-center gap-2 text-sm text-slate-700">
+                          <CheckCircle className="h-4 w-4 shrink-0 text-emerald-500" />
+                          <span>{feature}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    <Button
+                      className={cn("w-full", isSelected && adminPrimaryBtn)}
+                      variant={isSelected ? "default" : "outline"}
+                      onClick={() => handlePackageSelect(pkg.id)}
+                    >
+                      {isSelected ? "Selected" : "Select Package"}
+                    </Button>
                   </div>
-                </div>
-              )}
-            </>
+                )
+              })}
+            </div>
           )}
         </CardContent>
       </Card>
+
+      {/* Step 2: Category Selection — separate card, always on top */}
+      {selectedPackageData && (
+        <Card className={cn(adminCardShell, "relative z-10")}>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-slate-900">
+              <Target className="h-5 w-5 text-[#004A96]" />
+              Step 2 — Target User Categories
+            </CardTitle>
+            <p className="text-sm text-slate-600">
+              Categories configured for <span className="font-medium text-[#004A96]">{selectedPackageData.name}</span>
+            </p>
+          </CardHeader>
+          <CardContent>
+            {displayedCategories.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
+                No categories configured for this package.
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {displayedCategories.map((category) => {
+                    const isSelected = selectedCategories.includes(category.id)
+                    return (
+                      <button
+                        key={category.id}
+                        type="button"
+                        className={cn(
+                          "rounded-xl border-2 p-4 text-left transition-all",
+                          isSelected
+                            ? "border-[#004A96] bg-[#004A96]/10 shadow-sm"
+                            : "border-slate-200 bg-white hover:border-[#004A96]/40 hover:bg-slate-50",
+                        )}
+                        onClick={() => handleCategoryToggle(category.id)}
+                      >
+                        <div className="mb-3 flex items-center gap-3">
+                          <div className={cn("rounded-lg p-2", category.color)}>
+                            <category.icon className="h-5 w-5 text-white" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <h3 className="truncate text-sm font-semibold text-slate-900">{category.name}</h3>
+                          </div>
+                          <Checkbox
+                            checked={isSelected}
+                            onCheckedChange={() => handleCategoryToggle(category.id)}
+                            className="pointer-events-none"
+                          />
+                        </div>
+                        <div className="space-y-2 text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-slate-600">Users</span>
+                            <span className="font-medium">{category.userCount.toLocaleString()}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-slate-600">Engagement</span>
+                            <span className="font-medium">{category.avgEngagement}%</span>
+                          </div>
+                        </div>
+                      </button>
+                    )
+                  })}
+                </div>
+
+                {selectedCategories.length > 0 && (
+                  <div className="mt-6 rounded-xl border border-[#004A96]/20 bg-[#004A96]/5 p-5">
+                    <h3 className="mb-3 font-semibold text-slate-900">Estimated Reach</h3>
+                    <div className="grid grid-cols-1 gap-4 text-sm md:grid-cols-3">
+                      <div>
+                        <span className="text-slate-600">Total Users</span>
+                        <div className="text-2xl font-bold text-[#004A96]">
+                          {calculateEstimatedReach().toLocaleString()}
+                        </div>
+                      </div>
+                      <div>
+                        <span className="text-slate-600">Avg. Engagement</span>
+                        <div className="text-2xl font-bold text-emerald-600">{calculateEstimatedEngagement()}%</div>
+                      </div>
+                      <div>
+                        <span className="text-slate-600">Expected Registrations</span>
+                        <div className="text-2xl font-bold text-violet-600">
+                          {Math.round(calculateEstimatedReach() * (calculateEstimatedEngagement() / 100) * 0.15)}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {!selectedPackageData && (
+        <Card className="border-dashed border-slate-200 bg-slate-50/80 shadow-none">
+          <CardContent className="py-8 text-center text-sm text-slate-500">
+            Select a promotion package above to configure category targeting.
+          </CardContent>
+        </Card>
+      )}
 
       {selectedPackage && selectedCategories.length > 0 && (
         <div className="flex justify-end">
-          <Button onClick={() => setIsPaymentDialogOpen(true)}>
-            <CreditCard className="w-4 h-4 mr-2" />
+          <Button className={adminPrimaryBtn} onClick={() => setIsPaymentDialogOpen(true)}>
+            <CreditCard className="mr-2 h-4 w-4" />
             Continue to Purchase
           </Button>
         </div>

@@ -12,15 +12,21 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Plus, Edit, Trash2, Package, Users, DollarSign, TrendingUp, Star } from "lucide-react"
+import { Plus, Edit, Trash2, Package, Users, DollarSign, TrendingUp, Star, Check, X } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { apiFetch } from "@/lib/api"
+import { cn } from "@/lib/utils"
+import {
+  adminAccentText,
+  adminCardShell,
+  adminPrimaryBtn,
+} from "@/app/admin-dashboard/admin-dashboard-theme"
 
 interface PromotionPackage {
   id: string
@@ -42,6 +48,12 @@ interface EventCategoryOption {
   id: string
   name: string
 }
+
+const USER_TYPE_OPTIONS = [
+  { value: "BOTH", label: "Both Exhibitors & Organizers" },
+  { value: "EXHIBITOR", label: "Exhibitors Only" },
+  { value: "ORGANIZER", label: "Organizers Only" },
+] as const
 
 export default function PromotionPackagesPage() {
   const [packages, setPackages] = useState<PromotionPackage[]>([])
@@ -78,7 +90,7 @@ export default function PromotionPackagesPage() {
         { auth: true },
       )
       setPackages(data.packages ?? data.data ?? [])
-    } catch (error) {
+    } catch {
       toast({
         title: "Error",
         description: "Failed to load promotion packages",
@@ -102,7 +114,7 @@ export default function PromotionPackagesPage() {
           categories: prev.categories || list[0]?.name || "",
         }))
       }
-    } catch (error) {
+    } catch {
       setEventCategories([])
     }
   }
@@ -135,7 +147,7 @@ export default function PromotionPackagesPage() {
       setIsDialogOpen(false)
       resetForm()
       fetchPackages()
-    } catch (error) {
+    } catch {
       toast({
         title: "Error",
         description: "Failed to save package",
@@ -159,7 +171,7 @@ export default function PromotionPackagesPage() {
       })
 
       fetchPackages()
-    } catch (error) {
+    } catch {
       toast({
         title: "Error",
         description: "Failed to delete package",
@@ -233,285 +245,314 @@ export default function PromotionPackagesPage() {
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="space-y-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Promotion Packages</h1>
-          <p className="text-gray-600">Manage promotion packages for exhibitors and organizers</p>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900">Promotion Packages</h1>
+          <p className="mt-1 text-slate-600">Manage promotion packages for exhibitors and organizers</p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button onClick={resetForm}>
-              <Plus className="w-4 h-4 mr-2" />
+            <Button onClick={resetForm} className={adminPrimaryBtn}>
+              <Plus className="mr-2 h-4 w-4" />
               Create Package
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>{editingPackage ? "Edit" : "Create"} Promotion Package</DialogTitle>
+          <DialogContent className="flex max-h-[92vh] max-w-2xl flex-col gap-0 overflow-hidden p-0 sm:max-w-2xl">
+            <DialogHeader className="shrink-0 border-b border-slate-100 bg-slate-50/80 px-6 py-5">
+              <DialogTitle className="text-slate-900">
+                {editingPackage ? "Edit" : "Create"} Promotion Package
+              </DialogTitle>
               <DialogDescription>Configure the details of your promotion package</DialogDescription>
             </DialogHeader>
 
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Package Name</Label>
-                  <Input
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="e.g., Basic Promotion"
-                  />
+            <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-6 py-5">
+              <section className="space-y-4">
+                <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">Basic details</h3>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label>Package Name</Label>
+                    <Input
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      placeholder="e.g., Basic Promotion"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Price (USD)</Label>
+                    <Input
+                      type="number"
+                      value={formData.price}
+                      onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                      placeholder="2999"
+                    />
+                  </div>
                 </div>
                 <div className="space-y-2">
-                  <Label>Price (USD)</Label>
-                  <Input
-                    type="number"
-                    value={formData.price}
-                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                    placeholder="2999"
+                  <Label>Description</Label>
+                  <Textarea
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    placeholder="Brief description of the package"
+                    rows={2}
                   />
                 </div>
-              </div>
+              </section>
 
-              <div className="space-y-2">
-                <Label>Description</Label>
-                <Textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Brief description of the package"
-                  rows={2}
-                />
-              </div>
+              <section className="space-y-4">
+                <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">Reach & duration</h3>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                  <div className="space-y-2">
+                    <Label>User Count</Label>
+                    <Input
+                      type="number"
+                      value={formData.userCount}
+                      onChange={(e) => setFormData({ ...formData, userCount: e.target.value })}
+                      placeholder="5000"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Duration (days)</Label>
+                    <Input
+                      type="number"
+                      value={formData.durationDays}
+                      onChange={(e) => setFormData({ ...formData, durationDays: e.target.value })}
+                      placeholder="7"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Duration Display</Label>
+                    <Input
+                      value={formData.duration}
+                      onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
+                      placeholder="7 days"
+                    />
+                  </div>
+                </div>
+              </section>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>User Count</Label>
-                  <Input
-                    type="number"
-                    value={formData.userCount}
-                    onChange={(e) => setFormData({ ...formData, userCount: e.target.value })}
-                    placeholder="5000"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Duration (days)</Label>
-                  <Input
-                    type="number"
-                    value={formData.durationDays}
-                    onChange={(e) => setFormData({ ...formData, durationDays: e.target.value })}
-                    placeholder="7"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Duration Display</Label>
-                  <Input
-                    value={formData.duration}
-                    onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
-                    placeholder="7 days"
-                  />
-                </div>
-                <div className="space-y-2">
+              <section className="space-y-3">
+                <div>
                   <Label>Category Targeting</Label>
-                  <Select
-                    value={formData.categories}
-                    onValueChange={(value) => setFormData({ ...formData, categories: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {eventCategories.length === 0 ? (
-                        <SelectItem value="none" disabled>
-                          No categories available
-                        </SelectItem>
-                      ) : (
-                        eventCategories.map((cat) => (
-                          <SelectItem key={cat.id} value={cat.name}>
-                            {cat.name}
-                          </SelectItem>
-                        ))
-                      )}
-                    </SelectContent>
-                  </Select>
+                  <p className="mt-1 text-xs text-slate-500">Select the event category this package targets</p>
                 </div>
-              </div>
+                {eventCategories.length === 0 ? (
+                  <p className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center text-sm text-slate-500">
+                    No categories available
+                  </p>
+                ) : (
+                  <div className="grid max-h-44 grid-cols-1 gap-2 overflow-y-auto rounded-xl border border-slate-200 bg-white p-2 sm:grid-cols-2">
+                    {eventCategories.map((cat) => {
+                      const selected = formData.categories === cat.name
+                      return (
+                        <button
+                          key={cat.id}
+                          type="button"
+                          onClick={() => setFormData({ ...formData, categories: cat.name })}
+                          className={cn(
+                            "flex items-center justify-between rounded-lg border px-3 py-2.5 text-left text-sm transition-all",
+                            selected
+                              ? "border-[#004A96] bg-[#004A96]/10 font-medium text-[#004A96] shadow-sm"
+                              : "border-slate-200 bg-slate-50/50 text-slate-700 hover:border-[#004A96]/40 hover:bg-white",
+                          )}
+                        >
+                          <span className="truncate pr-2">{cat.name}</span>
+                          {selected && <Check className="h-4 w-4 shrink-0" />}
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
+              </section>
 
-              <div className="space-y-2">
+              <section className="space-y-3">
                 <Label>Available For</Label>
-                <Select
-                  value={formData.userType}
-                  onValueChange={(value) => setFormData({ ...formData, userType: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select audience" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="BOTH">Both Exhibitors & Organizers</SelectItem>
-                    <SelectItem value="EXHIBITOR">Exhibitors Only</SelectItem>
-                    <SelectItem value="ORGANIZER">Organizers Only</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                  {USER_TYPE_OPTIONS.map((option) => {
+                    const selected = formData.userType === option.value
+                    return (
+                      <button
+                        key={option.value}
+                        type="button"
+                        onClick={() => setFormData({ ...formData, userType: option.value })}
+                        className={cn(
+                          "rounded-lg border px-3 py-2.5 text-center text-sm transition-all",
+                          selected
+                            ? "border-[#004A96] bg-[#004A96] font-medium text-white shadow-sm"
+                            : "border-slate-200 bg-white text-slate-700 hover:border-[#004A96]/40 hover:bg-slate-50",
+                        )}
+                      >
+                        {option.label}
+                      </button>
+                    )
+                  })}
+                </div>
+              </section>
 
-              <div className="space-y-2">
+              <section className="space-y-3">
                 <Label>Features</Label>
                 <div className="flex gap-2">
                   <Input
                     value={featureInput}
                     onChange={(e) => setFeatureInput(e.target.value)}
                     placeholder="Enter a feature"
-                    onKeyPress={(e) => e.key === "Enter" && (e.preventDefault(), addFeature())}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault()
+                        addFeature()
+                      }
+                    }}
                   />
-                  <Button type="button" onClick={addFeature}>
+                  <Button type="button" variant="outline" onClick={addFeature} className="shrink-0">
                     Add
                   </Button>
                 </div>
-                <div className="space-y-2">
-                  {formData.features.map((feature, index) => (
-                    <div key={index} className="flex items-center gap-2 p-2 bg-gray-50 rounded">
-                      <span className="flex-1">{feature}</span>
-                      <Button type="button" variant="ghost" size="sm" onClick={() => removeFeature(index)}>
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </div>
+                {formData.features.length > 0 && (
+                  <div className="space-y-2 rounded-xl border border-slate-200 bg-slate-50/50 p-2">
+                    {formData.features.map((feature, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center gap-2 rounded-lg bg-white px-3 py-2 text-sm shadow-sm ring-1 ring-slate-100"
+                      >
+                        <span className="flex-1 text-slate-800">{feature}</span>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0 text-slate-400 hover:text-red-600"
+                          onClick={() => removeFeature(index)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </section>
 
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
+              <section className="flex flex-wrap items-center gap-6 rounded-xl border border-slate-200 bg-slate-50/60 px-4 py-3">
+                <div className="flex items-center gap-2">
                   <Switch
                     checked={formData.recommended}
                     onCheckedChange={(checked) => setFormData({ ...formData, recommended: checked })}
                   />
                   <Label>Mark as Recommended</Label>
                 </div>
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center gap-2">
                   <Switch
                     checked={formData.isActive}
                     onCheckedChange={(checked) => setFormData({ ...formData, isActive: checked })}
                   />
                   <Label>Active</Label>
                 </div>
-              </div>
-
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={handleSubmit}>{editingPackage ? "Update" : "Create"} Package</Button>
-              </div>
+              </section>
             </div>
+
+            <DialogFooter className="shrink-0 border-t border-slate-100 bg-white px-6 py-4">
+              <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleSubmit} className={adminPrimaryBtn}>
+                {editingPackage ? "Update" : "Create"} Package
+              </Button>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
 
-      {/* Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total Packages</CardTitle>
-            <Package className="w-4 h-4 text-gray-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalPackages}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Active Packages</CardTitle>
-            <TrendingUp className="w-4 h-4 text-green-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.activePackages}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total Value</CardTitle>
-            <DollarSign className="w-4 h-4 text-blue-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">${stats.totalRevenue.toLocaleString()}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Average Price</CardTitle>
-            <Users className="w-4 h-4 text-purple-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">${Math.round(stats.avgPrice).toLocaleString()}</div>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+        {[
+          { label: "Total Packages", value: stats.totalPackages, icon: Package, color: "text-[#004A96]" },
+          { label: "Active Packages", value: stats.activePackages, icon: TrendingUp, color: "text-emerald-600" },
+          { label: "Total Value", value: `$${stats.totalRevenue.toLocaleString()}`, icon: DollarSign, color: "text-[#004A96]" },
+          { label: "Average Price", value: `$${Math.round(stats.avgPrice).toLocaleString()}`, icon: Users, color: "text-violet-600" },
+        ].map((stat) => (
+          <Card key={stat.label} className={adminCardShell}>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-slate-600">{stat.label}</CardTitle>
+              <stat.icon className={cn("h-4 w-4", stat.color)} />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-slate-900">{stat.value}</div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
-      {/* Packages Table */}
-      <Card>
+      <Card className={adminCardShell}>
         <CardHeader>
-          <CardTitle>All Packages</CardTitle>
+          <CardTitle className="text-slate-900">All Packages</CardTitle>
           <CardDescription>Manage your promotion packages</CardDescription>
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="text-center py-8">Loading...</div>
+            <div className="py-8 text-center text-slate-500">Loading...</div>
           ) : packages.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">No packages created yet</div>
+            <div className="py-8 text-center text-slate-500">No packages created yet</div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Package Name</TableHead>
-                  <TableHead>Price</TableHead>
-                  <TableHead>Users</TableHead>
-                  <TableHead>Duration</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {packages.map((pkg) => (
-                  <TableRow key={pkg.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        {pkg.name}
-                        {pkg.recommended && (
-                          <Badge variant="secondary" className="bg-blue-100 text-blue-700">
-                            <Star className="w-3 h-3 mr-1" />
-                            Recommended
-                          </Badge>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell className="font-medium">${pkg.price.toLocaleString()}</TableCell>
-                    <TableCell>{pkg.userCount.toLocaleString()}+</TableCell>
-                    <TableCell>{pkg.duration}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{pkg.userType}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={pkg.isActive ? "default" : "secondary"}>
-                        {pkg.isActive ? "Active" : "Inactive"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="sm" onClick={() => handleEdit(pkg)}>
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleDelete(pkg.id)}>
-                          <Trash2 className="w-4 h-4 text-red-500" />
-                        </Button>
-                      </div>
-                    </TableCell>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Package Name</TableHead>
+                    <TableHead>Price</TableHead>
+                    <TableHead>Users</TableHead>
+                    <TableHead>Duration</TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {packages.map((pkg) => (
+                    <TableRow key={pkg.id}>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-slate-900">{pkg.name}</span>
+                          {pkg.recommended && (
+                            <Badge className="bg-[#004A96]/10 text-[#004A96] hover:bg-[#004A96]/15">
+                              <Star className="mr-1 h-3 w-3" />
+                              Recommended
+                            </Badge>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="font-medium">${pkg.price.toLocaleString()}</TableCell>
+                      <TableCell>{pkg.userCount.toLocaleString()}+</TableCell>
+                      <TableCell>{pkg.duration}</TableCell>
+                      <TableCell>
+                        <span className="text-sm text-slate-600">{pkg.categories[0] || "—"}</span>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{pkg.userType}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          className={cn(
+                            pkg.isActive
+                              ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-50"
+                              : "bg-slate-100 text-slate-600",
+                          )}
+                        >
+                          {pkg.isActive ? "Active" : "Inactive"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-1">
+                          <Button variant="ghost" size="sm" onClick={() => handleEdit(pkg)}>
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm" onClick={() => handleDelete(pkg.id)}>
+                            <Trash2 className="h-4 w-4 text-red-500" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>

@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { useToast } from "@/hooks/use-toast"
+import { apiFetch } from "@/lib/api"
 import {
   Megaphone,
   Users,
@@ -277,10 +278,10 @@ export default function EventPromotion({ organizerId }: EventPromotionProps) {
   const fetchPromotionData = async () => {
     try {
       setLoading(true)
-      const response = await fetch(`/api/organizers/${organizerId}/promotions`)
-      if (!response.ok) throw new Error("Failed to fetch promotion data")
-
-      const data = await response.json()
+      const data = await apiFetch<{ events?: Event[]; promotions?: Promotion[] }>(
+        `/api/organizers/${organizerId}/promotions`,
+        { auth: true },
+      )
       setEvents(data.events || [])
       setPromotions(data.promotions || [])
     } catch (error) {
@@ -301,21 +302,17 @@ export default function EventPromotion({ organizerId }: EventPromotionProps) {
 
     try {
       setCreating(true)
-      const response = await fetch(`/api/organizers/${organizerId}/promotions`, {
+      await apiFetch(`/api/organizers/${organizerId}/promotions`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+        auth: true,
+        body: {
           eventId: selectedEvent,
           packageType: selectedPackageData.id,
           targetCategories: selectedCategories,
           amount: selectedPackageData.price,
           duration: Number.parseInt(selectedPackageData.duration.split(" ")[0]),
-        }),
+        },
       })
-
-      if (!response.ok) throw new Error("Failed to create promotion")
 
       toast({
         title: "Success",

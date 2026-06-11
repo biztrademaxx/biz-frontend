@@ -63,6 +63,7 @@ import AdminNotes from "./help-support/support-notes"
 import AddOrganizerForm from "./add-organizer-form"
 import OrganizerConnectionsPage from "./organizer/connections"
 import OrganizerPromotionsPage from "./organizer/promotions"
+import PromotionsDashboard from "./promotions-dashboard"
 import OrganizerVenueBookingsPage from "./organizer/venue-bookings"
 import OrganizerFeedbackPage from "./organizer/feedback"
 import AddExhibitorForm from "./add-exhibitor-form"
@@ -115,6 +116,16 @@ import NewsletterAdminPage from "./newsletter-admin-page"
 import ExhibitorApprovals from "./approvals/components/ExhibitorApprovals"
 import OrganizerApprovals from "./approvals/components/OrganizerApprovals"
 import VenueApprovals from "./approvals/components/VenueApprovals"
+import {
+  adminAccentText,
+  adminNavActive,
+  adminNavInactive,
+  adminPageBg,
+  adminPrimaryBtn,
+  adminSidebarSurface,
+  adminUpgradeCard,
+} from "./admin-dashboard-theme"
+import { cn } from "@/lib/utils"
 
 interface AdminDashboardProps {
   userRole: "SUPER_ADMIN" | "SUB_ADMIN"
@@ -141,6 +152,7 @@ const MENU_PERMISSIONS = {
   "organizers-bulk-import": "organizers-bulk-import",
   "organizers-connections": "organizers-connections",
   promotions: "promotions",
+  "promotions-dashboard": "promotions-dashboard",
   "organizers-bookings": "organizers-bookings",
   "organizers-feedback": "organizers-feedback",
   exhibitors: "exhibitors",
@@ -319,7 +331,7 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
         { title: "Add Organizer", id: "organizers-add" },
         { title: "Bulk Import", id: "organizers-bulk-import" },
         { title: "Followers", id: "organizers-connections" },
-        { title: "Promotions", id: "promotions" },
+       
         { title: "Venue Bookings", id: "organizers-bookings" },
        
       ],
@@ -331,7 +343,7 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
       subItems: [
         { title: "All Exhibitors", id: "exhibitors-all" },
         { title: "Add Exhibitor", id: "exhibitors-add" },
-        { title: "Promotions", id: "exhibitors-promotions" },
+        
         // { title: "Followers", id: "exhibitors-followers" },
         { title: "Appointments", id: "exhibitors-appointments" },
        
@@ -412,7 +424,10 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
       icon: Tag,
       id: "promotions",
       subItems: [
+        { title: "Promotions Dashboard", id: "promotions-dashboard" },
         { title: " Event Promotions", id: "admin-promotions" },
+        { title: "Organizer Promotions", id: "promotions" },
+        { title: "ExhibitorPromotions", id: "exhibitors-promotions" },
         { title: "Banner & Ads Manager", id: "content-banners" },
         { title: "Blog & Articles", id: "content-blog" },
         { title: "Newsletter", id: "newsletter" },
@@ -599,6 +614,12 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
           return <OrganizerManagement initialTab="bulk-import" />
         case "organizers-connections":
           return <OrganizerConnectionsPage />
+        case "promotions-dashboard":
+          return (
+            <PromotionsDashboard
+              onNavigate={(subId) => navigateToSubSection("promotions", subId)}
+            />
+          )
         case "promotions":
           return <OrganizerPromotionsPage />
         case "organizers-bookings":
@@ -814,9 +835,9 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
   const isSubActive = (id: string) => activeSubSection === id
 
   return (
-    <div className="flex min-h-0 min-w-0 flex-1 overflow-hidden bg-background">
+    <div className={cn("flex min-h-0 min-w-0 flex-1 overflow-hidden", adminPageBg)}>
       {/* Sidebar */}
-      <aside className="flex w-[272px] min-w-[272px] shrink-0 flex-col border-r border-sidebar-border bg-sidebar shadow-[4px_0_24px_-12px_rgba(15,23,42,0.08)] dark:shadow-[4px_0_28px_-12px_rgba(0,0,0,0.5)]">
+      <aside className={cn("flex w-[272px] min-w-[272px] shrink-0 flex-col shadow-[4px_0_24px_-12px_rgba(15,23,42,0.06)]", adminSidebarSurface)}>
         <div className="flex items-center gap-3 border-b border-border px-4 py-4">
           <button
             type="button"
@@ -847,15 +868,17 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
                     <button
                       type="button"
                       onClick={() => toggleMenu(item.id)}
-                      className={`flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left transition-all ${
-                        isActive(item.id)
-                          ? "bg-sky-500/15 font-semibold text-sky-700 shadow-sm ring-1 ring-sky-300/40 hover:bg-sky-500/20 dark:bg-[#17F0F6]/20 dark:text-[#67F8FC] dark:ring-[#17F0F6]/40"
-                          : "text-foreground/90 hover:bg-sky-100/70 dark:hover:bg-sidebar-accent"
-                      }`}
+                      className={cn(
+                        "flex w-full items-center justify-between px-3 py-2.5 text-left transition-all",
+                        isActive(item.id) ? adminNavActive : adminNavInactive,
+                      )}
                     >
                       <div className="flex min-w-0 items-center gap-3">
                         <item.icon
-                          className={`h-[18px] w-[18px] shrink-0 ${isActive(item.id) ? "text-sky-600 dark:text-[#17F0F6]" : "text-muted-foreground"}`}
+                          className={cn(
+                            "h-[18px] w-[18px] shrink-0",
+                            isActive(item.id) ? "text-white" : "text-slate-500",
+                          )}
                         />
                         <span className="truncate text-sm">{item.title}</span>
                       </div>
@@ -867,17 +890,18 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
                     </button>
 
                     {isMenuOpen(item.id) && (
-                      <div className="ml-2 mt-1 space-y-0.5 border-l border-border py-1 pl-3">
+                      <div className="ml-2 mt-1 space-y-0.5 border-l border-slate-200 py-1 pl-3">
                         {item.subItems.map((subItem) => (
                           <button
                             key={subItem.id}
                             type="button"
                             onClick={() => handleSubSectionClick(item.id, subItem.id)}
-                            className={`block w-full rounded-lg px-2.5 py-2 text-left text-sm transition-colors ${
+                            className={cn(
+                              "block w-full rounded-lg px-2.5 py-2 text-left text-sm transition-colors",
                               isSubActive(subItem.id)
-                                ? "bg-sky-300/12 font-semibold text-sky-800 ring-1 ring-sky-300/40 dark:bg-[#17F0F6]/16 dark:text-[#67F8FC] dark:ring-[#17F0F6]/35"
-                                : "text-muted-foreground hover:bg-sky-100/70 hover:text-foreground"
-                            }`}
+                                ? "bg-[#004A96]/10 font-semibold text-[#004A96] ring-1 ring-[#004A96]/20"
+                                : "text-slate-600 hover:bg-slate-100 hover:text-[#004A96]",
+                            )}
                           >
                             {subItem.title}
                           </button>
@@ -889,13 +913,17 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
                   <button
                     type="button"
                     onClick={() => handleSectionClick(item.id)}
-                    className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-all ${
-                      isActive(item.id)
-                        ? "bg-sky-50 font-medium text-sky-700 shadow-sm ring-1 ring-sky-100/80 dark:bg-[#17F0F6]/12 dark:text-[#17F0F6] dark:ring-[#17F0F6]/25"
-                        : "text-foreground/90 hover:bg-muted/80 dark:hover:bg-sidebar-accent"
-                    }`}
+                    className={cn(
+                      "flex w-full items-center gap-3 px-3 py-2.5 text-left transition-all",
+                      isActive(item.id) ? adminNavActive : adminNavInactive,
+                    )}
                   >
-                    <item.icon className={`h-[18px] w-[18px] shrink-0 ${isActive(item.id) ? "text-sky-600 dark:text-[#17F0F6]" : "text-muted-foreground"}`} />
+                    <item.icon
+                      className={cn(
+                        "h-[18px] w-[18px] shrink-0",
+                        isActive(item.id) ? "text-white" : "text-slate-500",
+                      )}
+                    />
                     <span className="text-sm font-medium">{item.title}</span>
                   </button>
                 )}
@@ -905,16 +933,16 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
         </div>
 
         <div className="shrink-0 space-y-3 border-t border-border p-3">
-          <div className="rounded-2xl bg-gradient-to-br from-sky-50 to-indigo-50/80 p-4 ring-1 ring-sky-100/60 dark:from-[#122D4D] dark:to-[#18193D] dark:ring-border">
+          <div className={cn("rounded-2xl p-4", adminUpgradeCard)}>
             <div className="flex items-start gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-card shadow-sm ring-1 ring-sky-100/80 dark:bg-[#010639] dark:ring-border">
-                <Star className="h-5 w-5 text-sky-600 dark:text-[#17F0F6]" strokeWidth={1.5} />
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-blue-100">
+                <Star className={cn("h-5 w-5", adminAccentText)} strokeWidth={1.5} />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold text-foreground">Pro Plan</p>
+                <p className="text-sm font-semibold text-slate-900">Pro Plan</p>
                 <Button
                   type="button"
-                  className="mt-2 h-8 w-full rounded-xl bg-sky-600 text-xs font-semibold text-white shadow-sm hover:bg-sky-700 dark:bg-[#17F0F6] dark:text-[#010639] dark:hover:opacity-90"
+                  className={cn("mt-2 h-8 w-full rounded-xl text-xs font-semibold shadow-sm", adminPrimaryBtn)}
                   variant="default"
                 >
                   Manage Plan
@@ -938,7 +966,7 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
       </aside>
 
       {/* Main Content */}
-      <main className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden bg-muted/30 p-5 sm:p-6 lg:p-8 dark:bg-[#010639]">
+      <main className={cn("min-h-0 flex-1 overflow-y-auto overflow-x-hidden p-5 sm:p-6 lg:p-8", adminPageBg)}>
         {renderContent()}
       </main>
     </div>
