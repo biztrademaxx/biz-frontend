@@ -18,7 +18,10 @@ import {
   ArrowRight,
   Building2,
   Store,
+  FileUp,
 } from "lucide-react"
+import { PromotionMarketingReportsDialog } from "@/components/admin/promotion-marketing-reports-dialog"
+import { resolvePromotionPackageLabel } from "@/lib/promotion-package-constants"
 
 type PromotionStatus = "PENDING" | "APPROVED" | "REJECTED" | "ACTIVE" | "EXPIRED" | string
 
@@ -64,6 +67,12 @@ export default function PromotionsDashboard({ onNavigate }: PromotionsDashboardP
   const [organizerPromotions, setOrganizerPromotions] = useState<OrganizerPromotion[]>([])
   const [exhibitorPromotions, setExhibitorPromotions] = useState<ExhibitorPromotion[]>([])
   const [loading, setLoading] = useState(true)
+  const [reportsPromotion, setReportsPromotion] = useState<{
+    id: string
+    packageType: string
+    eventTitle?: string
+    accountName?: string
+  } | null>(null)
 
   useEffect(() => {
     const load = async () => {
@@ -246,18 +255,19 @@ export default function PromotionsDashboard({ onNavigate }: PromotionsDashboardP
                   <TableHead>Amount</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Submitted</TableHead>
+                  <TableHead className="text-right">Reports</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                       Loading promotions...
                     </TableCell>
                   </TableRow>
                 ) : recentPromotions.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                       No promotion requests yet
                     </TableCell>
                   </TableRow>
@@ -301,6 +311,29 @@ export default function PromotionsDashboard({ onNavigate }: PromotionsDashboardP
                       <TableCell className="text-sm text-muted-foreground">
                         {format(new Date(promotion.createdAt), "MMM dd, yyyy")}
                       </TableCell>
+                      <TableCell className="text-right">
+                        {promotion.status === "ACTIVE" || promotion.status === "APPROVED" ? (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="border-[#004A96]/30 text-[#004A96] hover:bg-[#004A96]/5"
+                            onClick={() =>
+                              setReportsPromotion({
+                                id: promotion.id,
+                                packageType: promotion.packageType,
+                                eventTitle: promotion.event?.title,
+                                accountName: promotion.name,
+                              })
+                            }
+                          >
+                            <FileUp className="mr-1 h-3.5 w-3.5" />
+                            Leads
+                          </Button>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
                     </TableRow>
                   ))
                 )}
@@ -309,6 +342,17 @@ export default function PromotionsDashboard({ onNavigate }: PromotionsDashboardP
           </div>
         </CardContent>
       </Card>
+
+      {reportsPromotion && (
+        <PromotionMarketingReportsDialog
+          open={!!reportsPromotion}
+          onOpenChange={(open) => !open && setReportsPromotion(null)}
+          promotionId={reportsPromotion.id}
+          packageType={reportsPromotion.packageType}
+          eventTitle={reportsPromotion.eventTitle}
+          accountName={reportsPromotion.accountName}
+        />
+      )}
     </div>
   )
 }
