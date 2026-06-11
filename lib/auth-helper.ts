@@ -1,3 +1,5 @@
+import { getAccessToken } from "@/lib/api"
+
 export function getAuthToken(): string | null {
   if (typeof window === "undefined") {
     return null;
@@ -48,4 +50,10 @@ export function clearAuthToken(): void {
 
 export function isAuthenticated(): boolean {
   return getAuthToken() !== null;
+}
+
+/** Bearer token for API calls — portal user (`accessToken`) or admin (`superAdminToken`). */
+export function getBearerTokenForApi(): string | null {
+  if (typeof window === "undefined") return null;
+  return getAccessToken() || getAuthToken();
 }
