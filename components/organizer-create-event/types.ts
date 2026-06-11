@@ -87,6 +87,10 @@ export interface EventFormData {
 }
 
 export interface ValidationErrors {
+  currency: any
+  generalPrice: any
+  studentPrice: any
+  vipPrice: any
   title?: string
   slug?: string
   description?: string
