@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { BRAND_IMAGE_BOTTOM_FADE } from "@/lib/brand-image-gradients"
 import { FEATURED_HOTELS_UI_MOCK } from "./event-page-constants"
 import type { ContentBanner } from "./event-page-types"
+import { EventPageRelatedEvents } from "./EventPageRelatedEvents"
 
 type Props = {
   event: any
@@ -29,6 +30,7 @@ export function EventPageSidebar({
 }: Props) {
   return (
     <div className="w-full lg:w-80 xl:w-96 space-y-6 flex-shrink-0">
+      {/* Banner Card */}
       <Card className="gap-0 p-0 overflow-hidden rounded-sm border border-gray-200 shadow-sm">
         {sidebarBanners.length > 0 ? (
           <div className="relative h-52 w-full">
@@ -93,9 +95,8 @@ export function EventPageSidebar({
                     key={idx}
                     type="button"
                     aria-label={`Go to promo ${idx + 1} of ${sidebarBanners.length}`}
-                    className={`h-2 w-2 rounded-full transition-colors ${
-                      idx === sidebarBannerSlide ? "bg-white" : "bg-white/50"
-                    }`}
+                    className={`h-2 w-2 rounded-full transition-colors ${idx === sidebarBannerSlide ? "bg-white" : "bg-white/50"
+                      }`}
                     onClick={() => sidebarBannerSliderInstanceRef.current?.moveToIdx(idx)}
                   />
                 ))}
@@ -115,19 +116,26 @@ export function EventPageSidebar({
         )}
       </Card>
 
+      {/* Related Events Section - NEW */}
+      <EventPageRelatedEvents
+        currentEventId={event.id}
+        categories={event.categories || (event.category ? [event.category] : [])}
+      />
+
+      {/* Featured Hotels Card */}
       <Card className="overflow-hidden rounded-sm border border-gray-300 bg-white shadow-sm">
         <CardHeader className="pb-2">
           <CardTitle className="text-lg font-semibold">Featured Hotels in {event.city || "this city"}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4 pt-0">
           {FEATURED_HOTELS_UI_MOCK.map((hotel) => (
-            <div key={hotel.name} className="bg-gray-100 p-3">
+            <div key={hotel.name} className="bg-gray-100 p-3 rounded-md">
               <div className="flex gap-4">
-                <div className="relative h-[74px] w-[74px] shrink-0 overflow-hidden">
+                <div className="relative h-[74px] w-[74px] shrink-0 overflow-hidden rounded-md">
                   <Image src={hotel.image} alt={hotel.name} fill sizes="74px" className="object-cover" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="line-clamp-1 text-[15px] font-normal text-[#0f5a8d]">{hotel.name}</p>
+                  <p className="line-clamp-1 text-[15px] font-medium text-[#0f5a8d]">{hotel.name}</p>
                   <div className="-mt-1 flex items-center gap-1">
                     {Array.from({ length: hotel.stars }).map((_, index) => (
                       <Star key={`${hotel.name}-${index}`} className="h-3.5 w-3.5 fill-[#e64700] text-[#e64700]" />
@@ -140,7 +148,7 @@ export function EventPageSidebar({
               </div>
             </div>
           ))}
-          <Button className="h-10 rounded-md bg-[#5b79ac] px-6 text-[14px] font-semibold text-white hover:bg-[#4f6fa8]">
+          <Button className="h-10 rounded-md bg-[#5b79ac] px-6 text-[14px] font-semibold text-white hover:bg-[#4f6fa8] w-full">
             More Hotels
           </Button>
         </CardContent>

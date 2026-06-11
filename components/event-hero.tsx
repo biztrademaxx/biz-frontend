@@ -15,6 +15,9 @@ import { resolveEventBannerImage } from "@/lib/events/resolve-event-banner-image
 const DEFAULT_EVENT_HERO_IMAGE = "/herosection-images/eventbanner.jpeg"
 
 interface Event {
+  bannerImage: unknown
+  thumbnailImage: unknown
+  logo: unknown
   id: string
   title: string
   subtitle?: string

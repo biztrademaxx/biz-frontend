@@ -358,7 +358,7 @@ export default function HeroSlideshowClient({
               <span className="mt-2 block sm:mt-3 lg:mt-4">Worldwide</span>
             </h1>
 
-            <p className="mt-3 max-w-[340px] text-[14px] leading-[1.65] text-[#64748B] sm:mt-5 sm:text-[16px] lg:mt-7 lg:text-[18px] lg:leading-[1.7]">
+            <p className="mt-3 max-w-[440px] text-[14px] leading-[1.65] text-[#64748B] sm:mt-5 sm:text-[16px] lg:mt-7 lg:text-[18px] lg:leading-[1.7]">
               Connect with buyers, exhibitors, and industry leaders at the world&apos;s leading trade fairs.
             </p>
 
@@ -409,7 +409,7 @@ export default function HeroSlideshowClient({
           </div>
 
           {/* ── RIGHT PANEL ── */}
-          <div className="flex w-full min-w-0 flex-col gap-3 sm:gap-4 lg:w-[55%] lg:gap-5">
+          <div className="flex w-full min-w-0 flex-col gap-3 sm:gap-4 lg:w-[68%] lg:gap-5">
 
             <div className="relative w-full min-w-0 overflow-hidden rounded-xl shadow-[0_5px_20px_-4px_rgba(0,0,0,0.95)]">
               <div className="relative h-[220px] overflow-hidden rounded-xl min-[400px]:h-[240px] sm:h-[300px] lg:h-[360px] xl:h-[400px]">

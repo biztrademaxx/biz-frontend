@@ -1,6 +1,7 @@
 "use client"
 
 import Image from "next/image"
+import { useEffect, useState } from "react"
 import type React from "react"
 import Link from "next/link"
 import {
@@ -35,6 +36,8 @@ interface FooterProps {
 }
 
 const Footer: React.FC<FooterProps> = ({ categories }) => {
+
+  const [showChatBot, setShowChatBot] = useState(false)
   const pathname = usePathname()
   const footerLogoSrc = getFooterLogoSrc()
   const footerLogoUnoptimized = isBrandLogoRemoteUrl(footerLogoSrc)
@@ -51,6 +54,21 @@ const Footer: React.FC<FooterProps> = ({ categories }) => {
     categories && categories.length > 0
       ? [...categories].sort((a, b) => b.eventCount - a.eventCount).slice(0, 5)
       : fallbackCategories
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollPosition = window.innerHeight + window.scrollY
+      const pageHeight = document.documentElement.scrollHeight
+
+      // Show chatbot when user is within 800px of footer
+      setShowChatBot(scrollPosition >= pageHeight - 800)
+    }
+
+    window.addEventListener("scroll", handleScroll)
+    handleScroll()
+
+    return () => window.removeEventListener("scroll", handleScroll)
+  }, [])
 
   return (
     <>
@@ -92,7 +110,7 @@ const Footer: React.FC<FooterProps> = ({ categories }) => {
               <Globe className="h-5 w-5 text-[#6EAAFF]" strokeWidth={1.8} />
             </div>
             <div className="leading-tight">
-              <p className="text-[14px] font-semibold text-white">Global Reach</p>
+              <p className="text-[22px] font-semibold text-white">Global Reach</p>
               <p className="mt-1 text-[12px] text-white/50">Events in 120+ countries</p>
             </div>
           </div>
@@ -324,8 +342,8 @@ const Footer: React.FC<FooterProps> = ({ categories }) => {
           </div>
         </div>
 
-        {pathname === "/" && <FooterChatBot />}
-      </footer>
+        {pathname === "/" && showChatBot && <FooterChatBot />}
+    </footer>
     </>
   )
 }
