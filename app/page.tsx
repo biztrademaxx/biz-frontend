@@ -49,15 +49,18 @@ export default function Home() {
           >
             <UpcomingVipEvents />
           </Suspense>
-          <div className="mt-4 mb-5 min-w-0 sm:mt-6 sm:mb-8">
-            <HomeTradeFairsSearch />
+          <div className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen bg-[#dbeafe] pt-4 pb-6 mt-5">
+            <div className="mx-auto max-w-7xl px-3 sm:px-4 lg:px-6">
+              <HomeTradeFairsSearch />
+            </div>
           </div>
         </div>
       </div>
       {/* <AboutBizTrade/> */}
-
       <Suspense fallback={<CategoryBrowseSkeleton />}>
-        <CategoryGrid />
+        <div className="-mt-8">
+          <CategoryGrid />
+        </div>
       </Suspense>
 
       <Suspense fallback={<FeaturedEventsSkeleton />}>

@@ -67,6 +67,7 @@ interface Organizer {
 }
 
 interface Event {
+  slug: string | null | undefined
   id: number
   title: string
   description: string
@@ -557,7 +558,7 @@ export default function OrganizerPage() {
                     <h3 className="text-xl font-semibold mb-4">Recent Events</h3>
                     <div className="space-y-4">
                       {events.slice(0, 3).map((event) => (
-                        <Link href={eventPublicPath(event)} key={event.id}>
+                        <Link href={eventPublicPath({ id: String(event.id), slug: event.slug })} key={event.id}>
                           <div className="flex gap-4 p-4 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
                             <Image
                               src={getEventDisplayImageUrl(event)}
@@ -657,7 +658,7 @@ export default function OrganizerPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {paginatedEvents.map((event) => (
                 <div key={event.id} className="hover:shadow-lg transition-shadow cursor-pointer border-2 rounded-xl">
-                  <Link href={eventPublicPath(event)}>
+                  <Link href={eventPublicPath({ id: event.id.toString() })}>
                     <div className="p-0">
                       <div className="relative">
                         <Image
