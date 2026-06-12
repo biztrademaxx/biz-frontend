@@ -80,81 +80,41 @@ function useCountdown(targetDate?: string) {
 
   return timeLeft
 }
-function DigitBox({ digit }: { digit: string }) {
-  return (
-    <div
-      className="h-12 w-8 rounded-md flex items-center justify-center"
-      style={{
-        background: "rgba(255,255,255,0.08)",
-        backdropFilter: "blur(20px)",
-        WebkitBackdropFilter: "blur(20px)",
-        border: "1px solid rgba(255,255,255,0.15)",
-        boxShadow:
-          "0 8px 32px rgba(31,38,135,0.2), inset 0 1px 0 rgba(255,255,255,0.1)",
-      }}
-    >
-      <span className="text-2xl font-bold text-white">
-        {digit}
-      </span>
-    </div>
-  )
+/** Navbar navy glass — matches `navbar.tsx` #002C71 / #004A96 system */
+const COUNTDOWN_OUTER_GLASS: React.CSSProperties = {
+  background: "linear-gradient(135deg, rgba(0, 26, 72, 0.92) 0%, rgba(0, 44, 113, 0.9) 50%, rgba(0, 74, 150, 0.88) 100%)",
+  backdropFilter: "blur(8px)",
+  WebkitBackdropFilter: "blur(8px)",
+  border: "1px solid rgba(255, 255, 255, 0.1)",
+  boxShadow: "0 8px 32px rgba(0, 26, 72, 0.35)",
 }
 
-function CountdownGroup({
-  value,
-  label,
-}: {
-  value: number
-  label: string
-}) {
-  const digits = String(value).padStart(2, "0").split("")
-
-  return (
-    <div className="flex flex-col items-center">
-      <div className="flex gap-1">
-        <DigitBox digit={digits[0]} />
-        <DigitBox digit={digits[1]} />
-      </div>
-
-      <span className=" text-[10px] font-semibold tracking-[0.15em] uppercase text-white">
-        {label}
-      </span>
-    </div>
-  )
+const COUNTDOWN_UNIT_GLASS: React.CSSProperties = {
+  background: "rgba(255, 255, 255, 0.08)",
+  backdropFilter: "blur(20px)",
+  WebkitBackdropFilter: "blur(20px)",
+  border: "1px solid rgba(255, 255, 255, 0.15)",
+  boxShadow:
+    "0 8px 32px rgba(0, 26, 72, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.1)",
 }
 
-// ── Glass countdown tile ──────────────────────────────────────────────────────
-function CountdownTile({ value, label }: { value: number; label: string }) {
+function CountdownUnit({ value, label }: { value: number; label: string }) {
   return (
-    <div className="flex flex-col items-center gap-0.5">
+    <div className="flex flex-col items-center gap-1.5">
       <div
-        className="flex items-center justify-center rounded-md"
-        style={{
-          width: 40,
-          height: 36,
-          background: "rgba(0, 74, 150, 0.6)",
-          backdropFilter: "blur(12px)",
-          WebkitBackdropFilter: "blur(12px)",
-          border: "1px solid rgba(255,255,255,0.15)",
-        }}
+        className="flex h-12 min-w-[3.25rem] items-center justify-center rounded-md px-3"
+        style={COUNTDOWN_UNIT_GLASS}
       >
-        <span className="text-sm font-semibold text-blue-700 tabular-nums tracking-tight leading-none">
+        <span className="text-2xl font-bold tabular-nums text-white">
           {String(value).padStart(2, "0")}
         </span>
       </div>
-      <span className="text-[9px] font-medium tracking-widest uppercase text-blue-400/80">
+      <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-white">
         {label}
       </span>
     </div>
   )
 }
-
-function CountdownSeparator() {
-  return (
-    <span className="text-blue-300/60 font-semibold text-sm pb-4 leading-none select-none">:</span>
-  )
-}
-
 
 // ── Countdown banner ──────────────────────────────────────────────────────────
 function EventCountdownBanner({ startDate }: { startDate?: string }) {
@@ -163,25 +123,13 @@ function EventCountdownBanner({ startDate }: { startDate?: string }) {
   if (!startDate || !timeLeft) return null
 
   return (
-    <div
-      className="rounded-sm p-4"
-      style={{
-        background: "rgba(46, 79, 168, 0.85)",
-        backdropFilter: "blur(8px)",
-        WebkitBackdropFilter: "blur(8px)",
-        border: "1px solid rgba(255,255,255,0.08)",
-      }}
-    >
+    <div className="rounded-sm p-4" style={COUNTDOWN_OUTER_GLASS}>
       <div className="flex items-center justify-center gap-2">
-        <CountdownGroup value={timeLeft.days} label="Days" />
-
-        <span className="text-3xl text-white/40 font-bold">:</span>
-
-        <CountdownGroup value={timeLeft.hours} label="Hours" />
-
-        <span className="text-3xl text-white/40 font-bold">:</span>
-
-        <CountdownGroup value={timeLeft.minutes} label="Mins" />
+        <CountdownUnit value={timeLeft.days} label="Days" />
+        <span className="pb-5 text-3xl font-bold text-white/40 select-none">:</span>
+        <CountdownUnit value={timeLeft.hours} label="Hours" />
+        <span className="pb-5 text-3xl font-bold text-white/40 select-none">:</span>
+        <CountdownUnit value={timeLeft.minutes} label="Mins" />
       </div>
     </div>
   )
