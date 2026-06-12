@@ -36,22 +36,42 @@ function VipEventCard({ event }: { event: HeroSlideshowEvent }) {
   return (
     <Link
       href={eventPublicPath(event)}
-      className="group flex w-[min(88vw,300px)] shrink-0 snap-start flex-col gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-[0_4px_20px_-8px_rgba(15,23,42,0.18)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[#004A96]/25 hover:shadow-[0_8px_28px_-10px_rgba(0,74,150,0.22)] min-[400px]:w-[300px] sm:flex-row sm:items-stretch"
+      className="
+    group
+    flex
+    w-[295px]
+    shrink-0
+    snap-start
+    flex-col
+    gap-2
+    rounded-xl
+    border
+    border-slate-200
+    bg-white
+    p-3
+    shadow-[0_4px_20px_-8px_rgba(15,23,42,0.18)]
+    transition-all
+    duration-200
+    hover:-translate-y-0.5
+    hover:border-[#004A96]/25
+    hover:shadow-[0_8px_28px_-10px_rgba(0,74,150,0.22)]
+    sm:flex-row
+    sm:items-stretch
+  "
     >
       <div className="relative mx-auto aspect-[4/3] w-full shrink-0 overflow-hidden rounded-lg bg-slate-50 ring-1 ring-inset ring-slate-200/70 sm:mx-0 sm:aspect-auto sm:h-[118px] sm:w-[118px] md:h-[128px] md:w-[128px]">
-        <div className="absolute inset-2 sm:inset-2.5">
-          {imageUrl ? (
-            <AppImage
-              src={imageUrl}
-              alt={event.title}
-              fill
-              sizes="(max-width: 640px) 88vw, 128px"
-              className="object-contain object-center"
-            />
-          ) : (
-            <div className="absolute inset-0 rounded-md bg-gradient-to-br from-[#004A96]/20 to-[#004A96]/40" />
-          )}
-        </div>
+        {imageUrl ? (
+          <AppImage
+            src={imageUrl}
+            alt={event.title}
+            fill
+            sizes="(max-width: 640px) 88vw, 128px"
+            className="object-container object-center"
+          />
+        ) : (
+          <div className="absolute inset-0 rounded-md bg-gradient-to-br from-[#004A96]/20 to-[#004A96]/40" />
+        )}
+
         <span className="absolute left-1.5 top-1.5 rounded bg-[#004A96] px-1.5 py-0.5 text-[0.58rem] font-extrabold uppercase tracking-wide text-white shadow">
           VIP Event
         </span>
