@@ -96,12 +96,12 @@ export default function UpcomingVipEventsClient({ events }: { events: HeroSlides
           <Crown className="h-5 w-5 shrink-0 text-[#004A96]" strokeWidth={2} aria-hidden />
           <h2 className="text-base font-bold text-slate-900 sm:text-lg md:text-xl">Upcoming VIP Events</h2>
         </div>
-        <Link
+        {/* <Link
           href="/event"
           className="shrink-0 text-sm font-semibold text-[#004A96] hover:text-[#003d7a]"
         >
           View All →
-        </Link>
+        </Link> */}
       </div>
 
       <div className="relative min-w-0">
@@ -115,7 +115,7 @@ export default function UpcomingVipEventsClient({ events }: { events: HeroSlides
           ))}
         </div>
 
-        {events.length > 1 ? (
+        {/* {events.length > 1 ? (
           <button
             type="button"
             aria-label="Scroll VIP events"
@@ -124,7 +124,15 @@ export default function UpcomingVipEventsClient({ events }: { events: HeroSlides
           >
             <ChevronRight className="h-5 w-5" strokeWidth={2} />
           </button>
-        ) : null}
+        ) : null} */}
+      </div>
+      <div className="mt-4 flex items-center justify-end">
+        <Link
+          href="/event"
+          className="shrink-0 text-sm font-semibold text-[#004A96] hover:text-[#003d7a]"
+        >
+          View All →
+        </Link>
       </div>
     </section>
   )
