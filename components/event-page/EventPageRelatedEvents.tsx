@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo, useCallback } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { Calendar, MapPin } from "lucide-react"
@@ -28,21 +28,23 @@ type Props = {
 export function EventPageRelatedEvents({ currentEventId, categories }: Props) {
     const [relatedEvents, setRelatedEvents] = useState<RelatedEvent[]>([])
     const [loading, setLoading] = useState(true)
+    const [hasFetched, setHasFetched] = useState(false)
 
-    // Helper function to extract category string from various formats
-    const getCategoryString = (category: any): string | null => {
-        if (!category) return null
-        if (typeof category === 'string') return category
-        if (typeof category === 'object') {
-            if (category.name && typeof category.name === 'string') return category.name
-            if (category.title && typeof category.title === 'string') return category.title
-            if (category.value && typeof category.value === 'string') return category.value
+    // Memoize category strings to prevent re-computation on every render
+    const categoryStrings = useMemo(() => {
+        // Helper function to extract category string from various formats
+        const getCategoryString = (category: any): string | null => {
+            if (!category) return null
+            if (typeof category === 'string') return category
+            if (typeof category === 'object') {
+                if (category.name && typeof category.name === 'string') return category.name
+                if (category.title && typeof category.title === 'string') return category.title
+                if (category.value && typeof category.value === 'string') return category.value
+            }
+            return null
         }
-        return null
-    }
 
-    // Get all valid category strings from the categories array
-    const getCategoryStrings = (categories: any[] | undefined): string[] => {
+        // Get all valid category strings from the categories array
         if (!categories || !Array.isArray(categories) || categories.length === 0) return []
         const strings: string[] = []
         for (const cat of categories) {
@@ -52,10 +54,10 @@ export function EventPageRelatedEvents({ currentEventId, categories }: Props) {
             }
         }
         return strings
-    }
+    }, [categories]) // Only recompute when categories reference changes
 
-    // Fetch all events (fallback)
-    const fetchAllEvents = async (): Promise<RelatedEvent[]> => {
+    // Memoize fetchAllEvents to prevent recreation on every render
+    const fetchAllEvents = useCallback(async (): Promise<RelatedEvent[]> => {
         try {
             const data = await apiFetch<{ events?: RelatedEvent[]; data?: RelatedEvent[] }>(
                 `/api/events?limit=10`,
@@ -79,15 +81,16 @@ export function EventPageRelatedEvents({ currentEventId, categories }: Props) {
             console.error("Error fetching all events:", error)
             return []
         }
-    }
+    }, [currentEventId]) // Only recreate when currentEventId changes
 
     useEffect(() => {
+        // Prevent multiple fetches
+        if (hasFetched) return
+
         const fetchRelatedEvents = async () => {
             setLoading(true)
 
             try {
-                // Get all valid category strings
-                const categoryStrings = getCategoryStrings(categories)
                 let events: RelatedEvent[] = []
 
                 // If there are categories, try to fetch events by category
@@ -143,6 +146,7 @@ export function EventPageRelatedEvents({ currentEventId, categories }: Props) {
 
                 // Limit to 4 events
                 setRelatedEvents(events.slice(0, 4))
+                setHasFetched(true)
 
             } catch (error) {
                 console.error("Error fetching related events:", error)
@@ -150,9 +154,11 @@ export function EventPageRelatedEvents({ currentEventId, categories }: Props) {
                 try {
                     const allEvents = await fetchAllEvents()
                     setRelatedEvents(allEvents.slice(0, 4))
+                    setHasFetched(true)
                 } catch (fallbackError) {
                     console.error("Fallback also failed:", fallbackError)
                     setRelatedEvents([])
+                    setHasFetched(true)
                 }
             } finally {
                 setLoading(false)
@@ -160,7 +166,14 @@ export function EventPageRelatedEvents({ currentEventId, categories }: Props) {
         }
 
         fetchRelatedEvents()
-    }, [currentEventId, categories])
+    }, [currentEventId, categoryStrings, fetchAllEvents, hasFetched]) // Added hasFetched to dependencies
+
+    // Reset hasFetched when currentEventId changes (for different event pages)
+    useEffect(() => {
+        setHasFetched(false)
+        setRelatedEvents([])
+        setLoading(true)
+    }, [currentEventId])
 
     if (loading) {
         return (
@@ -191,7 +204,6 @@ export function EventPageRelatedEvents({ currentEventId, categories }: Props) {
     }
 
     // Determine title based on what we're showing
-    const categoryStrings = getCategoryStrings(categories)
     let titleText = "You May Also Like"
 
     if (categoryStrings.length === 1) {
@@ -204,8 +216,8 @@ export function EventPageRelatedEvents({ currentEventId, categories }: Props) {
 
     // Build URL for "View All" - use categories if available, otherwise general events
     const viewAllUrl = categoryStrings.length > 0
-        ? `/events?${categoryStrings.map(c => `category=${encodeURIComponent(c)}`).join('&')}`
-        : "/events"
+        ? `/event?${categoryStrings.map(c => `category=${encodeURIComponent(c)}`).join('&')}`
+        : "/event"
 
     return (
         <Card className="overflow-hidden rounded-sm border border-gray-300 bg-white shadow-sm">
