@@ -165,11 +165,11 @@ export function EventPageSummaryBar({
             </div>
           )}
         </div>
-        {showActionButtons && (
+        {/* {showActionButtons && (
           <p className="mt-3 text-sm text-gray-500 text-center lg:text-right">
             Please verify schedules and participation details with organizers before finalizing travel plans.
           </p>
-        )}
+        )} */}
       </div>
     </div>
   )

@@ -358,11 +358,11 @@ export default function HeroSlideshowClient({
               <span className="mt-2 block sm:mt-3 lg:mt-4">Worldwide</span>
             </h1>
 
-            <p className="mt-3 max-w-[440px] text-[14px] leading-[1.65] text-[#64748B] sm:mt-5 sm:text-[16px] lg:mt-7 lg:text-[18px] lg:leading-[1.7]">
+            <p className="mt-3 max-w-[440px] text-[14px] leading-[1.65] text-[#64748B] sm:mt-5 sm:text-[16px] lg:mt-16 lg:text-[18px] lg:leading-[1.7]">
               Connect with buyers, exhibitors, and industry leaders at the world&apos;s leading trade fairs.
             </p>
 
-            <div className="mt-4 grid grid-cols-3 gap-2 sm:gap-3 lg:mt-8 lg:mb-8 lg:flex lg:gap-8 mb-4 sm:mb-5">
+            <div className="mt-4 grid grid-cols-3 gap-2 sm:gap-3 lg:mt-14 lg:mb-8 lg:flex lg:gap-8 mb-4 sm:mb-5">
               <div className="flex min-w-0 flex-col items-center gap-1 text-center sm:flex-row sm:items-center sm:gap-3 sm:text-left">
                 <CalendarDays className="h-4 w-4 shrink-0 text-blue-500 sm:h-5 sm:w-5 lg:h-6 lg:w-6" strokeWidth={1.5} />
                 <div className="min-w-0">
@@ -392,7 +392,7 @@ export default function HeroSlideshowClient({
               </div>
             </div>
 
-            <div className="flex w-full max-w-[360px] flex-col gap-2.5 min-[400px]:flex-row sm:gap-4 mt-24 lg:gap-6">
+            <div className="flex w-full max-w-[360px] flex-col gap-2.5 min-[400px]:flex-row sm:gap-4 lg:gap-6">
               <Link
                 href="/event"
                 className="flex-1 text-center bg-blue-600 hover:bg-blue-700 transition-colors text-white text-[0.85rem] sm:text-[0.9rem] font-bold h-11 sm:h-12 rounded-sm flex items-center justify-center"

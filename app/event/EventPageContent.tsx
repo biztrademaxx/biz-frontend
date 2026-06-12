@@ -538,6 +538,13 @@ export default function EventPageContent({ event, session: _session, router, toa
           />
         </div>
       </div>
+      {showActionButtons && (
+        <div className="mx-auto max-w-7xl px-3 sm:px-4 lg:px-6">
+          <p className="mt-3 text-sm text-gray-500">
+            Note: Please verify schedules and participation details with organizers before finalizing travel plans.
+          </p>
+        </div>
+      )}
     </div>
   )
 }
