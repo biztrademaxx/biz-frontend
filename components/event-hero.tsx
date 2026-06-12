@@ -58,6 +58,92 @@ interface EventHeroProps {
   event: Event
 }
 
+// ── Countdown hook ────────────────────────────────────────────────────────────
+function useCountdown(targetDate?: string) {
+  const calcTimeLeft = () => {
+    if (!targetDate) return null
+    const diff = new Date(targetDate).getTime() - Date.now()
+    if (diff <= 0) return null
+    return {
+      days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+      hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
+      minutes: Math.floor((diff / (1000 * 60)) % 60),
+    }
+  }
+
+  const [timeLeft, setTimeLeft] = useState(calcTimeLeft)
+
+  useEffect(() => {
+    const id = setInterval(() => setTimeLeft(calcTimeLeft()), 1000)
+    return () => clearInterval(id)
+  }, [targetDate])
+
+  return timeLeft
+}
+
+// ── Glass countdown tile ──────────────────────────────────────────────────────
+function CountdownTile({ value, label }: { value: number; label: string }) {
+  return (
+    <div className="flex flex-col items-center gap-0.5">
+      <div
+        className="flex items-center justify-center rounded-md"
+        style={{
+          width: 40,
+          height: 36,
+          background: "rgba(59,130,246,0.10)",
+          backdropFilter: "blur(8px)",
+          WebkitBackdropFilter: "blur(8px)",
+          border: "1px solid rgba(147,197,253,0.22)",
+        }}
+      >
+        <span className="text-sm font-semibold text-blue-700 tabular-nums tracking-tight leading-none">
+          {String(value).padStart(2, "0")}
+        </span>
+      </div>
+      <span className="text-[9px] font-medium tracking-widest uppercase text-blue-400/80">
+        {label}
+      </span>
+    </div>
+  )
+}
+
+function CountdownSeparator() {
+  return (
+    <span className="text-blue-300/60 font-semibold text-sm pb-4 leading-none select-none">:</span>
+  )
+}
+
+// ── Countdown banner ──────────────────────────────────────────────────────────
+function EventCountdownBanner({ startDate }: { startDate?: string }) {
+  const timeLeft = useCountdown(startDate)
+
+  if (!startDate || !timeLeft) return null
+
+  return (
+    <div
+      className="w-full rounded-xl px-3 py-2.5"
+      // style={{
+      //   background: "rgba(219,234,254,0.35)",
+      //   backdropFilter: "blur(12px)",
+      //   WebkitBackdropFilter: "blur(12px)",
+      //   border: "1px solid rgba(147,197,253,0.25)",
+      // }}
+    >
+      <p className="text-[9px] font-medium text-blue-400/90 tracking-widest uppercase mb-2">
+        Starts in
+      </p>
+      <div className="flex items-end gap-2">
+        <CountdownTile value={timeLeft.days} label="Days" />
+        <CountdownSeparator />
+        <CountdownTile value={timeLeft.hours} label="Hours" />
+        <CountdownSeparator />
+        <CountdownTile value={timeLeft.minutes} label="Mins" />
+      </div>
+    </div>
+  )
+}
+
+// ── Main component ────────────────────────────────────────────────────────────
 export default function EventHero({ event }: EventHeroProps) {
   const [currentSlide, setCurrentSlide] = useState(0)
   const [images, setImages] = useState<string[]>(event.images || [])
@@ -93,20 +179,12 @@ export default function EventHero({ event }: EventHeroProps) {
     }
   }, [event.images, event.bannerImage, event.thumbnailImage, event.logo])
 
-  // Get ticket price display
   const getTicketPriceDisplay = () => formatPublicTicketPriceLine(event.ticketTypes)
 
-  // Get followers count
   const getFollowersCount = () => {
-    if (event.followers && event.followers > 0) {
-      return event.followers
-    }
-    if (event.leads && event.leads.length > 0) {
-      return event.leads.length
-    }
-    if (event.currentAttendees && event.currentAttendees > 0) {
-      return event.currentAttendees
-    }
+    if (event.followers && event.followers > 0) return event.followers
+    if (event.leads && event.leads.length > 0) return event.leads.length
+    if (event.currentAttendees && event.currentAttendees > 0) return event.currentAttendees
     return null
   }
 
@@ -126,10 +204,9 @@ export default function EventHero({ event }: EventHeroProps) {
 
   return (
     <div>
-      {/* Top hero strip: fixed branding image (event photos only in card slider below) */}
+      {/* Top hero strip */}
       <div className="relative h-[200px] md:h-[300px] lg:h-[200px] overflow-hidden">
         <div className="relative h-full w-full">
-          {/* Slight scale + light blur avoids soft edges clipping inside overflow-hidden */}
           <Image
             src={DEFAULT_EVENT_HERO_IMAGE}
             alt={event.title}
@@ -138,7 +215,6 @@ export default function EventHero({ event }: EventHeroProps) {
             sizes="100vw"
             priority
           />
-          {/* Smoky / mist veil */}
           <div
             className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_120%_80%_at_50%_40%,rgba(15,23,42,0.14)_0%,rgba(15,23,42,0.38)_45%,rgba(2,6,23,0.52)_100%)]"
             aria-hidden
@@ -155,122 +231,119 @@ export default function EventHero({ event }: EventHeroProps) {
         </div>
       </div>
 
-      {/* Main Card — same horizontal inset as EventPageSummaryBar (max-w-7xl + px-3/4/6) */}
+      {/* Main Card */}
       <div className="mx-auto max-w-7xl px-3 sm:px-4 lg:px-6">
-        <div className="relative z-10 -mt-[72px] flex w-full flex-col items-stretch overflow-hidden rounded-sm bg-white shadow-md sm:-mt-[96px] md:-mt-[120px] md:flex-row">
-        {/* Slider Section */}
-        <div className="relative min-h-[220px] w-full sm:min-h-[260px] md:min-h-[320px] md:w-2/3">
-          <div
-            ref={sliderRef}
-            className="keen-slider h-[220px] w-full sm:h-[260px] md:h-[320px]"
-          >
-            {hasMainSliderMedia ? (
-              <>
-                {slideImages.map((imgSrc, index) => (
-                  <div
-                    key={`image-${index}`}
-                    className="keen-slider__slide relative h-[220px] w-full bg-neutral-100 sm:h-[260px] md:h-[320px]"
-                  >
-                    <Image
-                      src={imgSrc}
-                      alt={`${event.title} Image ${index + 1}`}
-                      fill
-                      className="object-cover"
-                      sizes="(max-width: 768px) 100vw, 66vw"
-                      priority={index === 0}
-                      onLoadingComplete={(imgEl) => {
-                        const ratio = imgEl.naturalWidth / imgEl.naturalHeight
-                        imgEl.style.objectFit = ratio > 2 ? "contain" : "cover"
-                      }}
-                    />
-                  </div>
-                ))}
+        <div className="relative z-10 -mt-[72px] flex w-full flex-col overflow-hidden rounded-sm bg-white shadow-md sm:-mt-[96px] md:-mt-[120px] md:flex-row md:items-stretch">
 
-                {videoSlides.map((vid: string, index: number) => (
-                  <div
-                    key={`video-${index}`}
-                    className="keen-slider__slide relative h-[220px] w-full sm:h-[260px] md:h-[320px]"
-                  >
-                    <video className="h-full w-full object-cover" autoPlay loop muted playsInline>
-                      <source src={vid} type="video/mp4" />
-                    </video>
-                  </div>
+          {/* Slider Section */}
+          <div className="relative w-full min-h-[260px] md:w-2/3 md:min-h-0 self-stretch">
+            <div
+              ref={sliderRef}
+              className="keen-slider absolute inset-0 h-full w-full"
+            >
+              {hasMainSliderMedia ? (
+                <>
+                  {slideImages.map((imgSrc, index) => (
+                    <div
+                      key={`image-${index}`}
+                      className="keen-slider__slide relative h-full w-full bg-neutral-100"
+                    >
+                      <Image
+                        src={imgSrc}
+                        alt={`${event.title} Image ${index + 1}`}
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 768px) 100vw, 66vw"
+                        priority={index === 0}
+                        onLoadingComplete={(imgEl) => {
+                          const ratio = imgEl.naturalWidth / imgEl.naturalHeight
+                          imgEl.style.objectFit = ratio > 2 ? "contain" : "cover"
+                        }}
+                      />
+                    </div>
+                  ))}
+
+                  {videoSlides.map((vid: string, index: number) => (
+                    <div
+                      key={`video-${index}`}
+                      className="keen-slider__slide relative h-full w-full"
+                    >
+                      <video className="h-full w-full object-cover" autoPlay loop muted playsInline>
+                        <source src={vid} type="video/mp4" />
+                      </video>
+                    </div>
+                  ))}
+                </>
+              ) : (
+                <div className="keen-slider__slide relative h-full w-full bg-neutral-100">
+                  <Image
+                    src={DEFAULT_EVENT_HERO_IMAGE}
+                    alt={event.title}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 768px) 100vw, 66vw"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Slide Indicators */}
+            {slideImages.length > 1 && (
+              <div className="absolute bottom-4 left-1/2 z-10 transform -translate-x-1/2 flex space-x-2">
+                {slideImages.map((_, idx) => (
+                  <button
+                    key={idx}
+                    className={`w-2 h-2 rounded-full transition-colors ${idx === currentSlide ? "bg-white" : "bg-white/50"
+                      }`}
+                    onClick={() => instanceRef.current?.moveToIdx(idx)}
+                  />
                 ))}
-              </>
-            ) : (
-              <div className="keen-slider__slide relative h-[220px] w-full bg-neutral-100 sm:h-[260px] md:h-[320px]">
-                <Image
-                  src={DEFAULT_EVENT_HERO_IMAGE}
-                  alt={event.title}
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 768px) 100vw, 66vw"
-                />
               </div>
             )}
           </div>
 
-          {/* Slide Indicators */}
-          {slideImages.length > 1 && (
-            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
-              {slideImages.map((_, idx) => (
-                <button
-                  key={idx}
-                  className={`w-2 h-2 rounded-full transition-colors ${idx === currentSlide ? "bg-white" : "bg-white/50"
-                    }`}
-                  onClick={() => instanceRef.current?.moveToIdx(idx)}
-                />
-              ))}
-            </div>
-          )}
-        </div>
+          {/* Info Section */}
+          <div className="md:w-1/3 w-full bg-white p-4 sm:p-6 lg:p-8 flex flex-col justify-center space-y-3">
+            <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold text-black leading-snug line-clamp-2">
+              {eventSubtitle}
+            </h2>
 
-        {/* Info Section */}
-        <div className="md:w-1/3 w-full bg-white p-4 sm:p-6 lg:p-8 flex flex-col justify-center space-y-3">
-          <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold text-black leading-snug line-clamp-2">
-            {eventSubtitle}
-          </h2>
-
-          <div className="space-y-3 text-xs sm:text-sm text-gray-800 py-2">
-            {/* Date */}
-            <div className="flex items-center gap-2 sm:gap-3">
-              <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-black flex-shrink-0" />
-              <p className="leading-tight">{formatEventPublicDateRange(event.startDate, event.endDate)}</p>
-            </div>
-
-            {/* Time */}
-            <div className="flex items-center gap-2 sm:gap-3">
-              <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-black flex-shrink-0" />
-              <span className="leading-tight">{formatEventSidebarTimeRange(event)}</span>
-            </div>
-
-            {/* Ticket Price */}
-            <div className="flex items-center gap-2 sm:gap-3">
-              <Ticket className="w-4 h-4 sm:w-5 sm:h-5 text-black flex-shrink-0" />
-              <span className="leading-tight font-medium">
-                {getTicketPriceDisplay()}
-              </span>
-            </div>
-
-            {/* Followers - ONLY SHOW IF WE HAVE FOLLOWERS */}
-            {followersCount !== null && followersCount > 0 && (
+            <div className="space-y-3 text-xs sm:text-sm text-gray-800 py-2">
+              {/* Date */}
               <div className="flex items-center gap-2 sm:gap-3">
-                <Users className="w-4 h-4 sm:w-5 sm:h-5 text-black flex-shrink-0" />
-                <span className="leading-tight">
-                  {followersCount.toLocaleString()} {followersCount === 1 ? 'Follower' : 'Followers'}
+                <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-black flex-shrink-0" />
+                <p className="leading-tight">{formatEventPublicDateRange(event.startDate, event.endDate)}</p>
+              </div>
+
+              {/* Time */}
+              <div className="flex items-center gap-2 sm:gap-3">
+                <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-black flex-shrink-0" />
+                <span className="leading-tight">{formatEventSidebarTimeRange(event)}</span>
+              </div>
+
+              {/* Ticket Price */}
+              <div className="flex items-center gap-2 sm:gap-3">
+                <Ticket className="w-4 h-4 sm:w-5 sm:h-5 text-black flex-shrink-0" />
+                <span className="leading-tight font-medium">
+                  {getTicketPriceDisplay()}
                 </span>
               </div>
-            )}
+
+              {/* Followers */}
+              {followersCount !== null && followersCount > 0 && (
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <Users className="w-4 h-4 sm:w-5 sm:h-5 text-black flex-shrink-0" />
+                  <span className="leading-tight">
+                    {followersCount.toLocaleString()} {followersCount === 1 ? "Follower" : "Followers"}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* ── Countdown Timer ── */}
+            <EventCountdownBanner startDate={event.startDate} />
           </div>
 
-          {/* {postponed && (
-            <div className="mt-2">
-              <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-1 text-xs font-medium text-amber-900">
-                {getEventPostponedNotice(event)}
-              </span>
-            </div>
-          )} */}
-        </div>
         </div>
       </div>
     </div>
