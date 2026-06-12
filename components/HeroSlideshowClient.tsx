@@ -350,7 +350,7 @@ export default function HeroSlideshowClient({
           {/* ── LEFT PANEL ── */}
           <div className="w-full min-w-0 lg:w-[32%] flex-shrink-0">
 
-            <h1 className="text-[clamp(1.375rem,4.2vw,2.625rem)] font-light leading-[0.95] tracking-[-0.05em] text-[#0B132B]">
+            <h1 className="text-[clamp(2.5rem,7vw,1rem)] font-light leading-[0.95] tracking-[-0.05em] text-[#0B132B]">
               <span className="block sm:whitespace-nowrap">
                 Discover{" "}
                 <span className="text-[#2563EB]">Trade Shows</span>
@@ -367,7 +367,7 @@ export default function HeroSlideshowClient({
                 <CalendarDays className="h-4 w-4 shrink-0 text-blue-500 sm:h-5 sm:w-5 lg:h-6 lg:w-6" strokeWidth={1.5} />
                 <div className="min-w-0">
                   <p className="text-[17px] font-extrabold leading-none text-[#0F172A] sm:text-[24px] lg:text-[28px]">12K+</p>
-                  <p className="mt-0.5 text-[10px] font-medium leading-tight text-[#64748B] sm:text-[12px] lg:text-[14px]">
+                  <p className="mt-0.5 whitespace-nowrap text-[10px] font-medium leading-tight text-[#64748B] sm:text-[12px] lg:text-[14px]">
                     Events Listed
                   </p>
                 </div>
@@ -392,7 +392,7 @@ export default function HeroSlideshowClient({
               </div>
             </div>
 
-            <div className="flex w-full max-w-[360px] flex-col gap-2.5 min-[400px]:flex-row sm:gap-4">
+            <div className="flex w-full max-w-[360px] flex-col gap-2.5 min-[400px]:flex-row sm:gap-4 mt-24 lg:gap-6">
               <Link
                 href="/event"
                 className="flex-1 text-center bg-blue-600 hover:bg-blue-700 transition-colors text-white text-[0.85rem] sm:text-[0.9rem] font-bold h-11 sm:h-12 rounded-sm flex items-center justify-center"
