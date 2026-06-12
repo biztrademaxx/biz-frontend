@@ -80,6 +80,48 @@ function useCountdown(targetDate?: string) {
 
   return timeLeft
 }
+function DigitBox({ digit }: { digit: string }) {
+  return (
+    <div
+      className="h-12 w-8 rounded-md flex items-center justify-center"
+      style={{
+        background: "rgba(255,255,255,0.08)",
+        backdropFilter: "blur(20px)",
+        WebkitBackdropFilter: "blur(20px)",
+        border: "1px solid rgba(255,255,255,0.15)",
+        boxShadow:
+          "0 8px 32px rgba(31,38,135,0.2), inset 0 1px 0 rgba(255,255,255,0.1)",
+      }}
+    >
+      <span className="text-2xl font-bold text-white">
+        {digit}
+      </span>
+    </div>
+  )
+}
+
+function CountdownGroup({
+  value,
+  label,
+}: {
+  value: number
+  label: string
+}) {
+  const digits = String(value).padStart(2, "0").split("")
+
+  return (
+    <div className="flex flex-col items-center">
+      <div className="flex gap-1">
+        <DigitBox digit={digits[0]} />
+        <DigitBox digit={digits[1]} />
+      </div>
+
+      <span className=" text-[10px] font-semibold tracking-[0.15em] uppercase text-white">
+        {label}
+      </span>
+    </div>
+  )
+}
 
 // ── Glass countdown tile ──────────────────────────────────────────────────────
 function CountdownTile({ value, label }: { value: number; label: string }) {
@@ -90,10 +132,10 @@ function CountdownTile({ value, label }: { value: number; label: string }) {
         style={{
           width: 40,
           height: 36,
-          background: "rgba(59,130,246,0.10)",
-          backdropFilter: "blur(8px)",
-          WebkitBackdropFilter: "blur(8px)",
-          border: "1px solid rgba(147,197,253,0.22)",
+          background: "rgba(0, 74, 150, 0.6)",
+          backdropFilter: "blur(12px)",
+          WebkitBackdropFilter: "blur(12px)",
+          border: "1px solid rgba(255,255,255,0.15)",
         }}
       >
         <span className="text-sm font-semibold text-blue-700 tabular-nums tracking-tight leading-none">
@@ -113,6 +155,7 @@ function CountdownSeparator() {
   )
 }
 
+
 // ── Countdown banner ──────────────────────────────────────────────────────────
 function EventCountdownBanner({ startDate }: { startDate?: string }) {
   const timeLeft = useCountdown(startDate)
@@ -121,23 +164,24 @@ function EventCountdownBanner({ startDate }: { startDate?: string }) {
 
   return (
     <div
-      className="w-full rounded-xl px-3 py-2.5"
-      // style={{
-      //   background: "rgba(219,234,254,0.35)",
-      //   backdropFilter: "blur(12px)",
-      //   WebkitBackdropFilter: "blur(12px)",
-      //   border: "1px solid rgba(147,197,253,0.25)",
-      // }}
+      className="rounded-sm p-4"
+      style={{
+        background: "rgba(46, 79, 168, 0.85)",
+        backdropFilter: "blur(8px)",
+        WebkitBackdropFilter: "blur(8px)",
+        border: "1px solid rgba(255,255,255,0.08)",
+      }}
     >
-      <p className="text-[9px] font-medium text-blue-400/90 tracking-widest uppercase mb-2">
-        Starts in
-      </p>
-      <div className="flex items-end gap-2">
-        <CountdownTile value={timeLeft.days} label="Days" />
-        <CountdownSeparator />
-        <CountdownTile value={timeLeft.hours} label="Hours" />
-        <CountdownSeparator />
-        <CountdownTile value={timeLeft.minutes} label="Mins" />
+      <div className="flex items-center justify-center gap-2">
+        <CountdownGroup value={timeLeft.days} label="Days" />
+
+        <span className="text-3xl text-white/40 font-bold">:</span>
+
+        <CountdownGroup value={timeLeft.hours} label="Hours" />
+
+        <span className="text-3xl text-white/40 font-bold">:</span>
+
+        <CountdownGroup value={timeLeft.minutes} label="Mins" />
       </div>
     </div>
   )
