@@ -241,7 +241,7 @@ export function EventPageRelatedEvents({ currentEventId, categories }: Props) {
                     return (
                         <Link
                             key={eventId}
-                            href={`/events/${eventSlug}`}
+                            href={`/event/${eventSlug}`}
                             className="group block"
                         >
                             <div className="flex gap-3 p-2 rounded-lg transition-all duration-200 hover:bg-gray-50 hover:shadow-sm">
