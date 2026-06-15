@@ -254,57 +254,11 @@ export default function SubAdminViewPage({ subAdmin, onCancel }: SubAdminViewPag
             <ArrowLeft className="w-4 h-4" />
             Back to List
           </Button>
-
-          {/* My Performance Button - Only show if sub-admin has permission */}
-          {canViewPerformance && (
-            <Link href="/my-performance" target="_blank">
-              <Button className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700">
-                <TrendingUp className="w-4 h-4" />
-                My Performance Dashboard
-                <ExternalLink className="w-3 h-3" />
-              </Button>
-            </Link>
-          )}
         </div>
 
         <div className="grid gap-6">
           {/* Performance Overview Card - Only show if sub-admin has permission */}
-          {canViewPerformance && (
-            <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-blue-800">
-                  <TrendingUp className="w-5 h-5" />
-                  Your Performance Overview
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="bg-white rounded-lg p-4 shadow-sm">
-                    <p className="text-sm text-gray-500">Total Leads Added</p>
-                    <p className="text-2xl font-bold text-green-600">--</p>
-                    <p className="text-xs text-gray-400 mt-1">Lifetime</p>
-                  </div>
-                  <div className="bg-white rounded-lg p-4 shadow-sm">
-                    <p className="text-sm text-gray-500">Total Leads Updated</p>
-                    <p className="text-2xl font-bold text-blue-600">--</p>
-                    <p className="text-xs text-gray-400 mt-1">Lifetime</p>
-                  </div>
-                  <div className="bg-white rounded-lg p-4 shadow-sm">
-                    <p className="text-sm text-gray-500">Current Streak</p>
-                    <p className="text-2xl font-bold text-orange-600">--</p>
-                    <p className="text-xs text-gray-400 mt-1">Active days</p>
-                  </div>
-                </div>
-                <div className="mt-4 text-center">
-                  <Link href="/my-performance">
-                    <Button variant="link" className="text-blue-600">
-                      View detailed performance analytics →
-                    </Button>
-                  </Link>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+          
 
           <Card>
             <CardHeader>
