@@ -58,10 +58,10 @@ export default function BrowseEventsByCityGridClient({
                     )}`
                   )
                 }
-                className="group overflow-hidden rounded-lg border border-gray-200 bg-white text-left shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
+                className="group overflow-hidden rounded-lg border-1 border-blue-500 bg-white text-left shadow-sm transition-all duration-300 hover:shadow-lg"
               >
                 {/* Image */}
-                <div className="relative h-[75px] w-full overflow-hidden">
+                <div className="relative m-2 h-[75px] overflow-hidden rounded-sm shadow-[0_0_12px_rgba(59,130,246,0.5)]">
                   <AppImage
                     src={
                       city.image?.trim()
