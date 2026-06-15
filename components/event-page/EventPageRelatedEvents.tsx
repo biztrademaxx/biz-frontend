@@ -214,6 +214,8 @@ export function EventPageRelatedEvents({ currentEventId, categories }: Props) {
         titleText = `Related Events (${categoryStrings.length} categories)`
     }
 
+    
+
     // Build URL for "View All" - use categories if available, otherwise general events
     const viewAllUrl = categoryStrings.length > 0
         ? `/event?${categoryStrings.map(c => `category=${encodeURIComponent(c)}`).join('&')}`
@@ -246,7 +248,7 @@ export function EventPageRelatedEvents({ currentEventId, categories }: Props) {
                         >
                             <div className="flex gap-3 p-2 rounded-lg transition-all duration-200 hover:bg-gray-50 hover:shadow-sm">
                                 <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-md bg-gray-100">
-                                    {imageUrl ? (
+                                    {/* {imageUrl ? (
                                         <Image
                                             src={event.image || event.thumbnail || "/placeholder.png"}
                                             alt={event.title}
@@ -258,7 +260,14 @@ export function EventPageRelatedEvents({ currentEventId, categories }: Props) {
                                         <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 text-gray-400">
                                             <Calendar className="h-6 w-6" />
                                         </div>
-                                    )}
+                                    )} */}
+                                     <Image
+                                            src={event.image || event.thumbnail || "/logo/default-user.png"}
+                                            alt={event.title}
+                                            fill
+                                            sizes="64px"
+                                            className="object-cover group-hover:scale-105 transition-transform duration-200"
+                                        />
                                 </div>
                                 <div className="min-w-0 flex-1">
                                     <p className="line-clamp-2 text-sm font-medium text-gray-900 group-hover:text-[#FF131C] transition-colors">

@@ -76,15 +76,18 @@ export default function RecommendedEvents({ userId, interests }: RecommendedEven
           >
             {/* Image */}
             {event.images?.[0] && (
-              <div className="relative h-72 w-full overflow-hidden">
-                <AppImage
-                  src={event.images[0].url}
-                  alt={event.title}
-                  fill
-                  sizes="(max-width: 768px) 100vw, 33vw"
-                  className="object-cover transition-transform hover:scale-105"
-                />
-              </div>
+             <div className="relative h-72 w-full overflow-hidden">
+  <AppImage
+    src={
+      event.images?.[0]?.url ||
+      "/herosection-images/eventbanner.jpeg"
+    }
+    alt={event.title}
+    fill
+    sizes="(max-width: 768px) 100vw, 33vw"
+    className="object-cover transition-transform hover:scale-105"
+  />
+</div>
             )}
 
             <CardHeader>
