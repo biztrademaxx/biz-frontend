@@ -102,15 +102,15 @@ const Footer: React.FC<FooterProps> = ({ categories }) => {
           </p>
         </div>
         <div className="mx-auto mt-14 h-px max-w-7xl bg-white/15" />
-        <div className="mx-auto mt-10 flex min-w-max items-center justify-center gap-10 px-8">          
+        <div className="mx-auto mt-10 grid max-w-7xl grid-cols-1 gap-6 px-4 sm:grid-cols-2 sm:px-6 lg:grid-cols-5 lg:gap-8 lg:px-8">
 
           {/* Trusted */}
-          <div className="flex items-center justify-center gap-4">
+          <div className="flex items-start gap-4 lg:items-center lg:justify-center">
             <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/[0.06] border border-white/[0.12]">
               <Globe className="h-5 w-5 text-[#6EAAFF]" strokeWidth={1.8} />
             </div>
-            <div className="leading-tight">
-              <p className="text-[22px] font-semibold text-white">Global Reach</p>
+            <div className="min-w-0 leading-tight">
+              <p className="text-xl font-semibold text-white sm:text-[22px]">Global Reach</p>
               <p className="mt-1 text-[12px] text-white/50">Events in 120+ countries</p>
             </div>
           </div>
@@ -118,12 +118,12 @@ const Footer: React.FC<FooterProps> = ({ categories }) => {
           
 
           {/* Events */}
-          <div className="flex items-center justify-center gap-4">
+          <div className="flex items-start gap-4 lg:items-center lg:justify-center">
             <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/[0.06] border border-white/[0.12]">
               <Verified className="h-5 w-5 text-[#6EAAFF]" strokeWidth={1.8} />
             </div>
-            <div className="leading-tight">
-              <p className="text-[22px] font-bold text-white">Verified & Trusted</p>
+            <div className="min-w-0 leading-tight">
+              <p className="text-xl font-bold text-white sm:text-[22px]">Verified & Trusted</p>
               <p className="mt-1 text-[12px] text-white/50">Authentic events & organizers</p>
             </div>
           </div>
@@ -131,12 +131,12 @@ const Footer: React.FC<FooterProps> = ({ categories }) => {
 
 
           {/* Organizers */}
-          <div className="flex items-center justify-center gap-4">
+          <div className="flex items-start gap-4 lg:items-center lg:justify-center">
             <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/[0.06] border border-white/[0.12]">
               <Clock className="h-5 w-5 text-[#6EAAFF]" strokeWidth={1.8} />
             </div>
-            <div className="leading-tight">
-              <p className="text-[22px] font-bold text-white">Always Updated</p>
+            <div className="min-w-0 leading-tight">
+              <p className="text-xl font-bold text-white sm:text-[22px]">Always Updated</p>
               <p className="mt-1 text-[12px] text-white/50">Real-time event information</p>
             </div>
           </div>
@@ -144,21 +144,21 @@ const Footer: React.FC<FooterProps> = ({ categories }) => {
 
 
           {/* Countries */}
-          <div className="flex items-center justify-center gap-4">
+          <div className="flex items-start gap-4 lg:items-center lg:justify-center">
             <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/[0.06] border border-white/[0.12]">
               <Headphones className="h-5 w-5 text-[#6EAAFF]" strokeWidth={1.8} />
             </div>
-            <div className="leading-tight">
-              <p className="text-[22px] font-bold text-white">Dedicated Support</p>
+            <div className="min-w-0 leading-tight">
+              <p className="text-xl font-bold text-white sm:text-[22px]">Dedicated Support</p>
               <p className="mt-1 text-[12px] text-white/50">Here to help you anytime</p>
             </div>
           </div>
-          <div className="flex items-center justify-center gap-4">
+          <div className="flex items-start gap-4 lg:items-center lg:justify-center">
             <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/[0.06] border border-white/[0.12]">
               <ShieldCheck className="h-5 w-5 text-[#6EAAFF]" strokeWidth={1.8} />
             </div>
-            <div className="leading-tight">
-              <p className="text-[22px] font-bold text-white">Secure & Reliable</p>
+            <div className="min-w-0 leading-tight">
+              <p className="text-xl font-bold text-white sm:text-[22px]">Secure & Reliable</p>
               <p className="mt-1 text-[12px] text-white/50">Your data is always safe</p>
             </div>
           </div>
