@@ -7,11 +7,12 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
-import { ChevronDown, ChevronRight, Eye, EyeOff } from "lucide-react"
+import { ChevronDown, ChevronRight, Eye, EyeOff, TrendingUp, ExternalLink } from "lucide-react"
 import { toast } from "sonner"
 import { adminApi } from "@/lib/admin-api"
 import { AuthErrorHandler } from "./auth-error-handler"
 import { ADMIN_PERMISSION_CATEGORIES, groupPermissionCategoriesForColumns } from "./permission-categories"
+import Link from "next/link"
 
 interface SubAdminEditPageProps {
   subAdmin: {
@@ -34,6 +35,15 @@ type RoleTemplate = {
   defaultPermissions: string[]
 }
 
+interface PerformanceStats {
+  totalLeadsAdded: number
+  totalLeadsUpdated: number
+  totalActions: number
+  currentStreak: number
+  bestStreak: number
+  lastActiveDate: string
+}
+
 export default function SubAdminEditPage({ subAdmin, onSuccess, onCancel }: SubAdminEditPageProps) {
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>([])
   const [expandedCategories, setExpandedCategories] = useState<string[]>([])
@@ -42,6 +52,8 @@ export default function SubAdminEditPage({ subAdmin, onSuccess, onCancel }: SubA
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [authError, setAuthError] = useState<Error | null>(null)
+  const [performanceStats, setPerformanceStats] = useState<PerformanceStats | null>(null)
+  const [loadingPerformance, setLoadingPerformance] = useState(false)
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -51,6 +63,26 @@ export default function SubAdminEditPage({ subAdmin, onSuccess, onCancel }: SubA
     password: "",
     confirmPassword: "",
   })
+
+  // Fetch performance stats for this sub-admin
+  useEffect(() => {
+    const fetchPerformanceStats = async () => {
+      setLoadingPerformance(true)
+      try {
+        const res = await adminApi<{ data: PerformanceStats }>(`/analytics/sub-admin-performance/${subAdmin.id}`)
+        if (res?.data) {
+          setPerformanceStats(res.data)
+        }
+      } catch (error) {
+        console.error("Error fetching performance stats:", error)
+        // Don't show error toast, just silently fail
+      } finally {
+        setLoadingPerformance(false)
+      }
+    }
+
+    fetchPerformanceStats()
+  }, [subAdmin.id])
 
   useEffect(() => {
     setFormData({
@@ -67,30 +99,30 @@ export default function SubAdminEditPage({ subAdmin, onSuccess, onCancel }: SubA
 
   useEffect(() => {
     let cancelled = false
-    ;(async () => {
-      try {
-        const res = await adminApi<{ success?: boolean; data?: RoleTemplate[] }>(
-          "/role-definitions?active=true&limit=100",
-        )
-        const rows = Array.isArray(res.data) ? res.data : []
-        if (!cancelled) setRoleTemplates(rows)
-      } catch {
-        if (!cancelled) {
-          setRoleTemplates([
-            { slug: "SUB_ADMIN", name: "Sub Admin", defaultPermissions: [] },
-            { slug: "MODERATOR", name: "Moderator", defaultPermissions: [] },
-            { slug: "SUPPORT", name: "Support Staff", defaultPermissions: [] },
-          ])
+      ; (async () => {
+        try {
+          const res = await adminApi<{ success?: boolean; data?: RoleTemplate[] }>(
+            "/role-definitions?active=true&limit=100",
+          )
+          const rows = Array.isArray(res.data) ? res.data : []
+          if (!cancelled) setRoleTemplates(rows)
+        } catch {
+          if (!cancelled) {
+            setRoleTemplates([
+              { slug: "SUB_ADMIN", name: "Sub Admin", defaultPermissions: [] },
+              { slug: "MODERATOR", name: "Moderator", defaultPermissions: [] },
+              { slug: "SUPPORT", name: "Support Staff", defaultPermissions: [] },
+            ])
+          }
         }
-      }
-    })()
+      })()
     return () => {
       cancelled = true
     }
   }, [])
 
   const handleToggle = (perm: string) => {
-    setSelectedPermissions((prev) => 
+    setSelectedPermissions((prev) =>
       prev.includes(perm) ? prev.filter((p) => p !== perm) : [...prev, perm]
     )
   }
@@ -172,7 +204,7 @@ export default function SubAdminEditPage({ subAdmin, onSuccess, onCancel }: SubA
       })
 
       toast.success("Sub-admin updated successfully")
-      
+
       if (onSuccess && typeof onSuccess === 'function') {
         onSuccess()
       }
@@ -224,6 +256,59 @@ export default function SubAdminEditPage({ subAdmin, onSuccess, onCancel }: SubA
             </div>
           </div>
         </div>
+
+        {/* My Performance Card - Quick Stats */}
+        <Card className="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2 text-blue-800">
+                <TrendingUp className="w-5 h-5" />
+                My Performance Overview
+              </CardTitle>
+              <Link href="/my-performance" target="_blank">
+                <Button variant="outline" size="sm" className="gap-2">
+                  View Full Dashboard
+                  <ExternalLink className="w-3 h-3" />
+                </Button>
+              </Link>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {loadingPerformance ? (
+              <div className="flex items-center justify-center py-4">
+                <div className="animate-pulse text-gray-500">Loading performance data...</div>
+              </div>
+            ) : performanceStats ? (
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="bg-white rounded-lg p-4 shadow-sm">
+                  <p className="text-sm text-gray-500">Total Leads Added</p>
+                  <p className="text-2xl font-bold text-green-600">{performanceStats.totalLeadsAdded}</p>
+                  <p className="text-xs text-gray-400 mt-1">Lifetime</p>
+                </div>
+                <div className="bg-white rounded-lg p-4 shadow-sm">
+                  <p className="text-sm text-gray-500">Total Leads Updated</p>
+                  <p className="text-2xl font-bold text-blue-600">{performanceStats.totalLeadsUpdated}</p>
+                  <p className="text-xs text-gray-400 mt-1">Lifetime</p>
+                </div>
+                <div className="bg-white rounded-lg p-4 shadow-sm">
+                  <p className="text-sm text-gray-500">Current Streak</p>
+                  <p className="text-2xl font-bold text-orange-600">{performanceStats.currentStreak} days</p>
+                  <p className="text-xs text-gray-400 mt-1">Best: {performanceStats.bestStreak} days</p>
+                </div>
+                <div className="bg-white rounded-lg p-4 shadow-sm">
+                  <p className="text-sm text-gray-500">Total Actions</p>
+                  <p className="text-2xl font-bold text-purple-600">{performanceStats.totalActions}</p>
+                  <p className="text-xs text-gray-400 mt-1">Added + Updated</p>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-4 text-gray-500">
+                <p>No performance data available yet</p>
+                <p className="text-sm mt-1">Start adding leads to see your metrics</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         <Card>
           <CardHeader>
@@ -377,7 +462,7 @@ export default function SubAdminEditPage({ subAdmin, onSuccess, onCancel }: SubA
                   </div>
                 </div>
               </div>
-              <hr className="mt-3"/>
+              <hr className="mt-3" />
 
               <div className="mt-5">
                 <Label className="block mb-3 font-medium text-gray-700">Permissions *</Label>
@@ -411,12 +496,11 @@ export default function SubAdminEditPage({ subAdmin, onSuccess, onCancel }: SubA
                                 }
                               }}
                               className={`transition-colors duration-200 
-                                ${
-                                  category.subItems.every((subItem) =>
-                                    selectedPermissions.includes(subItem.id),
-                                  )
-                                    ? "data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
-                                    : "bg-white border-gray-300"
+                                ${category.subItems.every((subItem) =>
+                                selectedPermissions.includes(subItem.id),
+                              )
+                                  ? "data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
+                                  : "bg-white border-gray-300"
                                 }`}
                             />
                             <Label
@@ -439,10 +523,9 @@ export default function SubAdminEditPage({ subAdmin, onSuccess, onCancel }: SubA
                                     checked={selectedPermissions.includes(subItem.id)}
                                     onCheckedChange={() => handleToggle(subItem.id)}
                                     className={`transition-colors duration-200 
-                                      ${
-                                        selectedPermissions.includes(subItem.id)
-                                          ? "data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
-                                          : "bg-white border-gray-300"
+                                      ${selectedPermissions.includes(subItem.id)
+                                        ? "data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
+                                        : "bg-white border-gray-300"
                                       }`}
                                   />
                                   <Label htmlFor={subItem.id} className="text-gray-600 text-sm">

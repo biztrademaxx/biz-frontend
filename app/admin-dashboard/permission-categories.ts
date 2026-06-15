@@ -175,10 +175,17 @@ export const ADMIN_PERMISSION_CATEGORIES: PermissionCategory[] = [
       { title: "Admin Notes", id: "support-notes" },
     ],
   },
+  {
+    title: "My Performance",
+    id: "my-performance",
+    subItems: [
+      { title: "View My Performance", id: "my-performance-view" },
+    ],
+  },
 ]
 
 export function groupPermissionCategoriesForColumns(
   categories: PermissionCategory[] = ADMIN_PERMISSION_CATEGORIES,
 ): PermissionCategory[][] {
-  return [categories.slice(0, 5), categories.slice(5, 10), categories.slice(10)]
+  return [categories.slice(0, 6), categories.slice(6, 12), categories.slice(12)]
 }

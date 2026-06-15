@@ -248,7 +248,7 @@ export function EventPageRelatedEvents({ currentEventId, categories }: Props) {
                                 <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-md bg-gray-100">
                                     {imageUrl ? (
                                         <Image
-                                            src={imageUrl}
+                                            src={event.image || event.thumbnail || "/placeholder.png"}
                                             alt={event.title}
                                             fill
                                             sizes="64px"

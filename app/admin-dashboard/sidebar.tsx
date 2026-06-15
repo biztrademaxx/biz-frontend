@@ -9,7 +9,7 @@ import {
   Calendar,
   Users,
   Building2,
-  Mic,   
+  Mic,
   MapPin,
   UserCircle,
   DollarSign,
@@ -29,6 +29,7 @@ import {
   Tag,
   MessageCircle,
   CheckCircle,
+  TrendingUp,
 } from "lucide-react"
 
 // Import all section components
@@ -38,7 +39,6 @@ import OrganizerManagement from "./organizers/page"
 import ExhibitorManagement from "./exhibitors/page"
 import SpeakerManagement from "./speakers/page"
 import VenueManagement from "./venues/page"
-// import ContentManagement from "./content-management"
 import SystemSettings from "./system-settings"
 import CustomRolesManagement from "./custom-roles-management"
 import { CreateEventForm } from "./eventManagement/createEvent/create-event"
@@ -74,7 +74,6 @@ import ExhibitorFeedbackPage from "./exhibitors/feedback"
 import AddSpeaker from "./AddSpeaker"
 import SpeakerFollowersPage from "./speaker/followers"
 import SpeakerFeedbackPage from "./speaker/feedback"
-// import AddVenue from "./add-venue"
 import AddVenueComponent from "./AddVenue"
 import VenuesEventsPage from "./venue/events"
 import VenueBookingsPage from "./venue/bookings"
@@ -116,6 +115,7 @@ import NewsletterAdminPage from "./newsletter-admin-page"
 import ExhibitorApprovals from "./approvals/components/ExhibitorApprovals"
 import OrganizerApprovals from "./approvals/components/OrganizerApprovals"
 import VenueApprovals from "./approvals/components/VenueApprovals"
+import MyPerformance from "./MyPerformance"
 import {
   adminAccentText,
   adminNavActive,
@@ -134,6 +134,7 @@ interface AdminDashboardProps {
 
 const MENU_PERMISSIONS = {
   dashboard: "dashboard-overview",
+  "my-performance": "my-performance-view",
   events: "events",
   "events-all": "events-all",
   "events-create": "events-create",
@@ -145,7 +146,6 @@ const MENU_PERMISSIONS = {
   "approvals-venues": "approvals-venues",
   "approvals-organizers": "approvals-organizers",
   "approvals-exhibitors": "approvals-exhibitors",
-
   organizers: "organizers",
   "organizers-all": "organizers-all",
   "organizers-add": "organizers-add",
@@ -229,7 +229,6 @@ const MENU_PERMISSIONS = {
   "visitors-suggestions": "visitors-suggestions",
   "contact-inquiries": "contact-inquiries",
   newsletter: "newsletter",
-  // Add permissions for locations
   locations: "locations",
   countries: "countries",
   states: "states",
@@ -250,12 +249,8 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
   const [activeSubSection, setActiveSubSection] = useState("")
   const [openMenus, setOpenMenus] = useState<Set<string>>(new Set(["dashboard"]))
 
-
   const hasPermission = (itemId: string): boolean => {
-    // Super admin has access to everything
     if (userRole === "SUPER_ADMIN") return true
-
-    // Sub admin needs specific permission
     const requiredPermission = MENU_PERMISSIONS[itemId as keyof typeof MENU_PERMISSIONS]
     if (!requiredPermission) return false
     const candidates = new Set<string>([
@@ -289,6 +284,15 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
       icon: LayoutDashboard,
       id: "dashboard",
     },
+    ...(userRole === "SUB_ADMIN"
+      ? [
+        {
+          title: "My Performance",
+          icon: TrendingUp,
+          id: "my-performance",
+        },
+      ]
+      : []),
     {
       title: "Events",
       icon: Calendar,
@@ -297,7 +301,7 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
         { title: "All Events", id: "events-all" },
         { title: "Create New Event", id: "events-create" },
         { title: "Event Categories", id: "events-categories" },
-        { title: "Event Approvals", id: "events-approvals" }, 
+        { title: "Event Approvals", id: "events-approvals" },
         { title: "Bulk Data", id: "bulk-data" },
       ],
     },
@@ -331,9 +335,7 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
         { title: "Add Organizer", id: "organizers-add" },
         { title: "Bulk Import", id: "organizers-bulk-import" },
         { title: "Followers", id: "organizers-connections" },
-       
         { title: "Venue Bookings", id: "organizers-bookings" },
-       
       ],
     },
     {
@@ -343,10 +345,7 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
       subItems: [
         { title: "All Exhibitors", id: "exhibitors-all" },
         { title: "Add Exhibitor", id: "exhibitors-add" },
-        
-        // { title: "Followers", id: "exhibitors-followers" },
         { title: "Appointments", id: "exhibitors-appointments" },
-       
       ],
     },
     {
@@ -357,8 +356,6 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
         { title: "All Speakers", id: "speakers-all" },
         { title: "Add Speaker", id: "speakers-add" },
         { title: "Followers", id: "speakers-followers" },
-        // { title: "Appointments", id: "speakers-appointments" },
-        
       ],
     },
     {
@@ -371,7 +368,6 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
         { title: "Bulk Import", id: "venues-bulk-import" },
         { title: "Events by Venue", id: "venues-events" },
         { title: "Booking Enquiries", id: "venues-bookings" },
-        
       ],
     },
     {
@@ -383,7 +379,7 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
         { title: "Events by Visitor", id: "visitors-events" },
         { title: "Connections", id: "visitors-connections" },
         { title: "Appointments", id: "visitors-appointments" },
-         { title: "Exhibitor Suggestions", id: "visitors-suggestions" },
+        { title: "Exhibitor Suggestions", id: "visitors-suggestions" },
       ],
     },
     {
@@ -392,7 +388,6 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
       id: "inquiries-registrations",
       subItems: [
         { title: "Contact inquiry", id: "contact-inquiries" },
-       
       ],
     },
     {
@@ -411,13 +406,7 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
       title: "Content",
       icon: FileText,
       id: "content",
-      subItems: [
-       
-        
-        
-        // { title: "Featured Events", id: "content-featured" },
-        // { title: "Media Library", id: "content-media" },
-      ],
+      subItems: [],
     },
     {
       title: "Promotions",
@@ -425,13 +414,12 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
       id: "promotions",
       subItems: [
         { title: "Promotions Dashboard", id: "promotions-dashboard" },
-        { title: " Event Promotions", id: "admin-promotions" },
+        { title: "Event Promotions", id: "admin-promotions" },
         { title: "Organizer Promotions", id: "promotions" },
         { title: "ExhibitorPromotions", id: "exhibitors-promotions" },
         { title: "Banner & Ads Manager", id: "content-banners" },
         { title: "Blog & Articles", id: "content-blog" },
         { title: "Newsletter", id: "newsletter" },
-        
       ],
     },
     {
@@ -444,11 +432,9 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
         { title: "Email Templates", id: "template-email" },
         { title: "Push Templates", id: "template-notifications" },
         { title: "News & Announcements", id: "content-news" },
-       
         { title: "SEO & Keywords", id: "marketing-seo" },
       ],
     },
-
     {
       title: "Reports & Analytics",
       icon: BarChart3,
@@ -468,7 +454,6 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
       subItems: [
         { title: "Payment Gateways", id: "integrations-payment" },
         { title: "Email/SMS Providers", id: "integrations-communication" },
-        // { title: "Calendar & API", id: "integrations-calendar" },
         { title: "Hotel & Travel Partners", id: "integrations-travel" },
       ],
     },
@@ -502,11 +487,8 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
       id: "support",
       subItems: [
         { title: "Support Tickets", id: "support-tickets" },
-        // { title: "FAQ Management", id: "support-faq" },
-        // { title: "Admin Notes", id: "support-notes" },
       ],
     },
-
     {
       title: "Feedback",
       icon: MessageCircle,
@@ -516,37 +498,27 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
         { title: "Exhibitor Feedback", id: "exhibitors-feedback" },
         { title: "Speaker Feedback", id: "speakers-feedback" },
         { title: "Venue Feedback", id: "venues-feedback" },
-        // { title: "Visitor Feedback", id: "visitors-feedback" },
       ],
     },
   ]
 
   const filteredSidebarItemsRaw = sidebarItems
     .map((item) => {
-      // For items with subitems, check if user has permission for any child
       if (item.subItems) {
         const filteredSubItems = item.subItems.filter((subItem) => hasPermission(subItem.id))
-
-        // If no subitems are accessible, hide the parent
         if (filteredSubItems.length === 0) return null
-
         return { ...item, subItems: filteredSubItems }
       }
-
-      // For items without subitems, check direct permission
       if (!hasPermission(item.id)) return null
-
       return item
     })
     .filter(Boolean) as typeof sidebarItems
 
-  // If permission filtering removed everything (e.g. empty permissions array), show full sidebar so menu is never empty
   const filteredSidebarItems =
     userRole === "SUPER_ADMIN"
       ? sidebarItems
       : filteredSidebarItemsRaw
 
-  /** Used by dashboard Quick Actions to switch main section (and expand that menu). */
   const navigateFromDashboard = (sectionId: string) => {
     setActiveSection(sectionId)
     if (sectionId === "financial") setActiveSubSection("financial-payments")
@@ -578,10 +550,8 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
     const section = activeSection
     const subSection = activeSubSection
 
-    // Handle sub-sections first
     if (subSection) {
       switch (subSection) {
-        // Roles
         case "roles-superadmin":
           return <SuperAdminManagement />
         case "roles-subadmins":
@@ -590,8 +560,6 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
           return <CustomRolesManagement />
         case "roles-subadmin-tracking":
           return <SubAdminTrackingPage />
-
-        // Events
         case "events-create":
           return <CreateEventForm />
         case "events-all":
@@ -606,8 +574,6 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
           return <CountriesManagement activeTab="states" />
         case "cities":
           return <CountriesManagement activeTab="cities" />
-
-        // Organizers
         case "organizers-add":
           return <AddOrganizerForm />
         case "organizers-bulk-import":
@@ -615,19 +581,13 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
         case "organizers-connections":
           return <OrganizerConnectionsPage />
         case "promotions-dashboard":
-          return (
-            <PromotionsDashboard
-              onNavigate={(subId) => navigateToSubSection("promotions", subId)}
-            />
-          )
+          return <PromotionsDashboard onNavigate={(subId) => navigateToSubSection("promotions", subId)} />
         case "promotions":
           return <OrganizerPromotionsPage />
         case "organizers-bookings":
           return <OrganizerVenueBookingsPage />
         case "organizers-feedback":
           return <OrganizerFeedbackPage />
-
-        // Exhibitors
         case "exhibitors-add":
           return <AddExhibitorForm />
         case "exhibitors-promotions":
@@ -638,16 +598,12 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
           return <ExhibitorAppointmentsPage />
         case "exhibitors-feedback":
           return <ExhibitorFeedbackPage />
-
-        // Speakers
         case "speakers-add":
           return <AddSpeaker />
         case "speakers-followers":
           return <SpeakerFollowersPage />
         case "speakers-feedback":
           return <SpeakerFeedbackPage />
-
-        // Venues
         case "venues-add":
           return <AddVenueComponent />
         case "venues-bulk-import":
@@ -659,28 +615,23 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
         case "venues-feedback":
           return <VenueFeedbackPage />
         case "approvals-events":
-          return <EventApprovalDashboard /> // Your existing event approval page
+          return <EventApprovalDashboard />
         case "approvals-venues":
           return <VenueApprovals />
         case "approvals-organizers":
           return <OrganizerApprovals />
         case "approvals-exhibitors":
           return <ExhibitorApprovals />
-
-        // Visitors
         case "visitors-events":
           return <VisitorEventsPage />
         case "visitors-connections":
           return <VisitorConnectionsPage />
         case "visitors-appointments":
           return <VisitorAppointmentsPage />
-
         case "contact-inquiries":
           return <ContactInquiriesPage />
         case "newsletter":
           return <NewsletterAdminPage />
-
-        // Financial
         case "financial-payments":
           return <FinancialPaymentsPage />
         case "financial-subscriptions":
@@ -689,11 +640,8 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
           return <FinancialInvoicesPage />
         case "financial-transactions":
           return <FinancialTransactionsPage />
-
         case "admin-promotions":
           return <PromotionPackagesPage />
-
-        // Reports & Analytics (data from Express: GET /api/admin/reports/overview)
         case "reports-events":
           return <ReportsAnalyticsPage view="events" />
         case "reports-engagement":
@@ -702,8 +650,6 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
           return <ReportsAnalyticsPage view="revenue" />
         case "reports-system":
           return <ReportsAnalyticsPage view="system" />
-
-        // Help & Support sub-sections
         case "support-tickets":
           return <SupportTickets />
         case "support-contacts":
@@ -712,57 +658,36 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
           return <FAQManagement />
         case "support-notes":
           return <AdminNotes />
-        
-
-          case "marketing-email":
-            return <EmailCampaigns />
-
-          case "template-email":
-            return < EmailTemplates />
-
-          case "marketing-notifications":
-            return <PushNotifications />
-
-          case "template-notifications" :
-            return <PushTemplates />
-
-          case "marketing-traffic":
-            return <MarketingTrafficPanel />
-
-          case "marketing-seo":
-            return <SeoKeywordsPanel />
-
-
-            case "integrations-payment":
-              return <PaymentIntegrationsPage />
-
-            case "integrations-communication":
-              return <CommunicationIntegrationsPage />
-
-            case "integrations-travel":
-              return <TravelIntegrationsPage />
-
-
-        //settings
+        case "marketing-email":
+          return <EmailCampaigns />
+        case "template-email":
+          return <EmailTemplates />
+        case "marketing-notifications":
+          return <PushNotifications />
+        case "template-notifications":
+          return <PushTemplates />
+        case "marketing-traffic":
+          return <MarketingTrafficPanel />
+        case "marketing-seo":
+          return <SeoKeywordsPanel />
+        case "integrations-payment":
+          return <PaymentIntegrationsPage />
+        case "integrations-communication":
+          return <CommunicationIntegrationsPage />
+        case "integrations-travel":
+          return <TravelIntegrationsPage />
         case "settings-modules":
           return <SettingsModulesPage />
-
         case "settings-notifications":
           return <SettingsNotificationsPage />
-
         case "settings-security":
           return <SettingsSecurityPage />
-
         case "settings-language":
           return <SettingsLanguagePage />
-
         case "settings-backup":
           return <SettingsBackupPage />
-
         case "settings-deactivations":
           return <AccountDeactivationsPage />
-
-        // Content (CMS sub-items — must match sidebar ids)
         case "content-news":
           return <NewsAnnouncementsPage />
         case "content-blog":
@@ -773,20 +698,20 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
           return <MediaLibraryPage />
         case "content-banners":
           return <BannersPage />
-
         default:
           break
       }
     }
 
-    // Handle main sections
     switch (section) {
       case "dashboard":
         return userRole === "SUB_ADMIN" ? <SubAdminAnalyticsPanel /> : <DashboardPage onNavigate={navigateFromDashboard} />
+      case "my-performance":
+        return <MyPerformance />
       case "events":
         return <EventManagement onPromote={navigateToEventPromotions} />
       case "locations":
-        return <CountriesManagement activeTab="countries" /> 
+        return <CountriesManagement activeTab="countries" />
       case "organizers":
         return <OrganizerManagement />
       case "exhibitors":
@@ -836,7 +761,6 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
 
   return (
     <div className={cn("flex min-h-0 min-w-0 flex-1 overflow-hidden", adminPageBg)}>
-      {/* Sidebar */}
       <aside className={cn("flex w-[272px] min-w-[272px] shrink-0 flex-col shadow-[4px_0_24px_-12px_rgba(15,23,42,0.06)]", adminSidebarSurface)}>
         <div className="flex items-center gap-3 border-b border-border px-4 py-4">
           <button
@@ -855,7 +779,6 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
               className={`${NAVBAR_LOGO_COMPACT_CLASSNAME} dark:brightness-110 dark:contrast-95`}
               unoptimized={sidebarLogo.unoptimized}
             />
-            {/* <span className="truncate text-sm font-semibold tracking-tight text-foreground">BizTradeFairs</span> */}
           </div>
         </div>
 
@@ -863,7 +786,7 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
           <div className="space-y-0.5 p-3">
             {filteredSidebarItems.map((item) => (
               <div key={item.id} className="mb-0.5">
-                {item.subItems ? (
+                {item.subItems && item.subItems.length > 0 ? (
                   <div className="rounded-2xl">
                     <button
                       type="button"
@@ -883,9 +806,8 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
                         <span className="truncate text-sm">{item.title}</span>
                       </div>
                       <ChevronDown
-                        className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 ${
-                          isMenuOpen(item.id) ? "rotate-180" : ""
-                        }`}
+                        className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 ${isMenuOpen(item.id) ? "rotate-180" : ""
+                          }`}
                       />
                     </button>
 
@@ -965,7 +887,6 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
         </div>
       </aside>
 
-      {/* Main Content */}
       <main className={cn("min-h-0 flex-1 overflow-y-auto overflow-x-hidden p-5 sm:p-6 lg:p-8", adminPageBg)}>
         {renderContent()}
       </main>

@@ -299,8 +299,8 @@ export function UserDashboard({ userId }: UserDashboardProps) {
         return <Favourites />
       // case "recommended-events":
       //   return <RecommendedEvents userId={resolvedUserId} interests={userInterests} />
-      // case "Suggested":
-      //   return <Recommendations />
+      case "Suggested":
+        return <Recommendations />
       case "connections":
         return <ConnectionsSection userId={resolvedUserId} />
       case "messages":
