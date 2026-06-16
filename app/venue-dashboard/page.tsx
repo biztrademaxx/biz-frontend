@@ -22,7 +22,9 @@ export default function VenueDashboardRoot() {
           `/api/venue-manager/${encodeURIComponent(userId)}`,
         )
         const payload = json.data
-        const name = payload?.manager?.venueName ?? payload?.name ?? ""
+        const rawVenueName = payload?.manager?.venueName?.trim() ?? ""
+        const name =
+          rawVenueName && rawVenueName !== "Unnamed Venue" ? rawVenueName : ""
         router.replace(getVenueDashboardPath(userId, name))
       } catch {
         router.replace(`/venue-dashboard/${userId}`)
