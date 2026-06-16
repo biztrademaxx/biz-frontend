@@ -14,7 +14,7 @@ import {
 
 // Increased height for better text accommodation
 const TILE_CLASS =
-  "group flex h-[148px] w-[200px] shrink-0 cursor-pointer flex-col items-center justify-between rounded-lg border border-[#2563EB] bg-white px-3 pt-3 pb-4 shadow-[0_8px_16px_-10px_rgba(0,0,0,0.18)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_12px_22px_-10px_rgba(0,0,0,0.22)]"
+  "group flex h-[148px] w-[200px] shrink-0 cursor-pointer flex-col items-center justify-between rounded-lg  bg-white px-3 pt-3 pb-4 shadow-[0_8px_16px_-10px_rgba(0,0,0,0.25)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_12px_22px_-10px_rgba(0,0,0,0.22)]"
 
 export interface OrganizerLogoTileProps {
   organizer: OrganizerListEntry

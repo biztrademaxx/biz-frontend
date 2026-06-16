@@ -1,14 +1,30 @@
 "use client"
 
-import { useState, useMemo, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
-import { Search, ChevronDown, Heart, User, Star, MapPin, Calendar, CheckCircle } from "lucide-react"
+import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
+import {
+  ArrowLeft,
+  ArrowRight,
+  Building2,
+  CalendarDays,
+  CheckCircle2,
+  ChevronDown,
+  LayoutGrid,
+  List,
+  MapPin,
+  Mic,
+  Search,
+  Sparkles,
+  Star,
+  UsersRound,
+} from "lucide-react"
+
+import SpeakersListingPageSkeleton from "@/components/SpeakersListingPageSkeleton"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { apiFetch } from "@/lib/api"
 import { getPublicProfilePath } from "@/lib/profile-path"
-import SpeakersListingPageSkeleton from "@/components/SpeakersListingPageSkeleton"
 
 interface Speaker {
   id: string
@@ -30,7 +46,6 @@ interface Speaker {
   certifications: string[]
   speakingExperience: string | null
   isVerified: boolean
-  /** Denormalized on user — used for listing without N+1 event fetches */
   totalEvents: number
   activeEvents: number
   totalAttendees: number
@@ -46,9 +61,6 @@ interface Speaker {
 interface ApiResponse {
   success: boolean
   speakers: Speaker[]
-  filters: {
-    expertise: string[]
-  }
   pagination: {
     page: number
     limit: number
@@ -57,70 +69,111 @@ interface ApiResponse {
   }
 }
 
-function speakerMatchesFilters(s: Speaker, search: string, expertise: string) {
-  if (expertise && !(s.specialties || []).includes(expertise)) return false
+type SortKey = "events" | "upcoming" | "past" | "rating" | "reviews"
+type ViewMode = "grid" | "list"
+
+const SORT_OPTIONS: Array<{ value: SortKey; label: string }> = [
+  { value: "reviews", label: "Reviews" },
+  { value: "rating", label: "Rating" },
+  { value: "events", label: "Total Events" },
+  { value: "upcoming", label: "Upcoming Events" },
+  { value: "past", label: "Past Events" },
+]
+
+const SPEAKERS_PER_PAGE = 5
+
+function speakerMatchesSearch(speaker: Speaker, search: string) {
   const q = search.trim().toLowerCase()
   if (!q) return true
+
   const blob = [
-    s.firstName,
-    s.lastName,
-    `${s.firstName} ${s.lastName}`,
-    s.company,
-    s.bio,
-    s.jobTitle,
-    s.location,
-    ...(s.specialties || []),
+    speaker.firstName,
+    speaker.lastName,
+    `${speaker.firstName} ${speaker.lastName}`,
+    speaker.company,
+    speaker.bio,
+    speaker.jobTitle,
+    speaker.location,
+    ...(speaker.specialties || []),
   ]
     .filter(Boolean)
     .join(" ")
     .toLowerCase()
+
   return blob.includes(q)
+}
+
+function formatSpeakerName(speaker: Speaker) {
+  return `${speaker.firstName || ""} ${speaker.lastName || ""}`.trim() || "Speaker"
+}
+
+function getSpeakerInitials(firstName: string, lastName: string) {
+  return `${firstName?.[0] || ""}${lastName?.[0] || ""}`.toUpperCase()
+}
+
+function getSpeakerAvatarStyles(speaker: Speaker) {
+  const seed = formatSpeakerName(speaker)
+    .split("")
+    .reduce((total, char) => total + char.charCodeAt(0), 0)
+
+  const variants = [
+    "bg-[#DCEAFE] text-[#2563EB]",
+    "bg-[#D9F0FF] text-[#0F9FB7]",
+    "bg-[#E3F0FF] text-[#1D4ED8]",
+  ]
+
+  return variants[seed % variants.length]
+}
+
+function getSpeakerTotalEvents(speaker: Speaker) {
+  return speaker.totalEvents || (speaker.upcomingEventsCount || 0) + (speaker.pastEventsCount || 0)
+}
+
+function getSpeakerUpcomingEvents(speaker: Speaker) {
+  return speaker.upcomingEventsCount || speaker.activeEvents || 0
+}
+
+function getSpeakerPastEvents(speaker: Speaker) {
+  return speaker.pastEventsCount || Math.max(0, getSpeakerTotalEvents(speaker) - getSpeakerUpcomingEvents(speaker))
 }
 
 export default function SpeakersPage() {
   const [searchQuery, setSearchQuery] = useState("")
-  const [selectedExpertise, setSelectedExpertise] = useState("")
-  const [sortBy, setSortBy] = useState("events")
-  const [favorites, setFavorites] = useState<Set<string>>(new Set())
+  const [sortBy, setSortBy] = useState<SortKey>("reviews")
+  const [viewMode, setViewMode] = useState<ViewMode>("grid")
+  const [currentPage, setCurrentPage] = useState(1)
   const [speakers, setSpeakers] = useState<Speaker[]>([])
-  const [availableExpertise, setAvailableExpertise] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
 
-  /** One list fetch: backend ignores search query params; N+1 /events calls were inflating edge/server load on every keystroke. */
   useEffect(() => {
     let cancelled = false
 
     async function fetchSpeakers() {
       try {
         setLoading(true)
-        const data = await apiFetch<ApiResponse>(`/api/speakers`, {
-          auth: false,
-        })
+        const data = await apiFetch<ApiResponse>("/api/speakers", { auth: false })
 
         if (!data.success) {
           throw new Error("Failed to load speakers")
         }
 
-        const allExpertise = data.speakers.flatMap((speaker) => speaker.specialties || [])
-        const uniqueExpertise = [...new Set(allExpertise)].filter(Boolean)
+        const normalizedSpeakers: Speaker[] = data.speakers.map((speaker) => {
+          const totalEvents = speaker.totalEvents ?? 0
+          const upcomingEvents = speaker.activeEvents ?? speaker.upcomingEventsCount ?? 0
 
-        const withEventCounts: Speaker[] = data.speakers.map((speaker) => {
-          const total = speaker.totalEvents ?? 0
-          const active = speaker.activeEvents ?? 0
           return {
             ...speaker,
-            upcomingEventsCount: active,
-            pastEventsCount: Math.max(0, total - active),
-            totalEvents: total,
-            activeEvents: active,
+            totalEvents,
+            activeEvents: upcomingEvents,
+            upcomingEventsCount: upcomingEvents,
+            pastEventsCount: Math.max(0, totalEvents - upcomingEvents),
           }
         })
 
         if (!cancelled) {
-          setSpeakers(withEventCounts)
-          setAvailableExpertise(uniqueExpertise)
+          setSpeakers(normalizedSpeakers)
         }
       } catch (err) {
         if (!cancelled) {
@@ -135,43 +188,60 @@ export default function SpeakersPage() {
     }
 
     fetchSpeakers()
+
     return () => {
       cancelled = true
     }
   }, [])
-  const toggleFavorite = (speakerId: string) => {
-    const newFavorites = new Set(favorites)
-    if (newFavorites.has(speakerId)) {
-      newFavorites.delete(speakerId)
-    } else {
-      newFavorites.add(speakerId)
-    }
-    setFavorites(newFavorites)
-  }
 
   const filteredSpeakers = useMemo(() => {
-    let filtered = speakers.filter((s) =>
-      speakerMatchesFilters(s, searchQuery, selectedExpertise),
-    )
+    const next = speakers.filter((speaker) => speakerMatchesSearch(speaker, searchQuery))
 
-    filtered.sort((a, b) => {
+    next.sort((a, b) => {
       switch (sortBy) {
         case "rating":
           return (b.averageRating || 0) - (a.averageRating || 0)
         case "reviews":
           return (b.totalReviews || 0) - (a.totalReviews || 0)
         case "upcoming":
-          return (b.upcomingEventsCount || 0) - (a.upcomingEventsCount || 0)
+          return getSpeakerUpcomingEvents(b) - getSpeakerUpcomingEvents(a)
         case "past":
-          return (b.pastEventsCount || 0) - (a.pastEventsCount || 0)
+          return getSpeakerPastEvents(b) - getSpeakerPastEvents(a)
         case "events":
         default:
-          return (b.totalEvents || 0) - (a.totalEvents || 0)
+          return getSpeakerTotalEvents(b) - getSpeakerTotalEvents(a)
       }
     })
 
-    return filtered
-  }, [speakers, sortBy, searchQuery, selectedExpertise])
+    return next
+  }, [searchQuery, sortBy, speakers])
+
+  const totalSpeakerPages = Math.max(1, Math.ceil(filteredSpeakers.length / SPEAKERS_PER_PAGE))
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchQuery, sortBy])
+
+  useEffect(() => {
+    if (currentPage > totalSpeakerPages) {
+      setCurrentPage(totalSpeakerPages)
+    }
+  }, [currentPage, totalSpeakerPages])
+
+  const pagedSpeakers = useMemo(() => {
+    const start = (currentPage - 1) * SPEAKERS_PER_PAGE
+    return filteredSpeakers.slice(start, start + SPEAKERS_PER_PAGE)
+  }, [currentPage, filteredSpeakers])
+
+  const totalEvents = useMemo(
+    () => filteredSpeakers.reduce((sum, speaker) => sum + getSpeakerTotalEvents(speaker), 0),
+    [filteredSpeakers],
+  )
+
+  const totalUpcomingEvents = useMemo(
+    () => filteredSpeakers.reduce((sum, speaker) => sum + getSpeakerUpcomingEvents(speaker), 0),
+    [filteredSpeakers],
+  )
 
   const handleSpeakerClick = (speaker: Speaker) => {
     router.push(
@@ -184,271 +254,366 @@ export default function SpeakersPage() {
     )
   }
 
-  const getInitials = (firstName: string, lastName: string) => {
-    return `${firstName?.[0] || ''}${lastName?.[0] || ''}`.toUpperCase()
-  }
-
-  // Calculate total events for a speaker
-  const getTotalEvents = (speaker: Speaker) => {
-    return speaker.totalEvents || (speaker.upcomingEventsCount || 0) + (speaker.pastEventsCount || 0)
-  }
-
   if (loading) {
     return <SpeakersListingPageSkeleton />
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-red-600 text-xl">Error: {error}</div>
-        <Button
-          onClick={() => window.location.reload()}
-          className="ml-4"
-        >
-          Retry
-        </Button>
+      <div className="flex min-h-screen items-center justify-center bg-[#F6F8FC] px-4">
+        <div className="rounded-3xl border border-red-100 bg-white px-6 py-8 text-center shadow-sm">
+          <p className="text-lg font-semibold text-red-600">Error: {error}</p>
+          <Button
+            onClick={() => window.location.reload()}
+            className="mt-4 bg-[#123D86] hover:bg-[#0E3270]"
+          >
+            Retry
+          </Button>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Search Bar */}
-        <div className="mb-8">
-          <div className="relative max-w-2xl mx-auto">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-            <input
-              type="text"
-              placeholder="Search speakers by name, expertise, company, or bio..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 py-3 text-lg border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
-        </div>
-
-        {/* Filters and Stats */}
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-8 space-y-4 lg:space-y-0">
-          {/* Stats */}
-          <div className="flex items-center space-x-6">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-gray-900">{filteredSpeakers.length}</div>
-              <div className="text-sm text-gray-600">Speakers</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-gray-900">
-                {filteredSpeakers.reduce((sum, speaker) => sum + getTotalEvents(speaker), 0)}
-              </div>
-              <div className="text-sm text-gray-600">Total Events</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-gray-900">
-                {filteredSpeakers.reduce((sum, speaker) => sum + (speaker.upcomingEventsCount || 0), 0)}
-              </div>
-              <div className="text-sm text-gray-600">Upcoming Events</div>
-            </div>
-          </div>
-
-          {/* Filters */}
-          <div className="flex flex-wrap items-center gap-4">
-            {/* Expertise Filter */}
-            {/* <div className="relative">
-              <select
-                value={selectedExpertise}
-                onChange={(e) => setSelectedExpertise(e.target.value)}
-                className="appearance-none bg-white border border-gray-300 rounded-md px-4 py-2 pr-8 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="">All Expertise</option>
-                {availableExpertise.map((expertise) => (
-                  <option key={expertise} value={expertise}>
-                    {expertise}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-            </div> */}
-
-            {/* Sort By */}
-            <div className="relative">
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="appearance-none bg-white border border-gray-300 rounded-md px-4 py-2 pr-8 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="events">Sort by Total Events</option>
-                <option value="upcoming">Sort by Upcoming Events</option>
-                <option value="past">Sort by Past Events</option>
-                <option value="rating">Sort by Rating</option>
-                <option value="reviews">Sort by Reviews</option>
-              </select>
-              <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-            </div>
-          </div>
-        </div>
-
-        {/* Clear Filters */}
-        {(selectedExpertise || searchQuery) && (
-          <div className="mb-6 flex items-center space-x-2">
-            <span className="text-sm text-gray-500">Active filters:</span>
-            {searchQuery && (
-              <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-                Search: {searchQuery}
-              </Badge>
-            )}
-            {selectedExpertise && (
-              <Badge variant="secondary" className="bg-purple-100 text-purple-800">
-                Expertise: {selectedExpertise}
-              </Badge>
-            )}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                setSearchQuery("")
-                setSelectedExpertise("")
-              }}
-              className="text-xs text-gray-500 hover:text-gray-700"
-            >
-              Clear all
-            </Button>
-          </div>
-        )}
-
-        {/* Speakers Grid */}
-        {filteredSpeakers.length === 0 ? (
-          <div className="text-center py-12">
-            <User className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">No speakers found</h3>
-            <p className="text-gray-600">Try adjusting your search criteria or filters</p>
-            <Button
-              onClick={() => {
-                setSearchQuery("")
-                setSelectedExpertise("")
-              }}
-              className="mt-4"
-            >
-              Clear Filters
-            </Button>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredSpeakers.map((speaker) => (
-              <div
-                key={speaker.id}
-                className="bg-white rounded-lg border border-gray-200 p-4 flex hover:shadow-md transition-all duration-200 relative cursor-pointer group"
-                onClick={() => handleSpeakerClick(speaker)}
-              >
-                {/* Favorite Button */}
-                {/* <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    toggleFavorite(speaker.id)
-                  }}
-                  className="absolute top-2 right-2 p-1 hover:bg-gray-100 rounded-full z-10"
-                >
-                  <Heart
-                    className={`w-4 h-4 ${
-                      favorites.has(speaker.id)
-                        ? "fill-red-500 text-red-500"
-                        : "text-gray-400 hover:text-red-500"
-                    }`}
-                  />
-                </button> */}
-
-                {/* Left: Image */}
-                <div className="relative w-20 h-20 shrink-0">
-                  <Avatar className="w-20 h-20 border-2 border-blue-100">
-                    <AvatarImage
-                      src={speaker.avatar || ""}
-                      alt={`${speaker.firstName} ${speaker.lastName}`}
-                    />
-                    <AvatarFallback className="text-sm font-semibold bg-blue-100 text-blue-600">
-                      {getInitials(speaker.firstName, speaker.lastName)}
-                    </AvatarFallback>
-                  </Avatar>
-                  {speaker.isVerified && (
-                    <div className="absolute -top-1 -right-1 bg-green-500 rounded-full p-0.5 shadow">
-                      <CheckCircle className="w-3 h-3 text-white" />
-                    </div>
-                  )}
-                </div>
-
-                {/* Right: Content */}
-                <div className="ml-4 flex flex-col justify-between flex-1">
-                  {/* Top Info */}
-                  <div>
-                    <h3 className="text-sm font-semibold text-blue-600">
-                      {speaker.firstName} {speaker.lastName}
-                    </h3>
-                    <p className="text-xs text-gray-500">{speaker.jobTitle}</p>
-                    {speaker.company && (
-                      <p className="text-xs text-blue-500">{speaker.company}</p>
-                    )}
-                    {speaker.location && (
-                      <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
-                        <MapPin className="w-3 h-3" />
-                        <span>{speaker.location}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Stats */}
-                  <div className="flex flex-col gap-2 text-xs text-gray-600 mt-2">
-                    <div className="flex items-center justify-between">
-                      {/* <div className="flex items-center gap-1">
-                        <Star className="w-3 h-3 text-yellow-400" />
-                        <span>{(speaker.averageRating || 0).toFixed(1)}</span>
-                        <span>({speaker.totalReviews})</span>
-                      </div> */}
-                      <div className="font-semibold text-blue-600">
-                        {getTotalEvents(speaker)} Total Events
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1 text-green-600">
-                        <Calendar className="w-3 h-3" />
-                        <span>{speaker.upcomingEventsCount || 0} Upcoming Events</span>
-                      </div>
-                      <div className="text-gray-500">
-                        {speaker.pastEventsCount || 0} Past Events
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Tags */}
-                  <div className="flex flex-wrap gap-1 mt-2">
-                    {(speaker.specialties || []).slice(0, 3).map((skill, index) => (
-                      <Badge key={index} className="text-[10px] px-2 py-0.5 bg-gray-100 text-gray-700">
-                        {skill}
-                      </Badge>
-                    ))}
-                    {(speaker.specialties?.length || 0) > 3 && (
-                      <Badge className="text-[10px] px-2 py-0.5 bg-gray-100 text-gray-700">
-                        +{speaker.specialties.length - 3}
-                      </Badge>
-                    )}
-
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Load More Button - Future Enhancement */}
-        {filteredSpeakers.length > 0 && (
-          <div className="flex justify-center mt-12">
-            <div className="text-center">
-              <p className="text-gray-600 mb-4">
-                Showing {filteredSpeakers.length} of {speakers.length} speakers
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(23,76,154,0.08),transparent_24%),linear-gradient(180deg,#FFFFFF_0%,#F8FAFD_100%)] text-[#102A5E]">
+      <div className="mx-auto max-w-[1380px] px-4 py-6 sm:px-8 lg:px-14 lg:py-8">
+        <div className="px-1 sm:px-2 lg:px-0">
+          <section className="border-b border-[#DFE6F1] pb-6 lg:flex lg:items-start lg:justify-between lg:gap-10">
+            <div className="max-w-[460px] shrink-0 lg:w-[35%]">
+              <p className="text-base font-semibold tracking-[-0.02em] text-[#1C4A95]">
+  Connect. Inspire. Grow.
+</p>
+             <h1 className="font-montserrat text-[40px] font-[800] leading-[0.96] tracking-[-0.045em]">
+  <span className="text-[#0B132B]">Find speakers</span>
+  <br />
+  <span className="text-[#0B132B]">who </span>
+  <span className="text-[#2563EB]">inspire</span>
+  <span className="text-[#0B132B]"> and </span>
+  <span className="text-[#2563EB]">impact.</span>
+</h1>
+              <p className="mt-5 max-w-[360px] text-[0.92rem] leading-7 text-[#4A608F]">
+                Discover verified speakers and industry leaders for your next event.
               </p>
-              {/* Future: Add pagination or load more functionality */}
             </div>
-          </div>
-        )}
+
+            <div className="space-y-3 pt-6 lg:w-[65%] lg:pt-2">
+              <div className="relative overflow-hidden rounded-[20px] bg-[linear-gradient(135deg,#0C2760_0%,#123D86_100%)] shadow-[0_14px_30px_rgba(18,61,134,0.18)]">
+                <Search className="pointer-events-none absolute left-6 top-1/2 h-6 w-6 -translate-y-1/2 text-white/80" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  placeholder="Search speakers by name, expertise, company, or bio..."
+                  className="h-[54px] w-full bg-transparent pl-16 pr-6 text-[0.96rem] text-white placeholder:text-white/75 focus:outline-none"
+                />
+              </div>
+
+              <div className="grid gap-3 md:grid-cols-3">
+                <div className="rounded-[20px] border border-[#E2E8F4] bg-white px-5 py-3.5 shadow-[0_10px_24px_rgba(16,42,94,0.06)]">
+                  <div className="flex items-center gap-4">
+                    <div className="flex h-13 w-13 items-center justify-center rounded-full bg-[linear-gradient(180deg,#15458F_0%,#0E2E67_100%)] text-white shadow-[0_10px_20px_rgba(16,42,94,0.16)]">
+                      <UsersRound className="h-6 w-6" />
+                    </div>
+                    <div>
+                      <div className="font-serif text-[2.35rem] font-semibold leading-none text-[#102A5E]">
+                        {filteredSpeakers.length}
+                      </div>
+                      <p className="mt-1 font-serif text-[1.05rem] font-semibold leading-none text-[#102A5E]">
+                        Speakers
+                      </p>
+                      <p className="mt-1.5 text-[0.84rem] text-[#5B6F98]">Active in our community</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-[20px] border border-[#E2E8F4] bg-white px-5 py-3.5 shadow-[0_10px_24px_rgba(16,42,94,0.06)]">
+                  <div className="flex items-center gap-4">
+                    <div className="flex h-13 w-13 items-center justify-center rounded-full bg-[linear-gradient(180deg,#15458F_0%,#0E2E67_100%)] text-white shadow-[0_10px_20px_rgba(16,42,94,0.16)]">
+                      <CalendarDays className="h-6 w-6" />
+                    </div>
+                    <div>
+                      <div className="font-serif text-[2.35rem] font-semibold leading-none text-[#102A5E]">
+                        {totalEvents}
+                      </div>
+                      <p className="mt-1 whitespace-nowrap font-serif text-[1.05rem] font-semibold leading-none text-[#102A5E]">
+                        Total Events
+                      </p>
+                      <p className="mt-1.5 text-[0.84rem] text-[#5B6F98]">Hosted by speakers</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-[20px] border border-[#E2E8F4] bg-white px-5 py-3.5 shadow-[0_10px_24px_rgba(16,42,94,0.06)]">
+                  <div className="flex items-center gap-4">
+                    <div className="flex h-13 w-13 items-center justify-center rounded-full bg-[linear-gradient(180deg,#15458F_0%,#0E2E67_100%)] text-white shadow-[0_10px_20px_rgba(16,42,94,0.16)]">
+                      <CalendarDays className="h-6 w-6" />
+                    </div>
+                    <div>
+                      <div className="font-serif text-[2.35rem] font-semibold leading-none text-[#102A5E]">
+                        {totalUpcomingEvents}
+                      </div>
+                      <p className="mt-1 whitespace-nowrap font-serif text-[1.05rem] font-semibold leading-none text-[#102A5E]">
+                        Upcoming Events
+                      </p>
+                      <p className="mt-1.5 text-[0.84rem] text-[#5B6F98]">Speakers joining soon</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section className="pt-5">
+            <div className="flex flex-col gap-5 border-b border-[#DFE6F1] pb-5 lg:flex-row lg:items-end lg:justify-between">
+              <div>
+                <div className="flex items-center gap-3">
+                  <Sparkles className="h-6 w-6 text-[#123D86]" />
+                  <h2 className="font-montserrat text-[1.85rem] font-[700] tracking-[-0.035em] text-[#102A5E] lg:text-[2.1rem]">
+                    Featured Speakers
+                  </h2>
+                </div>
+                <p className="mt-1 text-[0.98rem] text-[#4F638F] lg:text-[1.02rem]">
+                  Top rated and most engaging speakers
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+                <div className="flex items-center gap-3">
+                  <span className="text-lg text-[#314978]">Sort by:</span>
+                  <div className="relative">
+                    <select
+                      value={sortBy}
+                      onChange={(event) => setSortBy(event.target.value as SortKey)}
+                      className="h-[50px] min-w-[190px] appearance-none rounded-2xl border border-[#E2E8F4] bg-white pl-4 pr-12 text-[1.05rem] font-semibold text-[#102A5E] shadow-[0_10px_30px_rgba(16,42,94,0.06)] focus:outline-none"
+                    >
+                      {SORT_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#102A5E]" />
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setViewMode("grid")}
+                    aria-label="Grid view"
+                    className={`flex h-[50px] w-[50px] items-center justify-center rounded-2xl border transition-colors ${
+                      viewMode === "grid"
+                        ? "border-[#123D86] bg-[#123D86] text-white shadow-[0_14px_26px_rgba(18,61,134,0.2)]"
+                        : "border-[#E2E8F4] bg-white text-[#102A5E]"
+                    }`}
+                  >
+                    <LayoutGrid className="h-6 w-6" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setViewMode("list")}
+                    aria-label="List view"
+                    className={`flex h-[50px] w-[50px] items-center justify-center rounded-2xl border transition-colors ${
+                      viewMode === "list"
+                        ? "border-[#123D86] bg-[#123D86] text-white shadow-[0_14px_26px_rgba(18,61,134,0.2)]"
+                        : "border-[#E2E8F4] bg-white text-[#102A5E]"
+                    }`}
+                  >
+                    <List className="h-6 w-6" />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {filteredSpeakers.length === 0 ? (
+              <div className="flex min-h-[320px] flex-col items-center justify-center rounded-[30px] border border-dashed border-[#D6E0F0] bg-white/70 px-6 text-center">
+                <UsersRound className="h-14 w-14 text-[#9AAACA]" />
+                <h3 className="truncate font-montserrat text-[1.24rem] font-[600] leading-none tracking-[-0.03em] text-[#102A5E] lg:text-[1.34rem]">
+                  No speakers found
+                </h3>
+                <p className="mt-2 max-w-md text-lg text-[#5B6F98]">
+                  Try a different search term to explore more speakers from our community.
+                </p>
+                <Button
+                  onClick={() => setSearchQuery("")}
+                  className="mt-6 rounded-xl bg-[#123D86] px-5 py-2 text-base hover:bg-[#0E3270]"
+                >
+                  Clear Search
+                </Button>
+              </div>
+            ) : (
+              <>
+                <div
+                  className={`mt-6 grid gap-4 ${
+                    viewMode === "grid"
+                      ? "grid-cols-1 xl:grid-cols-3"
+                      : "grid-cols-1"
+                  }`}
+                >
+                  {pagedSpeakers.map((speaker) => (
+                    <article
+                      key={speaker.id}
+                      className={`group cursor-pointer overflow-hidden rounded-[22px] border border-[#E4EAF5] bg-white p-4 shadow-[0_10px_28px_rgba(16,42,94,0.08)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_16px_40px_rgba(16,42,94,0.12)] ${
+                        viewMode === "list" ? "flex flex-col sm:flex-row sm:items-start sm:gap-6" : ""
+                      }`}
+                      onClick={() => handleSpeakerClick(speaker)}
+                    >
+                      <div className={viewMode === "list" ? "sm:shrink-0" : ""}>
+                        <Avatar className="h-[72px] w-[72px] border border-[#DDE5F3] shadow-[0_8px_18px_rgba(16,42,94,0.08)]">
+                          <AvatarFallback
+                            className={`${getSpeakerAvatarStyles(speaker)} font-semibold`}
+                          >
+                            {getSpeakerInitials(speaker.firstName, speaker.lastName)}
+                          </AvatarFallback>
+                        </Avatar>
+                      </div>
+
+                      <div className={`mt-3 flex-1 ${viewMode === "list" ? "sm:mt-0" : ""}`}>
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                              <h3 className="truncate font-serif text-[1.24rem] font-semibold leading-none tracking-[-0.03em] text-[#102A5E] lg:text-[1.34rem]">
+                                {formatSpeakerName(speaker)}
+                              </h3>
+                              {speaker.isVerified ? (
+                                <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-[#1F8B4C]" />
+                              ) : null}
+                            </div>
+                            <p className="mt-1.5 text-[0.82rem] leading-none text-[#445C8E] lg:text-[0.88rem]">
+                              {speaker.jobTitle || "Industry Speaker"}
+                            </p>
+
+                            {speaker.company ? (
+                              <div className="mt-2.5 flex items-center gap-2 text-[0.82rem] text-[#123D86] lg:text-[0.88rem]">
+                                <Building2 className="h-3.5 w-3.5 shrink-0" />
+                                <span className="truncate">{speaker.company}</span>
+                              </div>
+                            ) : null}
+
+                            {speaker.location ? (
+                              <div className="mt-1.5 flex items-center gap-2 text-[0.82rem] text-[#445C8E] lg:text-[0.88rem]">
+                                <MapPin className="h-3.5 w-3.5 shrink-0" />
+                                <span className="truncate">{speaker.location}</span>
+                              </div>
+                            ) : null}
+                          </div>
+                        </div>
+
+                        <div className="mt-4 flex flex-wrap gap-1.5">
+                          {(speaker.specialties || []).slice(0, 3).map((specialty) => (
+                            <Badge
+                              key={specialty}
+                              variant="secondary"
+                              className="rounded-full border border-[#E2E8F4] bg-[#F3F6FB] px-3 py-1 text-[0.74rem] font-medium text-[#123D86]"
+                            >
+                              {specialty}
+                            </Badge>
+                          ))}
+                        </div>
+
+                        <div className="mt-4 border-t border-[#E4EAF5] pt-3.5">
+                          <div className="grid grid-cols-3 gap-3">
+                            <div className="pr-2">
+                              <div className="flex items-center gap-1.5 text-[#123D86]">
+                                <Star className="h-4 w-4 fill-current" />
+                                <span className="text-[0.98rem] font-semibold lg:text-[1.06rem]">
+                                  {(speaker.averageRating || 0).toFixed(1)}
+                                </span>
+                              </div>
+                              <p className="mt-1 text-[0.76rem] text-[#445C8E] lg:text-[0.8rem]">
+                                ({speaker.totalReviews || 0} reviews)
+                              </p>
+                            </div>
+
+                            <div className="border-l border-[#E4EAF5] px-3">
+                              <div className="flex items-center gap-1.5 text-[#123D86]">
+                                <Mic className="h-4 w-4" />
+                                <span className="text-[0.98rem] font-semibold lg:text-[1.06rem]">
+                                  {getSpeakerTotalEvents(speaker)}
+                                </span>
+                              </div>
+                              <p className="mt-1 text-[0.76rem] text-[#445C8E] lg:text-[0.8rem]">Total Events</p>
+                            </div>
+
+                            <div className="border-l border-[#E4EAF5] px-3">
+                              <div className="flex items-center gap-1.5 text-[#123D86]">
+                                <CalendarDays className="h-4 w-4" />
+                                <span className="text-[0.98rem] font-semibold lg:text-[1.06rem]">
+                                  {getSpeakerUpcomingEvents(speaker)}
+                                </span>
+                              </div>
+                              <p className="mt-1 text-[0.76rem] text-[#445C8E] lg:text-[0.8rem]">Upcoming</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </article>
+                  ))}
+
+                  <aside className="min-h-[220px] overflow-hidden rounded-[22px] bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.08),transparent_32%),linear-gradient(135deg,#0E2E67_0%,#133E8A_100%)] p-5 text-white shadow-[0_18px_50px_rgba(18,61,134,0.2)]">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10">
+                      <UsersRound className="h-5 w-5" />
+                    </div>
+                    <h3 className="mt-4 font-serif text-[1.42rem] font-semibold tracking-[-0.03em]">
+                      Are you a speaker?
+                    </h3>
+                    <p className="mt-2.5 max-w-sm text-[0.88rem] leading-6 text-white/88">
+                      Join our community and get discovered by event organizers worldwide.
+                    </p>
+
+                    <Button
+                      type="button"
+                      onClick={() => router.push("/signup")}
+                      className="mt-4 h-[42px] rounded-2xl bg-white px-4 text-sm font-semibold text-[#123D86] hover:bg-white/95"
+                    >
+                      Join as a Speaker
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+
+                    <div className="mt-5 space-y-2.5 text-[0.82rem] text-white/92">
+                      <div className="flex items-center gap-3">
+                        <CheckCircle2 className="h-5 w-5 shrink-0" />
+                        <span>Showcase your expertise</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <CheckCircle2 className="h-5 w-5 shrink-0" />
+                        <span>Connect with global organizers</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <CheckCircle2 className="h-5 w-5 shrink-0" />
+                        <span>Grow your speaking career</span>
+                      </div>
+                    </div>
+                  </aside>
+                </div>
+
+                <div className="mt-8 flex items-center justify-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+                    disabled={currentPage === 1}
+                    className="flex h-12 w-12 items-center justify-center rounded-2xl border border-[#E2E8F4] bg-white text-[#123D86] shadow-sm transition disabled:cursor-not-allowed disabled:opacity-45"
+                  >
+                    <ArrowLeft className="h-5 w-5" />
+                  </button>
+
+                  <div className="flex h-12 min-w-[48px] items-center justify-center rounded-2xl bg-[#123D86] px-4 text-xl font-semibold text-white shadow-[0_14px_30px_rgba(18,61,134,0.2)]">
+                    {currentPage}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage((page) => Math.min(totalSpeakerPages, page + 1))}
+                    disabled={currentPage === totalSpeakerPages}
+                    className="flex h-12 w-12 items-center justify-center rounded-2xl border border-[#E2E8F4] bg-white text-[#123D86] shadow-sm transition disabled:cursor-not-allowed disabled:opacity-45"
+                  >
+                    <ArrowRight className="h-5 w-5" />
+                  </button>
+                </div>
+              </>
+            )}
+          </section>
+        </div>
       </div>
     </div>
   )
