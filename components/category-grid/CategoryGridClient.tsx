@@ -37,10 +37,10 @@ import { formatEventCountDisplay } from "@/lib/format-event-count"
 const NAV_BLUE = "#002C71"
 
 const categoryCardClass =
-  "group flex min-h-[120px] w-full flex-col items-start rounded-lg border border-[#2563EB] bg-white px-3 py-3.5 text-left shadow-[0_8px_16px_-10px_rgba(0,0,0,0.18)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_12px_22px_-10px_rgba(0,0,0,0.22)]"
+  "group flex min-h-[120px] w-full flex-col items-start rounded-sm  bg-white px-3 py-3.5 text-left shadow-[0_8px_16px_-10px_rgba(0,0,0,0.18)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_12px_22px_-10px_rgba(0,0,0,0.22)]"
 
 const viewAllCardClass =
-  "flex min-h-[110px] w-full items-center justify-center rounded-md border border-[#002C71]/20 bg-[#002C71]/[0.06] px-3 py-3 text-center text-sm font-medium shadow-sm transition-colors duration-200 hover:border-[#002C71]/35 hover:bg-[#002C71]/10"
+  "flex min-h-[110px] w-full items-center justify-center rounded-sm bg-[#002C71]/[0.06] px-3 py-3 text-center text-sm font-medium shadow-sm transition-colors duration-200 hover:border-[#002C71]/35 hover:bg-[#002C71]/10"
 
 function categoryIconForName(name: string): LucideIcon {
   const n = name.toLowerCase()
