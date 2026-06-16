@@ -99,7 +99,8 @@ export default function SignupFormCard({ variant, onRegistrationSuccess }: Signu
     const newErrors: Record<string, string> = {}
 
     if (!formData.fullName.trim()) {
-      newErrors.fullName = "Full name is required"
+      newErrors.fullName =
+        userType === "venue" ? "Venue name is required" : "Full name is required"
     }
 
     if (!formData.email.trim()) {
@@ -275,6 +276,7 @@ export default function SignupFormCard({ variant, onRegistrationSuccess }: Signu
         website: formData.website,
         userType,
         selectedPlan: userType === "organiser" ? selectedPlan : null,
+        ...(userType === "venue" ? { venueName: formData.fullName.trim() } : {}),
       }
 
       const res = await fetch(
@@ -386,7 +388,7 @@ export default function SignupFormCard({ variant, onRegistrationSuccess }: Signu
   }
 
   const isCompanyRequired = () => {
-    return ["exhibitor", "organiser", "venue"].includes(userType)
+    return ["exhibitor", "organiser"].includes(userType)
   }
 
   const pricingPlans = [
@@ -561,11 +563,15 @@ export default function SignupFormCard({ variant, onRegistrationSuccess }: Signu
                 <form onSubmit={handleSubmitForm} className="space-y-4">
                   <div className="flex grid-cols-2 gap-1">
                     <div className="relative">
-                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      {userType === "venue" ? (
+                        <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      ) : (
+                        <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      )}
                       <Input
                         type="text"
                         name="fullName"
-                        placeholder="Full Name"
+                        placeholder={userType === "venue" ? "Venue Name" : "Full Name"}
                         value={formData.fullName}
                         onChange={handleInputChange}
                         className={`pl-10 ${errors.fullName ? "border-red-500" : ""}`}
@@ -606,19 +612,21 @@ export default function SignupFormCard({ variant, onRegistrationSuccess }: Signu
                       {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
                     </div>
 
-                    <div className="relative">
-                      <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                      <Input
-                        type="text"
-                        name="companyName"
-                        placeholder={getPlaceholderText()}
-                        value={formData.companyName}
-                        onChange={handleInputChange}
-                        className={`pl-10 ${errors.companyName ? "border-red-500" : ""}`}
-                        required={isCompanyRequired()}
-                      />
-                      {errors.companyName && <p className="text-red-500 text-xs mt-1">{errors.companyName}</p>}
-                    </div>
+                    {userType !== "venue" && (
+                      <div className="relative">
+                        <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <Input
+                          type="text"
+                          name="companyName"
+                          placeholder={getPlaceholderText()}
+                          value={formData.companyName}
+                          onChange={handleInputChange}
+                          className={`pl-10 ${errors.companyName ? "border-red-500" : ""}`}
+                          required={isCompanyRequired()}
+                        />
+                        {errors.companyName && <p className="text-red-500 text-xs mt-1">{errors.companyName}</p>}
+                      </div>
+                    )}
                   </div>
 
                   {userType !== "visitor" && (
