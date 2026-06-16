@@ -6,7 +6,7 @@ import type { BrowseByCountryServerPayload } from "@/lib/browse-by-country/types
 import { countryEventsCountLabel } from "./utils/country-events-count-label"
 
 const browseCardClass =
-  "group flex w-full min-h-[120px] cursor-pointer flex-col rounded-lg border border-[#2563EB] bg-white px-3 py-3.5 text-left shadow-[0_8px_16px_-10px_rgba(0,0,0,0.18)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_12px_22px_-10px_rgba(0,0,0,0.22)] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+  "group flex w-full min-h-[120px] cursor-pointer flex-col rounded-none bg-white px-3 py-3.5 text-left shadow-[0_4px_20px_rgba(0,0,0,0.12)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_12px_22px_-10px_rgba(0,0,0,0.22)] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
 const browseGridClass =
   "grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-6 md:gap-3 lg:gap-4"
 
