@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { getCurrentUserId, isAuthenticated } from "@/lib/api"
+import Image from "next/image"
 import { AppImage } from "@/components/app-image"
 import {
   MapPin,
@@ -1050,7 +1051,7 @@ export default function ExhibitorPage() {
                             >
                               {/* Event Image */}
                               <div className="relative w-20 h-20 flex-shrink-0">
-                                <Image
+                                <AppImage
                                   alt={event.title || "Event"}
                                   src={event.bannerImage || event.thumbnailImage || "/images/signupimg.png"}
                                   fill
