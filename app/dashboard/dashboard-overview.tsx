@@ -12,6 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { AppImage } from "@/components/app-image"
 import { EVENT_CARD_PLACEHOLDER_IMAGE, getEventCardImageUrl } from "@/lib/event-card-meta"
 import { cn } from "@/lib/utils"
+import { apiFetch, getCurrentUserId, isAuthenticated } from "@/lib/api"
+import { useToast } from "@/hooks/use-toast"
 
 interface DashboardOverviewProps {
   userId: string
@@ -105,13 +107,97 @@ function formatEventDateRange(start?: string, end?: string): string {
 
 export function DashboardOverview({ userId, events, userName, interests = [] }: DashboardOverviewProps) {
   const { setActiveSection } = useDashboard()
+  const { toast } = useToast()
   const [suggestedEvents, setSuggestedEvents] = useState<SuggestedEvent[]>([])
   const [loadingSuggested, setLoadingSuggested] = useState(false)
   const [selectedEventFilter, setSelectedEventFilter] = useState<string>("all")
+  const [savedEventIds, setSavedEventIds] = useState<Set<string>>(new Set())
+  const [savingInProgress, setSavingInProgress] = useState<Set<string>>(new Set())
 
   const upcomingEvents = events?.filter((e) => new Date(e.startDate) > new Date()).slice(0, 5) || []
   const interestedCount = events?.length || 0
   const upcomingCount = upcomingEvents.length
+
+  // Load saved events on mount
+  useEffect(() => {
+    if (userId && isAuthenticated()) {
+      fetchSavedEvents()
+    }
+  }, [userId])
+
+  const fetchSavedEvents = async () => {
+    try {
+      // Try the endpoint that matches your backend
+      // Based on your error, it seems you have /api/users/:userId/interested-events
+      const data = await apiFetch<{ events?: any[] }>(`/api/users/${userId}/interested-events`, {
+        auth: true,
+      })
+      const savedIds = new Set((data?.events || []).map((e) => e.id))
+      setSavedEventIds(savedIds)
+    } catch (error) {
+      console.error("Error fetching saved events:", error)
+    }
+  }
+
+  const toggleSaveEvent = async (eventId: string, e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+
+    if (!isAuthenticated()) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to save events",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (savingInProgress.has(eventId)) return
+
+    setSavingInProgress(prev => new Set(prev).add(eventId))
+
+    try {
+      const isSaved = savedEventIds.has(eventId)
+      const method = isSaved ? 'DELETE' : 'POST'
+
+      // Use the endpoint that matches your backend
+      // Based on your error, you have /api/users/:userId/interested-events
+      await apiFetch(`/api/events/${eventId}/save`, {
+        method,
+        auth: true,
+      })
+
+      // Update local state
+      const newSavedEvents = new Set(savedEventIds)
+      if (isSaved) {
+        newSavedEvents.delete(eventId)
+        toast({
+          title: "Event removed",
+          description: "Event has been removed from your saved list",
+        })
+      } else {
+        newSavedEvents.add(eventId)
+        toast({
+          title: "Event saved!",
+          description: "Event has been added to your saved list",
+        })
+      }
+      setSavedEventIds(newSavedEvents)
+    } catch (error: any) {
+      console.error("Error toggling save:", error)
+      toast({
+        title: "Error",
+        description: error.message || "Failed to save event. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setSavingInProgress(prev => {
+        const next = new Set(prev)
+        next.delete(eventId)
+        return next
+      })
+    }
+  }
 
   const getVenueName = (event: SuggestedEvent): string => {
     if (!event.venue) return "Venue TBD"
@@ -139,7 +225,6 @@ export function DashboardOverview({ userId, events, userName, interests = [] }: 
     return "EVENT"
   }
 
-  // Helper: check if an event matches any of the user's interests
   const matchesInterests = (event: SuggestedEvent, userInterests: string[]): boolean => {
     if (!userInterests || userInterests.length === 0) return true
     const normalised = userInterests.map((i) => i.toLowerCase())
@@ -167,7 +252,6 @@ export function DashboardOverview({ userId, events, userName, interests = [] }: 
       try {
         setLoadingSuggested(true)
 
-        // Fetch a larger pool so filtering still yields enough results
         const response = await fetch(`/api/events/recent?limit=50`)
         if (!response.ok) throw new Error("Failed to fetch recent events")
 
@@ -175,9 +259,7 @@ export function DashboardOverview({ userId, events, userName, interests = [] }: 
         const allEvents = Array.isArray(data) ? data : []
 
         if (interests && interests.length > 0) {
-          // First pass: strict match against user interests
           const matched = allEvents.filter((e) => matchesInterests(e, interests))
-          // If we have enough matched events use them, otherwise pad with recents
           if (matched.length >= 4) {
             setSuggestedEvents(matched.slice(0, 8))
           } else {
@@ -186,7 +268,6 @@ export function DashboardOverview({ userId, events, userName, interests = [] }: 
             setSuggestedEvents([...matched, ...rest].slice(0, 8))
           }
         } else {
-          // No interests set — just show recent events
           setSuggestedEvents(allEvents.slice(0, 8))
         }
       } catch (error) {
@@ -271,14 +352,8 @@ export function DashboardOverview({ userId, events, userName, interests = [] }: 
       ? interests.slice(0, 3).join(", ")
       : null
 
-  const greetingHour = new Date().getHours()
-  const timeGreeting =
-    greetingHour < 12 ? "Good morning" : greetingHour < 17 ? "Good afternoon" : "Good evening"
-
   return (
     <div className="space-y-6">
-      
-
       <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm md:p-6">
         <h2 className="text-lg font-bold text-slate-900 md:text-xl">
           Welcome back, {userName}! 👋
@@ -316,24 +391,13 @@ export function DashboardOverview({ userId, events, userName, interests = [] }: 
         ))}
       </div>
 
-      {/* Calendar + Upcoming — two columns */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card className="h-full border border-slate-100 shadow-sm">
           <CardContent className="p-6">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-lg font-semibold text-slate-900">Event Calendar</h3>
-              {/* <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleNavigation("schedule", false)}
-                className="text-[#004A96]"
-              >
-                View Full →
-              </Button> */}
             </div>
-            {/* <div className="max-h-[300px] overflow-hidden"> */}
-              <DynamicCalendar userId={userId} className="w-full scale-95 origin-top" />
-            {/* </div> */}
+            <DynamicCalendar userId={userId} className="w-full scale-95 origin-top" />
           </CardContent>
         </Card>
 
@@ -439,7 +503,6 @@ export function DashboardOverview({ userId, events, userName, interests = [] }: 
         </Card>
       </div>
 
-      {/* Suggested For You — full width row */}
       <section className="w-full">
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
@@ -465,14 +528,14 @@ export function DashboardOverview({ userId, events, userName, interests = [] }: 
               </Select>
             ) : null}
             <Link href="/event" className="ml-auto sm:ml-0">
-            <Button
-              variant="outline"
-              size="sm"
-              className="border-slate-200 text-[#004A96] hover:bg-slate-50"
-              onClick={() => handleNavigation("recommended-events", false)}
-            >
-              Browse All
-            </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-slate-200 text-[#004A96] hover:bg-slate-50"
+                onClick={() => handleNavigation("recommended-events", false)}
+              >
+                Browse All
+              </Button>
             </Link>
           </div>
         </div>
@@ -489,14 +552,14 @@ export function DashboardOverview({ userId, events, userName, interests = [] }: 
               const location = getLocation(event)
               const categoryLabel = getCategoryLabel(event)
               const badgeColor = CATEGORY_BADGE_STYLES[index % CATEGORY_BADGE_STYLES.length]
+              const isSaved = savedEventIds.has(event.id)
+              const isSaving = savingInProgress.has(event.id)
 
               return (
-                // FIX: p-0 ensures no padding pushes the image down; overflow-hidden clips radius
                 <Card
                   key={event.id}
                   className="overflow-hidden rounded-2xl border border-slate-100 shadow-sm transition hover:shadow-md p-0"
                 >
-                  {/* FIX: image sits flush at the very top, directly inside Card with no wrapper padding */}
                   <div className="relative aspect-[4/3] w-full bg-slate-100">
                     <AppImage
                       src={getEventCardImageUrl(event)}
@@ -506,7 +569,6 @@ export function DashboardOverview({ userId, events, userName, interests = [] }: 
                       fallbackSrc={EVENT_CARD_PLACEHOLDER_IMAGE}
                       className="object-cover"
                     />
-                    {/* FIX: category badge now uses getCategoryLabel which checks all possible fields */}
                     <span
                       className={cn(
                         "absolute left-3 top-3 rounded px-2 py-0.5 text-[10px] font-bold tracking-wide text-white",
@@ -517,11 +579,21 @@ export function DashboardOverview({ userId, events, userName, interests = [] }: 
                     </span>
                     <button
                       type="button"
-                      className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-white/95 shadow-sm"
-                      aria-label="Save event"
-                      onClick={(e) => e.preventDefault()}
+                      className={cn(
+                        "absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full shadow-sm transition-all",
+                        isSaved ? "bg-red-500 text-white hover:bg-red-600" : "bg-white/95 hover:bg-white"
+                      )}
+                      aria-label={isSaved ? "Remove from saved" : "Save event"}
+                      onClick={(e) => toggleSaveEvent(event.id, e)}
+                      disabled={isSaving}
                     >
-                      <Heart className="h-4 w-4 text-red-500" />
+                      {isSaving ? (
+                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-transparent" />
+                      ) : isSaved ? (
+                        <Heart className="h-4 w-4 fill-current" />
+                      ) : (
+                        <Heart className="h-4 w-4 text-red-500" />
+                      )}
                     </button>
                   </div>
                   <CardContent className="p-4">
@@ -549,9 +621,6 @@ export function DashboardOverview({ userId, events, userName, interests = [] }: 
                         Stalls Open
                       </span>
                       <div className="flex gap-2">
-                        {/* <Button variant="outline" size="sm" className="h-8 px-3 text-xs" asChild>
-                          <Link href={eventPublicPath(event)}>Register</Link>
-                        </Button> */}
                         <Button size="sm" className="h-8 bg-[#004A96] px-3 text-xs hover:bg-[#003d7a]" asChild>
                           <Link href={eventPublicPath(event)}>View</Link>
                         </Button>
@@ -568,9 +637,9 @@ export function DashboardOverview({ userId, events, userName, interests = [] }: 
               <TrendingUp className="mx-auto mb-3 h-12 w-12 text-slate-300" />
               <p className="text-slate-500">No suggestions available</p>
               <Link href="/events" className="text-[#004A96] hover:underline">
-              <Button variant="outline" className="mt-4" >
-                Browse Events
-              </Button>
+                <Button variant="outline" className="mt-4">
+                  Browse Events
+                </Button>
               </Link>
             </CardContent>
           </Card>
