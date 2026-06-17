@@ -14,11 +14,11 @@ import { useDashboard } from "@/contexts/dashboard-context"
 import { NotificationsDropdown } from "@/components/notifications-dropdown"
 import { DashboardResponsiveNavbar } from "@/components/dashboard-responsive-navbar"
 
-const EXPLORE_LINKS = [
-  { href: "/trade-fairs", label: "Trade Fairs" },
-  { href: "/conferences", label: "Conferences" },
-  { href: "/webinars", label: "Webinars" },
-]
+// const EXPLORE_LINKS = [
+//   { href: "/trade-fairs", label: "Trade Fairs" },
+//   { href: "/conferences", label: "Conferences" },
+//   { href: "/webinars", label: "Webinars" },
+// ]
 
 export default function Navbar() {
   const router = useRouter()
@@ -49,7 +49,7 @@ export default function Navbar() {
 
   return (
     <DashboardResponsiveNavbar
-      exploreLinks={EXPLORE_LINKS}
+      // exploreLinks={EXPLORE_LINKS}
       onAddEvent={handleAddevent}
       actions={
         <>

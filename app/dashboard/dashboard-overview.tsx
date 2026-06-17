@@ -322,14 +322,14 @@ export function DashboardOverview({ userId, events, userName, interests = [] }: 
           <CardContent className="p-6">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-lg font-semibold text-slate-900">Event Calendar</h3>
-              <Button
+              {/* <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => handleNavigation("schedule", false)}
                 className="text-[#004A96]"
               >
                 View Full →
-              </Button>
+              </Button> */}
             </div>
             {/* <div className="max-h-[300px] overflow-hidden"> */}
               <DynamicCalendar userId={userId} className="w-full scale-95 origin-top" />
@@ -337,7 +337,7 @@ export function DashboardOverview({ userId, events, userName, interests = [] }: 
           </CardContent>
         </Card>
 
-        <Card className="h-full border border-slate-100 shadow-sm">
+        <Card className="h-full border border-slate-100 shadow-sm ">
           <CardContent className="p-6">
             <div className="mb-5 flex items-center justify-between gap-3">
               <div className="flex min-w-0 items-center gap-3">
@@ -347,7 +347,7 @@ export function DashboardOverview({ userId, events, userName, interests = [] }: 
               <button
                 type="button"
                 className="inline-flex shrink-0 items-center gap-1 text-sm font-medium text-[#004A96] hover:underline"
-                onClick={() => handleNavigation("upcoming-events", false)}
+                onClick={() => handleNavigation("events", false)}
               >
                 View All Events
                 <ChevronRight className="h-4 w-4" />
@@ -355,7 +355,7 @@ export function DashboardOverview({ userId, events, userName, interests = [] }: 
             </div>
 
             {upcomingEvents.length > 0 ? (
-              <div className="scrollbar-hover max-h-[480px] space-y-3 overflow-y-auto pr-1">
+              <div className="scrollbar-hover max-h-[550px] space-y-3 overflow-y-auto pr-1">
                 {upcomingEvents.map((event) => {
                   const badge = formatEventDateBadge(event.startDate)
                   const daysToGo = getDaysUntilEvent(event.startDate)
@@ -464,6 +464,7 @@ export function DashboardOverview({ userId, events, userName, interests = [] }: 
                 </SelectContent>
               </Select>
             ) : null}
+            <Link href="/event" className="ml-auto sm:ml-0">
             <Button
               variant="outline"
               size="sm"
@@ -472,6 +473,7 @@ export function DashboardOverview({ userId, events, userName, interests = [] }: 
             >
               Browse All
             </Button>
+            </Link>
           </div>
         </div>
 
@@ -547,9 +549,9 @@ export function DashboardOverview({ userId, events, userName, interests = [] }: 
                         Stalls Open
                       </span>
                       <div className="flex gap-2">
-                        <Button variant="outline" size="sm" className="h-8 px-3 text-xs" asChild>
+                        {/* <Button variant="outline" size="sm" className="h-8 px-3 text-xs" asChild>
                           <Link href={eventPublicPath(event)}>Register</Link>
-                        </Button>
+                        </Button> */}
                         <Button size="sm" className="h-8 bg-[#004A96] px-3 text-xs hover:bg-[#003d7a]" asChild>
                           <Link href={eventPublicPath(event)}>View</Link>
                         </Button>
@@ -565,9 +567,11 @@ export function DashboardOverview({ userId, events, userName, interests = [] }: 
             <CardContent className="py-12 text-center">
               <TrendingUp className="mx-auto mb-3 h-12 w-12 text-slate-300" />
               <p className="text-slate-500">No suggestions available</p>
-              <Button variant="outline" className="mt-4" onClick={() => handleNavigation("/event", true)}>
+              <Link href="/events" className="text-[#004A96] hover:underline">
+              <Button variant="outline" className="mt-4" >
                 Browse Events
               </Button>
+              </Link>
             </CardContent>
           </Card>
         )}

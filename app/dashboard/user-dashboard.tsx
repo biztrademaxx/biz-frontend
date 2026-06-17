@@ -109,7 +109,7 @@ const VISITOR_SIDEBAR_GROUPS: { id: string; label: string; items: SidebarNavItem
 
 const VISITOR_INDIVIDUAL_ITEMS: SidebarNavItem[] = [
   // { id: "recommended-events", title: "Recommendations", icon: TrendingUp },
-  { id: "upgrade-plan", title: "Upgrade Plan", icon: Crown },
+  //{ id: "upgrade-plan", title: "Upgrade Plan", icon: Crown },//
   { id: "Help & Support", title: "Help & Support", icon: Headphones },
   { id: "settings", title: "Settings", icon: Settings },
 ]
