@@ -353,7 +353,7 @@ export default function HeroSlideshowClient({
             <h1 className="text-[clamp(2.5rem,7vw,1rem)] font-light leading-[0.95] tracking-[-0.05em] text-[#0B132B]">
               <span className="block sm:whitespace-nowrap">
                 Discover{" "}
-                <span className="text-[#2563EB]">Trade Shows</span>
+                <span className="text-[#004A96]">Trade Shows</span>
               </span>
               <span className="mt-2 block sm:mt-3 lg:mt-4">Worldwide</span>
             </h1>
@@ -364,7 +364,7 @@ export default function HeroSlideshowClient({
 
             <div className="mt-4 grid grid-cols-3 gap-2 sm:gap-3 lg:mt-14 lg:mb-8 lg:flex lg:gap-8 mb-4 sm:mb-5">
               <div className="flex min-w-0 flex-col items-center gap-1 text-center sm:flex-row sm:items-center sm:gap-3 sm:text-left">
-                <CalendarDays className="h-4 w-4 shrink-0 text-blue-500 sm:h-5 sm:w-5 lg:h-6 lg:w-6" strokeWidth={1.5} />
+                <CalendarDays className="h-4 w-4 shrink-0 text-[#004A96] sm:h-5 sm:w-5 lg:h-6 lg:w-6" strokeWidth={1.5} />
                 <div className="min-w-0">
                   <p className="text-[17px] font-extrabold leading-none text-[#0F172A] sm:text-[24px] lg:text-[28px]">12K+</p>
                   <p className="mt-0.5 whitespace-nowrap text-[10px] font-medium leading-tight text-[#64748B] sm:text-[12px] lg:text-[14px]">
@@ -373,7 +373,7 @@ export default function HeroSlideshowClient({
                 </div>
               </div>
               <div className="flex min-w-0 flex-col items-center gap-1 text-center sm:flex-row sm:items-center sm:gap-3 sm:text-left">
-                <Users className="h-4 w-4 shrink-0 text-blue-500 sm:h-5 sm:w-5 lg:h-6 lg:w-6" strokeWidth={2} />
+                <Users className="h-4 w-4 shrink-0 text-[#004A96] sm:h-5 sm:w-5 lg:h-6 lg:w-6" strokeWidth={2} />
                 <div className="min-w-0">
                   <p className="text-[17px] font-extrabold leading-none text-[#0F172A] sm:text-[24px] lg:text-[28px]">320K+</p>
                   <p className="mt-0.5 text-[10px] font-medium leading-tight text-[#64748B] sm:text-[12px] lg:text-[14px]">
@@ -382,7 +382,7 @@ export default function HeroSlideshowClient({
                 </div>
               </div>
               <div className="flex min-w-0 flex-col items-center gap-1 text-center sm:flex-row sm:items-center sm:gap-3 sm:text-left">
-                <Globe className="h-4 w-4 shrink-0 text-blue-500 sm:h-5 sm:w-5 lg:h-6 lg:w-6" strokeWidth={1.5} />
+                <Globe className="h-4 w-4 shrink-0 text-[#004A96] sm:h-5 sm:w-5 lg:h-6 lg:w-6" strokeWidth={1.5} />
                 <div className="min-w-0">
                   <p className="text-[17px] font-extrabold leading-none text-[#0F172A] sm:text-[24px] lg:text-[28px]">180+</p>
                   <p className="mt-0.5 text-[10px] font-medium leading-tight text-[#64748B] sm:text-[12px] lg:text-[14px]">
@@ -393,10 +393,10 @@ export default function HeroSlideshowClient({
             </div>
 
             <div className="flex w-full max-w-[360px] flex-col gap-2.5 min-[400px]:flex-row sm:gap-4 lg:gap-6">
-              <Link
-                href="/event"
-                className="flex-1 text-center bg-blue-600 hover:bg-blue-700 transition-colors text-white text-[0.85rem] sm:text-[0.9rem] font-bold h-11 sm:h-12 rounded-sm flex items-center justify-center"
-              >
+             <Link
+  href="/event"
+  className="flex-1 text-center bg-[#004A96] hover:bg-[#003a75] transition-colors text-white text-[0.85rem] sm:text-[0.9rem] font-bold h-11 sm:h-12 rounded-sm flex items-center justify-center"
+>
                 Find Events
               </Link>
               <Link
@@ -433,7 +433,7 @@ export default function HeroSlideshowClient({
 
                 {/* VIP badge */}
                 <div className="absolute top-3 left-3 sm:top-4 sm:left-4 z-10">
-                  <span className="bg-blue-600 text-white text-[0.58rem] sm:text-[0.62rem] font-extrabold uppercase tracking-[0.14em] px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-md shadow">
+                  <span className=" bg-[#004A96]  text-white text-[0.58rem] sm:text-[0.62rem] font-extrabold uppercase tracking-[0.14em] px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-md shadow">
                     VIP Event
                   </span>
                 </div>
@@ -464,7 +464,7 @@ export default function HeroSlideshowClient({
                       <div className="flex flex-col gap-2 min-[400px]:flex-row min-[400px]:flex-wrap">
                         <Link
                           href={eventPublicPath(featured)}
-                          className="rounded-md bg-blue-600 px-3 py-2 text-center text-[0.72rem] font-bold text-white shadow transition-colors hover:bg-blue-700 sm:rounded-lg sm:px-5 sm:py-2 sm:text-[0.8rem]"
+                          className="rounded-md  bg-[#004A96] px-3 py-2 text-center text-[0.72rem] font-bold text-white shadow transition-colors hover:bg-blue-700 sm:rounded-lg sm:px-5 sm:py-2 sm:text-[0.8rem]"
                         >
                           Register Now
                         </Link>
@@ -489,7 +489,7 @@ export default function HeroSlideshowClient({
                   type="button"
                   aria-label={`Event ${i + 1}`}
                   onClick={() => setActiveIdx(i)}
-                  className={`rounded-full transition-all duration-300 ${i === activeIdx ? "w-6 h-2 bg-blue-600" : "w-2 h-2 bg-blue-200 hover:bg-blue-400"
+                  className={`rounded-full transition-all duration-300 ${i === activeIdx ? "w-6 h-2 bg-[#004A96]" : "w-2 h-2 bg-blue-200 hover:bg-[#003a75]"
                     }`}
                 />
               ))}

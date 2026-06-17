@@ -58,7 +58,7 @@ export default function BrowseEventsByCityGridClient({
                     )}`
                   )
                 }
-                className="group overflow-hidden rounded-none bg-white text-left rounded-none shadow-md hover:shadow-xl"
+                className="group overflow-hidden rounded-sm bg-white text-left rounded-none shadow-md hover:shadow-xl"
               >
                 {/* Image */}
                 <div className="relative m-2 h-[75px] overflow-hidden rounded-sm shadow-[0_0_12px_rgba(59,130,246,0.5)]">

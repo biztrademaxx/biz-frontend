@@ -150,7 +150,7 @@ export default function ExploreVenuesGridClient({
             <div className="mt-10 flex justify-center">
               <Link
                 href="/venues"
-                className="inline-flex items-center justify-center rounded-sm bg-[#002C71] px-8 py-3 text-sm font-semibold text-white shadow-sm transition-colors duration-200 hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                className="inline-flex items-center justify-center rounded-sm bg-[#004A96] px-8 py-3 text-sm font-semibold text-white shadow-sm transition-colors duration-200 hover:bg-[#003a75] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
               >
                 View all venues
               </Link>
