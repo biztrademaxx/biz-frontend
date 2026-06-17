@@ -73,12 +73,35 @@ export function PresentationMaterials({ speakerId }: PresentationMaterialsProps)
     } catch (err) { setError(err instanceof Error ? err.message : "Failed to update") }
   }
 
-  const handleDownload = async (materialId: string, fileName: string) => {
-    try {
-      const data = await apiFetch<{ fileUrl?: string }>(`/api/materials/${materialId}/download`, { auth: true })
-      if (data?.fileUrl) window.open(data.fileUrl, "_blank"); else setError("Download failed")
-    } catch (err) { setError(err instanceof Error ? err.message : "Download failed") }
+const handleDownload = async (
+  materialId: string,
+  fileName: string
+) => {
+  const confirmed = window.confirm(
+    `Do you want to download ${fileName}?`
+  );
+
+  if (!confirmed) return;
+
+  try {
+    const data = await apiFetch<{ fileUrl?: string }>(
+      `/api/materials/${materialId}/download`,
+      { auth: true }
+    );
+
+    if (!data?.fileUrl) {
+      setError("Download failed");
+      return;
+    }
+
+    const link = document.createElement("a");
+    link.href = data.fileUrl;
+    link.download = fileName;
+    link.click();
+  } catch (err) {
+    setError(err instanceof Error ? err.message : "Download failed");
   }
+};
 
   const handleDelete = async (materialId: string) => {
     if (!confirm("Delete this file?")) return
@@ -268,9 +291,9 @@ export function PresentationMaterials({ speakerId }: PresentationMaterialsProps)
                             <button onClick={() => handleView(file.id, file.fileUrl)} className="p-1 rounded hover:bg-white text-slate-400 hover:text-blue-500 transition">
                               <Eye className="w-3 h-3" />
                             </button>
-                            <button onClick={() => handleDownload(file.id, file.fileName)} disabled={!file.allowDownload} className="p-1 rounded hover:bg-white text-slate-400 hover:text-blue-500 transition disabled:opacity-30">
+                            {/* <button onClick={() => handleDownload(file.id, file.fileName)} disabled={!file.allowDownload} className="p-1 rounded hover:bg-white text-slate-400 hover:text-blue-500 transition disabled:opacity-30">
                               <Download className="w-3 h-3" />
-                            </button>
+                            </button> */}
                           </div>
                         </div>
                       ))}

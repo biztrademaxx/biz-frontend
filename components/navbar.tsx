@@ -19,6 +19,7 @@ import { NAVBAR_LOGO_LINK_CLASSNAME, getNavbarLogoImageProps } from "@/lib/brand
 import { eventPublicPath } from "@/lib/event-path"
 import { getVenuePublicPath } from "@/lib/venue-dashboard-path"
 import ExploreMegaMenu from "./ExploreMegaMenu"
+
 // import LocationPicker from "./location/LocationPicker" // legacy manual picker — kept in repo, not used
 import NavbarCountryLabel from "./location/NavbarCountryLabel"
 
@@ -386,6 +387,20 @@ export default function Navbar() {
                 </button>
               </div>
             </div>
+
+            {/* MIDDLE: 4 Navigation Items - Organizers, Visitors, Venues, Exhibitors */}
+            <div className="hidden lg:flex lg:flex-1 lg:items-center lg:justify-center lg:gap-6">
+              <Link href="/organizers" className={navLinkClass}>
+                <span className="text-sm">Organizer</span>
+              </Link>
+            
+              <Link href="/venues" className={navLinkClass}>
+                <span className="text-sm">Venue</span>
+              </Link>
+              <Link href="/exhibitor" className={navLinkClass}>
+                <span className="text-sm">Exhibitor</span>
+              </Link>
+            </div>
           </div>
 
           <div className="hidden min-w-0 flex-1 justify-center pl-4 pr-2 lg:flex lg:pl-6">
@@ -462,6 +477,7 @@ export default function Navbar() {
           </div>
 
 
+          {/* Right side - existing items */}
           <div className="hidden shrink-0 items-center gap-6 lg:flex">
             <Link href="/event" className={navLinkClass}>
               <span className="text-sm">Top 100 Must Visit</span>
@@ -472,6 +488,7 @@ export default function Navbar() {
             <Link href="/organizer-signup" className={navLinkClass}>
               <span className="text-sm">Add Event</span>
             </Link>
+
             <div className="relative inline-block text-left" ref={desktopAccountRef}>
               <button
                 type="button"
@@ -584,6 +601,38 @@ export default function Navbar() {
             <div className="border-b border-gray-100 px-4 py-3 sm:hidden">
               <NavbarCountryLabel className="w-full" />
             </div>
+            
+            {/* Mobile: 4 Middle Items */}
+            <Link
+              href="/organizers"
+              className="block px-4 py-3 text-sm font-medium text-gray-800 hover:bg-gray-50"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Organizers
+            </Link>
+            <Link
+              href="/visitors"
+              className="block px-4 py-3 text-sm font-medium text-gray-800 hover:bg-gray-50"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Visitors
+            </Link>
+            <Link
+              href="/venues"
+              className="block px-4 py-3 text-sm font-medium text-gray-800 hover:bg-gray-50"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Venues
+            </Link>
+            <Link
+              href="/exhibitor"
+              className="block px-4 py-3 text-sm font-medium text-gray-800 hover:bg-gray-50"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Exhibitors
+            </Link>
+
+            {/* Keep existing items */}
             <Link
               href="/event"
               className="block px-4 py-3 text-sm font-medium text-gray-800 hover:bg-gray-50"

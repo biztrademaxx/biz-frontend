@@ -277,7 +277,7 @@ export default function SpeakerOverview({ speakerId }: OverviewProps) {
                             </p>
 
                             {/* Pills */}
-                            {card.pills.length > 0 && (
+                            {/* {card.pills.length > 0 && (
                                 <div className="flex flex-wrap gap-2 mt-4">
                                     {card.pills.map((pill) => (
                                         <span
@@ -294,7 +294,7 @@ export default function SpeakerOverview({ speakerId }: OverviewProps) {
                                         </span>
                                     ))}
                                 </div>
-                            )}
+                            )} */}
 
                         </div>
 
