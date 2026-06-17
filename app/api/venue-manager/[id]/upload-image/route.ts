@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { Cloudinary } from "@/lib/cloudinary"
+import { maybeCompressImageServer } from "@/lib/compress-image-server"
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -12,11 +13,17 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       return NextResponse.json({ success: false, error: "No file provided" }, { status: 400 })
     }
 
-    // Convert file to buffer
-    const arrayBuffer = await file.arrayBuffer()
+    let uploadFile = file
+    try {
+      uploadFile = await maybeCompressImageServer(file)
+    } catch (compressErr) {
+      const message = compressErr instanceof Error ? compressErr.message : "Image is too large"
+      return NextResponse.json({ success: false, error: message }, { status: 413 })
+    }
+
+    const arrayBuffer = await uploadFile.arrayBuffer()
     const buffer = Buffer.from(arrayBuffer)
 
-    // Upload to Cloudinary
     const result = await new Promise((resolve, reject) => {
       Cloudinary.uploader
         .upload_stream(

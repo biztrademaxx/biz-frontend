@@ -21,6 +21,11 @@ import { useToast } from "@/hooks/use-toast"
 import { getCityOptions, getCountryOptions, getStateOptions } from "@/lib/location-data"
 import { getIanaTimeZoneOptions } from "@/lib/iana-timezones"
 import { safeResponseJson } from "@/lib/api"
+import {
+  IMAGE_UPLOAD_HINT,
+  parseUploadErrorMessage,
+  prepareImageFileForUpload,
+} from "@/lib/prepare-image-upload"
 import { cn } from "@/lib/utils"
 import { venueTabsList, venueTabsTrigger } from "./venue-dashboard-theme"
 import Link from "next/link"
@@ -197,11 +202,21 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
 
   const handleImageUpload = async (file: File, type: "venue" | "floorplan" | "logo") => {
     try {
+      const prepared = await prepareImageFileForUpload(file)
       const formData = new FormData()
-      formData.append("file", file)
+      formData.append("file", prepared)
       formData.append("type", type)
       const res = await fetch(`/api/venue-manager/${venueData.id}/upload-image`, { method: "POST", body: formData })
-      const data = await safeResponseJson<{ success?: boolean; data?: { secure_url?: string }; error?: string }>(res)
+      const raw = await res.text()
+      if (!res.ok) {
+        throw new Error(parseUploadErrorMessage(res.status, raw))
+      }
+      let data: { success?: boolean; data?: { secure_url?: string }; error?: string } | null = null
+      try {
+        data = raw.trim() ? JSON.parse(raw) : null
+      } catch {
+        throw new Error("Upload failed")
+      }
       if (data?.success && data.data?.secure_url) {
         const imageUrl = data.data.secure_url
         if (type === "venue") setImages((prev) => [...prev, imageUrl])
@@ -210,8 +225,12 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
         toast({ title: "Success", description: "Image uploaded successfully" })
         return imageUrl
       } else throw new Error(data?.error || "Upload failed")
-    } catch {
-      toast({ title: "Error", description: "Failed to upload image", variant: "destructive" })
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: err instanceof Error ? err.message : "Failed to upload image",
+        variant: "destructive",
+      })
       return null
     }
   }
@@ -559,7 +578,8 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
             {isEditing && (
               <div className="border-2 border-dashed border-[#E2E8F0] rounded-xl p-6 text-center">
                 <Upload className="w-8 h-8 text-[#94A3B8] mx-auto mb-2" />
-                <p className="text-sm text-[#64748B] mb-3">Drop images here or click to upload</p>
+                <p className="text-sm text-[#64748B] mb-1">Drop images here or click to upload</p>
+                <p className="text-xs text-[#94A3B8] mb-3">{IMAGE_UPLOAD_HINT}</p>
                 <Input type="file" accept="image/*" multiple onChange={async (e) => { for (const f of Array.from(e.target.files || [])) await handleImageUpload(f, "venue") }} className="hidden" id="venue-img-upload" />
                 <Button asChild size="sm" className="rounded-xl bg-[#004A96] text-white">
                   <label htmlFor="venue-img-upload" className="cursor-pointer"><Plus className="w-4 h-4 mr-1" />Add Images</label>
@@ -668,7 +688,8 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
             {isEditing && (
               <div className="mt-4 border-2 border-dashed border-[#E2E8F0] rounded-xl p-6 text-center">
                 <Building2 className="w-8 h-8 text-[#94A3B8] mx-auto mb-2" />
-                <p className="text-sm text-[#64748B] mb-3">Upload floor plans</p>
+                <p className="text-sm text-[#64748B] mb-1">Upload floor plans</p>
+                <p className="text-xs text-[#94A3B8] mb-3">{IMAGE_UPLOAD_HINT}</p>
                 <Input type="file" accept="image/*" onChange={async (e) => { const f = e.target.files?.[0]; if (f) await handleImageUpload(f, "floorplan") }} className="hidden" id="floor-upload" />
                 <Button asChild size="sm" className="rounded-xl bg-[#004A96] text-white">
                   <label htmlFor="floor-upload" className="cursor-pointer"><Plus className="w-4 h-4 mr-1" />Upload</label>
