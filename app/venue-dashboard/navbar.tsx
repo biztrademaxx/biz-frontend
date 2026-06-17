@@ -14,11 +14,11 @@ import { useDashboard } from "@/contexts/dashboard-context"
 import { NotificationsDropdown } from "@/components/notifications-dropdown"
 import { DashboardResponsiveNavbar } from "@/components/dashboard-responsive-navbar"
 
-const EXPLORE_LINKS = [
-  { href: "/trade-fairs", label: "Trade Fairs" },
-  { href: "/conferences", label: "Conferences" },
-  { href: "/webinars", label: "Webinars" },
-]
+// const EXPLORE_LINKS = [
+//   { href: "/trade-fairs", label: "Trade Fairs" },
+//   { href: "/conferences", label: "Conferences" },
+//   { href: "/webinars", label: "Webinars" },
+// ]
 
 export default function Navbar() {
   const router = useRouter()
@@ -48,14 +48,14 @@ export default function Navbar() {
 
   const handleLogout = () => {
     markLogoutSuccessBanner()
-    clearTokens()
+    clearTokens()        
     router.push("/login")
   }
 
   return (
     <DashboardResponsiveNavbar
       navClassName="sticky top-0 z-40 border-b border-slate-200 bg-white/65 shadow-sm backdrop-blur-xl"
-      exploreLinks={EXPLORE_LINKS}
+      // exploreLinks={EXPLORE_LINKS}
       onAddEvent={handleAddevent}
       actions={
         <>
