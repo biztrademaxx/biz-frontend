@@ -388,9 +388,9 @@ export default function Navbar() {
             </div>
           </div>
 
-          {/* <div className="hidden min-w-0 flex-1 justify-center pl-4 pr-2 lg:flex lg:pl-6">
+          <div className="hidden min-w-0 flex-1 justify-center pl-4 pr-2 lg:flex lg:pl-6">
             <div className="relative w-full max-w-xs xl:max-w-sm" ref={searchRef}>
-              <div
+              {/* <div
                 className={`group flex w-full items-stretch rounded-none border transition-[border-color,box-shadow,background-color] duration-150 ${
                   showSearchResults
                     ? "border-[#002C71]/35 bg-white shadow-[0_1px_0_rgba(0,44,113,0.06)]"
@@ -413,7 +413,37 @@ export default function Navbar() {
                   onKeyDown={(e) => e.key === "Enter" && handleViewAll()}
                   aria-label="Search"
                 />
-              </div>
+              </div> */}
+              <Link href={"/organizers"}>
+                <button
+                  className="rounded-lg px-4 py-2 text-sm font-medium text-[#002C71] transition"
+                >
+                  Organizers
+                </button>
+              </Link>
+
+              <Link href={"/venues"}>
+                <button
+                  className="rounded-lg  px-4 py-2 text-sm font-medium text-[#002C71]  transition"
+                >
+                  Venues
+                </button>
+              </Link>
+              <Link href={"/exhibitor"}>
+                <button
+                  className="rounded-lg  px-4 py-2 text-sm font-medium text-[#002C71]  transition"
+                >
+                  Exhibitors
+                </button>
+              </Link>
+              <Link href={"/speakers"}>
+                <button
+                  className="rounded-lg  px-4 py-2 text-sm font-medium text-[#002C71]  transition"
+                >
+                  Speakers
+                </button>
+              </Link>
+
               {showSearchResults && (
                 <div className="absolute left-0 right-0 top-full z-[100] mt-1 max-h-80 overflow-hidden rounded-none border border-gray-300 bg-white shadow-[0_8px_24px_rgba(0,0,0,0.08)]">
                   <div className="max-h-72 overflow-y-auto">{renderSearchHits(false)}</div>
@@ -429,7 +459,8 @@ export default function Navbar() {
                 </div>
               )}
             </div>
-          </div> */}
+          </div>
+
 
           <div className="hidden shrink-0 items-center gap-6 lg:flex">
             <Link href="/event" className={navLinkClass}>
@@ -498,11 +529,10 @@ export default function Navbar() {
           <div ref={mobileSearchRef} className="border-t border-gray-100 py-3 lg:hidden">
             <div className="relative">
               <div
-                className={`group flex w-full items-stretch rounded-none border transition-[border-color,box-shadow,background-color] duration-150 ${
-                  showSearchResults
+                className={`group flex w-full items-stretch rounded-none border transition-[border-color,box-shadow,background-color] duration-150 ${showSearchResults
                     ? "border-[#002C71]/35 bg-white shadow-[0_1px_0_rgba(0,44,113,0.06)]"
                     : "border-gray-300 bg-gray-50 hover:border-gray-400"
-                } focus-within:border-[#002C71] focus-within:bg-white focus-within:shadow-[0_0_0_1px_rgba(0,44,113,0.12)]`}
+                  } focus-within:border-[#002C71] focus-within:bg-white focus-within:shadow-[0_0_0_1px_rgba(0,44,113,0.12)]`}
               >
                 <span
                   className="flex shrink-0 items-center border-r border-gray-200/90 bg-gray-100/60 px-3 text-gray-500 transition-colors group-focus-within:border-[#002C71]/20 group-focus-within:bg-white group-focus-within:text-[#002C71]"

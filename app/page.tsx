@@ -49,7 +49,7 @@ export default function Home() {
           >
             {/* <UpcomingVipEvents /> */}
           </Suspense>
-          <div className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen bg-[#dbeafe] pt-4 pb-6 mt-5">
+          <div className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen  pt-4 pb-6 mt-5">
             <div className="mx-auto max-w-7xl px-3 sm:px-4 lg:px-6">
               <HomeTradeFairsSearch />
             </div>
