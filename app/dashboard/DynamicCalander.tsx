@@ -47,7 +47,7 @@ export function DynamicCalendar({ className, userId }: DynamicCalendarProps) {
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const data = await apiFetch<{ events?: Event[]; data?: Event[] }>(`/api/users/${userId}/interested-events`, { auth: true })
+        const data = await apiFetch<{ events?: Event[]; data?: Event[] }>(`/api/users/${userId}/interested-events-events?year=${currentYear}`, { auth: true })
         setEvents(data.events ?? data.data ?? [])
       } catch (err) {
         console.error("Failed to load events", err)
@@ -55,7 +55,7 @@ export function DynamicCalendar({ className, userId }: DynamicCalendarProps) {
     }
 
     if (userId) fetchEvents()
-  }, [userId])
+  }, [userId, currentYear])
 
   useEffect(() => {
     setSelectedDate(null)
@@ -95,16 +95,26 @@ export function DynamicCalendar({ className, userId }: DynamicCalendarProps) {
     )
   })
 
-  return (
+ return (
     <div className={cn("w-full", className)}>
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-slate-800">
-          {new Date(currentYear, currentMonth).toLocaleString("default", {
-            month: "long",
-            year: "numeric",
-          })}
-        </h3>
+        <div className="flex items-center gap-2">
+          <h3 className="text-lg font-semibold text-slate-800">
+            {new Date(currentYear, currentMonth).toLocaleString("default", { month: "long" })}
+          </h3>
+          <select
+            value={currentYear}
+            onChange={(e) => setCurrentYear(Number(e.target.value))}
+            className="text-lg font-semibold text-slate-800 border-gray-200 rounded-md px-2 py-1 outline-none cursor-pointer transition-colors"
+          >
+            {Array.from({ length: 11 }, (_, i) => today.getFullYear() - 5 + i).map((year) => (
+              <option key={year} value={year}>
+                {year}
+              </option>
+            ))}
+          </select>
+        </div>
         <div className="flex gap-1">
           <Button
             variant="outline"
@@ -124,7 +134,6 @@ export function DynamicCalendar({ className, userId }: DynamicCalendarProps) {
           </Button>
         </div>
       </div>
-
       {/* Weekdays */}
       <div className="grid grid-cols-7 gap-1 mb-2">
         {daysOfWeek.map((day, i) => (

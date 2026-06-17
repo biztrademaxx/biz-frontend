@@ -255,7 +255,7 @@ export default function TrendingEventsGridClient({
                         <button
                           type="button"
                           onClick={(e) => handleRegister(e, event)}
-                          className="inline-flex h-10 shrink-0 items-center justify-center rounded-sm bg-[#002C71] px-4 text-sm font-bold text-white shadow-sm transition hover:bg-[#002255] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#002C71]"
+                          className="inline-flex h-10 shrink-0 items-center justify-center rounded-sm bg-[#004A96] px-4 text-sm font-bold text-white shadow-sm transition hover:bg-[#002255] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#002C71]"
                         >
                           Register
                         </button>

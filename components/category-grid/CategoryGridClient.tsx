@@ -98,7 +98,7 @@ export default function CategoryGridClient({ categories, variant = "home" }: Cat
   return (
     <section
       id={isFull ? "browse-all-categories" : "category"}
-      className="home-tt-section bg-[#F3F2F0] py-6 sm:py-8"
+      className="home-tt-section bg-white py-6 sm:py-8"
       aria-label="Browse events by category"
     >
       <div className="mx-auto w-full min-w-0 max-w-7xl px-3 sm:px-4 lg:px-6">
