@@ -283,7 +283,7 @@ export default function SpeakersPage() {
               <p className="text-base font-semibold tracking-[-0.02em] text-[#1C4A95]">
   Connect. Inspire. Grow.
 </p>
-             <h1 className="font-montserrat text-[40px] font-[800] leading-[0.96] tracking-[-0.045em]">
+             <h1 className="font-display text-[40px] font-extrabold leading-[0.96] tracking-[-0.045em]">
   <span className="text-[#0B132B]">Find speakers</span>
   <br />
   <span className="text-[#0B132B]">who </span>
@@ -315,10 +315,10 @@ export default function SpeakersPage() {
                       <UsersRound className="h-6 w-6" />
                     </div>
                     <div>
-                      <div className="font-serif text-[2.35rem] font-semibold leading-none text-[#102A5E]">
+                      <div className="font-sans text-[2.35rem] font-semibold tabular-nums leading-none text-[#102A5E]">
                         {filteredSpeakers.length}
                       </div>
-                      <p className="mt-1 font-serif text-[1.05rem] font-semibold leading-none text-[#102A5E]">
+                      <p className="mt-1 font-sans text-[1.05rem] font-semibold leading-none text-[#102A5E]">
                         Speakers
                       </p>
                       <p className="mt-1.5 text-[0.84rem] text-[#5B6F98]">Active in our community</p>
@@ -332,10 +332,10 @@ export default function SpeakersPage() {
                       <CalendarDays className="h-6 w-6" />
                     </div>
                     <div>
-                      <div className="font-serif text-[2.35rem] font-semibold leading-none text-[#102A5E]">
+                      <div className="font-sans text-[2.35rem] font-semibold tabular-nums leading-none text-[#102A5E]">
                         {totalEvents}
                       </div>
-                      <p className="mt-1 whitespace-nowrap font-serif text-[1.05rem] font-semibold leading-none text-[#102A5E]">
+                      <p className="mt-1 whitespace-nowrap font-sans text-[1.05rem] font-semibold leading-none text-[#102A5E]">
                         Total Events
                       </p>
                       <p className="mt-1.5 text-[0.84rem] text-[#5B6F98]">Hosted by speakers</p>
@@ -349,10 +349,10 @@ export default function SpeakersPage() {
                       <CalendarDays className="h-6 w-6" />
                     </div>
                     <div>
-                      <div className="font-serif text-[2.35rem] font-semibold leading-none text-[#102A5E]">
+                      <div className="font-sans text-[2.35rem] font-semibold tabular-nums leading-none text-[#102A5E]">
                         {totalUpcomingEvents}
                       </div>
-                      <p className="mt-1 whitespace-nowrap font-serif text-[1.05rem] font-semibold leading-none text-[#102A5E]">
+                      <p className="mt-1 whitespace-nowrap font-sans text-[1.05rem] font-semibold leading-none text-[#102A5E]">
                         Upcoming Events
                       </p>
                       <p className="mt-1.5 text-[0.84rem] text-[#5B6F98]">Speakers joining soon</p>
@@ -368,7 +368,7 @@ export default function SpeakersPage() {
               <div>
                 <div className="flex items-center gap-3">
                   <Sparkles className="h-6 w-6 text-[#123D86]" />
-                  <h2 className="font-montserrat text-[1.85rem] font-[700] tracking-[-0.035em] text-[#102A5E] lg:text-[2.1rem]">
+                  <h2 className="font-display text-[1.85rem] font-bold tracking-[-0.035em] text-[#102A5E] lg:text-[2.1rem]">
                     Featured Speakers
                   </h2>
                 </div>
@@ -428,7 +428,7 @@ export default function SpeakersPage() {
             {filteredSpeakers.length === 0 ? (
               <div className="flex min-h-[320px] flex-col items-center justify-center rounded-[30px] border border-dashed border-[#D6E0F0] bg-white/70 px-6 text-center">
                 <UsersRound className="h-14 w-14 text-[#9AAACA]" />
-                <h3 className="truncate font-montserrat text-[1.24rem] font-[600] leading-none tracking-[-0.03em] text-[#102A5E] lg:text-[1.34rem]">
+                <h3 className="truncate font-display text-[1.24rem] font-semibold leading-none tracking-[-0.03em] text-[#102A5E] lg:text-[1.34rem]">
                   No speakers found
                 </h3>
                 <p className="mt-2 max-w-md text-lg text-[#5B6F98]">
@@ -472,7 +472,7 @@ export default function SpeakersPage() {
                         <div className="flex items-start justify-between gap-4">
                           <div className="min-w-0">
                             <div className="flex items-center gap-2">
-                              <h3 className="truncate font-serif text-[1.24rem] font-semibold leading-none tracking-[-0.03em] text-[#102A5E] lg:text-[1.34rem]">
+                              <h3 className="truncate font-display text-[1.24rem] font-semibold leading-none tracking-[-0.03em] text-[#102A5E] lg:text-[1.34rem]">
                                 {formatSpeakerName(speaker)}
                               </h3>
                               {speaker.isVerified ? (
@@ -554,7 +554,7 @@ export default function SpeakersPage() {
                     <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10">
                       <UsersRound className="h-5 w-5" />
                     </div>
-                    <h3 className="mt-4 font-serif text-[1.42rem] font-semibold tracking-[-0.03em]">
+                    <h3 className="mt-4 font-display text-[1.42rem] font-semibold tracking-[-0.03em]">
                       Are you a speaker?
                     </h3>
                     <p className="mt-2.5 max-w-sm text-[0.88rem] leading-6 text-white/88">
