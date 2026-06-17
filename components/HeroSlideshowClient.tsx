@@ -411,8 +411,8 @@ export default function HeroSlideshowClient({
           {/* ── RIGHT PANEL ── */}
           <div className="flex w-full min-w-0 flex-col gap-3 sm:gap-4 lg:w-[68%] lg:gap-5">
 
-            <div className="relative w-full min-w-0 overflow-hidden rounded-xl shadow-[0_5px_20px_-4px_rgba(0,0,0,0.95)]">
-              <div className="relative h-[220px] overflow-hidden rounded-xl min-[400px]:h-[240px] sm:h-[300px] lg:h-[360px] xl:h-[400px]">
+            <div className="relative w-full min-w-0 overflow-hidden rounded-xl shadow-[0_4px_0px_4px_rgba(0,0,0,0.15)]">
+              <div className="relative h-[220px] w-full overflow-hidden rounded-xl min-[400px]:h-[240px] sm:h-[300px] lg:h-[360px] xl:h-[400px]">
                 {featuredImageUrl ? (
                   <AppImage
                     key={featured.id}
@@ -423,9 +423,9 @@ export default function HeroSlideshowClient({
                     className="object-cover"
                     priority
                   />
-                ) : null}
+                ) : null}  
 
-                <div className="absolute bottom-0 left-0 right-0 h-[55%] bg-gradient-to-t from-black/75 via-black/40 to-transparent z-[1]" />
+                {/* <div className="absolute bottom-0 left-0 right-0 h-[55%] bg-gradient-to-t from-black/75 via-black/40 to-transparent z-[1]" /> */}
 
                 {!featuredImageUrl && (
                   <div className="absolute inset-0 bg-gradient-to-br from-blue-200 to-blue-400" />
