@@ -1,4 +1,4 @@
-// FeaturedOrganizersSectionHeading.tsx
+// FeaturedOrganizersSectionHeading.tsx - Remove border
 "use client"
 
 import { memo } from "react"
@@ -6,7 +6,7 @@ import { memo } from "react"
 function FeaturedOrganizersSectionHeadingComponent({ homeCountry }: { homeCountry?: string | null }) {
   const subtitle = homeCountry ? `Organizers in ${homeCountry}` : "Worldwide Organizers"
   return (
-    <div className="border-b border-gray-200 py-6">
+    <div className="py-6"> {/* Removed border-b */}
       <h2 className="home-tt-h2 mb-3">
         Featured Organizers
         <br />
