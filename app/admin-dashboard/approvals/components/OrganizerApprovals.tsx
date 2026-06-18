@@ -186,12 +186,7 @@ export default function OrganizerApprovals() {
                 body: { isVerified: true, isActive: true },
             })
             toast({ title: "Success", description: "Organizer approved successfully" })
-            // Move from pending to active in local state
-            const approvedOrganizer = allPendingOrganizers.find(o => o.id === organizerId)
-            if (approvedOrganizer) {
-                setAllPendingOrganizers(prev => prev.filter(o => o.id !== organizerId))
-                setAllActiveOrganizers(prev => [...prev, { ...approvedOrganizer, isVerified: true, isActive: true }])
-            }
+            await fetchAllOrganizers()
         } catch (error) {
             toast({ title: "Error", description: "Failed to approve organizer", variant: "destructive" })
         } finally {
@@ -208,7 +203,7 @@ export default function OrganizerApprovals() {
                 body: { reason: rejectReason },
             })
             toast({ title: "Success", description: "Organizer rejected successfully" })
-            setAllPendingOrganizers(prev => prev.filter(o => o.id !== selectedOrganizer.id))
+            await fetchAllOrganizers()
             setRejectDialogOpen(false)
             setRejectReason("")
             setSelectedOrganizer(null)
@@ -236,7 +231,10 @@ export default function OrganizerApprovals() {
     }
 
     const handlePageChange = (newPage: number) => {
-        if (newPage >= 1 && newPage <= totalPages) {
+        const pages = Math.max(1, Math.ceil(
+            (activeTab === "pending" ? allPendingOrganizers : allActiveOrganizers).length / itemsPerPage
+        ))
+        if (newPage >= 1 && newPage <= pages) {
             setCurrentPage(newPage)
             window.scrollTo({ top: 0, behavior: "smooth" })
         }
@@ -265,6 +263,7 @@ export default function OrganizerApprovals() {
     const startIndex = (currentPage - 1) * itemsPerPage
     const endIndex = startIndex + itemsPerPage
     const displayedOrganizers = currentFilteredData.slice(startIndex, endIndex)
+    const pages = Math.max(1, Math.ceil(currentTotal / itemsPerPage))
 
     return (
         <div className="space-y-6">
@@ -410,7 +409,7 @@ export default function OrganizerApprovals() {
                                 ))}
                             </div>
 
-                            {totalPages > 1 && (
+                            {pages > 1 && (
                                 <div className="flex items-center justify-between mt-6 pt-4 border-t">
                                     <p className="text-sm text-gray-500">
                                         Showing {displayedOrganizers.length} of {currentTotal} organizers
@@ -426,13 +425,13 @@ export default function OrganizerApprovals() {
                                             Previous
                                         </Button>
                                         <span className="text-sm text-gray-600 px-3 py-1">
-                                            Page {currentPage} of {totalPages}
+                                            Page {currentPage} of {pages}
                                         </span>
                                         <Button
                                             variant="outline"
                                             size="sm"
                                             onClick={() => handlePageChange(currentPage + 1)}
-                                            disabled={currentPage === totalPages}
+                                            disabled={currentPage === pages}
                                         >
                                             Next
                                             <ChevronRight className="h-4 w-4 ml-1" />
@@ -481,7 +480,7 @@ export default function OrganizerApprovals() {
                                 ))}
                             </div>
 
-                            {totalPages > 1 && (
+                            {pages > 1 && (
                                 <div className="flex items-center justify-between mt-6 pt-4 border-t">
                                     <p className="text-sm text-gray-500">
                                         Showing {displayedOrganizers.length} of {currentTotal} organizers
@@ -497,13 +496,13 @@ export default function OrganizerApprovals() {
                                             Previous
                                         </Button>
                                         <span className="text-sm text-gray-600 px-3 py-1">
-                                            Page {currentPage} of {totalPages}
+                                            Page {currentPage} of {pages}
                                         </span>
                                         <Button
                                             variant="outline"
                                             size="sm"
                                             onClick={() => handlePageChange(currentPage + 1)}
-                                            disabled={currentPage === totalPages}
+                                            disabled={currentPage === pages}
                                         >
                                             Next
                                             <ChevronRight className="h-4 w-4 ml-1" />

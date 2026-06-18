@@ -557,25 +557,23 @@ export default function EventPage({ params }: EventPageProps) {
     if (!confirm("Are you sure you want to remove this speaker?")) return
 
     try {
-      const response = await fetch(`/api/events/${event.id}/speakers/${speakerId}`, {
+      await apiFetch(`/api/events/${event.id}/speakers/${speakerId}`, {
         method: "DELETE",
+        auth: true,
       })
-
-      if (response.ok) {
-        setEvent((prev: any) => ({
-          ...prev,
-          speakerSessions: prev.speakerSessions.filter((session: any) => session.id !== speakerId),
-        }))
-        toast({
-          title: "Success",
-          description: "Speaker removed successfully",
-        })
-      }
+      setEvent((prev: any) => ({
+        ...prev,
+        speakerSessions: prev.speakerSessions.filter((session: any) => session.id !== speakerId),
+      }))
+      toast({
+        title: "Success",
+        description: "Speaker removed successfully",
+      })
     } catch (error) {
       console.error("Error deleting speaker:", error)
       toast({
         title: "Error",
-        description: "Failed to remove speaker",
+        description: error instanceof Error ? error.message : "Failed to remove speaker",
         variant: "destructive",
       })
     }
