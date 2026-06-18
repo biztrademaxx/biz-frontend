@@ -36,11 +36,12 @@ import { formatEventCountDisplay } from "@/lib/format-event-count"
 
 const NAV_BLUE = "#002C71"
 
+// Updated: Added border and improved shadow
 const categoryCardClass =
-  "group flex min-h-[120px] w-full flex-col items-start rounded-sm bg-white border border-gray-100 px-3 py-3.5 text-left shadow-[0_0_40px_rgba(0,0,0,0.15)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_25px_60px_rgba(0,0,0,0.2)]"
+  "group flex min-h-[120px] w-full flex-col items-start rounded-sm bg-white border-2 border-gray-200 px-3 py-3.5 text-left shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_40px_rgba(0,0,0,0.15)] hover:border-[#002C71]/30"
 
 const viewAllCardClass =
-  "flex min-h-[110px] w-full items-center justify-center rounded-sm bg-[#002C71]/[0.06] px-3 py-3 text-center text-sm font-medium shadow-sm transition-colors duration-200 hover:border-[#002C71]/35 hover:bg-[#002C71]/10"
+  "flex min-h-[110px] w-full items-center justify-center rounded-sm bg-[#002C71]/[0.06] px-3 py-3 text-center text-sm font-medium shadow-sm transition-all duration-200 hover:border-[#002C71]/35 hover:bg-[#002C71]/10 hover:shadow-[0_8px_20px_rgba(0,44,113,0.15)]"
 
 function categoryIconForName(name: string): LucideIcon {
   const n = name.toLowerCase()
@@ -98,14 +99,16 @@ export default function CategoryGridClient({ categories, variant = "home" }: Cat
   return (
     <section
       id={isFull ? "browse-all-categories" : "category"}
-      className="home-tt-section bg-[#F7FBFF] py-6 sm:py-8"
+      className="home-tt-section bg-[#F9F9F9] py-6 sm:py-8"
       aria-label="Browse events by category"
     >
       <div className="mx-auto w-full min-w-0 max-w-7xl px-3 sm:px-4 lg:px-6">
         <h2 className="home-tt-h2 mb-3">{isFull ? "Browse By Category" : "Browse Events By Category"}</h2>
 
-        <div id="category-grid-tiles"   className="grid grid-cols-2 gap-3 overflow-visible sm:grid-cols-3 md:grid-cols-6 md:gap-4"
->
+        <div
+          id="category-grid-tiles"
+          className="grid grid-cols-2 gap-3 overflow-visible sm:grid-cols-3 md:grid-cols-6 md:gap-4"
+        >
           {visibleCategories.map((category) => {
             const Icon = categoryIconForName(category.name)
             const sub = countLabel(category.eventCount)
@@ -113,7 +116,7 @@ export default function CategoryGridClient({ categories, variant = "home" }: Cat
               <Link
                 key={category.id}
                 href={categoryHref(category.name)}
-                className={`${categoryCardClass} cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#002C71] focus-visible:ring-offset-2`}
+                className={categoryCardClass}
               >
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#efefef] text-gray-800">
                   <Icon className="h-4 w-4" strokeWidth={2} aria-hidden />
@@ -134,7 +137,7 @@ export default function CategoryGridClient({ categories, variant = "home" }: Cat
             <button
               type="button"
               onClick={() => setExpanded(true)}
-              className={`${viewAllCardClass} cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#002C71] focus-visible:ring-offset-2`}
+              className={viewAllCardClass}
               style={{ color: NAV_BLUE }}
               aria-expanded={false}
               aria-controls="category-grid-tiles"
@@ -147,7 +150,7 @@ export default function CategoryGridClient({ categories, variant = "home" }: Cat
             <button
               type="button"
               onClick={() => setExpanded(false)}
-              className={`${viewAllCardClass} cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#002C71] focus-visible:ring-offset-2`}
+              className={viewAllCardClass}
               style={{ color: NAV_BLUE }}
               aria-expanded={true}
               aria-controls="category-grid-tiles"
