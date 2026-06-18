@@ -4,6 +4,7 @@ import { AppImage } from "@/components/app-image"
 import type React from "react"
 import { useState, useEffect } from "react"
 import { apiFetch } from "@/lib/api"
+import { uploadFileViaProxy } from "@/components/organizer-create-event/upload-backend"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -238,7 +239,8 @@ export default function ProductListing({ exhibitorId }: ProductListingProps) {
       setError(null)
 
       const data = await apiFetch<{ products?: Product[] }>(
-        `/api/exhibitors/${exhibitorId}/products`
+        `/api/exhibitors/${exhibitorId}/products`,
+        { auth: true }
       )
       setProducts(data?.products ?? [])
     } catch (err) {
@@ -256,25 +258,10 @@ export default function ProductListing({ exhibitorId }: ProductListingProps) {
 
   const uploadFiles = async (files: File[], type: "image" | "pdf") => {
     const uploadedUrls: string[] = []
-
     for (const file of files) {
-      const formData = new FormData()
-      formData.append("file", file)
-      formData.append("type", type)
-
-      const response = await fetch("/api/exhibitorBrochure", {
-        method: "POST",
-        body: formData,
-      })
-
-      if (!response.ok) {
-        throw new Error(`Failed to upload ${file.name}`)
-      }
-
-      const data = await response.json()
-      uploadedUrls.push(data.url)
+      const url = await uploadFileViaProxy(file, type === "image" ? "image" : "brochure")
+      uploadedUrls.push(url)
     }
-
     return uploadedUrls
   }
 
@@ -289,6 +276,7 @@ export default function ProductListing({ exhibitorId }: ProductListingProps) {
         `/api/exhibitors/${exhibitorId}/products`,
         {
           method: "POST",
+          auth: true,
           body: {
             name: formData.name,
             category: formData.category,
@@ -333,6 +321,7 @@ export default function ProductListing({ exhibitorId }: ProductListingProps) {
         `/api/exhibitors/${exhibitorId}/products/${editingProduct.id}`,
         {
           method: "PUT",
+          auth: true,
           body: {
             name: formData.name,
             category: formData.category,
@@ -371,6 +360,7 @@ export default function ProductListing({ exhibitorId }: ProductListingProps) {
     try {
       await apiFetch(`/api/exhibitors/${exhibitorId}/products/${productId}`, {
         method: "DELETE",
+        auth: true,
       })
       setProducts((prev) => prev.filter((p) => p.id !== productId))
 
@@ -402,7 +392,7 @@ export default function ProductListing({ exhibitorId }: ProductListingProps) {
 
       const data = await apiFetch<{ product: Product }>(
         `/api/exhibitors/${exhibitorId}/products/${productId}`,
-        { method: "PUT", body: { images: updatedImages } }
+        { method: "PUT", auth: true, body: { images: updatedImages } }
       )
 
       await fetch("/api/upload/cloudinary", {
