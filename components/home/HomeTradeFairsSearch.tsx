@@ -68,7 +68,7 @@ export default function HomeTradeFairsSearch() {
     >
       <div className="mb-3 flex flex-col gap-1 sm:mb-4 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-base font-bold text-[#004A96] sm:text-lg md:text-xl">Find Trade Fairs Worldwide</h2>
-        <p className="text-xs text-slate-500 sm:text-sm">Search across events and summits worldwide</p>
+        <p className="text-xs text-slate-500 sm:text-sm">Every industry. Every city. One search.</p>
       </div>
 
       <div className="mb-3 flex flex-col gap-2 sm:mb-4 sm:flex-row sm:items-stretch">
@@ -79,7 +79,7 @@ export default function HomeTradeFairsSearch() {
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSearch()}
             placeholder="Search events and summits..."
-            className="h-11 rounded-lg border-slate-200 pl-10 pr-3 text-sm shadow-none focus-visible:ring-[#004A96]/30"
+            className="h-11 rounded-lg border-slate-200 pl-10 pr-3 text-sm shadow-[0_0_12px_rgba(0,0,0,0.1)] focus-visible:ring-[#004A96]/30"
           />
         </div>
         <Button
@@ -146,12 +146,23 @@ export default function HomeTradeFairsSearch() {
               From
             </span>
             <CalendarDays className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            <Input
+            {/* <Input
               type="date"
               value={fromDate}
               onChange={(e) => setFromDate(e.target.value)}
               className="h-11 w-full rounded-lg border-slate-200 pl-12 pr-10 text-sm shadow-none [&::-webkit-calendar-picker-indicator]:opacity-0"
-            />
+            /> */}
+            <Input
+  type="date"
+  value={fromDate}
+  min="2000-01-01"
+  max="2099-12-31"
+  onChange={(e) => {
+    const val = e.target.value
+    if (!val || val.split("-")[0]?.length <= 4) setFromDate(val)
+  }}
+  className="h-11 w-full rounded-lg border-slate-200 pl-12 pr-10 text-sm shadow-none [&::-webkit-calendar-picker-indicator]:opacity-0"
+/>
           </div>
           <span className="hidden shrink-0 text-slate-400 sm:inline">–</span>
           <div className="relative min-w-0 flex-1">
@@ -159,13 +170,24 @@ export default function HomeTradeFairsSearch() {
               To
             </span>
             <CalendarDays className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            <Input
+            {/* <Input
               type="date"
               value={toDate}
               min={fromDate || undefined}
               onChange={(e) => setToDate(e.target.value)}
               className="h-11 w-full rounded-lg border-slate-200 pl-10 pr-10 text-sm shadow-none [&::-webkit-calendar-picker-indicator]:opacity-0"
-            />
+            /> */}
+            <Input
+  type="date"
+  value={toDate}
+  min={fromDate || "2000-01-01"}
+  max="2099-12-31"
+  onChange={(e) => {
+    const val = e.target.value
+    if (!val || val.split("-")[0]?.length <= 4) setToDate(val)
+  }}
+  className="h-11 w-full rounded-lg border-slate-200 pl-10 pr-10 text-sm shadow-none [&::-webkit-calendar-picker-indicator]:opacity-0"
+/>
           </div>
         </div>
       </div>
