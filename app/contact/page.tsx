@@ -117,9 +117,11 @@ export default function ContactPage() {
       </Section>
 
       {/* Contact Form */}
-      <Section title="Send Us a Message">
-        <ContactInquiryForm />
-      </Section>
+      <div id="contact-form">
+  <Section title="Send Us a Message">
+    <ContactInquiryForm />
+  </Section>
+</div>
 
       {/* Social */}
       <Section title="Follow Us">

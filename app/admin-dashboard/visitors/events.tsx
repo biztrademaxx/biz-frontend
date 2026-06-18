@@ -283,7 +283,14 @@ export default function VisitorEventsPage() {
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell>{visitor.visitor.email}</TableCell>
+                      <TableCell className="max-w-[220px]">
+                        <div
+                          className="truncate"
+                          title={visitor.visitor.email}
+                        >
+                          {visitor.visitor.email}
+                        </div>
+                      </TableCell>
                       <TableCell>
                         <Badge variant="outline">{visitor.stats.totalRegistrations}</Badge>
                       </TableCell>
@@ -338,9 +345,11 @@ export default function VisitorEventsPage() {
                       <p className="text-sm text-muted-foreground">Name</p>
                       <p className="font-medium">{selectedVisitor.visitor.name}</p>
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <p className="text-sm text-muted-foreground">Email</p>
-                      <p className="font-medium">{selectedVisitor.visitor.email}</p>
+                      <p className="font-medium break-all text-sm">
+                        {selectedVisitor.visitor.email}
+                      </p>
                     </div>
                     {selectedVisitor.visitor.phone && (
                       <div>

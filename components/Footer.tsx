@@ -74,29 +74,29 @@ const Footer: React.FC<FooterProps> = ({ categories }) => {
     <>
       {/* ── TOP TRUST BAR ─────────────────────────────────────── */}
       <div
-        className="relative w-full overflow-hidden border-b border-white/10 px-7 py-12"
+        className="relative w-full overflow-hidden border-b border-white/10 px-7 pt-2 pb-4"
         style={{
           background:
             "linear-gradient(180deg, #0A4FA3 0%, #004A96 35%, #003D82 70%, #002C71 100%)",
         }}
       >
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
-          <div className="absolute left-1/2 top-0 h-[500px] w-[300px] -translate-x-1/2 bg-white/5 blur-[120px]" />
-
-          <div className="absolute left-0 top-0 h-full w-full bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.08),transparent_55%)]" />
+          <div className="mt-4 text-3xl font-bold leading-tight text-white md:text-4xl">
+            <div className="absolute left-0 top-0 h-full w-full bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.08),transparent_55%)]" />
+          </div>
         </div>
-        <div className="relative z-10 mx-auto max-w-4xl pb-3 text-center lg:pb-14">
+      <div className="relative z-10 mx-auto max-w-4xl pt-0 pb-0 text-center mt-3">
           <span className="inline-flex rounded-full border border-[#FFD54A]/30 bg-[#FFD54A]/10 px-4 py-1 text-xs font-semibold uppercase tracking-wider text-[#FFD54A]">
             JOIN 34,500+ LISTED EVENTS
           </span>
 
-          <h2 className="mt-5 text-4xl font-bold leading-tight text-white md:text-5xl">
+          <h2 className="mt-4 text-2xl max-w-4xl font-bold leading-tight text-white md:text-5xl">
             Get your event in front of
-            <br />
+            {/* <br /> */}
             the people who matter.
           </h2>
 
-          <p className="mx-auto mt-4 max-w-2xl text-white/65">
+       <p className="mx-auto mt-2 max-w-2xl text-sm text-white/65">
             List your event today and reach thousands of industry professionals
             actively searching for exhibitions, conferences and trade fairs.
           </p>
@@ -347,7 +347,7 @@ const Footer: React.FC<FooterProps> = ({ categories }) => {
                     ["FAQ", "/faq"],
                     ["Contact Us", "/contact"],
                     ["Support Center", "/support"],
-                    ["Report an Issue", "/contact"],
+                    ["Report an Issue", "/contact#contact-form"]
                   ].map(([label, href]) => (
                     <li key={label}>
                       <Link href={href} className="text-[13.5px] text-white/70 transition-colors duration-150 hover:text-white">

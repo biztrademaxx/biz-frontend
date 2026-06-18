@@ -764,7 +764,7 @@ export default function DashboardOverview({
                         <Cell key={`cell-${j}`} fill={entry.color} stroke="transparent" />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(v: number, name: string) => [`${v} events`, name]} />
+                    <Tooltip formatter={((v: number, name: string) => [`${v} events`, name]) as any} />
                     <Legend
                       layout="vertical"
                       align="right"

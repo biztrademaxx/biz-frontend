@@ -43,7 +43,7 @@ export default function FeaturedOrganizersStripClient({
       <div className="mt-10 flex justify-center">
         <Link
           href="/organizers"
-          className="inline-flex items-center justify-center rounded-lg border-2 border-[#004A96] bg-white px-8 py-3 text-sm font-semibold text-[#004A96] transition-all duration-200 hover:bg-[#004A96] hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          className="inline-flex items-center justify-center rounded-sm bg-[#004A96] px-8 py-3 text-sm font-semibold text-white shadow-sm transition-colors duration-200 hover:bg-[#003a75] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
         >
           View All Organizers
         </Link>

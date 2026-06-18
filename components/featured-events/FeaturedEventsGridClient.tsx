@@ -208,7 +208,7 @@ export default function FeaturedEventsGridClient({
       <div className="mt-4 flex justify-center gap-4">
         <Link
           href="/organizer-signup"
-          className="inline-flex w-[120px] items-center justify-center rounded-md border border-[#002C71] px-3 py-2 text-sm font-medium text-[#002C71] transition-colors hover:bg-[#002C71]/5"
+          className="inline-flex items-center justify-center rounded-sm bg-[#004A96] px-8 py-3 text-sm font-semibold text-white shadow-sm transition-colors duration-200 hover:bg-[#003a75] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
         >
           Add Event
         </Link>

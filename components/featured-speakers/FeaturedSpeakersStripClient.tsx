@@ -45,24 +45,24 @@ export default function FeaturedSpeakersStripClient({
         <div className="relative">
 
           {/* Left arrow */}
-          <button
+          {/* <button
             type="button"
             onClick={() => scrollByAmount(-280)}
             aria-label="Scroll speakers left"
             className="absolute left-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/90 p-2 opacity-0 shadow-md transition-all hover:bg-white group-hover:opacity-100"
           >
             <ChevronLeft className="h-5 w-5 text-gray-700" strokeWidth={2} />
-          </button>
+          </button> */}
 
           {/* Right arrow */}
-          <button
+          {/* <button
             type="button"
             onClick={() => scrollByAmount(280)}
             aria-label="Scroll speakers right"
             className="absolute right-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/90 p-2 opacity-0 shadow-md transition-all hover:bg-white group-hover:opacity-100"
           >
             <ChevronRight className="h-5 w-5 text-gray-700" strokeWidth={2} />
-          </button>
+          </button> */}
 
           {/* Scrollable row */}
           <div

@@ -47,7 +47,9 @@ export function DynamicCalendar({ className, userId }: DynamicCalendarProps) {
   useEffect(() => {
     const fetchEvents = async () => {
       try {
+
         const data = await apiFetch<{ events?: Event[]; data?: Event[] }>(`/api/users/${userId}/interested-events?year=${currentYear}`, { auth: true })
+
         setEvents(data.events ?? data.data ?? [])
       } catch (err) {
         console.error("Failed to load events", err)

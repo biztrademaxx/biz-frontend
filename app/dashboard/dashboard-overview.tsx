@@ -396,6 +396,17 @@ export function DashboardOverview({ userId, events, userName, interests = [] }: 
           <CardContent className="p-6">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-lg font-semibold text-slate-900">Event Calendar</h3>
+
+
+              {/* <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleNavigation("schedule", false)}
+                className="text-[#004A96]"
+              >
+                View Full →
+              </Button> */}
+
             </div>
             <DynamicCalendar userId={userId} className="w-full scale-95 origin-top" />
           </CardContent>
@@ -528,6 +539,7 @@ export function DashboardOverview({ userId, events, userName, interests = [] }: 
               </Select>
             ) : null}
             <Link href="/event" className="ml-auto sm:ml-0">
+
               <Button
                 variant="outline"
                 size="sm"
@@ -536,6 +548,9 @@ export function DashboardOverview({ userId, events, userName, interests = [] }: 
               >
                 Browse All
               </Button>
+
+   
+
             </Link>
           </div>
         </div>
@@ -621,6 +636,11 @@ export function DashboardOverview({ userId, events, userName, interests = [] }: 
                         Stalls Open
                       </span>
                       <div className="flex gap-2">
+
+                        {/* <Button variant="outline" size="sm" className="h-8 px-3 text-xs" asChild>
+                          <Link href={eventPublicPath(event)}>Register</Link>
+                        </Button> */}
+
                         <Button size="sm" className="h-8 bg-[#004A96] px-3 text-xs hover:bg-[#003d7a]" asChild>
                           <Link href={eventPublicPath(event)}>View</Link>
                         </Button>
@@ -637,9 +657,11 @@ export function DashboardOverview({ userId, events, userName, interests = [] }: 
               <TrendingUp className="mx-auto mb-3 h-12 w-12 text-slate-300" />
               <p className="text-slate-500">No suggestions available</p>
               <Link href="/events" className="text-[#004A96] hover:underline">
-                <Button variant="outline" className="mt-4">
-                  Browse Events
-                </Button>
+
+              <Button variant="outline" className="mt-4" >
+                Browse Events
+              </Button>
+
               </Link>
             </CardContent>
           </Card>
