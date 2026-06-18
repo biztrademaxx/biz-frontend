@@ -35,6 +35,17 @@ interface CreateConferenceAgendaProps {
   onSuccess?: () => void
 }
 
+const formatDisplayDate = (isoDate: string): string => {
+  if (!isoDate) return ""
+  const date = new Date(isoDate)
+  return date.toLocaleDateString("en-GB", {
+    weekday: "long",
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  })
+}
+
 export function CreateConferenceAgenda({ eventId, conferenceId, initialData, onSuccess }: CreateConferenceAgendaProps) {
   const [agenda, setAgenda] = useState<ConferenceAgenda>(
     initialData || {
@@ -234,10 +245,17 @@ export function CreateConferenceAgenda({ eventId, conferenceId, initialData, onS
               <Label htmlFor="date">Date</Label>
               <Input
                 id="date"
-                type="text"
-                placeholder="e.g., 20 November 2025"
-                value={agenda.date}
-                onChange={(e) => setAgenda({ ...agenda, date: e.target.value })}
+                type="date"
+                value={agenda.date ? agenda.date.split("T")[0] : ""}
+                onChange={(e) => {
+                  const dateValue = e.target.value
+                  const isoDate = dateValue ? `${dateValue}` : ""
+                  setAgenda({
+                    ...agenda,
+                    date: isoDate,
+                    day: isoDate ? formatDisplayDate(isoDate) : "",
+                  })
+                }}
                 disabled={isLoading}
               />
             </div>
@@ -270,15 +288,10 @@ export function CreateConferenceAgenda({ eventId, conferenceId, initialData, onS
       {/* Sessions */}
       <Card>
         <CardContent className="pt-6">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-base font-medium text-foreground">Sessions</h2>
-            <Button variant="ghost" size="sm" onClick={addSession} disabled={isLoading}>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Session
-            </Button>
-          </div>
+          
 
           <div className="space-y-6">
+            <h2 className="text-base font-medium text-foreground">Sessions</h2>
             {agenda.sessions.map((session, index) => (
               <div key={session.id} className="space-y-4 rounded-lg border border-border p-4">
                 <div className="flex items-center justify-between">
@@ -291,18 +304,34 @@ export function CreateConferenceAgenda({ eventId, conferenceId, initialData, onS
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor={`time-${session.id}`}>Time</Label>
-                    <Input
-                      id={`time-${session.id}`}
-                      type="text"
-                      placeholder="e.g., 09:00 – 09:35"
-                      value={session.time}
-                      onChange={(e) => updateSession(session.id, "time", e.target.value)}
-                      disabled={isLoading}
-                    />
-                  </div>
-                  <div className="space-y-2">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor={`timeStart-${session.id}`}>Start Time</Label>
+                      <Input
+                        id={`timeStart-${session.id}`}
+                        type="time"
+                        value={session.time?.split(" – ")[0] || ""}
+                        onChange={(e) => {
+                          const end = session.time?.split(" – ")[1] || ""
+                          updateSession(session.id, "time", `${e.target.value} – ${end}`)
+                        }}
+                        disabled={isLoading}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor={`timeEnd-${session.id}`}>End Time</Label>
+                      <Input
+                        id={`timeEnd-${session.id}`}
+                        type="time"
+                        value={session.time?.split(" – ")[1] || ""}
+                        onChange={(e) => {
+                          const start = session.time?.split(" – ")[0] || ""
+                          updateSession(session.id, "time", `${start} – ${e.target.value}`)
+                        }}
+                        disabled={isLoading}
+                      />
+                    </div>
+                  </div>                  <div className="space-y-2">
                     <Label htmlFor={`type-${session.id}`}>Session Type</Label>
                     <Select
                       value={session.type}
@@ -365,8 +394,17 @@ export function CreateConferenceAgenda({ eventId, conferenceId, initialData, onS
               </div>
             ))}
           </div>
+
+          <div className="mb-4 flex items-center justify-between">
+            <Button variant="ghost" size="sm" onClick={addSession} disabled={isLoading}>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Session
+            </Button>
+          </div>
         </CardContent>
       </Card>
+
+      
 
       {/* Footer Actions */}
       <div className="flex justify-end gap-3">
