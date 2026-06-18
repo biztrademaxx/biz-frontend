@@ -18,6 +18,9 @@ export const EVENTS_LISTING_REVALIDATE_SEC = 45
 /** Matches public listing payload used across explore menu and /event filters. */
 export const EVENTS_LISTING_FETCH_LIMIT = 500
 
+/** Top 100 Must Visit — ranked by saved-event followers, then rating. */
+export const EVENTS_TOP_MUST_VISIT_LIMIT = 100
+
 export const EVENTS_API = `/api/events?limit=${EVENTS_LISTING_FETCH_LIMIT}&sort=newest`
 
 /** Fallback image for listing / trending cards when event has no media. */

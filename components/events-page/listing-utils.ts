@@ -5,7 +5,7 @@ import { sanitizeImageUrl } from "@/lib/placeholder"
 import { resolvedVerifiedBadgeImageUrl } from "@/lib/verified-event-badge"
 import type { ListingFollowerFace } from "@/components/event-listing/EventCardFollowStrip"
 import type { Event } from "./listing-types"
-import { LISTING_DEFAULT_EVENT_IMAGE } from "./listing-constants"
+import { EVENTS_TOP_MUST_VISIT_LIMIT, LISTING_DEFAULT_EVENT_IMAGE } from "./listing-constants"
 
 export function normalizeListingFollowerPreview(rawEvent: Record<string, unknown>): ListingFollowerFace[] {
   const raw = rawEvent.followerPreview ?? rawEvent.goingPreview ?? rawEvent.followersPreview
@@ -252,6 +252,178 @@ export function eventMatchesCity(event: Event, cityTerm: string): boolean {
     event.location?.address,
   ].map((v) => (v ? String(v) : ""))
   return fields.some((f) => locationTokensMatch(cityTerm, f))
+}
+
+function normalizeCategoryToken(value: string): string {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+}
+
+/** Lenient category match — handles "Education & Training" vs "Education Training". */
+export function eventMatchesCategory(event: Event, categoryTerm: string): boolean {
+  if (!categoryTerm.trim()) return true
+  if (!event.categories?.length) return false
+  const needle = normalizeCategoryToken(categoryTerm)
+  if (!needle) return true
+  return event.categories.some((cat) => {
+    if (!cat || typeof cat !== "string") return false
+    const hay = normalizeCategoryToken(cat)
+    return hay === needle || hay.includes(needle) || needle.includes(hay)
+  })
+}
+
+export function listingEventFollowerCount(event: Event): number {
+  if (typeof event.followersCount === "number" && Number.isFinite(event.followersCount)) {
+    return event.followersCount
+  }
+  return 0
+}
+
+export function listingEventRatingAverage(event: Event): number {
+  const avg = event.rating?.average
+  if (typeof avg === "number" && Number.isFinite(avg)) return avg
+  if (typeof event.averageRating === "number" && Number.isFinite(event.averageRating)) {
+    return event.averageRating
+  }
+  return 0
+}
+
+/** Top 100 Must Visit ranking: followers first, then rating, then soonest start date. */
+export function sortEventsByFollowersAndRating(events: Event[]): Event[] {
+  return [...events].sort((a, b) => {
+    const byFollowers = listingEventFollowerCount(b) - listingEventFollowerCount(a)
+    if (byFollowers !== 0) return byFollowers
+    const byRating = listingEventRatingAverage(b) - listingEventRatingAverage(a)
+    if (byRating !== 0) return byRating
+    const aStart = new Date(a.timings?.startDate ?? a.startDate).getTime()
+    const bStart = new Date(b.timings?.startDate ?? b.startDate).getTime()
+    if (!Number.isNaN(aStart) && !Number.isNaN(bStart) && aStart !== bStart) {
+      return aStart - bStart
+    }
+    return a.id.localeCompare(b.id)
+  })
+}
+
+export function applyTopMustVisitRanking(
+  events: Event[],
+  limit: number = EVENTS_TOP_MUST_VISIT_LIMIT,
+): Event[] {
+  return sortEventsByFollowersAndRating(events).slice(0, limit)
+}
+
+export function formatListingFollowerTotal(events: Event[]): string {
+  const total = events.reduce((sum, ev) => sum + listingEventFollowerCount(ev), 0)
+  if (total >= 1000) return `${(total / 1000).toFixed(1).replace(/\.0$/, "")}K Followers`
+  return `${total.toLocaleString()} Followers`
+}
+
+const DATE_RANGE_LABELS: Record<string, string> = {
+  today: "Today",
+  tomorrow: "Tomorrow",
+  "this-week": "This Week",
+  "this-month": "This Month",
+  "next-month": "Next Month",
+}
+
+const PRICE_RANGE_LABELS: Record<string, string> = {
+  free: "Free",
+  "under-1000": "Under ₹1,000",
+  "1000-5000": "₹1,000 – ₹5,000",
+  "above-5000": "Above ₹5,000",
+}
+
+export type EventsListingBannerTitleInput = {
+  searchQuery: string
+  selectedDate: Date | null
+  selectedDateRange: string
+  selectedCategories: string[]
+  selectedCategory: string
+  selectedLocation: string
+  selectedCountry: string
+  customFromDate: string
+  customToDate: string
+  selectedFormat: string
+  priceRange: string
+  rating: string
+  activeTab: string
+}
+
+export function getEventsListingBannerTitle(input: EventsListingBannerTitleInput): string {
+  const {
+    searchQuery,
+    selectedDate,
+    selectedDateRange,
+    selectedCategories,
+    selectedCategory,
+    selectedLocation,
+    selectedCountry,
+    customFromDate,
+    customToDate,
+    selectedFormat,
+    priceRange,
+    rating,
+    activeTab,
+  } = input
+
+  if (searchQuery.trim()) {
+    return `Search Results for "${searchQuery.trim()}"`
+  }
+  if (selectedDate) {
+    return `Events on ${selectedDate.toLocaleDateString("en-US", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    })}`
+  }
+  if (selectedDateRange.trim()) {
+    const label = DATE_RANGE_LABELS[selectedDateRange] ?? selectedDateRange
+    return `${label} Events`
+  }
+  if (selectedCategories.length > 0) {
+    return `${selectedCategories.join(", ")} Events`
+  }
+  if (selectedCategory && selectedCategory !== "All Events") {
+    return `${selectedCategory} Events`
+  }
+  if (selectedFormat && selectedFormat !== "All Formats") {
+    return `${selectedFormat} Events`
+  }
+  if (selectedLocation && selectedCountry) {
+    return `Events in ${selectedLocation}, ${selectedCountry}`
+  }
+  if (selectedLocation) {
+    return `Events in ${selectedLocation}`
+  }
+  if (selectedCountry) {
+    return `Events in ${selectedCountry}`
+  }
+  if (customFromDate || customToDate) {
+    if (customFromDate && customToDate) {
+      return `Events from ${customFromDate} to ${customToDate}`
+    }
+    if (customFromDate) return `Events from ${customFromDate}`
+    return `Events until ${customToDate}`
+  }
+  if (priceRange.trim()) {
+    const label = PRICE_RANGE_LABELS[priceRange] ?? priceRange
+    return `${label} Events`
+  }
+  if (rating.trim()) {
+    return `${rating}+ Star Events`
+  }
+  if (activeTab === "Verified") {
+    return "Verified Events"
+  }
+  if (activeTab !== "All Events") {
+    return `${activeTab} Events`
+  }
+  return "Top 100 Must Visit"
 }
 
 export function eventMatchesSearchQuery(event: Event, query: string): boolean {
