@@ -126,7 +126,7 @@ function getSpeakerAvatarStyles(speaker: Speaker) {
 }
 
 function getSpeakerTotalEvents(speaker: Speaker) {
-  return speaker.totalEvents || (speaker.upcomingEventsCount || 0) + (speaker.pastEventsCount || 0)
+  return speaker.totalEvents ?? 0
 }
 
 function getSpeakerUpcomingEvents(speaker: Speaker) {
@@ -161,14 +161,17 @@ export default function SpeakersPage() {
 
         const normalizedSpeakers: Speaker[] = data.speakers.map((speaker) => {
           const totalEvents = speaker.totalEvents ?? 0
-          const upcomingEvents = speaker.activeEvents ?? speaker.upcomingEventsCount ?? 0
+          const upcomingEvents =
+            speaker.upcomingEventsCount ?? speaker.activeEvents ?? 0
+          const pastEvents =
+            speaker.pastEventsCount ?? Math.max(0, totalEvents - upcomingEvents)
 
           return {
             ...speaker,
             totalEvents,
             activeEvents: upcomingEvents,
             upcomingEventsCount: upcomingEvents,
-            pastEventsCount: Math.max(0, totalEvents - upcomingEvents),
+            pastEventsCount: pastEvents,
           }
         })
 
