@@ -28,8 +28,13 @@ import UpcomingVipEvents from "@/components/home/UpcomingVipEvents";
 
 export default function Home() {
   return (
+<<<<<<< Updated upstream
     <div className="min-h-screen w-full min-w-0 overflow-x-hidden bg-[#f9f9f9]">
       <div className="bg-[#f9f9f9] pb-1">
+=======
+    <div className="min-h-screen w-full min-w-0 overflow-x-hidden bg-[#f8f5ee]">
+      <div className="bg-white pb-1">
+>>>>>>> Stashed changes
         <div className="mx-auto w-full min-w-0 max-w-7xl px-3 sm:px-4 lg:px-6">
           {/* <HeroSection/> */}
           <Suspense fallback={<HeroSlideshowSkeleton />}>

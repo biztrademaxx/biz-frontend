@@ -117,10 +117,10 @@ const AnimatedMessage = memo(({ messages }: any) => {
       key={currentIndex}
       className="transition-all duration-700 ease-in-out opacity-100"
     >
-      <h1 className="text-5xl font-bold leading-tight mb-6 text-white">
+      <h1 className="text-3xl font-bold leading-tight mb-6 text-white">
         {messages[currentIndex].title}
         <br />
-        <span className="font-normal text-2xl">
+        <span className="font-normal text-xl">
           {messages[currentIndex].subtitle}
         </span>
       </h1>
@@ -305,14 +305,66 @@ const OrganizerSignup = () => {
     if (currentStep !== 1) return null;
     
     return (
-      <div className="relative flex min-h-screen flex-col overflow-hidden bg-blue-100">
-        <div className="absolute inset-0 h-full w-full">
-          <div className="absolute inset-0 bg-black/40" />
-          <div
-            className="absolute inset-0 h-full w-full bg-cover bg-center"
-            style={{ backgroundImage: "url('/organizer-signup/BG_ORG_DSH.jpg')" }}
-          />
-        </div>
+      <div className="relative flex min-h-screen flex-col overflow-hidden">
+  {/* Background Design */}
+  <div className="absolute inset-0 overflow-hidden">
+    {/* Base Background */}
+    <div className="absolute inset-0 bg-[#001B70]" />
+
+    {/* Main Glow */}
+    <div
+      className="absolute left-1/2 top-1/2 h-[900px] w-[900px] -translate-x-1/2 -translate-y-1/2 rounded-full"
+      style={{
+        background:
+          "radial-gradient(circle, rgba(59,130,246,0.35) 0%, rgba(59,130,246,0.12) 45%, transparent 75%)",
+        filter: "blur(30px)",
+      }}
+    />
+
+    {/* Circular Rings */}
+    <div className="absolute left-1/2 top-1/2 h-[1200px] w-[1200px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-blue-400/10" />
+    <div className="absolute left-1/2 top-1/2 h-[950px] w-[950px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-blue-400/10" />
+    <div className="absolute left-1/2 top-1/2 h-[700px] w-[700px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-blue-400/10" />
+
+    {/* World Map Style Dot Pattern */}
+    <div
+      className="absolute inset-0 opacity-[0.08]"
+      style={{
+        backgroundImage:
+          "radial-gradient(circle, rgba(255,255,255,0.8) 1px, transparent 1px)",
+        backgroundSize: "14px 14px",
+      }}
+    />
+
+    {/* Left Glow */}
+    <div className="absolute left-[-200px] top-[20%] h-[500px] w-[500px] rounded-full bg-blue-500/10 blur-[120px]" />
+
+    {/* Right Glow */}
+    <div className="absolute right-[-200px] top-[40%] h-[500px] w-[500px] rounded-full bg-cyan-400/10 blur-[120px]" />
+
+    {/* Bottom Wave */}
+    <svg
+      className="absolute bottom-0 left-0 w-full opacity-40"
+      viewBox="0 0 1440 320"
+      preserveAspectRatio="none"
+    >
+      <path
+        fill="rgba(59,130,246,0.5)"
+        d="M0,256L80,224C160,192,320,128,480,128C640,128,800,192,960,224C1120,256,1280,256,1360,240L1440,224V320H0Z"
+      />
+    </svg>
+
+    {/* Floating Dots */}
+    <div className="absolute left-[8%] top-[22%] h-2 w-2 rounded-full bg-blue-400 shadow-[0_0_20px_#60A5FA]" />
+    <div className="absolute left-[28%] top-[10%] h-2 w-2 rounded-full bg-blue-400 shadow-[0_0_20px_#60A5FA]" />
+    <div className="absolute left-[75%] top-[15%] h-2 w-2 rounded-full bg-blue-400 shadow-[0_0_20px_#60A5FA]" />
+    <div className="absolute left-[90%] top-[60%] h-2 w-2 rounded-full bg-blue-400 shadow-[0_0_20px_#60A5FA]" />
+    <div className="absolute left-[55%] top-[80%] h-2 w-2 rounded-full bg-blue-400 shadow-[0_0_20px_#60A5FA]" />
+
+    {/* Overlay */}
+    <div className="absolute inset-0 bg-black/20" />
+  </div>
+        <br /> <br /><br /> <br /> 
 
         <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 sm:py-8 lg:flex-row lg:items-center lg:justify-between lg:gap-10">
           <div className="hidden max-w-lg flex-1 text-white lg:block lg:pr-8">
@@ -326,7 +378,7 @@ const OrganizerSignup = () => {
 
             <button
               type="button"
-              className="rounded-full border-2 border-white bg-transparent px-8 py-3 font-semibold text-white transition-colors hover:bg-white hover:text-blue-900"
+              className="rounded-full border-2 border-white bg-transparent px-7 py-2 font-semibold text-white transition-colors hover:bg-white hover:text-blue-900"
             >
               LEARN MORE
             </button>
