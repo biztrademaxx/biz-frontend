@@ -21,7 +21,17 @@ export const EVENTS_LISTING_FETCH_LIMIT = 500
 /** Top 100 Must Visit — ranked by saved-event followers, then rating. */
 export const EVENTS_TOP_MUST_VISIT_LIMIT = 100
 
-export const EVENTS_API = `/api/events?limit=${EVENTS_LISTING_FETCH_LIMIT}&sort=newest`
+export function getEventsListingApiUrl(): string {
+  const qs = new URLSearchParams({
+    limit: String(EVENTS_LISTING_FETCH_LIMIT),
+    sort: "newest",
+    excludePast: "true",
+  })
+  return `/api/events?${qs.toString()}`
+}
+
+/** @deprecated Use getEventsListingApiUrl() — excludes past events by default. */
+export const EVENTS_API = getEventsListingApiUrl()
 
 /** Fallback image for listing / trending cards when event has no media. */
 export const LISTING_DEFAULT_EVENT_IMAGE = DEFAULT_EVENT_IMAGE
