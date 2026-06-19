@@ -2,6 +2,14 @@ import { type NextRequest, NextResponse } from "next/server"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"
 
+function backendHeaders(req: NextRequest): Record<string, string> {
+  const auth = req.headers.get("authorization")
+  return {
+    "Content-Type": "application/json",
+    ...(auth ? { Authorization: auth } : {}),
+  }
+}
+
 async function proxy(
   req: NextRequest,
   backendPath: string,
@@ -17,9 +25,7 @@ async function proxy(
 
     const res = await fetch(`${API_BASE_URL}${backendPath}`, {
       method,
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: backendHeaders(req),
       body: body ? JSON.stringify(body) : undefined,
     })
 
@@ -74,15 +80,18 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   }
 
   try {
+    const auth = req.headers.get("authorization")
     const res = await fetch(`${API_BASE_URL}/api/venue-manager/${encodeURIComponent(id)}`, {
       method: "GET",
-      headers: { "Content-Type": "application/json" },
+      headers: backendHeaders(req),
       cache: "no-store",
     })
     const data = await res.json().catch(() => ({}))
-    const sanitized = stripPublicVenueContact(
-      typeof data === "object" && data !== null ? (data as Record<string, unknown>) : {},
-    )
+    const sanitized = auth
+      ? data
+      : stripPublicVenueContact(
+          typeof data === "object" && data !== null ? (data as Record<string, unknown>) : {},
+        )
     return NextResponse.json(sanitized, { status: res.status })
   } catch (error) {
     console.error("Error proxying venue-manager GET:", error)

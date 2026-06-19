@@ -20,7 +20,7 @@ import {
 import { useToast } from "@/hooks/use-toast"
 import { getCityOptions, getCountryOptions, getStateOptions } from "@/lib/location-data"
 import { getIanaTimeZoneOptions } from "@/lib/iana-timezones"
-import { safeResponseJson } from "@/lib/api"
+import { safeResponseJson, apiFetch } from "@/lib/api"
 import {
   IMAGE_UPLOAD_HINT,
   parseUploadErrorMessage,
@@ -69,6 +69,23 @@ interface VenueProfileProps {
 
 const LOCATION_NONE = "__none__"
 
+function sanitizeImageList(list: string[] | undefined | null): string[] {
+  return (list ?? []).map((item) => (typeof item === "string" ? item.trim() : "")).filter(Boolean)
+}
+
+function cloudinaryPublicIdFromUrl(imageUrl: string): string | null {
+  const trimmed = imageUrl.trim()
+  if (!trimmed.includes("cloudinary.com")) return null
+  const withoutQuery = trimmed.split("?")[0]
+  const uploadIdx = withoutQuery.indexOf("/upload/")
+  if (uploadIdx === -1) return null
+  let path = withoutQuery.slice(uploadIdx + "/upload/".length)
+  path = path.replace(/^v\d+\//, "")
+  const dot = path.lastIndexOf(".")
+  if (dot === -1) return path || null
+  return path.slice(0, dot) || null
+}
+
 const mapBackendToVenueData = (data: any): VenueData => ({
   id: data.id,
   venueName: data.manager?.venueName || data.name || "",
@@ -91,9 +108,9 @@ const mapBackendToVenueData = (data: any): VenueData => ({
   totalReviews: data.stats?.totalReviews || 0,
   amenities: data.amenities || [],
   meetingSpaces: data.meetingSpaces || [],
-  venueImages: data.images || [],
+  venueImages: sanitizeImageList(data.images),
   venueVideos: data.videos || [],
-  floorPlans: data.floorPlans || [],
+  floorPlans: sanitizeImageList(data.floorPlans),
   virtualTour: data.virtualTour || "",
   latitude: data.location?.coordinates?.lat || 0,
   longitude: data.location?.coordinates?.lng || 0,
@@ -107,10 +124,28 @@ const AMENITY_ICONS: Record<string, any> = {
   "Air Conditioning": Wind, "WiFi": Wifi,
 }
 
+const applyVenueState = (
+  venue: VenueData,
+  setters: {
+    setProfileData: (v: VenueData) => void
+    setAmenities: (v: string[]) => void
+    setMeetingSpaces: (v: any[]) => void
+    setImages: (v: string[]) => void
+    setFloorPlans: (v: string[]) => void
+  },
+) => {
+  setters.setProfileData(venue)
+  setters.setAmenities(venue.amenities ?? [])
+  setters.setMeetingSpaces(venue.meetingSpaces ?? [])
+  setters.setImages(sanitizeImageList(venue.venueImages))
+  setters.setFloorPlans(sanitizeImageList(venue.floorPlans))
+}
+
 export default function VenueProfile({ venueData }: VenueProfileProps) {
   const [isEditing, setIsEditing] = useState(false)
-  const [profileData, setProfileData] = useState<VenueData | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
+  const [profileData, setProfileData] = useState<VenueData>(() => venueData)
+  const [isRefreshing, setIsRefreshing] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
   const { toast } = useToast()
   const [amenities, setAmenities] = useState<string[]>([])
   const [meetingSpaces, setMeetingSpaces] = useState<any[]>([])
@@ -132,29 +167,41 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
   }, [ianaZones, tzFilter])
 
   useEffect(() => {
+    applyVenueState(venueData, {
+      setProfileData,
+      setAmenities,
+      setMeetingSpaces,
+      setImages,
+      setFloorPlans,
+    })
+  }, [venueData])
+
+  useEffect(() => {
     const fetchVenue = async () => {
+      if (!venueData.id) return
       try {
-        setIsLoading(true)
-        const res = await fetch(`/api/venue-manager/${venueData.id}`)
-        const data = await safeResponseJson<{ success?: boolean; data?: unknown }>(res)
+        setIsRefreshing(true)
+        const data = await apiFetch<{ success?: boolean; data?: unknown }>(
+          `/api/venue-manager/${encodeURIComponent(venueData.id)}`,
+          { auth: true },
+        )
         if (data?.success && data.data != null) {
-          const venue = mapBackendToVenueData(data.data)
-          setProfileData(venue)
-          setAmenities(venue.amenities)
-          setMeetingSpaces(venue.meetingSpaces)
-          setImages(venue.venueImages)
-          setFloorPlans(venue.floorPlans)
-        } else {
-          toast({ title: "Error", description: "Failed to load venue data", variant: "destructive" })
+          applyVenueState(mapBackendToVenueData(data.data), {
+            setProfileData,
+            setAmenities,
+            setMeetingSpaces,
+            setImages,
+            setFloorPlans,
+          })
         }
       } catch (err) {
-        toast({ title: "Error", description: "Failed to load venue data", variant: "destructive" })
+        console.error("Failed to refresh venue profile:", err)
       } finally {
-        setIsLoading(false)
+        setIsRefreshing(false)
       }
     }
-    fetchVenue()
-  }, [venueData.id, toast])
+    void fetchVenue()
+  }, [venueData.id])
 
   useEffect(() => { setCountryOptions(getCountryOptions()) }, [])
 
@@ -200,7 +247,7 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
     } catch { }
   }
 
-  const handleImageUpload = async (file: File, type: "venue" | "floorplan" | "logo") => {
+  const handleImageUpload = async (file: File, type: "venue" | "floorplan" | "logo", skipListUpdate = false) => {
     try {
       const prepared = await prepareImageFileForUpload(file)
       const formData = new FormData()
@@ -219,9 +266,11 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
       }
       if (data?.success && data.data?.secure_url) {
         const imageUrl = data.data.secure_url
-        if (type === "venue") setImages((prev) => [...prev, imageUrl])
-        else if (type === "floorplan") setFloorPlans((prev) => [...prev, imageUrl])
-        else if (type === "logo") setProfileData((prev) => (prev ? { ...prev, logo: imageUrl } : null))
+        if (!skipListUpdate) {
+          if (type === "venue") setImages((prev) => [...prev, imageUrl])
+          else if (type === "floorplan") setFloorPlans((prev) => [...prev, imageUrl])
+          else if (type === "logo") setProfileData((prev) => ({ ...prev, logo: imageUrl }))
+        }
         toast({ title: "Success", description: "Image uploaded successfully" })
         return imageUrl
       } else throw new Error(data?.error || "Upload failed")
@@ -235,43 +284,126 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
     }
   }
 
-  const handleImageDelete = async (imageUrl: string, type: "venue" | "floorplan") => {
+  const handleImageDelete = async (imageUrl: string, type: "venue" | "floorplan", index?: number) => {
+    const removeFromList = (prev: string[]) => {
+      if (typeof index === "number") return prev.filter((_, i) => i !== index)
+      return prev.filter((img) => img !== imageUrl)
+    }
+
+    const nextVenueImages = type === "venue" ? removeFromList(images) : images
+    const nextFloorPlans = type === "floorplan" ? removeFromList(floorPlans) : floorPlans
+
     try {
-      const urlParts = imageUrl.split("/")
-      const publicIdWithExt = urlParts.slice(-3).join("/")
-      const publicId = publicIdWithExt.split(".")[0]
-      const res = await fetch(`/api/venue-manager/${venueData.id}/delete-image?publicId=${publicId}`, { method: "DELETE" })
-      const data = await safeResponseJson<{ success?: boolean; error?: string }>(res)
-      if (data?.success) {
-        if (type === "venue") setImages((prev) => prev.filter((img) => img !== imageUrl))
-        else if (type === "floorplan") setFloorPlans((prev) => prev.filter((img) => img !== imageUrl))
-        toast({ title: "Success", description: "Image deleted successfully" })
-      } else throw new Error(data?.error || "Delete failed")
-    } catch {
-      toast({ title: "Error", description: "Failed to delete image", variant: "destructive" })
+      const publicId = cloudinaryPublicIdFromUrl(imageUrl)
+      if (publicId) {
+        await fetch(
+          `/api/venue-manager/${venueData.id}/delete-image?publicId=${encodeURIComponent(publicId)}`,
+          { method: "DELETE" },
+        )
+      }
+
+      if (type === "venue") setImages(nextVenueImages)
+      else setFloorPlans(nextFloorPlans)
+
+      await persistVenueMedia(nextVenueImages, nextFloorPlans)
+      toast({ title: "Success", description: "Image removed successfully" })
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: err instanceof Error ? err.message : "Failed to delete image",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleRemoveCoverImage = () => {
+    if (images.length === 0) return
+    void handleImageDelete(images[0], "venue", 0)
+  }
+
+  const persistVenueMedia = async (nextVenueImages: string[], nextFloorPlans: string[]) => {
+    const payload = profileData ?? venueData
+    const data = await apiFetch<{ success?: boolean; venue?: VenueData; error?: string }>(
+      `/api/venue-manager/${encodeURIComponent(payload.id)}`,
+      {
+        method: "PUT",
+        body: {
+          ...payload,
+          amenities,
+          meetingSpaces,
+          venueImages: sanitizeImageList(nextVenueImages),
+          floorPlans: sanitizeImageList(nextFloorPlans),
+        },
+        auth: true,
+      },
+    )
+    if (data?.success && data.venue) {
+      applyVenueState(data.venue, {
+        setProfileData,
+        setAmenities,
+        setMeetingSpaces,
+        setImages,
+        setFloorPlans,
+      })
+    } else {
+      throw new Error(data?.error || "Failed to save image changes")
+    }
+  }
+
+  const handleReplaceCoverImage = async (file: File) => {
+    const uploaded = await handleImageUpload(file, "venue", true)
+    if (!uploaded) return
+    const nextImages = images.length === 0 ? [uploaded] : [uploaded, ...images.slice(1)]
+    setImages(nextImages)
+    try {
+      await persistVenueMedia(nextImages, floorPlans)
+      toast({ title: "Success", description: "Cover image updated" })
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: err instanceof Error ? err.message : "Failed to update cover image",
+        variant: "destructive",
+      })
     }
   }
 
   const handleSave = async () => {
-    if (!profileData) return
+    const payload = profileData ?? venueData
+    if (!payload?.id) {
+      toast({ title: "Error", description: "Venue profile is not loaded yet.", variant: "destructive" })
+      return
+    }
     try {
-      setIsLoading(true)
-      const res = await fetch(`/api/venue-manager/${venueData.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...profileData, amenities, meetingSpaces, venueImages: images, floorPlans }),
-      })
-      const data = await safeResponseJson<{ success?: boolean; venue?: VenueData; error?: string }>(res)
+      setIsSaving(true)
+      const data = await apiFetch<{ success?: boolean; venue?: VenueData; error?: string }>(
+        `/api/venue-manager/${encodeURIComponent(payload.id)}`,
+        {
+          method: "PUT",
+          body: { ...payload, amenities, meetingSpaces, venueImages: sanitizeImageList(images), floorPlans: sanitizeImageList(floorPlans) },
+          auth: true,
+        },
+      )
       if (data?.success && data.venue) {
-        setProfileData(data.venue)
-        if (Array.isArray(data.venue.meetingSpaces)) setMeetingSpaces(data.venue.meetingSpaces)
+        applyVenueState(data.venue, {
+          setProfileData,
+          setAmenities,
+          setMeetingSpaces,
+          setImages,
+          setFloorPlans,
+        })
         setIsEditing(false)
         toast({ title: "Success", description: "Venue updated successfully" })
-      } else throw new Error(data?.error || "Update failed")
-    } catch {
-      toast({ title: "Error", description: "Failed to update venue", variant: "destructive" })
+      } else {
+        throw new Error(data?.error || "Update failed")
+      }
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: err instanceof Error ? err.message : "Failed to update venue",
+        variant: "destructive",
+      })
     } finally {
-      setIsLoading(false)
+      setIsSaving(false)
     }
   }
 
@@ -295,7 +427,7 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
 
   const handleRemoveSpace = (id: string) => setMeetingSpaces(meetingSpaces.filter((s) => s.id !== id))
 
-  if (isLoading && !profileData) {
+  if (isRefreshing && !profileData?.id) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
@@ -320,16 +452,31 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
           <div className="flex gap-2">
             {isEditing ? (
               <>
-                <Button variant="outline" onClick={() => setIsEditing(false)} disabled={isLoading} className="rounded-xl border-[#E2E8F0] text-[#64748B]">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsEditing(false)}
+                  disabled={isSaving}
+                  className="rounded-xl border-[#E2E8F0] text-[#64748B]"
+                >
                   Cancel
                 </Button>
-                <Button onClick={handleSave} disabled={isLoading} className="rounded-xl bg-[#004A96] hover:bg-[#003d7a] text-white flex items-center gap-2">
+                <Button
+                  type="button"
+                  onClick={() => void handleSave()}
+                  disabled={isSaving}
+                  className="rounded-xl bg-[#004A96] hover:bg-[#003d7a] text-white flex items-center gap-2"
+                >
                   <Save className="w-4 h-4" />
-                  {isLoading ? "Saving..." : "Save Changes"}
+                  {isSaving ? "Saving..." : "Save Changes"}
                 </Button>
               </>
             ) : (
-              <Button onClick={() => setIsEditing(true)} className="rounded-xl bg-[#004A96] hover:bg-[#003d7a] text-white flex items-center gap-2">
+              <Button
+                type="button"
+                onClick={() => setIsEditing(true)}
+                className="rounded-xl bg-[#004A96] hover:bg-[#003d7a] text-white flex items-center gap-2"
+              >
                 <Edit className="w-4 h-4" />
                 Edit Profile
               </Button>
@@ -349,11 +496,32 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
 
-          {/* Edit button overlay on image */}
+          {/* Edit controls on hero cover */}
           {isEditing && (
-            <button className="absolute top-4 right-4 bg-black/50 hover:bg-black/70 backdrop-blur-sm text-white px-3 py-1.5 rounded-lg text-xs flex items-center gap-1 transition-colors z-10">
-              <Camera className="w-3.5 h-3.5" /> Change Cover
-            </button>
+            <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
+              {heroBg?.trim() ? (
+                <button
+                  type="button"
+                  onClick={handleRemoveCoverImage}
+                  className="bg-red-600/90 hover:bg-red-700 backdrop-blur-sm text-white px-3 py-1.5 rounded-lg text-xs flex items-center gap-1 transition-colors"
+                >
+                  <Trash2 className="w-3.5 h-3.5" /> Remove Cover
+                </button>
+              ) : null}
+              <label className="bg-black/50 hover:bg-black/70 backdrop-blur-sm text-white px-3 py-1.5 rounded-lg text-xs flex items-center gap-1 transition-colors cursor-pointer">
+                <Camera className="w-3.5 h-3.5" /> Change Cover
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (file) void handleReplaceCoverImage(file)
+                    e.target.value = ""
+                  }}
+                />
+              </label>
+            </div>
           )}
         </div>
 
@@ -558,20 +726,34 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
           <div className="bg-white rounded-2xl border border-[#E2E8F0] p-5">
             <h3 className="text-base font-semibold text-[#1E293B] mb-4">Venue Images</h3>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 mb-4">
+              {images.length === 0 ? (
+                <p className="col-span-full text-sm text-[#64748B] py-6 text-center border border-dashed border-[#E2E8F0] rounded-xl">
+                  No venue images yet. Upload images below.
+                </p>
+              ) : null}
               {images.map((image, index) => (
-                <div key={index} className="relative group rounded-xl overflow-hidden aspect-video">
+                <div key={`${image}-${index}`} className="relative rounded-xl overflow-hidden aspect-video border border-[#E2E8F0] bg-slate-100">
                   {image?.trim() ? (
                     <Image src={image.trim()} alt={`Venue ${index + 1}`} fill className="object-cover" />
                   ) : (
-                    <div className="absolute inset-0 bg-slate-100" aria-hidden />
-                  )}
-                  {isEditing && (
-                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <button onClick={() => handleImageDelete(image, "venue")} className="bg-red-500 text-white p-2 rounded-lg">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                    <div className="absolute inset-0 flex items-center justify-center text-xs text-[#94A3B8]">
+                      Empty image slot
                     </div>
                   )}
+                  <button
+                    type="button"
+                    onClick={() => void handleImageDelete(image, "venue", index)}
+                    className="absolute top-2 right-2 z-10 flex items-center gap-1 rounded-lg bg-red-600 px-2 py-1 text-xs font-medium text-white shadow hover:bg-red-700"
+                    aria-label={`Delete venue image ${index + 1}`}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    Delete
+                  </button>
+                  {index === 0 ? (
+                    <span className="absolute bottom-2 left-2 rounded bg-black/60 px-2 py-0.5 text-[10px] text-white">
+                      Cover
+                    </span>
+                  ) : null}
                 </div>
               ))}
             </div>
@@ -675,13 +857,15 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
                     <div className="absolute inset-0 bg-slate-50" aria-hidden />
                   )}
                   <div className="absolute top-2 left-2"><Badge className="bg-[#EFF6FF] text-[#004A96] border-0 text-xs">Floor {index + 1}</Badge></div>
-                  {isEditing && (
-                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <button onClick={() => handleImageDelete(plan, "floorplan")} className="bg-red-500 text-white p-2 rounded-lg">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  )}
+                  <button
+                    type="button"
+                    onClick={() => void handleImageDelete(plan, "floorplan", index)}
+                    className="absolute top-2 right-2 z-10 flex items-center gap-1 rounded-lg bg-red-600 px-2 py-1 text-xs font-medium text-white shadow hover:bg-red-700"
+                    aria-label={`Delete floor plan ${index + 1}`}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    Delete
+                  </button>
                 </div>
               ))}
             </div>
