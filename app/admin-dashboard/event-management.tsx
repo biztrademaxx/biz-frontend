@@ -90,6 +90,7 @@ interface Event {
   youtubeVideoUrl?: string | null
   brochure: string
   layout: string
+   isPublic?: boolean 
   documents: string[]
   promotionBudget: number
   socialShares: number
