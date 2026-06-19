@@ -328,7 +328,7 @@ export default function HeroSlideshowClient({
   return (
     <section
       aria-label="Discover Trade Shows"
-      className="relative w-full min-w-0 overflow-hidden rounded-2xl sm:rounded-3xl lg:rounded-[28px]"
+      className="relative bg-[#F9F9F9] w-full min-w-0 overflow-hidden rounded-2xl sm:rounded-3xl lg:rounded-[28px]"
     >
       {/* Background Image */}
       {/* <div
@@ -340,7 +340,7 @@ export default function HeroSlideshowClient({
       /> */}
 
       {/* White overlay */}
-      <div className="absolute inset-0 bg-white/85" />
+      <div className="absolute inset-0 bg-[#F9F9F9]" />
 
       {/* Content */}
       <div className="relative z-10 w-full mx-auto">

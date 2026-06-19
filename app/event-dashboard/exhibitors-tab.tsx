@@ -17,6 +17,9 @@ interface Exhibitor {
   publicSlug?: string
   boothId: string
   company: string
+  organizationName?: string
+  firstName?: string
+  lastName?: string
   name: string
   email: string
   phone?: string
@@ -57,15 +60,19 @@ export default function ExhibitorsTab({ eventId }: ExhibitorsTabProps) {
           description: string | null
           totalCost: number
           status?: string
-          exhibitor: { id: string; firstName: string; lastName: string; email: string; phone: string | null; avatar: string | null; company: string | null; jobTitle: string | null }
+          exhibitor: { id: string; firstName: string; lastName: string; email: string; phone: string | null; avatar: string | null; company: string | null; organizationName?: string | null; jobTitle: string | null; publicSlug?: string }
           space?: { id: string; name: string; spaceType: string }
-        }> } }>(`/api/events/${eventId}/exhibitors`)
+        }> } }>(`/api/events/${eventId}/exhibitors`, { auth: true })
 
         const list = data?.data?.exhibitors ?? []
         const mapped: Exhibitor[] = list.map((booth) => ({
           id: booth.exhibitor.id,
           boothId: booth.id,
-          company: booth.companyName ?? booth.exhibitor.company ?? "",
+          company: booth.companyName ?? booth.exhibitor.company ?? booth.exhibitor.organizationName ?? "",
+          organizationName: booth.exhibitor.organizationName ?? booth.exhibitor.company ?? undefined,
+          firstName: booth.exhibitor.firstName,
+          lastName: booth.exhibitor.lastName,
+          publicSlug: booth.exhibitor.publicSlug,
           name: [booth.exhibitor.firstName, booth.exhibitor.lastName].filter(Boolean).join(" ").trim() || "—",
           email: booth.exhibitor.email,
           phone: booth.exhibitor.phone ?? undefined,
@@ -92,11 +99,16 @@ export default function ExhibitorsTab({ eventId }: ExhibitorsTabProps) {
   }, [eventId])
 
   const handleExhibitorClick = (exhibitor: Exhibitor) => {
+    const userId = exhibitor.userId || exhibitor.id
     router.push(
       getPublicProfilePath("exhibitor", {
-        id: exhibitor.userId || exhibitor.id,
-        publicSlug: exhibitor.publicSlug,
+        id: userId,
+        // Prefer server slug from DB; fall back to UUID so resolution always succeeds
+        publicSlug: exhibitor.publicSlug || userId,
+        organizationName: exhibitor.organizationName,
         company: exhibitor.company,
+        firstName: exhibitor.firstName,
+        lastName: exhibitor.lastName,
       }),
     )
   }
@@ -113,6 +125,7 @@ export default function ExhibitorsTab({ eventId }: ExhibitorsTabProps) {
 
       await apiFetch(`/api/events/${eventId}/exhibitors/${exhibitor.id}`, {
         method: "DELETE",
+        auth: true,
       })
 
       setExhibitors((prev) => prev.filter((e) => e.id !== exhibitor.id))
@@ -224,6 +237,18 @@ export default function ExhibitorsTab({ eventId }: ExhibitorsTabProps) {
               </div>
 
               <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleExhibitorClick(exhibitor)
+                }}
+                className="w-full mt-4 border-2 text-sm py-2 rounded-full font-semibold transition flex items-center justify-center border-blue-600 text-blue-600 hover:bg-blue-50"
+              >
+                View Profile
+              </button>
+
+              <button
+                type="button"
                 onClick={(e) => handleDelete(exhibitor, e)}
                 disabled={deleting === exhibitor.id}
                 className={`w-full mt-4 border-2 text-sm py-2 rounded-full font-semibold transition flex items-center justify-center border-red-600 text-red-600 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed`}

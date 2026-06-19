@@ -522,7 +522,7 @@ export default function SpeakersPage() {
 
                         <div className="mt-4 border-t border-[#E4EAF5] pt-3.5">
                           <div className="grid grid-cols-3 gap-3">
-                            <div className="pr-2">
+                            {/* <div className="pr-2">
                               <div className="flex items-center gap-1.5 text-[#123D86]">
                                 <Star className="h-4 w-4 fill-current" />
                                 <span className="text-[0.98rem] font-semibold lg:text-[1.06rem]">
@@ -532,7 +532,7 @@ export default function SpeakersPage() {
                               <p className="mt-1 text-[0.76rem] text-[#445C8E] lg:text-[0.8rem]">
                                 ({speaker.totalReviews || 0} reviews)
                               </p>
-                            </div>
+                            </div> */}
 
                             <div className="border-l border-[#E4EAF5] px-3">
                               <div className="flex items-center gap-1.5 text-[#123D86]">

@@ -58,10 +58,11 @@ export default function BrowseEventsByCityGridClient({
                     )}`
                   )
                 }
-                className="group overflow-hidden rounded-sm bg-white text-left rounded-none shadow-md hover:shadow-xl"
+                // Updated: Added border, shadow, and hover effects
+                className="group flex flex-col overflow-hidden rounded-sm bg-white border border-gray-200 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_40px_rgba(0,0,0,0.15)] hover:border-[#002C71]/30 focus:outline-none focus:ring-2 focus:ring-[#002C71] focus:ring-offset-2"
               >
                 {/* Image */}
-                <div className="relative m-2 h-[75px] overflow-hidden rounded-sm">
+                <div className="relative m-2 h-[75px] rounded-sm overflow-hidden">
                   <AppImage
                     src={
                       city.image?.trim()

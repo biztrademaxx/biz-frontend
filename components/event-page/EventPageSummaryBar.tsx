@@ -43,7 +43,7 @@ export function EventPageSummaryBar({
       <div className="mb-8 rounded-sm bg-white p-4 shadow-sm sm:p-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
           <div className="flex-1">
-            <h1 className="text-2xl sm:text-3xl font-bold text-[#004A96] mb-3">{event.title || "Event Title"}</h1>
+            <h1 className="text-sm sm:text-xl font-bold text-[#004A96] mb-3">{event.title || "Event Title"}</h1>
 
             <div className="flex items-center gap-2 text-gray-600 mb-4">
               <MapPin className="w-4 h-4 shrink-0" />

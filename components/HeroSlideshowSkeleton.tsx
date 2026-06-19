@@ -8,7 +8,7 @@ function Shimmer({ className }: { className?: string }) {
 export default function HeroSlideshowSkeleton() {
   return (
     <section
-      className="relative w-full min-w-0 overflow-hidden rounded-2xl sm:rounded-3xl lg:rounded-[28px]"
+      className="relative bg-[#F9F9F9] w-full min-w-0 overflow-hidden rounded-2xl sm:rounded-3xl lg:rounded-[28px]"
       aria-busy="true"
       aria-label="Loading featured events"
     >
@@ -16,7 +16,7 @@ export default function HeroSlideshowSkeleton() {
         className="pointer-events-none absolute inset-0 opacity-[0.22] bg-[url('/images/glob.jpeg')] bg-cover bg-no-repeat bg-top lg:bg-center"
         aria-hidden
       />
-      <div className="absolute inset-0 bg-white/88" aria-hidden />
+      <div className="absolute inset-0 bg-[#F9F9F9]" aria-hidden />
 
       <div className="relative z-10 mx-auto w-full">
         <div className="relative z-10 flex flex-col gap-5 pb-4 pt-6 sm:gap-6 sm:pb-6 sm:pt-8 lg:flex-row lg:items-start lg:gap-10 lg:pt-16 xl:gap-16 xl:pt-20">

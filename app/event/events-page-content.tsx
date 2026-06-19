@@ -22,6 +22,7 @@ import {
   EVENTS_LISTING_PAGE_CHUNK_BEFORE_FEATURED_AD,
   EVENTS_LISTING_PAGE_CHUNK_AFTER_FEATURED_AD,
   EVENTS_LISTING_INLINE_PROMO_FALLBACK_MAX,
+  EVENTS_TOP_MUST_VISIT_LIMIT,
 } from "@/components/events-page/listing-constants"
 import {
   extractEventsFromResponse,
@@ -33,7 +34,12 @@ import {
   isEventInCustomDateRange,
   eventMatchesCountry,
   eventMatchesCity,
+  eventMatchesCategory,
   eventMatchesSearchQuery,
+  applyTopMustVisitRanking,
+  formatListingFollowerTotal,
+  getEventsListingBannerTitle,
+  sortEventsByFollowersAndRating,
 } from "@/components/events-page/listing-utils"
 import { EventsListingDesktopFiltersSidebar } from "@/components/events-page/EventsListingDesktopFiltersSidebar"
 import { EventsListingTabs } from "@/components/events-page/EventsListingTabs"
@@ -179,8 +185,7 @@ export default function EventsPageContent({
   }
 
   useEffect(() => {
-    if (initialEventsProp.length > 0) return
-    void fetchEvents()
+    void fetchEvents({ silent: initialEventsProp.length > 0 })
   }, [])
 
   useEffect(() => {
@@ -406,14 +411,10 @@ export default function EventsPageContent({
 
     if (selectedCategories.length > 0) {
       filtered = filtered.filter((event) =>
-        event.categories?.some((cat) =>
-          selectedCategories.some((selectedCat) => cat.toLowerCase().trim() === selectedCat.toLowerCase().trim()),
-        ),
+        selectedCategories.some((selectedCat) => eventMatchesCategory(event, selectedCat)),
       )
     } else if (selectedCategory && selectedCategory !== "All Events") {
-      filtered = filtered.filter((event) =>
-        event.categories?.some((cat) => cat.toLowerCase().trim() === selectedCategory.toLowerCase().trim()),
-      )
+      filtered = filtered.filter((event) => eventMatchesCategory(event, selectedCategory))
     }
 
     if (selectedRelatedTopics.length > 0) {
@@ -490,6 +491,46 @@ export default function EventsPageContent({
     customToDate,
   ])
 
+  const rankedEvents = useMemo(() => {
+    return applyTopMustVisitRanking(filteredEvents, EVENTS_TOP_MUST_VISIT_LIMIT)
+  }, [filteredEvents])
+
+  const bannerTitle = useMemo(
+    () =>
+      getEventsListingBannerTitle({
+        searchQuery,
+        selectedDate,
+        selectedDateRange,
+        selectedCategories,
+        selectedCategory,
+        selectedLocation,
+        selectedCountry,
+        customFromDate,
+        customToDate,
+        selectedFormat,
+        priceRange,
+        rating,
+        activeTab,
+      }),
+    [
+      searchQuery,
+      selectedDate,
+      selectedDateRange,
+      selectedCategories,
+      selectedCategory,
+      selectedLocation,
+      selectedCountry,
+      customFromDate,
+      customToDate,
+      selectedFormat,
+      priceRange,
+      rating,
+      activeTab,
+    ],
+  )
+
+  const followerLabel = useMemo(() => formatListingFollowerTotal(rankedEvents), [rankedEvents])
+
   const categoryBannerImageUrl = useMemo(() => {
     if (browseCategoryMeta.length === 0) return null
     const names: string[] =
@@ -525,55 +566,8 @@ export default function EventsPageContent({
     }
   }, [categoryBannerImageUrl])
 
-  const getBannerTitle = () => {
-    if (searchQuery.trim()) {
-      return `Search Results for "${searchQuery.trim()}"`
-    }
-    if (selectedDate) {
-      return `Events on ${selectedDate.toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}`
-    }
-    if (selectedCategories.length > 0) {
-      return `${selectedCategories.join(", ")} Events`
-    }
-    if (selectedCategory && selectedCategory !== "All Events") {
-      return `${selectedCategory}`
-    }
-    if (selectedLocation && selectedCountry) {
-      return `Events in ${selectedLocation}, ${selectedCountry}`
-    }
-    if (selectedLocation) {
-      return `Events in ${selectedLocation}`
-    }
-    if (selectedCountry) {
-      return `Events in ${selectedCountry}`
-    }
-    if (customFromDate || customToDate) {
-      if (customFromDate && customToDate) {
-        return `Events from ${customFromDate} to ${customToDate}`
-      }
-      if (customFromDate) return `Events from ${customFromDate}`
-      return `Events until ${customToDate}`
-    }
-    if (activeTab === "Verified") {
-      return "Verified Events"
-    }
-    if (activeTab !== "All Events") {
-      return `${activeTab} Events`
-    }
-    return "Education & Training Events"
-  }
-
-  const getFollowerCount = () => {
-    const total = filteredEvents.reduce(
-      (sum, ev) => sum + (typeof ev.followersCount === "number" ? ev.followersCount : 0),
-      0,
-    )
-    if (total >= 1000) return `${(total / 1000).toFixed(1).replace(/\.0$/, "")}K Followers`
-    return `${total} Followers`
-  }
-
-  const totalPages = Math.max(1, Math.ceil(filteredEvents.length / itemsPerPage))
-  const paginatedEvents = filteredEvents.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+  const totalPages = Math.max(1, Math.ceil(rankedEvents.length / itemsPerPage))
+  const paginatedEvents = rankedEvents.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
   const eventsBeforeFeaturedAd = paginatedEvents.slice(0, EVENTS_LISTING_PAGE_CHUNK_BEFORE_FEATURED_AD)
   const eventsAfterFeaturedAd = paginatedEvents.slice(EVENTS_LISTING_PAGE_CHUNK_BEFORE_FEATURED_AD)
 
@@ -583,28 +577,11 @@ export default function EventsPageContent({
     if (events.length === 0) return []
     const tagged = events.filter((e) => e.featured)
     if (tagged.length > 0) return tagged
-    return [...events]
-      .sort((a, b) => {
-        const v = (b.isVerified ? 1 : 0) - (a.isVerified ? 1 : 0)
-        if (v !== 0) return v
-        const ra = Number.isFinite(a.rating?.average) ? a.rating.average : 0
-        const rb = Number.isFinite(b.rating?.average) ? b.rating.average : 0
-        if (rb !== ra) return rb - ra
-        const fa = typeof a.followersCount === "number" ? a.followersCount : 0
-        const fb = typeof b.followersCount === "number" ? b.followersCount : 0
-        return fb - fa
-      })
-      .slice(0, EVENTS_LISTING_INLINE_PROMO_FALLBACK_MAX)
+    return sortEventsByFollowersAndRating(events).slice(0, EVENTS_LISTING_INLINE_PROMO_FALLBACK_MAX)
   }, [events])
 
   const trendingSidebarEvents = useMemo(() => {
-    return [...events]
-      .sort((a, b) => {
-        const aCount = typeof a.followersCount === "number" ? a.followersCount : 0
-        const bCount = typeof b.followersCount === "number" ? b.followersCount : 0
-        return bCount - aCount
-      })
-      .slice(0, 5)
+    return sortEventsByFollowersAndRating(events).slice(0, 5)
   }, [events])
 
   useEffect(() => {
@@ -676,6 +653,7 @@ export default function EventsPageContent({
   const tabs = ["All Events", "Upcoming", "This Week", "This Month", "Verified"]
 
   const handleCategoryToggle = (categoryName: string) => {
+    setSelectedCategory("All Events")
     setSelectedCategories((prev) => {
       const newCategories = prev.includes(categoryName)
         ? prev.filter((c) => c !== categoryName)
@@ -724,7 +702,7 @@ export default function EventsPageContent({
   ])
 
   const handleListingShare = async () => {
-    const title = getBannerTitle()
+    const title = bannerTitle
     const url = typeof window !== "undefined" ? window.location.href : ""
     try {
       if (typeof navigator !== "undefined" && navigator.share) {
@@ -820,16 +798,16 @@ export default function EventsPageContent({
           <div className="lg:col-span-5 order-1 lg:order-2 w-full min-w-0">
             <EventsListingListBanner
               surfaceStyle={listingBannerSurfaceStyle}
-              title={getBannerTitle()}
-              followerLabel={getFollowerCount()}
-              filteredCount={filteredEvents.length}
+              title={bannerTitle}
+              followerLabel={followerLabel}
+              filteredCount={rankedEvents.length}
               paginatedCount={paginatedEvents.length}
               onShare={handleListingShare}
             />
 
             <EventsListingResultsHeader
               paginatedCount={paginatedEvents.length}
-              filteredCount={filteredEvents.length}
+              filteredCount={rankedEvents.length}
               activeTab={activeTab}
               currentPage={currentPage}
               totalPages={totalPages}

@@ -1,4 +1,4 @@
-// FeaturedOrganizersStripClient.tsx - Fixed (only ONE heading)
+// FeaturedOrganizersStripClient.tsx
 "use client"
 
 import { useCallback } from "react"
@@ -32,18 +32,18 @@ export default function FeaturedOrganizersStripClient({
 
   return (
     <div className="w-full">
-      {/* Marquee - make sure it doesn't have its own heading */}
+      {/* Marquee with hideHeading=true */}
       <OrganizersMarquee
         organizers={organizers}
         onOrganizerActivate={onOrganizerActivate}
-        hideHeading={true}  // Pass prop to hide heading in marquee
+        hideHeading={true}
       />
 
       {/* View All Button */}
-      <div className="mt-10 flex justify-center">
+      <div className="mt-8 flex justify-center">
         <Link
           href="/organizers"
-          className="inline-flex items-center justify-center rounded-sm bg-[#004A96] px-8 py-3 text-sm font-semibold text-white shadow-sm transition-colors duration-200 hover:bg-[#003a75] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          className="inline-flex items-center justify-center rounded-sm bg-[#004A96] px-8 py-3 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-[#003a75] hover:shadow-[0_8px_20px_rgba(0,44,113,0.25)] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
         >
           View All Organizers
         </Link>

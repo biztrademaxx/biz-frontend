@@ -1,3 +1,4 @@
+// OrganizersMarquee.tsx
 "use client"
 
 import type { CSSProperties } from "react"
@@ -18,7 +19,7 @@ function OrganizersMarqueeComponent({
   onOrganizerActivate,
   hideHeading = false,
 }: OrganizersMarqueeProps) {
-  const stripClass = "flex w-max shrink-0 flex-row flex-nowrap items-stretch gap-6"
+  const stripClass = "flex w-max shrink-0 flex-row flex-nowrap items-stretch gap-4"
 
   const scrollRef = useRef<HTMLDivElement>(null)
   const isDragging = useRef(false)
@@ -76,13 +77,7 @@ function OrganizersMarqueeComponent({
 
   if (organizers.length < MARQUEE_MIN_ORGANIZERS) {
     return (
-      <div className="py-4">
-        {!hideHeading && (
-          <div className="mb-6 border-b border-gray-200 pb-4">
-            <h2 className="text-2xl font-bold text-gray-900">Featured Organizers</h2>
-            <p className="mt-1 text-sm text-gray-600">Organizers in India</p>
-          </div>
-        )}
+      <div className="py-2">
         <div
           ref={scrollRef}
           className="overflow-x-auto pb-1 cursor-grab select-none"
@@ -91,7 +86,7 @@ function OrganizersMarqueeComponent({
           onMouseUp={onMouseUp}
           onMouseLeave={onMouseUp}
         >
-          <div className={`mx-auto ${stripClass} justify-center px-2`}>
+          <div className={`mx-auto ${stripClass} justify-center px-1`}>
             {organizers.map((organizer) => (
               <div key={String(organizer.id)} className="flex-shrink-0">
                 <OrganizerLogoTile
@@ -108,13 +103,7 @@ function OrganizersMarqueeComponent({
   }
 
   return (
-    <div className="py-4">
-      {!hideHeading && (
-        <div className="mb-6 border-b border-gray-200 pb-4">
-          <h2 className="text-2xl font-bold text-gray-900">Featured Organizers</h2>
-          <p className="mt-1 text-sm text-gray-600">Organizers in India</p>
-        </div>
-      )}
+    <div className="py-2">
       <div
         ref={scrollRef}
         className="overflow-x-auto cursor-grab select-none"
@@ -124,7 +113,7 @@ function OrganizersMarqueeComponent({
         onMouseUp={onMouseUp}
         onMouseLeave={onMouseUp}
       >
-        <div className="flex w-max flex-row flex-nowrap items-stretch gap-6">
+        <div className="flex w-max flex-row flex-nowrap items-stretch gap-4">
           {/* First strip */}
           <div className={stripClass}>
             {organizers.map((organizer) => (

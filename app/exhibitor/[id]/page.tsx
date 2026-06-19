@@ -522,7 +522,7 @@ export default function ExhibitorPage() {
       try {
         const data = await apiFetch<{ success: boolean; exhibitor: Exhibitor }>(
           `/api/exhibitors/${encodeURIComponent(exhibitorId)}`,
-          { auth: false },
+          { auth: isAuthenticated() },
         )
 
         if (data.success) {

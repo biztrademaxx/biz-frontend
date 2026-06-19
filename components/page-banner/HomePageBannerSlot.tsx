@@ -28,7 +28,7 @@ export function HomePageBannerSlot({
       <Suspense
         fallback={
           <div
-            className="home-shimmer relative w-full rounded-lg"
+            className="home-shimmer relative w-full rounded-sm"
             style={{ height }}
             aria-hidden
           />
@@ -43,7 +43,7 @@ export function HomePageBannerSlot({
           autoplay
           autoplayInterval={5000}
           showControls
-          className="rounded-lg shadow-sm"
+          className="rounded-sm shadow-sm"
         />
       </Suspense>
     </div>

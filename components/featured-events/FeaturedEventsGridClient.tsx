@@ -47,7 +47,8 @@ function FeaturedEventCard({ event }: { event: FeaturedEventPayload }) {
   const labels = featuredEventCategoryLabels(event).slice(0, 3)
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-sm bg-white p-3 shadow-[0_4px_20px_rgba(0,0,0,0.12)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_12px_22px_-10px_rgba(0,0,0,0.22)]">
+    // Updated: Added border and improved shadow
+    <div className="flex h-full flex-col overflow-hidden rounded-sm bg-white border border-gray-200 p-3 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_40px_rgba(0,0,0,0.15)] hover:border-[#002C71]/30">
       {/* Clickable top section */}
       <Link href={href} className="flex cursor-pointer flex-col">
         {/* Date */}
@@ -91,7 +92,7 @@ function FeaturedEventCard({ event }: { event: FeaturedEventPayload }) {
               <Link
                 key={`${event.id}-${label}`}
                 href={`/event?category=${encodeURIComponent(label)}`}
-                className="inline-block max-w-[140px] truncate rounded-md bg-gray-100 px-1.5 py-0.5 text-xs leading-none text-gray-600 no-underline hover:text-gray-900"
+                className="inline-block max-w-[140px] truncate rounded-md bg-gray-100 px-1.5 py-0.5 text-xs leading-none text-gray-600 no-underline transition-colors hover:bg-gray-200 hover:text-gray-900"
               >
                 {label}
               </Link>
@@ -119,7 +120,7 @@ function PlaceholderCard({ index }: { index: number }) {
   return (
     <div
       aria-hidden
-      className="rounded-md border border-gray-200/90 bg-white p-2 shadow-[0_3px_12px_rgba(15,23,42,0.08)]"
+      className="rounded-sm border border-gray-200/90 bg-white p-3 shadow-sm"
     >
       <div className="home-shimmer h-3 w-36 rounded" />
       <div className="mt-2 flex justify-between gap-2">
@@ -208,7 +209,7 @@ export default function FeaturedEventsGridClient({
       <div className="mt-4 flex justify-center gap-4">
         <Link
           href="/organizer-signup"
-          className="inline-flex items-center justify-center rounded-sm bg-[#004A96] px-8 py-3 text-sm font-semibold text-white shadow-sm transition-colors duration-200 hover:bg-[#003a75] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          className="inline-flex items-center justify-center rounded-sm bg-[#004A96] px-8 py-3 text-sm font-semibold text-white shadow-sm transition-colors duration-200 hover:bg-[#003a75] hover:shadow-[0_8px_20px_rgba(0,44,113,0.25)] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
         >
           Add Event
         </Link>

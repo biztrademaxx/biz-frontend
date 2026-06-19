@@ -1,4 +1,4 @@
-// OrganizerLogoTile.tsx - Improved version with better text handling
+// OrganizerLogoTile.tsx
 "use client"
 
 import { AppImage } from "@/components/app-image"
@@ -12,9 +12,9 @@ import {
   organizerRouteId,
 } from "./utils/organizers.helpers"
 
-// Increased height for better text accommodation
+// Updated: Added border and improved shadow with consistent sizing
 const TILE_CLASS =
-  "group flex h-[148px] w-[200px] shrink-0 cursor-pointer flex-col items-center justify-between rounded-lg  bg-white px-3 pt-3 pb-4 shadow-[0_8px_16px_-10px_rgba(0,0,0,0.25)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_12px_22px_-10px_rgba(0,0,0,0.22)]"
+  "group flex h-[140px] w-[180px] shrink-0 cursor-pointer flex-col items-center rounded-lg bg-white border border-gray-200 px-3 py-3 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_40px_rgba(0,0,0,0.15)] hover:border-[#002C71]/30"
 
 export interface OrganizerLogoTileProps {
   organizer: OrganizerListEntry
@@ -33,8 +33,6 @@ function OrganizerLogoTileComponent({
 
   // Get company/name for text display
   const companyName = organizer.company || organizer.name || "Organization"
-
-  // Check if there's a subtitle/event info (like "SERIES CONGRESS" or "kym jones exhibitions")
   const hasSubtitle = organizer.location || organizer.city || organizer.state
 
   const activate = useCallback(() => {
@@ -55,23 +53,25 @@ function OrganizerLogoTileComponent({
   if (mode === "decorative") {
     return (
       <div className={TILE_CLASS} onClick={activate}>
-        {src ? (
-          <div className="flex h-16 w-full items-center justify-center">
+        {/* Fixed height container for logo */}
+        <div className="flex h-[70px] w-full items-center justify-center">
+          {src ? (
             <AppImage
               src={src}
               alt=""
               width={160}
               height={64}
-              className="max-h-16 max-w-full object-contain"
+              className="max-h-[60px] max-w-full object-contain"
             />
-          </div>
-        ) : (
-          <div className="flex h-16 w-full items-center justify-center">
+          ) : (
             <span className="text-2xl font-bold text-gray-400">{companyName.charAt(0)}</span>
-          </div>
-        )}
-        <div className="mt-1 w-full min-h-0 flex-1 text-center">
-          <p className="line-clamp-2 text-xs font-medium leading-snug text-gray-600">{companyName}</p>
+          )}
+        </div>
+        {/* Fixed height container for text with truncation */}
+        <div className="mt-1 h-[30px] w-full text-center overflow-hidden">
+          <p className="text-xs font-medium leading-snug text-gray-600 truncate">
+            {companyName}
+          </p>
         </div>
       </div>
     )
@@ -86,15 +86,15 @@ function OrganizerLogoTileComponent({
       onClick={activate}
       onKeyDown={onKeyDown}
     >
-      {/* Logo/Image Section */}
-      <div className="flex h-16 w-full items-center justify-center">
+      {/* Fixed height container for logo */}
+      <div className="flex h-[70px] w-full items-center justify-center">
         {src ? (
           <AppImage
             src={src}
             alt={displayName}
             width={160}
             height={64}
-            className="max-h-16 max-w-full object-contain"
+            className="max-h-[60px] max-w-full object-contain"
           />
         ) : (
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100">
@@ -103,13 +103,13 @@ function OrganizerLogoTileComponent({
         )}
       </div>
 
-      {/* Text Section */}
-      <div className="mt-2 w-full text-center">
-        <p className="line-clamp-2 text-sm font-semibold text-gray-900">
+      {/* Fixed height container for text with truncation */}
+      <div className="mt-1 h-[40px] w-full text-center overflow-hidden">
+        <p className="text-sm font-semibold text-gray-900 truncate">
           {companyName}
         </p>
         {hasSubtitle && (
-          <p className="mt-1 line-clamp-2 text-xs text-gray-500">
+          <p className="text-xs text-gray-500 truncate">
             {organizer.location || organizer.city || organizer.headquarters}
           </p>
         )}
