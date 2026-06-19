@@ -20,7 +20,7 @@ import {
 } from "lucide-react"
 
 import SpeakersListingPageSkeleton from "@/components/SpeakersListingPageSkeleton"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { apiFetch } from "@/lib/api"
@@ -463,12 +463,18 @@ export default function SpeakersPage() {
                     >
                       <div className={viewMode === "list" ? "sm:shrink-0" : ""}>
                         <Avatar className="h-[72px] w-[72px] border border-[#DDE5F3] shadow-[0_8px_18px_rgba(16,42,94,0.08)]">
-                          <AvatarFallback
-                            className={`${getSpeakerAvatarStyles(speaker)} font-semibold`}
-                          >
-                            {getSpeakerInitials(speaker.firstName, speaker.lastName)}
-                          </AvatarFallback>
-                        </Avatar>
+  <AvatarImage
+    src={speaker.avatar || ""}
+    alt={formatSpeakerName(speaker)}
+    className="object-cover"
+  />
+
+  <AvatarFallback
+    className={`${getSpeakerAvatarStyles(speaker)} font-semibold`}
+  >
+    {getSpeakerInitials(speaker.firstName, speaker.lastName)}
+  </AvatarFallback>
+</Avatar>
                       </div>
 
                       <div className={`mt-3 flex-1 ${viewMode === "list" ? "sm:mt-0" : ""}`}>
@@ -566,7 +572,7 @@ export default function SpeakersPage() {
 
                     <Button
                       type="button"
-                      onClick={() => router.push("/signup")}
+                     onClick={() => router.push("/signup?role=speaker")}
                       className="mt-4 h-[42px] rounded-2xl bg-white px-4 text-sm font-semibold text-[#123D86] hover:bg-white/95"
                     >
                       Join as a Speaker

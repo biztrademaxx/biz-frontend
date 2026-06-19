@@ -4,7 +4,7 @@ import type React from "react"
 import { useState } from "react"
 import { signIn } from "next-auth/react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter,useSearchParams } from "next/navigation"
 import { AppImage } from "@/components/app-image"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -36,6 +36,7 @@ type SignupFormCardProps = {
 
 export default function SignupFormCard({ variant, onRegistrationSuccess }: SignupFormCardProps) {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { toast } = useToast()
   
   // 🔥 3-STEP FLOW: form → otp → password
