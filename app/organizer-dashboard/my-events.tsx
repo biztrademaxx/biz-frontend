@@ -267,16 +267,7 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
   return (
     <div className="space-y-6">
       {/* Page heading */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">My Events</h1>
-        <p className="text-sm text-gray-500 mt-1">Manage and track your events all in one place.</p>
-      </div>
-
-      // CHANGED: Wrap entire page content in a single white Card to match design
-// where events appear inside the same container as filters
-// OLD: everything was in <div className="space-y-6"> with separate Card for filters
-
-return (
+ 
   <div className="space-y-4">
     {/* Page heading — outside the card */}
     <div>
@@ -372,50 +363,14 @@ return (
               })} */}
             </div>
 
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="flex items-center justify-center gap-2 pt-2">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-9 w-9 border-gray-200 text-gray-500 hover:text-gray-700"
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </Button>
-                {getPageNumbers().map((page) => (
-                  <Button
-                    key={page}
-                    size="icon"
-                    className={`h-9 w-9 text-sm font-medium ${
-                      currentPage === page
-                        ? "bg-[#004A96] text-white border-[#004A96] hover:bg-[#003d7a]"
-                        : "border border-gray-200 text-gray-700 hover:bg-gray-50 bg-white"
-                    }`}
-                    onClick={() => setCurrentPage(page)}
-                  >
-                    {page}
-                  </Button>
-                ))}
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-9 w-9 border-gray-200 text-gray-500 hover:text-gray-700"
-                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages}
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
-              </div>
-            )}
+      
           </>
         )}
 
       </CardContent>
     </Card>
   </div>
-)
+
 
       {loading && (
         <div className="text-center py-12">
@@ -607,6 +562,6 @@ return (
         </>
       )}
     </div>
-    </div>
+    
   )
 }
