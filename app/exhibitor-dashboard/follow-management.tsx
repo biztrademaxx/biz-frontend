@@ -172,7 +172,7 @@ export function FollowManagement({ userId }: FollowManagementProps) {
                           </p>
                         </div>
                       </div>
-                      <Button
+                      {/* <Button
                         variant="outline"
                         size="sm"
                         onClick={() => handleRemoveFollower(follower.id)}
@@ -180,7 +180,7 @@ export function FollowManagement({ userId }: FollowManagementProps) {
                       >
                         <UserMinus className="h-4 w-4 mr-2" />
                         Remove
-                      </Button>
+                      </Button> */}
                     </div>
                   ))}
                 </div>

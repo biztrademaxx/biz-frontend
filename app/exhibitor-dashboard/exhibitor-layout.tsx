@@ -106,7 +106,7 @@ const EXHIBITOR_SIDEBAR_GROUPS: { id: string; label: string; items: ExhibitorNav
 ]
 
 const EXHIBITOR_INDIVIDUAL_ITEMS: ExhibitorNavItem[] = [
-  { id: "analytics", title: "Analytics", icon: BarChart3 },
+  //{ id: "analytics", title: "Analytics", icon: BarChart3 },
   { id: "pricing-plans", title: "Pricing plans", icon: Crown },
   { id: "help", title: "Help & Support", icon: HelpCircle },
   { id: "settings", title: "Settings", icon: Settings },
@@ -468,8 +468,13 @@ case "view-feedback":
       case "settings":
         return <ExhibitorSettings />
       default:
-        return <CompanyInfo exhibitorId={exhibitor.id} onUpdate={handleUpdate} exhibitorData={exhibitor} />
-    }
+  return (
+    <ExhibitorDashboardOverview
+      exhibitor={exhibitor}
+      onNavigate={(section) => setActiveSection(section)}
+    />
+  )
+      }
   }
 
   const sidebarInitial = (
