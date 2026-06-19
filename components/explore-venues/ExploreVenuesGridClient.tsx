@@ -21,6 +21,7 @@ function VenueCard({ venue, onNavigate }: { venue: ExploreVenueCard; onNavigate:
       aria-label={`View venue: ${venue.name}`}
       // Updated: Added border and improved shadow
       className="group flex h-full w-full cursor-pointer flex-col overflow-hidden rounded-sm bg-white border border-gray-200 text-left shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_40px_rgba(0,0,0,0.15)] hover:border-[#002C71]/30 focus:outline-none focus:ring-2 focus:ring-[#002C71] focus:ring-offset-2"
+
     >
       <div className="relative h-28 w-full shrink-0 overflow-hidden bg-gray-100 sm:h-32">
         <AppImage
