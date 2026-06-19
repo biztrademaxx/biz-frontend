@@ -6,7 +6,7 @@ import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { FaFacebookF, FaTwitter, FaInstagram, FaLinkedinIn, FaYoutube, FaPlay, FaFileAlt, FaExternalLinkAlt } from "react-icons/fa"
+import { FaFacebookF, FaTwitter, FaInstagram, FaLinkedinIn, FaYoutube, FaPlay, FaFileAlt, FaExternalLinkAlt, FaMapMarkerAlt, FaGlobe, FaPhoneAlt } from "react-icons/fa"
 import { ShareButton } from "@/components/share-button"
 import Link from "next/link"
 import { apiFetch } from "@/lib/api"
@@ -105,7 +105,6 @@ export default function SpeakerPage({ params: _params }: SpeakerPageProps) {
         setLoading(true)
         if (!identifier) throw new Error("Speaker slug is required")
 
-        // Fetch speaker data
         const speakerData = await apiFetch<any>(`/api/speakers/${identifier}`, { auth: false })
 
         const s = speakerData.profile
@@ -126,7 +125,6 @@ export default function SpeakerPage({ params: _params }: SpeakerPageProps) {
           },
         })
 
-        // Fetch events (upcoming + past) from backend
         const eventsData = await apiFetch<{
           upcoming?: Event[]
           past?: Event[]
@@ -134,7 +132,6 @@ export default function SpeakerPage({ params: _params }: SpeakerPageProps) {
         setUpcomingEvents(eventsData.upcoming || [])
         setPastEvents(eventsData.past || [])
 
-        // Sessions, videos & materials — direct backend (same origin as profile/events)
         try {
           const sessionsPayload = await apiFetch<{
             success?: boolean
@@ -173,7 +170,6 @@ export default function SpeakerPage({ params: _params }: SpeakerPageProps) {
     fetchData()
   }, [identifier])
 
-  // Fetch hero banners for speaker-detail page
   useEffect(() => {
     let cancelled = false
     let intervalId: ReturnType<typeof setInterval> | undefined
@@ -205,11 +201,9 @@ export default function SpeakerPage({ params: _params }: SpeakerPageProps) {
     }
   }, [])
 
-  // Handle banner click tracking
   const handleBannerClick = async (bannerId: string) => {
     try {
       const speakerId = speaker?.id || routeId
-      // Track banner click
       await fetch(`/api/analytics/banner-click`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -262,6 +256,8 @@ export default function SpeakerPage({ params: _params }: SpeakerPageProps) {
     return videoId ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg` : null
   }
 
+  const getInitial = (name: string) => (name?.trim()?.[0] || "?").toUpperCase()
+
   if (loading) {
     return <SpeakerProfilePageSkeleton />
   }
@@ -281,438 +277,475 @@ export default function SpeakerPage({ params: _params }: SpeakerPageProps) {
     )
 
   return (
-    <div className="bg-white min-h-screen">
-      {/* DYNAMIC HERO BANNER SECTION */}
-    <div className="relative h-[300px] md:h-[350px] overflow-hidden">
-  {heroBannersLoading ? (
-    // Loading skeleton
-    <div className="w-full h-full bg-gradient-to-r from-gray-200 to-gray-300 animate-pulse"></div>
-  ) : heroBanners.length > 0 ? (
-    <>
-      {/* Banner Display - Only images */}
-      {heroBanners.map((banner, index) => (
-        <div
-          key={banner.id}
-          className={`absolute inset-0 transition-opacity duration-500 ${
-            index === currentBannerIndex ? 'opacity-100' : 'opacity-0 pointer-events-none'
-          }`}
-        >
-          <Link 
-            href={banner.link || "#"}
-            onClick={() => handleBannerClick(banner.id)}
-            target={banner.link?.startsWith('http') ? '_blank' : '_self'}
-            className="block w-full h-full"
-          >
+    <div className="bg-gray-50 min-h-screen">
+      {/* HERO BANNER WITH PROFILE OVERLAY (matches reference design) */}
+      <div className="relative h-[220px] md:h-[280px] overflow-hidden bg-blue-950">
+        {heroBannersLoading ? (
+          <div className="w-full h-full bg-gradient-to-r from-gray-200 to-gray-300 animate-pulse"></div>
+        ) : heroBanners.length > 0 ? (
+          <>
+            {heroBanners.map((banner, index) => (
+              <div
+                key={banner.id}
+                className={`absolute inset-0 transition-opacity duration-500 ${
+                  index === currentBannerIndex ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                }`}
+              >
+                <Link
+                  href={banner.link || "#"}
+                  onClick={() => handleBannerClick(banner.id)}
+                  target={banner.link?.startsWith('http') ? '_blank' : '_self'}
+                  className="block w-full h-full"
+                >
+                  <Image
+                    src={banner.imageUrl || '/images/speaker-bg.png'}
+                    alt={banner.title}
+                    fill
+                    className="object-cover"
+                    priority={index === 0}
+                    sizes="100vw"
+                  />
+                </Link>
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-950/80 via-blue-950/50 to-blue-950/20" />
+
+                {heroBanners.length > 1 && (
+                  <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 flex space-x-2 z-10">
+                    {heroBanners.map((_, idx) => (
+                      <button
+                        key={idx}
+                        className={`w-2.5 h-2.5 rounded-full transition-all ${
+                          idx === currentBannerIndex
+                            ? "bg-white scale-110"
+                            : "bg-white/50 hover:bg-white/75"
+                        }`}
+                        onClick={() => setCurrentBannerIndex(idx)}
+                        aria-label={`Go to banner ${idx + 1}`}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </>
+        ) : (
+          <div className="relative w-full h-full">
             <Image
-              src={banner.imageUrl }
-              alt={banner.title}
+              src="/logo/logo-5.png"
+              alt="Speaker Background"
               fill
               className="object-cover"
-              priority={index === 0}
               sizes="100vw"
+              priority
             />
-          </Link>
-          
-          {/* Banner indicators if multiple banners */}
-          {heroBanners.length > 1 && (
-            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
-              {heroBanners.map((_, idx) => (
-                <button
-                  key={idx}
-                  className={`w-3 h-3 rounded-full transition-all ${
-                    idx === currentBannerIndex 
-                      ? "bg-white scale-110" 
-                      : "bg-white/50 hover:bg-white/75"
-                  }`}
-                  onClick={() => setCurrentBannerIndex(idx)}
-                  aria-label={`Go to banner ${idx + 1}`}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      ))}
-    </>
-  ) : (
-    // Fallback to default background if no banners found (no query string — Next.js Image localPatterns)
-    <div className="relative w-full h-full">
-      <Image
-        src="/logo/logo-5.png"
-        alt="Speaker Background"
-        fill
-        className="object-cover"
-        sizes="100vw"
-        priority
-      />
-      <div className="absolute inset-0 bg-black/25" />
-    </div>
-  )}
-</div>
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-950/85 via-blue-950/55 to-blue-950/25" />
+          </div>
+        )}
 
-      {/* MAIN CONTENT SECTION */}
-      <div className="max-w-6xl mx-auto px-4 mt-7 ml-20 relative z-20">
-        <div className="flex flex-col lg:flex-row gap-8 items-start">
-          {/* PROFILE CARD - LEFT SIDE */}
-          <div className="w-full lg:w-1/3">
-            <div className="">
-              <CardContent className="p-6">
-                <div className="flex flex-col items-center text-center mb-6">
-                  <div className="w-32 h-32 rounded-full border-4 border-orange-500 p-1 bg-white overflow-hidden mb-4">
-                    <Image
-                      src={speaker.image}
-                      alt={speaker.name}
-                      width={128}
-                      height={128}
-                      className="w-full h-full rounded-full object-cover"
-                    />
-                  </div>
-                  <h2 className="text-xl font-bold text-blue-900">{speaker.name}</h2>
-                  <p className="text-gray-600 text-sm mt-1">{speaker.title}</p>
+        {/* Profile info overlaid directly on the banner */}
+        <div className="absolute inset-0 flex items-center">
+          <div className="max-w-6xl mx-auto px-4 w-full">
+            <div className="flex items-center gap-5 md:gap-6">
+              <div className="w-20 h-20 md:w-28 md:h-28 rounded-full border-4 border-white/90 overflow-hidden shadow-lg shrink-0 bg-blue-600 flex items-center justify-center">
+                {speaker.image ? (
+                  <Image
+                    src={speaker.image}
+                    alt={speaker.name}
+                    width={112}
+                    height={112}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span className="text-white text-3xl md:text-4xl font-semibold">
+                    {getInitial(speaker.name)}
+                  </span>
+                )}
+              </div>
 
-                  <div className="flex justify-center gap-3 mt-4">
+              <div className="text-white min-w-0">
+                <h1 className="text-xl md:text-3xl font-bold truncate">{speaker.name}</h1>
+                {speaker.title && (
+                  <p className="text-white/80 text-sm md:text-base mt-0.5">{speaker.title}</p>
+                )}
+
+                <div className="flex items-center gap-2 mt-2 md:mt-3">
+                  {speaker.socialLinks.facebook && speaker.socialLinks.facebook !== "#" && (
                     <a
                       href={speaker.socialLinks.facebook}
                       target="_blank"
-                      className="w-8 h-8 flex items-center justify-center rounded-full bg-blue-600 text-white hover:bg-blue-700 text-sm"
+                      rel="noopener noreferrer"
+                      className="w-8 h-8 flex items-center justify-center rounded-full bg-[#1877F2] text-white hover:opacity-80 transition-opacity"
                     >
-                      <FaFacebookF />
+                      <FaFacebookF size={13} />
                     </a>
+                  )}
+                  {speaker.socialLinks.twitter && speaker.socialLinks.twitter !== "#" && (
                     <a
                       href={speaker.socialLinks.twitter}
                       target="_blank"
-                      className="w-8 h-8 flex items-center justify-center rounded-full bg-sky-400 text-white hover:bg-sky-500 text-sm"
+                      rel="noopener noreferrer"
+                      className="w-8 h-8 flex items-center justify-center rounded-full bg-[#1DA1F2] text-white hover:opacity-80 transition-opacity"
                     >
-                      <FaTwitter />
+                      <FaTwitter size={13} />
                     </a>
+                  )}
+                  {speaker.socialLinks.instagram && speaker.socialLinks.instagram !== "#" && (
                     <a
                       href={speaker.socialLinks.instagram}
                       target="_blank"
-                      className="w-8 h-8 flex items-center justify-center rounded-full bg-pink-600 text-white hover:bg-pink-700 text-sm"
+                      rel="noopener noreferrer"
+                      className="w-8 h-8 flex items-center justify-center rounded-full bg-gradient-to-br from-[#F58529] via-[#DD2A7B] to-[#8134AF] text-white hover:opacity-80 transition-opacity"
                     >
-                      <FaInstagram />
+                      <FaInstagram size={13} />
                     </a>
+                  )}
+                  {speaker.socialLinks.linkedin && speaker.socialLinks.linkedin !== "#" && (
                     <a
                       href={speaker.socialLinks.linkedin}
                       target="_blank"
-                      className="w-8 h-8 flex items-center justify-center rounded-full bg-blue-700 text-white hover:bg-blue-800 text-sm"
+                      rel="noopener noreferrer"
+                      className="w-8 h-8 flex items-center justify-center rounded-full bg-[#0A66C2] text-white hover:opacity-80 transition-opacity"
                     >
-                      <FaLinkedinIn />
+                      <FaLinkedinIn size={13} />
                     </a>
-                  </div>
+                  )}
                 </div>
-              </CardContent>
-            </div>
-          </div>
-
-          {/* ABOUT SECTION - RIGHT SIDE */}
-          <div className="w-full lg:w-2/3">
-            <div className="">
-              <CardContent className="p-6">
-                <h2 className="text-2xl font-bold text-blue-900 mb-4">About Me</h2>
-                <p className="text-gray-700 leading-relaxed">{speaker.bio}</p>
-              </CardContent>
+              </div>
             </div>
           </div>
         </div>
       </div>
-      <hr className="border-gray-200 w-3/4 mx-auto my-4 border-t-[1px]" />
 
-      {/* SESSION VIDEOS SECTION */}
-      <div className="max-w-6xl mx-auto px-4 py-12 mt-12">
-        <h2 className="text-2xl font-bold text-blue-900 mb-6">Session Videos</h2>
-        {sessions.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {sessions.map((session) => (
-              <Card key={session.id} className="border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
-                <CardContent className="p-4">
-                  {/* Session Header */}
-                  <div className="mb-3">
-                    <h3 className="font-semibold text-blue-900 text-sm line-clamp-2 mb-1">
-                      {session.title}
-                    </h3>
-                    <div className="flex flex-wrap gap-2 text-xs text-gray-600 mb-2">
-                      <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
-                        {session.sessionType}
-                      </span>
-                      <span>{formatDate(session.startTime)}</span>
+      {/* TWO COLUMN LAYOUT: sidebar (About Me + contact) | main content */}
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        <div className="flex flex-col lg:flex-row gap-6 items-start">
+          {/* LEFT SIDEBAR */}
+          <aside className="w-full lg:w-72 lg:sticky lg:top-6 shrink-0 space-y-6">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+              <h2 className="text-lg font-bold text-blue-900 mb-2 relative inline-block">
+                About Me
+                <span className="block h-0.5 w-8 bg-blue-600 mt-1" />
+              </h2>
+              <p className="text-gray-700 text-sm leading-relaxed mt-3">
+                {speaker.bio || "No bio available."}
+              </p>
+
+              {(speaker.location || speaker.website || speaker.mobileNumber) && (
+                <div className="mt-5 pt-5 border-t border-gray-100 space-y-3">
+                  {speaker.location && (
+                    <div className="flex items-start gap-2 text-sm text-gray-600">
+                      <FaMapMarkerAlt className="text-orange-500 mt-0.5 shrink-0" size={13} />
+                      <span>{speaker.location}</span>
                     </div>
-                    <p className="text-xs text-gray-500 line-clamp-2">
-                      {session.description}
-                    </p>
-                  </div>
+                  )}
+                  {speaker.website && (
+                    <div className="flex items-start gap-2 text-sm text-gray-600">
+                      <FaGlobe className="text-orange-500 mt-0.5 shrink-0" size={13} />
+                      <a
+                        href={speaker.website.startsWith("http") ? speaker.website : `https://${speaker.website}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="hover:text-blue-600 hover:underline break-all"
+                      >
+                        {speaker.website}
+                      </a>
+                    </div>
+                  )}
+                  {speaker.mobileNumber && (
+                    <div className="flex items-start gap-2 text-sm text-gray-600">
+                      <FaPhoneAlt className="text-orange-500 mt-0.5 shrink-0" size={13} />
+                      <span>{speaker.mobileNumber}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </aside>
 
-                  {/* YouTube Videos */}
-                  {session.youtube && session.youtube.length > 0 ? (
-                    <div className="space-y-3">
-                      {session.youtube.map((youtubeUrl, index) => {
-                        const thumbnail = getYouTubeThumbnail(youtubeUrl)
-                        const videoId = extractYouTubeVideoId(youtubeUrl)
-                        return (
-                          <div key={index} className="group">
-                            <div className="relative aspect-video rounded-lg overflow-hidden bg-gray-200">
-                              {thumbnail ? (
-                                <>
-                                  <AppImage
-                                    src={thumbnail}
-                                    alt={`YouTube thumbnail for ${session.title}`}
-                                    fill
-                                    sizes="(max-width: 768px) 100vw, 50vw"
-                                    className="object-cover transition-transform group-hover:scale-105"
-                                  />
-                                  <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-colors" />
-                                  <div className="absolute inset-0 flex items-center justify-center">
-                                    <div className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center transform group-hover:scale-110 transition-transform">
-                                      <FaPlay className="text-white text-sm ml-1" />
+          {/* MAIN CONTENT */}
+          <main className="flex-1 min-w-0 space-y-10">
+            {/* SESSION VIDEOS SECTION */}
+            <section>
+              <h2 className="text-xl font-bold text-blue-900 mb-1 relative inline-block">
+                Session Videos
+                <span className="block h-0.5 w-8 bg-blue-600 mt-1" />
+              </h2>
+              <div className="mt-4">
+                {sessions.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    {sessions.map((session) => (
+                      <Card key={session.id} className="border border-gray-200 shadow-sm hover:shadow-lg transition-shadow overflow-hidden">
+                        <CardContent className="p-4">
+                          {/* Session Header */}
+                          <div className="mb-3">
+                            <h3 className="font-semibold text-blue-900 text-sm line-clamp-2 mb-1">
+                              {session.title}
+                            </h3>
+                            <div className="flex flex-wrap items-center gap-2 text-xs text-gray-600 mb-2">
+                              <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full text-[10px] font-medium uppercase">
+                                {session.sessionType}
+                              </span>
+                              <span className="text-gray-400">·</span>
+                              <span className="text-gray-500">{formatDate(session.startTime)}</span>
+                            </div>
+                            <p className="text-xs text-gray-500 line-clamp-2">
+                              {session.description}
+                            </p>
+                          </div>
+
+                          {/* YouTube Videos */}
+                          {session.youtube && session.youtube.length > 0 ? (
+                            <div className="space-y-3">
+                              {session.youtube.map((youtubeUrl, index) => {
+                                const thumbnail = getYouTubeThumbnail(youtubeUrl)
+                                return (
+                                  <div key={index} className="group">
+                                    <div className="relative aspect-video rounded-lg overflow-hidden bg-gray-200">
+                                      {thumbnail ? (
+                                        <>
+                                          <AppImage
+                                            src={thumbnail}
+                                            alt={`YouTube thumbnail for ${session.title}`}
+                                            fill
+                                            sizes="(max-width: 768px) 100vw, 50vw"
+                                            className="object-cover transition-transform group-hover:scale-105"
+                                          />
+                                          <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-colors" />
+                                          <div className="absolute inset-0 flex items-center justify-center">
+                                            <div className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center transform group-hover:scale-110 transition-transform shadow-lg">
+                                              <FaPlay className="text-white text-sm ml-1" />
+                                            </div>
+                                          </div>
+                                        </>
+                                      ) : (
+                                        <div className="absolute inset-0 flex items-center justify-center bg-gray-300">
+                                          <FaYoutube className="text-red-600 text-4xl" />
+                                        </div>
+                                      )}
+                                      <a
+                                        href={youtubeUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="absolute inset-0"
+                                      >
+                                        <span className="sr-only">Watch on YouTube</span>
+                                      </a>
+                                    </div>
+                                    <div className="mt-2 flex items-center gap-2">
+                                      <FaYoutube className="text-red-600 text-xs" />
+                                      <span className="text-xs text-gray-600">Watch on YouTube</span>
                                     </div>
                                   </div>
-                                </>
-                              ) : (
-                                <div className="absolute inset-0 flex items-center justify-center bg-gray-300">
-                                  <FaYoutube className="text-red-600 text-3xl" />
-                                </div>
-                              )}
-                              <a
-                                href={youtubeUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="absolute inset-0"
-                              >
-                                <span className="sr-only">Watch on YouTube</span>
-                              </a>
+                                )
+                              })}
                             </div>
-                            <div className="mt-2 flex items-center gap-2">
-                              <FaYoutube className="text-red-600 text-xs" />
-                              <span className="text-xs text-gray-600">Watch on YouTube</span>
-                            </div>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  ) : (
-                    <div className="text-center py-6">
-                      <FaYoutube className="text-gray-400 text-2xl mx-auto mb-2" />
-                      <p className="text-gray-500 text-xs">No videos available for this session</p>
-                    </div>
-                  )}
-
-                  {session.event?.id && (
-                    <div className="mt-3 pt-3 border-t border-gray-100">
-                      <Link
-                        href={eventPublicPath(session.event)}
-                        className="text-xs text-blue-600 hover:text-blue-800 inline-flex items-center gap-1 font-medium"
-                      >
-                        View event <FaExternalLinkAlt className="text-[10px]" />
-                      </Link>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        ) : (
-          <Card className="border border-gray-200 shadow-sm">
-            <CardContent className="p-8 text-center">
-              <FaYoutube className="text-gray-400 text-3xl mx-auto mb-3" />
-              <p className="text-gray-500">No session videos available.</p>
-            </CardContent>
-          </Card>
-        )}
-      </div>
-
-      {/* PRESENTATION MATERIALS */}
-      <div className="max-w-6xl mx-auto px-4 pb-12">
-        <h2 className="text-2xl font-bold text-blue-900 mb-2">Presentation Materials</h2>
-        <p className="text-gray-600 text-sm mb-6">Documents and slides from this speaker&apos;s sessions</p>
-        {sessions.some((s) => (s.materials?.length ?? 0) > 0) ? (
-          <div className="space-y-8">
-            {sessions.map((session) =>
-              session.materials && session.materials.length > 0 ? (
-                <Card key={`mat-${session.id}`} className="border border-gray-200 shadow-sm">
-                  <CardContent className="p-5">
-                    <h3 className="font-semibold text-blue-900 mb-1">{session.title}</h3>
-                    <p className="text-xs text-gray-500 mb-4">
-                      {session.sessionType} · {formatDate(session.startTime)}
-                      {session.event?.id && (
-                        <>
-                          {" · "}
-                          <Link
-                            href={eventPublicPath(session.event)}
-                            className="text-blue-600 hover:underline"
-                          >
-                            Event page
-                          </Link>
-                        </>
-                      )}
-                    </p>
-                    <ul className="space-y-2">
-                      {session.materials.map((m) => (
-                        <li
-                          key={m.id}
-                          className="flex flex-wrap items-center justify-between gap-2 py-2 px-3 bg-gray-50 rounded-lg border border-gray-100"
-                        >
-                          <span className="flex items-center gap-2 text-sm text-gray-800 min-w-0">
-                            <FaFileAlt className="text-orange-500 shrink-0" />
-                            <span className="truncate">{m.fileName}</span>
-                            <span className="text-xs text-gray-400 shrink-0">
-                              ({m.fileType})
-                            </span>
-                          </span>
-                          {m.allowDownload !== false && m.fileUrl ? (
-                            <a
-                              href={m.fileUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-sm text-blue-600 hover:text-blue-800 font-medium shrink-0"
-                            >
-                              Download
-                            </a>
                           ) : (
-                            <span className="text-xs text-gray-400">Preview only</span>
+                            <div className="text-center py-6">
+                              <FaYoutube className="text-gray-400 text-2xl mx-auto mb-2" />
+                              <p className="text-gray-500 text-xs">No videos available for this session</p>
+                            </div>
                           )}
-                        </li>
-                      ))}
-                    </ul>
+
+                          {session.event?.id && (
+                            <div className="mt-3 pt-3 border-t border-gray-100">
+                              <Link
+                                href={eventPublicPath(session.event)}
+                                className="text-xs text-blue-600 hover:text-blue-800 inline-flex items-center gap-1 font-medium"
+                              >
+                                View event <FaExternalLinkAlt className="text-[10px]" />
+                              </Link>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <Card className="border border-gray-200 shadow-sm">
+                    <CardContent className="p-8 text-center">
+                      <FaYoutube className="text-gray-400 text-3xl mx-auto mb-3" />
+                      <p className="text-gray-500">No session videos available.</p>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            </section>
+
+            {/* PRESENTATION MATERIALS */}
+            <section>
+              <h2 className="text-xl font-bold text-blue-900 mb-1 relative inline-block">
+                Presentation Materials
+                <span className="block h-0.5 w-8 bg-blue-600 mt-1" />
+              </h2>
+              <p className="text-gray-600 text-sm mt-3 mb-4">Documents and slides from this speaker&apos;s sessions</p>
+              {sessions.some((s) => (s.materials?.length ?? 0) > 0) ? (
+                <div className="space-y-6">
+                  {sessions.map((session) =>
+                    session.materials && session.materials.length > 0 ? (
+                      <Card key={`mat-${session.id}`} className="border border-gray-200 shadow-sm">
+                        <CardContent className="p-5">
+                          <h3 className="font-semibold text-blue-900 mb-1">{session.title}</h3>
+                          <p className="text-xs text-gray-500 mb-4">
+                            {session.sessionType} · {formatDate(session.startTime)}
+                            {session.event?.id && (
+                              <>
+                                {" · "}
+                                <Link
+                                  href={eventPublicPath(session.event)}
+                                  className="text-blue-600 hover:underline"
+                                >
+                                  Event page
+                                </Link>
+                              </>
+                            )}
+                          </p>
+                          <ul className="space-y-2">
+                            {session.materials.map((m) => (
+                              <li
+                                key={m.id}
+                                className="flex flex-wrap items-center justify-between gap-2 py-2 px-3 bg-gray-50 rounded-lg border border-gray-100"
+                              >
+                                <span className="flex items-center gap-2 text-sm text-gray-800 min-w-0">
+                                  <FaFileAlt className="text-orange-500 shrink-0" />
+                                  <span className="truncate">{m.fileName}</span>
+                                  <span className="text-xs text-gray-400 shrink-0">
+                                    ({m.fileType})
+                                  </span>
+                                </span>
+                                {m.allowDownload !== false && m.fileUrl ? (
+                                  <a
+                                    href={m.fileUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-sm text-blue-600 hover:text-blue-800 font-medium shrink-0"
+                                  >
+                                    Download
+                                  </a>
+                                ) : (
+                                  <span className="text-xs text-gray-400">Preview only</span>
+                                )}
+                              </li>
+                            ))}
+                          </ul>
+                        </CardContent>
+                      </Card>
+                    ) : null
+                  )}
+                </div>
+              ) : (
+                <Card className="border border-gray-200 shadow-sm">
+                  <CardContent className="p-8 text-center">
+                    <FaFileAlt className="text-gray-400 text-3xl mx-auto mb-3" />
+                    <p className="text-gray-500">No presentation materials uploaded yet.</p>
                   </CardContent>
                 </Card>
-              ) : null
-            )}
-          </div>
-        ) : (
-          <Card className="border border-gray-200 shadow-sm">
-            <CardContent className="p-8 text-center">
-              <FaFileAlt className="text-gray-400 text-3xl mx-auto mb-3" />
-              <p className="text-gray-500">No presentation materials uploaded yet.</p>
-            </CardContent>
-          </Card>
-        )}
-      </div>
+              )}
+            </section>
 
-      {/* EVENTS SECTION */}
-      <div className="max-w-6xl mx-auto px-4 pb-16">
-        <Tabs defaultValue="upcoming" className="w-full">
-          {/* Tabs aligned left and smaller */}
-          <TabsList className="flex justify-start space-x-2 mb-4">
-            <TabsTrigger
-              value="upcoming"
-              className="text-sm px-3 py-1 rounded-md data-[state=active]:bg-blue-600 data-[state=active]:text-white"
-            >
-              Upcoming
-            </TabsTrigger>
-            <TabsTrigger
-              value="past"
-              className="text-sm px-3 py-1 rounded-md data-[state=active]:bg-blue-600 data-[state=active]:text-white"
-            >
-              Past
-            </TabsTrigger>
-          </TabsList>
-
-          {/* Upcoming Events */}
-          <TabsContent value="upcoming">
-            {upcomingEvents.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {upcomingEvents.map((e) => (
-                  <Link
-                    key={e.id}
-                    href={e.id ? eventPublicPath(e) : "#"}
-                    className="border hover:shadow-lg transition-shadow rounded-lg overflow-hidden block cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500"
+            {/* EVENTS SECTION */}
+            <section>
+              <Tabs defaultValue="upcoming" className="w-full">
+                <TabsList className="flex justify-start space-x-2 mb-6 bg-transparent p-0">
+                  <TabsTrigger
+                    value="upcoming"
+                    className="text-sm px-4 py-2 rounded-md data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=inactive]:bg-gray-100 data-[state=inactive]:text-gray-600 transition-colors"
                   >
-                    <CardContent className="p-0">
-                      <Image
-                        src={(e.image || "/images/gpex.jpg").trim()}
-                        alt={e.title}
-                        width={300}
-                        height={180}
-                        className="w-full h-32 object-cover"
-                      />
-
-                      <div className="p-4">
-                        <h3 className="font-semibold text-gray-900 text-sm">{e.title}</h3>
-                        <p className="text-xs text-gray-500 mt-1">{formatEventDate(e.date)}</p>
-
-                        <p className="text-xs text-gray-500">{e.location}</p>
-
-                        <div className="flex justify-between items-center mt-3">
-                          <span className="bg-green-100 text-green-800 text-[10px] px-2 py-1 rounded">
-                            {e.averageRating?.toFixed(1) || 0} ⭐
-                          </span>
-
-                          <div
-                            className="flex items-center gap-2"
-                            onClick={(ev) => {
-                              ev.preventDefault()
-                              ev.stopPropagation()
-                            }}
-                          >
-                            <ShareButton 
-                              id={e.id} 
-                              title={e.title} 
-                              type="event" 
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Link>
-                ))}
-              </div>
-            ) : (
-              <p className="text-center text-gray-500 py-8">No upcoming events scheduled.</p>
-            )}
-          </TabsContent>
-
-          {/* Past Events */}
-          <TabsContent value="past">
-            {pastEvents.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {pastEvents.map((e) => (
-                  <Link
-                    key={e.id}
-                    href={e.id ? eventPublicPath(e) : "#"}
-                    className="hover:shadow-lg transition-shadow rounded-lg overflow-hidden block border border-transparent hover:border-gray-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    Upcoming
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="past"
+                    className="text-sm px-4 py-2 rounded-md data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=inactive]:bg-gray-100 data-[state=inactive]:text-gray-600 transition-colors"
                   >
-                    <CardContent className="p-0">
-                      <Image
-                        src={(e.image || "/images/gpex.jpg").trim()}
-                        alt={e.title}
-                        width={300}
-                        height={180}
-                        className="w-full h-32 object-cover"
-                      />
+                    Past
+                  </TabsTrigger>
+                </TabsList>
 
-                      <div className="p-4">
-                        <h3 className="font-semibold text-gray-900 text-sm">{e.title}</h3>
-                        <p className="text-xs text-gray-500 mt-1">{formatEventDate(e.date)}</p>
+                <TabsContent value="upcoming">
+                  {upcomingEvents.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {upcomingEvents.map((e) => (
+                        <Link
+                          key={e.id}
+                          href={e.id ? eventPublicPath(e) : "#"}
+                          className="border hover:shadow-lg transition-shadow rounded-lg overflow-hidden block cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          <CardContent className="p-0">
+                            <div className="relative w-full h-40">
+                              <Image
+                                src={(e.image || "/images/gpex.jpg").trim()}
+                                alt={e.title}
+                                fill
+                                className="object-cover"
+                              />
+                            </div>
+                            <div className="p-4">
+                              <h3 className="font-semibold text-gray-900 text-sm line-clamp-1">{e.title}</h3>
+                              <p className="text-xs text-gray-500 mt-1">{formatEventDate(e.date)}</p>
+                              <p className="text-xs text-gray-500 line-clamp-1">{e.location}</p>
+                              <div className="flex justify-between items-center mt-3">
+                                <span className="bg-green-100 text-green-800 text-[10px] px-2 py-1 rounded">
+                                  {e.averageRating?.toFixed(1) || 0} ⭐
+                                </span>
+                                <div onClick={(ev) => { ev.preventDefault(); ev.stopPropagation() }}>
+                                  <ShareButton id={e.id} title={e.title} type="event" />
+                                </div>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Link>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-12 bg-gray-50 rounded-lg">
+                      <p className="text-gray-500">No upcoming events scheduled.</p>
+                    </div>
+                  )}
+                </TabsContent>
 
-                        <p className="text-xs text-gray-500">{e.location}</p>
-
-                        <div className="flex justify-between items-center mt-3">
-                          <div
-                            className="flex items-center gap-2"
-                            onClick={(ev) => {
-                              ev.preventDefault()
-                              ev.stopPropagation()
-                            }}
-                          >
-                            <span className="bg-green-100 text-green-800 text-[10px] px-2 py-1 rounded">
-                              {e.averageRating?.toFixed(1) || 0} ⭐
-                            </span>
-                            <ShareButton 
-                              id={e.id} 
-                              title={e.title} 
-                              type="event" 
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Link>
-                ))}
-              </div>
-            ) : (
-              <p className="text-center text-gray-500 py-8">No past events found.</p>
-            )}
-          </TabsContent>
-        </Tabs>
+                <TabsContent value="past">
+                  {pastEvents.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {pastEvents.map((e) => (
+                        <Link
+                          key={e.id}
+                          href={e.id ? eventPublicPath(e) : "#"}
+                          className="border hover:shadow-lg transition-shadow rounded-lg overflow-hidden block cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          <CardContent className="p-0">
+                            <div className="relative w-full h-40">
+                              <Image
+                                src={(e.image || "/images/gpex.jpg").trim()}
+                                alt={e.title}
+                                fill
+                                className="object-cover"
+                              />
+                            </div>
+                            <div className="p-4">
+                              <h3 className="font-semibold text-gray-900 text-sm line-clamp-1">{e.title}</h3>
+                              <p className="text-xs text-gray-500 mt-1">{formatEventDate(e.date)}</p>
+                              <p className="text-xs text-gray-500 line-clamp-1">{e.location}</p>
+                              <div className="flex justify-between items-center mt-3">
+                                <span className="bg-green-100 text-green-800 text-[10px] px-2 py-1 rounded">
+                                  {e.averageRating?.toFixed(1) || 0} ⭐
+                                </span>
+                                <div onClick={(ev) => { ev.preventDefault(); ev.stopPropagation() }}>
+                                  <ShareButton id={e.id} title={e.title} type="event" />
+                                </div>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Link>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-12 bg-gray-50 rounded-lg">
+                      <p className="text-gray-500">No past events found.</p>
+                    </div>
+                  )}
+                </TabsContent>
+              </Tabs>
+            </section>
+          </main>
+        </div>
       </div>
     </div>
   )

@@ -15,8 +15,11 @@ import Image from "next/image"
 import { getEventDisplayImageUrl } from "@/lib/default-event-image"
 
 interface Event {
+  slug: string
+  subTitle: ReactNode
   id: string
   title: string
+  shortTitle: string
   description: string
   startDate: string
   endDate: string
@@ -68,7 +71,7 @@ function getPrimaryEventType(eventType: unknown): string {
   return types[0] || "Event"
 }
 
-// Pagination: 6 events per page (3 columns × 2 rows)
+// Pagination: 6 events per page (3 columns x 2 rows)
 const EVENTS_PER_PAGE = 6
 
 export default function MyEvents({ organizerId }: MyEventsProps) {
@@ -82,7 +85,6 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
   const [error, setError] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const router = useRouter()
-  const defaultImage = ""
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -154,9 +156,10 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
     return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
   }
 
-  const formatCurrency = (amount: number, currency = "USD") => {
-    return new Intl.NumberFormat("en-US", { style: "currency", currency }).format(amount)
-  }
+  // kept for potential future use
+  // const formatCurrency = (amount: number, currency = "USD") => {
+  //   return new Intl.NumberFormat("en-US", { style: "currency", currency }).format(amount)
+  // }
 
   const getTimelineStatusLabel = (status: string) => {
     const labels: Record<string, string> = {
@@ -167,19 +170,13 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
     return labels[status] || status
   }
 
-  // CHANGED: Updated colors to match screenshot exactly
-  // OLD:
-  // upcoming: { bg: "#dbeafe", text: "#004A96", border: "#bfdbfe" },
-  // ongoing:  { bg: "#F0FDF4", text: "#166534", border: "#BBF7D0" },
-  // past:     { bg: "#F3F4F6", text: "#6B7280", border: "#E5E7EB" },
   const getTimelineStatusColor = (status: string) => {
     const colors: Record<string, { bg: string; text: string; border: string }> = {
-      upcoming: { bg: "#EFF6FF", text: "#1D4ED8", border: "#BFDBFE" },   // light blue bg, blue text
-      ongoing:  { bg: "#F0FDF4", text: "#166534", border: "#BBF7D0" },   // light green
-      past:     { bg: "#F3F4F6", text: "#6B7280", border: "#E5E7EB" },   // gray
+      upcoming: { bg: "#EFF6FF", text: "#1D4ED8", border: "#BFDBFE" },
+      ongoing:  { bg: "#F0FDF4", text: "#166534", border: "#BBF7D0" },
+      past:     { bg: "#F3F4F6", text: "#6B7280", border: "#E5E7EB" },
     }
-    const color = colors[status] || colors.past
-    return { bg: color.bg, text: color.text, border: color.border }
+    return colors[status] || colors.past
   }
 
   const getPublicationStatusLabel = (status: string) => {
@@ -195,38 +192,32 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
     return labels[status] || status
   }
 
-  // CHANGED: Updated badge colors to match screenshot exactly
-  // OLD:
-  // approved: { bg: "#ECFDF5", text: "#065F46", border: "#A7F3D0" },  // was light green
-  // pending:  { bg: "#FEF3C7", text: "#D97706", border: "#FDE68A" },
   const getPublicationStatusColor = (status: string) => {
     const colors: Record<string, { bg: string; text: string; border: string }> = {
-      draft:      { bg: "#FEF3C7", text: "#92400E", border: "#FDE68A" },
-      published:  { bg: "#ECFDF5", text: "#065F46", border: "#A7F3D0" },
-      cancelled:  { bg: "#FEF2F2", text: "#991B1B", border: "#FECACA" },
-      archived:   { bg: "#F3F4F6", text: "#6B7280", border: "#E5E7EB" },
-      // CHANGED: solid dark green bg + white text to match screenshot "Approved" badge
-      // OLD: approved: { bg: "#ECFDF5", text: "#065F46", border: "#A7F3D0" },
-      approved:   { bg: "#166534", text: "#FFFFFF", border: "#166534" },
-      rejected:   { bg: "#FEF2F2", text: "#DC2626", border: "#FECACA" },
-      // CHANGED: amber yellow bg to match screenshot "Pending Review" badge
-      // OLD: pending: { bg: "#FEF3C7", text: "#D97706", border: "#FDE68A" },
-      pending:    { bg: "#FEF9C3", text: "#A16207", border: "#FEF08A" },
+      draft:     { bg: "#FEF3C7", text: "#92400E",  border: "#FDE68A" },
+      published: { bg: "#ECFDF5", text: "#065F46",  border: "#A7F3D0" },
+      cancelled: { bg: "#FEF2F2", text: "#991B1B",  border: "#FECACA" },
+      archived:  { bg: "#F3F4F6", text: "#6B7280",  border: "#E5E7EB" },
+      // Light green bg + dark green text (matches design "Approved" pill)
+      // OLD: approved: { bg: "#166534", text: "#FFFFFF", border: "#166534" },
+      approved:  { bg: "#DCFCE7", text: "#166534",  border: "#BBF7D0" },
+      rejected:  { bg: "#FEF2F2", text: "#DC2626",  border: "#FECACA" },
+      pending:   { bg: "#FEF9C3", text: "#A16207",  border: "#FEF08A" },
     }
-    const color = colors[status] || colors.draft
-    return { bg: color.bg, text: color.text, border: color.border }
+    return colors[status] || colors.draft
   }
 
-  const getLeadTypeLabel = (type: string) => {
-    const labels: Record<string, string> = {
-      ATTENDEE: "Attendee",
-      EXHIBITOR: "Exhibitor",
-      SPEAKER: "Speaker",
-      SPONSOR: "Sponsor",
-      PARTNER: "Partner",
-    }
-    return labels[type] || type
-  }
+  // kept for potential future use
+  // const getLeadTypeLabel = (type: string) => {
+  //   const labels: Record<string, string> = {
+  //     ATTENDEE: "Attendee",
+  //     EXHIBITOR: "Exhibitor",
+  //     SPEAKER: "Speaker",
+  //     SPONSOR: "Sponsor",
+  //     PARTNER: "Partner",
+  //   }
+  //   return labels[type] || type
+  // }
 
   const uniqueTypes = [
     ...new Set(
@@ -257,7 +248,7 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
   const getPageNumbers = () => {
     const maxVisible = 3
     let start = Math.max(1, currentPage - 1)
-    let end = Math.min(totalPages, start + maxVisible - 1)
+    const end = Math.min(totalPages, start + maxVisible - 1)
     if (end - start < maxVisible - 1) start = Math.max(1, end - maxVisible + 1)
     const pages: number[] = []
     for (let i = start; i <= end; i++) pages.push(i)
@@ -265,135 +256,96 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
   }
 
   return (
-    <div className="space-y-6">
+    // Outer wrapper — white background, no card border (matches design: content sits on plain white bg)
+    <div className="space-y-4 bg-white rounded-xl p-6">
+
       {/* Page heading */}
- 
-  <div className="space-y-4">
-    {/* Page heading — outside the card */}
-    <div>
-      <h1 className="text-2xl font-bold text-gray-900">My Events</h1>
-      <p className="text-sm text-gray-500 mt-1">Manage and track your events all in one place.</p>
-    </div>
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">My Events</h1>
+        <p className="text-sm text-gray-500 mt-1">Manage and track your events all in one place.</p>
+      </div>
 
-    {/* CHANGED: Single outer Card wrapping both filters AND events grid */}
-    <Card className="border border-gray-200 shadow-none bg-white">
-      <CardContent className="p-6 space-y-6">
+      {/* Filter section — sits inside same white container, with its own border */}
+      <div className="border border-gray-200 rounded-xl p-4 space-y-3 bg-white">
 
-        {/* Filter section */}
-        <div className="space-y-3">
-          {/* Row 1: Search + Type + Filter icon */}
-          <div className="flex gap-3 items-center">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <Input
-                placeholder="Search events..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 border-gray-200 bg-white"
-              />
-            </div>
-            <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger className="w-[160px] border-gray-200">
-                <SelectValue placeholder="All Types" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
-                {uniqueTypes.map((type) => (
-                  <SelectItem key={type} value={type.toLowerCase()}>
-                    {type}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-10 w-10 border-gray-200 text-gray-400 hover:text-gray-600 flex-shrink-0"
-            >
-              <SlidersHorizontal className="w-4 h-4" />
-            </Button>
+        {/* Row 1: Search + Type dropdown + Filter icon */}
+        <div className="flex gap-3 items-center">
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Input
+              placeholder="Search events..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 border-gray-200 bg-white"
+            />
           </div>
-
-          {/* Row 2: Timeline Status buttons */}
-          <div className="flex gap-2 flex-wrap items-center">
-            <span className="text-sm font-medium text-gray-600">Timeline Status:</span>
-            {["all", "upcoming", "ongoing", "past"].map((status) => (
-              <Button
-                key={status}
-                size="sm"
-                onClick={() => setTimelineStatusFilter(status as typeof timelineStatusFilter)}
-                className={
-                  timelineStatusFilter === status
-                    ? "bg-[#0F172A] text-white hover:bg-[#1E293B] border-[#0F172A] rounded-full px-4 text-sm"
-                    : "border border-gray-200 text-gray-700 hover:bg-gray-50 bg-white rounded-full px-4 text-sm"
-                }
-              >
-                {status === "all" ? "All Timeline" : getTimelineStatusLabel(status)}
-              </Button>
-            ))}
-          </div>
+          <Select value={typeFilter} onValueChange={setTypeFilter}>
+            <SelectTrigger className="w-[160px] border-gray-200">
+              <SelectValue placeholder="All Types" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Types</SelectItem>
+              {uniqueTypes.map((type) => (
+                <SelectItem key={type} value={type.toLowerCase()}>
+                  {type}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-10 w-10 border-gray-200 text-gray-400 hover:text-gray-600 flex-shrink-0"
+          >
+            <SlidersHorizontal className="w-4 h-4" />
+          </Button>
         </div>
 
-        {/* Divider between filters and events */}
-        <div className="border-t border-gray-100" />
+        {/* Row 2: Timeline Status filter buttons */}
+        <div className="flex gap-2 flex-wrap items-center">
+          <span className="text-sm font-medium text-gray-600">Timeline Status:</span>
+          {["all", "upcoming", "ongoing", "past"].map((status) => (
+            <Button
+              key={status}
+              size="sm"
+              onClick={() => setTimelineStatusFilter(status)}
+              className={
+                timelineStatusFilter === status
+                  ? "bg-[#0F172A] text-white hover:bg-[#1E293B] border-[#0F172A] rounded-full px-4 text-sm"
+                  : "border border-gray-200 text-gray-700 hover:bg-gray-50 bg-white rounded-full px-4 text-sm"
+              }
+            >
+              {status === "all" ? "All Timeline" : getTimelineStatusLabel(status)}
+            </Button>
+          ))}
+        </div>
+      </div>
 
-        {/* Loading / Error / Empty states */}
-        {loading && (
-          <div className="text-center py-12">
-            <p className="text-gray-500">Loading events...</p>
-          </div>
-        )}
-        {error && (
-          <div className="text-center py-12">
-            <p className="text-red-500">{error}</p>
-          </div>
-        )}
-        {!loading && !error && filteredEvents.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-gray-500">No events found</p>
-          </div>
-        )}
-
-        {/* Events Grid + Pagination — now INSIDE the same Card */}
-        {!loading && !error && filteredEvents.length > 0 && (
-          <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {/* {paginatedEvents.map((event: Event) => {
-                // ... keep all your existing card map code exactly as-is
-              })} */}
-            </div>
-
-      
-          </>
-        )}
-
-      </CardContent>
-    </Card>
-  </div>
-
-
+      {/* Loading state */}
       {loading && (
         <div className="text-center py-12">
           <p className="text-gray-500">Loading events...</p>
         </div>
       )}
 
+      {/* Error state */}
       {error && (
         <div className="text-center py-12">
           <p className="text-red-500">{error}</p>
         </div>
       )}
 
+      {/* Empty state */}
       {!loading && !error && filteredEvents.length === 0 && (
         <div className="text-center py-12">
           <p className="text-gray-500">No events found</p>
         </div>
       )}
 
+      {/* Events Grid + Pagination */}
       {!loading && !error && filteredEvents.length > 0 && (
         <>
-          {/* Events Grid — 3 columns */}
-          {/* OLD: className="grid grid-cols-1 md:grid-cols-2 gap-6" */}
+          {/* 3-column grid matching design */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {paginatedEvents.map((event: Event) => {
               const timelineColors = getTimelineStatusColor(event.timelineStatus ?? "past")
@@ -411,7 +363,8 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
                   className="overflow-hidden p-0 bg-white border border-gray-200 rounded-2xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer group"
                 >
                   <div className="flex flex-col h-full">
-                    {/* Image */}
+
+                    {/* Card image section */}
                     <div className="relative w-full h-48 bg-gray-100 overflow-hidden">
                       <Image
                         src={eventImage}
@@ -422,8 +375,7 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
 
-                      {/* CHANGED: Publication status — top LEFT, always visible
-                          OLD position was bottom-left, then moved to top-left in last revision */}
+                      {/* Publication status badge — top left */}
                       <div className="absolute top-3 left-3 z-10">
                         <span
                           className="px-2.5 py-1 text-xs font-semibold rounded-full shadow-sm"
@@ -437,9 +389,7 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
                         </span>
                       </div>
 
-                      {/* CHANGED: Timeline status — top RIGHT, always visible for all statuses
-                          OLD: was conditionally hidden when timelineStatus === "past"
-                          // OLD: {event.timelineStatus && event.timelineStatus !== "past" && ( */}
+                      {/* Timeline status badge — top right */}
                       {event.timelineStatus && (
                         <div className="absolute top-3 right-3 z-10">
                           <span
@@ -456,14 +406,14 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
                       )}
                     </div>
 
-                    {/* Content */}
+                    {/* Card content */}
                     <CardContent className="flex-1 p-5 bg-white">
                       <div className="flex flex-col justify-between h-full">
                         <div className="space-y-3">
-                          <h3 className="font-bold text-lg text-gray-900 line-clamp-2 hover:text-[#004A96] transition-colors">
+                          <h3 className="font-bold text-lg text-gray-900 line-clamp-1 hover:text-[#004A96] transition-colors">
                             {event.title}
                           </h3>
-                          <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed">
+                          <p className="text-sm text-gray-600 line-clamp-1 leading-relaxed">
                             {event.description}
                           </p>
                           <div className="space-y-2 text-sm text-gray-600">
@@ -486,15 +436,6 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
                                 {event.leads || 0} leads
                               </span>
                             </div>
-                          </div>
-                        </div>
-
-                        {/* Footer badges */}
-                        <div className="flex items-center justify-between gap-3 pt-4 mt-4 border-t border-gray-100">
-                          <div className="flex min-w-0 flex-wrap items-center gap-1.5">
-                            <span className="shrink-0 rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700">
-                              {eventTypeLabel}
-                            </span>
                             {visibleCategories.map((label) => (
                               <span
                                 key={`footer-${label}`}
@@ -508,6 +449,16 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
                                 +{hiddenCategoryCount}
                               </span>
                             )}
+                          </div>
+                        </div>
+
+                        {/* Footer: type + category pills + View Details */}
+                        <div className="flex items-center justify-between gap-3 pt-4 mt-4 border-t border-gray-100">
+                          <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+                            <span className="shrink-0 rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700">
+                              {eventTypeLabel}
+                            </span>
+                            
                           </div>
                           <span className="shrink-0 text-xs font-medium text-[#004A96] group-hover:text-[#003d7a]">
                             View Details →
@@ -523,7 +474,7 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-2 pt-4">
+            <div className="flex items-center justify-center gap-2 pt-2">
               <Button
                 variant="outline"
                 size="icon"
@@ -536,12 +487,11 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
               {getPageNumbers().map((page) => (
                 <Button
                   key={page}
-                  variant={currentPage === page ? "default" : "outline"}
                   size="icon"
                   className={`h-9 w-9 text-sm font-medium ${
                     currentPage === page
                       ? "bg-[#004A96] text-white border-[#004A96] hover:bg-[#003d7a]"
-                      : "border-gray-200 text-gray-700 hover:bg-gray-50"
+                      : "border border-gray-200 text-gray-700 hover:bg-gray-50 bg-white"
                   }`}
                   onClick={() => setCurrentPage(page)}
                 >
@@ -562,6 +512,5 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
         </>
       )}
     </div>
-    
   )
 }

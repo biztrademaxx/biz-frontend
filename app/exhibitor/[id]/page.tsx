@@ -843,19 +843,23 @@ export default function ExhibitorPage() {
 
   // Filter events based on active events tab
   const filteredEvents = useMemo(() => {
-    const currentDate = new Date();
+    const now = new Date();
 
-    if (eventsTab === "upcoming") {
-      return booths.filter(booth => {
-        const eventEndDate = new Date(booth.event.endDate);
-        return eventEndDate > currentDate;
-      });
-    } else {
-      return booths.filter(booth => {
-        const eventEndDate = new Date(booth.event.endDate);
-        return eventEndDate <= currentDate;
-      });
-    }
+    return booths.filter((booth) => {
+      const endDate = booth.event.endDate
+        ? new Date(booth.event.endDate)
+        : booth.event.startDate
+          ? new Date(booth.event.startDate)
+          : null;
+
+      if (!endDate || isNaN(endDate.getTime())) {
+        return true; // show event instead of hiding it
+      }
+
+      return eventsTab === "upcoming"
+        ? endDate >= now
+        : endDate < now;
+    });
   }, [booths, eventsTab]);
 
   // Pagination for events
