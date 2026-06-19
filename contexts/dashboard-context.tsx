@@ -6,6 +6,9 @@ import React, { createContext, useContext, useState, useCallback, useMemo } from
 interface DashboardContextType {
   activeSection: string
   setActiveSection: (section: string) => void
+  messageTargetUserId: string | null
+  openMessagesWithUser: (userId: string) => void
+  clearMessageTarget: () => void
 }
 
 const DashboardContext = createContext<DashboardContextType | undefined>(undefined)
@@ -13,12 +16,27 @@ const DashboardContext = createContext<DashboardContextType | undefined>(undefin
 export function DashboardProvider({ children }: { children: React.ReactNode }) {
   // Change this from "profile" to "dashboard"
   const [activeSection, setActiveSection] = useState("dashboard")
+  const [messageTargetUserId, setMessageTargetUserId] = useState<string | null>(null)
+
+  const openMessagesWithUser = useCallback((userId: string) => {
+    const trimmed = userId.trim()
+    if (!trimmed) return
+    setMessageTargetUserId(trimmed)
+    setActiveSection("messages")
+  }, [])
+
+  const clearMessageTarget = useCallback(() => {
+    setMessageTargetUserId(null)
+  }, [])
 
   // Memoize the context value to prevent unnecessary re-renders
   const contextValue = useMemo(() => ({
     activeSection,
-    setActiveSection
-  }), [activeSection])
+    setActiveSection,
+    messageTargetUserId,
+    openMessagesWithUser,
+    clearMessageTarget,
+  }), [activeSection, messageTargetUserId, openMessagesWithUser, clearMessageTarget])
 
   return (
     <DashboardContext.Provider value={contextValue}>
