@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useMemo, useCallback } from "react"
+import { useEffect, useState, useMemo, useCallback, useRef } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { Calendar, MapPin } from "lucide-react"
@@ -29,10 +29,11 @@ export function EventPageRelatedEvents({ currentEventId, categories }: Props) {
     const [relatedEvents, setRelatedEvents] = useState<RelatedEvent[]>([])
     const [loading, setLoading] = useState(true)
     const [hasFetched, setHasFetched] = useState(false)
+    // NEW
+    const [currentPage, setCurrentPage] = useState(0)
+    const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
-    // Memoize category strings to prevent re-computation on every render
     const categoryStrings = useMemo(() => {
-        // Helper function to extract category string from various formats
         const getCategoryString = (category: any): string | null => {
             if (!category) return null
             if (typeof category === 'string') return category
@@ -44,7 +45,6 @@ export function EventPageRelatedEvents({ currentEventId, categories }: Props) {
             return null
         }
 
-        // Get all valid category strings from the categories array
         if (!categories || !Array.isArray(categories) || categories.length === 0) return []
         const strings: string[] = []
         for (const cat of categories) {
@@ -54,9 +54,8 @@ export function EventPageRelatedEvents({ currentEventId, categories }: Props) {
             }
         }
         return strings
-    }, [categories]) // Only recompute when categories reference changes
+    }, [categories])
 
-    // Memoize fetchAllEvents to prevent recreation on every render
     const fetchAllEvents = useCallback(async (): Promise<RelatedEvent[]> => {
         try {
             const data = await apiFetch<{ events?: RelatedEvent[]; data?: RelatedEvent[] }>(
@@ -81,10 +80,9 @@ export function EventPageRelatedEvents({ currentEventId, categories }: Props) {
             console.error("Error fetching all events:", error)
             return []
         }
-    }, [currentEventId]) // Only recreate when currentEventId changes
+    }, [currentEventId])
 
     useEffect(() => {
-        // Prevent multiple fetches
         if (hasFetched) return
 
         const fetchRelatedEvents = async () => {
@@ -93,11 +91,9 @@ export function EventPageRelatedEvents({ currentEventId, categories }: Props) {
             try {
                 let events: RelatedEvent[] = []
 
-                // If there are categories, try to fetch events by category
                 if (categoryStrings.length > 0) {
                     const eventsMap = new Map<string, RelatedEvent>()
 
-                    // Fetch events for each category
                     const fetchPromises = categoryStrings.map(async (categoryName) => {
                         try {
                             const data = await apiFetch<{ events?: RelatedEvent[]; data?: RelatedEvent[] }>(
@@ -121,10 +117,8 @@ export function EventPageRelatedEvents({ currentEventId, categories }: Props) {
                         }
                     })
 
-                    // Wait for all category fetches to complete
                     const allEventsArrays = await Promise.all(fetchPromises)
 
-                    // Combine all events and filter out current event
                     for (const eventArray of allEventsArrays) {
                         for (const event of eventArray) {
                             const eventId = event.id || event._id
@@ -138,22 +132,21 @@ export function EventPageRelatedEvents({ currentEventId, categories }: Props) {
                     events = Array.from(eventsMap.values())
                 }
 
-                // If no events found from categories OR no categories exist, fetch all events
                 if (events.length === 0) {
                     console.log("No category-based events found, fetching all events...")
                     events = await fetchAllEvents()
                 }
 
-                // Limit to 4 events
-                setRelatedEvents(events.slice(0, 4))
+                // CHANGED: removed slice(0,4) to store all events for rotation
+                setRelatedEvents(events)
                 setHasFetched(true)
 
             } catch (error) {
                 console.error("Error fetching related events:", error)
-                // Fallback to all events if anything fails
                 try {
                     const allEvents = await fetchAllEvents()
-                    setRelatedEvents(allEvents.slice(0, 4))
+                    // CHANGED: removed slice(0,4) to store all events for rotation
+                    setRelatedEvents(allEvents)
                     setHasFetched(true)
                 } catch (fallbackError) {
                     console.error("Fallback also failed:", fallbackError)
@@ -166,14 +159,25 @@ export function EventPageRelatedEvents({ currentEventId, categories }: Props) {
         }
 
         fetchRelatedEvents()
-    }, [currentEventId, categoryStrings, fetchAllEvents, hasFetched]) // Added hasFetched to dependencies
+    }, [currentEventId, categoryStrings, fetchAllEvents, hasFetched])
 
-    // Reset hasFetched when currentEventId changes (for different event pages)
     useEffect(() => {
         setHasFetched(false)
         setRelatedEvents([])
         setLoading(true)
     }, [currentEventId])
+
+    // NEW: Auto-rotate every 5 seconds
+    useEffect(() => {
+        if (relatedEvents.length <= 1) return
+        intervalRef.current = setInterval(() => {
+            setCurrentPage((prev) => (prev + 1) % relatedEvents.length)
+        }, 5000)
+        return () => {
+            if (intervalRef.current) clearInterval(intervalRef.current)
+        }
+    
+    }, [relatedEvents.length])
 
     if (loading) {
         return (
@@ -203,7 +207,6 @@ export function EventPageRelatedEvents({ currentEventId, categories }: Props) {
         return null
     }
 
-    // Determine title based on what we're showing
     let titleText = "You May Also Like"
 
     if (categoryStrings.length === 1) {
@@ -214,12 +217,15 @@ export function EventPageRelatedEvents({ currentEventId, categories }: Props) {
         titleText = `Related Events (${categoryStrings.length} categories)`
     }
 
-    
-
-    // Build URL for "View All" - use categories if available, otherwise general events
     const viewAllUrl = categoryStrings.length > 0
         ? `/event?${categoryStrings.map(c => `category=${encodeURIComponent(c)}`).join('&')}`
         : "/event"
+
+    // // NEW: Get current 4 events to display
+    // const visibleEvents = relatedEvents.slice(currentPage * 4, currentPage * 4 + 4)
+    const visibleEvents = Array.from({ length: Math.min(4, relatedEvents.length) }, (_, i) =>
+  relatedEvents[(currentPage + i) % relatedEvents.length]
+)
 
     return (
         <Card className="overflow-hidden rounded-sm border border-gray-300 bg-white shadow-sm">
@@ -235,7 +241,7 @@ export function EventPageRelatedEvents({ currentEventId, categories }: Props) {
                 </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 pt-0">
-                {relatedEvents.map((event) => {
+                {visibleEvents.map((event) => {
                     const eventId = event.id || event._id
                     const eventSlug = event.slug || eventId
                     const imageUrl = event.image || event.thumbnail || null

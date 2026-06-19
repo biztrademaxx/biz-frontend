@@ -265,7 +265,7 @@ export default function EventParticipation({ exhibitorId }: EventParticipationPr
           </div>
         )}
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 text-sm">
+        {/* <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 text-sm">
           <div className="text-center rounded-lg bg-[#004A96]/10 p-3">
             <div className="font-semibold text-[#004A96]">{event.passes}</div>
             <div className="text-gray-600">Total Passes</div>
@@ -286,7 +286,7 @@ export default function EventParticipation({ exhibitorId }: EventParticipationPr
               <div className="text-gray-600">Leads Generated</div>
             </div>
           )}
-        </div>
+        </div> */}
 
         {event.specialRequests && (
           <div className="mb-4 rounded-lg border border-white/60 bg-white/40 p-3 backdrop-blur-sm">

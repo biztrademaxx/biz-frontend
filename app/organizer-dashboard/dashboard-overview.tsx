@@ -424,9 +424,9 @@ export default function DashboardOverview({
                       <p className="text-lg font-bold leading-none text-slate-900">{badge.day}</p>
                       <p className="text-[10px] text-slate-500">{badge.year}</p>
                     </div>
-                    <button type="button" className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-white/95 shadow-sm" aria-label="Favorite">
+                    {/* <button type="button" className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-white/95 shadow-sm" aria-label="Favorite">
                       <Heart className="h-4 w-4 text-red-500" />
-                    </button>
+                    </button> */}
                   </div>
                   <CardContent className="p-4">
                     <p className="line-clamp-2 min-h-[2.5rem] text-sm font-bold text-slate-900">{event.title}</p>

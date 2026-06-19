@@ -34,7 +34,7 @@ import ScheduleMeetingButton from "@/components/ScheduleMeetingButton"
 import { FollowButton } from "@/components/follow-button"
 import { apiFetch } from "@/lib/api"
 import { eventPublicPath } from "@/lib/event-path"
-import { getPublicProfilePath } from "@/lib/profile-path"
+import { getPublicProfilePath, slugifyPublicProfile } from "@/lib/profile-path"
 
 // Define types for exhibitor data
 interface Exhibitor {
@@ -167,10 +167,10 @@ interface Review {
 }
 
 // Review Card Component with Replies
-function ReviewCard({ review, exhibitorId, onReplyAdded }: { 
-  review: Review 
+function ReviewCard({ review, exhibitorId, onReplyAdded }: {
+  review: Review
   exhibitorId: string
-  onReplyAdded: (reviewId: string, reply: ReviewReply) => void 
+  onReplyAdded: (reviewId: string, reply: ReviewReply) => void
 }) {
   const [showReplyForm, setShowReplyForm] = useState(false)
   const [replyContent, setReplyContent] = useState("")
@@ -221,9 +221,9 @@ function ReviewCard({ review, exhibitorId, onReplyAdded }: {
               />
             ) : (
               <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
-                  <span className="text-sm font-medium">
-                        {([review.user?.firstName?.[0], review.user?.lastName?.[0]].filter(Boolean).join("") || "G").toUpperCase()}
-                      </span>
+                <span className="text-sm font-medium">
+                  {([review.user?.firstName?.[0], review.user?.lastName?.[0]].filter(Boolean).join("") || "G").toUpperCase()}
+                </span>
               </div>
             )}
             <div>
@@ -483,25 +483,93 @@ const safeFormatDate = (dateInput: string | null | undefined): string => {
 // Helper function to get location string
 const getLocationString = (venue: any): string => {
   if (!venue) return "Location TBD";
-  
+
   const { venueName, venueAddress, venueCity, venueState, venueCountry } = venue;
-  
+
   const parts = [];
   if (venueName) parts.push(venueName);
   if (venueAddress) parts.push(venueAddress);
   if (venueCity) parts.push(venueCity);
   if (venueState) parts.push(venueState);
   if (venueCountry) parts.push(venueCountry);
-  
+
   return parts.length > 0 ? parts.join(", ") : "Location TBD";
 };
+
+/**
+ * The exhibitors list page links to /exhibitor/{slug} (see getPublicProfilePath), where
+ * {slug} is derived from the company/org name — it is NOT the database id. The backend's
+ * GET /api/exhibitors/:id only accepts a real id and throws "Invalid exhibitor ID" for a
+ * slug. So: try the route param as an id first: if the backend rejects it, fall back to
+ * loading the public exhibitor list and resolving the slug to a real exhibitor record.
+ */
+async function resolveExhibitorIdOrSlug(
+  routeParam: string,
+): Promise<{ exhibitor: Exhibitor; resolvedId: string }> {
+  // 1) Try treating the param as a real id (covers links that already use ids/UUIDs).
+  try {
+    const data = await apiFetch<{ success: boolean; exhibitor: Exhibitor }>(
+      `/api/exhibitors/${encodeURIComponent(routeParam)}`,
+      { auth: isAuthenticated() },
+    )
+    if (data.success && data.exhibitor) {
+      return { exhibitor: data.exhibitor, resolvedId: data.exhibitor.id }
+    }
+  } catch {
+    // fall through to slug resolution
+  }
+
+  // 2) Treat the param as a slug: pull the public list and match by publicSlug,
+  // or by the same slug logic used to build the link (org/company/full name).
+  const listResponse = await apiFetch<unknown>("/api/exhibitors?limit=1000", { auth: false })
+  const list: unknown[] = Array.isArray(listResponse)
+    ? listResponse
+    : Array.isArray((listResponse as any)?.exhibitors)
+      ? (listResponse as any).exhibitors
+      : Array.isArray((listResponse as any)?.data)
+        ? (listResponse as any).data
+        : []
+
+  const target = routeParam.toLowerCase()
+
+  const match = (list as Record<string, unknown>[]).find((raw) => {
+    const ex = raw as Record<string, any>
+    if (ex.publicSlug && String(ex.publicSlug).toLowerCase() === target) return true
+
+    const company = (ex.company as string) || (ex.companyName as string) || ""
+    const fullName = `${ex.firstName ?? ""} ${ex.lastName ?? ""}`.trim()
+    const candidates = [
+      ex.organizationName,
+      company,
+      fullName,
+      ex.firstName,
+    ].filter(Boolean) as string[]
+
+    return candidates.some((c) => slugifyPublicProfile(c) === target)
+  }) as Record<string, any> | undefined
+
+  if (!match || !match.id) {
+    throw new Error("Exhibitor not found")
+  }
+
+  // 3) Now fetch the full record by the real id so we get complete fields
+  // (the list endpoint may return a trimmed shape).
+  const data = await apiFetch<{ success: boolean; exhibitor: Exhibitor }>(
+    `/api/exhibitors/${encodeURIComponent(String(match.id))}`,
+    { auth: isAuthenticated() },
+  )
+  if (!data.success || !data.exhibitor) {
+    throw new Error("Exhibitor not found")
+  }
+  return { exhibitor: data.exhibitor, resolvedId: data.exhibitor.id }
+}
 
 // Main Exhibitor Page Component
 export default function ExhibitorPage() {
   const params = useParams()
   const router = useRouter()
   const pathname = usePathname()
-  const exhibitorId = (params.slug ?? params.id) as string
+  const routeParam = (params.slug ?? params.id) as string
 
   const userId = getCurrentUserId()
 
@@ -509,6 +577,10 @@ export default function ExhibitorPage() {
   const [eventsTab, setEventsTab] = useState("upcoming")
   const [currentPage, setCurrentPage] = useState(1)
   const [exhibitor, setExhibitor] = useState<Exhibitor | null>(null)
+  // The real database id, resolved from the route param (which may be a slug).
+  // All follow-up API calls (events, reviews) must use this, not the raw route param.
+  const [exhibitorId, setExhibitorId] = useState<string | null>(null)
+  const [notFound, setNotFound] = useState(false)
   const [booths, setBooths] = useState<Booth[]>([])
   const [reviews, setReviews] = useState<Review[]>([])
   const [loading, setLoading] = useState(true)
@@ -516,43 +588,47 @@ export default function ExhibitorPage() {
   const [reviewsLoading, setReviewsLoading] = useState(false)
   const eventsPerPage = 6
 
-  // Fetch exhibitor data
+  // Resolve route param (id or slug) -> exhibitor + real id
   useEffect(() => {
-    async function fetchExhibitor() {
-      try {
-        const data = await apiFetch<{ success: boolean; exhibitor: Exhibitor }>(
-          `/api/exhibitors/${encodeURIComponent(exhibitorId)}`,
-          { auth: isAuthenticated() },
-        )
+    let cancelled = false
 
-        if (data.success) {
-          setExhibitor(data.exhibitor)
-          const ex = data.exhibitor
-          const canonical = getPublicProfilePath("exhibitor", {
-            id: ex.id,
-            publicSlug: ex.publicSlug,
-            organizationName: ex.organizationName,
-            company: ex.companyName || ex.company,
-            firstName: ex.firstName,
-            lastName: ex.lastName,
-          })
-          if (pathname && canonical !== pathname) {
-            router.replace(canonical)
-          }
-        } else {
-          console.error("Failed to fetch exhibitor")
+    async function fetchExhibitor() {
+      setLoading(true)
+      setNotFound(false)
+      try {
+        const { exhibitor: ex, resolvedId } = await resolveExhibitorIdOrSlug(routeParam)
+        if (cancelled) return
+
+        setExhibitor(ex)
+        setExhibitorId(resolvedId)
+
+        const canonical = getPublicProfilePath("exhibitor", {
+          id: ex.id,
+          publicSlug: ex.publicSlug,
+          organizationName: ex.organizationName,
+          company: ex.companyName || ex.company,
+          firstName: ex.firstName,
+          lastName: ex.lastName,
+        })
+        if (pathname && canonical !== pathname) {
+          router.replace(canonical)
         }
       } catch (error) {
         console.error("Error fetching exhibitor:", error)
+        if (!cancelled) setNotFound(true)
       } finally {
-        setLoading(false)
+        if (!cancelled) setLoading(false)
       }
     }
 
-    if (exhibitorId) {
+    if (routeParam) {
       fetchExhibitor()
     }
-  }, [exhibitorId, pathname, router])
+
+    return () => {
+      cancelled = true
+    }
+  }, [routeParam, pathname, router])
 
   // Fetch exhibitor booths (events) from backend
   useEffect(() => {
@@ -561,34 +637,36 @@ export default function ExhibitorPage() {
 
       setEventsLoading(true);
       try {
-        const data = await apiFetch<{ success?: boolean; events?: Array<{
-          id: string
-          eventId: string
-          eventSlug?: string
-          eventName: string
-          bannerImage?: string | null
-          thumbnailImage?: string | null
-          boothNumber: string
-          date?: string
-          endDate?: string
-          rawStartDate: string
-          rawEndDate: string
-          venue:
+        const data = await apiFetch<{
+          success?: boolean; events?: Array<{
+            id: string
+            eventId: string
+            eventSlug?: string
+            eventName: string
+            bannerImage?: string | null
+            thumbnailImage?: string | null
+            boothNumber: string
+            date?: string
+            endDate?: string
+            rawStartDate: string
+            rawEndDate: string
+            venue:
             | string
             | {
-                venueName?: string
-                venueAddress?: string
-                venueCity?: string
-                venueState?: string
-                venueCountry?: string
-                venueZipCode?: string
-              }
+              venueName?: string
+              venueAddress?: string
+              venueCity?: string
+              venueState?: string
+              venueCountry?: string
+              venueZipCode?: string
+            }
             | null
-          organizer?: { id: string; firstName: string; lastName: string; company?: string }
-          currency?: string
-          invoiceAmount?: number
-          status?: string
-        }> }>(`/api/exhibitors/${encodeURIComponent(exhibitorId)}/events`);
+            organizer?: { id: string; firstName: string; lastName: string; company?: string }
+            currency?: string
+            invoiceAmount?: number
+            status?: string
+          }>
+        }>(`/api/exhibitors/${encodeURIComponent(exhibitorId)}/events`);
 
         if (data?.events && Array.isArray(data.events)) {
           const mapped: Booth[] = data.events.map((e) => ({
@@ -651,23 +729,23 @@ export default function ExhibitorPage() {
               venue:
                 typeof e.venue === "string"
                   ? {
-                      id: "",
-                      venueName: e.venue,
-                      venueDescription: "",
-                      venueAddress: "",
-                      venueCity: "",
-                      venueState: "",
-                      venueCountry: "",
-                    }
+                    id: "",
+                    venueName: e.venue,
+                    venueDescription: "",
+                    venueAddress: "",
+                    venueCity: "",
+                    venueState: "",
+                    venueCountry: "",
+                  }
                   : {
-                      id: "",
-                      venueName: e.venue?.venueName ?? "",
-                      venueDescription: "",
-                      venueAddress: e.venue?.venueAddress ?? "",
-                      venueCity: e.venue?.venueCity ?? "",
-                      venueState: e.venue?.venueState ?? "",
-                      venueCountry: e.venue?.venueCountry ?? "",
-                    },
+                    id: "",
+                    venueName: e.venue?.venueName ?? "",
+                    venueDescription: "",
+                    venueAddress: e.venue?.venueAddress ?? "",
+                    venueCity: e.venue?.venueCity ?? "",
+                    venueState: e.venue?.venueState ?? "",
+                    venueCountry: e.venue?.venueCountry ?? "",
+                  },
             },
           }));
           setBooths(mapped);
@@ -716,9 +794,9 @@ export default function ExhibitorPage() {
 
   // Handle new reply submission
   const handleReplyAdded = (reviewId: string, newReply: ReviewReply) => {
-    setReviews(prevReviews => 
-      prevReviews.map(review => 
-        review.id === reviewId 
+    setReviews(prevReviews =>
+      prevReviews.map(review =>
+        review.id === reviewId
           ? { ...review, replies: [...(review.replies || []), newReply] }
           : review
       )
@@ -766,7 +844,7 @@ export default function ExhibitorPage() {
   // Filter events based on active events tab
   const filteredEvents = useMemo(() => {
     const currentDate = new Date();
-    
+
     if (eventsTab === "upcoming") {
       return booths.filter(booth => {
         const eventEndDate = new Date(booth.event.endDate);
@@ -806,7 +884,7 @@ export default function ExhibitorPage() {
     )
   }
 
-  if (!exhibitor) {
+  if (notFound || !exhibitor || !exhibitorId) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -848,7 +926,7 @@ export default function ExhibitorPage() {
             {/* Exhibitor Avatar */}
             <div className="relative">
               <Avatar className="w-32 h-32 border-4 border-white shadow-lg">
-                <AvatarImage src={exhibitorLogo } alt={exhibitorName} />
+                <AvatarImage src={exhibitorLogo} alt={exhibitorName} />
                 <AvatarFallback className="text-2xl font-bold bg-white text-blue-600">
                   {exhibitorName
                     .split(" ")
@@ -1170,8 +1248,8 @@ export default function ExhibitorPage() {
                         const event = booth.event;
 
                         return (
-                          <div 
-                            key={booth.id} 
+                          <div
+                            key={booth.id}
                             className="hover:shadow-lg transition-shadow cursor-pointer border-2 rounded-lg"
                             onClick={() => router.push(eventPublicPath(event))}
                           >
@@ -1276,8 +1354,8 @@ export default function ExhibitorPage() {
                         const event = booth.event;
 
                         return (
-                          <Card 
-                            key={booth.id} 
+                          <Card
+                            key={booth.id}
                             className="hover:shadow-lg transition-shadow cursor-pointer"
                             onClick={() => router.push(eventPublicPath(event))}
                           >
@@ -1373,7 +1451,7 @@ export default function ExhibitorPage() {
             <Card>
               <CardContent className="p-8">
                 <h3 className="text-2xl font-bold text-gray-900 mb-6">Company Information</h3>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   <div className="space-y-4">
                     <div>
@@ -1466,8 +1544,8 @@ export default function ExhibitorPage() {
                         >
                           {reviews.map((review) => (
                             <div key={review.id} className="pb-4 border-b last:border-b-0 last:pb-0">
-                              <ReviewCard 
-                                review={review} 
+                              <ReviewCard
+                                review={review}
                                 exhibitorId={exhibitorId}
                                 onReplyAdded={handleReplyAdded}
                               />

@@ -15,14 +15,11 @@ const DashboardContext = createContext<DashboardContextType | undefined>(undefin
 
 export function DashboardProvider({ children }: { children: React.ReactNode }) {
   // Change this from "profile" to "dashboard"
-  const [activeSection, setActiveSection] = useState("dashboard")
+  const [activeSection, setActiveSection] = useState("overview")
   const [messageTargetUserId, setMessageTargetUserId] = useState<string | null>(null)
 
   const openMessagesWithUser = useCallback((userId: string) => {
-    const trimmed = userId.trim()
-    if (!trimmed) return
-    setMessageTargetUserId(trimmed)
-    setActiveSection("messages")
+    setMessageTargetUserId(userId)
   }, [])
 
   const clearMessageTarget = useCallback(() => {

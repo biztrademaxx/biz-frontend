@@ -39,6 +39,7 @@ const NAV_BLUE = "#002C71"
 // Updated: Added border and improved shadow
 const categoryCardClass =
   "group flex min-h-[120px] w-full flex-col items-start rounded-sm bg-white border border-gray-200 px-3 py-3.5 text-left shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_40px_rgba(0,0,0,0.15)] hover:border-[#002C71]/30"
+
 const viewAllCardClass =
   "flex min-h-[110px] w-full items-center justify-center rounded-sm bg-[#002C71]/[0.06] px-3 py-3 text-center text-sm font-medium shadow-sm transition-all duration-200 hover:border-[#002C71]/35 hover:bg-[#002C71]/10 hover:shadow-[0_8px_20px_rgba(0,44,113,0.15)]"
 
