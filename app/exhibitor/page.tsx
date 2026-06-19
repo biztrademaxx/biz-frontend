@@ -467,6 +467,27 @@ export default function ExhibitorsPage() {
                     </>
                 )}
             </section>
+<<<<<<< Updated upstream
+=======
+
+            {/* RECOMMENDED */}
+            {featuredExhibitors.length > 0 && !debouncedSearch && (
+                <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8 lg:py-20">
+                    <div className="mb-6 flex flex-col gap-2 sm:mb-8 sm:flex-row sm:items-center sm:justify-between">
+                        <h2 className="text-2xl font-bold sm:text-3xl">You May Also Like</h2>
+                    </div>
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-4">
+                        {featuredExhibitors.slice(0, 4).map((exhibitor) => (
+                            <FeaturedCard
+                                key={`rec-${exhibitor.id}`}
+                                exhibitor={exhibitor}
+                                onClick={() => navigateToProfile(exhibitor)}
+                            />
+                        ))}
+                    </div>
+                </section>
+            )}
+>>>>>>> Stashed changes
         </main>
     );
 }
@@ -484,12 +505,53 @@ function ExhibitorAvatar({ exhibitor, name }: { exhibitor: Exhibitor; name: stri
     };
 
     return (
+<<<<<<< Updated upstream
         <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-50 to-blue-100">
             {exhibitor.avatar ? (
                 <img src={exhibitor.avatar} alt={name} className="h-14 w-14 rounded-xl object-cover" />
             ) : (
                 <span className="text-lg font-bold text-blue-600">{getInitials()}</span>
             )}
+=======
+        <div
+            onClick={onClick}
+            className="cursor-pointer rounded-2xl bg-white p-5 shadow-sm transition hover:shadow-md sm:p-6"
+        >
+            <div className="mb-4 flex justify-center sm:mb-5">
+    <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-blue-50 to-blue-100">
+        {exhibitor.avatar ? (
+            <img
+                src={exhibitor.avatar}
+                alt={name}
+                className="h-20 w-20 rounded-full object-cover"
+            />
+                    ) : (
+                        <span className="text-lg font-bold text-blue-600 sm:text-xl">{getInitials()}</span>
+                    )}
+                </div>
+                {exhibitor.isVerified && (
+                    <span className="shrink-0 rounded-full bg-green-100 px-2.5 py-1 text-xs text-green-700">
+                        Verified
+                    </span>
+                )}
+            </div>
+            <h3 className="line-clamp-2 text-base font-semibold sm:text-lg">{name}</h3>
+            <p className="mt-1.5 line-clamp-2 text-sm text-gray-500">
+                {exhibitor.industry || exhibitor.location || "Various Industries"}
+            </p>
+            <div className="mt-4 flex items-center justify-between text-sm sm:mt-5">
+                <span className="flex items-center gap-1 text-gray-600">
+                    <Calendar size={14} />
+                    0 Events
+                </span>
+            </div>
+            <button
+                type="button"
+                className="mt-4 w-full rounded-xl border py-2.5 text-sm font-medium transition hover:bg-gray-50 sm:mt-5 sm:py-3"
+            >
+                View Profile
+            </button>
+>>>>>>> Stashed changes
         </div>
     );
 }
@@ -508,6 +570,7 @@ function ExhibitorCard({ exhibitor, onClick }: { exhibitor: Exhibitor; onClick: 
             }}
             className="cursor-pointer rounded-2xl bg-white p-5 shadow-sm transition hover:shadow-md sm:p-6"
         >
+<<<<<<< Updated upstream
             <div className="mb-4">
                 <ExhibitorAvatar exhibitor={exhibitor} name={name} />
             </div>
@@ -571,6 +634,29 @@ function ExhibitorRow({ exhibitor, onClick }: { exhibitor: Exhibitor; onClick: (
                         </span>
                     )}
                 </div>
+=======
+           <div className="mb-3 flex justify-center sm:mb-4">
+    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-blue-50 to-blue-100">
+        {exhibitor.avatar ? (
+            <img
+                src={exhibitor.avatar}
+                alt={name}
+                className="h-16 w-16 rounded-full object-cover"
+            />
+        ) : (
+            <span className="text-base font-bold text-blue-600 sm:text-lg">
+                {getInitials()}
+            </span>
+        )}
+    </div>
+</div>
+            <h3 className="line-clamp-2 font-semibold leading-snug">{name}</h3>
+            <p className="mt-1.5 line-clamp-2 text-sm text-gray-500">
+                {exhibitor.industry || exhibitor.location || "Various Industries"}
+            </p>
+            <div className="mt-3 flex items-center justify-between text-sm text-gray-600 sm:mt-4">
+                <span>0 Events</span>
+>>>>>>> Stashed changes
             </div>
             <button
                 type="button"
