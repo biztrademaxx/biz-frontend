@@ -373,8 +373,8 @@ export default function EventPageContent({ event, session: _session, router, toa
   const showActionButtons = !isOrganizer
 
   return (
-    <div className="min-h-screen bg-[#f1f7fb] pb-6 md:pb-8">
-<EventHero 
+    <div className="min-h-screen bg-[#f9f9f9] pb-6 md:pb-8">
+      <EventHero 
   event={event} 
   onInterested={handleVisitClick}
   onRequestBooth={handleExhibitClick}

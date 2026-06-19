@@ -428,7 +428,7 @@ export default function OrganizerPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
-      <div className="bg-[#002C71] text-white">
+      <div className="bg-[#f9f9f9] text-white">
         <div className="max-w-7xl mx-auto px-4 py-12">
           <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
             {/* Organizer Avatar — contain logo so wide/tall assets are not cropped */}
@@ -459,7 +459,7 @@ export default function OrganizerPage() {
             {/* Organizer Info */}
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-2">
-                <h1 className="text-4xl font-bold">{organizer.company}</h1>
+                <h1 className="text-3xl font-bold">{organizer.company}</h1>
                 <Badge className="bg-yellow-500 text-yellow-900">Verified</Badge>
               </div>
               <p className="text-xl text-blue-100 mb-4">{organizer.description}</p>

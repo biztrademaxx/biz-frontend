@@ -70,164 +70,175 @@ const Footer: React.FC<FooterProps> = ({ categories }) => {
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
+  // Check if current page is home page
+  const isHomePage = pathname === "/"
+
   return (
     <>
       {/* ── TOP TRUST BAR ─────────────────────────────────────── */}
-      <div
-        className="relative w-full overflow-hidden border-b border-white/10 px-7 pt-2 pb-4"
-        style={{
-          background:
-            "linear-gradient(180deg, #0A4FA3 0%, #004A96 35%, #003D82 70%, #002C71 100%)",
-        }}
-      >
-        <div className="pointer-events-none absolute inset-0 overflow-hidden">
-          <div className="mt-4 text-3xl font-bold leading-tight text-white md:text-4xl">
-            <div className="absolute left-0 top-0 h-full w-full bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.08),transparent_55%)]" />
-          </div>
-        </div>
-      <div className="relative z-10 mx-auto max-w-4xl pt-0 pb-0 text-center mt-3">
-          <span className="inline-flex rounded-full border border-[#FFD54A]/30 bg-[#FFD54A]/10 px-4 py-1 text-xs font-semibold uppercase tracking-wider text-[#FFD54A]">
-            JOIN 34,500+ LISTED EVENTS
-          </span>
-
-          <h2 className="mt-4 text-2xl max-w-4xl font-bold leading-tight text-white md:text-5xl">
-            Get your event in front of
-            {/* <br /> */}
-            the people who matter.
-          </h2>
-
-       <p className="mx-auto mt-2 max-w-2xl text-sm text-white/65">
-            List your event today and reach thousands of industry professionals
-            actively searching for exhibitions, conferences and trade fairs.
-          </p>
-        </div>
-        <div className="relative z-10 mx-auto mt-8 h-px max-w-7xl bg-white/15 lg:mt-14" />
+      {/* Only render on home page */}
+      {isHomePage && (
         <div
-          className="relative z-10 scrollbar-hide mt-10 overflow-x-auto overflow-y-hidden px-4 pb-2 sm:px-6 lg:hidden"
+          className="relative w-full overflow-hidden border-b border-white/10 px-7 pt-2 pb-4"
           style={{
-            WebkitOverflowScrolling: "touch",
-            touchAction: "pan-x",
-            overscrollBehaviorX: "contain",
+            background:
+              "linear-gradient(180deg, #0A4FA3 0%, #004A96 35%, #003D82 70%, #002C71 100%)",
           }}
         >
-          <div className="flex min-w-max gap-8">
-
-          {/* Trusted */}
-          <div className="flex w-[280px] shrink-0 items-start gap-4">
-            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/[0.06] border border-white/[0.12]">
-              <Globe className="h-5 w-5 text-[#6EAAFF]" strokeWidth={1.8} />
-            </div>
-            <div className="min-w-0 leading-tight">
-              <p className="text-xl font-semibold text-white sm:text-[22px]">Global Reach</p>
-              <p className="mt-1 text-[12px] text-white/50">Events in 120+ countries</p>
+          <div className="pointer-events-none absolute inset-0 overflow-hidden">
+            <div className="mt-4 text-3xl font-bold leading-tight text-white md:text-4xl">
+              <div className="absolute left-0 top-0 h-full w-full bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.08),transparent_55%)]" />
             </div>
           </div>
+          <div className="relative z-10 mx-auto max-w-4xl pt-0 pb-0 text-center mt-3">
+            <span className="inline-flex rounded-full border border-[#FFD54A]/30 bg-[#FFD54A]/10 px-4 py-1 text-xs font-semibold uppercase tracking-wider text-[#FFD54A]">
+              JOIN 34,500+ LISTED EVENTS
+            </span>
+
+            <h2 className="mt-4 text-xl max-w-4xl font-bold leading-tight text-white md:text-4xl">
+              Get your event in front of
+              the people who matter.
+            </h2>
+
+            <p className="mx-auto mt-2 max-w-2xl text-sm text-white/65">
+              List your event today and reach thousands of industry professionals
+              actively searching for exhibitions, conferences and trade fairs.
+            </p>
+          </div>
+          <div className="relative z-10 mx-auto mt-8 h-px max-w-7xl bg-white/15 lg:mt-14" />
+          <div
+            className="relative z-10 scrollbar-hide mt-10 overflow-x-auto overflow-y-hidden px-4 pb-2 sm:px-6 lg:hidden"
+            style={{
+              WebkitOverflowScrolling: "touch",
+              touchAction: "pan-x",
+              overscrollBehaviorX: "contain",
+            }}
+          >
+            <div className="flex min-w-max gap-8">
+
+              {/* Trusted */}
+              <div className="flex w-[280px] shrink-0 items-start gap-4">
+                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/[0.06] border border-white/[0.12]">
+                  <Globe className="h-5 w-5 text-[#6EAAFF]" strokeWidth={1.8} />
+                </div>
+                <div className="min-w-0 leading-tight">
+                  <p className="text-xl font-semibold text-white sm:text-[22px]">Global Reach</p>
+                  <p className="mt-1 text-[12px] text-white/50">Events in 120+ countries</p>
+                </div>
+              </div>
+
+              {/* Events */}
+              <div className="flex w-[280px] shrink-0 items-start gap-4">
+                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/[0.06] border border-white/[0.12]">
+                  <Verified className="h-5 w-5 text-[#6EAAFF]" strokeWidth={1.8} />
+                </div>
+                <div className="min-w-0 leading-tight">
+                  <p className="text-xl font-bold text-white sm:text-[22px]">Verified & Trusted</p>
+                  <p className="mt-1 text-[12px] text-white/50">Authentic events & organizers</p>
+                </div>
+              </div>
+
+              {/* Organizers */}
+              <div className="flex w-[280px] shrink-0 items-start gap-4">
+                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/[0.06] border border-white/[0.12]">
+                  <Clock className="h-5 w-5 text-[#6EAAFF]" strokeWidth={1.8} />
+                </div>
+                <div className="min-w-0 leading-tight">
+                  <p className="text-xl font-bold text-white sm:text-[22px]">Always Updated</p>
+                  <p className="mt-1 text-[12px] text-white/50">Real-time event information</p>
+                </div>
+              </div>
+
+              {/* Countries */}
+              <div className="flex w-[280px] shrink-0 items-start gap-4">
+                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/[0.06] border border-white/[0.12]">
+                  <Headphones className="h-5 w-5 text-[#6EAAFF]" strokeWidth={1.8} />
+                </div>
+                <div className="min-w-0 leading-tight">
+                  <p className="text-xl font-bold text-white sm:text-[22px]">Dedicated Support</p>
+                  <p className="mt-1 text-[12px] text-white/50">Here to help you anytime</p>
+                </div>
+              </div>
+              <div className="flex w-[280px] shrink-0 items-start gap-4">
+                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/[0.06] border border-white/[0.12]">
+                  <ShieldCheck className="h-5 w-5 text-[#6EAAFF]" strokeWidth={1.8} />
+                </div>
+                <div className="min-w-0 leading-tight">
+                  <p className="text-xl font-bold text-white sm:text-[22px]">Secure & Reliable</p>
+                  <p className="mt-1 text-[12px] text-white/50">Your data is always safe</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="relative z-10 mx-auto mt-10 hidden min-w-max items-center justify-center gap-10 px-8 lg:flex">
+
+            {/* Trusted */}
+            <div className="flex items-center justify-center gap-4">
+              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/[0.06] border border-white/[0.12]">
+                <Globe className="h-5 w-5 text-[#6EAAFF]" strokeWidth={1.8} />
+              </div>
+              <div className="leading-tight">
+                <p className="text-[22px] font-semibold text-white">Global Reach</p>
+                <p className="mt-1 text-[12px] text-white/50">Events in 120+ countries</p>
+              </div>
+            </div>
+
+            {/* Events */}
+            <div className="flex items-center justify-center gap-4">
+              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/[0.06] border border-white/[0.12]">
+                <Verified className="h-5 w-5 text-[#6EAAFF]" strokeWidth={1.8} />
+              </div>
+              <div className="leading-tight">
+                <p className="text-[22px] font-bold text-white">Verified & Trusted</p>
+                <p className="mt-1 text-[12px] text-white/50">Authentic events & organizers</p>
+              </div>
+            </div>
+
+            {/* Organizers */}
+            <div className="flex items-center justify-center gap-4">
+              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/[0.06] border border-white/[0.12]">
+                <Clock className="h-5 w-5 text-[#6EAAFF]" strokeWidth={1.8} />
+              </div>
+              <div className="leading-tight">
+                <p className="text-[22px] font-bold text-white">Always Updated</p>
+                <p className="mt-1 text-[12px] text-white/50">Real-time event information</p>
+              </div>
+            </div>
+
+            {/* Countries */}
+            <div className="flex items-center justify-center gap-4">
+              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/[0.06] border border-white/[0.12]">
+                <Headphones className="h-5 w-5 text-[#6EAAFF]" strokeWidth={1.8} />
+              </div>
+              <div className="leading-tight">
+                <p className="text-[22px] font-bold text-white">Dedicated Support</p>
+                <p className="mt-1 text-[12px] text-white/50">Here to help you anytime</p>
+              </div>
+            </div>
+            <div className="flex items-center justify-center gap-4">
+              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/[0.06] border border-white/[0.12]">
+                <ShieldCheck className="h-5 w-5 text-[#6EAAFF]" strokeWidth={1.8} />
+              </div>
+              <div className="leading-tight">
+                <p className="text-[22px] font-bold text-white">Secure & Reliable</p>
+                <p className="mt-1 text-[12px] text-white/50">Your data is always safe</p>
+              </div>
+            </div>
+          </div>
+          <div className="mx-auto max-w-7xl px-6 py-4 lg:px-10">
 
           
+            <p className="max-w-7xl text-[12.5px] leading-6 text-white/45">
+              BizTradeFairs.com provides verified information on trade fairs, expos, conferences,
+              and industrial events worldwide.Users are advised to confirm event schedules, venue details, participation terms,
 
-          {/* Events */}
-          <div className="flex w-[280px] shrink-0 items-start gap-4">
-            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/[0.06] border border-white/[0.12]">
-              <Verified className="h-5 w-5 text-[#6EAAFF]" strokeWidth={1.8} />
-            </div>
-            <div className="min-w-0 leading-tight">
-              <p className="text-xl font-bold text-white sm:text-[22px]">Verified & Trusted</p>
-              <p className="mt-1 text-[12px] text-white/50">Authentic events & organizers</p>
-            </div>
-          </div>
-
-
-
-          {/* Organizers */}
-          <div className="flex w-[280px] shrink-0 items-start gap-4">
-            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/[0.06] border border-white/[0.12]">
-              <Clock className="h-5 w-5 text-[#6EAAFF]" strokeWidth={1.8} />
-            </div>
-            <div className="min-w-0 leading-tight">
-              <p className="text-xl font-bold text-white sm:text-[22px]">Always Updated</p>
-              <p className="mt-1 text-[12px] text-white/50">Real-time event information</p>
-            </div>
-          </div>
-
-
-
-          {/* Countries */}
-          <div className="flex w-[280px] shrink-0 items-start gap-4">
-            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/[0.06] border border-white/[0.12]">
-              <Headphones className="h-5 w-5 text-[#6EAAFF]" strokeWidth={1.8} />
-            </div>
-            <div className="min-w-0 leading-tight">
-              <p className="text-xl font-bold text-white sm:text-[22px]">Dedicated Support</p>
-              <p className="mt-1 text-[12px] text-white/50">Here to help you anytime</p>
-            </div>
-          </div>
-          <div className="flex w-[280px] shrink-0 items-start gap-4">
-            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/[0.06] border border-white/[0.12]">
-              <ShieldCheck className="h-5 w-5 text-[#6EAAFF]" strokeWidth={1.8} />
-            </div>
-            <div className="min-w-0 leading-tight">
-              <p className="text-xl font-bold text-white sm:text-[22px]">Secure & Reliable</p>
-              <p className="mt-1 text-[12px] text-white/50">Your data is always safe</p>
-            </div>
-          </div>
+              <span className="block pl-80">
+                and travel requirements directly with organizers before planning attendance.
+              </span>
+            </p>
           </div>
         </div>
-        <div className="relative z-10 mx-auto mt-10 hidden min-w-max items-center justify-center gap-10 px-8 lg:flex">
-
-          {/* Trusted */}
-          <div className="flex items-center justify-center gap-4">
-            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/[0.06] border border-white/[0.12]">
-              <Globe className="h-5 w-5 text-[#6EAAFF]" strokeWidth={1.8} />
-            </div>
-            <div className="leading-tight">
-              <p className="text-[22px] font-semibold text-white">Global Reach</p>
-              <p className="mt-1 text-[12px] text-white/50">Events in 120+ countries</p>
-            </div>
-          </div>
-
-          {/* Events */}
-          <div className="flex items-center justify-center gap-4">
-            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/[0.06] border border-white/[0.12]">
-              <Verified className="h-5 w-5 text-[#6EAAFF]" strokeWidth={1.8} />
-            </div>
-            <div className="leading-tight">
-              <p className="text-[22px] font-bold text-white">Verified & Trusted</p>
-              <p className="mt-1 text-[12px] text-white/50">Authentic events & organizers</p>
-            </div>
-          </div>
-
-          {/* Organizers */}
-          <div className="flex items-center justify-center gap-4">
-            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/[0.06] border border-white/[0.12]">
-              <Clock className="h-5 w-5 text-[#6EAAFF]" strokeWidth={1.8} />
-            </div>
-            <div className="leading-tight">
-              <p className="text-[22px] font-bold text-white">Always Updated</p>
-              <p className="mt-1 text-[12px] text-white/50">Real-time event information</p>
-            </div>
-          </div>
-
-          {/* Countries */}
-          <div className="flex items-center justify-center gap-4">
-            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/[0.06] border border-white/[0.12]">
-              <Headphones className="h-5 w-5 text-[#6EAAFF]" strokeWidth={1.8} />
-            </div>
-            <div className="leading-tight">
-              <p className="text-[22px] font-bold text-white">Dedicated Support</p>
-              <p className="mt-1 text-[12px] text-white/50">Here to help you anytime</p>
-            </div>
-          </div>
-          <div className="flex items-center justify-center gap-4">
-            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/[0.06] border border-white/[0.12]">
-              <ShieldCheck className="h-5 w-5 text-[#6EAAFF]" strokeWidth={1.8} />
-            </div>
-            <div className="leading-tight">
-              <p className="text-[22px] font-bold text-white">Secure & Reliable</p>
-              <p className="mt-1 text-[12px] text-white/50">Your data is always safe</p>
-            </div>
-          </div>
-        </div>
-      </div>
+      )}
 
       {/* ── MAIN FOOTER ───────────────────────────────────────── */}
       <footer className="relative overflow-hidden bg-[#0B1628]">
@@ -379,25 +390,22 @@ const Footer: React.FC<FooterProps> = ({ categories }) => {
                 </ul>
               </div>
             </div>
+            
           </div>
           {/* ── REGISTERED ADDRESS ── */}
           <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", backgroundColor: "rgba(0,0,0,0.30)" }}>
             <div className="mx-auto max-w-7xl px-6 py-4 lg:px-10">
-              <p className="m-0 text-[11.5px] leading-[1.7] text-white/45">
-                <span className="font-medium text-white/65">Registered Office:</span>{" "}
-                Maxx Business Media Pvt Ltd | # T9, 3rd Floor, Swastik Manandi Arcade, SC Road,
-                Seshadripuram, Bengaluru – 560020, India, Support-+91-9148319993 | CIN: U74999KA2019PTC123194
-              </p>
+             
             </div>
           </div>
 
           {/* ── COPYRIGHT ── */}
           <div style={{ backgroundColor: "rgba(0,0,0,0.40)" }}>
             <div className="mx-auto max-w-7xl px-6 py-4 lg:px-10">
-              <p className="text-[12.5px] text-white/45">
-                BizTradeFairs.com provides verified information on trade fairs, expos, conferences, and industrial events worldwide.
-                Users are advised to confirm event schedules, venue details, participation terms, and travel requirements directly
-                with organizers before planning attendance.
+              <p className="m-0 text-[12px] leading-[1.7] text-white/45">
+                <span className="text-[12px] font-semibold text-white/65">Registered Office:</span>{" "}
+                Maxx Business Media Pvt Ltd | # T9, 3rd Floor, Swastik Manandi Arcade, SC Road,
+                Seshadripuram, Bengaluru – 560020, India, Support-+91-9148319993 | CIN: U74999KA2019PTC123194
               </p>
               <p className="mt-1 text-center text-[12.5px] font-medium text-white/55">
                 © {new Date().getFullYear()} BizTradeFairs. All rights reserved.
@@ -407,7 +415,7 @@ const Footer: React.FC<FooterProps> = ({ categories }) => {
         </div>
 
         {pathname === "/" && showChatBot && <FooterChatBot />}
-    </footer>
+      </footer>
     </>
   )
 }
