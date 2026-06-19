@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useToast } from "@/hooks/use-toast"
@@ -61,7 +62,21 @@ interface ExhibitorData {
   profileCity?: string
   profileState?: string
   profileCountry?: string
+  foundedYear?: string
+  companySize?: string
+  industry?: string
+  headquarters?: string
+  specialties?: string[]
 }
+
+const COMPANY_SIZE_OPTIONS = [
+  "1-10 employees",
+  "11-50 employees",
+  "51-200 employees",
+  "201-500 employees",
+  "501-1000 employees",
+  "1000+ employees",
+] as const
 
 interface CompanyInfoProps {
   exhibitorId: string
@@ -75,11 +90,36 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
   const [loading, setLoading] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [formData, setFormData] = useState(exhibitorData)
-  const [categories, setCategories] = useState<string[]>(["Technology", "Software", "AI/ML"])
+  const [productTags, setProductTags] = useState<string[]>(exhibitorData.specialties ?? [])
+  const [industryOptions, setIndustryOptions] = useState<string[]>([])
+  const [customProductTag, setCustomProductTag] = useState("")
 
   useEffect(() => {
     setFormData(exhibitorData)
+    setProductTags(exhibitorData.specialties ?? [])
   }, [exhibitorData])
+
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      try {
+        const data = await apiFetch<{ categories?: Array<{ name?: string }> }>(
+          "/api/events/categories/browse",
+          { auth: false },
+        )
+        if (cancelled) return
+        const names = (data.categories ?? [])
+          .map((c) => (typeof c.name === "string" ? c.name.trim() : ""))
+          .filter(Boolean)
+        setIndustryOptions(Array.from(new Set(names)).sort((a, b) => a.localeCompare(b)))
+      } catch {
+        if (!cancelled) setIndustryOptions([])
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -137,7 +177,18 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
   const handleSave = async () => {
     try {
       setLoading(true)
-      await onUpdate(formData)
+      const headquarters =
+        formData.headquarters?.trim() ||
+        [formData.profileCity, formData.profileCountry].filter(Boolean).join(", ") ||
+        undefined
+      await onUpdate({
+        ...formData,
+        foundedYear: formData.foundedYear,
+        companySize: formData.companySize,
+        industry: formData.industry,
+        headquarters,
+        specialties: productTags,
+      })
       setIsEditing(false)
       toast({
         title: "Success",
@@ -155,14 +206,15 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
     }
   }
 
-  const handleAddCategory = (newCategory: string) => {
-    if (newCategory.trim() && !categories.includes(newCategory.trim())) {
-      setCategories([...categories, newCategory.trim()])
-    }
+  const handleAddProductTag = (value: string) => {
+    const trimmed = value.trim()
+    if (!trimmed || productTags.includes(trimmed)) return
+    setProductTags([...productTags, trimmed])
+    setCustomProductTag("")
   }
 
-  const handleRemoveCategory = (categoryToRemove: string) => {
-    setCategories(categories.filter((cat) => cat !== categoryToRemove))
+  const handleRemoveProductTag = (tag: string) => {
+    setProductTags(productTags.filter((t) => t !== tag))
   }
 
   const socialLinks = [
@@ -391,6 +443,117 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
           </CardContent>
         </Card>
 
+        {/* Company Details */}
+        <Card className={exGlassCardPremium}>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-slate-800">
+              <Building2 className="h-5 w-5 text-[#004A96]" />
+              Company Details
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className={cn(exGlassNested, "space-y-4 p-5")}>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="founded-year">Founded Year</Label>
+                  {isEditing ? (
+                    <Input
+                      id="founded-year"
+                      type="number"
+                      min={1800}
+                      max={2100}
+                      placeholder="e.g. 2015"
+                      value={formData.foundedYear || ""}
+                      onChange={(e) => setFormData({ ...formData, foundedYear: e.target.value })}
+                      className={exInput}
+                    />
+                  ) : (
+                    <p className="text-sm font-medium text-slate-800">{formData.foundedYear || "—"}</p>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="company-size">Company Size</Label>
+                  {isEditing ? (
+                    <Select
+                      value={formData.companySize || ""}
+                      onValueChange={(value) => setFormData({ ...formData, companySize: value })}
+                    >
+                      <SelectTrigger id="company-size" className={cn(exInput, "w-full")}>
+                        <SelectValue placeholder="Select company size" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {COMPANY_SIZE_OPTIONS.map((size) => (
+                          <SelectItem key={size} value={size}>
+                            {size}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <p className="text-sm font-medium text-slate-800">{formData.companySize || "—"}</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="industry">Industry / Category</Label>
+                  {isEditing ? (
+                    <Select
+                      value={formData.industry || ""}
+                      onValueChange={(value) => setFormData({ ...formData, industry: value })}
+                    >
+                      <SelectTrigger id="industry" className={cn(exInput, "w-full")}>
+                        <SelectValue placeholder="Select industry category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {(() => {
+                          const options =
+                            formData.industry && !industryOptions.includes(formData.industry)
+                              ? [formData.industry, ...industryOptions]
+                              : industryOptions
+                          if (options.length === 0) {
+                            return (
+                              <SelectItem value="__loading__" disabled>
+                                Loading categories…
+                              </SelectItem>
+                            )
+                          }
+                          return options.map((name) => (
+                            <SelectItem key={name} value={name}>
+                              {name}
+                            </SelectItem>
+                          ))
+                        })()}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <p className="text-sm font-medium text-slate-800">{formData.industry || "—"}</p>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="headquarters">Headquarters</Label>
+                  {isEditing ? (
+                    <Input
+                      id="headquarters"
+                      placeholder="e.g. Bangalore, India"
+                      value={formData.headquarters || ""}
+                      onChange={(e) => setFormData({ ...formData, headquarters: e.target.value })}
+                      className={exInput}
+                    />
+                  ) : (
+                    <p className="text-sm font-medium text-slate-800">
+                      {formData.headquarters ||
+                        [formData.profileCity, formData.profileCountry].filter(Boolean).join(", ") ||
+                        "—"}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Social Media Links */}
         <Card className={exGlassCardPremium}>
           <CardHeader className="pb-3">
@@ -432,48 +595,64 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
           <CardContent>
             <div className={cn(exGlassNested, "space-y-4 p-5")}>
             <div className="flex flex-wrap gap-2">
-              {categories.map((category) => (
+              {productTags.map((tag) => (
                 <Badge
-                  key={category}
+                  key={tag}
                   variant="secondary"
                   className="flex items-center gap-1 border-[#004A96]/20 bg-[#004A96]/10 text-[#004A96]"
                 >
-                  {category}
+                  {tag}
                   {isEditing && (
                     <X
                       className="h-3 w-3 cursor-pointer hover:text-[#004A96]"
-                      onClick={() => handleRemoveCategory(category)}
+                      onClick={() => handleRemoveProductTag(tag)}
                     />
                   )}
                 </Badge>
               ))}
+              {productTags.length === 0 && !isEditing ? (
+                <p className="text-sm text-muted-foreground">No product categories added yet.</p>
+              ) : null}
             </div>
 
             {isEditing && (
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Add new category"
-                  className={exInput}
-                  onKeyPress={(e) => {
-                    if (e.key === "Enter") {
-                      handleAddCategory(e.currentTarget.value)
-                      e.currentTarget.value = ""
-                    }
-                  }}
-                />
-                <Button
-                  onClick={() => {
-                    const input = document.querySelector('input[placeholder="Add new category"]') as HTMLInputElement
-                    if (input) {
-                      handleAddCategory(input.value)
-                      input.value = ""
-                    }
-                  }}
-                  size="sm"
-                  className={cn("shadow-md", exCtaGradient)}
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
+              <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                <Select onValueChange={(v) => handleAddProductTag(v)}>
+                  <SelectTrigger className={cn(exInput, "w-full sm:flex-1")}>
+                    <SelectValue placeholder="Add from event categories" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {industryOptions
+                      .filter((name) => !productTags.includes(name))
+                      .map((name) => (
+                        <SelectItem key={name} value={name}>
+                          {name}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Or type custom tag"
+                    value={customProductTag}
+                    onChange={(e) => setCustomProductTag(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault()
+                        handleAddProductTag(customProductTag)
+                      }
+                    }}
+                    className={exInput}
+                  />
+                  <Button
+                    type="button"
+                    onClick={() => handleAddProductTag(customProductTag)}
+                    size="sm"
+                    className={cn("shadow-md", exCtaGradient)}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             )}
             </div>
@@ -518,6 +697,7 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
                 profileState: loc.state,
                 profileCountry: loc.country,
               })
+              setProductTags(exhibitorData.specialties ?? [])
             }}
             disabled={loading}
           >

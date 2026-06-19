@@ -54,9 +54,16 @@ interface Exhibitor {
   industry?: string
   companySize?: string
   foundedYear?: string
+  /** Raw backend field aliases (list endpoint may return these) */
+  founded?: string
+  teamSize?: string
+  companyIndustry?: string
   headquarters?: string
   specialties?: string[]
   certifications?: string[]
+  profileCity?: string
+  profileCountry?: string
+  location?: string
   isVerified: boolean
   createdAt: string
 }
@@ -496,17 +503,86 @@ const getLocationString = (venue: any): string => {
   return parts.length > 0 ? parts.join(", ") : "Location TBD";
 };
 
+function exhibitorListEntryMatchesSlug(ex: Record<string, any>, target: string): boolean {
+  if (ex.publicSlug && String(ex.publicSlug).toLowerCase() === target) return true
+
+  const company = (ex.company as string) || (ex.companyName as string) || ""
+  const fullName = `${ex.firstName ?? ""} ${ex.lastName ?? ""}`.trim()
+  const candidates = [ex.organizationName, company, fullName, ex.firstName].filter(Boolean) as string[]
+
+  return candidates.some((c) => slugifyPublicProfile(c) === target)
+}
+
+function scoreExhibitorProfile(ex: Exhibitor | Record<string, any>): number {
+  let score = 0
+  if (ex.isVerified) score += 1000
+  if (String(ex.website ?? "").trim()) score += 50
+  if (String(ex.foundedYear ?? ex.founded ?? "").trim()) score += 20
+  if (String(ex.companySize ?? ex.teamSize ?? "").trim()) score += 20
+  if (String(ex.industry ?? ex.companyIndustry ?? "").trim()) score += 20
+  if (String(ex.headquarters ?? "").trim()) score += 15
+  if (String(ex.bio ?? "").trim()) score += 10
+  return score
+}
+
+async function fetchExhibitorById(id: string): Promise<Exhibitor> {
+  const data = await apiFetch<{ success: boolean; exhibitor: Exhibitor }>(
+    `/api/exhibitors/${encodeURIComponent(id)}`,
+    { auth: isAuthenticated() },
+  )
+  if (!data.success || !data.exhibitor) {
+    throw new Error("Exhibitor not found")
+  }
+  return data.exhibitor
+}
+
+/** Pick the best exhibitor when multiple accounts share the same public slug. */
+async function resolveBestExhibitorFromMatches(
+  matches: Record<string, any>[],
+): Promise<{ exhibitor: Exhibitor; resolvedId: string }> {
+  if (matches.length === 0) {
+    throw new Error("Exhibitor not found")
+  }
+
+  const userId = getCurrentUserId()?.trim()
+  if (userId) {
+    const self = matches.find((m) => String(m.id) === userId)
+    if (self?.id) {
+      const exhibitor = await fetchExhibitorById(String(self.id))
+      return { exhibitor, resolvedId: exhibitor.id }
+    }
+  }
+
+  const fullProfiles = await Promise.all(
+    matches.map(async (m) => {
+      if (!m.id) return null
+      try {
+        return await fetchExhibitorById(String(m.id))
+      } catch {
+        return null
+      }
+    }),
+  )
+
+  const valid = fullProfiles.filter(Boolean) as Exhibitor[]
+  if (valid.length === 0) {
+    throw new Error("Exhibitor not found")
+  }
+
+  valid.sort((a, b) => scoreExhibitorProfile(b) - scoreExhibitorProfile(a))
+  const exhibitor = valid[0]
+  return { exhibitor, resolvedId: exhibitor.id }
+}
+
 /**
  * The exhibitors list page links to /exhibitor/{slug} (see getPublicProfilePath), where
- * {slug} is derived from the company/org name — it is NOT the database id. The backend's
- * GET /api/exhibitors/:id only accepts a real id and throws "Invalid exhibitor ID" for a
- * slug. So: try the route param as an id first: if the backend rejects it, fall back to
- * loading the public exhibitor list and resolving the slug to a real exhibitor record.
+ * {slug} is derived from the company/org name — it is NOT the database id. Try the route
+ * param as an id or slug on the backend first; if that fails, resolve via the public list.
  */
 async function resolveExhibitorIdOrSlug(
   routeParam: string,
 ): Promise<{ exhibitor: Exhibitor; resolvedId: string }> {
-  // 1) Try treating the param as a real id (covers links that already use ids/UUIDs).
+  // 1) Backend resolves UUIDs, Mongo ids, and slugs (with duplicate disambiguation).
   try {
     const data = await apiFetch<{ success: boolean; exhibitor: Exhibitor }>(
       `/api/exhibitors/${encodeURIComponent(routeParam)}`,
@@ -516,11 +592,10 @@ async function resolveExhibitorIdOrSlug(
       return { exhibitor: data.exhibitor, resolvedId: data.exhibitor.id }
     }
   } catch {
-    // fall through to slug resolution
+    // fall through to list-based slug resolution
   }
 
-  // 2) Treat the param as a slug: pull the public list and match by publicSlug,
-  // or by the same slug logic used to build the link (org/company/full name).
+  // 2) Match slug against the public list (may return multiple accounts with the same slug).
   const listResponse = await apiFetch<unknown>("/api/exhibitors?limit=1000", { auth: false })
   const list: unknown[] = Array.isArray(listResponse)
     ? listResponse
@@ -531,37 +606,11 @@ async function resolveExhibitorIdOrSlug(
         : []
 
   const target = routeParam.toLowerCase()
+  const matches = (list as Record<string, unknown>[]).filter((raw) =>
+    exhibitorListEntryMatchesSlug(raw as Record<string, any>, target),
+  ) as Record<string, any>[]
 
-  const match = (list as Record<string, unknown>[]).find((raw) => {
-    const ex = raw as Record<string, any>
-    if (ex.publicSlug && String(ex.publicSlug).toLowerCase() === target) return true
-
-    const company = (ex.company as string) || (ex.companyName as string) || ""
-    const fullName = `${ex.firstName ?? ""} ${ex.lastName ?? ""}`.trim()
-    const candidates = [
-      ex.organizationName,
-      company,
-      fullName,
-      ex.firstName,
-    ].filter(Boolean) as string[]
-
-    return candidates.some((c) => slugifyPublicProfile(c) === target)
-  }) as Record<string, any> | undefined
-
-  if (!match || !match.id) {
-    throw new Error("Exhibitor not found")
-  }
-
-  // 3) Now fetch the full record by the real id so we get complete fields
-  // (the list endpoint may return a trimmed shape).
-  const data = await apiFetch<{ success: boolean; exhibitor: Exhibitor }>(
-    `/api/exhibitors/${encodeURIComponent(String(match.id))}`,
-    { auth: isAuthenticated() },
-  )
-  if (!data.success || !data.exhibitor) {
-    throw new Error("Exhibitor not found")
-  }
-  return { exhibitor: data.exhibitor, resolvedId: data.exhibitor.id }
+  return resolveBestExhibitorFromMatches(matches)
 }
 
 // Main Exhibitor Page Component
@@ -837,7 +886,6 @@ export default function ExhibitorPage() {
       reviewAvgRating: Math.round(reviewAvgRating * 10) / 10,
       totalReviews: reviews.length,
       totalReplies,
-      clientsServed: "500+", // Mock data
     };
   }, [booths, reviews]);
 
@@ -902,24 +950,12 @@ export default function ExhibitorPage() {
   const exhibitorName = exhibitor.companyName || `${exhibitor.firstName} ${exhibitor.lastName}`.trim() || "Exhibitor"
   const exhibitorLogo = exhibitor.companyLogo || exhibitor.avatar
   const exhibitorDescription = exhibitor.bio || "No description available."
-  const exhibitorSpecialties = exhibitor.specialties || ["Enterprise Software", "AI/ML Solutions", "Cloud Computing"]
-  const exhibitorCertifications = exhibitor.certifications || ["ISO 27001:2013", "SOC 2 Type II", "GDPR Compliant"]
-
-  // Mock data for achievements and social proof
-  const mockDetails = {
-    achievements: [
-      "Best Tech Innovation Award 2023",
-      "Top 50 Startups in India 2022",
-      "Excellence in Customer Service",
-      "Sustainability Leader Recognition",
-    ],
-    socialProof: {
-      clientsServed: "500+",
-      projectsCompleted: "1,200+",
-      yearsExperience: "8+",
-      teamSize: "150+",
-    },
-  }
+  const displayHeadquarters =
+    exhibitor.headquarters?.trim() ||
+    exhibitor.location?.trim() ||
+    [exhibitor.profileCity, exhibitor.profileCountry].filter(Boolean).join(", ") ||
+    null
+  const displayValue = (value?: string | null) => (value?.trim() ? value.trim() : "—")
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -959,10 +995,10 @@ export default function ExhibitorPage() {
 
               {/* Contact Info */}
               <div className="flex flex-wrap gap-6 text-blue-100">
-                {exhibitor.headquarters && (
+                {displayHeadquarters && (
                   <div className="flex items-center gap-2">
                     <MapPin className="w-4 h-4" />
-                    <span>{exhibitor.headquarters}</span>
+                    <span>{displayHeadquarters}</span>
                   </div>
                 )}
                 {/* {exhibitor.phone && (
@@ -1028,28 +1064,22 @@ export default function ExhibitorPage() {
       {/* Stats Section */}
       <div className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-4 py-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
             <div className="text-center">
               <div className="text-2xl font-bold text-gray-900">{stats.totalEvents}</div>
               <div className="text-sm text-gray-600">Events Participated</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-gray-900">{stats.clientsServed}</div>
-              <div className="text-sm text-gray-600">Clients Served</div>
-            </div>
-            <div className="text-center">
               <div className="flex items-center justify-center gap-1">
                 <Star className="w-5 h-5 text-yellow-400 fill-current" />
-                <span className="text-2xl font-bold text-gray-900">{stats.reviewAvgRating}</span>
+                <span className="text-2xl font-bold text-gray-900">
+                  {stats.totalReviews > 0 ? stats.reviewAvgRating : "—"}
+                </span>
               </div>
               <div className="text-sm text-gray-600">Event Rating</div>
             </div>
-            {/* <div className="text-center">
-              <div className="text-2xl font-bold text-gray-900">{stats.totalReplies}</div>
-              <div className="text-sm text-gray-600">Total Replies</div>
-            </div> */}
             <div className="text-center">
-              <div className="text-2xl font-bold text-gray-900">{exhibitor.foundedYear || "2015"}</div>
+              <div className="text-2xl font-bold text-gray-900">{displayValue(exhibitor.foundedYear)}</div>
               <div className="text-sm text-gray-600">Founded</div>
             </div>
           </div>
@@ -1460,35 +1490,41 @@ export default function ExhibitorPage() {
                   <div className="space-y-4">
                     <div>
                       <label className="text-sm font-medium text-gray-500">Founded</label>
-                      <p className="text-lg font-semibold text-gray-900">{exhibitor.foundedYear || "2015"}</p>
+                      <p className="text-lg font-semibold text-gray-900">{displayValue(exhibitor.foundedYear)}</p>
                     </div>
                     <div>
                       <label className="text-sm font-medium text-gray-500">Headquarters</label>
-                      <p className="text-lg font-semibold text-gray-900">{exhibitor.headquarters || "Bangalore, India"}</p>
+                      <p className="text-lg font-semibold text-gray-900">{displayValue(displayHeadquarters)}</p>
                     </div>
                   </div>
 
                   <div className="space-y-4">
                     <div>
                       <label className="text-sm font-medium text-gray-500">Industry</label>
-                      <p className="text-lg font-semibold text-gray-900">{exhibitor.industry || "Technology"}</p>
+                      <p className="text-lg font-semibold text-gray-900">{displayValue(exhibitor.industry)}</p>
                     </div>
                     <div>
                       <label className="text-sm font-medium text-gray-500">Company Size</label>
-                      <p className="text-lg font-semibold text-gray-900">{exhibitor.companySize || "201-500 employees"}</p>
+                      <p className="text-lg font-semibold text-gray-900">{displayValue(exhibitor.companySize)}</p>
                     </div>
                   </div>
 
                   <div className="space-y-4">
                     <div>
                       <label className="text-sm font-medium text-gray-500">Website</label>
-                      <a
-                        href={exhibitor.website || "#"}
-                        className="text-lg font-semibold text-blue-600 hover:text-blue-700 hover:underline flex items-center gap-1"
-                      >
-                        {exhibitor.website || "https://techcorp.com"}
-                        <ExternalLink className="w-4 h-4" />
-                      </a>
+                      {exhibitor.website?.trim() ? (
+                        <a
+                          href={exhibitor.website.startsWith("http") ? exhibitor.website : `https://${exhibitor.website}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-lg font-semibold text-blue-600 hover:text-blue-700 hover:underline flex items-center gap-1"
+                        >
+                          {exhibitor.website}
+                          <ExternalLink className="w-4 h-4" />
+                        </a>
+                      ) : (
+                        <p className="text-lg font-semibold text-gray-900">—</p>
+                      )}
                     </div>
                     {/* <div>
                       <label className="text-sm font-medium text-gray-500">Contact</label>
