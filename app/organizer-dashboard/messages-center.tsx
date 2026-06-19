@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import type { MessageSurface } from "@/components/messages/message-theme"
 import { MessagesInbox } from "@/components/messages/messages-inbox"
+import { useDashboard } from "@/contexts/dashboard-context"
 
 interface Connection {
   id: string
@@ -77,6 +78,7 @@ interface MessagesCenterProps {
 
 export default function MessagesCenter({ organizerId, surface = "default" }: MessagesCenterProps) {
   const { toast } = useToast()
+  const { messageTargetUserId, clearMessageTarget } = useDashboard()
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [selectedContact, setSelectedContact] = useState<string | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
@@ -91,6 +93,7 @@ export default function MessagesCenter({ organizerId, surface = "default" }: Mes
   const [deleteConversationId, setDeleteConversationId] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const openingTargetRef = useRef<string | null>(null)
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -306,6 +309,58 @@ export default function MessagesCenter({ organizerId, surface = "default" }: Mes
       })
     }
   }
+
+  const openConversationWithUser = useCallback(
+    async (targetUserId: string) => {
+      const trimmed = targetUserId.trim()
+      if (!trimmed) return
+
+      const existing = conversations.find(
+        (conv) => conv.contactId === trimmed || conv.contact?.id === trimmed,
+      )
+      if (existing) {
+        setSelectedContact(existing.id)
+        clearMessageTarget()
+        return
+      }
+
+      try {
+        const data = await apiFetch<{ conversation?: { id: string } }>("/api/conversations/start", {
+          method: "POST",
+          body: { participantIds: [trimmed] },
+          auth: true,
+        })
+        const conversationId = data?.conversation?.id
+        if (conversationId) {
+          await fetchConversations()
+          setSelectedContact(conversationId)
+          await fetchMessages(conversationId)
+        }
+      } catch (err) {
+        console.error("Error opening conversation:", err)
+        toast({
+          title: "Cannot open messages",
+          description:
+            err instanceof Error
+              ? err.message
+              : "You may need to connect with this visitor before messaging.",
+          variant: "destructive",
+        })
+      } finally {
+        clearMessageTarget()
+      }
+    },
+    [conversations, clearMessageTarget, fetchConversations, fetchMessages, toast],
+  )
+
+  useEffect(() => {
+    if (!messageTargetUserId || loading) return
+    if (openingTargetRef.current === messageTargetUserId) return
+    openingTargetRef.current = messageTargetUserId
+    void openConversationWithUser(messageTargetUserId).finally(() => {
+      openingTargetRef.current = null
+    })
+  }, [messageTargetUserId, loading, openConversationWithUser])
 
   const getSelectedContactInfo = () => {
     if (!selectedContact) return null

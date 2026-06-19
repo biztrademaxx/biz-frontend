@@ -13,7 +13,6 @@ import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useToast } from "@/hooks/use-toast"
 import {
-  Clock,
   CalendarIcon,
   CheckCircle,
   X,
@@ -26,6 +25,7 @@ import {
   MessageSquare,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useDashboard } from "@/contexts/dashboard-context"
 import { exGlassCard, exBtnPrimary, exPageTitle } from "./dashboard-theme"
 
 interface AppointmentSchedulingProps {
@@ -37,6 +37,7 @@ interface AppointmentSchedulingProps {
 
 interface Appointment {
   id: string
+  visitorId?: string
   visitorName: string
   visitorEmail: string
   visitorPhone?: string
@@ -56,8 +57,8 @@ interface Appointment {
 }
 
 export default function AppointmentScheduling({ exhibitorId, onCountChange }: AppointmentSchedulingProps) {
-
   const { toast } = useToast()
+  const { openMessagesWithUser } = useDashboard()
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date())
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null)
   const [appointments, setAppointments] = useState<Appointment[]>([])
@@ -167,6 +168,19 @@ const fetchAppointments = async () => {
     (appointment) => filterStatus === "ALL" || appointment.status === filterStatus,
   )
 
+  const handleMessageVisitor = (appointment: Appointment) => {
+    const visitorId = appointment.visitorId?.trim()
+    if (!visitorId) {
+      toast({
+        title: "Cannot open messages",
+        description: "This visitor does not have a linked account yet.",
+        variant: "destructive",
+      })
+      return
+    }
+    openMessagesWithUser(visitorId)
+  }
+
   const AppointmentCard = ({ appointment }: { appointment: Appointment }) => (
     <Card className={cn(exGlassCard, "transition-shadow hover:shadow-md")}>
       <CardContent className="p-6">
@@ -248,7 +262,7 @@ const fetchAppointments = async () => {
                         onChange={(e) => setSelectedAppointment({ ...selectedAppointment, notes: e.target.value })}
                       />
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-4">
                       <div>
                         <Label className="text-sm font-medium">Status</Label>
                         <Select
@@ -265,10 +279,6 @@ const fetchAppointments = async () => {
                             <SelectItem value="CANCELLED">Cancelled</SelectItem>
                           </SelectContent>
                         </Select>
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium">Reschedule Date</Label>
-                        <Input type="date" className="mt-1" />
                       </div>
                     </div>
                     {selectedAppointment.meetingLink && (
@@ -336,10 +346,6 @@ const fetchAppointments = async () => {
                   <CheckCircle className="w-4 h-4" />
                   Approve
                 </Button>
-                <Button variant="outline" size="sm" className="flex items-center gap-2 bg-transparent">
-                  <Clock className="w-4 h-4" />
-                  Reschedule
-                </Button>
                 <Button
                   variant="outline"
                   size="sm"
@@ -351,13 +357,12 @@ const fetchAppointments = async () => {
                 </Button>
               </>
             )}
-            {appointment.status === "CONFIRMED" && (
-              <Button variant="outline" size="sm" className="flex items-center gap-2 bg-transparent">
-                <Clock className="w-4 h-4" />
-                Reschedule
-              </Button>
-            )}
-            <Button variant="outline" size="sm" className="flex items-center gap-2 bg-transparent">
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-2 bg-transparent"
+              onClick={() => handleMessageVisitor(appointment)}
+            >
               <MessageSquare className="w-4 h-4" />
               Message
             </Button>
