@@ -18,6 +18,7 @@ export async function fetchEventsListingServer(): Promise<Event[]> {
     const qs = new URLSearchParams({
       limit: String(EVENTS_LISTING_FETCH_LIMIT),
       sort: "newest",
+      excludePast: "true",
     })
     const res = await fetch(`${getApiBaseUrl()}/api/events?${qs.toString()}`, {
       next: { revalidate: EVENTS_LISTING_REVALIDATE_SEC },

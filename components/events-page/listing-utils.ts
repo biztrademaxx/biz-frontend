@@ -477,10 +477,26 @@ export function isEventInCustomDateRange(event: Event, from?: string, to?: strin
   return true
 }
 
+/** Local calendar start of today (midnight). */
+export function getListingTodayStart(): Date {
+  const now = new Date()
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate())
+}
+
+/** True when the event end date is today or later (excludes fully past events). */
+export function isEventNotPast(event: Event): boolean {
+  const today = getListingTodayStart()
+  const endRaw = event.timings?.endDate ?? event.timings?.startDate
+  if (!endRaw) return true
+  const eventEnd = new Date(endRaw)
+  if (Number.isNaN(eventEnd.getTime())) return true
+  const eventEndDay = new Date(eventEnd.getFullYear(), eventEnd.getMonth(), eventEnd.getDate())
+  return eventEndDay >= today
+}
+
 export function isEventInDateRange(event: Event, dateRange: string): boolean {
   const eventDate = new Date(event.timings.startDate)
-  const now = new Date()
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const today = getListingTodayStart()
   const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000)
   const weekFromNow = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000)
   const monthFromNow = new Date(today.getFullYear(), today.getMonth() + 1, today.getDate())
@@ -505,9 +521,10 @@ export function isEventInDateRange(event: Event, dateRange: string): boolean {
 }
 
 export function isEventInTab(event: Event, tab: string): boolean {
+  if (!isEventNotPast(event)) return false
+
   const eventDate = new Date(event.timings.startDate)
-  const now = new Date()
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const today = getListingTodayStart()
   const weekFromNow = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000)
   const monthFromNow = new Date(today.getFullYear(), today.getMonth() + 1, today.getDate())
 

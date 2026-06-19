@@ -18,7 +18,7 @@ import type { Event, EventsPageContentProps, NameCount } from "@/components/even
 import {
   EVENTS_LISTING_BANNER_GRADIENT,
   EVENTS_LISTING_BANNER_GRADIENT_OVER_IMAGE,
-  EVENTS_API,
+  getEventsListingApiUrl,
   EVENTS_LISTING_PAGE_CHUNK_BEFORE_FEATURED_AD,
   EVENTS_LISTING_PAGE_CHUNK_AFTER_FEATURED_AD,
   EVENTS_LISTING_INLINE_PROMO_FALLBACK_MAX,
@@ -39,6 +39,7 @@ import {
   applyTopMustVisitRanking,
   formatListingFollowerTotal,
   getEventsListingBannerTitle,
+  isEventNotPast,
   sortEventsByFollowersAndRating,
 } from "@/components/events-page/listing-utils"
 import { EventsListingDesktopFiltersSidebar } from "@/components/events-page/EventsListingDesktopFiltersSidebar"
@@ -155,7 +156,7 @@ export default function EventsPageContent({
         setLoading(true)
       }
       setError(null)
-      const response = await fetch(EVENTS_API)
+      const response = await fetch(getEventsListingApiUrl())
       const payload = await response.json().catch(() => ({}))
       if (!response.ok) {
         const message =
@@ -292,10 +293,15 @@ export default function EventsPageContent({
   const itemsPerPage =
     EVENTS_LISTING_PAGE_CHUNK_BEFORE_FEATURED_AD + EVENTS_LISTING_PAGE_CHUNK_AFTER_FEATURED_AD
 
+  const listingEvents = useMemo(
+    () => events.filter((event) => isEventNotPast(event)),
+    [events],
+  )
+
   const categories = useMemo((): NameCount[] => {
-    if (!events || events.length === 0) return []
+    if (!listingEvents || listingEvents.length === 0) return []
     const categoryMap = new Map<string, number>()
-    events.forEach((event) => {
+    listingEvents.forEach((event) => {
       if (event.categories && Array.isArray(event.categories)) {
         event.categories.forEach((category) => {
           if (category && typeof category === "string") {
@@ -330,7 +336,7 @@ export default function EventsPageContent({
 
     return hardcodedCategories
       .map((categoryName) => {
-        const count = events.filter((event) => {
+        const count = listingEvents.filter((event) => {
           if (!event.categories || !Array.isArray(event.categories)) return false
           return event.categories.some((cat) => {
             if (!cat || typeof cat !== "string") return false
@@ -340,12 +346,12 @@ export default function EventsPageContent({
         return { name: categoryName, count }
       })
       .filter((cat) => cat.count > 0)
-  }, [events])
+  }, [listingEvents])
 
   const formats = useMemo(() => {
     const formatMap = new Map<string, number>()
-    formatMap.set("All Formats", events.length)
-    events.forEach((event) => {
+    formatMap.set("All Formats", listingEvents.length)
+    listingEvents.forEach((event) => {
       const formatName = normalizeEventFormatName(event)
       formatMap.set(formatName, (formatMap.get(formatName) || 0) + 1)
     })
@@ -355,12 +361,12 @@ export default function EventsPageContent({
       .map(([name, count]) => ({ name, count }))
       .sort((a, b) => b.count - a.count)
     return [{ name: "All Formats", count: allFormatsCount }, ...formatArray]
-  }, [events])
+  }, [listingEvents])
 
   const locations = useMemo(() => {
-    if (!events || events.length === 0) return []
+    if (!listingEvents || listingEvents.length === 0) return []
     const locationMap = new Map<string, number>()
-    events.forEach((event) => {
+    listingEvents.forEach((event) => {
       let locationKey = ""
       if (event.venue?.venueCity) {
         locationKey = event.venue.venueCity.trim()
@@ -384,12 +390,12 @@ export default function EventsPageContent({
         }
         return a.name.localeCompare(b.name)
       })
-  }, [events])
+  }, [listingEvents])
 
   const filteredCategories = useMemo(() => categories, [categories])
 
   const filteredEvents = useMemo(() => {
-    let filtered = events
+    let filtered = listingEvents
 
     filtered = filtered.filter((event) => isEventInTab(event, activeTab))
 
@@ -474,7 +480,7 @@ export default function EventsPageContent({
 
     return filtered
   }, [
-    events,
+    listingEvents,
     activeTab,
     selectedDate,
     selectedDateRange,
@@ -571,18 +577,18 @@ export default function EventsPageContent({
   const eventsBeforeFeaturedAd = paginatedEvents.slice(0, EVENTS_LISTING_PAGE_CHUNK_BEFORE_FEATURED_AD)
   const eventsAfterFeaturedAd = paginatedEvents.slice(EVENTS_LISTING_PAGE_CHUNK_BEFORE_FEATURED_AD)
 
-  const featuredEvents = events.filter((event) => event.featured)
+  const featuredEvents = listingEvents.filter((event) => event.featured)
 
   const inlinePromoEvents = useMemo(() => {
-    if (events.length === 0) return []
-    const tagged = events.filter((e) => e.featured)
+    if (listingEvents.length === 0) return []
+    const tagged = listingEvents.filter((e) => e.featured)
     if (tagged.length > 0) return tagged
-    return sortEventsByFollowersAndRating(events).slice(0, EVENTS_LISTING_INLINE_PROMO_FALLBACK_MAX)
-  }, [events])
+    return sortEventsByFollowersAndRating(listingEvents).slice(0, EVENTS_LISTING_INLINE_PROMO_FALLBACK_MAX)
+  }, [listingEvents])
 
   const trendingSidebarEvents = useMemo(() => {
-    return sortEventsByFollowersAndRating(events).slice(0, 5)
-  }, [events])
+    return sortEventsByFollowersAndRating(listingEvents).slice(0, 5)
+  }, [listingEvents])
 
   useEffect(() => {
     if (featuredEvents.length === 0 || isHovered || isTransitioning) return
