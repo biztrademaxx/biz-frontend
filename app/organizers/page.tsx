@@ -305,8 +305,8 @@ export default function OrganizersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f1f7fb]">
-      {/* Mobile filter bar */}
+    <div className="min-h-screen bg-[#f9f9f9]">
+            {/* Mobile filter bar */}
       <div className="sticky top-0 z-30 flex items-center gap-2 border-b border-gray-200/80 bg-white/95 px-4 py-3 backdrop-blur lg:hidden">
         <Sheet open={mobileFiltersOpen} onOpenChange={setMobileFiltersOpen}>
           <SheetTrigger asChild>

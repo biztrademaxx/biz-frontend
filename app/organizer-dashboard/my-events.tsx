@@ -2,7 +2,7 @@
 
 import { devLog } from "@/lib/dev-log"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, ReactNode } from "react"
 import { useRouter } from "next/navigation"
 import { apiFetch } from "@/lib/api"
 import { Button } from "@/components/ui/button"
