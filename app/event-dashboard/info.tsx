@@ -1338,59 +1338,132 @@ export default function EventPage({ params }: EventPageProps) {
                   </CardContent>
                 </Card>
               </TabsContent>
+              
               <TabsContent value="speakers">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Speakers</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {event.speakerSessions?.length > 0 ? (
-                      event.speakerSessions.map((session: any) => (
-                        <div
-                          key={session.id}
-                          className="flex justify-between items-start p-4 bg-white rounded-lg border shadow-sm cursor-pointer hover:bg-gray-50 transition-colors"
-                          onClick={() =>
-                            router.push(
-                              getPublicProfilePath("speaker", {
-                                id: session.speaker?.id,
-                                publicSlug: session.speaker?.publicSlug,
-                                firstName: session.speaker?.firstName,
-                                lastName: session.speaker?.lastName,
-                              }),
-                            )
-                          }
-                        >
-                          <div className="flex gap-4">
-                            <Avatar className="w-12 h-12">
-                              <AvatarImage src={session.speaker?.avatar } />
-                              <AvatarFallback>{session.speaker?.firstName?.charAt(0) || "S"}</AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <h4 className="font-semibold hover:text-blue-600 transition-colors">
-                                {session.speaker?.firstName || "Speaker"}
-                              </h4>
-                              <p className="text-sm text-gray-600">{session.title}</p>
-                              <p className="text-xs text-gray-500">{session.description}</p>
-                            </div>
-                          </div>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation(); // Prevent navigation when clicking delete
-                              handleDeleteSpeaker(session.id);
-                            }}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      ))
-                    ) : (
-                      <p className="text-gray-600">No speakers scheduled yet.</p>
-                    )}
-                  </CardContent>
-                </Card>
-              </TabsContent>
+  <div className="py-6">
+    <div className="mb-6">
+      <h2 className="text-xl font-semibold text-gray-800 mb-1">Speakers</h2>
+      <p className="text-sm text-gray-500">
+        {event.speakerSessions?.length || 0} Speakers of Current Edition
+      </p>
+    </div>
+
+    {event.speakerSessions?.length > 0 ? (
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+        {event.speakerSessions.map((session: any) => (
+          <div
+            key={session.id}
+            className="bg-white rounded-xl overflow-hidden shadow-sm border hover:shadow-lg transition-shadow cursor-pointer flex flex-col"
+            onClick={() =>
+              router.push(
+                getPublicProfilePath("speaker", {
+                  id: session.speaker?.id,
+                  publicSlug: session.speaker?.publicSlug,
+                  firstName: session.speaker?.firstName,
+                  lastName: session.speaker?.lastName,
+                }),
+              )
+            }
+          >
+            <div className="p-4 flex flex-col flex-1">
+              {/* Top row: avatar + name + session title */}
+              <div className="flex items-center gap-3 mb-3">
+                {/* Circular avatar */}
+                <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-gray-200 flex-shrink-0">
+                  {session.speaker?.avatar ? (
+                    <img
+                      src={session.speaker.avatar}
+                      alt={`${session.speaker?.firstName} ${session.speaker?.lastName}`}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-[#004A96] to-[#2d6a9f] flex items-center justify-center">
+                      <span className="text-xl font-bold text-white">
+                        {session.speaker?.firstName?.charAt(0) || "S"}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Name + session title */}
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-bold text-gray-900 text-base leading-tight">
+                    {[session.speaker?.firstName, session.speaker?.lastName]
+                      .filter(Boolean)
+                      .join(" ") || "Speaker"}
+                  </h4>
+                  <p className="text-sm font-semibold text-gray-700 mt-0.5 leading-tight">
+                    {session.title || ""}
+                  </p>
+                  {(session.speaker?.company || session.speaker?.organizationName) && (
+                    <p className="text-xs text-gray-500 mt-0.5 truncate">
+                      {session.speaker?.company || session.speaker?.organizationName}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Description with truncation + More link */}
+              {session.description && (
+                <div className="flex-1 mb-3">
+                  {session.description.length > 100 ? (
+                    <p className="text-sm text-gray-600 leading-relaxed">
+                      {session.description.slice(0, 100).trimEnd()}...{" "}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          router.push(
+                            getPublicProfilePath("speaker", {
+                              id: session.speaker?.id,
+                              publicSlug: session.speaker?.publicSlug,
+                              firstName: session.speaker?.firstName,
+                              lastName: session.speaker?.lastName,
+                            }),
+                          )
+                        }}
+                        className="text-blue-600 font-medium hover:underline"
+                      >
+                        more
+                      </button>
+                    </p>
+                  ) : (
+                    <p className="text-sm text-gray-600 leading-relaxed">
+                      {session.description}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Spacer to push divider + button to bottom */}
+              <div className="flex-1" />
+
+              {/* Divider + Delete button */}
+              <hr className="border-gray-200 mb-3" />
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleDeleteSpeaker(session.id)
+                  }}
+                  className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold px-5 py-2 rounded-full transition"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    ) : (
+      <div className="py-12 text-center text-gray-500">
+        <p>No speakers scheduled yet.</p>
+      </div>
+    )}
+  </div>
+</TabsContent>
 
 
               <TabsContent value="organizer">
