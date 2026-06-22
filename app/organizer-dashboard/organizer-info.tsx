@@ -312,21 +312,19 @@ export default function OrganizerInfo({ organizerData: initialData, onOrganizerU
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">Organization Information</h2>
-          <p className="text-gray-600">Manage your organization profile and details</p>
-        </div>
+    <div className="w-full min-w-0 max-w-full space-y-4 sm:space-y-6">
+      <div>
+        <h2 className="text-xl font-bold text-gray-900 sm:text-2xl">Organization Information</h2>
+        <p className="text-sm text-gray-600 sm:text-base">Manage your organization profile and details</p>
       </div>
 
       {/* Profile Header */}
-    <Card>
-  <CardContent className="p-6">
-    <div className="flex items-start gap-6">
-      <div className="relative">
+    <Card className="gap-0 py-0">
+  <CardContent className="p-4 sm:p-6">
+    <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start sm:gap-6">
+      <div className="relative shrink-0">
         {/* Avatar Container */}
-        <div className="w-32 h-32 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
+        <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
           {organizerData.avatar ? (
             <Image
               src={organizerData.avatar }
@@ -351,7 +349,7 @@ export default function OrganizerInfo({ organizerData: initialData, onOrganizerU
               <Camera className="w-4 h-4" />
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="w-[calc(100vw-2rem)] max-w-lg">
             <DialogHeader>
               <DialogTitle>Upload Organization Logo</DialogTitle>
             </DialogHeader>
@@ -391,7 +389,7 @@ export default function OrganizerInfo({ organizerData: initialData, onOrganizerU
         </Dialog>
       </div>
 
-      <div className="flex-1">
+      <div className="flex-1 min-w-0 w-full text-center sm:text-left">
         {isEditing === "basic" ? (
           <div className="space-y-4">
             <div>
@@ -411,26 +409,26 @@ export default function OrganizerInfo({ organizerData: initialData, onOrganizerU
                 rows={3}
               />
             </div>
-            <div className="flex gap-2">
-              <Button onClick={() => handleSave("basic")} disabled={loading}>
+            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+              <Button onClick={() => handleSave("basic")} disabled={loading} className="w-full sm:w-auto">
                 {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
                 Save
               </Button>
-              <Button variant="outline" onClick={handleCancel}>
+              <Button variant="outline" onClick={handleCancel} className="w-full sm:w-auto">
                 Cancel
               </Button>
             </div>
           </div>
         ) : (
           <div>
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-2xl font-bold text-gray-900">{organizerData.company}</h3>
-              <Button variant="outline" size="sm" onClick={() => setIsEditing("basic")}>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-2">
+              <h3 className="text-xl font-bold text-gray-900 sm:text-2xl break-words">{organizerData.company}</h3>
+              <Button variant="outline" size="sm" onClick={() => setIsEditing("basic")} className="w-full sm:w-auto shrink-0">
                 <Edit className="w-4 h-4 mr-2" />
                 Edit
               </Button>
             </div>
-            <p className="text-gray-600 leading-relaxed">{organizerData.description}</p>
+            <p className="text-gray-600 leading-relaxed text-sm sm:text-base break-words">{organizerData.description}</p>
           </div>
         )}
       </div>
@@ -439,24 +437,25 @@ export default function OrganizerInfo({ organizerData: initialData, onOrganizerU
 </Card>
 
       {/* Contact Information */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Phone className="w-5 h-5" />
+      <Card className="gap-0 py-0">
+        <CardHeader className="px-4 sm:px-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <Phone className="w-5 h-5 shrink-0" />
               Contact Information
             </CardTitle>
             <Button
               variant="outline"
               size="sm"
               onClick={() => setIsEditing(isEditing === "contact" ? null : "contact")}
+              className="w-full sm:w-auto shrink-0"
             >
               <Edit className="w-4 h-4 mr-2" />
               {isEditing === "contact" ? "Cancel" : "Edit"}
             </Button>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-4 sm:px-6">
           {isEditing === "contact" ? (
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -601,58 +600,58 @@ export default function OrganizerInfo({ organizerData: initialData, onOrganizerU
                 </div>
               </div>
 
-              <div className="flex gap-2">
-                <Button onClick={() => handleSave("contact")} disabled={loading}>
+              <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                <Button onClick={() => handleSave("contact")} disabled={loading} className="w-full sm:w-auto">
                   {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
                   Save Changes
                 </Button>
-                <Button variant="outline" onClick={handleCancel}>
+                <Button variant="outline" onClick={handleCancel} className="w-full sm:w-auto">
                   Cancel
                 </Button>
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="flex items-center gap-3">
-                <Mail className="w-5 h-5 text-gray-400" />
-                <div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+              <div className="flex items-start gap-3 min-w-0">
+                <Mail className="w-5 h-5 text-gray-400 shrink-0 mt-0.5" />
+                <div className="min-w-0">
                   <p className="text-sm text-gray-600">Email</p>
-                  <p className="font-medium">{organizerData.email}</p>
+                  <p className="font-medium break-all">{organizerData.email}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
-                <Phone className="w-5 h-5 text-gray-400" />
-                <div>
+              <div className="flex items-start gap-3 min-w-0">
+                <Phone className="w-5 h-5 text-gray-400 shrink-0 mt-0.5" />
+                <div className="min-w-0">
                   <p className="text-sm text-gray-600">Phone</p>
-                  <p className="font-medium">{organizerData.phone}</p>
+                  <p className="font-medium break-words">{organizerData.phone}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
-                <Globe className="w-5 h-5 text-gray-400" />
-                <div>
+              <div className="flex items-start gap-3 min-w-0">
+                <Globe className="w-5 h-5 text-gray-400 shrink-0 mt-0.5" />
+                <div className="min-w-0">
                   <p className="text-sm text-gray-600">Website</p>
-                  <p className="font-medium text-[#004A96]">{organizerData.website}</p>
+                  <p className="font-medium text-[#004A96] break-all">{organizerData.website}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
-                <MapPin className="w-5 h-5 text-gray-400" />
-                <div>
+              <div className="flex items-start gap-3 min-w-0">
+                <MapPin className="w-5 h-5 text-gray-400 shrink-0 mt-0.5" />
+                <div className="min-w-0">
                   <p className="text-sm text-gray-600">Country</p>
-                  <p className="font-medium">{organizerData.organizerCountry || "—"}</p>
+                  <p className="font-medium break-words">{organizerData.organizerCountry || "—"}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
-                <MapPin className="w-5 h-5 text-gray-400" />
-                <div>
+              <div className="flex items-start gap-3 min-w-0">
+                <MapPin className="w-5 h-5 text-gray-400 shrink-0 mt-0.5" />
+                <div className="min-w-0">
                   <p className="text-sm text-gray-600">State / Region</p>
-                  <p className="font-medium">{organizerData.organizerState || "—"}</p>
+                  <p className="font-medium break-words">{organizerData.organizerState || "—"}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
-                <MapPin className="w-5 h-5 text-gray-400" />
-                <div>
+              <div className="flex items-start gap-3 min-w-0">
+                <MapPin className="w-5 h-5 text-gray-400 shrink-0 mt-0.5" />
+                <div className="min-w-0">
                   <p className="text-sm text-gray-600">City</p>
-                  <p className="font-medium">{organizerData.organizerCity || "—"}</p>
+                  <p className="font-medium break-words">{organizerData.organizerCity || "—"}</p>
                 </div>
               </div>
             </div>
@@ -661,27 +660,28 @@ export default function OrganizerInfo({ organizerData: initialData, onOrganizerU
       </Card>
 
       {/* Company Information */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Building className="w-5 h-5" />
+      <Card className="gap-0 py-0">
+        <CardHeader className="px-4 sm:px-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <Building className="w-5 h-5 shrink-0" />
               Company Information
             </CardTitle>
             <Button
               variant="outline"
               size="sm"
               onClick={() => setIsEditing(isEditing === "company" ? null : "company")}
+              className="w-full sm:w-auto shrink-0"
             >
               <Edit className="w-4 h-4 mr-2" />
               {isEditing === "company" ? "Cancel" : "Edit"}
             </Button>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-4 sm:px-6">
           {isEditing === "company" ? (
             <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="founded">Founded Year</Label>
                   <Input
@@ -699,30 +699,30 @@ export default function OrganizerInfo({ organizerData: initialData, onOrganizerU
                   />
                 </div>
               </div>
-              <div className="flex gap-2">
-                <Button onClick={() => handleSave("company")} disabled={loading}>
+              <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                <Button onClick={() => handleSave("company")} disabled={loading} className="w-full sm:w-auto">
                   {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
                   Save Changes
                 </Button>
-                <Button variant="outline" onClick={handleCancel}>
+                <Button variant="outline" onClick={handleCancel} className="w-full sm:w-auto">
                   Cancel
                 </Button>
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="flex items-center gap-3">
-                <Calendar className="w-5 h-5 text-gray-400" />
-                <div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+              <div className="flex items-start gap-3 min-w-0">
+                <Calendar className="w-5 h-5 text-gray-400 shrink-0 mt-0.5" />
+                <div className="min-w-0">
                   <p className="text-sm text-gray-600">Founded</p>
-                  <p className="font-medium">{organizerData.founded || "—"}</p>
+                  <p className="font-medium break-words">{organizerData.founded || "—"}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
-                <Users className="w-5 h-5 text-gray-400" />
-                <div>
+              <div className="flex items-start gap-3 min-w-0">
+                <Users className="w-5 h-5 text-gray-400 shrink-0 mt-0.5" />
+                <div className="min-w-0">
                   <p className="text-sm text-gray-600">Team Size</p>
-                  <p className="font-medium">{organizerData.teamSize} employees</p>
+                  <p className="font-medium break-words">{organizerData.teamSize} employees</p>
                 </div>
               </div>
             </div>
@@ -731,12 +731,12 @@ export default function OrganizerInfo({ organizerData: initialData, onOrganizerU
       </Card>
 
       {/* Specialties */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <CardTitle>Event Specialties</CardTitle>
-              <p className="text-xs text-gray-500 whitespace-nowrap">
+      <Card className="gap-0 py-0">
+        <CardHeader className="px-4 sm:px-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0 space-y-1">
+              <CardTitle className="text-base sm:text-lg">Event Specialties</CardTitle>
+              <p className="text-xs text-gray-500">
                 (Please click on the plus button to add, then click on Done)
               </p>
             </div>
@@ -744,6 +744,7 @@ export default function OrganizerInfo({ organizerData: initialData, onOrganizerU
             <Button
               variant="outline"
               size="sm"
+              className="w-full sm:w-auto shrink-0"
               onClick={() => {
                 if (isEditing === "specialties") {
                   handleSpecialtiesDone()
@@ -758,7 +759,7 @@ export default function OrganizerInfo({ organizerData: initialData, onOrganizerU
           </div>
         </CardHeader>
 
-        <CardContent>
+        <CardContent className="px-4 sm:px-6">
           <div className="flex flex-wrap gap-2 mb-4">
             {organizerData.specialties.map((specialty, index) => (
               <Badge key={index} variant="secondary" className="flex items-center gap-1">
@@ -777,14 +778,15 @@ export default function OrganizerInfo({ organizerData: initialData, onOrganizerU
           </div>
 
           {isEditing === "specialties" && (
-            <div className="flex gap-2">
+            <div className="flex flex-col gap-2 sm:flex-row">
               <Input
                 value={newSpecialty}
                 onChange={(e) => setNewSpecialty(e.target.value)}
                 placeholder="Add new specialty"
                 onKeyPress={(e) => e.key === "Enter" && addSpecialty()}
+                className="min-w-0"
               />
-              <Button onClick={addSpecialty}>
+              <Button onClick={addSpecialty} className="w-full sm:w-auto shrink-0">
                 <Plus className="w-4 h-4" />
               </Button>
             </div>
@@ -793,15 +795,15 @@ export default function OrganizerInfo({ organizerData: initialData, onOrganizerU
       </Card>
 
       {/* Achievements */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <CardTitle className="flex items-center gap-2">
-                <Award className="w-5 h-5" />
+      <Card className="gap-0 py-0">
+        <CardHeader className="px-4 sm:px-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0 space-y-1">
+              <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                <Award className="w-5 h-5 shrink-0" />
                 Achievements & Awards
               </CardTitle>
-              <p className="text-xs text-gray-500 whitespace-nowrap">
+              <p className="text-xs text-gray-500">
                 (Please click on the plus button to add, then click on Done)
               </p>
             </div>
@@ -809,6 +811,7 @@ export default function OrganizerInfo({ organizerData: initialData, onOrganizerU
             <Button
               variant="outline"
               size="sm"
+              className="w-full sm:w-auto shrink-0"
               onClick={() => {
                 if (isEditing === "achievements") {
                   handleAchievementsDone()
@@ -823,13 +826,13 @@ export default function OrganizerInfo({ organizerData: initialData, onOrganizerU
           </div>
         </CardHeader>
 
-        <CardContent>
+        <CardContent className="px-4 sm:px-6">
           <div className="space-y-3 mb-4">
             {organizerData.achievements.map((achievement, index) => (
-              <div key={index} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-                <div className="w-2 h-2 bg-[#004A96] rounded-full mt-2" />
-                <div className="flex-1">
-                  <p className="text-gray-800">{achievement}</p>
+              <div key={index} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg min-w-0">
+                <div className="w-2 h-2 bg-[#004A96] rounded-full mt-2 shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-gray-800 break-words text-sm sm:text-base">{achievement}</p>
                 </div>
                 {isEditing === "achievements" && (
                   <Button
@@ -846,14 +849,15 @@ export default function OrganizerInfo({ organizerData: initialData, onOrganizerU
           </div>
 
           {isEditing === "achievements" && (
-            <div className="flex gap-2">
+            <div className="flex flex-col gap-2 sm:flex-row">
               <Input
                 value={newAchievement}
                 onChange={(e) => setNewAchievement(e.target.value)}
                 placeholder="Add new achievement"
                 onKeyPress={(e) => e.key === "Enter" && addAchievement()}
+                className="min-w-0"
               />
-              <Button onClick={addAchievement}>
+              <Button onClick={addAchievement} className="w-full sm:w-auto shrink-0">
                 <Plus className="w-4 h-4" />
               </Button>
             </div>
@@ -862,12 +866,12 @@ export default function OrganizerInfo({ organizerData: initialData, onOrganizerU
       </Card>
 
       {/* Certifications */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <CardTitle>Certifications & Licenses</CardTitle>
-              <p className="text-xs text-gray-500 whitespace-nowrap">
+      <Card className="gap-0 py-0">
+        <CardHeader className="px-4 sm:px-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0 space-y-1">
+              <CardTitle className="text-base sm:text-lg">Certifications & Licenses</CardTitle>
+              <p className="text-xs text-gray-500">
                 (Please click on the plus button to add, then click on Done)
               </p>
             </div>
@@ -875,6 +879,7 @@ export default function OrganizerInfo({ organizerData: initialData, onOrganizerU
             <Button
               variant="outline"
               size="sm"
+              className="w-full sm:w-auto shrink-0"
               onClick={() => {
                 if (isEditing === "certifications") {
                   handleCertificationsDone()
@@ -889,16 +894,16 @@ export default function OrganizerInfo({ organizerData: initialData, onOrganizerU
           </div>
         </CardHeader>
 
-        <CardContent>
+        <CardContent className="px-4 sm:px-6">
           <div className="space-y-3 mb-4">
             {organizerData.certifications.map((certification, index) => (
               <div
                 key={index}
-                className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200"
+                className="flex items-start justify-between gap-3 p-3 bg-green-50 rounded-lg border border-green-200 min-w-0"
               >
-                <div className="flex items-center gap-3">
-                  <Award className="w-5 h-5 text-green-600" />
-                  <p className="font-medium text-gray-800">{certification}</p>
+                <div className="flex items-start gap-3 min-w-0 flex-1">
+                  <Award className="w-5 h-5 text-green-600 shrink-0 mt-0.5" />
+                  <p className="font-medium text-gray-800 break-words text-sm sm:text-base">{certification}</p>
                 </div>
                 {isEditing === "certifications" && (
                   <Button
@@ -915,14 +920,15 @@ export default function OrganizerInfo({ organizerData: initialData, onOrganizerU
           </div>
 
           {isEditing === "certifications" && (
-            <div className="flex gap-2">
+            <div className="flex flex-col gap-2 sm:flex-row">
               <Input
                 value={newCertification}
                 onChange={(e) => setNewCertification(e.target.value)}
                 placeholder="Add new certification"
                 onKeyPress={(e) => e.key === "Enter" && addCertification()}
+                className="min-w-0"
               />
-              <Button onClick={addCertification}>
+              <Button onClick={addCertification} className="w-full sm:w-auto shrink-0">
                 <Plus className="w-4 h-4" />
               </Button>
             </div>

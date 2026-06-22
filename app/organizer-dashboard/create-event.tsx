@@ -27,6 +27,7 @@ import { CreateEventDetailsTab } from "@/components/organizer-create-event/tabs/
 import { CreateEventPricingTab } from "@/components/organizer-create-event/tabs/CreateEventPricingTab"
 import { CreateEventMediaTab } from "@/components/organizer-create-event/tabs/CreateEventMediaTab"
 import { CreateEventPreviewTab } from "@/components/organizer-create-event/tabs/CreateEventPreviewTab"
+import { cn } from "@/lib/utils"
 
 // Validation function for each tab
 const validateBasicTab = (formData: EventFormData): { isValid: boolean; errorField?: string } => {
@@ -615,11 +616,11 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="bg-card border rounded-lg p-4">
-        <div className="flex items-center justify-between mb-2">
+    <div className="w-full min-w-0 max-w-full space-y-4 sm:space-y-6">
+      <div className="bg-card border rounded-lg p-3 sm:p-4">
+        <div className="flex items-center justify-between mb-2 gap-2">
           <span className="text-sm font-medium">Form Completion</span>
-          <span className="text-sm text-muted-foreground">{completionPercentage}%</span>
+          <span className="text-sm text-muted-foreground shrink-0">{completionPercentage}%</span>
         </div>
         <Progress value={completionPercentage} className="h-2 bg-gray-200 [&>div]:bg-gradient-to-r [&>div]:from-[#004A96] [&>div]:to-[#003d7a]" />
         <p className="text-xs text-muted-foreground mt-1">
@@ -627,12 +628,12 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
         </p>
       </div>
 
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">Create New Event</h2>
-          <p className="text-gray-600">Fill in all details to create your event. All fields are required.</p>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <h2 className="text-xl font-bold text-gray-900 sm:text-2xl">Create New Event</h2>
+          <p className="text-sm text-gray-600 sm:text-base">Fill in all details to create your event. All fields are required.</p>
         </div>
-        <div className="flex gap-3">
+        <div className="hidden shrink-0 sm:flex sm:gap-3">
           <Button
             type="button"
             onClick={() => void handlePublishEvent()}
@@ -654,22 +655,28 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-        <TabsList className="grid w-full grid-cols-5 rounded-xl bg-gray-100 p-1">
-          {tabs.map((tab) => (
-            <TabsTrigger
-              key={tab.id}
-              value={tab.id}
-              className={`rounded-lg text-gray-600 transition-all duration-200 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#004A96] data-[state=active]:to-[#004A96] data-[state=active]:text-white data-[state=active]:shadow-md ${tabValidationErrors[tab.id] ? "border-2 border-red-500 text-red-600" : ""
-                }`}
-            >
-              {tab.label}
-              {tabValidationErrors[tab.id] && (
-                <span className="ml-1 text-xs text-red-500">*</span>
-              )}
-            </TabsTrigger>
-          ))}
-        </TabsList>
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full min-w-0">
+        <div className="overflow-x-auto overscroll-x-contain pb-1 [-webkit-overflow-scrolling:touch]">
+          <TabsList className="inline-flex h-auto w-max min-w-full flex-nowrap gap-1 rounded-xl bg-gray-100 p-1 md:grid md:w-full md:grid-cols-5 md:gap-1">
+            {tabs.map((tab) => (
+              <TabsTrigger
+                key={tab.id}
+                value={tab.id}
+                className={cn(
+                  "shrink-0 min-w-[5.5rem] rounded-lg px-3 py-2.5 text-xs font-medium text-gray-600 transition-all duration-200 sm:min-w-0 sm:px-2 sm:py-2 sm:text-sm md:flex-1",
+                  "data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#004A96] data-[state=active]:to-[#004A96] data-[state=active]:text-white data-[state=active]:shadow-md",
+                  tabValidationErrors[tab.id] && "border-2 border-red-500 text-red-600",
+                )}
+              >
+                <span className="md:hidden">{tab.shortLabel}</span>
+                <span className="hidden md:inline">{tab.label}</span>
+                {tabValidationErrors[tab.id] && (
+                  <span className="ml-1 text-xs text-red-500">*</span>
+                )}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </div>
 
         <TabsContent value="basic" className="space-y-6">
           <CreateEventBasicTab
@@ -734,31 +741,31 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
         </TabsContent>
       </Tabs>
 
-      <div className="flex justify-between pt-6 border-t">
+      <div className="flex flex-col-reverse gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between sm:pt-6">
         <Button
           type="button"
           variant="outline"
           onClick={handlePreviousTab}
           disabled={activeTab === "basic"}
-          className="flex items-center gap-2 bg-transparent"
+          className="flex w-full items-center justify-center gap-2 bg-transparent sm:w-auto"
         >
           <ChevronLeft className="w-4 h-4" />
           Previous
         </Button>
 
-        <div className="flex gap-3">
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:gap-3">
           {activeTab === "preview" ? (
             <Button
               type="button"
               onClick={() => void handlePublishEvent()}
               disabled={isPublishing || completionPercentage < 100}
-              className="bg-[#004A96] hover:bg-[#003d7a]"
+              className="w-full bg-[#004A96] hover:bg-[#003d7a] sm:w-auto"
             >
               <Send className="w-4 h-4 mr-2" />
               {isPublishing ? "Submitting..." : "Submit for Approval"}
             </Button>
           ) : (
-            <Button type="button" onClick={handleNextTab} className="flex items-center gap-2 bg-[#004A96] hover:bg-[#003d7a]">
+            <Button type="button" onClick={handleNextTab} className="flex w-full items-center justify-center gap-2 bg-[#004A96] hover:bg-[#003d7a] sm:w-auto">
               Next
               <ChevronRight className="w-4 h-4" />
             </Button>

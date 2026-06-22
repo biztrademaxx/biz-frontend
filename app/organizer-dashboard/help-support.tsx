@@ -105,40 +105,41 @@ export function OrganizerHelpSupport() {
     }
 
     return (
-        <div className="max-w-6xl mx-auto py-12 px-4 sm:px-6 space-y-12">
+        <div className="w-full min-w-0 max-w-full mx-auto space-y-6 sm:space-y-10 md:space-y-12 py-2 sm:py-4">
             {/* Header Section */}
-            <div className="text-center">
-                <h1 className="text-4xl font-bold text-gray-900 mb-4">Help & Support</h1>
-                <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            <div className="text-center min-w-0">
+                <h1 className="text-2xl font-bold text-gray-900 mb-3 sm:text-3xl md:text-4xl sm:mb-4">Help & Support</h1>
+                <p className="text-base text-gray-600 max-w-3xl mx-auto sm:text-lg md:text-xl break-words px-1">
                     Welcome to the Organizer Help & Support section.
                     This FAQ is designed to address common questions and provide clear guidance to help you efficiently manage your exhibitions and events on Biztradefairs.com.
                 </p>
             </div>
 
             {/* FAQs Section */}
-            <section className="bg-white p-8 rounded-xl shadow-lg border border-gray-100">
-                <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-                    <HelpCircle className="text-[#004A96]" size={28} />
-                    Frequently Asked Questions
+            <section className="bg-white p-4 sm:p-6 md:p-8 rounded-xl shadow-lg border border-gray-100 min-w-0 overflow-hidden">
+                <h2 className="text-xl font-bold mb-4 sm:text-2xl sm:mb-6 flex items-center gap-2 flex-wrap">
+                    <HelpCircle className="text-[#004A96] shrink-0" size={24} />
+                    <span className="min-w-0">Frequently Asked Questions</span>
                 </h2>
-                <div className="space-y-4">
+                <div className="space-y-3 sm:space-y-4">
                     {faqList.map((faq, index) => (
                         <div
                             key={index}
-                            className="border border-gray-200 rounded-lg overflow-hidden transition-all hover:shadow-sm"
+                            className="border border-gray-200 rounded-lg overflow-hidden transition-all hover:shadow-sm min-w-0"
                         >
                             <button
-                                className="w-full flex items-center gap-4 p-6 font-medium text-left bg-gray-50 hover:bg-gray-100 transition"
+                                type="button"
+                                className="w-full flex items-start gap-3 p-4 sm:p-6 font-medium text-left bg-gray-50 hover:bg-gray-100 transition min-w-0"
                                 onClick={() => toggleFAQ(index)}
                             >
-                                <span className="text-2xl font-bold text-gray-600 w-6 flex-shrink-0">
+                                <span className="text-xl sm:text-2xl font-bold text-gray-600 w-5 sm:w-6 shrink-0 leading-none pt-0.5">
                                     {openFAQIndex === index ? "−" : "+"}
                                 </span>
-                                <span className="text-gray-900 text-lg">{faq.question}</span>
+                                <span className="text-gray-900 text-base sm:text-lg min-w-0 flex-1 break-words text-left">{faq.question}</span>
                             </button>
 
                             {openFAQIndex === index && (
-                                <div className="p-6 text-gray-700 bg-white whitespace-pre-line border-t border-gray-200">
+                                <div className="p-4 sm:p-6 text-gray-700 bg-white whitespace-pre-line border-t border-gray-200 break-words text-sm sm:text-base">
                                     {faq.answer}
                                 </div>
                             )}
@@ -150,68 +151,78 @@ export function OrganizerHelpSupport() {
             <HelpSupportTicketsSection />
 
             {/* Contact Support Section */}
-            <div className="bg-white p-8 rounded-xl shadow-lg space-y-6 border border-gray-100">
-                <h2 className="text-2xl font-bold flex items-center gap-2">
-                    <MessageCircle className="text-[#004A96]" size={28} />
-                    Contact Support
+            <div className="bg-white p-4 sm:p-6 md:p-8 rounded-xl shadow-lg space-y-4 sm:space-y-6 border border-gray-100 min-w-0 overflow-hidden">
+                <h2 className="text-xl font-bold sm:text-2xl flex items-center gap-2 flex-wrap">
+                    <MessageCircle className="text-[#004A96] shrink-0" size={24} />
+                    <span className="min-w-0">Contact Support</span>
                 </h2>
-                <p className="text-gray-700">
+                <p className="text-gray-700 text-sm sm:text-base break-words">
                     Welcome to the Organizer Support Center of <span className="font-semibold text-[#004A96]">BizTradeFairs.com</span>.
                     We're here to ensure your event management experience is seamless, efficient, and successful.
                 </p>
 
-                <div className="space-y-4">
-                    <div className="p-4 bg-[#004A96]/10 rounded-lg border border-[#dbeafe]">
-                        <div className="flex items-start gap-3">
-                            <Mail className="text-[#004A96] mt-1 flex-shrink-0" size={20} />
-                            <div>
-                                <h3 className="font-semibold text-gray-900">Organizer Email Support</h3>
-                                <p className="text-gray-700 text-sm mt-1">For event management queries, technical support, and platform assistance:</p>
-                                <p className="text-[#004A96] font-medium mt-2">organizer-support@biztradefairs.com</p>
+                <div className="space-y-3 sm:space-y-4">
+                    <div className="p-3 sm:p-4 bg-[#004A96]/10 rounded-lg border border-[#dbeafe] min-w-0 overflow-hidden">
+                        <div className="flex items-start gap-3 min-w-0">
+                            <Mail className="text-[#004A96] mt-0.5 shrink-0" size={20} />
+                            <div className="min-w-0 flex-1">
+                                <h3 className="font-semibold text-gray-900 text-sm sm:text-base">Organizer Email Support</h3>
+                                <p className="text-gray-700 text-xs sm:text-sm mt-1 break-words">For event management queries, technical support, and platform assistance:</p>
+                                <a
+                                    href="mailto:organizer-support@biztradefairs.com"
+                                    className="text-[#004A96] font-medium mt-2 block break-all text-sm sm:text-base hover:underline"
+                                >
+                                    organizer-support@biztradefairs.com
+                                </a>
                             </div>
                         </div>
                     </div>
 
-                    <div className="p-4 bg-green-50 rounded-lg border border-green-100">
-                        <div className="flex items-start gap-3">
-                            <Phone className="text-green-600 mt-1 flex-shrink-0" size={20} />
-                            <div>
-                                <h3 className="font-semibold text-gray-900">Priority Phone Support</h3>
-                                <p className="text-gray-700 text-sm mt-1">Dedicated helpline for organizers during extended business hours:</p>
-                                <p className="text-green-600 font-medium mt-2">+91-9148319993</p>
-                                <div className="flex items-center gap-1 text-sm text-gray-600 mt-2">
-                                    <Clock size={16} />
-                                    <span>Monday – Saturday, 9:00 AM – 7:00 PM (IST)</span>
+                    <div className="p-3 sm:p-4 bg-green-50 rounded-lg border border-green-100 min-w-0 overflow-hidden">
+                        <div className="flex items-start gap-3 min-w-0">
+                            <Phone className="text-green-600 mt-0.5 shrink-0" size={20} />
+                            <div className="min-w-0 flex-1">
+                                <h3 className="font-semibold text-gray-900 text-sm sm:text-base">Priority Phone Support</h3>
+                                <p className="text-gray-700 text-xs sm:text-sm mt-1 break-words">Dedicated helpline for organizers during extended business hours:</p>
+                                <a
+                                    href="tel:+919148319993"
+                                    className="text-green-600 font-medium mt-2 block break-words text-sm sm:text-base hover:underline"
+                                >
+                                    +91-9148319993
+                                </a>
+                                <div className="flex flex-wrap items-start gap-1.5 text-xs sm:text-sm text-gray-600 mt-2">
+                                    <Clock size={16} className="shrink-0 mt-0.5" />
+                                    <span className="break-words">Monday – Saturday, 9:00 AM – 7:00 PM (IST)</span>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
-                        <div className="flex items-start gap-3">
-                            <Building className="text-blue-600 mt-1 flex-shrink-0" size={20} />
-                            <div>
-                                <h3 className="font-semibold text-gray-900">Corporate Office</h3>
-                                <p className="text-gray-700 text-sm mt-1">BizTradeFairs.com</p>
-                                <p className="text-gray-700 text-sm">Maxx Business Media Pvt. Ltd.</p>
-                                <p className="text-gray-700 text-sm mt-1">
+                    <div className="p-3 sm:p-4 bg-blue-50 rounded-lg border border-blue-100 min-w-0 overflow-hidden">
+                        <div className="flex items-start gap-3 min-w-0">
+                            <Building className="text-blue-600 mt-0.5 shrink-0" size={20} />
+                            <div className="min-w-0 flex-1">
+                                <h3 className="font-semibold text-gray-900 text-sm sm:text-base">Corporate Office</h3>
+                                <p className="text-gray-700 text-xs sm:text-sm mt-1 break-words">BizTradeFairs.com</p>
+                                <p className="text-gray-700 text-xs sm:text-sm break-words">Maxx Business Media Pvt. Ltd.</p>
+                                <p className="text-gray-700 text-xs sm:text-sm mt-1 break-words leading-relaxed">
                                     T9, 3rd Floor, Swastik Manandi Arcade, SC Road, Seshadripuram, Bengaluru – 560020, INDIA
                                 </p>
                             </div>
                         </div>
                     </div>
 
-                    <div className="p-4 bg-amber-50 rounded-lg border border-amber-100">
-                        <div className="flex items-start gap-3">
-                            <Clock className="text-amber-600 mt-1 flex-shrink-0" size={20} />
-                            <div>
-                                <h3 className="font-semibold text-gray-900">Priority Live Chat</h3>
-                                <p className="text-gray-700 text-sm mt-1">
+                    <div className="p-3 sm:p-4 bg-amber-50 rounded-lg border border-amber-100 min-w-0 overflow-hidden">
+                        <div className="flex items-start gap-3 min-w-0">
+                            <Clock className="text-amber-600 mt-0.5 shrink-0" size={20} />
+                            <div className="min-w-0 flex-1">
+                                <h3 className="font-semibold text-gray-900 text-sm sm:text-base">Priority Live Chat</h3>
+                                <p className="text-gray-700 text-xs sm:text-sm mt-1 break-words">
                                     Click on the Chat Now button for instant connection with our organizer support team.
                                 </p>
-                                <div className="flex items-center gap-1 text-sm text-gray-600 mt-2">
-                                    <Clock size={16} />
-                                    <span>Monday – Saturday, 9:00 AM – 7:00 PM (IST)</span>
+                                <div className="flex flex-wrap items-start gap-1.5 text-xs sm:text-sm text-gray-600 mt-2">
+                                    <Clock size={16} className="shrink-0 mt-0.5" />
+                                    <span className="break-words">Monday – Saturday, 9:00 AM – 7:00 PM (IST)</span>
                                 </div>
                             </div>
                         </div>

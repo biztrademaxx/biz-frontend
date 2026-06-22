@@ -18,6 +18,7 @@ import {
   venueCardShell,
   venuePrimaryBtn,
   venueTabsList,
+  venueTabsScrollWrapper,
   venueTabsTrigger,
 } from "./venue-dashboard-theme"
 
@@ -348,9 +349,9 @@ export default function CommunicationCenter({ params }: CommunicationCenterProps
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-900">Communication Center</h1>
+    <div className="min-w-0 space-y-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h1 className="text-xl font-bold text-gray-900 sm:text-2xl md:text-3xl">Communication Center</h1>
         <div className="flex items-center gap-2">
           <Badge variant="outline" className="text-red-600">
             {notifications.filter((n) => !n.read).length} Unread
@@ -358,12 +359,14 @@ export default function CommunicationCenter({ params }: CommunicationCenterProps
         </div>
       </div>
 
-      <Tabs defaultValue="messages" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="messages">Messages</TabsTrigger>
-          <TabsTrigger value="notifications">Notifications</TabsTrigger>
-          <TabsTrigger value="broadcast">Broadcast</TabsTrigger>
-        </TabsList>
+      <Tabs defaultValue="messages" className="min-w-0 space-y-6">
+        <div className={venueTabsScrollWrapper}>
+          <TabsList className={cn(venueTabsList, "mb-0")}>
+            <TabsTrigger value="messages" className={venueTabsTrigger}>Messages</TabsTrigger>
+            <TabsTrigger value="notifications" className={venueTabsTrigger}>Notifications</TabsTrigger>
+            <TabsTrigger value="broadcast" className={venueTabsTrigger}>Broadcast</TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="messages" className="space-y-6">
           <div className="">
@@ -395,16 +398,16 @@ export default function CommunicationCenter({ params }: CommunicationCenterProps
                       !notification.read ? "bg-blue-50 border-blue-200" : "bg-gray-50 border-gray-200"
                     }`}
                   >
-                    <div className="flex items-start space-x-3">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:space-x-3">
                       {getNotificationIcon(notification.type)}
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <h4 className="font-medium text-sm text-gray-900">{notification.title}</h4>
-                          <Badge className={getPriorityColor(notification.priority)} variant="outline">
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                          <h4 className="font-medium text-sm text-gray-900 break-words">{notification.title}</h4>
+                          <Badge className={cn(getPriorityColor(notification.priority), "w-fit shrink-0")} variant="outline">
                             {notification.priority}
                           </Badge>
                         </div>
-                        <p className="text-sm text-gray-600 mt-1">{notification.message}</p>
+                        <p className="text-sm text-gray-600 mt-1 break-words">{notification.message}</p>
                         <p className="text-xs text-gray-400 mt-2">{notification.timestamp}</p>
                       </div>
                       {!notification.read && (
@@ -504,12 +507,12 @@ export default function CommunicationCenter({ params }: CommunicationCenterProps
                     />
                   </div>
 
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div className="text-sm text-gray-600">{selectedOrganizers.length} recipient(s) selected</div>
                     <Button
                       onClick={sendBroadcast}
                       disabled={!broadcastMessage.trim() || selectedOrganizers.length === 0 || sendingBroadcast}
-                      className="flex items-center space-x-2"
+                      className="flex w-full items-center justify-center space-x-2 sm:w-auto"
                     >
                       {sendingBroadcast ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                       <span>{sendingBroadcast ? "Sending..." : "Send Broadcast"}</span>

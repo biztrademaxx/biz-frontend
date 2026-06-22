@@ -452,18 +452,18 @@ export default function AppointmentScheduling({ venueId, onCountChange }: Appoin
   }
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Visitor Appointment Scheduling</h1>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <h1 className="text-xl font-bold text-slate-900 sm:text-2xl">Visitor Appointment Scheduling</h1>
           <p className="text-sm text-slate-500 mt-0.5">Manage and track visitor meeting requests</p>
         </div>
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
             size="sm"
-            className={cn("gap-1.5 border-slate-200 text-slate-700 text-xs", view === "calendar" && "bg-slate-100")}
+            className={cn("w-full gap-1.5 border-slate-200 text-slate-700 text-xs sm:w-auto", view === "calendar" && "bg-slate-100")}
             onClick={() => setView(view === "list" ? "calendar" : "list")}
           >
             <CalendarDays className="h-4 w-4" />
@@ -544,7 +544,8 @@ export default function AppointmentScheduling({ venueId, onCountChange }: Appoin
         </div>
       ) : (
         /* Calendar View */
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="overflow-x-auto">
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm min-w-[320px]">
           <div className="flex items-center justify-between mb-4">
             <Button variant="outline" size="sm" className="border-slate-200" onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1))}>
               <ChevronLeft className="h-4 w-4" />
@@ -598,11 +599,12 @@ export default function AppointmentScheduling({ venueId, onCountChange }: Appoin
             })}
           </div>
         </div>
+        </div>
       )}
 
       {/* Detail Dialog */}
       <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
-        <DialogContent className="max-w-xl rounded-2xl">
+        <DialogContent className="w-[calc(100vw-2rem)] max-w-xl rounded-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-lg">
               <User className="h-5 w-5 text-[#004A96]" />
@@ -626,7 +628,7 @@ export default function AppointmentScheduling({ venueId, onCountChange }: Appoin
               </div>
 
               {/* Contact Info */}
-              <div className="grid grid-cols-2 gap-3 rounded-xl border border-slate-100 bg-slate-50 p-3 text-sm">
+              <div className="grid grid-cols-1 gap-3 rounded-xl border border-slate-100 bg-slate-50 p-3 text-sm sm:grid-cols-2">
                 <div className="space-y-2">
                   <p className="font-semibold text-slate-700 text-xs uppercase tracking-wide">Contact</p>
                   <div className="flex items-center gap-1.5 text-slate-600">
@@ -710,12 +712,12 @@ export default function AppointmentScheduling({ venueId, onCountChange }: Appoin
               )}
 
               {/* Actions */}
-              <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
-                <Button variant="outline" className="rounded-xl" onClick={() => setDetailsOpen(false)}>
+              <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end pt-2 border-t border-slate-100">
+                <Button variant="outline" className="rounded-xl w-full sm:w-auto" onClick={() => setDetailsOpen(false)}>
                   Cancel
                 </Button>
                 <Button
-                  className="rounded-xl bg-[#004A96] text-white hover:bg-[#003d7a]"
+                  className="rounded-xl bg-[#004A96] text-white hover:bg-[#003d7a] w-full sm:w-auto"
                   onClick={() => {
                     if (selectedAppointment) {
                       updateAppointment(selectedAppointment.id, selectedAppointment.status, selectedAppointment.notes)

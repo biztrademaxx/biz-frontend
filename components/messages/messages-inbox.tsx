@@ -208,7 +208,7 @@ export function MessagesInbox(props: MessagesInboxProps) {
   return (
     <div
       className={cn(
-        "flex h-[min(720px,calc(100vh-12rem))] min-h-[560px] overflow-hidden rounded-2xl border",
+        "flex h-[min(720px,calc(100vh-12rem))] min-h-[min(560px,calc(100vh-10rem))] overflow-hidden rounded-2xl border",
         theme.shell,
       )}
     >

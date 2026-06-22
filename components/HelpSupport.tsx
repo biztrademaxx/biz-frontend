@@ -5,6 +5,7 @@ import { devLog } from "@/lib/dev-log"
 
 import { useState } from "react"
 import { HelpSupportTicketsSection } from "@/components/support/HelpSupportTicketsSection"
+import { cn } from "@/lib/utils"
 import {
     Phone,
     Mail,
@@ -110,13 +111,23 @@ export function HelpSupport({ variant = "default" }: { variant?: "default" | "ve
     }
 
     return (
-        <div className="max-w-6xl mx-auto py-12 px-4 sm:px-6 space-y-12">
+        <div className={cn(
+            "w-full min-w-0 max-w-full mx-auto",
+            venue ? "space-y-6 sm:space-y-10 md:space-y-12 py-2 sm:py-4" : "max-w-6xl py-12 px-4 sm:px-6 space-y-12"
+        )}>
             {/* Header Section */}
-            <div className="text-center">
-                <h1 className="text-4xl font-bold text-gray-900 mb-4">Help & Support</h1>
-                <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                    This FAQ designed to address common questions and provide quick, clear answers to help you
-                    understand more about our services/products
+            <div className="text-center min-w-0">
+                <h1 className={cn(
+                    "font-bold text-gray-900 mb-3 sm:mb-4",
+                    venue ? "text-2xl sm:text-3xl md:text-4xl" : "text-4xl mb-4"
+                )}>Help & Support</h1>
+                <p className={cn(
+                    "text-gray-600 max-w-3xl mx-auto break-words px-1",
+                    venue ? "text-base sm:text-lg md:text-xl" : "text-xl"
+                )}>
+                    {venue
+                        ? "Welcome to the Venue Help & Support section. This FAQ guides venue partners in managing listings, bookings, and communications through the Biztradefairs.com Venue Dashboard."
+                        : "This FAQ designed to address common questions and provide quick, clear answers to help you understand more about our services/products"}
                 </p>
             </div>
 
@@ -206,32 +217,49 @@ export function HelpSupport({ variant = "default" }: { variant?: "default" | "ve
             {/* </section> */}
 
             {/* FAQs Section */}
-            <section className={sectionShell}>
-                <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-                    <HelpCircle className={accentIcon} size={28} />
-                    Frequently Asked Questions
+            <section className={cn(sectionShell, "min-w-0 overflow-hidden", venue && "p-4 sm:p-6 md:p-8")}>
+                <h2 className={cn(
+                    "font-bold mb-4 sm:mb-6 flex items-center gap-2 flex-wrap",
+                    venue ? "text-xl sm:text-2xl" : "text-2xl"
+                )}>
+                    <HelpCircle className={cn(accentIcon, "shrink-0")} size={venue ? 24 : 28} />
+                    <span className="min-w-0">Frequently Asked Questions</span>
                 </h2>
-                <div className="space-y-4">
+                <div className={venue ? "space-y-3 sm:space-y-4" : "space-y-4"}>
                     {faqList.map((faq, index) => (
                         <div
                             key={index}
-                            className={`border border-gray-200 ${faqItemRadius} overflow-hidden transition-all hover:shadow-sm`}
+                            className={cn(
+                                `border border-gray-200 ${faqItemRadius} overflow-hidden transition-all hover:shadow-sm`,
+                                venue && "min-w-0"
+                            )}
                         >
                             <button
-                                className="w-full flex items-center gap-4 p-6 font-medium text-left bg-gray-50 hover:bg-gray-100 transition"
+                                type="button"
+                                className={cn(
+                                    "w-full flex items-start gap-3 font-medium text-left bg-gray-50 hover:bg-gray-100 transition min-w-0",
+                                    venue ? "p-4 sm:p-6" : "p-6 items-center gap-4"
+                                )}
                                 onClick={() => toggleFAQ(index)}
                             >
-                                {/* + / - button on left */}
-                                <span className="text-2xl font-bold text-gray-600 w-6 flex-shrink-0">
+                                <span className={cn(
+                                    "font-bold text-gray-600 shrink-0 leading-none",
+                                    venue ? "text-xl sm:text-2xl w-5 sm:w-6 pt-0.5" : "text-2xl w-6"
+                                )}>
                                     {openFAQIndex === index ? "−" : "+"}
                                 </span>
 
-                                {/* Question text on right */}
-                                <span className="text-gray-900 text-lg">{faq.question}</span>
+                                <span className={cn(
+                                    "text-gray-900 min-w-0 flex-1 break-words text-left",
+                                    venue ? "text-base sm:text-lg" : "text-lg"
+                                )}>{faq.question}</span>
                             </button>
 
                             {openFAQIndex === index && (
-                                <div className="p-6 text-gray-700 bg-white whitespace-pre-line border-t border-gray-200">
+                                <div className={cn(
+                                    "text-gray-700 bg-white whitespace-pre-line border-t border-gray-200 break-words",
+                                    venue ? "p-4 sm:p-6 text-sm sm:text-base" : "p-6"
+                                )}>
                                     {faq.answer}
                                 </div>
                             )}
@@ -244,67 +272,72 @@ export function HelpSupport({ variant = "default" }: { variant?: "default" | "ve
 
             <HelpSupportTicketsSection iconAccentClass={accentIcon} />
 
-            <div className={`${sectionShell} space-y-6`}>
-                <h2 className="text-2xl font-bold flex items-center gap-2">
-                    <MessageCircle className={accentIcon} size={28} />
-                    Contact Support
+            <div className={cn(sectionShell, "space-y-4 sm:space-y-6 min-w-0 overflow-hidden", venue && "p-4 sm:p-6 md:p-8")}>
+                <h2 className={cn(
+                    "font-bold flex items-center gap-2 flex-wrap",
+                    venue ? "text-xl sm:text-2xl" : "text-2xl"
+                )}>
+                    <MessageCircle className={cn(accentIcon, "shrink-0")} size={venue ? 24 : 28} />
+                    <span className="min-w-0">Contact Support</span>
                 </h2>
-                <p className="text-gray-700">
-                    Welcome to the Support Center of <span className={`font-semibold ${accentIcon}`}>BizTradeFairs.com</span>.
-                    We're here to make your visitor journey smooth, easy, and productive.
+                <p className={cn("text-gray-700 break-words", venue ? "text-sm sm:text-base" : "")}>
+                    Welcome to the {venue ? "Venue " : ""}Support Center of <span className={`font-semibold ${accentIcon}`}>BizTradeFairs.com</span>.
+                    {venue
+                        ? " We're here to help you maximize your venue's potential and streamline your event management process."
+                        : " We're here to make your visitor journey smooth, easy, and productive."}
                 </p>
 
-                <div className="space-y-4">
-                    <div className={`p-4 ${accentSoft}`}>
-                        <div className="flex items-start gap-3">
+                <div className={venue ? "space-y-3 sm:space-y-4" : "space-y-4"}>
+                    <div className={cn(`p-4 ${accentSoft}`, venue && "p-3 sm:p-4 min-w-0 overflow-hidden")}>
+                        <div className="flex items-start gap-3 min-w-0">
                             <Mail className={`${accentIcon} mt-1 flex-shrink-0`} size={20} />
-                            <div>
-                                <h3 className="font-semibold text-gray-900">Email Support</h3>
-                                <p className="text-gray-700 text-sm mt-1">For non-urgent queries, feedback, or documentation support:</p>
-                                <p className={`${accentIcon} font-medium mt-2`}>support@biztradefairs.com</p>
+                            <div className="min-w-0 flex-1">
+                                <h3 className={cn("font-semibold text-gray-900", venue && "text-sm sm:text-base")}>Email Support</h3>
+                                <p className={cn("text-gray-700 mt-1", venue ? "text-xs sm:text-sm break-words" : "text-sm")}>For non-urgent queries, feedback, or documentation support:</p>
+                                <p className={cn(`${accentIcon} font-medium mt-2`, venue && "break-all text-sm sm:text-base")}>support@biztradefairs.com</p>
                             </div>
                         </div>
                     </div>
 
-                    <div className="p-4 bg-green-50 rounded-lg border border-green-100">
-                        <div className="flex items-start gap-3">
+                    <div className={cn("p-4 bg-green-50 rounded-lg border border-green-100", venue && "p-3 sm:p-4 min-w-0 overflow-hidden")}>
+                        <div className="flex items-start gap-3 min-w-0">
                             <Phone className="text-green-600 mt-1 flex-shrink-0" size={20} />
-                            <div>
-                                <h3 className="font-semibold text-gray-900">Phone Support</h3>
-                                <p className="text-gray-700 text-sm mt-1">Our helpline is open for visitors during business hours:</p>
-                                <p className="text-green-600 font-medium mt-2">+91-9148319993</p>
-                                <div className="flex items-center gap-1 text-sm text-gray-600 mt-2">
-                                    <Clock size={16} />
+                            <div className="min-w-0 flex-1">
+                                <h3 className={cn("font-semibold text-gray-900", venue && "text-sm sm:text-base")}>Phone Support</h3>
+                                <p className={cn("text-gray-700 mt-1", venue ? "text-xs sm:text-sm break-words" : "text-sm")}>Our helpline is open for visitors during business hours:</p>
+                                <p className={cn("text-green-600 font-medium mt-2", venue && "text-sm sm:text-base")}>+91-9148319993</p>
+                                <div className="flex flex-wrap items-center gap-1 text-xs sm:text-sm text-gray-600 mt-2">
+                                    <Clock size={16} className="shrink-0" />
                                     <span>Monday – Friday, 9:30 AM – 6:30 PM (IST)</span>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div className="p-4 bg-purple-50 rounded-lg border border-purple-100">
-                        <div className="flex items-start gap-3">
+                    <div className={cn("p-4 bg-purple-50 rounded-lg border border-purple-100", venue && "p-3 sm:p-4 min-w-0 overflow-hidden")}>
+                        <div className="flex items-start gap-3 min-w-0">
                             <Building className="text-purple-600 mt-1 flex-shrink-0" size={20} />
-                            <div>
-                                <h3 className="font-semibold text-gray-900">Corporate Office</h3>
-                                <p className="text-gray-700 text-sm mt-1">BizTradeFairs.com</p>
-                                <p className="text-gray-700 text-sm">Maxx Business Media Pvt. Ltd.</p>
-                                <p className="text-gray-700 text-sm mt-1">
+                            <div className="min-w-0 flex-1">
+                                <h3 className={cn("font-semibold text-gray-900", venue && "text-sm sm:text-base")}>Corporate Office</h3>
+                                <p className={cn("text-gray-700 mt-1", venue ? "text-xs sm:text-sm" : "text-sm")}>BizTradeFairs.com</p>
+                                <p className={cn("text-gray-700", venue ? "text-xs sm:text-sm" : "text-sm")}>Maxx Business Media Pvt. Ltd.</p>
+                                <p className={cn("text-gray-700 mt-1 break-words", venue ? "text-xs sm:text-sm" : "text-sm")}>
                                     T9, 3rd Floor, Swastik Manandi Arcade, SC Road, Seshadripuram, Bengaluru – 560020, INDIA
                                 </p>
                             </div>
                         </div>
                     </div>
 
-                    <div className="p-4 bg-amber-50 rounded-lg border border-amber-100">
-                        <div className="flex items-start gap-3">
+                    <div className={cn("p-4 bg-amber-50 rounded-lg border border-amber-100", venue && "p-3 sm:p-4 min-w-0 overflow-hidden")}>
+                        <div className="flex items-start gap-3 min-w-0">
                             <Clock className="text-amber-600 mt-1 flex-shrink-0" size={20} />
-                            <div>
-                                <h3 className="font-semibold text-gray-900">Live Chat</h3>
-                                <p className="text-gray-700 text-sm mt-1">
+                            <div className="min-w-0 flex-1">
+                                <h3 className={cn("font-semibold text-gray-900", venue && "text-sm sm:text-base")}>Live Chat</h3>
+                                <p className={cn("text-gray-700 mt-1 break-words", venue ? "text-xs sm:text-sm" : "text-sm")}>
                                     Click on the Chat Now button at the bottom of your screen to connect with our support team instantly.
                                 </p>
-                                <div className="flex items-center gap-1 text-sm text-gray-600 mt-2">
-                                    <Clock size={16} />
+                                <div className="flex flex-wrap items-center gap-1 text-xs sm:text-sm text-gray-600 mt-2">
+                                    <Clock size={16} className="shrink-0" />
                                     <span>Monday – Friday, 9:30 AM – 6:30 PM (IST)</span>
                                 </div>
                             </div>

@@ -327,19 +327,19 @@ export default function DashboardOverview({
   const proFeatures = ["Featured Listing", "Advanced Analytics", "Priority Support", "Unlimited Events"]
 
   return (
-    <div className="w-full space-y-8">
-      <header className={cn(orgPageHeader, "lg:items-center lg:gap-6")}>
+    <div className="w-full min-w-0 max-w-full space-y-6 sm:space-y-8">
+      <header className={cn(orgPageHeader, "min-w-0 lg:items-center lg:gap-6")}>
         <div className="min-w-0 shrink-0 lg:max-w-[280px] xl:max-w-xs">
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Dashboard</h1>
-          <p className="mt-1 text-sm text-slate-600">
+          <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl md:text-3xl">Dashboard</h1>
+          <p className="mt-1 text-sm text-slate-600 break-words">
             Welcome back, <span className="font-medium text-slate-800">{organizerName}</span>.
           </p>
         </div>
-        <div className="flex min-w-0 flex-1 flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+        <div className="flex min-w-0 w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
           <DashboardManagedBanner
             page="organizer-dashboard"
             variant="compact"
-            className="!h-14 w-full min-w-[360px] sm:!h-16 sm:flex-1 sm:max-w-3xl lg:-ml-2"
+            className="!h-12 w-full min-w-0 max-w-full sm:!h-14 md:!h-16 sm:flex-1 md:max-w-3xl lg:-ml-2"
           />
           <Button type="button" onClick={onCreateEventClick} className={cn(orgPrimaryBtn, "h-11 w-full shrink-0 rounded-xl px-5 sm:w-auto")}>
             <Plus className="h-4 w-4" />
@@ -387,9 +387,9 @@ export default function DashboardOverview({
 
       {/* Upcoming Events row */}
       <section>
-        <div className="mb-4 flex items-center justify-between gap-3">
-          <h2 className="text-lg font-bold text-slate-900">Upcoming Events</h2>
-          <div className="flex items-center gap-2">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2 sm:gap-3">
+          <h2 className="text-base font-bold text-slate-900 sm:text-lg">Upcoming Events</h2>
+          <div className="flex items-center gap-1.5 sm:gap-2">
             {onViewAllEventsClick ? (
               <button type="button" onClick={onViewAllEventsClick} className={cn("text-sm font-medium hover:underline", orgAccentText)}>
                 View All &gt;
@@ -408,7 +408,7 @@ export default function DashboardOverview({
             <CardContent className="py-10 text-center text-sm text-slate-500">No upcoming events yet.</CardContent>
           </Card>
         ) : (
-          <div id="org-upcoming-scroll" className="flex gap-4 overflow-x-auto pb-2 hide-scrollbar">
+          <div id="org-upcoming-scroll" className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-2 hide-scrollbar sm:gap-4">
             {upcomingEvents.map((event) => {
               const img = getEventDisplayImageUrl(event)
               const badge = formatEventDateBadge(event.startDate || event.date)
@@ -416,7 +416,7 @@ export default function DashboardOverview({
               const location = event.location || [event.city, event.state].filter(Boolean).join(", ") || "Location TBD"
 
               return (
-                <Card key={String(event.id)} className={cn(orgCardShell, "w-[280px] shrink-0 overflow-hidden p-0")}>
+                <Card key={String(event.id)} className={cn(orgCardShell, "w-[min(85vw,280px)] shrink-0 overflow-hidden p-0 sm:w-[280px]")}>
                   <div className="relative aspect-[16/10] bg-slate-100">
                     <Image src={img} alt={event.title} fill sizes="280px" className="object-cover" />
                     <div className="absolute left-3 top-3 rounded-lg bg-white/95 px-2 py-1 text-center shadow-sm">
@@ -439,13 +439,13 @@ export default function DashboardOverview({
                       <span className="line-clamp-1">{location}</span>
                     </p>
                     <p className="mt-1 text-xs text-slate-500">{interested.toLocaleString()} Interested</p>
-                    <div className="mt-3 flex items-center justify-between gap-2 border-t border-slate-100 pt-3">
-                      <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-700">Upcoming</span>
+                    <div className="mt-3 flex flex-col gap-2 border-t border-slate-100 pt-3 sm:flex-row sm:items-center sm:justify-between">
+                      <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-700 w-fit">Upcoming</span>
                       <div className="flex gap-2">
-                        <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => openEventDashboard(event)}>
+                        <Button variant="outline" size="sm" className="h-8 flex-1 text-xs sm:flex-none" onClick={() => openEventDashboard(event)}>
                           Manage
                         </Button>
-                        <Button size="sm" className={cn("h-8 text-xs", orgPrimaryBtn)} asChild>
+                        <Button size="sm" className={cn("h-8 flex-1 text-xs sm:flex-none", orgPrimaryBtn)} asChild>
                           <Link href={eventPublicPath(event)}>View</Link>
                         </Button>
                       </div>

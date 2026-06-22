@@ -428,16 +428,16 @@ export default function OrganizerDashboardSimplified({ organizerId }: OrganizerD
     }
   }
 
-  // const getCurrentSectionTitle = () => {
-  //   for (const group of sidebarGroups) {
-  //     const item = group.items.find((item) => item.id === activeSection)
-  //     if (item) return item.title
-  //   }
-  //   const individualItem = individualSidebarItems.find((item) => item.id === activeSection)
-  //   if (individualItem) return individualItem.title
+  const getCurrentSectionTitle = () => {
+    for (const group of sidebarGroups) {
+      const item = group.items.find((item) => item.id === activeSection)
+      if (item) return item.title
+    }
+    const individualItem = individualSidebarItems.find((item) => item.id === activeSection)
+    if (individualItem) return individualItem.title
 
-  //   return "Dashboard"
-  // }
+    return "Dashboard"
+  }
 
   return (
     <div className={cn("relative flex min-h-0 flex-1 w-full overflow-hidden", orgPageBg)}>
@@ -453,7 +453,7 @@ export default function OrganizerDashboardSimplified({ organizerId }: OrganizerD
       {/* Sidebar */}
       <div
         className={cn(
-          "fixed z-50 flex h-full w-[260px] shrink-0 flex-col transform transition-transform duration-300 ease-in-out md:static md:translate-x-0",
+          "fixed inset-y-0 left-0 z-50 flex h-full w-[min(100vw,260px)] max-w-[85vw] shrink-0 flex-col transform transition-transform duration-300 ease-in-out md:static md:max-w-none md:w-[260px] md:translate-x-0",
           orgSidebarSurface,
           sidebarOpen ? "translate-x-0" : "-translate-x-full",
         )}
@@ -570,17 +570,21 @@ export default function OrganizerDashboardSimplified({ organizerId }: OrganizerD
       </div>
 
       {/* Main Content Area */}
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-        <div className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3 md:hidden">
-          <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(true)} className="text-[#004A96]">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+        <div className="flex items-center justify-between gap-2 border-b border-slate-200 bg-white px-3 py-3 md:hidden">
+          <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(true)} className="shrink-0 text-[#004A96]">
             <Menu className="h-5 w-5" />
           </Button>
-          <span className="text-sm font-semibold text-[#004A96]">Organizer</span>
-          <div className="w-9" />
+          <span className="min-w-0 truncate text-center text-sm font-semibold text-[#004A96]">
+            {getCurrentSectionTitle()}
+          </span>
+          <div className="w-9 shrink-0" />
         </div>
 
-        <main className="min-h-0 flex-1 overflow-auto p-0">
-          <div className="min-h-0 w-full px-6 py-6">{renderContent()}</div>
+        <main className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden p-0">
+          <div className="min-h-0 w-full min-w-0 max-w-full px-3 py-4 sm:px-4 sm:py-5 md:px-6 md:py-6">
+            {renderContent()}
+          </div>
         </main>
       </div>
     </div>

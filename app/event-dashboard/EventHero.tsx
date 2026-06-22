@@ -399,8 +399,8 @@ export default function EventHero({ event, onImagesUpdate, onScheduleUpdate }: E
                   <Button size="sm" onClick={() => setIsEditing(false)}>Save</Button>
                 </div>
               ) : (
-                <div className="flex items-center justify-between group">
-                  <h2 className="text-xl sm:text-2xl font-bold text-gray-900 leading-tight">
+                <div className="flex items-center justify-between group gap-2 min-w-0">
+                  <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 leading-tight break-words min-w-0 flex-1">
                     {title}
                   </h2>
                   <Button
@@ -437,7 +437,7 @@ export default function EventHero({ event, onImagesUpdate, onScheduleUpdate }: E
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="mb-0.5 text-xs uppercase text-gray-500">Date</p>
-                      <p className="text-sm font-medium text-gray-900">
+                      <p className="text-sm font-medium text-gray-900 break-words">
                         {formatEventPublicDateRange(event.startDate, event.endDate)}
                       </p>
                     </div>
@@ -453,13 +453,13 @@ export default function EventHero({ event, onImagesUpdate, onScheduleUpdate }: E
                   </div>
 
                   {/* Time */}
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-start gap-3">
                     <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-50">
                       <Clock className="h-4 w-4 text-blue-600" />
                     </div>
-                    <div>
+                    <div className="min-w-0 flex-1">
                       <p className="mb-0.5 text-xs uppercase text-gray-500">Time</p>
-                      <p className="text-sm font-medium text-gray-900">
+                      <p className="text-sm font-medium text-gray-900 break-words">
                         {formatEventSidebarTimeRange(event)}
                       </p>
                     </div>
@@ -474,13 +474,13 @@ export default function EventHero({ event, onImagesUpdate, onScheduleUpdate }: E
               )}
 
               {/* Ticket Price */}
-              <div className="flex items-center gap-3">
+              <div className="flex items-start gap-3">
                 <div className="flex-shrink-0 w-9 h-9 bg-blue-50 rounded-lg flex items-center justify-center">
                   <Ticket className="w-4 h-4 text-blue-600" />
                 </div>
-                <div>
+                <div className="min-w-0 flex-1">
                   <p className="text-xs text-gray-500 uppercase mb-0.5">Ticket Price</p>
-                  <p className="text-sm text-gray-900 font-medium">
+                  <p className="text-sm font-medium text-gray-900 break-words leading-snug">
                     {formatPublicTicketPriceLine(event.ticketTypes)}
                   </p>
                 </div>

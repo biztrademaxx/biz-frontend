@@ -257,30 +257,31 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
 
   return (
     // Outer wrapper — white background, no card border (matches design: content sits on plain white bg)
-    <div className="space-y-4 bg-white rounded-xl p-6">
+    <div className="w-full min-w-0 max-w-full space-y-4 bg-white rounded-xl p-3 sm:p-4 md:p-6">
 
       {/* Page heading */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">My Events</h1>
+        <h1 className="text-xl font-bold text-gray-900 sm:text-2xl">My Events</h1>
         <p className="text-sm text-gray-500 mt-1">Manage and track your events all in one place.</p>
       </div>
 
       {/* Filter section — sits inside same white container, with its own border */}
-      <div className="border border-gray-200 rounded-xl p-4 space-y-3 bg-white">
+      <div className="border border-gray-200 rounded-xl p-3 sm:p-4 space-y-3 bg-white">
 
         {/* Row 1: Search + Type dropdown + Filter icon */}
-        <div className="flex gap-3 items-center">
-          <div className="flex-1 relative">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="flex-1 relative min-w-0">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
             <Input
               placeholder="Search events..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 border-gray-200 bg-white"
+              className="pl-10 border-gray-200 bg-white w-full"
             />
           </div>
+          <div className="flex gap-3 items-center">
           <Select value={typeFilter} onValueChange={setTypeFilter}>
-            <SelectTrigger className="w-[160px] border-gray-200">
+            <SelectTrigger className="w-full sm:w-[160px] border-gray-200">
               <SelectValue placeholder="All Types" />
             </SelectTrigger>
             <SelectContent>
@@ -299,6 +300,7 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
           >
             <SlidersHorizontal className="w-4 h-4" />
           </Button>
+          </div>
         </div>
 
         {/* Row 2: Timeline Status filter buttons */}

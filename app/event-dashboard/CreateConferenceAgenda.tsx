@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent } from "@/components/ui/card"
 import { Plus, Trash2, CheckCircle, XCircle } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { cn } from "@/lib/utils"
 
 type SessionType = "SESSION" | "BREAK" | "KEYNOTE" | "PANEL" | "NETWORKING"
 
@@ -204,43 +205,46 @@ export function CreateConferenceAgenda({ eventId, conferenceId, initialData, onS
   }
 
   return (
-    <div className="space-y-6">
+    <div className="w-full min-w-0 max-w-full space-y-4 sm:space-y-6">
       {/* Message Display */}
       {message && (
         <div
-          className={`flex items-center gap-2 rounded-lg border p-4 ${
+          className={cn(
+            "flex items-start gap-2 rounded-lg border p-3 sm:p-4 min-w-0",
             message.type === "success"
               ? "border-green-200 bg-green-50 text-green-800"
-              : "border-red-200 bg-red-50 text-red-800"
-          }`}
+              : "border-red-200 bg-red-50 text-red-800",
+          )}
         >
           {message.type === "success" ? (
-            <CheckCircle className="h-5 w-5" />
+            <CheckCircle className="h-5 w-5 shrink-0 mt-0.5" />
           ) : (
-            <XCircle className="h-5 w-5" />
+            <XCircle className="h-5 w-5 shrink-0 mt-0.5" />
           )}
-          <span className="text-sm font-medium">{message.text}</span>
+          <span className="text-sm font-medium break-words">{message.text}</span>
         </div>
       )}
 
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-foreground">{conferenceId ? "Edit" : "Create"} Conference Agenda</h1>
-        <div className="flex gap-3">
-          <Button variant="outline" onClick={handleCancel} disabled={isLoading}>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between min-w-0">
+        <h1 className="text-xl sm:text-2xl font-semibold text-foreground break-words">
+          {conferenceId ? "Edit" : "Create"} Conference Agenda
+        </h1>
+        <div className="flex flex-col gap-2 w-full sm:w-auto sm:flex-row sm:gap-3 shrink-0">
+          <Button variant="outline" onClick={handleCancel} disabled={isLoading} className="w-full sm:w-auto">
             Cancel
           </Button>
-          <Button onClick={handleSave} disabled={isLoading}>
+          <Button onClick={handleSave} disabled={isLoading} className="w-full sm:w-auto">
             {isLoading ? "Saving..." : conferenceId ? "Update Agenda" : "Save Agenda"}
           </Button>
         </div>
       </div>
 
       {/* Day Information */}
-      <Card>
-        <CardContent className="pt-6">
+      <Card className="gap-0 py-0 min-w-0 overflow-hidden">
+        <CardContent className="pt-4 sm:pt-6 px-4 sm:px-6">
           <h2 className="mb-4 text-base font-medium text-foreground">Day Information</h2>
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <div className="space-y-2">
               <Label htmlFor="date">Date</Label>
               <Input
@@ -286,30 +290,29 @@ export function CreateConferenceAgenda({ eventId, conferenceId, initialData, onS
       </Card>
 
       {/* Sessions */}
-      <Card>
-        <CardContent className="pt-6">
-          
-
-          <div className="space-y-6">
+      <Card className="gap-0 py-0 min-w-0 overflow-hidden">
+        <CardContent className="pt-4 sm:pt-6 px-4 sm:px-6 min-w-0">
+          <div className="space-y-4 sm:space-y-6">
             <h2 className="text-base font-medium text-foreground">Sessions</h2>
             {agenda.sessions.map((session, index) => (
-              <div key={session.id} className="space-y-4 rounded-lg border border-border p-4">
-                <div className="flex items-center justify-between">
+              <div key={session.id} className="space-y-4 rounded-lg border border-border p-3 sm:p-4 min-w-0 overflow-hidden">
+                <div className="flex items-center justify-between gap-2">
                   <h3 className="text-sm font-medium text-foreground">Session {index + 1}</h3>
                   {agenda.sessions.length > 1 && (
-                    <Button variant="ghost" size="icon" onClick={() => removeSession(session.id)} disabled={isLoading}>
+                    <Button variant="ghost" size="icon" onClick={() => removeSession(session.id)} disabled={isLoading} className="shrink-0">
                       <Trash2 className="h-4 w-4 text-muted-foreground" />
                     </Button>
                   )}
                 </div>
 
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div className="space-y-2">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="grid grid-cols-2 gap-3 sm:gap-4 sm:col-span-1 min-w-0">
+                    <div className="space-y-2 min-w-0">
                       <Label htmlFor={`timeStart-${session.id}`}>Start Time</Label>
                       <Input
                         id={`timeStart-${session.id}`}
                         type="time"
+                        className="w-full min-w-0"
                         value={session.time?.split(" – ")[0] || ""}
                         onChange={(e) => {
                           const end = session.time?.split(" – ")[1] || ""
@@ -318,11 +321,12 @@ export function CreateConferenceAgenda({ eventId, conferenceId, initialData, onS
                         disabled={isLoading}
                       />
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-2 min-w-0">
                       <Label htmlFor={`timeEnd-${session.id}`}>End Time</Label>
                       <Input
                         id={`timeEnd-${session.id}`}
                         type="time"
+                        className="w-full min-w-0"
                         value={session.time?.split(" – ")[1] || ""}
                         onChange={(e) => {
                           const start = session.time?.split(" – ")[0] || ""
@@ -331,14 +335,15 @@ export function CreateConferenceAgenda({ eventId, conferenceId, initialData, onS
                         disabled={isLoading}
                       />
                     </div>
-                  </div>                  <div className="space-y-2">
+                  </div>
+                  <div className="space-y-2 min-w-0">
                     <Label htmlFor={`type-${session.id}`}>Session Type</Label>
                     <Select
                       value={session.type}
                       onValueChange={(value) => updateSession(session.id, "type", value)}
                       disabled={isLoading}
                     >
-                      <SelectTrigger id={`type-${session.id}`}>
+                      <SelectTrigger id={`type-${session.id}`} className="w-full min-w-0">
                         <SelectValue placeholder="Select type" />
                       </SelectTrigger>
                       <SelectContent>
@@ -395,8 +400,8 @@ export function CreateConferenceAgenda({ eventId, conferenceId, initialData, onS
             ))}
           </div>
 
-          <div className="mb-4 flex items-center justify-between">
-            <Button variant="ghost" size="sm" onClick={addSession} disabled={isLoading}>
+          <div className="mt-4 flex items-center justify-start sm:justify-between">
+            <Button variant="ghost" size="sm" onClick={addSession} disabled={isLoading} className="w-full sm:w-auto justify-center sm:justify-start">
               <Plus className="mr-2 h-4 w-4" />
               Add Session
             </Button>
@@ -404,14 +409,12 @@ export function CreateConferenceAgenda({ eventId, conferenceId, initialData, onS
         </CardContent>
       </Card>
 
-      
-
       {/* Footer Actions */}
-      <div className="flex justify-end gap-3">
-        <Button variant="outline" onClick={handleCancel} disabled={isLoading}>
+      <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end pb-2">
+        <Button variant="outline" onClick={handleCancel} disabled={isLoading} className="w-full sm:w-auto">
           Cancel
         </Button>
-        <Button onClick={handleSave} disabled={isLoading}>
+        <Button onClick={handleSave} disabled={isLoading} className="w-full sm:w-auto">
           {isLoading ? "Saving..." : conferenceId ? "Update Agenda" : "Create Agenda"}
         </Button>
       </div>

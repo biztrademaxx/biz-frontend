@@ -32,8 +32,11 @@ export const venueCardShell =
 export const venueUpgradeCard =
   "rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 to-sky-50 p-4"
 
+export const venueTabsScrollWrapper =
+  "w-full min-w-0 overflow-x-auto overscroll-x-contain pb-1 [-webkit-overflow-scrolling:touch]"
+
 export const venueTabsList =
-  "inline-flex h-auto w-fit items-center gap-1 rounded-xl border border-slate-200 bg-slate-100 p-1"
+  "inline-flex h-auto w-max min-w-full flex-nowrap items-center gap-1 rounded-xl border border-slate-200 bg-slate-100 p-1"
 
 export const venueTabsTrigger =
-  "rounded-lg px-4 py-2 text-sm font-medium text-slate-600 transition-colors data-[state=active]:bg-[#004A96] data-[state=active]:text-white data-[state=active]:shadow-sm"
+  "shrink-0 rounded-lg px-3 py-2 text-xs font-medium text-slate-600 transition-colors sm:px-4 sm:text-sm data-[state=active]:bg-[#004A96] data-[state=active]:text-white data-[state=active]:shadow-sm"

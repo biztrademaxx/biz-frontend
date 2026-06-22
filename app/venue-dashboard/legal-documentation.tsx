@@ -222,11 +222,11 @@ export default function LegalDocumentation({ venueId }: LegalDocumentationProps)
   }
 
   const DocumentCard = ({ document, type = "standard" }: { document: LegalDocument; type?: string }) => (
-    <Card className="hover:shadow-md transition-shadow">
-      <CardContent className="p-6">
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex-1">
-            <h3 className="text-lg font-semibold mb-2">{document.name || document.eventName}</h3>
+    <Card className="hover:shadow-md transition-shadow min-w-0 overflow-hidden">
+      <CardContent className="p-4 sm:p-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-4">
+          <div className="flex-1 min-w-0">
+            <h3 className="text-base font-semibold mb-2 break-words sm:text-lg">{document.name || document.eventName}</h3>
             <div className="space-y-1 text-sm text-muted-foreground">
               {type === "standard" && (
                 <>
@@ -266,7 +266,7 @@ export default function LegalDocumentation({ venueId }: LegalDocumentationProps)
               )}
             </div>
           </div>
-          <div className="flex flex-col items-end gap-2">
+          <div className="flex flex-row flex-wrap items-center gap-2 sm:flex-col sm:items-end">
             <Badge className={getStatusColor(document.status)}>
               {getStatusIcon(document.status)}
               <span className="ml-1">{document.status}</span>
@@ -277,15 +277,15 @@ export default function LegalDocumentation({ venueId }: LegalDocumentationProps)
 
         {document.description && <p className="text-sm text-muted-foreground mb-4">{document.description}</p>}
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
           <Dialog>
             <DialogTrigger asChild>
-              <Button variant="outline" size="sm" onClick={() => setSelectedDocument(document)}>
+              <Button variant="outline" size="sm" className="w-full sm:w-auto" onClick={() => setSelectedDocument(document)}>
                 <Eye className="w-4 h-4 mr-2" />
                 View
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl">
+            <DialogContent className="w-[calc(100vw-2rem)] max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>{document.name || document.eventName}</DialogTitle>
               </DialogHeader>
@@ -318,7 +318,7 @@ export default function LegalDocumentation({ venueId }: LegalDocumentationProps)
             </DialogContent>
           </Dialog>
 
-          <Button variant="outline" size="sm" onClick={() => handleDownload(document.id)}>
+          <Button variant="outline" size="sm" className="w-full sm:w-auto" onClick={() => handleDownload(document.id)}>
             <Download className="w-4 h-4 mr-2" />
             Download
           </Button>
@@ -327,7 +327,7 @@ export default function LegalDocumentation({ venueId }: LegalDocumentationProps)
             variant="outline"
             size="sm"
             onClick={() => handleDelete(document.id, document.category)}
-            className="text-destructive hover:text-destructive"
+            className="w-full text-destructive hover:text-destructive sm:w-auto"
           >
             <Trash2 className="w-4 h-4" />
           </Button>
@@ -337,9 +337,9 @@ export default function LegalDocumentation({ venueId }: LegalDocumentationProps)
   )
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Legal & Documentation</h1>
+    <div className="min-w-0 space-y-6">
+      <div>
+        <h1 className="text-xl font-bold sm:text-2xl md:text-3xl">Legal & Documentation</h1>
       </div>
 
       {/* Stats Cards */}

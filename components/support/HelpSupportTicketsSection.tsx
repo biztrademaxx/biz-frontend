@@ -129,19 +129,19 @@ export function HelpSupportTicketsSection({ iconAccentClass = "text-blue-600" }:
   }
 
   return (
-    <section className="space-y-8">
-      <Card className="border border-gray-100 shadow-lg">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-2xl">
-            <Ticket className={`h-7 w-7 ${iconAccentClass}`} />
-            Raise a support ticket
+    <section className="w-full min-w-0 max-w-full space-y-6 sm:space-y-8">
+      <Card className="gap-0 py-0 border border-gray-100 shadow-lg min-w-0 overflow-hidden">
+        <CardHeader className="px-4 sm:px-6">
+          <CardTitle className="flex items-center gap-2 text-lg sm:text-2xl flex-wrap">
+            <Ticket className={`h-6 w-6 sm:h-7 sm:w-7 shrink-0 ${iconAccentClass}`} />
+            <span className="min-w-0">Raise a support ticket</span>
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="break-words">
             Describe your issue and we will route it to the admin team. You can track replies below.
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <form onSubmit={submitTicket} className="space-y-4 max-w-2xl">
+        <CardContent className="px-4 sm:px-6">
+          <form onSubmit={submitTicket} className="space-y-4 w-full min-w-0 max-w-2xl">
             <div>
               <Label htmlFor="st-title">Subject</Label>
               <Input
@@ -194,7 +194,7 @@ export function HelpSupportTicketsSection({ iconAccentClass = "text-blue-600" }:
                 className="mt-1"
               />
             </div>
-            <Button type="submit" disabled={submitting} className="min-w-[140px]">
+            <Button type="submit" disabled={submitting} className="w-full sm:w-auto sm:min-w-[140px]">
               {submitting ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -208,32 +208,32 @@ export function HelpSupportTicketsSection({ iconAccentClass = "text-blue-600" }:
         </CardContent>
       </Card>
 
-      <Card className="border border-gray-100 shadow-lg">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-xl">
-            <MessageSquare className={`h-6 w-6 ${iconAccentClass}`} />
-            My tickets
+      <Card className="gap-0 py-0 border border-gray-100 shadow-lg min-w-0 overflow-hidden">
+        <CardHeader className="px-4 sm:px-6">
+          <CardTitle className="flex items-center gap-2 text-lg sm:text-xl flex-wrap">
+            <MessageSquare className={`h-5 w-5 sm:h-6 sm:w-6 shrink-0 ${iconAccentClass}`} />
+            <span className="min-w-0">My tickets</span>
           </CardTitle>
           <CardDescription>Tickets you have raised from this account.</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-4 sm:px-6 min-w-0">
           {loadingMine ? (
             <p className="text-sm text-muted-foreground py-4">Loading…</p>
           ) : mine.length === 0 ? (
             <p className="text-sm text-muted-foreground py-2">No tickets yet.</p>
           ) : (
-            <ul className="divide-y rounded-md border">
+            <ul className="divide-y rounded-md border min-w-0 overflow-hidden">
               {mine.map((t) => (
-                <li key={t.id} className="flex flex-wrap items-center justify-between gap-3 p-4">
-                  <div>
-                    <p className="font-medium">{t.title}</p>
-                    <p className="text-xs text-muted-foreground">
+                <li key={t.id} className="flex flex-col gap-3 p-3 sm:p-4 sm:flex-row sm:items-center sm:justify-between min-w-0">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium break-words text-sm sm:text-base">{t.title}</p>
+                    <p className="text-xs text-muted-foreground break-words">
                       {new Date(t.createdAt).toLocaleString()} · {t.replies?.length ?? 0} replies
                     </p>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2 shrink-0">
                     <Badge variant={statusVariant(t.status)}>{t.status.replace("_", " ")}</Badge>
-                    <Button type="button" variant="outline" size="sm" onClick={() => setActive(t)}>
+                    <Button type="button" variant="outline" size="sm" onClick={() => setActive(t)} className="w-full sm:w-auto">
                       View / reply
                     </Button>
                   </div>
@@ -245,10 +245,10 @@ export function HelpSupportTicketsSection({ iconAccentClass = "text-blue-600" }:
       </Card>
 
       <Dialog open={!!active} onOpenChange={(o) => !o && setActive(null)}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[calc(100vw-2rem)] max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{active?.title}</DialogTitle>
-            <DialogDescription className="whitespace-pre-wrap">{active?.description}</DialogDescription>
+            <DialogTitle className="break-words pr-6">{active?.title}</DialogTitle>
+            <DialogDescription className="whitespace-pre-wrap break-words">{active?.description}</DialogDescription>
           </DialogHeader>
           {active && (
             <div className="space-y-4">
@@ -272,11 +272,11 @@ export function HelpSupportTicketsSection({ iconAccentClass = "text-blue-600" }:
                   placeholder="Follow-up message…"
                 />
               </div>
-              <div className="flex justify-end gap-2">
-                <Button type="button" variant="outline" onClick={() => setActive(null)}>
+              <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                <Button type="button" variant="outline" onClick={() => setActive(null)} className="w-full sm:w-auto">
                   Close
                 </Button>
-                <Button type="button" onClick={sendReply} disabled={replying || !replyText.trim()}>
+                <Button type="button" onClick={sendReply} disabled={replying || !replyText.trim()} className="w-full sm:w-auto">
                   {replying ? <Loader2 className="h-4 w-4 animate-spin" /> : "Send reply"}
                 </Button>
               </div>

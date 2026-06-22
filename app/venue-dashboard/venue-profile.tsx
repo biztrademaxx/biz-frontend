@@ -27,7 +27,7 @@ import {
   prepareImageFileForUpload,
 } from "@/lib/prepare-image-upload"
 import { cn } from "@/lib/utils"
-import { venueTabsList, venueTabsTrigger } from "./venue-dashboard-theme"
+import { venueTabsList, venueTabsScrollWrapper, venueTabsTrigger } from "./venue-dashboard-theme"
 import Link from "next/link"
 
 interface VenueData {
@@ -440,16 +440,24 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
 
   const heroBg = images[0] || profileData?.venueImages?.[0] 
 
+  const profileTabs = [
+    { value: "images", label: "Images", shortLabel: "Images" },
+    { value: "amenities", label: "Amenities", shortLabel: "Amenities" },
+    { value: "spaces", label: "Halls", shortLabel: "Halls" },
+    { value: "floorplan", label: "Floor Plans", shortLabel: "Floors" },
+    { value: "details", label: "Details", shortLabel: "Details" },
+  ] as const
+
   return (
-    <div className="space-y-0">
+    <div className="min-w-0 space-y-0">
       {/* Page Header */}
       <div className="mb-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-[#1E293B]">Venue Profile</h1>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
+            <h1 className="text-xl font-bold text-[#1E293B] sm:text-2xl">Venue Profile</h1>
             <p className="text-sm text-[#64748B] mt-0.5">Manage your venue information and settings</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
             {isEditing ? (
               <>
                 <Button
@@ -457,7 +465,7 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
                   variant="outline"
                   onClick={() => setIsEditing(false)}
                   disabled={isSaving}
-                  className="rounded-xl border-[#E2E8F0] text-[#64748B]"
+                  className="w-full rounded-xl border-[#E2E8F0] text-[#64748B] sm:w-auto"
                 >
                   Cancel
                 </Button>
@@ -465,7 +473,7 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
                   type="button"
                   onClick={() => void handleSave()}
                   disabled={isSaving}
-                  className="rounded-xl bg-[#004A96] hover:bg-[#003d7a] text-white flex items-center gap-2"
+                  className="w-full rounded-xl bg-[#004A96] hover:bg-[#003d7a] text-white flex items-center justify-center gap-2 sm:w-auto"
                 >
                   <Save className="w-4 h-4" />
                   {isSaving ? "Saving..." : "Save Changes"}
@@ -475,7 +483,7 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
               <Button
                 type="button"
                 onClick={() => setIsEditing(true)}
-                className="rounded-xl bg-[#004A96] hover:bg-[#003d7a] text-white flex items-center gap-2"
+                className="w-full rounded-xl bg-[#004A96] hover:bg-[#003d7a] text-white flex items-center justify-center gap-2 sm:w-auto"
               >
                 <Edit className="w-4 h-4" />
                 Edit Profile
@@ -527,20 +535,20 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
 
         {/* Floating White Card - Overlaps the bottom of the hero image */}
         {/* Floating Cards */}
-        <div className="relative -mt-12 mx-4 md:mx-6 z-10">
+        <div className="relative -mt-12 mx-2 sm:mx-4 md:mx-6 z-10">
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_220px] gap-4 items-stretch">
 
             {/* Venue Details Card */}
-            <div className="bg-white rounded-2xl shadow-lg border border-[#E2E8F0] p-5">
-              <div className="flex items-center gap-2 mb-2">
-                <h2 className="text-2xl font-bold text-[#1E293B]">
+            <div className="bg-white rounded-2xl shadow-lg border border-[#E2E8F0] p-4 sm:p-5">
+              <div className="flex items-start gap-2 mb-2 min-w-0">
+                <h2 className="text-xl font-bold text-[#1E293B] break-words sm:text-2xl">
                   {profileData?.venueName || venueData.venueName}
                 </h2>
 
                 <CheckCircle className="w-5 h-5 text-[#10B981]" />
               </div>
 
-              <p className="text-sm text-[#64748B] mb-3">
+              <p className="text-sm text-[#64748B] mb-3 break-words">
                 {profileData?.address || venueData.address}
               </p>
 
@@ -605,7 +613,7 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
 
       {/* About Venue + Stats */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-6 mt-2">
-        <div className="lg:col-span-2 bg-white rounded-2xl border border-[#E2E8F0] p-5">
+        <div className="lg:col-span-2 bg-white rounded-2xl border border-[#E2E8F0] p-4 sm:p-5 min-w-0">
           <h3 className="text-base font-semibold text-[#1E293B] mb-3">About Venue</h3>
           {isEditing ? (
             <Textarea
@@ -663,17 +671,17 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
           <div className="mt-4">
             <h4 className="text-sm font-semibold text-[#1E293B] mb-2">Contact Information</h4>
             <div className="space-y-1.5">
-              <div className="flex items-center gap-2 text-sm text-[#64748B]">
-                <Users className="w-4 h-4 text-[#004A96]" />
-                {profileData?.contactPerson || venueData.contactPerson}
+              <div className="flex items-start gap-2 text-sm text-[#64748B] min-w-0">
+                <Users className="w-4 h-4 text-[#004A96] shrink-0 mt-0.5" />
+                <span className="break-words">{profileData?.contactPerson || venueData.contactPerson}</span>
               </div>
-              <div className="flex items-center gap-2 text-sm text-[#64748B]">
-                <Phone className="w-4 h-4 text-[#004A96]" />
-                {profileData?.mobile || venueData.mobile}
+              <div className="flex items-start gap-2 text-sm text-[#64748B] min-w-0">
+                <Phone className="w-4 h-4 text-[#004A96] shrink-0 mt-0.5" />
+                <span className="break-all">{profileData?.mobile || venueData.mobile}</span>
               </div>
-              <div className="flex items-center gap-2 text-sm text-[#64748B]">
-                <Mail className="w-4 h-4 text-[#004A96]" />
-                {profileData?.email || venueData.email}
+              <div className="flex items-start gap-2 text-sm text-[#64748B] min-w-0">
+                <Mail className="w-4 h-4 text-[#004A96] shrink-0 mt-0.5" />
+                <span className="break-all">{profileData?.email || venueData.email}</span>
               </div>
             </div>
           </div>
@@ -702,28 +710,22 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
       </div>
 
       {/* Tabs for Images / Halls / Floor Plans - rest remains same */}
-      <Tabs defaultValue="images" className="w-full">
-        <TabsList className={cn(venueTabsList, "mb-5")}>
-          <TabsTrigger value="images" className={venueTabsTrigger}>
-            Images
-          </TabsTrigger>
-          <TabsTrigger value="amenities" className={venueTabsTrigger}>
-            Amenities
-          </TabsTrigger>
-          <TabsTrigger value="spaces" className={venueTabsTrigger}>
-            Halls
-          </TabsTrigger>
-          <TabsTrigger value="floorplan" className={venueTabsTrigger}>
-            Floor Plans
-          </TabsTrigger>
-          <TabsTrigger value="details" className={venueTabsTrigger}>
-            Details
-          </TabsTrigger>
-        </TabsList>
+      <Tabs defaultValue="images" className="w-full min-w-0">
+        <div className={venueTabsScrollWrapper}>
+          <TabsList className={cn(venueTabsList, "mb-0")}>
+            {profileTabs.map((tab) => (
+              <TabsTrigger key={tab.value} value={tab.value} className={venueTabsTrigger}>
+                <span className="sm:hidden">{tab.shortLabel}</span>
+                <span className="hidden sm:inline">{tab.label}</span>
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </div>
+        <div className="mb-5" />
 
         {/* Images Tab - unchanged */}
         <TabsContent value="images">
-          <div className="bg-white rounded-2xl border border-[#E2E8F0] p-5">
+          <div className="bg-white rounded-2xl border border-[#E2E8F0] p-4 sm:p-5 min-w-0">
             <h3 className="text-base font-semibold text-[#1E293B] mb-4">Venue Images</h3>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 mb-4">
               {images.length === 0 ? (
@@ -773,7 +775,7 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
 
         {/* Amenities Tab - unchanged */}
         <TabsContent value="amenities">
-          <div className="bg-white rounded-2xl border border-[#E2E8F0] p-5">
+          <div className="bg-white rounded-2xl border border-[#E2E8F0] p-4 sm:p-5 min-w-0">
             <h3 className="text-base font-semibold text-[#1E293B] mb-4">Venue Amenities</h3>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
               {amenities.map((amenity, index) => {
@@ -804,7 +806,7 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
 
         {/* Spaces Tab - unchanged */}
         <TabsContent value="spaces">
-          <div className="bg-white rounded-2xl border border-[#E2E8F0] p-5">
+          <div className="bg-white rounded-2xl border border-[#E2E8F0] p-4 sm:p-5 min-w-0">
             <h3 className="text-base font-semibold text-[#1E293B] mb-4">Meeting Halls</h3>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
               {meetingSpaces.map((space) => (
@@ -846,7 +848,7 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
 
         {/* Floor Plans Tab - unchanged */}
         <TabsContent value="floorplan">
-          <div className="bg-white rounded-2xl border border-[#E2E8F0] p-5">
+          <div className="bg-white rounded-2xl border border-[#E2E8F0] p-4 sm:p-5 min-w-0">
             <h3 className="text-base font-semibold text-[#1E293B] mb-4">Floor Plans</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {floorPlans.map((plan, index) => (

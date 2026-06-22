@@ -141,7 +141,7 @@ export function DashboardManagedBanner({
           >
             {title}
           </h3>
-          <p className={cn("mt-1 line-clamp-2 text-xs md:text-sm", theme.descriptionText)}>
+          <p className={cn("mt-1 line-clamp-2 text-xs md:text-sm max-sm:line-clamp-1", theme.descriptionText)}>
             {description}
           </p>
           {href ? (
@@ -150,7 +150,7 @@ export function DashboardManagedBanner({
               target="_blank"
               rel="noopener noreferrer"
               className={cn(
-                "mt-2 inline-flex items-center rounded-sm px-2.5 py-1 text-xs font-medium text-white md:text-sm",
+                "mt-2 inline-flex items-center rounded-sm px-2.5 py-1 text-xs font-medium text-white md:text-sm max-sm:hidden",
                 theme.badgeLink,
               )}
             >
@@ -159,7 +159,7 @@ export function DashboardManagedBanner({
           ) : (
             <span
               className={cn(
-                "mt-2 inline-flex items-center rounded-sm px-2.5 py-1 text-xs font-medium text-white md:text-sm",
+                "mt-2 inline-flex items-center rounded-sm px-2.5 py-1 text-xs font-medium text-white md:text-sm max-sm:hidden",
                 theme.badge,
               )}
             >

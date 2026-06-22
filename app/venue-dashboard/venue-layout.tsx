@@ -24,6 +24,7 @@ import {
   Clock,
   ChevronRight,
   CheckCircle,
+  Menu,
 } from "lucide-react"
 import { useRouter, usePathname } from "next/navigation"
 import { useAuth } from "@/hooks/use-auth"
@@ -300,6 +301,22 @@ export default function VenueDashboardPage({ routeSegment }: UserDashboardProps)
         : "text-[#64748B] hover:bg-[#F1F5F9] hover:text-[#1E293B]"
     )
 
+  const getCurrentSectionTitle = () => {
+    const titles: Record<string, string> = {
+      dashboard: "Dashboard",
+      "venue-profile": "Venue Profile",
+      "event-management": "Event Management",
+      "booking-system": "Booking System",
+      communication: "Messages",
+      connection: "Connections",
+      "ratings-reviews": "Reviews & Ratings",
+      "legal-documentation": "Legal Documentation",
+      "help-support": "Help & Support",
+      settings: "Settings",
+    }
+    return titles[activeSection] ?? "Venue Dashboard"
+  }
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#F8FAFC]">
@@ -428,29 +445,41 @@ export default function VenueDashboardPage({ routeSegment }: UserDashboardProps)
     <VenueDashboardVenueIdProvider venueUserId={venueData.id}>
       <div className={cn("relative flex min-h-0 flex-1 w-full overflow-hidden", venuePageBg)}>
         {sidebarOpen && (
-          <div className="fixed inset-0 z-40 bg-black/40 md:hidden" onClick={() => setSidebarOpen(false)} />
+          <div className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm md:hidden" onClick={() => setSidebarOpen(false)} aria-hidden />
         )}
 
         <aside
           className={cn(
-            "fixed z-50 top-0 left-0 flex h-full w-[260px] flex-col transition-transform duration-300",
+            "fixed inset-y-0 left-0 z-50 flex h-full w-[min(100vw,260px)] max-w-[85vw] flex-col transition-transform duration-300 ease-in-out md:static md:max-w-none md:w-[260px] md:shrink-0",
             venueSidebarSurface,
-            "md:static md:translate-x-0 md:shrink-0",
-            sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+            sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
           )}
         >
-          <button
-            className="absolute top-4 right-4 md:hidden text-[#64748B] hover:text-[#1E293B]"
-            onClick={() => setSidebarOpen(false)}
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center justify-between border-b border-slate-200 p-4 md:hidden">
+            <h2 className="text-lg font-semibold text-slate-900">Menu</h2>
+            <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(false)} className="text-slate-600">
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
           <SidebarNav onNavigate={() => setSidebarOpen(false)} />
         </aside>
 
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-          <main className="min-h-0 flex-1 overflow-auto p-0">
-            <div className="min-h-0 w-full px-6 py-6">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+          <div className="flex items-center justify-between gap-2 border-b border-slate-200 bg-white px-3 py-3 md:hidden">
+            <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(true)} className="shrink-0 text-[#004A96]">
+              <Menu className="h-5 w-5" />
+            </Button>
+            <div className="min-w-0 flex-1 px-1 text-center">
+              {venueData.venueName ? (
+                <p className="truncate text-xs text-slate-500">{venueData.venueName}</p>
+              ) : null}
+              <p className="truncate text-sm font-semibold text-[#004A96]">{getCurrentSectionTitle()}</p>
+            </div>
+            <div className="w-9 shrink-0" />
+          </div>
+
+          <main className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden p-0">
+            <div className="min-h-0 w-full min-w-0 max-w-full px-3 py-4 sm:px-4 sm:py-5 md:px-6 md:py-6">
             {accountUnderReview && (
               <Alert className="mb-5 border-amber-200 bg-amber-50" role="status">
                 <AlertCircle className="h-4 w-4 text-amber-600" />
@@ -627,7 +656,7 @@ function VenueDashboardHome({ venueData, setActiveSection }: { venueData: VenueD
           <DashboardManagedBanner
             page="venue-dashboard"
             variant="compact"
-            className="!h-14 w-full min-w-[360px] sm:!h-16 sm:flex-1 sm:max-w-3xl lg:-ml-2"
+            className="!h-14 w-full sm:!h-16 sm:flex-1 sm:max-w-3xl lg:-ml-2"
           />
         </div>
       </header>
@@ -655,9 +684,9 @@ function VenueDashboardHome({ venueData, setActiveSection }: { venueData: VenueD
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Event Overview - with Bar Chart */}
         <div className="lg:col-span-2 bg-white rounded-2xl border border-[#E2E8F0] p-5">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
             <h2 className="text-base font-semibold text-[#1E293B]">Event Overview</h2>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <button
                 onClick={() => setSelectedPeriod("thisMonth")}
                 className={cn(
@@ -792,10 +821,10 @@ function VenueDashboardHome({ venueData, setActiveSection }: { venueData: VenueD
 
                       {isExpanded && (
                         <div className="border-t border-[#F1F5F9] p-3 bg-[#F8FAFC] space-y-2">
-                          <div className="grid grid-cols-2 gap-2 text-xs">
-                            <div>
+                          <div className="grid grid-cols-1 gap-2 text-xs sm:grid-cols-2">
+                            <div className="min-w-0">
                               <p className="text-[10px] text-[#94A3B8]">Email</p>
-                              <p className="text-[11px] text-[#1E293B] truncate">{visitorEmail}</p>
+                              <p className="text-[11px] text-[#1E293B] break-all">{visitorEmail}</p>
                             </div>
                             <div>
                               <p className="text-[10px] text-[#94A3B8]">Phone</p>

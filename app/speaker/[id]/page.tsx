@@ -232,18 +232,21 @@ export default function SpeakerPage({ params: _params }: SpeakerPageProps) {
   }
 
   const formatEventDate = (isoString: string) => {
-    if (!isoString) return "Invalid date";
-    const date = new Date(isoString);
-    return date.toLocaleDateString("en-US", {
+    if (!isoString) return { datePart: "Invalid date", timePart: "" }
+    const date = new Date(isoString)
+    if (Number.isNaN(date.getTime())) return { datePart: "Invalid date", timePart: "" }
+    const datePart = date.toLocaleDateString("en-US", {
       year: "numeric",
       month: "long",
       day: "numeric",
-    }) + " at " + date.toLocaleTimeString("en-US", {
+    })
+    const timePart = date.toLocaleTimeString("en-US", {
       hour: "numeric",
       minute: "numeric",
       hour12: true,
-    });
-  };
+    })
+    return { datePart, timePart }
+  }
 
   const extractYouTubeVideoId = (url: string) => {
     const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/
@@ -277,7 +280,7 @@ export default function SpeakerPage({ params: _params }: SpeakerPageProps) {
     )
 
   return (
-    <div className="bg-gray-50 min-h-screen">
+    <div className="bg-gray-50 min-h-screen overflow-x-hidden">
       {/* HERO BANNER WITH PROFILE OVERLAY (matches reference design) */}
       <div className="relative h-[220px] md:h-[280px] overflow-hidden bg-blue-950">
         {heroBannersLoading ? (
@@ -471,10 +474,10 @@ export default function SpeakerPage({ params: _params }: SpeakerPageProps) {
               </h2>
               <div className="mt-4">
                 {sessions.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
                     {sessions.map((session) => (
-                      <Card key={session.id} className="border border-gray-200 shadow-sm hover:shadow-lg transition-shadow overflow-hidden">
-                        <CardContent className="p-4">
+                      <Card key={session.id} className="w-full min-w-0 gap-0 py-0 border border-gray-200 shadow-sm hover:shadow-lg transition-shadow overflow-hidden">
+                        <CardContent className="p-3 sm:p-4">
                           {/* Session Header */}
                           <div className="mb-3">
                             <h3 className="font-semibold text-blue-900 text-sm line-clamp-2 mb-1">
@@ -560,10 +563,10 @@ export default function SpeakerPage({ params: _params }: SpeakerPageProps) {
                     ))}
                   </div>
                 ) : (
-                  <Card className="border border-gray-200 shadow-sm">
-                    <CardContent className="p-8 text-center">
+                  <Card className="gap-0 py-0 border border-gray-200 shadow-sm">
+                    <CardContent className="p-6 sm:p-8 text-center">
                       <FaYoutube className="text-gray-400 text-3xl mx-auto mb-3" />
-                      <p className="text-gray-500">No session videos available.</p>
+                      <p className="text-gray-500 text-sm sm:text-base">No session videos available.</p>
                     </CardContent>
                   </Card>
                 )}
@@ -581,10 +584,10 @@ export default function SpeakerPage({ params: _params }: SpeakerPageProps) {
                 <div className="space-y-6">
                   {sessions.map((session) =>
                     session.materials && session.materials.length > 0 ? (
-                      <Card key={`mat-${session.id}`} className="border border-gray-200 shadow-sm">
-                        <CardContent className="p-5">
-                          <h3 className="font-semibold text-blue-900 mb-1">{session.title}</h3>
-                          <p className="text-xs text-gray-500 mb-4">
+                      <Card key={`mat-${session.id}`} className="w-full min-w-0 gap-0 py-0 border border-gray-200 shadow-sm">
+                        <CardContent className="p-3 sm:p-5">
+                          <h3 className="font-semibold text-blue-900 text-sm sm:text-base mb-1 break-words">{session.title}</h3>
+                          <p className="text-xs text-gray-500 mb-4 break-words">
                             {session.sessionType} · {formatDate(session.startTime)}
                             {session.event?.id && (
                               <>
@@ -602,26 +605,26 @@ export default function SpeakerPage({ params: _params }: SpeakerPageProps) {
                             {session.materials.map((m) => (
                               <li
                                 key={m.id}
-                                className="flex flex-wrap items-center justify-between gap-2 py-2 px-3 bg-gray-50 rounded-lg border border-gray-100"
+                                className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 py-2.5 px-3 bg-gray-50 rounded-lg border border-gray-100"
                               >
-                                <span className="flex items-center gap-2 text-sm text-gray-800 min-w-0">
-                                  <FaFileAlt className="text-orange-500 shrink-0" />
-                                  <span className="truncate">{m.fileName}</span>
-                                  <span className="text-xs text-gray-400 shrink-0">
-                                    ({m.fileType})
-                                  </span>
-                                </span>
+                                <div className="flex items-start sm:items-center gap-2 min-w-0 flex-1">
+                                  <FaFileAlt className="text-orange-500 shrink-0 mt-0.5 sm:mt-0" size={14} />
+                                  <div className="min-w-0 flex-1">
+                                    <p className="text-sm text-gray-800 break-all sm:break-words leading-snug">{m.fileName}</p>
+                                    <span className="text-xs text-gray-400">({m.fileType})</span>
+                                  </div>
+                                </div>
                                 {m.allowDownload !== false && m.fileUrl ? (
                                   <a
                                     href={m.fileUrl}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="text-sm text-blue-600 hover:text-blue-800 font-medium shrink-0"
+                                    className="text-sm text-blue-600 hover:text-blue-800 font-medium shrink-0 self-start sm:self-center pl-6 sm:pl-0"
                                   >
                                     Download
                                   </a>
                                 ) : (
-                                  <span className="text-xs text-gray-400">Preview only</span>
+                                  <span className="text-xs text-gray-400 shrink-0 self-start sm:self-center pl-6 sm:pl-0">Preview only</span>
                                 )}
                               </li>
                             ))}
@@ -632,10 +635,10 @@ export default function SpeakerPage({ params: _params }: SpeakerPageProps) {
                   )}
                 </div>
               ) : (
-                <Card className="border border-gray-200 shadow-sm">
-                  <CardContent className="p-8 text-center">
+                <Card className="gap-0 py-0 border border-gray-200 shadow-sm">
+                  <CardContent className="p-6 sm:p-8 text-center">
                     <FaFileAlt className="text-gray-400 text-3xl mx-auto mb-3" />
-                    <p className="text-gray-500">No presentation materials uploaded yet.</p>
+                    <p className="text-gray-500 text-sm sm:text-base">No presentation materials uploaded yet.</p>
                   </CardContent>
                 </Card>
               )}
@@ -644,7 +647,7 @@ export default function SpeakerPage({ params: _params }: SpeakerPageProps) {
             {/* EVENTS SECTION */}
             <section>
               <Tabs defaultValue="upcoming" className="w-full">
-                <TabsList className="flex justify-start space-x-2 mb-6 bg-transparent p-0">
+                <TabsList className="flex flex-wrap justify-start gap-2 mb-6 bg-transparent p-0 h-auto">
                   <TabsTrigger
                     value="upcoming"
                     className="text-sm px-4 py-2 rounded-md data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=inactive]:bg-gray-100 data-[state=inactive]:text-gray-600 transition-colors"
@@ -661,84 +664,98 @@ export default function SpeakerPage({ params: _params }: SpeakerPageProps) {
 
                 <TabsContent value="upcoming">
                   {upcomingEvents.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {upcomingEvents.map((e) => (
-                        <Link
-                          key={e.id}
-                          href={e.id ? eventPublicPath(e) : "#"}
-                          className="border hover:shadow-lg transition-shadow rounded-lg overflow-hidden block cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        >
-                          <CardContent className="p-0">
-                            <div className="relative w-full h-40">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                      {upcomingEvents.map((e) => {
+                        const { datePart, timePart } = formatEventDate(e.date)
+                        return (
+                          <Link
+                            key={e.id}
+                            href={e.id ? eventPublicPath(e) : "#"}
+                            className="w-full min-w-0 border hover:shadow-lg transition-shadow rounded-lg overflow-hidden block cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                          >
+                            <CardContent className="p-0">
                               <Image
                                 src={(e.image || "/images/gpex.jpg").trim()}
                                 alt={e.title}
-                                fill
-                                className="object-cover"
+                                width={400}
+                                height={160}
+                                className="w-full h-36 sm:h-40 object-cover"
+                                sizes="(max-width: 640px) 100vw, 50vw"
                               />
-                            </div>
-                            <div className="p-4">
-                              <h3 className="font-semibold text-gray-900 text-sm line-clamp-1">{e.title}</h3>
-                              <p className="text-xs text-gray-500 mt-1">{formatEventDate(e.date)}</p>
-                              <p className="text-xs text-gray-500 line-clamp-1">{e.location}</p>
-                              <div className="flex justify-between items-center mt-3">
-                                <span className="bg-green-100 text-green-800 text-[10px] px-2 py-1 rounded">
-                                  {e.averageRating?.toFixed(1) || 0} ⭐
-                                </span>
-                                <div onClick={(ev) => { ev.preventDefault(); ev.stopPropagation() }}>
-                                  <ShareButton id={e.id} title={e.title} type="event" />
+                              <div className="p-3 sm:p-4">
+                                <h3 className="font-semibold text-gray-900 text-sm line-clamp-2 break-words">{e.title}</h3>
+                                <p className="text-xs text-gray-500 mt-1.5 leading-relaxed">
+                                  <span className="block sm:inline">{datePart}</span>
+                                  <span className="hidden sm:inline"> at </span>
+                                  <span className="block sm:inline text-gray-400 sm:text-gray-500">{timePart}</span>
+                                </p>
+                                <p className="text-xs text-gray-500 mt-1 line-clamp-2 break-words">{e.location}</p>
+                                <div className="flex justify-between items-center gap-2 mt-3">
+                                  <span className="bg-green-100 text-green-800 text-[10px] px-2 py-1 rounded shrink-0">
+                                    {e.averageRating?.toFixed(1) || 0} ⭐
+                                  </span>
+                                  <div className="shrink-0" onClick={(ev) => { ev.preventDefault(); ev.stopPropagation() }}>
+                                    <ShareButton id={e.id} title={e.title} type="event" />
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          </CardContent>
-                        </Link>
-                      ))}
+                            </CardContent>
+                          </Link>
+                        )
+                      })}
                     </div>
                   ) : (
-                    <div className="text-center py-12 bg-gray-50 rounded-lg">
-                      <p className="text-gray-500">No upcoming events scheduled.</p>
+                    <div className="text-center py-8 sm:py-12 px-4 bg-gray-50 rounded-lg border border-gray-100">
+                      <p className="text-gray-500 text-sm sm:text-base">No upcoming events scheduled.</p>
                     </div>
                   )}
                 </TabsContent>
 
                 <TabsContent value="past">
                   {pastEvents.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {pastEvents.map((e) => (
-                        <Link
-                          key={e.id}
-                          href={e.id ? eventPublicPath(e) : "#"}
-                          className="border hover:shadow-lg transition-shadow rounded-lg overflow-hidden block cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        >
-                          <CardContent className="p-0">
-                            <div className="relative w-full h-40">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                      {pastEvents.map((e) => {
+                        const { datePart, timePart } = formatEventDate(e.date)
+                        return (
+                          <Link
+                            key={e.id}
+                            href={e.id ? eventPublicPath(e) : "#"}
+                            className="w-full min-w-0 border hover:shadow-lg transition-shadow rounded-lg overflow-hidden block cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                          >
+                            <CardContent className="p-0">
                               <Image
                                 src={(e.image || "/images/gpex.jpg").trim()}
                                 alt={e.title}
-                                fill
-                                className="object-cover"
+                                width={400}
+                                height={160}
+                                className="w-full h-36 sm:h-40 object-cover"
+                                sizes="(max-width: 640px) 100vw, 50vw"
                               />
-                            </div>
-                            <div className="p-4">
-                              <h3 className="font-semibold text-gray-900 text-sm line-clamp-1">{e.title}</h3>
-                              <p className="text-xs text-gray-500 mt-1">{formatEventDate(e.date)}</p>
-                              <p className="text-xs text-gray-500 line-clamp-1">{e.location}</p>
-                              <div className="flex justify-between items-center mt-3">
-                                <span className="bg-green-100 text-green-800 text-[10px] px-2 py-1 rounded">
-                                  {e.averageRating?.toFixed(1) || 0} ⭐
-                                </span>
-                                <div onClick={(ev) => { ev.preventDefault(); ev.stopPropagation() }}>
-                                  <ShareButton id={e.id} title={e.title} type="event" />
+                              <div className="p-3 sm:p-4">
+                                <h3 className="font-semibold text-gray-900 text-sm line-clamp-2 break-words">{e.title}</h3>
+                                <p className="text-xs text-gray-500 mt-1.5 leading-relaxed">
+                                  <span className="block sm:inline">{datePart}</span>
+                                  <span className="hidden sm:inline"> at </span>
+                                  <span className="block sm:inline text-gray-400 sm:text-gray-500">{timePart}</span>
+                                </p>
+                                <p className="text-xs text-gray-500 mt-1 line-clamp-2 break-words">{e.location}</p>
+                                <div className="flex justify-between items-center gap-2 mt-3">
+                                  <span className="bg-green-100 text-green-800 text-[10px] px-2 py-1 rounded shrink-0">
+                                    {e.averageRating?.toFixed(1) || 0} ⭐
+                                  </span>
+                                  <div className="shrink-0" onClick={(ev) => { ev.preventDefault(); ev.stopPropagation() }}>
+                                    <ShareButton id={e.id} title={e.title} type="event" />
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          </CardContent>
-                        </Link>
-                      ))}
+                            </CardContent>
+                          </Link>
+                        )
+                      })}
                     </div>
                   ) : (
-                    <div className="text-center py-12 bg-gray-50 rounded-lg">
-                      <p className="text-gray-500">No past events found.</p>
+                    <div className="text-center py-8 sm:py-12 px-4 bg-gray-50 rounded-lg border border-gray-100">
+                      <p className="text-gray-500 text-sm sm:text-base">No past events found.</p>
                     </div>
                   )}
                 </TabsContent>

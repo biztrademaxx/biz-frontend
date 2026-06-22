@@ -318,7 +318,7 @@ export default function EventSidebar({
 
       <aside
         className={cn(
-          "fixed z-50 flex h-full w-[260px] shrink-0 flex-col transition-transform duration-300 ease-in-out md:static md:translate-x-0",
+          "fixed inset-y-0 left-0 z-50 flex h-full w-[min(100vw,260px)] max-w-[85vw] shrink-0 flex-col transition-transform duration-300 ease-in-out md:static md:max-w-none md:w-[260px] md:translate-x-0",
           eventSidebarSurface,
           sidebarOpen ? "translate-x-0" : "-translate-x-full",
         )}
@@ -390,18 +390,18 @@ export default function EventSidebar({
         </div>
       </aside>
 
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-        <div className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3 md:hidden">
-          <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(true)} className="text-[#004A96]">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+        <div className="flex items-center justify-between gap-2 border-b border-slate-200 bg-white px-3 py-3 md:hidden">
+          <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(true)} className="shrink-0 text-[#004A96]">
             <Menu className="h-5 w-5" />
           </Button>
-          <div className="min-w-0 flex-1 px-2 text-center">
+          <div className="min-w-0 flex-1 px-1 text-center">
             {displayEventTitle ? (
               <p className="truncate text-xs text-slate-500">{displayEventTitle}</p>
             ) : null}
             <p className="truncate text-sm font-semibold text-[#004A96]">{getCurrentSectionTitle()}</p>
           </div>
-          <div className="w-9" />
+          <div className="w-9 shrink-0" />
         </div>
 
         <div className="hidden border-b border-slate-200 bg-white px-6 py-5 md:block">
@@ -411,8 +411,8 @@ export default function EventSidebar({
           <p className="mt-1 text-sm text-slate-600">{getCurrentSectionTitle()}</p>
         </div>
 
-        <main className="min-h-0 flex-1 overflow-auto p-0">
-          <div className="min-h-0 w-full px-6 py-6">{renderContent()}</div>
+        <main className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden p-0">
+          <div className="min-h-0 w-full min-w-0 max-w-full px-3 py-4 sm:px-4 sm:py-5 md:px-6 md:py-6">{renderContent()}</div>
         </main>
       </div>
     </div>

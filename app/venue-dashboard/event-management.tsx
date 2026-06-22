@@ -5,7 +5,7 @@ import Image from "next/image"
 import { useVenueDashboardVenueUserId } from "@/contexts/venue-dashboard-venue-id"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { venueTabsList, venueTabsTrigger } from "./venue-dashboard-theme"
+import { venueTabsList, venueTabsScrollWrapper, venueTabsTrigger } from "./venue-dashboard-theme"
 import { Button } from "@/components/ui/button"
 import { CalendarIcon, MapPin, Users, Building, Plus, MoreHorizontal } from "lucide-react"
 import { apiFetch } from "@/lib/api"
@@ -152,13 +152,10 @@ export default function EventManagement() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-[#1E293B]">Event Management</h1>
-          <p className="text-sm text-[#64748B] mt-0.5">Manage and organize your venue events</p>
-        </div>
-
+    <div className="min-w-0 space-y-6">
+      <div>
+        <h1 className="text-xl font-bold text-[#1E293B] sm:text-2xl">Event Management</h1>
+        <p className="text-sm text-[#64748B] mt-0.5">Manage and organize your venue events</p>
       </div>
 
       {loading ? (
@@ -175,20 +172,24 @@ export default function EventManagement() {
           ))}
         </div>
       ) : (
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className={cn(venueTabsList, "mb-5")}>
-            <TabsTrigger value="upcoming" className={venueTabsTrigger}>
-              Upcoming Events
-              {upcomingEvents.length > 0 && (
-                <span className="ml-1.5 bg-[#004A96] text-white text-[10px] px-1.5 py-0.5 rounded-full">
-                  {upcomingEvents.length}
-                </span>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="past" className={venueTabsTrigger}>
-              Past Events
-            </TabsTrigger>
-          </TabsList>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="min-w-0">
+          <div className={venueTabsScrollWrapper}>
+            <TabsList className={cn(venueTabsList, "mb-0")}>
+              <TabsTrigger value="upcoming" className={venueTabsTrigger}>
+                <span className="sm:hidden">Upcoming</span>
+                <span className="hidden sm:inline">Upcoming Events</span>
+                {upcomingEvents.length > 0 && (
+                  <span className="ml-1.5 bg-[#004A96] text-white text-[10px] px-1.5 py-0.5 rounded-full">
+                    {upcomingEvents.length}
+                  </span>
+                )}
+              </TabsTrigger>
+              <TabsTrigger value="past" className={venueTabsTrigger}>
+                Past Events
+              </TabsTrigger>
+            </TabsList>
+          </div>
+          <div className="mb-5" />
 
           <TabsContent value="upcoming">
             {upcomingEvents.length > 0 ? (

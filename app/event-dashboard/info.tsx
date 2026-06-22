@@ -25,6 +25,18 @@ import {
   resolveBrochureUrl,
 } from "@/lib/utils"
 import { exhibitionSpaceTypeLabel, formatEventMoney } from "@/lib/format-event-money"
+import { cn } from "@/lib/utils"
+
+const EVENT_INFO_TABS = [
+  { value: "about", label: "About", shortLabel: "About" },
+  { value: "exhibitors", label: "Exhibitors", shortLabel: "Exhibitors" },
+  { value: "space-cost", label: "Space Cost", shortLabel: "Space" },
+  { value: "layout", label: "Layout Plan", shortLabel: "Layout" },
+  { value: "brochure", label: "Brochure", shortLabel: "Brochure" },
+  { value: "venue", label: "Venue", shortLabel: "Venue" },
+  { value: "speakers", label: "Speakers", shortLabel: "Speakers" },
+  { value: "organizer", label: "Organizer", shortLabel: "Organizer" },
+] as const
 
 interface EventPageProps {
   params: { id: string }
@@ -653,10 +665,10 @@ export default function EventPage({ params }: EventPageProps) {
   }
 
   return (
-    <div className="max-w-7xl bg-[#F5F4F0] py-0 mx-10">
-      <div className="max-w-7xl mx-auto">
+    <div className="w-full min-w-0 max-w-full bg-[#F5F4F0]">
+      <div className="w-full min-w-0 max-w-full mx-auto">
         {/* Hero Section */}
-        <div className="mb-10">
+        <div className="mb-6 sm:mb-10">
           <EventHero
             event={event}
             onScheduleUpdate={(patch) =>
@@ -664,66 +676,33 @@ export default function EventPage({ params }: EventPageProps) {
             }
           />
         </div>
-        <div className="flex flex-col lg:flex-row gap-6">
-          <div className="flex-1">
-            <Tabs value={eventTab} onValueChange={setEventTab} className="w-full">
-              <div className="bg-white rounded-lg mb-6 shadow-sm border border-gray-200">
-                <TabsList className="grid w-full grid-cols-9 h-auto p-0 bg-transparent">
-                  <TabsTrigger
-                    value="about"
-                    className="data-[state=active]:bg-red-600 data-[state=active]:text-white rounded-none py-3 px-4 text-sm font-medium"
-                  >
-                    About
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="exhibitors"
-                    className="data-[state=active]:bg-red-600 data-[state=active]:text-white rounded-none py-3 px-4 text-sm font-medium"
-                  >
-                    Exhibitors
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="space-cost"
-                    className="data-[state=active]:bg-red-600 data-[state=active]:text-white rounded-none py-3 px-4 text-sm font-medium"
-                  >
-                    Space Cost
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="layout"
-                    className="data-[state=active]:bg-red-600 data-[state=active]:text-white rounded-none py-3 px-4 text-sm font-medium"
-                  >
-                    Layout Plan
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="brochure"
-                    className="data-[state=active]:bg-red-600 data-[state=active]:text-white rounded-none py-3 px-4 text-sm font-medium"
-                  >
-                    Brochure
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="venue"
-                    className="data-[state=active]:bg-red-600 data-[state=active]:text-white rounded-none py-3 px-4 text-sm font-medium"
-                  >
-                    Venue
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="speakers"
-                    className="data-[state=active]:bg-red-600 data-[state=active]:text-white rounded-none py-3 px-4 text-sm font-medium"
-                  >
-                    Speakers
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="organizer"
-                    className="data-[state=active]:bg-red-600 data-[state=active]:text-white rounded-none py-3 px-4 text-sm font-medium"
-                  >
-                    Organizer
-                  </TabsTrigger>
-                </TabsList>
+        <div className="flex flex-col gap-6 min-w-0">
+          <div className="flex-1 min-w-0 w-full">
+            <Tabs value={eventTab} onValueChange={setEventTab} className="w-full min-w-0">
+              <div className="bg-white rounded-lg mb-4 sm:mb-6 shadow-sm border border-gray-200 min-w-0 overflow-hidden">
+                <div className="overflow-x-auto overscroll-x-contain pb-0 [-webkit-overflow-scrolling:touch]">
+                  <TabsList className="inline-flex h-auto w-max min-w-full flex-nowrap gap-0 rounded-none bg-transparent p-0 lg:grid lg:w-full lg:grid-cols-8">
+                    {EVENT_INFO_TABS.map((tab) => (
+                      <TabsTrigger
+                        key={tab.value}
+                        value={tab.value}
+                        className={cn(
+                          "shrink-0 min-w-[4.75rem] rounded-none px-3 py-3 text-xs font-medium sm:min-w-0 sm:px-4 sm:text-sm lg:flex-1",
+                          "data-[state=active]:bg-red-600 data-[state=active]:text-white",
+                        )}
+                      >
+                        <span className="lg:hidden">{tab.shortLabel}</span>
+                        <span className="hidden lg:inline">{tab.label}</span>
+                      </TabsTrigger>
+                    ))}
+                  </TabsList>
+                </div>
               </div>
 
-              <TabsContent value="about" className="space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center justify-between gap-2">
+              <TabsContent value="about" className="space-y-4 sm:space-y-6">
+                <Card className="gap-0 py-0 min-w-0 overflow-hidden">
+                  <CardHeader className="px-4 sm:px-6">
+                    <CardTitle className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                       <span>About the Event</span>
                       <div className="flex gap-2">
                         <Button
@@ -759,7 +738,7 @@ export default function EventPage({ params }: EventPageProps) {
                       </div>
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="px-4 sm:px-6">
                     {editingSection === "about" ? (
                       <Textarea
                         className="w-full p-2 border rounded"
@@ -768,14 +747,14 @@ export default function EventPage({ params }: EventPageProps) {
                         rows={5}
                       />
                     ) : (
-                      <p className="text-gray-700 mb-4 leading-relaxed">{aboutText}</p>
+                      <p className="text-gray-700 mb-4 leading-relaxed break-words text-sm sm:text-base">{aboutText}</p>
                     )}
                   </CardContent>
                 </Card>
 
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center justify-between">
+                <Card className="gap-0 py-0 min-w-0 overflow-hidden">
+                  <CardHeader className="px-4 sm:px-6">
+                    <CardTitle className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                       <span className="text-blue-700">Listed In</span>
                       <div className="flex gap-2">
                         <Button variant="ghost" size="sm" onClick={() => setEditingTags(!editingTags)}>
@@ -812,7 +791,7 @@ export default function EventPage({ params }: EventPageProps) {
                       </div>
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="px-4 sm:px-6">
                     {editingTags ? (
                       <Textarea
                         className="w-full p-2 border rounded"
@@ -856,11 +835,11 @@ export default function EventPage({ params }: EventPageProps) {
               </TabsContent>
 
               <TabsContent value="space-cost">
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0">
-                    <div>
-                      <CardTitle>Exhibitor Space Costs</CardTitle>
-                      <p className="text-sm text-gray-600 mt-1">
+                <Card className="gap-0 py-0 min-w-0 overflow-hidden">
+                  <CardHeader className="flex flex-col gap-4 px-4 sm:px-6 sm:flex-row sm:items-start sm:justify-between space-y-0">
+                    <div className="min-w-0">
+                      <CardTitle className="text-base sm:text-lg">Exhibitor Space Costs</CardTitle>
+                      <p className="text-xs sm:text-sm text-gray-600 mt-1 break-words">
                         Shell space and raw space only. Pricing uses the event currency from{" "}
                         <strong>Pricing</strong> ({event.currency}). Minimum booth total = price per sq.m × minimum
                         area.
@@ -869,6 +848,7 @@ export default function EventPage({ params }: EventPageProps) {
                     <Button
                       variant={addingSpace ? "outline" : "default"}
                       size="sm"
+                      className="w-full sm:w-auto shrink-0"
                       disabled={!canAddShellOrRaw && !addingSpace}
                       onClick={() => {
                         setAddingSpace((prev) => {
@@ -891,7 +871,7 @@ export default function EventPage({ params }: EventPageProps) {
                       {addingSpace ? "Cancel" : !hasShellSpace ? "Add shell space" : !hasRawSpace ? "Add raw space" : "Add space"}
                     </Button>
                   </CardHeader>
-                  <CardContent className="space-y-4">
+                  <CardContent className="space-y-4 px-4 sm:px-6">
                     {addingSpace && canAddShellOrRaw && (
                       <div className="p-4 rounded-lg border border-dashed border-gray-300 space-y-4 bg-gray-50">
                         <h4 className="font-medium">New {newSpaceForm.spaceType === "SHELL_SPACE" ? "shell" : "raw"} space</h4>
