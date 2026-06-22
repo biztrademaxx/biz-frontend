@@ -9,4 +9,7 @@ export interface FeaturedSpeakerTile {
   country?: string
   /** Combined city, state, country, legacy location — used for geo matching. */
   locationHay?: string
+  publicSlug?: string | null
+  firstName?: string | null
+  lastName?: string | null
 }

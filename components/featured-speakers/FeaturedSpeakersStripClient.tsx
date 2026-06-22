@@ -5,10 +5,12 @@ import { useRef } from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { useRouter } from "next/navigation"
 import type { FeaturedSpeakerTile } from "@/lib/speakers/types"
+import { getPublicProfilePath } from "@/lib/profile-path"
 
 export interface FeaturedSpeakersStripClientProps {
   speakers: FeaturedSpeakerTile[]
   homeCountry?: string | null
+  
 }
 
 export default function FeaturedSpeakersStripClient({
@@ -74,11 +76,25 @@ export default function FeaturedSpeakersStripClient({
                 key={spk.id}
                 role="button"
                 tabIndex={0}
-                onClick={() => router.push(`/speaker/${spk.id}`)}
+                onClick={() => router.push(
+                    getPublicProfilePath("speaker", {
+                      id: spk.id,
+                      publicSlug: spk.publicSlug,
+                      firstName: spk.firstName,
+                      lastName: spk.lastName,
+                    }),
+                  )}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" || e.key === " ") {
                     e.preventDefault()
-                    router.push(`/speaker/${spk.id}`)
+                    router.push(
+                      getPublicProfilePath("speaker", {
+                        id: spk.id,
+                        publicSlug: spk.publicSlug,
+                        firstName: spk.firstName,
+                        lastName: spk.lastName,
+                      })
+                    )
                   }
                 }}
                 className="flex min-w-[100px] max-w-[140px] cursor-pointer flex-col items-center"
