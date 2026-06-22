@@ -1260,64 +1260,177 @@ export default function EventPage({ params }: EventPageProps) {
 
 
               <TabsContent value="venue">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Venue Information</CardTitle>
-                  </CardHeader>
-                  <CardContent
-                    className="p-6 bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 cursor-pointer"
-                    onClick={() => {
+  <div className="py-6">
+    <div className="mb-6">
+      <h2 className="text-xl font-semibold text-gray-800 mb-1">
+        Venue
+      </h2>
+      <p className="text-sm text-gray-500">
+        Current Event Venue
+      </p>
+    </div>
+
+    {event.venue ? (
+      <div
+        className="bg-white rounded-xl overflow-hidden shadow-sm border hover:shadow-lg transition-shadow cursor-pointer max-w-sm"
+        onClick={() => {
+          const id = event.venue?.id
+          if (!id) return
+
+          router.push(
+            getVenuePublicPath(
+              id,
+              event.venue?.venueName ?? event.venue?.company ?? null
+            )
+          )
+        }}
+      >
+        {/* Banner */}
+        <div className="relative h-48 w-full bg-gray-200 overflow-hidden">
+          {event.venue?.venueImages?.[0] ? (
+            <img
+              src={event.venue.venueImages[0]}
+              alt={event.venue?.venueName || "Venue"}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-[#004A96] via-[#003d7a] to-[#002f5e] flex items-center justify-center">
+              <span className="text-5xl font-bold text-white opacity-30">
+                {event.venue?.venueName?.charAt(0) || "V"}
+              </span>
+            </div>
+          )}
+
+          {/* Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+
+          {/* Title */}
+          <div className="absolute bottom-3 left-4 right-4">
+            <h4 className="text-white font-bold text-xl leading-tight">
+              {event.venue?.venueName ||
+                event.venue?.company ||
+                "Venue"}
+            </h4>
+
+            {event.venue?.location && (
+              <p className="text-white/80 text-xs mt-0.5">
+                {event.venue.location}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Body */}
+        <div className="px-4 pt-4 pb-4">
+
+          {/* Description */}
+          {event.venue?.venueDescription && (
+            <div className="mb-3">
+              {event.venue.venueDescription.length > 120 ? (
+                <p className="text-sm text-gray-600 leading-relaxed">
+                  {event.venue.venueDescription
+                    .slice(0, 120)
+                    .trimEnd()}
+                  ...{" "}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+
                       const id = event.venue?.id
                       if (!id) return
+
                       router.push(
-                        getVenuePublicPath(id, event.venue?.venueName ?? event.venue?.company ?? null),
+                        getVenuePublicPath(
+                          id,
+                          event.venue?.venueName ??
+                            event.venue?.company ??
+                            null
+                        )
                       )
                     }}
+                    className="text-blue-600 font-medium hover:underline"
                   >
-                    <div className="space-y-4">
-                      {/* Venue Header */}
-                      <div>
-                        <h4 className="text-xl font-bold text-gray-800 hover:text-blue-600 transition-colors">
-                          {event.venue?.company}
-                        </h4>
-                        {/* Bio / Description */}
-                        {event.venue?.bio && (
-                          <p className="text-gray-600 text-sm">{event.venue.bio}</p>
-                        )}
-                        <p className="text-gray-500">{event.venue?.location}</p>
-                        {event.venue?.website && (
-                          <a
-                            href={event.venue.website}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-500 hover:underline"
-                            onClick={(e) => e.stopPropagation()} // Prevent navigation when clicking link
-                          >
-                            {event.venue.website}
-                          </a>
-                        )}
-                      </div>
+                    more
+                  </button>
+                </p>
+              ) : (
+                <p className="text-sm text-gray-600 leading-relaxed">
+                  {event.venue.venueDescription}
+                </p>
+              )}
+            </div>
+          )}
 
-                      {/* Amenities */}
-                      {event.venue?.amenities?.length > 0 && (
-                        <div>
-                          <h5 className="font-semibold text-gray-700 mb-2">Amenities</h5>
-                          <div className="flex flex-wrap gap-2">
-                            {event.venue.amenities.map((amenity: any, idx: any) => (
-                              <span
-                                key={idx}
-                                className="bg-blue-100 text-blue-800 text-sm px-2 py-1 rounded-full"
-                              >
-                                {amenity}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
+          {/* Website */}
+          {event.venue?.venueWebsite && (
+            <a
+              href={event.venue.venueWebsite}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-500 text-sm hover:underline block mb-3"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {event.venue.venueWebsite}
+            </a>
+          )}
+
+          {/* Amenities */}
+          {event.venue?.amenities?.length > 0 && (
+            <div className="mb-3">
+              <p className="text-sm font-bold text-gray-800 mb-2">
+                Amenities
+              </p>
+
+              <div className="flex flex-wrap gap-2">
+                {event.venue.amenities.map(
+                  (amenity: string, idx: number) => (
+                    <span
+                      key={idx}
+                      className="bg-blue-50 text-blue-700 text-xs font-medium px-3 py-1 rounded-full border border-blue-100"
+                    >
+                      {amenity}
+                    </span>
+                  )
+                )}
+              </div>
+            </div>
+          )}
+
+          <hr className="border-gray-200 mb-3 mt-2" />
+
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+
+                const id = event.venue?.id
+                if (!id) return
+
+                router.push(
+                  getVenuePublicPath(
+                    id,
+                    event.venue?.venueName ??
+                      event.venue?.company ??
+                      null
+                  )
+                )
+              }}
+              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-5 py-2 rounded-full transition"
+            >
+              View Venue
+            </button>
+          </div>
+        </div>
+      </div>
+    ) : (
+      <div className="py-12 text-center text-gray-500">
+        <p>No venue assigned to this event yet.</p>
+      </div>
+    )}
+  </div>
+</TabsContent>
               
               <TabsContent value="speakers">
   <div className="py-6">

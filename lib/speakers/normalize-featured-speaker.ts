@@ -44,5 +44,9 @@ export function normalizeFeaturedSpeakerTile(raw: unknown): FeaturedSpeakerTile 
     state: parts.state,
     country: parts.country,
     locationHay,
+
+    firstName: fn || null,
+    lastName: ln || null,
+    publicSlug: readString(raw.publicSlug) || null,
   }
 }
