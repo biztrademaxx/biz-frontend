@@ -139,9 +139,9 @@ export function CreateEventPricingTab({
           )}
           <div className="grid gap-6">
             {formData.spaceCosts.map((cost, index) => (
-              <div key={index} className="p-6 border rounded-lg bg-gray-50">
-                <div className="flex items-center gap-3 mb-4">
-                  <h4 className="font-semibold text-lg">{cost.type}</h4>
+              <div key={index} className="min-w-0 rounded-lg border bg-gray-50 p-4 sm:p-6">
+                <div className="mb-4 flex flex-wrap items-center gap-3">
+                  <h4 className="text-base font-semibold break-words sm:text-lg">{cost.type}</h4>
                   {cost.type.includes("Shell") ? (
                     <Badge variant="secondary" className="text-xs">
                       Standard
@@ -197,10 +197,10 @@ export function CreateEventPricingTab({
                         placeholder="0"
                       />
                     </div>
-                    <div className="flex items-end">
-                      <div className="text-sm pb-2">
+                    <div className="flex items-end sm:col-span-1">
+                      <div className="pb-2 text-sm">
                         <span className="text-gray-600">Total from: </span>
-                        <span className="font-semibold text-lg">
+                        <span className="text-base font-semibold sm:text-lg">
                           {formData.currency}
                           {((cost.pricePerSqm || 0) * (cost.minArea || 0)).toLocaleString()}
                         </span>

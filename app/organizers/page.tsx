@@ -33,6 +33,7 @@ import {
   OrganizersFilterSidebar,
   type OrganizerFacets,
 } from "@/components/organizers/organizers-filter-sidebar"
+import OrganizersListingPageSkeleton from "@/components/OrganizersListingPageSkeleton"
 
 const PAGE_SIZE = 20
 
@@ -293,15 +294,7 @@ export default function OrganizersPage() {
   )
 
   if (initialLoad) {
-    return (
-      <div className="min-h-screen bg-[#f1f7fb] flex items-center justify-center px-4">
-        <div className="text-center max-w-md">
-          <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-2 border-[#004A96] border-t-transparent" />
-          <h1 className="text-xl font-semibold text-gray-900">Loading organizers</h1>
-          <p className="mt-2 text-sm text-muted-foreground">Fetching professional event organizers…</p>
-        </div>
-      </div>
-    )
+    return <OrganizersListingPageSkeleton />
   }
 
   return (

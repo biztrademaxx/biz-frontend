@@ -380,28 +380,28 @@ export default function EventPromotion({ eventId }: { eventId: string }) {
   }
 
   return (
-    <div className="space-y-8 p-6">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900">Promote Your Event</h1>
-          <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-slate-600">
-            <span className="font-semibold text-slate-900">{event.title}</span>
+    <div className="min-w-0 space-y-5 sm:space-y-8">
+      <div className="flex flex-col gap-3 sm:gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="min-w-0">
+          <h1 className="text-xl font-bold text-slate-900 sm:text-2xl md:text-3xl">Promote Your Event</h1>
+          <div className="mt-2 flex flex-col gap-2 text-sm text-slate-600 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
+            <span className="break-words font-semibold text-slate-900">{event.title}</span>
             <div className="flex items-center gap-1">
-              <MapPin className="h-4 w-4" />
-              {event.location}
+              <MapPin className="h-4 w-4 shrink-0" />
+              <span className="break-words">{event.location}</span>
             </div>
-            <Badge variant="outline">{event.status}</Badge>
+            <Badge variant="outline" className="w-fit">{event.status}</Badge>
           </div>
         </div>
-        <Badge variant="outline" className="w-fit bg-[#004A96]/10 text-[#004A96]">
+        <Badge variant="outline" className="w-fit shrink-0 bg-[#004A96]/10 text-[#004A96]">
           <Users className="mr-1 h-4 w-4" />
           {platformReach.toLocaleString()} Platform Users
         </Badge>
       </div>
 
       {/* Step 1: Promotion Packages */}
-      <Card className={cn(adminCardShell, "relative z-0 overflow-visible")}>
-        <CardHeader>
+      <Card className={cn(adminCardShell, "relative z-0 min-w-0 overflow-hidden")}>
+        <CardHeader className="p-4 sm:p-6">
           <CardTitle className="flex items-center gap-2 text-slate-900">
             <Megaphone className="h-5 w-5 text-[#004A96]" />
             Step 1 — Choose Promotion Package
@@ -410,7 +410,7 @@ export default function EventPromotion({ eventId }: { eventId: string }) {
             Select a subscription plan or on-demand solution. Category targeting is in the next step.
           </p>
         </CardHeader>
-        <CardContent className="overflow-visible">
+        <CardContent className="min-w-0 overflow-hidden p-3 pt-0 sm:p-6 sm:pt-0">
           {promotionPackages.length === 0 ? (
             <div className="py-8 text-center text-slate-500">
               <p>No promotion packages available at the moment.</p>
@@ -431,8 +431,8 @@ export default function EventPromotion({ eventId }: { eventId: string }) {
 
       {/* Step 2: Category Selection — separate card, always on top */}
       {selectedPackageData && (
-        <Card className={cn(adminCardShell, "relative z-10")}>
-          <CardHeader>
+        <Card className={cn(adminCardShell, "relative z-10 min-w-0 overflow-hidden")}>
+          <CardHeader className="p-4 sm:p-6">
             <CardTitle className="flex items-center gap-2 text-slate-900">
               <Target className="h-5 w-5 text-[#004A96]" />
               Step 2 — Target User Categories
@@ -451,7 +451,7 @@ export default function EventPromotion({ eventId }: { eventId: string }) {
               )}
             </p>
           </CardHeader>
-          <CardContent>
+          <CardContent className="min-w-0 overflow-hidden p-3 pt-0 sm:p-6 sm:pt-0">
             {packageHasAllCategories && displayedCategories.length > 0 && (
               <div className="mb-4 flex flex-wrap gap-2">
                 <Badge className="bg-[#004A96] text-white hover:bg-[#004A96]">{ALL_CATEGORIES_LABEL}</Badge>
@@ -573,8 +573,8 @@ export default function EventPromotion({ eventId }: { eventId: string }) {
       )}
 
       {canContinueToPurchase && (
-        <div className="flex justify-end">
-          <Button className={adminPrimaryBtn} onClick={() => setIsPaymentDialogOpen(true)}>
+        <div className="flex justify-stretch sm:justify-end">
+          <Button className={cn(adminPrimaryBtn, "w-full sm:w-auto")} onClick={() => setIsPaymentDialogOpen(true)}>
             <CreditCard className="mr-2 h-4 w-4" />
             Continue to Purchase
           </Button>
@@ -583,7 +583,7 @@ export default function EventPromotion({ eventId }: { eventId: string }) {
 
       {/* Payment Dialog */}
       <Dialog open={isPaymentDialogOpen} onOpenChange={setIsPaymentDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="w-[calc(100vw-2rem)] max-w-2xl">
           <DialogHeader>
             <DialogTitle>Complete Your Promotion Purchase</DialogTitle>
             <DialogDescription>

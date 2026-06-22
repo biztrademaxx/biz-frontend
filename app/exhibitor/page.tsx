@@ -17,6 +17,7 @@ import {
 import { apiFetch } from "@/lib/api";
 import { useRouter } from "next/navigation";
 import { getPublicProfilePath } from "@/lib/profile-path";
+import ExhibitorsListingPageSkeleton from "@/components/ExhibitorsListingPageSkeleton";
 
 interface Exhibitor {
     id: string;
@@ -228,6 +229,10 @@ export default function ExhibitorsPage() {
         return nums;
     }, [totalPages, safePage]);
 
+    if (loading) {
+        return <ExhibitorsListingPageSkeleton />;
+    }
+
     return (
         <main className="min-h-screen bg-[#f6f8fb]">
             {/* HERO */}
@@ -291,13 +296,11 @@ export default function ExhibitorsPage() {
                 <div className="mb-7 flex flex-col gap-3 sm:mb-8 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                         <h2 className="text-2xl font-bold text-[#111827] sm:text-[26px]">{sectionTitle}</h2>
-                        {!loading && (
-                            <p className="mt-1 text-sm text-gray-500">
-                                {filteredExhibitors.length.toLocaleString()} exhibitor
-                                {filteredExhibitors.length !== 1 ? "s" : ""}
-                                {hasActiveFilters ? " matching your search" : " available"}
-                            </p>
-                        )}
+                        <p className="mt-1 text-sm text-gray-500">
+                            {filteredExhibitors.length.toLocaleString()} exhibitor
+                            {filteredExhibitors.length !== 1 ? "s" : ""}
+                            {hasActiveFilters ? " matching your search" : " available"}
+                        </p>
                     </div>
                     <div className="flex items-center gap-2 self-start sm:self-auto">
                         <button
@@ -371,11 +374,7 @@ export default function ExhibitorsPage() {
                     </div>
                 </div>
 
-                {loading ? (
-                    <div className="flex justify-center py-16 sm:py-20">
-                        <div className="h-10 w-10 animate-spin rounded-full border-b-2 border-[#0B63F6] sm:h-12 sm:w-12" />
-                    </div>
-                ) : displayedExhibitors.length === 0 ? (
+                {displayedExhibitors.length === 0 ? (
                     <div className="rounded-2xl bg-white py-16 text-center sm:py-20">
                         <div className="mb-4 text-5xl sm:text-6xl">🔍</div>
                         <p className="text-base text-gray-500 sm:text-lg">No exhibitors found</p>

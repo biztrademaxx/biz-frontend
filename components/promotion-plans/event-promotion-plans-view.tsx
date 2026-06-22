@@ -145,25 +145,25 @@ export function EventPromotionPlansView({
   }
 
   return (
-    <div className="space-y-10">
+    <div className="min-w-0 space-y-6 sm:space-y-10">
       {/* Hero */}
-      <div className="text-center">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+      <div className="min-w-0 text-center">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-500 sm:text-xs sm:tracking-[0.2em]">
           BizTradeFairs.com Pricing Plans
         </p>
-        <h2 className="mt-2 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+        <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl md:text-4xl">
           Event Promotion Plans
         </h2>
-        <p className="mx-auto mt-3 max-w-2xl text-sm text-slate-600 sm:text-base">
+        <p className="mx-auto mt-3 max-w-2xl px-1 text-sm text-slate-600 sm:text-base">
           Choose the perfect plan to grow your event visibility, attract more leads and maximize ROI.
         </p>
 
-        <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white p-1 shadow-sm">
+        <div className="mx-auto mt-5 flex w-full max-w-md flex-col items-stretch gap-2 rounded-2xl border border-slate-200 bg-white p-1.5 shadow-sm sm:inline-flex sm:max-w-none sm:flex-row sm:items-center sm:gap-2 sm:rounded-full sm:p-1">
           <button
             type="button"
             onClick={() => setBilling("monthly")}
             className={cn(
-              "rounded-full px-5 py-2 text-sm font-medium transition-colors",
+              "rounded-xl px-4 py-2.5 text-sm font-medium transition-colors sm:rounded-full sm:px-5",
               billing === "monthly" ? "bg-[#004A96] text-white shadow-sm" : "text-slate-600 hover:text-slate-900",
             )}
           >
@@ -173,12 +173,12 @@ export function EventPromotionPlansView({
             type="button"
             onClick={() => setBilling("yearly")}
             className={cn(
-              "flex items-center gap-2 rounded-full px-5 py-2 text-sm font-medium transition-colors",
+              "flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors sm:rounded-full sm:px-5",
               billing === "yearly" ? "bg-[#004A96] text-white shadow-sm" : "text-slate-600 hover:text-slate-900",
             )}
           >
-            Yearly
-            <Badge className="border-0 bg-emerald-500 text-[10px] text-white hover:bg-emerald-500">
+            <span>Yearly</span>
+            <Badge className="border-0 bg-emerald-500 text-[10px] whitespace-nowrap text-white hover:bg-emerald-500">
               Save up to 20%
             </Badge>
           </button>
@@ -187,7 +187,7 @@ export function EventPromotionPlansView({
 
       {/* Subscription plans */}
       {subscriptionPlans.length > 0 && (
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-3">
           {subscriptionPlans.map((pkg) => {
             const accent = planAccent(pkg.planKey, pkg.recommended)
             const isSelected = selectedPackageId === pkg.id
@@ -197,7 +197,7 @@ export function EventPromotionPlansView({
               <div
                 key={pkg.id}
                 className={cn(
-                  "relative flex flex-col rounded-2xl border-2 bg-white p-6 shadow-sm transition-all",
+                  "relative flex min-w-0 flex-col rounded-2xl border-2 bg-white p-4 shadow-sm transition-all sm:p-6",
                   isPopular ? accent.border : accent.border,
                   isSelected && "shadow-lg",
                 )}
@@ -224,7 +224,7 @@ export function EventPromotionPlansView({
                   {pkg.features.map((feature) => (
                     <li key={feature} className="flex items-start gap-2 text-sm text-slate-700">
                       <Check className={cn("mt-0.5 h-4 w-4 shrink-0", accent.check)} />
-                      <span>{feature}</span>
+                      <span className="break-words">{feature}</span>
                     </li>
                   ))}
                 </ul>
@@ -248,7 +248,7 @@ export function EventPromotionPlansView({
 
       {/* Average results */}
       {subscriptionPlans.some((p) => p.visibilityLabel) && (
-        <div className="rounded-2xl border border-slate-200 bg-gradient-to-r from-slate-50 to-white p-5 shadow-sm">
+        <div className="rounded-2xl border border-slate-200 bg-gradient-to-r from-slate-50 to-white p-4 shadow-sm sm:p-5">
           <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-slate-800">
             <BarChart3 className="h-5 w-5 text-[#004A96]" />
             Average Results
@@ -279,12 +279,12 @@ export function EventPromotionPlansView({
           {ADD_ON_ITEMS.map((item) => (
             <div
               key={item.title}
-              className="flex flex-col items-center rounded-xl border border-slate-200 bg-white p-4 text-center shadow-sm"
+              className="flex min-w-0 flex-col items-center rounded-xl border border-slate-200 bg-white p-3 text-center shadow-sm sm:p-4"
             >
               <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-[#004A96]/10 text-[#004A96]">
                 <item.icon className="h-5 w-5" />
               </div>
-              <p className="text-xs font-semibold text-slate-900">{item.title}</p>
+              <p className="text-xs font-semibold text-slate-900 break-words">{item.title}</p>
               <p className="mt-1 text-[11px] text-slate-500">{item.subtitle}</p>
             </div>
           ))}
@@ -300,14 +300,14 @@ export function EventPromotionPlansView({
               Flexible campaigns and tools — pay only for what you need.
             </p>
           </div>
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-3">
             {onDemandPlans.map((pkg) => {
               const isSelected = selectedPackageId === pkg.id
               return (
                 <div
                   key={pkg.id}
                   className={cn(
-                    "flex flex-col rounded-2xl border-2 bg-white p-6 shadow-sm transition-all",
+                    "flex min-w-0 flex-col rounded-2xl border-2 bg-white p-4 shadow-sm transition-all sm:p-6",
                     isSelected ? "border-[#004A96] ring-2 ring-[#004A96]/15" : "border-slate-200",
                   )}
                 >
@@ -326,7 +326,7 @@ export function EventPromotionPlansView({
                     {pkg.features.map((feature) => (
                       <li key={feature} className="flex items-start gap-2 text-sm text-slate-700">
                         <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#004A96]" />
-                        <span>{feature}</span>
+                        <span className="break-words">{feature}</span>
                       </li>
                     ))}
                   </ul>
@@ -346,19 +346,19 @@ export function EventPromotionPlansView({
       )}
 
       {/* Custom package */}
-      <div className="rounded-2xl border-2 border-dashed border-[#004A96]/30 bg-[#004A96]/5 p-6 sm:p-8">
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex-1">
-            <div className="flex items-center gap-2">
-              <Users className="h-5 w-5 text-[#004A96]" />
-              <h3 className="text-xl font-bold text-slate-900">Need a Custom Marketing Package?</h3>
+      <div className="min-w-0 rounded-2xl border-2 border-dashed border-[#004A96]/30 bg-[#004A96]/5 p-4 sm:p-6 md:p-8">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-start gap-2">
+              <Users className="h-5 w-5 shrink-0 text-[#004A96]" />
+              <h3 className="text-lg font-bold text-slate-900 break-words sm:text-xl">Need a Custom Marketing Package?</h3>
             </div>
             <p className="mt-2 text-sm font-medium text-[#004A96]">Customized Solutions Available</p>
             <ul className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
               {CUSTOM_FEATURES.map((feature) => (
-                <li key={feature} className="flex items-center gap-2 text-sm text-slate-700">
-                  <Check className="h-4 w-4 shrink-0 text-emerald-600" />
-                  {feature}
+                <li key={feature} className="flex items-start gap-2 text-sm text-slate-700">
+                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+                  <span className="break-words">{feature}</span>
                 </li>
               ))}
             </ul>
@@ -366,7 +366,7 @@ export function EventPromotionPlansView({
           <Button
             type="button"
             size="lg"
-            className="shrink-0 bg-[#004A96] hover:bg-[#003d7a]"
+            className="h-auto w-full shrink-0 whitespace-normal bg-[#004A96] px-4 py-3 text-center text-sm leading-snug hover:bg-[#003d7a] sm:text-base lg:w-auto lg:max-w-xs"
             onClick={onContactCustom}
           >
             Contact Us for a Tailored Proposal
@@ -374,7 +374,7 @@ export function EventPromotionPlansView({
         </div>
       </div>
 
-      <p className="flex items-center justify-center gap-2 text-center text-xs text-slate-500">
+      <p className="flex flex-wrap items-center justify-center gap-2 px-1 text-center text-xs text-slate-500">
         <Shield className="h-4 w-4" />
         All plans include Verified Event Badge &amp; Analytics Dashboard
       </p>

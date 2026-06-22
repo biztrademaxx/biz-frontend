@@ -15,29 +15,29 @@ export function CreateEventPreviewTab({ formData }: { formData: EventFormData })
           Event Preview
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="bg-gray-50 p-6 rounded-lg">
-          <div className="space-y-4">
-            <div>
-              <h3 className="text-2xl font-bold text-blue-900">{formData.title || "Event Title"}</h3>
-              <div className="flex flex-col gap-2 mt-2 text-gray-600">
-                <div className="flex items-center gap-1">
-                  <Calendar className="w-4 h-4" />
-                  <span>
+      <CardContent className="min-w-0">
+        <div className="rounded-lg bg-gray-50 p-4 sm:p-6">
+          <div className="min-w-0 space-y-4">
+            <div className="min-w-0">
+              <h3 className="text-xl font-bold break-words text-blue-900 sm:text-2xl">{formData.title || "Event Title"}</h3>
+              <div className="mt-2 flex flex-col gap-2 text-gray-600">
+                <div className="flex min-w-0 items-start gap-1">
+                  <Calendar className="mt-0.5 h-4 w-4 shrink-0" />
+                  <span className="break-words">
                     {formData.startDate ? getDatePart(formData.startDate) : "Start Date"} -{" "}
                     {formData.endDate ? getDatePart(formData.endDate) : "End Date"}
                   </span>
                 </div>
-                <div className="flex items-center gap-1">
-                  <Clock className="w-4 h-4" />
-                  <span>
+                <div className="flex min-w-0 items-start gap-1">
+                  <Clock className="mt-0.5 h-4 w-4 shrink-0" />
+                  <span className="break-words">
                     Daily: {formatTimeTo12Hour(formData.dailyStart)} - {formatTimeTo12Hour(formData.dailyEnd)} (
                     {getEffectiveEventCreationTimezone(formData)})
                   </span>
                 </div>
-                <div className="flex items-center gap-1">
-                  <MapPin className="w-4 h-4" />
-                  <span>
+                <div className="flex min-w-0 items-start gap-1">
+                  <MapPin className="mt-0.5 h-4 w-4 shrink-0" />
+                  <span className="break-words">
                     {formData.venue || "Venue"}, {[formData.city || "City", formData.state, formData.country]
                       .filter(Boolean)
                       .join(", ")}
@@ -54,7 +54,7 @@ export function CreateEventPreviewTab({ formData }: { formData: EventFormData })
               ))}
             </div>
 
-            <p className="text-gray-700">{formData.description || "Event description will appear here..."}</p>
+            <p className="break-words text-gray-700">{formData.description || "Event description will appear here..."}</p>
 
             {formData.highlights.length > 0 && (
               <div>
@@ -127,22 +127,22 @@ export function CreateEventPreviewTab({ formData }: { formData: EventFormData })
                   {formData.spaceCosts.map((cost, index) => (
                     <div
                       key={index}
-                      className="bg-white p-4 rounded-lg border flex justify-between items-center gap-4"
+                      className="flex min-w-0 flex-col gap-3 rounded-lg border bg-white p-4 sm:flex-row sm:items-start sm:justify-between sm:gap-4"
                     >
-                      <div>
-                        <h5 className="font-medium">{cost.type}</h5>
+                      <div className="min-w-0 flex-1">
+                        <h5 className="font-medium break-words">{cost.type}</h5>
                         {cost.hallName ? (
-                          <p className="text-sm text-gray-700 font-medium">Hall: {cost.hallName}</p>
+                          <p className="text-sm font-medium break-words text-gray-700">Hall: {cost.hallName}</p>
                         ) : null}
-                        <p className="text-sm text-gray-600">{cost.description}</p>
+                        <p className="text-sm break-words text-gray-600">{cost.description}</p>
                       </div>
-                      <div className="text-right shrink-0">
+                      <div className="w-full shrink-0 border-t pt-3 text-left sm:w-auto sm:border-t-0 sm:pt-0 sm:text-right">
                         <p className="font-semibold text-blue-600">
                           {formData.currency}
                           {(cost.pricePerSqm || 0).toLocaleString()} / sq.m
                         </p>
                         <p className="text-sm text-gray-500">Min: {cost.minArea || 0} sq.m</p>
-                        <p className="text-sm font-medium text-gray-800 mt-1">
+                        <p className="mt-1 text-sm font-medium text-gray-800">
                           From: {formData.currency}
                           {((cost.pricePerSqm || 0) * (cost.minArea || 0)).toLocaleString()}
                         </p>

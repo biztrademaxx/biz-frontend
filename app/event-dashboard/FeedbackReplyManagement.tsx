@@ -288,26 +288,24 @@ export default function FeedbackReplyManagement({ eventId }: { eventId: string }
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">
-            {event ? `Feedback for ${event.title}` : "Feedback Replies"}
-          </h2>
-          <p className="text-muted-foreground">Respond to event feedback and manage replies</p>
-        </div>
+    <div className="min-w-0 space-y-4 overflow-x-hidden sm:space-y-6">
+      <div className="min-w-0">
+        <h2 className="text-xl font-bold tracking-tight break-words sm:text-2xl md:text-3xl">
+          {event ? `Feedback for ${event.title}` : "Feedback Replies"}
+        </h2>
+        <p className="text-sm text-muted-foreground sm:text-base">Respond to event feedback and manage replies</p>
       </div>
 
       {/* Filters */}
-      <Card>
-        <CardHeader className="pb-3">
+      <Card className="min-w-0 overflow-hidden">
+        <CardHeader className="p-4 pb-3 sm:p-6">
           <div className="flex items-center">
-            <Filter className="w-5 h-5 mr-2" />
-            <CardTitle>Filters</CardTitle>
+            <Filter className="mr-2 h-5 w-5 shrink-0" />
+            <CardTitle className="text-base sm:text-lg">Filters</CardTitle>
           </div>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <div>
               <label className="text-sm font-medium mb-2 block">Rating</label>
               <Select value={ratingFilter} onValueChange={setRatingFilter}>
@@ -357,16 +355,16 @@ export default function FeedbackReplyManagement({ eventId }: { eventId: string }
       </Card>
 
       {/* Reviews List */}
-      <Card>
-        <CardHeader>
-          <div className="flex justify-between items-center">
-            <CardTitle>Reviews ({filteredReviews.length})</CardTitle>
-            <Button variant="outline" onClick={fetchReviews}>
+      <Card className="min-w-0 overflow-hidden">
+        <CardHeader className="p-4 sm:p-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <CardTitle className="text-base sm:text-lg">Reviews ({filteredReviews.length})</CardTitle>
+            <Button variant="outline" onClick={fetchReviews} className="w-full sm:w-auto">
               Refresh
             </Button>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="min-w-0 overflow-hidden p-4 pt-0 sm:p-6 sm:pt-0">
           {loading ? (
             <div className="space-y-4">
               {[...Array(5)].map((_, i) => (
@@ -393,10 +391,10 @@ export default function FeedbackReplyManagement({ eventId }: { eventId: string }
           ) : (
             <div className="space-y-4">
               {filteredReviews.map((review) => (
-                <div key={review.id} className="p-4 border rounded-lg">
-                  <div className="flex justify-between items-start">
-                    <div className="flex items-start space-x-4 flex-1">
-                      <div className="flex-shrink-0">
+                <div key={review.id} className="min-w-0 overflow-hidden rounded-lg border p-3 sm:p-4">
+                  <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="flex min-w-0 flex-1 items-start gap-3 sm:space-x-4">
+                      <div className="shrink-0">
                         {review.user.avatar ? (
                           <AppImage
                             src={review.user.avatar}
@@ -411,9 +409,9 @@ export default function FeedbackReplyManagement({ eventId }: { eventId: string }
                           </div>
                         )}
                       </div>
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2">
-                          <h4 className="font-semibold">
+                      <div className="min-w-0 flex-1 overflow-hidden">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h4 className="break-words font-semibold">
                             {review.user.firstName} {review.user.lastName}
                           </h4>
                           <Badge variant={review.isApproved ? "default" : "secondary"} className="text-xs">
@@ -426,10 +424,10 @@ export default function FeedbackReplyManagement({ eventId }: { eventId: string }
                           )}
                         </div>
                         <div className="mt-1">{renderStars(review.rating)}</div>
-                        {review.title && <p className="font-medium mt-2">{review.title}</p>}
-                        <p className="text-muted-foreground mt-1">{review.comment}</p>
-                        <div className="flex items-center mt-2 text-sm text-muted-foreground">
-                          <Calendar className="w-4 h-4 mr-1" />
+                        {review.title && <p className="mt-2 break-words font-medium">{review.title}</p>}
+                        <p className="mt-1 break-words text-muted-foreground">{review.comment}</p>
+                        <div className="mt-2 flex items-center text-sm text-muted-foreground">
+                          <Calendar className="mr-1 h-4 w-4 shrink-0" />
                           <span>{formatDate(review.createdAt)}</span>
                         </div>
 
@@ -451,11 +449,11 @@ export default function FeedbackReplyManagement({ eventId }: { eventId: string }
                             </Button>
 
                             {expandedReplies.has(review.id) && (
-                              <div className="mt-2 space-y-3 pl-6 border-l-2 border-gray-200">
+                              <div className="mt-2 min-w-0 space-y-3 border-l-2 border-gray-200 pl-3 sm:pl-6">
                                 {review.replies.map((reply) => (
-                                  <div key={reply.id} className="pt-3">
-                                    <div className="flex items-start space-x-3">
-                                      <div className="flex-shrink-0">
+                                  <div key={reply.id} className="min-w-0 pt-2">
+                                    <div className="flex min-w-0 items-start gap-3">
+                                      <div className="shrink-0">
                                         {reply.user.avatar ? (
                                           <AppImage
                                             src={reply.user.avatar}
@@ -470,10 +468,10 @@ export default function FeedbackReplyManagement({ eventId }: { eventId: string }
                                           </div>
                                         )}
                                       </div>
-                                      <div className="flex-1">
-                                        <div className="flex items-center justify-between">
-                                          <div className="flex items-center space-x-2">
-                                            <span className="font-medium">
+                                      <div className="min-w-0 flex-1 overflow-hidden">
+                                        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                                          <div className="flex min-w-0 flex-wrap items-center gap-2">
+                                            <span className="break-words font-medium">
                                               {reply.user.firstName} {reply.user.lastName}
                                             </span>
                                             {reply.isOrganizerReply && (
@@ -484,7 +482,7 @@ export default function FeedbackReplyManagement({ eventId }: { eventId: string }
                                           </div>
                                           <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
-                                              <Button variant="ghost" size="sm">
+                                              <Button variant="ghost" size="sm" className="shrink-0 self-end sm:self-auto">
                                                 •••
                                               </Button>
                                             </DropdownMenuTrigger>
@@ -498,7 +496,7 @@ export default function FeedbackReplyManagement({ eventId }: { eventId: string }
                                             </DropdownMenuContent>
                                           </DropdownMenu>
                                         </div>
-                                        <p className="text-sm mt-1">{reply.content}</p>
+                                        <p className="mt-1 break-words text-sm">{reply.content}</p>
                                         <p className="text-xs text-muted-foreground mt-1">
                                           {formatDateTime(reply.createdAt)}
                                         </p>
@@ -520,13 +518,14 @@ export default function FeedbackReplyManagement({ eventId }: { eventId: string }
                               onChange={(e) => setReplyContent(e.target.value)}
                               className="mb-2"
                             />
-                            <div className="flex space-x-2">
-                              <Button onClick={() => handleSendReply(review.id)}>
-                                <Send className="w-4 h-4 mr-2" />
+                            <div className="flex flex-col gap-2 sm:flex-row">
+                              <Button onClick={() => handleSendReply(review.id)} className="w-full sm:w-auto">
+                                <Send className="mr-2 h-4 w-4" />
                                 Send Reply
                               </Button>
                               <Button
                                 variant="outline"
+                                className="w-full sm:w-auto"
                                 onClick={() => {
                                   setReplyingTo(null)
                                   setReplyContent("")
@@ -540,7 +539,7 @@ export default function FeedbackReplyManagement({ eventId }: { eventId: string }
                           <Button
                             variant="outline"
                             size="sm"
-                            className="mt-4 bg-transparent"
+                            className="mt-4 w-full bg-transparent sm:w-auto"
                             onClick={() => setReplyingTo(review.id)}
                           >
                             <Reply className="w-4 h-4 mr-2" />

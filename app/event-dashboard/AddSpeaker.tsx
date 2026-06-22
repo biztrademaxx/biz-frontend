@@ -320,19 +320,29 @@ export default function AddSpeaker({ eventId }: AddSpeakerProps) {
   }
 
   return (
-    <div className="space-y-6">
-      <Card>
+    <div className="min-w-0 space-y-6">
+      <Card className="min-w-0 overflow-hidden">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <User className="w-5 h-5" />
+            <User className="w-5 h-5 shrink-0" />
             Add Speaker to Event
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="existing">Select Existing Speaker</TabsTrigger>
-              <TabsTrigger value="new">Create New Speaker</TabsTrigger>
+        <CardContent className="min-w-0">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="min-w-0 space-y-6">
+            <TabsList className="flex h-auto w-full flex-col gap-1 p-1 sm:grid sm:grid-cols-2">
+              <TabsTrigger
+                value="existing"
+                className="h-auto w-full whitespace-normal px-3 py-2.5 text-xs sm:text-sm"
+              >
+                Select Existing Speaker
+              </TabsTrigger>
+              <TabsTrigger
+                value="new"
+                className="h-auto w-full whitespace-normal px-3 py-2.5 text-xs sm:text-sm"
+              >
+                Create New Speaker
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="existing" className="space-y-6">
@@ -348,18 +358,18 @@ export default function AddSpeaker({ eventId }: AddSpeakerProps) {
               </div>
 
               {/* Speakers List */}
-              <div className="grid gap-4 max-h-96 overflow-y-auto">
+              <div className="grid max-h-96 gap-4 overflow-y-auto">
                 {filteredSpeakers.map((speaker) => (
                   <Card
                     key={speaker.id}
-                    className={`cursor-pointer transition-colors ${
+                    className={`min-w-0 cursor-pointer transition-colors ${
                       selectedSpeaker?.id === speaker.id ? "ring-2 ring-blue-500 bg-blue-50" : "hover:bg-gray-50"
                     }`}
                     onClick={() => setSelectedSpeaker(speaker)}
                   >
                     <CardContent className="p-4">
-                      <div className="flex items-start gap-4">
-                        <Avatar className="w-16 h-16">
+                      <div className="flex min-w-0 flex-col items-start gap-4 sm:flex-row">
+                        <Avatar className="h-16 w-16 shrink-0">
                           <AvatarImage src={speaker.avatar} />
                           <AvatarFallback>
                             {speaker.firstName[0]}
@@ -367,31 +377,31 @@ export default function AddSpeaker({ eventId }: AddSpeakerProps) {
                           </AvatarFallback>
                         </Avatar>
 
-                        <div className="flex-1 space-y-2">
+                        <div className="min-w-0 flex-1 space-y-2">
                           <div>
-                            <h3 className="text-lg font-semibold">
+                            <h3 className="text-lg font-semibold break-words">
                               {speaker.firstName} {speaker.lastName}
                             </h3>
-                            <p className="text-sm text-gray-600">
+                            <p className="text-sm text-gray-600 break-words">
                               {speaker.jobTitle} {speaker.company && `at ${speaker.company}`}
                             </p>
                           </div>
 
-                          <div className="flex items-center gap-4 text-sm text-gray-500">
-                            <div className="flex items-center gap-1">
-                              <Mail className="w-3 h-3" />
-                              {speaker.email}
+                          <div className="flex flex-col gap-2 text-sm text-gray-500 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
+                            <div className="flex min-w-0 items-center gap-1">
+                              <Mail className="h-3 w-3 shrink-0" />
+                              <span className="break-all">{speaker.email}</span>
                             </div>
                             {speaker.phone && (
                               <div className="flex items-center gap-1">
-                                <Phone className="w-3 h-3" />
+                                <Phone className="h-3 w-3 shrink-0" />
                                 {speaker.phone}
                               </div>
                             )}
                             {speaker.location && (
-                              <div className="flex items-center gap-1">
-                                <Building className="w-3 h-3" />
-                                {speaker.location}
+                              <div className="flex min-w-0 items-center gap-1">
+                                <Building className="h-3 w-3 shrink-0" />
+                                <span className="break-words">{speaker.location}</span>
                               </div>
                             )}
                           </div>
