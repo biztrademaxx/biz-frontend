@@ -288,9 +288,9 @@ export default function SpeakersPage() {
                 <span className="text-[#0B132B]">Find speakers</span>
                 <br />
                 <span className="text-[#0B132B]">who </span>
-                <span className="text-[#2563EB]">inspire</span>
+                <span className="text-[#004A96]">inspire</span>
                 <span className="text-[#0B132B]"> and </span>
-                <span className="text-[#2563EB]">impact.</span>
+                <span className="text-[#004A96]">impact.</span>
               </h1>
               <p className="mt-5 max-w-[360px] text-[0.92rem] leading-7 text-[#4A608F]">
                 Discover verified speakers and industry leaders for your next event.
@@ -420,7 +420,7 @@ export default function SpeakersPage() {
                 <div
   className={`mt-6 grid gap-4  ${
     viewMode === "grid"
-      ? "grid-cols-1 md:grid-cols-2 xl:grid-cols-4"
+      ? "grid-cols-1 md:grid-cols-2 xl:grid-cols-3"
       : "grid-cols-1"
   }`}
 >
