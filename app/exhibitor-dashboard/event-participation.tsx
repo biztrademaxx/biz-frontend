@@ -25,7 +25,7 @@ import {
   Building,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { exGlassCard, exTabsList, exTabsTriggerActive, exBtnPrimary, exPageTitle } from "./dashboard-theme"
+import { exGlassCard, exTabsList, exTabsScrollWrapper, exTabsTriggerActive, exBtnPrimary, exPageTitle } from "./dashboard-theme"
 
 interface EventParticipationProps {
   exhibitorId: string
@@ -213,11 +213,11 @@ export default function EventParticipation({ exhibitorId }: EventParticipationPr
   devLog("EventParticipation - Past events names:", pastEvents.map(e => e.eventName))
 
   const EventCard = ({ event, isPast = false }: { event: Event; isPast?: boolean }) => (
-    <Card className={exGlassCard}>
-      <CardContent className="p-6">
-        <div className="flex items-start justify-between mb-4">
-          <div>
-            <h3 className="text-lg font-semibold mb-2">{event.eventName}</h3>
+    <Card className={cn(exGlassCard, "min-w-0 overflow-hidden")}>
+      <CardContent className="p-4 sm:p-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-4">
+          <div className="min-w-0 flex-1">
+            <h3 className="text-base font-semibold mb-2 break-words sm:text-lg">{event.eventName}</h3>
             <div className="space-y-2 text-sm text-gray-600">
               <div className="flex items-center gap-2">
                 <Calendar className="w-4 h-4" />
@@ -235,7 +235,7 @@ export default function EventParticipation({ exhibitorId }: EventParticipationPr
           </div>
           <Badge
             variant={event.paymentStatus === "PAID" ? "default" : "destructive"}
-            className={event.paymentStatus === "PAID" ? "bg-green-500" : ""}
+            className={cn("w-fit shrink-0", event.paymentStatus === "PAID" ? "bg-green-500" : "")}
           >
             {event.paymentStatus === "PAID" ? (
               <CheckCircle className="w-3 h-3 mr-1" />
@@ -323,21 +323,24 @@ export default function EventParticipation({ exhibitorId }: EventParticipationPr
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="min-w-0 space-y-6">
+      <div>
         <h1 className={exPageTitle}>Event Participation</h1>
-        
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className={cn(exTabsList)}>
-          <TabsTrigger value="upcoming" className={exTabsTriggerActive}>
-            Upcoming Events ({upcomingEvents.length})
-          </TabsTrigger>
-          <TabsTrigger value="past" className={exTabsTriggerActive}>
-            Past Events ({pastEvents.length})
-          </TabsTrigger>
-        </TabsList>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="min-w-0 space-y-6">
+        <div className={exTabsScrollWrapper}>
+          <TabsList className={cn(exTabsList, "mb-0")}>
+            <TabsTrigger value="upcoming" className={exTabsTriggerActive}>
+              <span className="sm:hidden">Upcoming ({upcomingEvents.length})</span>
+              <span className="hidden sm:inline">Upcoming Events ({upcomingEvents.length})</span>
+            </TabsTrigger>
+            <TabsTrigger value="past" className={exTabsTriggerActive}>
+              <span className="sm:hidden">Past ({pastEvents.length})</span>
+              <span className="hidden sm:inline">Past Events ({pastEvents.length})</span>
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="upcoming" className="space-y-4">
           {upcomingEvents.length > 0 ? (

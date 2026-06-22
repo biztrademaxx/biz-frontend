@@ -102,7 +102,7 @@ export default function ActivePromotions({ exhibitorId, refetchTrigger }: Active
   }
 
   return (
-    <Card className={exGlassCard}>
+    <Card className={cn(exGlassCard, "min-w-0 overflow-hidden")}>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <TrendingUp className="w-5 h-5" />

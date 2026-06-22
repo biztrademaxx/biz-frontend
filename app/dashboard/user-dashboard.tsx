@@ -302,7 +302,7 @@ export function UserDashboard({ userId }: UserDashboardProps) {
       case "Suggested":
         return <Recommendations />
       case "connections":
-        return <ConnectionsSection userId={resolvedUserId} />
+        return <ConnectionsSection userId={resolvedUserId} surface="exhibitor" />
       case "messages":
         return <MessagesSection organizerId={resolvedUserId} surface="visitor" />
       case "settings":
@@ -333,7 +333,7 @@ export function UserDashboard({ userId }: UserDashboardProps) {
     const sidebarInitial = (userData?.firstName?.[0] || userData?.lastName?.[0] || "V").toUpperCase()
 
     const sidebarContent = (
-      <div className={cn("flex h-full w-[260px] flex-col overflow-hidden", orgSidebarSurface)}>
+      <div className={cn("flex h-full w-[min(100vw,260px)] max-w-[85vw] flex-col overflow-hidden md:w-[260px]", orgSidebarSurface)}>
         <div className="flex items-center justify-between border-b border-slate-200 p-4 md:hidden">
           <h2 className="text-lg font-semibold text-slate-900">Menu</h2>
           <Button
@@ -479,37 +479,40 @@ export function UserDashboard({ userId }: UserDashboardProps) {
     userData?.displayName?.trim() ||
     [userData?.firstName, userData?.lastName].filter(Boolean).join(" ").trim()
 
-  const showShellHeader = Boolean(
-    !loading && !error && userData && activeSection !== "profile" && activeSection !== "dashboard"
-  )
+  const currentSectionTitle = getVisitorSectionTitle(activeSection ?? "dashboard")
 
   return (
-    <div className="flex min-h-0 flex-1 w-full overflow-hidden bg-white">
+    <div className="flex min-h-0 flex-1 w-full overflow-hidden bg-[#f8fafc]">
       {renderSidebar()}
 
       <div className="relative flex min-h-0 min-w-0 flex-1 flex-col">
         {/* Mobile topbar */}
-        <div className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3 md:hidden">
+        <div className="flex items-center justify-between gap-2 border-b border-slate-200 bg-white px-3 py-3 md:hidden">
           <Button
             variant="ghost"
             size="sm"
-            className="text-[#004A96]"
+            className="shrink-0 text-[#004A96]"
             onClick={() => setIsMobileSidebarOpen(true)}
           >
             <Menu className="h-5 w-5" />
           </Button>
-          <span className="text-sm font-semibold text-[#004A96]">Biz TradeFairs</span>
-          <div className="w-9" />
+          <div className="min-w-0 flex-1 px-1 text-center">
+            {displayName ? (
+              <p className="truncate text-xs text-slate-500">{displayName}</p>
+            ) : null}
+            <p className="truncate text-sm font-semibold text-[#004A96]">{currentSectionTitle}</p>
+          </div>
+          <div className="w-9 shrink-0" />
         </div>
 
         <main className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden p-0">
-          {/* Removed the greeting header */}
-
           {!loading && !error && userData && activeSection === "dashboard" && (
-            <DashboardManagedBanner page="visitor-dashboard" className="w-full" />
+            <DashboardManagedBanner page="visitor-dashboard" className="w-full min-w-0" />
           )}
 
-          <div className="w-full px-6 py-6">{renderContent()}</div>
+          <div className="w-full min-w-0 max-w-full px-3 py-4 sm:px-4 sm:py-5 md:px-6 md:py-6">
+            <div className="min-w-0 overflow-x-hidden">{renderContent()}</div>
+          </div>
         </main>
       </div>
     </div>
@@ -525,4 +528,14 @@ function getVisitorGroupForSection(section: string): string | null {
     }
   }
   return null
+}
+
+function getVisitorSectionTitle(section: string): string {
+  for (const group of VISITOR_SIDEBAR_GROUPS) {
+    const item = group.items.find((i) => i.id === section)
+    if (item) return item.title
+  }
+  const individual = VISITOR_INDIVIDUAL_ITEMS.find((i) => i.id === section)
+  if (individual) return individual.title
+  return "Dashboard"
 }

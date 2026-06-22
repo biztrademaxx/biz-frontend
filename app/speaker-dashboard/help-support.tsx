@@ -79,7 +79,7 @@ export function SpeakerHelpSupport() {
     }
 
     return (
-        <div className="space-y-4 max-w-5xl mx-auto">
+        <div className="space-y-4 max-w-5xl mx-auto min-w-0">
             {/* Header */}
             <div>
                 <h2 className="text-xl font-extrabold text-slate-800 tracking-tight">Help & Support</h2>
@@ -105,10 +105,10 @@ export function SpeakerHelpSupport() {
                     {faqList.map((faq, index) => (
                         <div key={index}>
                             <button
-                                className="w-full flex items-center justify-between gap-4 p-5 text-left hover:bg-slate-50/60 transition-colors"
+                                className="w-full flex items-start justify-between gap-3 p-4 sm:p-5 text-left hover:bg-slate-50/60 transition-colors"
                                 onClick={() => toggleFAQ(index)}
                             >
-                                <span className="text-sm font-semibold text-slate-700">{faq.question}</span>
+                                <span className="text-sm font-semibold text-slate-700 break-words min-w-0 flex-1">{faq.question}</span>
                                 <ChevronDown
                                     className="w-4 h-4 text-slate-400 flex-shrink-0 transition-transform duration-200"
                                     style={{ transform: openFAQIndex === index ? "rotate(180deg)" : "rotate(0deg)" }}
@@ -116,7 +116,7 @@ export function SpeakerHelpSupport() {
                             </button>
                             {openFAQIndex === index && (
                                 <div
-                                    className="px-5 pb-5 text-sm text-slate-500 leading-relaxed whitespace-pre-line"
+                                    className="px-4 sm:px-5 pb-4 sm:pb-5 text-sm text-slate-500 leading-relaxed whitespace-pre-line break-words"
                                     style={{ borderTop: "1px solid rgba(241,245,249,0.6)", background: "rgba(248,250,252,0.4)" }}
                                 >
                                     {faq.answer}
@@ -147,17 +147,17 @@ export function SpeakerHelpSupport() {
                     {contactCards.map((card, index) => (
                         <div
                             key={index}
-                            className="rounded-2xl p-4 space-y-2 hover:shadow-md transition-all duration-200"
+                            className="rounded-2xl p-4 space-y-2 hover:shadow-md transition-all duration-200 min-w-0 overflow-hidden"
                             style={{ background: "rgba(255,255,255,0.75)", border: "1px solid rgba(255,255,255,0.9)" }}
                         >
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-start gap-3 min-w-0">
                                 <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: card.gradient }}>
                                     <span style={{ color: card.iconColor }}>{card.icon}</span>
                                 </div>
-                                <p className="text-sm font-bold text-slate-700">{card.title}</p>
+                                <p className="text-sm font-bold text-slate-700 break-words min-w-0">{card.title}</p>
                             </div>
-                            <p className="text-xs text-slate-500 leading-relaxed">{card.description}</p>
-                            <p className="text-xs font-semibold" style={{ color: card.detailColor }}>{card.detail}</p>
+                            <p className="text-xs text-slate-500 leading-relaxed break-words">{card.description}</p>
+                            <p className="text-xs font-semibold break-words" style={{ color: card.detailColor }}>{card.detail}</p>
                             {card.sub && (
                                 <div className="flex items-center gap-1.5 text-[10px] text-slate-400 font-medium">
                                     <Clock className="w-3 h-3" />{card.sub}

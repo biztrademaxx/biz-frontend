@@ -173,7 +173,7 @@ export function Recommendations() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 space-y-6">
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
@@ -186,14 +186,14 @@ export function Recommendations() {
           </p>
         </div>
         
-        <div className="flex gap-2">
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
           <Input
             placeholder="Search exhibitors..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-64"
+            className="min-w-0 w-full sm:w-64"
           />
-          <Button onClick={fetchSuggestions} variant="outline" disabled={loading}>
+          <Button onClick={fetchSuggestions} variant="outline" disabled={loading} className="w-full sm:w-auto">
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Refresh"}
           </Button>
         </div>
@@ -230,7 +230,7 @@ export function Recommendations() {
         onValueChange={(v) => setSuggestionType(v as "personalized" | "trending")}
         className="w-full"
       >
-        <TabsList className="grid w-full max-w-md grid-cols-2">
+        <TabsList className="grid w-full max-w-md grid-cols-2 min-w-0">
           <TabsTrigger value="personalized" className="flex items-center gap-2">
             <Sparkles className="h-4 w-4" />
             Personalized
@@ -262,7 +262,7 @@ export function Recommendations() {
           {suggestions.map((exhibitor) => (
             <Card
               key={exhibitor.id}
-              className="hover:shadow-lg transition-all duration-200 hover:scale-[1.02]"
+              className="min-w-0 overflow-hidden transition-all duration-200 hover:shadow-lg"
             >
               <CardContent className="p-5">
                 {/* Profile Image */}
@@ -283,9 +283,9 @@ export function Recommendations() {
                 </div>
 
                 {/* Name & Company */}
-                <div className="text-center mb-3">
-                  <h3 className="font-bold text-lg text-blue-600">{exhibitor.name}</h3>
-                  <p className="text-sm text-gray-600">{exhibitor.company}</p>
+                <div className="mb-3 min-w-0 text-center">
+                  <h3 className="break-words text-lg font-bold text-blue-600">{exhibitor.name}</h3>
+                  <p className="break-words text-sm text-gray-600">{exhibitor.company}</p>
                 </div>
 
                 {/* Industry & Location */}

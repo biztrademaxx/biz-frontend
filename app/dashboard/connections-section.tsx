@@ -10,7 +10,7 @@ import { Search, Users, UserPlus, UserCheck, UserX, Send, Inbox } from "lucide-r
 import { apiFetch, getCurrentUserId } from "@/lib/api"
 import { cn } from "@/lib/utils"
 import { formatCityCountryLine } from "@/lib/location-data"
-import { exGlassCard, exGlassInset, exBtnPrimary } from "@/app/exhibitor-dashboard/dashboard-theme"
+import { exGlassCard, exGlassInset, exBtnPrimary, exTabsScrollWrapper, exCardShell } from "@/app/exhibitor-dashboard/dashboard-theme"
 
 interface Connection {
   id: string
@@ -198,14 +198,18 @@ export function ConnectionsSection({ userId: _userId, surface = "default" }: Con
   const findPeopleCard = isExhibitorShell ? exGlassCard : "border border-[#F5F4F0]"
   const gridItemCard = isExhibitorShell ? cn(exGlassInset, "shadow-none") : "border border-gray-100"
   const listPanelWrap = isExhibitorShell
-    ? "rounded-2xl border border-white/50 bg-white/25 p-1 backdrop-blur-sm"
-    : "bg-[#F5F4F0]"
-  const tabActive =
-    "px-4 py-2.5 text-sm font-medium rounded-t-lg transition-colors border border-b-0 -mb-px " +
-    (isExhibitorShell
-      ? "bg-white/50 border-white/60 text-[#5b21b6] backdrop-blur-sm"
-      : "bg-white border-gray-200 text-blue-600")
-  const tabInactive = "px-4 py-2.5 text-sm font-medium rounded-t-lg transition-colors text-gray-600 hover:text-gray-900"
+    ? cn(exCardShell, "p-1")
+    : "bg-[#F5F4F0] rounded-2xl"
+  const tabBase =
+    "shrink-0 whitespace-nowrap rounded-t-lg px-3 py-2.5 text-xs font-medium transition-colors sm:px-4 sm:text-sm"
+  const tabActive = cn(
+    tabBase,
+    "border border-b-0 -mb-px",
+    isExhibitorShell
+      ? "border-slate-200 bg-white text-[#004A96] shadow-sm"
+      : "border-gray-200 bg-white text-blue-600",
+  )
+  const tabInactive = cn(tabBase, "text-gray-600 hover:bg-white/60 hover:text-gray-900")
 
   if (loading) {
     return (
@@ -232,11 +236,11 @@ export function ConnectionsSection({ userId: _userId, surface = "default" }: Con
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="min-w-0 space-y-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-xl font-semibold text-gray-900">Connections</h2>
-        <div className="flex items-center gap-2">
-          <div className="relative flex-1 sm:w-56">
+        <div className="flex min-w-0 items-center gap-2">
+          <div className="relative min-w-0 flex-1 sm:w-56">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
               placeholder="Search by name, company..."
@@ -316,7 +320,8 @@ export function ConnectionsSection({ userId: _userId, surface = "default" }: Con
         </Card>
       ) : (
         <>
-          <div className="flex border-b border-[#F0F0F0] gap-1">
+          <div className={cn("min-w-0 border-b border-slate-200", exTabsScrollWrapper)}>
+            <div className="flex w-max min-w-full gap-1">
             <button
               type="button"
               onClick={() => setActiveTab("connected")}
@@ -340,10 +345,11 @@ export function ConnectionsSection({ userId: _userId, surface = "default" }: Con
               <Inbox className="h-4 w-4 inline-block mr-1.5 align-middle" />
               Requests received ({receivedList.length})
             </button>
+            </div>
           </div>
 
           <div className={listPanelWrap}>
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-6">
               {filteredList.length > 0 ? (
                 <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {filteredList.map((c) => (

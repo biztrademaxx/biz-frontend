@@ -197,10 +197,10 @@ const handleDownload = async (
   }
 
   return (
-    <div className="space-y-4">
+    <div className="min-w-0 space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
           <h2 className="text-lg font-bold text-slate-800">Materials</h2>
           <p className="text-xs text-slate-400">Manage session files & videos</p>
         </div>
@@ -229,8 +229,8 @@ const handleDownload = async (
       )}
 
       {/* Horizontal Scroll Cards */}
-      <div className="w-full">
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+      <div className="w-full min-w-0 overflow-hidden">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 min-w-0">
           {sessions.map((session) => {
             const daysLeft = getDaysUntilDeadline(session.deadline)
             const hasMaterials = session.materials.length > 0
@@ -337,18 +337,18 @@ const handleDownload = async (
                       <div className="space-y-1.5">
                         <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Files</p>
                         {session.materials.map((file) => (
-                          <div key={file.id} className="flex items-center justify-between p-2 rounded-lg bg-white border border-slate-100">
+                          <div key={file.id} className="flex flex-col gap-2 p-2 rounded-lg bg-white border border-slate-100 sm:flex-row sm:items-center sm:justify-between">
                             <div className="flex items-center gap-2 min-w-0 flex-1">
                               {getFileIcon(file.fileType)}
                               <div className="min-w-0 flex-1">
-                                <p className="text-[10px] font-medium text-slate-700 truncate">{file.fileName}</p>
-                                <div className="flex items-center gap-1.5 mt-0.5">
+                                <p className="text-[10px] font-medium text-slate-700 break-all">{file.fileName}</p>
+                                <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
                                   <span className="text-[9px] text-slate-400">{formatFileSize(file.fileSize)}</span>
                                   <span className={getStatusBadge(file.status)}>{file.status}</span>
                                 </div>
                               </div>
                             </div>
-                            <div className="flex items-center gap-0.5">
+                            <div className="flex items-center gap-0.5 flex-shrink-0 self-end sm:self-center">
                               <div className="flex items-center gap-0.5 mr-1">
                                 <Switch
                                   id={`dl-${file.id}`}
@@ -389,13 +389,15 @@ const handleDownload = async (
                           {session.youtube.map((url, idx) => {
                             const videoId = getYoutubeVideoId(url)
                             return (
-                              <div key={idx} className="flex items-center justify-between p-1.5 rounded-lg bg-white border border-slate-100">
+                              <div key={idx} className="flex flex-col gap-2 p-1.5 rounded-lg bg-white border border-slate-100 sm:flex-row sm:items-center sm:justify-between">
                                 {videoId ? (
-                                  <iframe className="w-20 h-12 rounded" src={`https://www.youtube.com/embed/${videoId}`} title="YouTube" allowFullScreen />
+                                  <div className="relative w-full max-w-[200px] aspect-video shrink-0 overflow-hidden rounded">
+                                    <iframe className="absolute inset-0 h-full w-full rounded" src={`https://www.youtube.com/embed/${videoId}`} title="YouTube" allowFullScreen />
+                                  </div>
                                 ) : (
-                                  <a href={url} target="_blank" rel="noopener noreferrer" className="text-[9px] text-blue-500 hover:underline truncate flex-1">{url}</a>
+                                  <a href={url} target="_blank" rel="noopener noreferrer" className="text-[9px] text-blue-500 hover:underline break-all flex-1 min-w-0">{url}</a>
                                 )}
-                                <button onClick={() => handleRemoveYoutubeLink(session.id, url)} className="p-1 rounded hover:bg-red-50">
+                                <button onClick={() => handleRemoveYoutubeLink(session.id, url)} className="p-1 rounded hover:bg-red-50 self-end sm:self-center shrink-0">
                                   <Trash2 className="w-3 h-3 text-slate-400 hover:text-red-500" />
                                 </button>
                               </div>
@@ -404,13 +406,13 @@ const handleDownload = async (
                         </div>
                       )}
 
-                      <div className="flex gap-1.5">
+                      <div className="flex flex-col gap-1.5 sm:flex-row">
                         <Input
                           placeholder="Paste YouTube URL"
                           value={youtubeInput[session.id] || ""}
                           onChange={(e) => setYoutubeInput(prev => ({ ...prev, [session.id]: e.target.value }))}
                           onKeyDown={(e) => e.key === "Enter" && handleAddYoutubeLink(session.id)}
-                          className="flex-1 h-7 text-[10px] rounded-lg border-slate-200"
+                          className="flex-1 h-7 text-[10px] rounded-lg border-slate-200 min-w-0"
                         />
                         <button
                           onClick={() => handleAddYoutubeLink(session.id)}

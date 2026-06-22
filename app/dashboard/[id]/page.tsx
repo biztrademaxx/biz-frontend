@@ -13,7 +13,7 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
 
   return (
     <DashboardProvider>
-      <div className="flex h-screen flex-col overflow-hidden bg-white">
+      <div className="flex h-screen flex-col overflow-hidden bg-[#f8fafc]">
         <Navbar />
         <UserDashboard userId={id} />
       </div>

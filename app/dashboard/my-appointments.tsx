@@ -273,9 +273,9 @@ function EventSection({
   return (
     <div className="mb-8">
       {/* Event Header */}
-      <div className="flex items-center gap-2 mb-4 pb-2 border-b border-slate-200">
-        <Building2 className="h-5 w-5 text-[#004A96]" />
-        <h3 className="text-lg font-semibold text-slate-800">{eventTitle}</h3>
+      <div className="mb-4 flex flex-col gap-2 border-b border-slate-200 pb-2 sm:flex-row sm:items-center">
+        <Building2 className="h-5 w-5 shrink-0 text-[#004A96]" />
+        <h3 className="break-words text-lg font-semibold text-slate-800">{eventTitle}</h3>
         <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">
           {appointments.length} {appointments.length === 1 ? "meeting" : "meetings"}
         </span>
@@ -425,7 +425,7 @@ export function MyAppointments({ userId }: MyAppointmentsProps) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 space-y-6">
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>

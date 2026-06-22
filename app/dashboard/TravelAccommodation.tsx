@@ -46,7 +46,7 @@ const TravelAccommodation: React.FC = () => {
   };
 
   return (
-    <div className="max-w-6xl mx-auto p-6 bg-[#F5F4F0]">
+    <div className="mx-auto min-w-0 max-w-6xl p-3 sm:p-6">
       <h3 className="text-xl font-semibold text-gray-700 mb-4">
         Featured Hotels
       </h3>
@@ -90,7 +90,7 @@ const HotelCard: React.FC<{ hotel: Hotel; defaultImage: string; renderStars: (ra
         />
       </div>
       <div className="p-4">
-        <h4 className="text-lg font-semibold text-gray-800">
+        <h4 className="break-words text-lg font-semibold text-gray-800">
           {hotel.name}
         </h4>
         {renderStars(hotel.rating)}

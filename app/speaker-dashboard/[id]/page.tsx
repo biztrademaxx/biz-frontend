@@ -7,7 +7,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ id: 
   const { id } = await params
   return (
     <DashboardProvider>
-      <div>
+      <div className="min-w-0 overflow-x-hidden">
         <Navbar />
         <SpeakerDashboard routeSegment={id} />
       </div>

@@ -98,7 +98,7 @@ export function FollowManagement({ userId }: FollowManagementProps) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 space-y-6">
       <div>
         <h1 className={exPageTitle}>Follow Management</h1>
         <p className="text-slate-600">Manage your followers and following</p>
@@ -152,21 +152,21 @@ export function FollowManagement({ userId }: FollowManagementProps) {
                   {followers.map((follower) => (
                     <div
                       key={follower.id}
-                      className="flex items-center justify-between rounded-xl border border-white/60 bg-white/35 p-4 backdrop-blur-sm transition-colors hover:bg-white/50"
+                      className="flex flex-col gap-3 rounded-xl border border-white/60 bg-white/35 p-4 backdrop-blur-sm transition-colors hover:bg-white/50 sm:flex-row sm:items-center sm:justify-between"
                     >
-                      <div className="flex items-center space-x-4">
-                        <Avatar className="h-12 w-12">
+                      <div className="flex items-center space-x-4 min-w-0">
+                        <Avatar className="h-12 w-12 shrink-0">
                           <AvatarImage src={follower.avatar } />
                           <AvatarFallback>
                             {follower.firstName[0]}
                             {follower.lastName[0]}
                           </AvatarFallback>
                         </Avatar>
-                        <div>
-                          <h3 className="font-semibold">
+                        <div className="min-w-0">
+                          <h3 className="font-semibold break-words">
                             {follower.firstName} {follower.lastName}
                           </h3>
-                          <p className="text-sm text-gray-600">{follower.jobTitle || follower.email}</p>
+                          <p className="text-sm text-gray-600 break-all">{follower.jobTitle || follower.email}</p>
                           <p className="text-xs text-gray-400">
                             Following since {new Date(follower.followedAt).toLocaleDateString()}
                           </p>
@@ -205,21 +205,21 @@ export function FollowManagement({ userId }: FollowManagementProps) {
                   {following.map((user) => (
                     <div
                       key={user.id}
-                      className="flex items-center justify-between rounded-xl border border-white/60 bg-white/35 p-4 backdrop-blur-sm transition-colors hover:bg-white/50"
+                      className="flex flex-col gap-3 rounded-xl border border-white/60 bg-white/35 p-4 backdrop-blur-sm transition-colors hover:bg-white/50 sm:flex-row sm:items-center sm:justify-between"
                     >
-                      <div className="flex items-center space-x-4">
-                        <Avatar className="h-12 w-12">
+                      <div className="flex items-center space-x-4 min-w-0">
+                        <Avatar className="h-12 w-12 shrink-0">
                           <AvatarImage src={user.avatar } />
                           <AvatarFallback>
                             {user.firstName[0]}
                             {user.lastName[0]}
                           </AvatarFallback>
                         </Avatar>
-                        <div>
-                          <h3 className="font-semibold">
+                        <div className="min-w-0">
+                          <h3 className="font-semibold break-words">
                             {user.firstName} {user.lastName}
                           </h3>
-                          <p className="text-sm text-gray-600">{user.jobTitle || user.email}</p>
+                          <p className="text-sm text-gray-600 break-all">{user.jobTitle || user.email}</p>
                           <p className="text-xs text-gray-400">
                             Following since {new Date(user.followedAt).toLocaleDateString()}
                           </p>
@@ -229,7 +229,7 @@ export function FollowManagement({ userId }: FollowManagementProps) {
                         variant="outline"
                         size="sm"
                         onClick={() => handleUnfollow(user.id)}
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        className="w-full text-red-600 hover:text-red-700 hover:bg-red-50 sm:w-auto"
                       >
                         <UserMinus className="h-4 w-4 mr-2" />
                         Unfollow

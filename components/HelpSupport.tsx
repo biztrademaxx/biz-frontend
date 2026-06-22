@@ -88,6 +88,8 @@ export function HelpSupport({ variant = "default" }: { variant?: "default" | "ve
     const sectionShell = venue
         ? "rounded-2xl border border-slate-100 bg-white p-8 shadow-sm"
         : "rounded-xl border border-gray-100 bg-white p-8 shadow-lg"
+    const contactCardClass = (colorClasses: string) =>
+        cn("min-w-0 overflow-hidden rounded-lg p-3 sm:p-4", colorClasses)
     const faqItemRadius = venue ? "rounded-2xl" : "rounded-lg"
 
     const [openFAQIndex, setOpenFAQIndex] = useState<number | null>(null)
@@ -113,7 +115,7 @@ export function HelpSupport({ variant = "default" }: { variant?: "default" | "ve
     return (
         <div className={cn(
             "w-full min-w-0 max-w-full mx-auto",
-            venue ? "space-y-6 sm:space-y-10 md:space-y-12 py-2 sm:py-4" : "max-w-6xl py-12 px-4 sm:px-6 space-y-12"
+            venue ? "space-y-6 sm:space-y-10 md:space-y-12 py-2 sm:py-4" : "max-w-6xl space-y-8 py-6 px-3 sm:space-y-12 sm:py-12 sm:px-6"
         )}>
             {/* Header Section */}
             <div className="text-center min-w-0">
@@ -217,7 +219,7 @@ export function HelpSupport({ variant = "default" }: { variant?: "default" | "ve
             {/* </section> */}
 
             {/* FAQs Section */}
-            <section className={cn(sectionShell, "min-w-0 overflow-hidden", venue && "p-4 sm:p-6 md:p-8")}>
+            <section className={cn(sectionShell, "min-w-0 overflow-hidden", venue ? "p-4 sm:p-6 md:p-8" : "p-4 sm:p-6 md:p-8")}>
                 <h2 className={cn(
                     "font-bold mb-4 sm:mb-6 flex items-center gap-2 flex-wrap",
                     venue ? "text-xl sm:text-2xl" : "text-2xl"
@@ -272,7 +274,7 @@ export function HelpSupport({ variant = "default" }: { variant?: "default" | "ve
 
             <HelpSupportTicketsSection iconAccentClass={accentIcon} />
 
-            <div className={cn(sectionShell, "space-y-4 sm:space-y-6 min-w-0 overflow-hidden", venue && "p-4 sm:p-6 md:p-8")}>
+            <div className={cn(sectionShell, "min-w-0 space-y-4 overflow-hidden sm:space-y-6", venue ? "p-4 sm:p-6 md:p-8" : "p-4 sm:p-6 md:p-8")}>
                 <h2 className={cn(
                     "font-bold flex items-center gap-2 flex-wrap",
                     venue ? "text-xl sm:text-2xl" : "text-2xl"
@@ -288,24 +290,34 @@ export function HelpSupport({ variant = "default" }: { variant?: "default" | "ve
                 </p>
 
                 <div className={venue ? "space-y-3 sm:space-y-4" : "space-y-4"}>
-                    <div className={cn(`p-4 ${accentSoft}`, venue && "p-3 sm:p-4 min-w-0 overflow-hidden")}>
-                        <div className="flex items-start gap-3 min-w-0">
-                            <Mail className={`${accentIcon} mt-1 flex-shrink-0`} size={20} />
-                            <div className="min-w-0 flex-1">
-                                <h3 className={cn("font-semibold text-gray-900", venue && "text-sm sm:text-base")}>Email Support</h3>
-                                <p className={cn("text-gray-700 mt-1", venue ? "text-xs sm:text-sm break-words" : "text-sm")}>For non-urgent queries, feedback, or documentation support:</p>
-                                <p className={cn(`${accentIcon} font-medium mt-2`, venue && "break-all text-sm sm:text-base")}>support@biztradefairs.com</p>
+                    <div className={contactCardClass(accentSoft)}>
+                        <div className="flex min-w-0 items-start gap-3">
+                            <Mail className={`${accentIcon} mt-1 shrink-0`} size={20} />
+                            <div className="min-w-0 flex-1 overflow-hidden">
+                                <h3 className={cn("font-semibold text-gray-900", venue ? "text-sm sm:text-base" : "text-sm sm:text-base")}>Email Support</h3>
+                                <p className={cn("mt-1 text-gray-700 break-words", venue ? "text-xs sm:text-sm" : "text-xs sm:text-sm")}>For non-urgent queries, feedback, or documentation support:</p>
+                                <a
+                                    href="mailto:support@biztradefairs.com"
+                                    className={cn(accentIcon, "mt-2 block max-w-full break-all text-sm font-medium sm:text-base")}
+                                >
+                                    support@biztradefairs.com
+                                </a>
                             </div>
                         </div>
                     </div>
 
-                    <div className={cn("p-4 bg-green-50 rounded-lg border border-green-100", venue && "p-3 sm:p-4 min-w-0 overflow-hidden")}>
-                        <div className="flex items-start gap-3 min-w-0">
-                            <Phone className="text-green-600 mt-1 flex-shrink-0" size={20} />
-                            <div className="min-w-0 flex-1">
-                                <h3 className={cn("font-semibold text-gray-900", venue && "text-sm sm:text-base")}>Phone Support</h3>
-                                <p className={cn("text-gray-700 mt-1", venue ? "text-xs sm:text-sm break-words" : "text-sm")}>Our helpline is open for visitors during business hours:</p>
-                                <p className={cn("text-green-600 font-medium mt-2", venue && "text-sm sm:text-base")}>+91-9148319993</p>
+                    <div className={contactCardClass("rounded-lg border border-green-100 bg-green-50")}>
+                        <div className="flex min-w-0 items-start gap-3">
+                            <Phone className="mt-1 shrink-0 text-green-600" size={20} />
+                            <div className="min-w-0 flex-1 overflow-hidden">
+                                <h3 className={cn("font-semibold text-gray-900", venue ? "text-sm sm:text-base" : "text-sm sm:text-base")}>Phone Support</h3>
+                                <p className={cn("mt-1 text-gray-700 break-words", venue ? "text-xs sm:text-sm" : "text-xs sm:text-sm")}>Our helpline is open for visitors during business hours:</p>
+                                <a
+                                    href="tel:+919148319993"
+                                    className="mt-2 block break-words text-sm font-medium text-green-600 sm:text-base"
+                                >
+                                    +91-9148319993
+                                </a>
                                 <div className="flex flex-wrap items-center gap-1 text-xs sm:text-sm text-gray-600 mt-2">
                                     <Clock size={16} className="shrink-0" />
                                     <span>Monday – Friday, 9:30 AM – 6:30 PM (IST)</span>
@@ -314,10 +326,10 @@ export function HelpSupport({ variant = "default" }: { variant?: "default" | "ve
                         </div>
                     </div>
 
-                    <div className={cn("p-4 bg-purple-50 rounded-lg border border-purple-100", venue && "p-3 sm:p-4 min-w-0 overflow-hidden")}>
-                        <div className="flex items-start gap-3 min-w-0">
-                            <Building className="text-purple-600 mt-1 flex-shrink-0" size={20} />
-                            <div className="min-w-0 flex-1">
+                    <div className={contactCardClass("rounded-lg border border-purple-100 bg-purple-50")}>
+                        <div className="flex min-w-0 items-start gap-3">
+                            <Building className="mt-1 shrink-0 text-purple-600" size={20} />
+                            <div className="min-w-0 flex-1 overflow-hidden">
                                 <h3 className={cn("font-semibold text-gray-900", venue && "text-sm sm:text-base")}>Corporate Office</h3>
                                 <p className={cn("text-gray-700 mt-1", venue ? "text-xs sm:text-sm" : "text-sm")}>BizTradeFairs.com</p>
                                 <p className={cn("text-gray-700", venue ? "text-xs sm:text-sm" : "text-sm")}>Maxx Business Media Pvt. Ltd.</p>
@@ -328,10 +340,10 @@ export function HelpSupport({ variant = "default" }: { variant?: "default" | "ve
                         </div>
                     </div>
 
-                    <div className={cn("p-4 bg-amber-50 rounded-lg border border-amber-100", venue && "p-3 sm:p-4 min-w-0 overflow-hidden")}>
-                        <div className="flex items-start gap-3 min-w-0">
-                            <Clock className="text-amber-600 mt-1 flex-shrink-0" size={20} />
-                            <div className="min-w-0 flex-1">
+                    <div className={contactCardClass("rounded-lg border border-amber-100 bg-amber-50")}>
+                        <div className="flex min-w-0 items-start gap-3">
+                            <Clock className="mt-1 shrink-0 text-amber-600" size={20} />
+                            <div className="min-w-0 flex-1 overflow-hidden">
                                 <h3 className={cn("font-semibold text-gray-900", venue && "text-sm sm:text-base")}>Live Chat</h3>
                                 <p className={cn("text-gray-700 mt-1 break-words", venue ? "text-xs sm:text-sm" : "text-sm")}>
                                     Click on the Chat Now button at the bottom of your screen to connect with our support team instantly.

@@ -45,7 +45,7 @@ export function SettingsSection({ userData, onUpdate }: SettingsSectionProps) {
   }, [editEmail, emailError]);
 
   if (isLoading) {
-    return <div className="w-full px-6 py-6">Loading settings...</div>;
+    return <div className="w-full min-w-0 py-2">Loading settings...</div>;
   }
 
   const handleToggle = (key: string, value: boolean) => {
@@ -221,7 +221,7 @@ const handleSaveEmailWithoutVerification = () => {
   };
 
   return (
-    <div className="w-full px-6 py-6 space-y-10 bg-white">
+    <div className="w-full min-w-0 max-w-full space-y-8 sm:space-y-10 bg-white">
       {/* ---- Privacy Settings ---- */}
       <section>
         <h2 className="text-lg font-semibold mb-4">Privacy Settings</h2>
@@ -510,10 +510,10 @@ const handleSaveEmailWithoutVerification = () => {
       <section>
         <h2 className="text-lg font-semibold mb-4">Manage</h2>
         <div className="space-y-4 text-sm">
-          <div className="rounded-lg border border-red-200 bg-red-50/80 p-4 space-y-3">
-            <div>
+          <div className="rounded-lg border border-red-200 bg-red-50/80 p-4 space-y-3 min-w-0 overflow-hidden">
+            <div className="min-w-0">
               <p className="font-semibold text-red-900">Deactivate my account</p>
-              <p className="text-gray-700 mt-1">
+              <p className="text-gray-700 mt-1 break-words">
                 Request account closure. An <strong>administrator must approve</strong> it first. After
                 approval, your account stays active for <strong>30 more days</strong>, then it is
                 deactivated and you cannot sign in.
@@ -552,12 +552,12 @@ const handleSaveEmailWithoutVerification = () => {
               </div>
             )}
 
-            <div className="flex flex-wrap gap-2 pt-1">
+            <div className="flex flex-col gap-2 pt-1 sm:flex-row sm:flex-wrap">
               {deactivation?.status === "PENDING" ? (
                 <Button
                   type="button"
                   variant="outline"
-                  className="border-slate-400 text-slate-900"
+                  className="w-full border-slate-400 text-slate-900 sm:w-auto"
                   onClick={handleCancelDeactivationRequest}
                   disabled={isCancellingDeactivation}
                 >
@@ -567,7 +567,7 @@ const handleSaveEmailWithoutVerification = () => {
                 <Button
                   type="button"
                   variant="destructive"
-                  className="min-w-[200px] font-semibold shadow-sm"
+                  className="h-auto min-h-10 w-full !whitespace-normal px-4 py-2.5 text-center font-semibold leading-snug shadow-sm sm:w-auto sm:max-w-md"
                   onClick={handleRequestDeactivation}
                   disabled={isRequestingDeactivation}
                 >

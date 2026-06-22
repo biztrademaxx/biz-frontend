@@ -34,6 +34,15 @@ import {
   BarChart3,
 } from "lucide-react"
 
+import { cn } from "@/lib/utils"
+import {
+  exCardShell,
+  exNavActive,
+  exNavInactive,
+  exNavGroupLabel,
+  exPrimaryBtn,
+  exSidebarSurface,
+} from "@/app/exhibitor-dashboard/dashboard-theme"
 import MyProfile from "./my-profile"
 import MySessions from "./my-sessions"
 import { PresentationMaterials } from "./presentation-materials"
@@ -190,65 +199,41 @@ export function SpeakerDashboard({ routeSegment }: UserDashboardProps) {
 
   if (loading) {
     return (
-      <div
-        className="flex items-center justify-center min-h-screen"
-        style={{ background: "linear-gradient(135deg, #f0f4ff 0%, #faf5ff 50%, #f0fdf4 100%)" }}
-      >
-        <div className="flex flex-col items-center gap-5">
-          <div className="relative">
-            <div
-              className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg"
-              style={{ background: "linear-gradient(135deg, #2563eb, #7c3aed)" }}
-            >
-              <Mic className="w-7 h-7 text-white" />
-            </div>
-            <div
-              className="absolute -inset-1 rounded-2xl opacity-30 animate-ping"
-              style={{ background: "linear-gradient(135deg, #2563eb, #7c3aed)" }}
-            />
-          </div>
-          <div className="text-center">
-            <p className="text-sm font-semibold text-slate-600 tracking-wide">Loading your dashboard</p>
-            <p className="text-xs text-slate-400 mt-1">Setting everything up…</p>
-          </div>
-        </div>
+      <div className="flex min-h-[50vh] items-center justify-center bg-[#f8fafc]">
+        <div
+          className="h-14 w-14 animate-spin rounded-full border-2 border-blue-100 border-t-[#004A96]"
+          aria-hidden
+        />
       </div>
     )
   }
 
   if (error) {
     return (
-      <div
-        className="flex items-center justify-center min-h-screen"
-        style={{ background: "linear-gradient(135deg, #f0f4ff 0%, #faf5ff 50%, #f0fdf4 100%)" }}
-      >
-        <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-10 shadow-xl max-w-md w-full border border-white/60">
-          <div className="w-12 h-12 rounded-2xl bg-red-50 flex items-center justify-center mb-4">
-            <X className="w-6 h-6 text-red-500" />
-          </div>
-          <p className="text-red-600 font-semibold mb-2">Something went wrong</p>
-          <p className="text-slate-500 text-sm mb-6">{error}</p>
-          <button
-            onClick={fetchSpeakerData}
-            className="w-full py-3 rounded-2xl text-white text-sm font-semibold transition-all hover:shadow-lg hover:-translate-y-0.5"
-            style={{ background: "linear-gradient(135deg, #2563eb, #7c3aed)" }}
-          >
-            Try Again
-          </button>
-        </div>
+      <div className="flex min-h-[50vh] items-center justify-center bg-[#f8fafc] p-4">
+        <Card className={cn("w-full max-w-md", exCardShell)}>
+          <CardHeader>
+            <CardTitle className="text-red-600">Error</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-gray-600 mb-4">{error}</p>
+            <Button onClick={fetchSpeakerData} className={cn("w-full", exPrimaryBtn)}>
+              Try Again
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     )
   }
 
   if (!speaker) {
     return (
-      <div
-        className="flex items-center justify-center min-h-screen"
-        style={{ background: "linear-gradient(135deg, #f0f4ff 0%, #faf5ff 50%, #f0fdf4 100%)" }}
-      >
-        <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-10 shadow-xl border border-white/60">
-          <p className="text-slate-500">No speaker data found.</p>
-        </div>
+      <div className="flex min-h-[50vh] items-center justify-center bg-[#f8fafc] p-4">
+        <Card className={cn("w-full max-w-md", exCardShell)}>
+          <CardContent className="pt-6">
+            <p className="text-slate-500">No speaker data found.</p>
+          </CardContent>
+        </Card>
       </div>
     )
   }
@@ -259,8 +244,8 @@ export function SpeakerDashboard({ routeSegment }: UserDashboardProps) {
       case "mysessions": return <MySessions speakerId={speaker.id} />
       case "overview": return <SpeakerOverview speakerId={speaker.id} />
       case "materials": return <PresentationMaterials speakerId={speaker.id} />
-      case "message": return <MessagesCenter organizerId={speaker.id} />
-      case "connection": return <ConnectionsSection userId={speaker.id} />
+      case "message": return <MessagesCenter organizerId={speaker.id} surface="exhibitor" />
+      case "connection": return <ConnectionsSection userId={speaker.id} surface="exhibitor" />
       case "help": return <SpeakerHelpSupport />
       case "settings": return <SpeakerSettings />
       default: return <MyProfile speakerId={speaker.id} />
@@ -270,22 +255,17 @@ export function SpeakerDashboard({ routeSegment }: UserDashboardProps) {
   const navItem = (id: string, label: string, icon: React.ReactNode) => (
     <button
       key={id}
+      type="button"
       onClick={() => { setActiveSection(id); setSidebarOpen(false) }}
-      className={`
-        w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200
-        ${activeSection === id
-          ? "text-white shadow-md"
-          : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"}
-        ${sidebarCollapsed ? "justify-center px-2" : ""}
-      `}
-      style={activeSection === id ? { background: "linear-gradient(135deg, #2563eb, #7c3aed)" } : {}}
+      className={cn(
+        "flex w-full items-center gap-3 py-2.5 pr-3 text-sm transition-colors",
+        sidebarCollapsed ? "justify-center px-2" : "px-3",
+        activeSection === id ? exNavActive : exNavInactive,
+      )}
       title={sidebarCollapsed ? label : ""}
     >
       <span className="flex-shrink-0">{icon}</span>
-      {!sidebarCollapsed && <span>{label}</span>}
-      {activeSection === id && !sidebarCollapsed && (
-        <span className="ml-auto w-1.5 h-1.5 rounded-full bg-white/70" />
-      )}
+      {!sidebarCollapsed && <span className="truncate">{label}</span>}
     </button>
   )
 
@@ -294,10 +274,7 @@ export function SpeakerDashboard({ routeSegment }: UserDashboardProps) {
      * FIX: Changed from `flex min-h-screen` (row) to `flex flex-col min-h-screen`
      * so the topnav and the body-row stack vertically.
      */
-    <div
-      className="flex flex-col min-h-screen w-full font-sans"
-      style={{ background: "linear-gradient(135deg, #f0f4ff 0%, #faf8ff 50%, #f0fdf4 100%)" }}
-    >
+    <div className="flex min-h-0 flex-1 w-full overflow-hidden bg-[#f8fafc]">
       {/* Mobile overlay */}
       {sidebarOpen && (
         <div
@@ -311,39 +288,30 @@ export function SpeakerDashboard({ routeSegment }: UserDashboardProps) {
        * `items-stretch` makes BOTH the sidebar and the main column
        * grow to exactly the same height automatically.
        */}
-      <div className="flex flex-1 items-stretch min-h-0">
+      <div className="flex flex-1 items-stretch min-h-0 min-w-0 overflow-hidden">
 
-        {/* ── SIDEBAR ─────────────────────────────────────────────────────
-         *  KEY FIXES:
-         *  1. Removed `fixed` positioning — sidebar is now in normal flow.
-         *  2. Removed `h-screen` — height is driven by the parent flex row.
-         *  3. Added `self-stretch` so it always fills the full row height
-         *     even when content is short.
-         *  4. `overflow-y-auto` on the nav section handles long nav lists.
-         * ──────────────────────────────────────────────────────────────── */}
+        {/* ── SIDEBAR ── */}
+        <div
+          className={cn(
+            "fixed inset-y-0 left-0 z-50 h-full shrink-0 transition-transform duration-300 ease-in-out md:static md:translate-x-0",
+            sidebarOpen ? "translate-x-0" : "-translate-x-full",
+          )}
+        >
         <aside
-          className={`
-            relative self-stretch z-50 flex flex-col
-            transform transition-all duration-300 ease-in-out
-            ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0
-            ${sidebarCollapsed ? "w-[72px]" : "w-[260px]"}
-          `}
-          style={{
-            background: "rgba(255,255,255,0.92)",
-            backdropFilter: "blur(24px)",
-            borderRight: "1px solid rgba(255,255,255,0.6)",
-            boxShadow: "4px 0 24px rgba(99,102,241,0.06)",
-          }}
+          className={cn(
+            "relative flex h-full w-[min(100vw,260px)] max-w-[85vw] flex-col overflow-hidden md:w-[260px]",
+            exSidebarSurface,
+            sidebarCollapsed && "md:w-[72px]",
+          )}
         >
           {/* Logo / Brand */}
           <div
-            className={`flex items-center gap-3 px-4 py-4 flex-shrink-0 ${sidebarCollapsed ? "justify-center" : ""}`}
-            style={{ borderBottom: "1px solid rgba(148,163,184,0.12)" }}
+            className={cn(
+              "flex items-center gap-3 border-b border-slate-200 px-4 py-4 flex-shrink-0",
+              sidebarCollapsed && "justify-center",
+            )}
           >
-            <div
-              className="w-10 h-10 rounded-2xl flex items-center justify-center shadow-lg flex-shrink-0"
-              style={{ background: "linear-gradient(135deg, #2563eb, #7c3aed)" }}
-            >
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#004A96] shadow-sm">
               <Mic className="w-4 h-4 text-white" />
             </div>
             {!sidebarCollapsed && (
@@ -362,10 +330,10 @@ export function SpeakerDashboard({ routeSegment }: UserDashboardProps) {
             )}
           </div>
 
-          {/* Collapse Toggle */}
+          {/* Collapse Toggle — desktop only */}
           <button
             onClick={toggleSidebar}
-            className="absolute -right-3 top-20 w-6 h-6 rounded-full bg-white shadow-md border border-slate-200 flex items-center justify-center hover:bg-slate-50 transition-all z-10"
+            className="absolute -right-3 top-20 hidden w-6 h-6 rounded-full bg-white shadow-md border border-slate-200 md:flex items-center justify-center hover:bg-slate-50 transition-all z-10"
             style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}
           >
             {sidebarCollapsed
@@ -381,7 +349,10 @@ export function SpeakerDashboard({ routeSegment }: UserDashboardProps) {
               {!sidebarCollapsed && (
                 <button
                   onClick={() => toggleMenu("speaker-management")}
-                  className="w-full flex items-center justify-between px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 hover:text-slate-600 transition rounded-lg hover:bg-slate-50"
+                  className={cn(
+                    "mb-1 flex w-full items-center justify-between rounded-md px-2 py-1.5",
+                    exNavGroupLabel,
+                  )}
                 >
                   <span className="flex items-center gap-2">
                     <User className="w-3 h-3" />
@@ -408,7 +379,10 @@ export function SpeakerDashboard({ routeSegment }: UserDashboardProps) {
               {!sidebarCollapsed && (
                 <button
                   onClick={() => toggleMenu("communication")}
-                  className="w-full flex items-center justify-between px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 hover:text-slate-600 transition rounded-lg hover:bg-slate-50"
+                  className={cn(
+                    "mb-1 flex w-full items-center justify-between rounded-md px-2 py-1.5",
+                    exNavGroupLabel,
+                  )}
                 >
                   <span className="flex items-center gap-2">
                     <MessageSquare className="w-3 h-3" />
@@ -429,10 +403,7 @@ export function SpeakerDashboard({ routeSegment }: UserDashboardProps) {
             </div>
 
             {/* Standalone items */}
-            <div
-              className="pt-4 space-y-0.5"
-              style={{ borderTop: "1px solid rgba(148,163,184,0.12)", marginTop: "12px" }}
-            >
+            <div className="mt-2 space-y-0.5 border-t border-slate-200 pt-4">
               {navItem("help", "Help & Support", <HelpCircle className="w-4 h-4" />)}
               {navItem("settings", "Settings", <Settings className="w-4 h-4" />)}
             </div>
@@ -440,37 +411,29 @@ export function SpeakerDashboard({ routeSegment }: UserDashboardProps) {
 
           {/* Speaker mini-card + logout */}
           {!sidebarCollapsed ? (
-            <div
-              className="px-3 pb-5 pt-4 space-y-3 flex-shrink-0"
-              style={{ borderTop: "1px solid rgba(148,163,184,0.12)" }}
-            >
-              <div
-                className="flex items-center gap-3 p-3 rounded-2xl"
-                style={{ background: "linear-gradient(135deg, #f0f4ff, #faf5ff)" }}
-              >
-                <Avatar className="w-9 h-9 ring-2 ring-white shadow-sm">
+            <div className="shrink-0 space-y-3 border-t border-slate-200 px-3 pb-5 pt-4">
+              <div className="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2.5">
+                <Avatar className="h-9 w-9 shrink-0 ring-2 ring-blue-100">
                   <AvatarImage src={speaker.avatar || ""} alt={speaker.firstName} />
-                  <AvatarFallback
-                    className="text-xs font-bold"
-                    style={{ background: "linear-gradient(135deg, #dbeafe, #ede9fe)", color: "#2563eb" }}
-                  >
+                  <AvatarFallback className="bg-blue-50 text-xs font-bold text-[#004A96]">
                     {speaker.firstName?.[0]}{speaker.lastName?.[0]}
                   </AvatarFallback>
                 </Avatar>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-slate-800 truncate">
+                  <p className="truncate text-sm font-semibold text-slate-900">
                     {speaker.firstName} {speaker.lastName}
                   </p>
-                  <p className="text-[10px] text-slate-400 truncate font-medium">{speaker.email}</p>
+                  <p className="truncate text-xs text-slate-500">{speaker.email}</p>
                 </div>
               </div>
-              <button
+              <Button
+                type="button"
                 onClick={() => logout()}
-                className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium text-red-500 hover:bg-red-50 transition-all duration-200"
+                className={cn("h-10 w-full rounded-lg", exPrimaryBtn)}
               >
-                <LogOut className="w-4 h-4" />
+                <LogOut className="mr-2 h-4 w-4" />
                 Log out
-              </button>
+              </Button>
             </div>
           ) : (
             <div className="px-2 pb-5 pt-4 flex-shrink-0">
@@ -484,71 +447,46 @@ export function SpeakerDashboard({ routeSegment }: UserDashboardProps) {
             </div>
           )}
         </aside>
+        </div>
 
-        {/* ── MAIN CONTENT ────────────────────────────────────────────────
-         *  `flex-1` makes it take all remaining horizontal space.
-         *  `flex flex-col` stacks the inner content vertically.
-         *  `min-w-0` prevents flex blowout on narrow viewports.
-         *  `overflow-auto` lets the content scroll when needed.
-         * ──────────────────────────────────────────────────────────────── */}
-        <div className="flex-1 flex flex-col min-w-0 overflow-auto">
+        {/* ── MAIN CONTENT ── */}
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
 
           {/* Mobile top bar */}
-          <div className="md:hidden flex items-center gap-3 px-4 py-3 bg-white/80 backdrop-blur-sm border-b border-slate-200/60">
-            <button
+          <div className="flex items-center justify-between gap-2 border-b border-slate-200 bg-white px-3 py-3 md:hidden">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="shrink-0 text-[#004A96]"
               onClick={() => setSidebarOpen(true)}
-              className="p-2 rounded-xl hover:bg-slate-100 transition"
             >
-              <Menu className="w-5 h-5 text-slate-600" />
-            </button>
-            <span className="text-sm font-bold text-slate-800">Speaker Dashboard</span>
+              <Menu className="w-5 h-5" />
+            </Button>
+            <div className="min-w-0 flex-1 px-1 text-center">
+              <p className="truncate text-xs text-slate-500">
+                {speaker.firstName} {speaker.lastName}
+              </p>
+              <p className="truncate text-sm font-semibold text-[#004A96]">
+                {sectionLabel[activeSection ?? "overview"] ?? "Dashboard"}
+              </p>
+            </div>
+            <div className="w-9 shrink-0" />
           </div>
 
-          <main className="flex-1 p-6">
-            <div className="max-w-7xl mx-auto space-y-5">
-              <DashboardManagedBanner page="speaker-dashboard" />
-
-              {/* Header breadcrumb row */}
-              <div className="flex items-center justify-between mt-4">
-                <div className="flex items-center gap-3">
-                  <div
-                    className="flex items-center gap-2 px-4 py-2 rounded-2xl text-xs font-bold"
-                    style={{
-                      background: "linear-gradient(135deg, #dbeafe, #ede9fe)",
-                      color: "#2563eb",
-                      border: "1px solid rgba(99,102,241,0.15)",
-                    }}
-                  >
-                    <LayoutDashboard className="w-3.5 h-3.5" />
-                    {sectionLabel[activeSection ?? "overview"] ?? "Dashboard"}
-                  </div>
-                  <div
-                    className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-semibold text-emerald-700"
-                    style={{
-                      background: "rgba(209,250,229,0.6)",
-                      border: "1px solid rgba(167,243,208,0.6)",
-                    }}
-                  >
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                    Active
-                  </div>
+          <main className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden p-0">
+            <DashboardManagedBanner page="speaker-dashboard" className="min-w-0 w-full" />
+            <div className="w-full min-w-0 max-w-full px-3 py-4 sm:px-4 sm:py-5 md:px-6 md:py-6">
+              <div className="mb-4 hidden items-center gap-3 sm:flex">
+                <div className="flex items-center gap-2 rounded-xl border border-blue-100 bg-blue-50 px-4 py-2 text-xs font-bold text-[#004A96]">
+                  <LayoutDashboard className="w-3.5 h-3.5" />
+                  {sectionLabel[activeSection ?? "overview"] ?? "Dashboard"}
+                </div>
+                <div className="hidden items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-[10px] font-semibold text-emerald-700 sm:flex">
+                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
+                  Active
                 </div>
               </div>
-
-              {/*
-               * CONTENT CARD
-               * `min-h-[calc(100vh-220px)]` ensures the card is always tall
-               * enough to visually match the sidebar on short-content pages.
-               */}
-              <div
-                className="rounded-3xl min-h-[calc(100vh-220px)] p-6 md:p-8"
-                style={{
-                  background: "rgba(255,255,255,0.80)",
-                  backdropFilter: "blur(20px)",
-                  border: "1px solid rgba(255,255,255,0.8)",
-                  boxShadow: "0 4px 32px rgba(99,102,241,0.06), 0 1px 4px rgba(0,0,0,0.04)",
-                }}
-              >
+              <div className="min-w-0 overflow-x-hidden">
                 {renderContent()}
               </div>
             </div>

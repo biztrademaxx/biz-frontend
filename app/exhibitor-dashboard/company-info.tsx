@@ -238,7 +238,7 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
   }
 
   return (
-    <div className="relative">
+    <div className="relative min-w-0">
       <div className={exCompanyGlowLayer} aria-hidden />
       <div className="relative z-10 space-y-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -247,7 +247,7 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
           </h1>
           <Button
             onClick={() => (isEditing ? handleSave() : setIsEditing(true))}
-            className={cn("flex items-center gap-2 shadow-md", exCtaGradient)}
+            className={cn("flex w-full items-center justify-center gap-2 shadow-md sm:w-auto", exCtaGradient)}
             disabled={loading}
           >
             {isEditing ? <Save className="w-4 h-4" /> : <Edit className="w-4 h-4" />}

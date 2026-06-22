@@ -100,11 +100,11 @@ export default function MySessions({ speakerId }: { speakerId: string }) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 space-y-4 sm:space-y-6">
 
       {/* ── Header ── */}
-      <div className="flex items-start justify-between flex-wrap gap-4">
-        <div>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
           <h2 className="text-xl font-extrabold text-slate-800 tracking-tight">My Sessions</h2>
           <p className="text-xs text-slate-400 mt-0.5 font-medium">
             {sessions.length} session{sessions.length !== 1 ? "s" : ""} scheduled
@@ -112,7 +112,7 @@ export default function MySessions({ speakerId }: { speakerId: string }) {
         </div>
 
         {/* Filter pills */}
-        <div className="flex items-center gap-1.5 flex-wrap">
+        <div className="flex items-center gap-1.5 flex-wrap w-full sm:w-auto">
           <Filter className="w-3.5 h-3.5 text-slate-300" />
           {filters.map((f) => (
             <button
@@ -134,7 +134,7 @@ export default function MySessions({ speakerId }: { speakerId: string }) {
       {/* ── Empty state ── */}
       {filteredSessions.length === 0 && (
         <div
-          className="rounded-2xl p-16 flex flex-col items-center gap-4"
+          className="rounded-2xl p-8 sm:p-16 flex flex-col items-center gap-4 min-w-0"
           style={{ background: "rgba(241,245,249,0.5)", border: "2px dashed rgba(203,213,225,0.6)" }}
         >
           <div
@@ -190,13 +190,13 @@ export default function MySessions({ speakerId }: { speakerId: string }) {
               </div>
 
               {/* ── Card content ── */}
-              <div className="relative z-10 p-5">
+              <div className="relative z-10 p-4 sm:p-5">
 
                 {/* Top row: title + type badge */}
-                <div className="flex items-start justify-between gap-4 flex-wrap mb-3">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4 mb-3">
                   <div className="flex-1 min-w-0 space-y-1.5">
-                    <div className="flex items-center gap-2.5 flex-wrap">
-                      <h3 className="text-base font-extrabold text-slate-800 leading-tight">{session.title}</h3>
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:flex-wrap sm:gap-2.5">
+                      <h3 className="text-base font-extrabold text-slate-800 leading-tight break-words">{session.title}</h3>
 
                       {/* Status pill */}
                       <span
@@ -212,7 +212,7 @@ export default function MySessions({ speakerId }: { speakerId: string }) {
                     </div>
 
                     {/* Event name */}
-                    <p className="text-sm font-semibold" style={{ color: "#2563eb" }}>{session.event.title}</p>
+                    <p className="text-sm font-semibold break-words" style={{ color: "#2563eb" }}>{session.event.title}</p>
 
                     {/* Description */}
                     {session.description && (
@@ -222,7 +222,7 @@ export default function MySessions({ speakerId }: { speakerId: string }) {
 
                   {/* Session type badge */}
                   <div
-                    className="flex items-center gap-2 px-3.5 py-2 rounded-2xl text-xs font-bold flex-shrink-0"
+                    className="flex items-center gap-2 px-3.5 py-2 rounded-2xl text-xs font-bold flex-shrink-0 self-start"
                     style={{ background: type.iconBg, color: type.color, border: `1px solid ${type.glowColor.replace("0.55", "0.3")}` }}
                   >
                     {type.icon}
@@ -234,7 +234,7 @@ export default function MySessions({ speakerId }: { speakerId: string }) {
                 <div style={{ height: "1px", background: "rgba(226,232,240,0.5)", margin: "0 0 12px" }} />
 
                 {/* Meta row */}
-                <div className="flex items-center gap-5 flex-wrap">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-5 sm:flex-wrap">
                   <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
                     <div
                       className="w-6 h-6 rounded-lg flex items-center justify-center"
@@ -283,7 +283,7 @@ export default function MySessions({ speakerId }: { speakerId: string }) {
                   {/* Past indicator */}
                   {isPast && (
                     <span
-                      className="ml-auto text-[10px] font-bold px-2.5 py-1 rounded-full"
+                      className="sm:ml-auto text-[10px] font-bold px-2.5 py-1 rounded-full self-start"
                       style={{ background: "rgba(241,245,249,0.9)", color: "#94a3b8", border: "1px solid rgba(226,232,240,0.6)" }}
                     >
                       Completed

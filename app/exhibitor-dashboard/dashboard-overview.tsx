@@ -278,7 +278,7 @@ export function ExhibitorDashboardOverview({ exhibitor, onNavigate }: ExhibitorO
   }, [exhibitor.id])
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-slate-900 md:text-3xl">
           Welcome back, {displayName}! 👋
@@ -286,9 +286,9 @@ export function ExhibitorDashboardOverview({ exhibitor, onNavigate }: ExhibitorO
         <p className="mt-1 text-slate-600">Here&apos;s what&apos;s happening with your exhibitions today.</p>
       </div>
 
-      <div className="overflow-hidden rounded-2xl bg-gradient-to-r from-[#004A96] via-[#003d7a] to-[#002f5e] p-6 text-white shadow-md">
+      <div className="overflow-hidden rounded-2xl bg-gradient-to-r from-[#004A96] via-[#003d7a] to-[#002f5e] p-4 text-white shadow-md sm:p-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-start gap-4">
+          <div className="flex items-start gap-4 min-w-0">
             <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white/15">
               <CalendarDays className="h-6 w-6" />
             </span>
@@ -302,7 +302,7 @@ export function ExhibitorDashboardOverview({ exhibitor, onNavigate }: ExhibitorO
           <Button
             type="button"
             variant="secondary"
-            className="shrink-0 bg-white text-[#004A96] hover:bg-sky-50"
+            className="w-full shrink-0 bg-white text-[#004A96] hover:bg-sky-50 sm:w-auto"
             onClick={() => onNavigate("promotions")}
           >
             Explore Promotion Options
@@ -347,7 +347,7 @@ export function ExhibitorDashboardOverview({ exhibitor, onNavigate }: ExhibitorO
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <Card className={cn(exCardShell, "lg:col-span-2")}>
-          <CardHeader className="flex flex-row items-center justify-between gap-3 pb-2">
+          <CardHeader className="flex flex-col gap-3 pb-2 sm:flex-row sm:items-center sm:justify-between">
             <CardTitle className="text-lg font-bold text-slate-900">Exhibitor Leads Overview</CardTitle>
             <div className="flex flex-wrap items-center gap-2">
               {(
@@ -414,7 +414,7 @@ export function ExhibitorDashboardOverview({ exhibitor, onNavigate }: ExhibitorO
         </Card>
 
         <Card className={exCardShell}>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardHeader className="flex flex-col gap-2 pb-2 sm:flex-row sm:items-center sm:justify-between">
             <CardTitle className="text-lg font-bold text-slate-900">Recent Leads</CardTitle>
             <button
               type="button"
@@ -459,7 +459,7 @@ export function ExhibitorDashboardOverview({ exhibitor, onNavigate }: ExhibitorO
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <Card className={exCardShell}>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardHeader className="flex flex-col gap-2 pb-2 sm:flex-row sm:items-center sm:justify-between">
             <CardTitle className="text-lg font-bold text-slate-900">Upcoming Appointments</CardTitle>
             <button
               type="button"
@@ -503,7 +503,7 @@ export function ExhibitorDashboardOverview({ exhibitor, onNavigate }: ExhibitorO
         </Card>
 
         <Card className={exCardShell}>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardHeader className="flex flex-col gap-2 pb-2 sm:flex-row sm:items-center sm:justify-between">
             <CardTitle className="text-lg font-bold text-slate-900">Top Viewed Products</CardTitle>
             <button
               type="button"
@@ -537,13 +537,13 @@ export function ExhibitorDashboardOverview({ exhibitor, onNavigate }: ExhibitorO
         </Card>
 
         <Card className={exCardShell}>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardHeader className="flex flex-col gap-2 pb-2 sm:flex-row sm:items-center sm:justify-between">
             <CardTitle className="text-lg font-bold text-slate-900">Profile Summary</CardTitle>
             <Button
               type="button"
               size="sm"
               variant="outline"
-              className="h-8 border-slate-200 text-xs"
+              className="h-8 w-full border-slate-200 text-xs sm:w-auto"
               onClick={() => onNavigate("company")}
             >
               Edit Profile
@@ -562,9 +562,9 @@ export function ExhibitorDashboardOverview({ exhibitor, onNavigate }: ExhibitorO
                 {exhibitor.company || exhibitor.organizationName || "Exhibitor"}
               </p>
               <div className="mt-4 w-full space-y-2 text-left text-sm text-slate-600">
-                <p className="flex items-center gap-2">
-                  <Mail className="h-4 w-4 shrink-0 text-[#004A96]" />
-                  <span className="truncate">{exhibitor.email}</span>
+                <p className="flex items-start gap-2 min-w-0">
+                  <Mail className="h-4 w-4 shrink-0 text-[#004A96] mt-0.5" />
+                  <span className="break-all">{exhibitor.email}</span>
                 </p>
                 {exhibitor.phone ? (
                   <p className="flex items-center gap-2">

@@ -35,9 +35,14 @@ export const exBtnDestructive = "text-white hover:opacity-95"
 export const exDestructiveBg = EX_PRIMARY
 export const exLink = "font-medium text-[#004A96] hover:underline"
 export const exInput = "border-slate-200 bg-white focus-visible:ring-[#004A96]/25"
-export const exTabsList = "border border-slate-200 bg-slate-50 p-1"
+export const exTabsScrollWrapper =
+  "w-full min-w-0 overflow-x-auto overscroll-x-contain pb-1 [-webkit-overflow-scrolling:touch]"
+
+export const exTabsList =
+  "inline-flex h-auto w-max min-w-full flex-nowrap items-center gap-1 rounded-xl border border-slate-200 bg-slate-50 p-1"
+
 export const exTabsTriggerActive =
-  "data-[state=active]:bg-[#004A96] data-[state=active]:text-white data-[state=active]:shadow-sm"
+  "shrink-0 rounded-lg px-3 py-2 text-xs font-medium text-slate-600 transition-colors sm:px-4 sm:text-sm data-[state=active]:bg-[#004A96] data-[state=active]:text-white data-[state=active]:shadow-sm"
 export const exBadgeBlue = "border-[#004A96]/25 bg-blue-50 text-[#004A96]"
 export const exBadgeRed = "border-red-200 bg-red-50 text-red-700"
 

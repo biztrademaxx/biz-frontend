@@ -23,7 +23,7 @@ import {
 } from "recharts"
 import { Eye, Download, Users, TrendingUp, FileText } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { exGlassCard, exTabsList, exTabsTriggerActive, exBtnPrimary, exPageTitle } from "./dashboard-theme"
+import { exGlassCard, exTabsList, exTabsScrollWrapper, exTabsTriggerActive, exBtnPrimary, exPageTitle } from "./dashboard-theme"
 
 interface AnalyticsReportsProps {
   exhibitorId: string
@@ -129,12 +129,12 @@ export default function AnalyticsReports({ exhibitorId }: AnalyticsReportsProps)
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="min-w-0 space-y-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 className={exPageTitle}>Analytics & Reports</h1>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col gap-2 w-full sm:flex-row sm:items-center sm:w-auto sm:gap-4">
           <Select value={timeRange} onValueChange={setTimeRange}>
-            <SelectTrigger className="w-32">
+            <SelectTrigger className="w-full sm:w-32">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -143,28 +143,25 @@ export default function AnalyticsReports({ exhibitorId }: AnalyticsReportsProps)
               <SelectItem value="90d">90 Days</SelectItem>
             </SelectContent>
           </Select>
-          <Button className={cn("flex items-center gap-2", exBtnPrimary)}>
+          <Button className={cn("flex w-full items-center justify-center gap-2 sm:w-auto", exBtnPrimary)}>
             <Download className="w-4 h-4" />
             Export Report
           </Button>
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className={cn(exTabsList, "grid w-full grid-cols-4")}>
-          <TabsTrigger value="overview" className={exTabsTriggerActive}>
-            Overview
-          </TabsTrigger>
-          <TabsTrigger value="profile-views" className={exTabsTriggerActive}>
-            Profile Views
-          </TabsTrigger>
-          <TabsTrigger value="downloads" className={exTabsTriggerActive}>
-            Downloads
-          </TabsTrigger>
-          <TabsTrigger value="engagement" className={exTabsTriggerActive}>
-            Engagement
-          </TabsTrigger>
-        </TabsList>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="min-w-0 space-y-6">
+        <div className={exTabsScrollWrapper}>
+          <TabsList className={cn(exTabsList, "mb-0")}>
+            <TabsTrigger value="overview" className={exTabsTriggerActive}>Overview</TabsTrigger>
+            <TabsTrigger value="profile-views" className={exTabsTriggerActive}>
+              <span className="sm:hidden">Views</span>
+              <span className="hidden sm:inline">Profile Views</span>
+            </TabsTrigger>
+            <TabsTrigger value="downloads" className={exTabsTriggerActive}>Downloads</TabsTrigger>
+            <TabsTrigger value="engagement" className={exTabsTriggerActive}>Engagement</TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="overview" className="space-y-6">
           {/* Key Metrics Cards */}

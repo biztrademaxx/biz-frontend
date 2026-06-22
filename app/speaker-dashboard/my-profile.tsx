@@ -1,6 +1,8 @@
 "use client"
 
 import type React from "react"
+import { exPrimaryBtn } from "@/app/exhibitor-dashboard/dashboard-theme"
+import { cn } from "@/lib/utils"
 import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -126,28 +128,30 @@ export default function MyProfile({ speakerId }: { speakerId: string }) {
   ]
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
           <h2 className="text-xl font-extrabold text-slate-800 tracking-tight">My Profile</h2>
           <p className="text-xs text-slate-400 mt-0.5 font-medium">Manage your public speaker profile</p>
         </div>
         <button
           onClick={() => isEditing ? handleSave() : setIsEditing(true)}
           disabled={loading}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-2xl text-sm font-semibold text-white shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-60"
-          style={{ background: "linear-gradient(135deg, #2563eb, #7c3aed)" }}
+          className={cn(
+            "flex w-full sm:w-auto shrink-0 items-center justify-center gap-2 px-5 py-2.5 rounded-2xl text-sm font-semibold text-white shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-60",
+            exPrimaryBtn,
+          )}
         >
           {isEditing ? <Save className="w-4 h-4" /> : <Edit className="w-4 h-4" />}
           {isEditing ? "Save Changes" : "Edit Profile"}
         </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5 min-w-0">
         {/* Avatar card */}
         <div
-          className="rounded-2xl p-6 flex flex-col items-center gap-5"
+          className="rounded-2xl p-4 sm:p-6 flex flex-col items-center gap-5 min-w-0 overflow-hidden"
           style={{
             background: "linear-gradient(135deg, rgba(219,234,254,0.4), rgba(237,233,254,0.4))",
             border: "1px solid rgba(255,255,255,0.8)",
@@ -171,18 +175,20 @@ export default function MyProfile({ speakerId }: { speakerId: string }) {
                 <button
                   onClick={() => fileInputRef.current?.click()}
                   disabled={uploadingAvatar}
-                  className="absolute -bottom-2 -right-2 w-9 h-9 rounded-xl flex items-center justify-center text-white shadow-lg hover:shadow-xl transition-all"
-                  style={{ background: "linear-gradient(135deg, #2563eb, #7c3aed)" }}
+                  className={cn(
+                    "absolute -bottom-2 -right-2 w-9 h-9 rounded-xl flex items-center justify-center text-white shadow-lg hover:shadow-xl transition-all",
+                    exPrimaryBtn,
+                  )}
                 >
                   <Camera className="w-4 h-4" />
                 </button>
               </>
             )}
           </div>
-          <div className="text-center space-y-1">
-            <h3 className="font-bold text-slate-800 text-base">{profile.fullName}</h3>
-            <p className="text-sm text-slate-500 font-medium">{profile.designation}</p>
-            <p className="text-xs text-slate-400">{profile.company}</p>
+          <div className="text-center space-y-1 min-w-0 w-full px-2">
+            <h3 className="font-bold text-slate-800 text-base break-words">{profile.fullName}</h3>
+            <p className="text-sm text-slate-500 font-medium break-words">{profile.designation}</p>
+            <p className="text-xs text-slate-400 break-words">{profile.company}</p>
           </div>
           <div
             className="w-full flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-semibold"
@@ -195,7 +201,7 @@ export default function MyProfile({ speakerId }: { speakerId: string }) {
 
         {/* Contact info */}
         <div
-          className="lg:col-span-2 rounded-2xl p-6"
+          className="lg:col-span-2 rounded-2xl p-4 sm:p-6 min-w-0 overflow-hidden"
           style={{
             background: "rgba(255,255,255,0.7)",
             border: "1px solid rgba(255,255,255,0.9)",
@@ -204,7 +210,7 @@ export default function MyProfile({ speakerId }: { speakerId: string }) {
           <h3 className="text-sm font-bold text-slate-700 mb-4 uppercase tracking-wider">Contact Information</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {fields.map((field) => (
-              <div key={field.id} className="space-y-1.5">
+              <div key={field.id} className="space-y-1.5 min-w-0">
                 <Label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">{field.label}</Label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">{field.icon}</span>
@@ -214,7 +220,7 @@ export default function MyProfile({ speakerId }: { speakerId: string }) {
                     value={field.value || ""}
                     onChange={(e) => !field.readOnly && setProfile({ ...profile, [field.id]: e.target.value })}
                     disabled={!isEditing || field.readOnly}
-                    className="pl-9 rounded-xl text-sm border-slate-200/60 bg-slate-50/60 focus:bg-white transition-colors disabled:opacity-60 disabled:cursor-default"
+                    className="pl-9 rounded-xl text-sm border-slate-200/60 bg-slate-50/60 focus:bg-white transition-colors disabled:opacity-60 disabled:cursor-default min-w-0"
                     style={isEditing && !field.readOnly ? { borderColor: "rgba(99,102,241,0.3)", background: "white" } : {}}
                   />
                   {field.readOnly && isEditing && (
@@ -251,14 +257,14 @@ export default function MyProfile({ speakerId }: { speakerId: string }) {
       </div>
 
       {/* Bio & Experience */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5 min-w-0">
         {[
           { title: "Professional Bio", key: "bio", value: profile.bio, placeholder: "Tell your professional story…" },
           { title: "Speaking Experience", key: "speakingExperience", value: profile.speakingExperience, placeholder: "Describe your speaking background…" },
         ].map((section) => (
           <div
             key={section.key}
-            className="rounded-2xl p-6"
+            className="rounded-2xl p-4 sm:p-6 min-w-0 overflow-hidden"
             style={{ background: "rgba(255,255,255,0.7)", border: "1px solid rgba(255,255,255,0.9)" }}
           >
             <h3 className="text-sm font-bold text-slate-700 mb-3 uppercase tracking-wider">{section.title}</h3>

@@ -334,7 +334,7 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
   }, [fetchConnectionsCount, fetchInterestedEventsCount])
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -434,7 +434,7 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
       <Card className="rounded-2xl border border-white/70 bg-white/55 shadow-[0_4px_24px_rgba(0,74,150,0.08)] backdrop-blur-md overflow-hidden">
         <CardContent className="p-6">
           {/* Avatar and Name */}
-          <div className="flex items-center gap-6 mb-6">
+          <div className="mb-6 flex flex-col items-center gap-4 sm:flex-row sm:items-start sm:gap-6">
             <div className="relative">
               <Avatar className="h-24 w-24 ring-4 ring-[#004A96]/20 ring-offset-2 ring-offset-white/50">
                 <AvatarImage src={localUserData.avatar || "/image/Ellipse 72.png"} />
@@ -607,7 +607,7 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <Label>First Name</Label>
                   <Input

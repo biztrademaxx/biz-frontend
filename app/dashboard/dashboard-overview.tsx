@@ -353,7 +353,7 @@ export function DashboardOverview({ userId, events, userName, interests = [] }: 
       : null
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 space-y-4 sm:space-y-6">
       <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm md:p-6">
         <h2 className="text-lg font-bold text-slate-900 md:text-xl">
           Welcome back, {userName}! 👋

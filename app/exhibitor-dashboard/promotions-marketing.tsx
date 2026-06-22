@@ -47,6 +47,7 @@ import {
   exPageTitle,
   exLink,
   exInput,
+  exTabsScrollWrapper,
 } from "./dashboard-theme"
 
 interface PromotionsMarketingProps {
@@ -377,26 +378,30 @@ export default function PromotionsMarketing({ exhibitorId, onPromotionCreated }:
   const selectedPackageData = promotionPackages.find((p) => p.id === selectedPackage)
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="min-w-0 space-y-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 className={exPageTitle}>Exhibitor Promotion</h1>
         <div className="flex items-center gap-2">
-          <Badge variant="outline" className="border-[#004A96]/25 bg-[#004A96]/10 text-[#004A96]">
+          <Badge variant="outline" className="w-fit border-[#004A96]/25 bg-[#004A96]/10 text-[#004A96]">
             <Users className="w-4 h-4 mr-1" />
             {userCategories.reduce((total, cat) => total + cat.userCount, 0).toLocaleString()} Platform Users
           </Badge>
         </div>
       </div>
 
-      <Tabs value={selectedTab} onValueChange={setSelectedTab} className="space-y-6">
-        <TabsList className={cn(exTabsList, "grid w-full grid-cols-2")}>
-          <TabsTrigger value="platform-promotion" className={exTabsTriggerActive}>
-            Platform Promotion
-          </TabsTrigger>
-          <TabsTrigger value="external-campaigns" className={exTabsTriggerActive}>
-            External Campaigns
-          </TabsTrigger>
-        </TabsList>
+      <Tabs value={selectedTab} onValueChange={setSelectedTab} className="min-w-0 space-y-6">
+        <div className={exTabsScrollWrapper}>
+          <TabsList className={cn(exTabsList, "mb-0 w-full sm:grid sm:grid-cols-2 sm:w-full")}>
+            <TabsTrigger value="platform-promotion" className={cn(exTabsTriggerActive, "flex-1")}>
+              <span className="sm:hidden">Platform</span>
+              <span className="hidden sm:inline">Platform Promotion</span>
+            </TabsTrigger>
+            <TabsTrigger value="external-campaigns" className={cn(exTabsTriggerActive, "flex-1")}>
+              <span className="sm:hidden">External</span>
+              <span className="hidden sm:inline">External Campaigns</span>
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="platform-promotion" className="space-y-6">
           {/* Event Selection */}

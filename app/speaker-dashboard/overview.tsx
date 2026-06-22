@@ -196,14 +196,14 @@ export default function SpeakerOverview({ speakerId }: OverviewProps) {
     ]
 
     return (
-        <div className="space-y-6">
+        <div className="min-w-0 space-y-4 sm:space-y-6">
 
             {/* ── Stat cards ── */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 xl:grid-cols-4">
                 {cards.map((card) => (
                     <div
                         key={card.label}
-                        className="relative overflow-hidden rounded-[20px]"
+                        className="relative overflow-hidden rounded-[20px] min-w-0"
                         style={{
                             background: "#ffffff",
                             border: "1px solid rgba(226,232,240,0.8)",
@@ -335,7 +335,7 @@ export default function SpeakerOverview({ speakerId }: OverviewProps) {
                     }}
                 >
                     <div
-                        className="px-5 py-4 flex items-center justify-between"
+                        className="px-4 py-3.5 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-5"
                         style={{ borderBottom: "1px solid rgba(226,232,240,0.6)" }}
                     >
                         <div className="flex items-center gap-3">
@@ -367,13 +367,13 @@ export default function SpeakerOverview({ speakerId }: OverviewProps) {
                                     : { bg: "rgba(241,245,249,0.8)", color: "#64748b", border: "rgba(226,232,240,0.6)" }
 
                             return (
-                                <div key={session.id} className="px-5 py-3.5 flex items-center justify-between gap-4 hover:bg-slate-50/50 transition-colors">
-                                    <div className="min-w-0">
-                                        <p className="text-sm font-semibold text-slate-800 truncate">{session.title}</p>
-                                        <p className="text-xs text-slate-400 mt-0.5 truncate">{session.event?.title}</p>
+                                <div key={session.id} className="px-4 py-3.5 sm:px-5 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4 hover:bg-slate-50/50 transition-colors">
+                                    <div className="min-w-0 flex-1">
+                                        <p className="text-sm font-semibold text-slate-800 break-words">{session.title}</p>
+                                        <p className="text-xs text-slate-400 mt-0.5 break-words">{session.event?.title}</p>
                                     </div>
-                                    <div className="flex items-center gap-2 flex-shrink-0">
-                                        <span className="text-[11px] text-slate-400 hidden sm:block">
+                                    <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
+                                        <span className="text-[11px] text-slate-400">
                                             {new Date(session.startTime).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
                                         </span>
                                         <span
@@ -391,8 +391,8 @@ export default function SpeakerOverview({ speakerId }: OverviewProps) {
             )}
 
             {/* ── Welcome footer ── */}
-            <div className="flex items-center gap-2 text-slate-400 text-xs pt-1">
-                <Sparkles className="w-3.5 h-3.5" />
+            <div className="flex items-start gap-2 text-slate-400 text-xs pt-1 break-words">
+                <Sparkles className="w-3.5 h-3.5 shrink-0" />
                 <span>Welcome back, {profile?.fullName?.split(" ")[0] || "Speaker"}! Your dashboard is ready.</span>
             </div>
 

@@ -16,7 +16,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { useToast } from "@/hooks/use-toast"
 import { Package, Plus, Upload, FileText, Edit, Trash2, ExternalLink, Youtube } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { exGlassCard, exBtnPrimary } from "./dashboard-theme"
+import { exGlassCard, exBtnPrimary, exPageTitle } from "./dashboard-theme"
 
 interface ProductListingProps {
   exhibitorId: string
@@ -551,17 +551,17 @@ export default function ProductListing({ exhibitorId }: ProductListingProps) {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Product Listing & Brochures</h1>
+    <div className="min-w-0 space-y-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <h1 className={exPageTitle}>Product Listing & Brochures</h1>
         <Dialog open={isAddProductOpen} onOpenChange={setIsAddProductOpen}>
           <DialogTrigger asChild>
-            <Button className={cn("flex items-center gap-2", exBtnPrimary)}>
+            <Button className={cn("flex w-full items-center justify-center gap-2 sm:w-auto", exBtnPrimary)}>
               <Plus className="w-4 h-4" />
               Add Product/Service
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="w-[calc(100vw-2rem)] max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Add New Product/Service</DialogTitle>
             </DialogHeader>
@@ -575,7 +575,7 @@ export default function ProductListing({ exhibitorId }: ProductListingProps) {
       </div>
 
       <Dialog open={isEditProductOpen} onOpenChange={setIsEditProductOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[calc(100vw-2rem)] max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Product/Service</DialogTitle>
           </DialogHeader>
@@ -593,9 +593,9 @@ export default function ProductListing({ exhibitorId }: ProductListingProps) {
       </Dialog>
 
       <Dialog open={isBrochureDialogOpen} onOpenChange={setIsBrochureDialogOpen}>
-        <DialogContent className="max-w-5xl max-h-[90vh] p-0">
-          <DialogHeader className="p-6 pb-0">
-            <DialogTitle className="flex items-center justify-between">
+        <DialogContent className="w-[calc(100vw-2rem)] max-w-5xl max-h-[90vh] p-0 overflow-hidden">
+          <DialogHeader className="p-4 pb-0 sm:p-6">
+            <DialogTitle className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <span className="flex items-center gap-2">
                 <FileText className="w-5 h-5" />
                 Brochure Viewer
@@ -644,7 +644,7 @@ export default function ProductListing({ exhibitorId }: ProductListingProps) {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:gap-6">
             <div className="text-center">
               <div className="text-3xl font-bold text-[#004A96]">{products.length}</div>
               <div className="text-muted-foreground">Total Products</div>

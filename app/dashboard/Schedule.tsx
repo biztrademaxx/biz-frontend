@@ -99,7 +99,7 @@ export default function Schedule({ userId }: ScheduleProps) {
   }
 
   return (
-    <div className="p-4 bg-[#F5F4F0] min-h-screen">
+    <div className="min-w-0 p-3 sm:p-4">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <Button variant="outline" onClick={prevMonth} className="hover:bg-gray-100">
@@ -114,19 +114,19 @@ export default function Schedule({ userId }: ScheduleProps) {
       </div>
 
       {/* Calendar Grid */}
-      <div className="relative">
-        <div className="grid grid-cols-7 gap-2 text-center mb-2">
+      <div className="relative min-w-0 overflow-hidden">
+        <div className="grid grid-cols-7 gap-1 text-center mb-2">
           {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
-            <div key={d} className="font-semibold text-sm text-gray-600 py-2">
+            <div key={d} className="py-1 text-[10px] font-semibold text-gray-600 sm:text-sm sm:py-2">
               {d}
             </div>
           ))}
         </div>
 
-        <div className="grid grid-cols-7 gap-2">
+        <div className="grid grid-cols-7 gap-1 sm:gap-2">
           {/* Empty cells for days before month starts */}
           {Array(startOfMonth.getDay()).fill(null).map((_, i) => (
-            <div key={`empty-${i}`} className="h-24" />
+            <div key={`empty-${i}`} className="h-14 sm:h-24" />
           ))}
 
           {/* Calendar days */}
@@ -137,11 +137,11 @@ export default function Schedule({ userId }: ScheduleProps) {
             const isSelected = selectedDate === day
 
             return (
-              <div key={day} className="relative">
+              <div key={day} className="relative min-w-0">
                 {/* Date cell */}
                 <div
                   className={cn(
-                    "h-24 border rounded-lg p-2 cursor-pointer transition-all duration-200",
+                    "h-14 sm:h-24 border rounded-lg p-1 sm:p-2 cursor-pointer transition-all duration-200",
                     hasEvents && !isSelected
                       ? "bg-green-50 border-green-300 hover:bg-green-100 hover:shadow-md"
                       : isSelected
@@ -170,54 +170,62 @@ export default function Schedule({ userId }: ScheduleProps) {
                     </div>
                   )}
                 </div>
-
-                {/* Popup card showing events for the selected date */}
-                {isSelected && dayEvents.length > 0 && (
-                  <div className="absolute top-full left-0 z-20 mt-2 w-72 bg-white border border-gray-200 rounded-lg shadow-xl overflow-hidden">
-                    <div className="bg-blue-600 text-white px-4 py-2">
-                      <h3 className="font-semibold text-sm">
-                        Events on {currentMonth.toLocaleString("default", { month: "long" })} {day}, {currentMonth.getFullYear()}
-                      </h3>
-                    </div>
-                    <div className="max-h-96 overflow-y-auto">
-                      {dayEvents.map((event) => (
-                        <Link
-                          key={event.id}
-                          href={eventPublicPath(event)}
-                          className="block hover:bg-blue-50 transition-colors cursor-pointer"
-                        >
-                          <div className="p-3 border-b border-gray-100">
-                            <h4 className="font-medium text-gray-800 text-sm mb-1">
-                              {event.title}
-                            </h4>
-                            {event.city && (
-                              <div className="flex items-center gap-1 text-xs text-gray-500 mb-1">
-                                <MapPin className="w-3 h-3" />
-                                <span>{event.city}</span>
-                              </div>
-                            )}
-                            {event.description && (
-                              <p className="text-xs text-gray-600 line-clamp-2">
-                                {event.description}
-                              </p>
-                            )}
-                            <div className="flex items-center gap-1 text-xs text-gray-400 mt-1">
-                              <Calendar className="w-3 h-3" />
-                              <span>
-                                {new Date(event.startDate).toLocaleDateString()} - {new Date(event.endDate).toLocaleDateString()}
-                              </span>
-                            </div>
-                          </div>
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </div>
             )
           })}
         </div>
       </div>
+
+      {/* Selected date events — shown below calendar so popup never overflows on mobile */}
+      {selectedDate !== null && (
+        <Card className="mt-4 w-full min-w-0 overflow-hidden border border-gray-200 shadow-md">
+          <div className="bg-[#004A96] px-4 py-3 text-white">
+            <h3 className="text-sm font-semibold break-words sm:text-base">
+              Events on {currentMonth.toLocaleString("default", { month: "long" })} {selectedDate},{" "}
+              {currentMonth.getFullYear()}
+            </h3>
+          </div>
+          <CardContent className="p-0">
+            {getDayEvents(selectedDate).length > 0 ? (
+              <div className="max-h-96 overflow-y-auto">
+                {getDayEvents(selectedDate).map((event) => (
+                  <Link
+                    key={event.id}
+                    href={eventPublicPath(event)}
+                    className="block border-b border-gray-100 transition-colors last:border-b-0 hover:bg-blue-50"
+                  >
+                    <div className="p-3 sm:p-4">
+                      <h4 className="mb-1 break-words text-sm font-medium text-gray-800 sm:text-base">
+                        {event.title}
+                      </h4>
+                      {event.city && (
+                        <div className="mb-1 flex items-start gap-1 text-xs text-gray-500">
+                          <MapPin className="mt-0.5 h-3 w-3 shrink-0" />
+                          <span className="break-words">{event.city}</span>
+                        </div>
+                      )}
+                      {event.description && (
+                        <p className="line-clamp-2 break-words text-xs text-gray-600">
+                          {event.description}
+                        </p>
+                      )}
+                      <div className="mt-1 flex items-start gap-1 text-xs text-gray-400">
+                        <Calendar className="mt-0.5 h-3 w-3 shrink-0" />
+                        <span className="break-words">
+                          {new Date(event.startDate).toLocaleDateString()} –{" "}
+                          {new Date(event.endDate).toLocaleDateString()}
+                        </span>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <p className="p-4 text-sm text-gray-500">No events on this date.</p>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Instructions */}
       <div className="mt-6 text-center text-xs text-gray-500">

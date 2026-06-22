@@ -105,39 +105,40 @@ export function ExhibitorHelpSupport() {
     }
 
     return (
-        <div className="max-w-6xl mx-auto py-12 px-4 sm:px-6 space-y-12">
+        <div className="w-full min-w-0 max-w-full mx-auto space-y-6 sm:space-y-10 md:space-y-12 py-2 sm:py-4">
             {/* Header Section */}
-            <div className="text-center">
-                <h1 className={cn(exPageTitle, "mb-4 text-center")}>Help & Support</h1>
-                <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            <div className="text-center min-w-0">
+                <h1 className={cn(exPageTitle, "mb-3 sm:mb-4 text-center")}>Help & Support</h1>
+                <p className="text-base text-gray-600 max-w-3xl mx-auto sm:text-lg md:text-xl break-words px-1">
                     This FAQ section is designed to address common exhibitor questions and provide quick, clear answers to help you manage your participation effectively on Biztradefairs.com.
                 </p>
             </div>
 
             {/* FAQs Section */}
-            <section className={cn(exGlassCard, "p-8")}>
-                <h2 className="mb-6 flex items-center gap-2 text-2xl font-bold text-slate-800">
-                    <HelpCircle className="text-[#004A96]" size={28} />
-                    Frequently Asked Questions
+            <section className={cn(exGlassCard, "p-4 sm:p-6 md:p-8 min-w-0 overflow-hidden")}>
+                <h2 className="mb-4 sm:mb-6 flex items-center gap-2 text-xl font-bold text-slate-800 sm:text-2xl flex-wrap">
+                    <HelpCircle className="text-[#004A96] shrink-0" size={24} />
+                    <span className="min-w-0">Frequently Asked Questions</span>
                 </h2>
-                <div className="space-y-4">
+                <div className="space-y-3 sm:space-y-4">
                     {faqList.map((faq, index) => (
                         <div
                             key={index}
-                            className="overflow-hidden rounded-lg border border-white/60 transition-all hover:shadow-sm"
+                            className="overflow-hidden rounded-lg border border-white/60 transition-all hover:shadow-sm min-w-0"
                         >
                             <button
-                                className="flex w-full items-center gap-4 bg-white/40 p-6 text-left font-medium transition hover:bg-white/55"
+                                type="button"
+                                className="flex w-full items-start gap-3 bg-white/40 p-4 text-left font-medium transition hover:bg-white/55 sm:p-6 min-w-0"
                                 onClick={() => toggleFAQ(index)}
                             >
-                                <span className="flex w-6 flex-shrink-0 items-center justify-center text-2xl font-bold text-slate-600">
+                                <span className="flex w-5 sm:w-6 flex-shrink-0 items-center justify-center text-xl sm:text-2xl font-bold text-slate-600 leading-none pt-0.5">
                                     {openFAQIndex === index ? "−" : "+"}
                                 </span>
-                                <span className="text-lg text-slate-900">{faq.question}</span>
+                                <span className="text-base text-slate-900 sm:text-lg min-w-0 flex-1 break-words text-left">{faq.question}</span>
                             </button>
 
                             {openFAQIndex === index && (
-                                <div className="whitespace-pre-line border-t border-white/50 bg-white/35 p-6 text-slate-700 backdrop-blur-sm">
+                                <div className="whitespace-pre-line border-t border-white/50 bg-white/35 p-4 sm:p-6 text-slate-700 backdrop-blur-sm break-words text-sm sm:text-base">
                                     {faq.answer}
                                 </div>
                             )}
@@ -146,70 +147,70 @@ export function ExhibitorHelpSupport() {
                 </div>
             </section>
 
-            <HelpSupportTicketsSection />
+            <HelpSupportTicketsSection iconAccentClass="text-[#004A96]" />
 
             {/* Contact Support Section */}
-            <div className={cn(exGlassCard, "space-y-6 p-8")}>
-                <h2 className="flex items-center gap-2 text-2xl font-bold text-slate-800">
-                    <MessageCircle className="text-[#004A96]" size={28} />
-                    Contact Support
+            <div className={cn(exGlassCard, "space-y-4 sm:space-y-6 p-4 sm:p-6 md:p-8 min-w-0 overflow-hidden")}>
+                <h2 className="flex items-center gap-2 text-xl font-bold text-slate-800 sm:text-2xl flex-wrap">
+                    <MessageCircle className="text-[#004A96] shrink-0" size={24} />
+                    <span className="min-w-0">Contact Support</span>
                 </h2>
-                <p className="text-slate-700">
+                <p className="text-slate-700 text-sm sm:text-base break-words">
                     Welcome to the Exhibitor Support Center of <span className={cn(exLink, "font-semibold")}>BizTradeFairs.com</span>.
                     We're here to make your exhibition journey successful, efficient, and productive.
                 </p>
 
-                <div className="space-y-4">
-                    <div className="rounded-lg border border-[#004A96]/20 bg-[#004A96]/10 p-4">
-                        <div className="flex items-start gap-3">
-                            <Mail className="mt-1 flex-shrink-0 text-[#004A96]" size={20} />
-                            <div>
-                                <h3 className="font-semibold text-slate-900">Email Support</h3>
-                                <p className="mt-1 text-sm text-slate-700">For exhibitor queries, booth management, and documentation support:</p>
-                                <p className={cn(exLink, "mt-2 font-medium")}>exhibitor-support@biztradefairs.com</p>
+                <div className="space-y-3 sm:space-y-4">
+                    <div className="rounded-lg border border-[#004A96]/20 bg-[#004A96]/10 p-3 sm:p-4 min-w-0 overflow-hidden">
+                        <div className="flex items-start gap-3 min-w-0">
+                            <Mail className="mt-0.5 flex-shrink-0 text-[#004A96]" size={20} />
+                            <div className="min-w-0 flex-1">
+                                <h3 className="font-semibold text-slate-900 text-sm sm:text-base">Email Support</h3>
+                                <p className="mt-1 text-xs text-slate-700 sm:text-sm break-words">For exhibitor queries, booth management, and documentation support:</p>
+                                <p className={cn(exLink, "mt-2 font-medium break-all text-sm sm:text-base")}>exhibitor-support@biztradefairs.com</p>
                             </div>
                         </div>
                     </div>
 
-                    <div className="p-4 bg-green-50 rounded-lg border border-green-100">
-                        <div className="flex items-start gap-3">
-                            <Phone className="text-green-600 mt-1 flex-shrink-0" size={20} />
-                            <div>
-                                <h3 className="font-semibold text-slate-900">Phone Support</h3>
-                                <p className="mt-1 text-sm text-slate-700">Dedicated helpline for exhibitors during business hours:</p>
-                                <p className="text-green-600 font-medium mt-2">+91-9148319993</p>
-                                <div className="flex items-center gap-1 text-sm text-gray-600 mt-2">
-                                    <Clock size={16} />
+                    <div className="p-3 sm:p-4 bg-green-50 rounded-lg border border-green-100 min-w-0 overflow-hidden">
+                        <div className="flex items-start gap-3 min-w-0">
+                            <Phone className="text-green-600 mt-0.5 flex-shrink-0" size={20} />
+                            <div className="min-w-0 flex-1">
+                                <h3 className="font-semibold text-slate-900 text-sm sm:text-base">Phone Support</h3>
+                                <p className="mt-1 text-xs text-slate-700 sm:text-sm break-words">Dedicated helpline for exhibitors during business hours:</p>
+                                <p className="text-green-600 font-medium mt-2 text-sm sm:text-base">+91-9148319993</p>
+                                <div className="flex flex-wrap items-center gap-1 text-xs sm:text-sm text-gray-600 mt-2">
+                                    <Clock size={16} className="shrink-0" />
                                     <span>Monday – Friday, 9:30 AM – 6:30 PM (IST)</span>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
-                        <div className="flex items-start gap-3">
-                            <Building className="text-[#004A96] mt-1 flex-shrink-0" size={20} />
-                            <div>
-                                <h3 className="font-semibold text-slate-900">Corporate Office</h3>
-                                <p className="text-sm text-slate-700">BizTradeFairs.com</p>
-                                <p className="text-sm text-slate-700">Maxx Business Media Pvt. Ltd.</p>
-                                <p className="mt-1 text-sm text-slate-700">
+                    <div className="p-3 sm:p-4 bg-blue-50 rounded-lg border border-blue-100 min-w-0 overflow-hidden">
+                        <div className="flex items-start gap-3 min-w-0">
+                            <Building className="text-[#004A96] mt-0.5 flex-shrink-0" size={20} />
+                            <div className="min-w-0 flex-1">
+                                <h3 className="font-semibold text-slate-900 text-sm sm:text-base">Corporate Office</h3>
+                                <p className="text-xs text-slate-700 sm:text-sm">BizTradeFairs.com</p>
+                                <p className="text-xs text-slate-700 sm:text-sm">Maxx Business Media Pvt. Ltd.</p>
+                                <p className="mt-1 text-xs text-slate-700 sm:text-sm break-words">
                                     T9, 3rd Floor, Swastik Manandi Arcade, SC Road, Seshadripuram, Bengaluru – 560020, INDIA
                                 </p>
                             </div>
                         </div>
                     </div>
 
-                    <div className="p-4 bg-amber-50 rounded-lg border border-amber-100">
-                        <div className="flex items-start gap-3">
-                            <Clock className="text-amber-600 mt-1 flex-shrink-0" size={20} />
-                            <div>
-                                <h3 className="font-semibold text-slate-900">Live Chat</h3>
-                                <p className="mt-1 text-sm text-slate-700">
+                    <div className="p-3 sm:p-4 bg-amber-50 rounded-lg border border-amber-100 min-w-0 overflow-hidden">
+                        <div className="flex items-start gap-3 min-w-0">
+                            <Clock className="text-amber-600 mt-0.5 flex-shrink-0" size={20} />
+                            <div className="min-w-0 flex-1">
+                                <h3 className="font-semibold text-slate-900 text-sm sm:text-base">Live Chat</h3>
+                                <p className="mt-1 text-xs text-slate-700 sm:text-sm break-words">
                                     Click on the Chat Now button at the bottom of your screen to connect with our exhibitor support team instantly.
                                 </p>
-                                <div className="flex items-center gap-1 text-sm text-gray-600 mt-2">
-                                    <Clock size={16} />
+                                <div className="flex flex-wrap items-center gap-1 text-xs sm:text-sm text-gray-600 mt-2">
+                                    <Clock size={16} className="shrink-0" />
                                     <span>Monday – Friday, 9:30 AM – 6:30 PM (IST)</span>
                                 </div>
                             </div>

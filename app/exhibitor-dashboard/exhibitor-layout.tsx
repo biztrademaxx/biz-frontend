@@ -362,6 +362,14 @@ export function ExhibitorLayout({ routeSegment }: UserDashboardProps) {
     [exhibitor?.firstName, exhibitor?.lastName].filter(Boolean).join(" ").trim() ||
     "Exhibitor"
 
+  const getCurrentSectionTitle = () => {
+    const fromGroups = EXHIBITOR_SIDEBAR_GROUPS.flatMap((g) => g.items).find((i) => i.id === activeSection)
+    if (fromGroups) return fromGroups.title
+    const fromIndividual = EXHIBITOR_INDIVIDUAL_ITEMS.find((i) => i.id === activeSection)
+    if (fromIndividual) return fromIndividual.title
+    return "Exhibitor Dashboard"
+  }
+
   const renderMainContent = () => {
     if (authLoading) {
       return (
@@ -386,7 +394,7 @@ export function ExhibitorLayout({ routeSegment }: UserDashboardProps) {
     if (error) {
       return (
         <div className="flex min-h-[50vh] items-center justify-center">
-          <Card className={cn("w-full max-w-md", exGlassCard)}>
+          <Card className={cn("w-full max-w-md", exCardShell)}>
             <CardHeader>
               <CardTitle className="text-red-600">Error</CardTitle>
             </CardHeader>
@@ -406,7 +414,7 @@ export function ExhibitorLayout({ routeSegment }: UserDashboardProps) {
     if (!exhibitor) {
       return (
         <div className="flex min-h-[50vh] items-center justify-center">
-          <Card className={cn("w-full max-w-md", exGlassCard)}>
+          <Card className={cn("w-full max-w-md", exCardShell)}>
             <CardHeader>
               <CardTitle className="text-slate-800">No Data</CardTitle>
             </CardHeader>
@@ -444,10 +452,7 @@ export function ExhibitorLayout({ routeSegment }: UserDashboardProps) {
         return <FollowManagement userId={exhibitor.id} />
       case "appointments":
         return (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              {/* Add any appointment stats cards here if needed */}
-            </div>
+          <div className="min-w-0 space-y-6">
             <AppointmentScheduling
               exhibitorId={exhibitor.id}
               onCountChange={setAppointmentCount}
@@ -501,7 +506,7 @@ case "view-feedback":
 
       <div
         className={cn(
-          "fixed inset-y-0 left-0 z-50 h-full shrink-0 transform transition-transform duration-300 ease-in-out md:static md:translate-x-0",
+          "fixed inset-y-0 left-0 z-50 h-full w-[min(100vw,260px)] max-w-[85vw] shrink-0 transform transition-transform duration-300 ease-in-out md:static md:max-w-none md:w-[260px] md:translate-x-0",
           sidebarOpen ? "translate-x-0" : "-translate-x-full",
         )}
       >
@@ -622,20 +627,25 @@ case "view-feedback":
         </aside>
       </div>
 
-      <div className="relative flex min-h-0 min-w-0 flex-1 flex-col">
-        <div className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3 md:hidden">
-          <Button variant="ghost" size="sm" className="text-[#004A96]" onClick={() => setSidebarOpen(true)}>
+      <div className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+        <div className="flex items-center justify-between gap-2 border-b border-slate-200 bg-white px-3 py-3 md:hidden">
+          <Button variant="ghost" size="sm" className="shrink-0 text-[#004A96]" onClick={() => setSidebarOpen(true)}>
             <Menu className="h-5 w-5" />
           </Button>
-          <span className="text-sm font-semibold text-[#004A96]">Exhibitor Dashboard</span>
-          <div className="w-9" />
+          <div className="min-w-0 flex-1 px-1 text-center">
+            {exhibitorDisplayName ? (
+              <p className="truncate text-xs text-slate-500">{exhibitorDisplayName}</p>
+            ) : null}
+            <p className="truncate text-sm font-semibold text-[#004A96]">{getCurrentSectionTitle()}</p>
+          </div>
+          <div className="w-9 shrink-0" />
         </div>
 
         <main className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden p-0">
           {activeSection !== "overview" && (
-            <DashboardManagedBanner page="exhibitor-dashboard" className="w-full" />
+            <DashboardManagedBanner page="exhibitor-dashboard" className="w-full min-w-0" />
           )}
-          <div className="w-full px-6 py-6">{renderMainContent()}</div>
+          <div className="w-full min-w-0 max-w-full px-3 py-4 sm:px-4 sm:py-5 md:px-6 md:py-6">{renderMainContent()}</div>
         </main>
       </div>
     </div>
