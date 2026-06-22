@@ -255,9 +255,9 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="grid min-w-0 grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-3">
           {/* Company Logo & Banner */}
-          <Card className={exGlassCardPremium}>
+          <Card className={cn(exGlassCardPremium, "min-w-0 overflow-hidden")}>
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-slate-800">
                 <Building2 className="h-5 w-5 text-[#004A96]" />
@@ -313,16 +313,16 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
         </Card>
 
         {/* Contact Information */}
-        <Card className={exGlassCardPremium}>
+        <Card className={cn(exGlassCardPremium, "min-w-0 overflow-hidden")}>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-slate-800">
               <User className="h-5 w-5 text-[#004A96]" />
               Contact Information
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className={cn(exGlassNested, "space-y-4 p-5")}>
-            <div className="grid grid-cols-2 gap-4">
+          <CardContent className="min-w-0">
+            <div className={cn(exGlassNested, "min-w-0 space-y-4 p-4 sm:p-5")}>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="first-name">First Name</Label>
                 <Input
@@ -368,16 +368,14 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
             </div>
 
             {/* Email Field - Always Read Only */}
-            <div className="space-y-2">
+            <div className="min-w-0 space-y-2">
               <Label htmlFor="email">Email</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-3 h-4 w-4 text-[#004A96]/60" />
-                <div className="flex items-center justify-between rounded-md border border-white/60 bg-white/45 p-2 backdrop-blur-sm">
-                  <span className="text-sm pl-7">{formData.email}</span>
-                  {!isEditing && (
-                    <CheckCircle className="w-4 h-4 text-green-500" />
-                  )}
-                </div>
+              <div className="flex min-w-0 items-start gap-2.5 rounded-md border border-white/60 bg-white/45 p-3 backdrop-blur-sm">
+                <Mail className="mt-0.5 h-4 w-4 shrink-0 text-[#004A96]/60" />
+                <span className="min-w-0 flex-1 break-all text-sm leading-snug">{formData.email}</span>
+                {!isEditing && (
+                  <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-green-500" />
+                )}
               </div>
               {isEditing && (
                 <p className="text-xs text-muted-foreground">
@@ -387,16 +385,16 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
             </div>
 
             {/* Phone Field - Always Read Only */}
-            <div className="space-y-2">
+            <div className="min-w-0 space-y-2">
               <Label htmlFor="phone">Phone</Label>
-              <div className="relative">
-                <Phone className="absolute left-3 top-3 h-4 w-4 text-[#004A96]/60" />
-                <div className="flex items-center justify-between rounded-md border border-white/60 bg-white/45 p-2 backdrop-blur-sm">
-                  <span className="text-sm pl-7">{formData.phone || "Not provided"}</span>
-                  {!isEditing && formData.phone && (
-                    <CheckCircle className="w-4 h-4 text-green-500" />
-                  )}
-                </div>
+              <div className="flex min-w-0 items-start gap-2.5 rounded-md border border-white/60 bg-white/45 p-3 backdrop-blur-sm">
+                <Phone className="mt-0.5 h-4 w-4 shrink-0 text-[#004A96]/60" />
+                <span className="min-w-0 flex-1 break-all text-sm leading-snug">
+                  {formData.phone || "Not provided"}
+                </span>
+                {!isEditing && formData.phone && (
+                  <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-green-500" />
+                )}
               </div>
               {isEditing && (
                 <p className="text-xs text-muted-foreground">
@@ -444,15 +442,15 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
         </Card>
 
         {/* Company Details */}
-        <Card className={exGlassCardPremium}>
+        <Card className={cn(exGlassCardPremium, "min-w-0 overflow-hidden")}>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-slate-800">
               <Building2 className="h-5 w-5 text-[#004A96]" />
               Company Details
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className={cn(exGlassNested, "space-y-4 p-5")}>
+          <CardContent className="min-w-0">
+            <div className={cn(exGlassNested, "min-w-0 space-y-4 p-4 sm:p-5")}>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="founded-year">Founded Year</Label>
@@ -555,16 +553,16 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
         </Card>
 
         {/* Social Media Links */}
-        <Card className={exGlassCardPremium}>
+        <Card className={cn(exGlassCardPremium, "min-w-0 overflow-hidden")}>
           <CardHeader className="pb-3">
             <CardTitle className="text-slate-800">Social Media Links</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className={cn(exGlassNested, "space-y-4 p-5")}>
+          <CardContent className="min-w-0">
+            <div className={cn(exGlassNested, "min-w-0 space-y-4 p-4 sm:p-5")}>
             {socialLinks.map((social) => (
-              <div key={social.name} className="flex items-center gap-3">
-                <social.icon className={`w-5 h-5 ${social.color}`} />
-                <div className="flex-1">
+              <div key={social.name} className="flex min-w-0 items-center gap-3">
+                <social.icon className={`h-5 w-5 shrink-0 ${social.color}`} />
+                <div className="min-w-0 flex-1">
                   <Input
                     value={social.url}
                     disabled={!isEditing}
@@ -587,13 +585,13 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
       </div>
 
       {/* Product Categories & Description */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <Card className={exGlassCardPremium}>
+      <div className="grid min-w-0 grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2">
+        <Card className={cn(exGlassCardPremium, "min-w-0 overflow-hidden")}>
           <CardHeader className="pb-3">
             <CardTitle className="text-slate-800">Product Categories / Services</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className={cn(exGlassNested, "space-y-4 p-5")}>
+          <CardContent className="min-w-0">
+            <div className={cn(exGlassNested, "min-w-0 space-y-4 p-4 sm:p-5")}>
             <div className="flex flex-wrap gap-2">
               {productTags.map((tag) => (
                 <Badge
@@ -659,12 +657,12 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
           </CardContent>
         </Card>
 
-        <Card className={exGlassCardPremium}>
+        <Card className={cn(exGlassCardPremium, "min-w-0 overflow-hidden")}>
           <CardHeader className="pb-3">
             <CardTitle className="text-slate-800">Company Description</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className={cn(exGlassNested, "p-5")}>
+          <CardContent className="min-w-0">
+            <div className={cn(exGlassNested, "min-w-0 p-4 sm:p-5")}>
               <Textarea
                 value={formData.bio || ""}
                 onChange={(e) => setFormData({ ...formData, bio: e.target.value })}

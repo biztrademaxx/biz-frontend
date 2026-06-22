@@ -645,7 +645,7 @@ case "view-feedback":
           {activeSection !== "overview" && (
             <DashboardManagedBanner page="exhibitor-dashboard" className="w-full min-w-0" />
           )}
-          <div className="w-full min-w-0 max-w-full px-3 py-4 sm:px-4 sm:py-5 md:px-6 md:py-6">{renderMainContent()}</div>
+          <div className="w-full min-w-0 max-w-full px-2 py-4 sm:px-4 sm:py-5 md:px-6 md:py-6">{renderMainContent()}</div>
         </main>
       </div>
     </div>
