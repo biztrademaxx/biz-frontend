@@ -28,7 +28,6 @@ import {
 } from "@/lib/prepare-image-upload"
 import { cn } from "@/lib/utils"
 import { venueTabsList, venueTabsScrollWrapper, venueTabsTrigger } from "./venue-dashboard-theme"
-import Link from "next/link"
 
 interface VenueData {
   id: string
@@ -86,38 +85,54 @@ function cloudinaryPublicIdFromUrl(imageUrl: string): string | null {
   return path.slice(0, dot) || null
 }
 
-const mapBackendToVenueData = (data: any): VenueData => ({
-  id: data.id,
-  venueName: data.manager?.venueName || data.name || "",
-  logo: data.manager?.avatar || data.images?.[0] ,
-  contactPerson: data.manager?.name || "",
-  email: data.manager?.email || data.contact?.email || "",
-  mobile: data.manager?.phone || data.contact?.phone || "",
-  address: data.location?.address || data.manager?.address || data.address || "",
-  city: data.location?.city || "",
-  state: data.location?.state || "",
-  country: data.location?.country || "",
-  zipCode: data.location?.zipCode || "",
-  website: data.manager?.website || data.contact?.website || "",
-  description: data.manager?.description || data.description || "",
-  maxCapacity: data.capacity?.total || 0,
-  totalHalls: data.capacity?.halls || 0,
-  totalEvents: data.stats?.totalEvents || 0,
-  activeBookings: data.stats?.activeBookings || 0,
-  averageRating: data.stats?.averageRating || 0,
-  totalReviews: data.stats?.totalReviews || 0,
-  amenities: data.amenities || [],
-  meetingSpaces: data.meetingSpaces || [],
-  venueImages: sanitizeImageList(data.images),
-  venueVideos: data.videos || [],
-  floorPlans: sanitizeImageList(data.floorPlans),
-  virtualTour: data.virtualTour || "",
-  latitude: data.location?.coordinates?.lat || 0,
-  longitude: data.location?.coordinates?.lng || 0,
-  basePrice: data.pricing?.basePrice || 0,
-  currency: data.pricing?.currency || "₹",
-  timezone: data.location?.timezone ?? "",
-})
+const mapBackendToVenueData = (data: any): VenueData => {
+  // Parse meetingSpaces if it's a JSON string
+  let meetingSpaces = data.meetingSpaces || data.halls || []
+  if (typeof meetingSpaces === 'string') {
+    try {
+      meetingSpaces = JSON.parse(meetingSpaces)
+    } catch {
+      meetingSpaces = []
+    }
+  }
+
+  // Calculate totalHalls and maxCapacity from meetingSpaces if not provided
+  const totalHalls = data.totalHalls || meetingSpaces.length || 0
+  const maxCapacity = data.maxCapacity || meetingSpaces.reduce((total: number, space: any) => total + (Number(space.capacity) || 0), 0)
+
+  return {
+    id: data.id,
+    venueName: data.venueName || data.manager?.venueName || data.name || "",
+    logo: data.logo || data.manager?.avatar || data.images?.[0] || "",
+    contactPerson: data.contactPerson || data.manager?.name || "",
+    email: data.email || data.manager?.email || data.contact?.email || "",
+    mobile: data.mobile || data.manager?.phone || data.contact?.phone || "",
+    address: data.address || data.location?.address || data.manager?.address || "",
+    city: data.city || data.location?.city || "",
+    state: data.state || data.location?.state || "",
+    country: data.country || data.location?.country || "",
+    zipCode: data.zipCode || data.location?.zipCode || "",
+    website: data.website || data.manager?.website || data.contact?.website || "",
+    description: data.description || data.manager?.description || "",
+    maxCapacity: maxCapacity,
+    totalHalls: totalHalls,
+    totalEvents: data.totalEvents || data.stats?.totalEvents || 0,
+    activeBookings: data.activeBookings || data.stats?.activeBookings || 0,
+    averageRating: data.averageRating || data.stats?.averageRating || 0,
+    totalReviews: data.totalReviews || data.stats?.totalReviews || 0,
+    amenities: data.amenities || [],
+    meetingSpaces: meetingSpaces,
+    venueImages: sanitizeImageList(data.venueImages || data.images),
+    venueVideos: data.venueVideos || data.videos || [],
+    floorPlans: sanitizeImageList(data.floorPlans || []),
+    virtualTour: data.virtualTour || "",
+    latitude: data.latitude || data.location?.coordinates?.lat || 0,
+    longitude: data.longitude || data.location?.coordinates?.lng || 0,
+    basePrice: data.basePrice || data.pricing?.basePrice || 0,
+    currency: data.currency || data.pricing?.currency || "₹",
+    timezone: data.timezone || data.location?.timezone || "",
+  }
+}
 
 const AMENITY_ICONS: Record<string, any> = {
   "Parking": Car, "Wi-Fi": Wifi, "Catering": Utensils, "Security": Shield,
@@ -186,7 +201,8 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
           { auth: true },
         )
         if (data?.success && data.data != null) {
-          applyVenueState(mapBackendToVenueData(data.data), {
+          const mappedData = mapBackendToVenueData(data.data)
+          applyVenueState(mappedData, {
             setProfileData,
             setAmenities,
             setMeetingSpaces,
@@ -323,30 +339,46 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
 
   const persistVenueMedia = async (nextVenueImages: string[], nextFloorPlans: string[]) => {
     const payload = profileData ?? venueData
-    const data = await apiFetch<{ success?: boolean; venue?: VenueData; error?: string }>(
-      `/api/venue-manager/${encodeURIComponent(payload.id)}`,
-      {
-        method: "PUT",
-        body: {
-          ...payload,
-          amenities,
-          meetingSpaces,
-          venueImages: sanitizeImageList(nextVenueImages),
-          floorPlans: sanitizeImageList(nextFloorPlans),
+
+    // Calculate totals from meeting spaces
+    const totalHalls = meetingSpaces.length
+    const maxCapacity = meetingSpaces.reduce((total, space) => total + (Number(space.capacity) || 0), 0)
+
+    const updatePayload = {
+      ...payload,
+      amenities,
+      meetingSpaces: meetingSpaces,
+      venueImages: sanitizeImageList(nextVenueImages),
+      floorPlans: sanitizeImageList(nextFloorPlans),
+      totalHalls: totalHalls,
+      maxCapacity: maxCapacity,
+    }
+
+    try {
+      const data = await apiFetch<{ success?: boolean; venue?: VenueData; error?: string }>(
+        `/api/venue-manager/${encodeURIComponent(payload.id)}`,
+        {
+          method: "PUT",
+          body: updatePayload,
+          auth: true,
         },
-        auth: true,
-      },
-    )
-    if (data?.success && data.venue) {
-      applyVenueState(data.venue, {
-        setProfileData,
-        setAmenities,
-        setMeetingSpaces,
-        setImages,
-        setFloorPlans,
-      })
-    } else {
-      throw new Error(data?.error || "Failed to save image changes")
+      )
+
+      if (data?.success && data.venue) {
+        const mappedData = mapBackendToVenueData(data.venue)
+        applyVenueState(mappedData, {
+          setProfileData,
+          setAmenities,
+          setMeetingSpaces,
+          setImages,
+          setFloorPlans,
+        })
+      } else {
+        throw new Error(data?.error || "Failed to save image changes")
+      }
+    } catch (err) {
+      console.error("Error persisting venue media:", err)
+      throw err
     }
   }
 
@@ -375,16 +407,39 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
     }
     try {
       setIsSaving(true)
+
+      // Calculate totals from meeting spaces
+      const totalHalls = meetingSpaces.length
+      const maxCapacity = meetingSpaces.reduce((total, space) => total + (Number(space.capacity) || 0), 0)
+
+      // Create a clean payload with proper structure
+      const updatePayload = {
+        ...payload,
+        amenities: amenities,
+        meetingSpaces: meetingSpaces,
+        venueImages: sanitizeImageList(images),
+        floorPlans: sanitizeImageList(floorPlans),
+        totalHalls: totalHalls,
+        maxCapacity: maxCapacity,
+      }
+
+      console.log("Saving meeting spaces:", meetingSpaces)
+      console.log("Total Halls:", totalHalls)
+      console.log("Max Capacity:", maxCapacity)
+      console.log("Update payload:", updatePayload)
+
       const data = await apiFetch<{ success?: boolean; venue?: VenueData; error?: string }>(
         `/api/venue-manager/${encodeURIComponent(payload.id)}`,
         {
           method: "PUT",
-          body: { ...payload, amenities, meetingSpaces, venueImages: sanitizeImageList(images), floorPlans: sanitizeImageList(floorPlans) },
+          body: updatePayload,
           auth: true,
         },
       )
+
       if (data?.success && data.venue) {
-        applyVenueState(data.venue, {
+        const mappedData = mapBackendToVenueData(data.venue)
+        applyVenueState(mappedData, {
           setProfileData,
           setAmenities,
           setMeetingSpaces,
@@ -417,15 +472,39 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
 
   const handleAddSpace = () => {
     if (!newSpace.name.trim()) return
-    setMeetingSpaces([...meetingSpaces, {
-      id: Date.now().toString(), name: newSpace.name, capacity: Number(newSpace.capacity),
-      area: Number(newSpace.area), hourlyRate: Number(newSpace.hourlyRate),
-      features: newSpace.features.split(",").map((f) => f.trim()),
-    }])
+    const newMeetingSpace = {
+      id: Date.now().toString(),
+      name: newSpace.name,
+      capacity: Number(newSpace.capacity) || 0,
+      area: Number(newSpace.area) || 0,
+      hourlyRate: Number(newSpace.hourlyRate) || 0,
+      features: newSpace.features.split(",").map((f) => f.trim()).filter(Boolean),
+    }
+
+    const updatedSpaces = [...meetingSpaces, newMeetingSpace]
+    setMeetingSpaces(updatedSpaces)
+
+    // Update totalHalls and maxCapacity in profileData
+    setProfileData((prev) => ({
+      ...prev,
+      totalHalls: updatedSpaces.length,
+      maxCapacity: updatedSpaces.reduce((total, space) => total + (Number(space.capacity) || 0), 0)
+    }))
+
     setNewSpace({ name: "", capacity: "", area: "", hourlyRate: "", features: "" })
   }
 
-  const handleRemoveSpace = (id: string) => setMeetingSpaces(meetingSpaces.filter((s) => s.id !== id))
+  const handleRemoveSpace = (id: string) => {
+    const updatedSpaces = meetingSpaces.filter((s) => s.id !== id)
+    setMeetingSpaces(updatedSpaces)
+
+    // Update totalHalls and maxCapacity in profileData
+    setProfileData((prev) => ({
+      ...prev,
+      totalHalls: updatedSpaces.length,
+      maxCapacity: updatedSpaces.reduce((total, space) => total + (Number(space.capacity) || 0), 0)
+    }))
+  }
 
   if (isRefreshing && !profileData?.id) {
     return (
@@ -438,7 +517,7 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
     )
   }
 
-  const heroBg = images[0] || profileData?.venueImages?.[0] 
+  const heroBg = images[0] || profileData?.venueImages?.[0]
 
   const profileTabs = [
     { value: "images", label: "Images", shortLabel: "Images" },
@@ -493,9 +572,8 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
         </div>
       </div>
 
-      {/* Hero Image Card - MODIFIED: White card overlaps the bottom of the image */}
+      {/* Hero Image Card */}
       <div className="relative mb-8">
-        {/* Hero Image Container - no bottom margin, card will overlap */}
         <div className="relative w-full h-56 md:h-72 rounded-2xl overflow-hidden">
           {heroBg?.trim() ? (
             <Image src={heroBg.trim()} alt="Venue" fill className="object-cover" />
@@ -504,7 +582,6 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
 
-          {/* Edit controls on hero cover */}
           {isEditing && (
             <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
               {heroBg?.trim() ? (
@@ -533,32 +610,23 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
           )}
         </div>
 
-        {/* Floating White Card - Overlaps the bottom of the hero image */}
-        {/* Floating Cards */}
         <div className="relative -mt-12 mx-2 sm:mx-4 md:mx-6 z-10">
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_220px] gap-4 items-stretch">
-
-            {/* Venue Details Card */}
             <div className="bg-white rounded-2xl shadow-lg border border-[#E2E8F0] p-4 sm:p-5">
               <div className="flex items-start gap-2 mb-2 min-w-0">
                 <h2 className="text-xl font-bold text-[#1E293B] break-words sm:text-2xl">
                   {profileData?.venueName || venueData.venueName}
                 </h2>
-
                 <CheckCircle className="w-5 h-5 text-[#10B981]" />
               </div>
-
               <p className="text-sm text-[#64748B] mb-3 break-words">
                 {profileData?.address || venueData.address}
               </p>
-
               <div className="flex flex-wrap items-center gap-4 text-sm text-[#64748B]">
                 <span className="flex items-center gap-1">
                   <MapPin className="w-4 h-4 text-[#004A96]" />
-                  {profileData?.city || venueData.city},{" "}
-                  {profileData?.country || venueData.country}
+                  {profileData?.city || venueData.city}, {profileData?.country || venueData.country}
                 </span>
-
                 {(profileData?.timezone || venueData.timezone) && (
                   <span className="flex items-center gap-1">
                     🕐 {profileData?.timezone || venueData.timezone}
@@ -567,30 +635,19 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
               </div>
             </div>
 
-            {/* Rating Card */}
             <div className="bg-gradient-to-br from-[#004A96] to-[#003d7a] text-white rounded-2xl shadow-lg p-5 flex flex-col justify-center">
-              <p className="text-sm font-medium opacity-90">
-                Customer Rating
-              </p>
-
+              <p className="text-sm font-medium opacity-90">Customer Rating</p>
               <div className="flex items-center gap-2 mt-2">
                 <span className="text-4xl font-bold">
-                  {(profileData?.averageRating ||
-                    venueData.averageRating ||
-                    0).toFixed(1)}
+                  {(profileData?.averageRating || venueData.averageRating || 0).toFixed(1)}
                 </span>
-
                 <div className="flex">
                   {[1, 2, 3, 4, 5].map((s) => (
                     <Star
                       key={s}
                       className={cn(
                         "w-4 h-4",
-                        s <= Math.floor(
-                          profileData?.averageRating ||
-                          venueData.averageRating ||
-                          0
-                        )
+                        s <= Math.floor(profileData?.averageRating || venueData.averageRating || 0)
                           ? "fill-yellow-400 text-yellow-400"
                           : "text-white/40"
                       )}
@@ -598,15 +655,10 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
                   ))}
                 </div>
               </div>
-
               <p className="text-xs opacity-80 mt-1">
-                {profileData?.totalReviews ||
-                  venueData.totalReviews ||
-                  0}{" "}
-                Reviews
+                {profileData?.totalReviews || venueData.totalReviews || 0} Reviews
               </p>
             </div>
-
           </div>
         </div>
       </div>
@@ -705,11 +757,10 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
               </div>
             ))}
           </div>
-
         </div>
       </div>
 
-      {/* Tabs for Images / Halls / Floor Plans - rest remains same */}
+      {/* Tabs */}
       <Tabs defaultValue="images" className="w-full min-w-0">
         <div className={venueTabsScrollWrapper}>
           <TabsList className={cn(venueTabsList, "mb-0")}>
@@ -723,7 +774,7 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
         </div>
         <div className="mb-5" />
 
-        {/* Images Tab - unchanged */}
+        {/* Images Tab */}
         <TabsContent value="images">
           <div className="bg-white rounded-2xl border border-[#E2E8F0] p-4 sm:p-5 min-w-0">
             <h3 className="text-base font-semibold text-[#1E293B] mb-4">Venue Images</h3>
@@ -773,7 +824,7 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
           </div>
         </TabsContent>
 
-        {/* Amenities Tab - unchanged */}
+        {/* Amenities Tab */}
         <TabsContent value="amenities">
           <div className="bg-white rounded-2xl border border-[#E2E8F0] p-4 sm:p-5 min-w-0">
             <h3 className="text-base font-semibold text-[#1E293B] mb-4">Venue Amenities</h3>
@@ -804,49 +855,118 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
           </div>
         </TabsContent>
 
-        {/* Spaces Tab - unchanged */}
+        {/* Spaces Tab */}
         <TabsContent value="spaces">
           <div className="bg-white rounded-2xl border border-[#E2E8F0] p-4 sm:p-5 min-w-0">
             <h3 className="text-base font-semibold text-[#1E293B] mb-4">Meeting Halls</h3>
+
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+              <span className="text-sm text-[#64748B]">
+                Total Halls: <strong className="text-[#1E293B]">{meetingSpaces.length}</strong>
+              </span>
+              <span className="text-sm text-[#64748B]">
+                Total Capacity: <strong className="text-[#1E293B]">
+                  {meetingSpaces.reduce((total, space) => total + (Number(space.capacity) || 0), 0)}
+                </strong>
+              </span>
+            </div>
+
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
-              {meetingSpaces.map((space) => (
-                <div key={space.id} className="border border-[#E2E8F0] rounded-xl p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <h4 className="font-semibold text-[#1E293B]">{space.name}</h4>
-                    {isEditing && (
-                      <button onClick={() => handleRemoveSpace(space.id)} className="text-[#EF4444]"><Trash2 className="w-4 h-4" /></button>
+              {meetingSpaces.length === 0 ? (
+                <div className="col-span-full text-center py-8 text-[#64748B] border border-dashed border-[#E2E8F0] rounded-xl">
+                  No halls added yet. Add your first hall below.
+                </div>
+              ) : (
+                meetingSpaces.map((space, index) => (
+                  <div key={space.id || index} className="border border-[#E2E8F0] rounded-xl p-4 hover:border-[#004A96] transition-colors">
+                    <div className="flex items-center justify-between mb-3">
+                      <div>
+                        <h4 className="font-semibold text-[#1E293B]">{space.name || `Hall ${index + 1}`}</h4>
+                        {space.id && <p className="text-xs text-[#94A3B8]">ID: {space.id}</p>}
+                      </div>
+                      {isEditing && (
+                        <button
+                          onClick={() => handleRemoveSpace(space.id || index.toString())}
+                          className="text-[#EF4444] hover:text-red-700 transition-colors p-1 rounded-lg hover:bg-red-50"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-sm text-[#64748B] mb-3">
+                      <span>Capacity: <strong className="text-[#1E293B]">{space.capacity || 0}</strong></span>
+                      <span>Area: <strong className="text-[#1E293B]">{space.area || 0} sq ft</strong></span>
+                      {space.hourlyRate && (
+                        <span className="col-span-2">Hourly Rate: <strong className="text-[#1E293B]">${space.hourlyRate}</strong></span>
+                      )}
+                    </div>
+                    {space.features?.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        {space.features.map((f: string, i: number) => (
+                          <Badge key={i} variant="secondary" className="text-xs bg-[#EFF6FF] text-[#004A96] border-0">
+                            {f}
+                          </Badge>
+                        ))}
+                      </div>
                     )}
                   </div>
-                  <div className="grid grid-cols-2 gap-2 text-sm text-[#64748B] mb-3">
-                    <span>Capacity: <strong className="text-[#1E293B]">{space.capacity}</strong></span>
-                    <span>Area: <strong className="text-[#1E293B]">{space.area} sq ft</strong></span>
-                  </div>
-                  {space.features?.length > 0 && (
-                    <div className="flex flex-wrap gap-1">
-                      {space.features.map((f: string, i: number) => (
-                        <Badge key={i} variant="secondary" className="text-xs bg-[#EFF6FF] text-[#004A96] border-0">{f}</Badge>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
+                ))
+              )}
             </div>
+
             {isEditing && (
-              <div className="border-2 border-dashed border-[#E2E8F0] rounded-xl p-5">
+              <div className="border-2 border-dashed border-[#E2E8F0] rounded-xl p-5 hover:border-[#004A96] transition-colors">
                 <h4 className="font-semibold text-[#1E293B] mb-3">Add New Hall</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-                  <Input placeholder="Hall name" value={newSpace.name} onChange={(e) => setNewSpace({ ...newSpace, name: e.target.value })} className="rounded-xl border-[#E2E8F0]" />
-                  <Input placeholder="Capacity" type="number" value={newSpace.capacity} onChange={(e) => setNewSpace({ ...newSpace, capacity: e.target.value })} className="rounded-xl border-[#E2E8F0]" />
-                  <Input placeholder="Area (sq ft)" type="number" value={newSpace.area} onChange={(e) => setNewSpace({ ...newSpace, area: e.target.value })} className="rounded-xl border-[#E2E8F0]" />
-                  <Input placeholder="Features (comma separated)" value={newSpace.features} onChange={(e) => setNewSpace({ ...newSpace, features: e.target.value })} className="rounded-xl border-[#E2E8F0]" />
+                  <Input
+                    placeholder="Hall name"
+                    value={newSpace.name}
+                    onChange={(e) => setNewSpace({ ...newSpace, name: e.target.value })}
+                    className="rounded-xl border-[#E2E8F0] focus:border-[#004A96]"
+                  />
+                  <Input
+                    placeholder="Capacity"
+                    type="number"
+                    value={newSpace.capacity}
+                    onChange={(e) => setNewSpace({ ...newSpace, capacity: e.target.value })}
+                    className="rounded-xl border-[#E2E8F0] focus:border-[#004A96]"
+                  />
+                  <Input
+                    placeholder="Area (sq ft)"
+                    type="number"
+                    value={newSpace.area}
+                    onChange={(e) => setNewSpace({ ...newSpace, area: e.target.value })}
+                    className="rounded-xl border-[#E2E8F0] focus:border-[#004A96]"
+                  />
+                  <Input
+                    placeholder="Hourly Rate (optional)"
+                    type="number"
+                    value={newSpace.hourlyRate}
+                    onChange={(e) => setNewSpace({ ...newSpace, hourlyRate: e.target.value })}
+                    className="rounded-xl border-[#E2E8F0] focus:border-[#004A96]"
+                  />
+                  <div className="md:col-span-2">
+                    <Input
+                      placeholder="Features (comma separated)"
+                      value={newSpace.features}
+                      onChange={(e) => setNewSpace({ ...newSpace, features: e.target.value })}
+                      className="rounded-xl border-[#E2E8F0] focus:border-[#004A96]"
+                    />
+                  </div>
                 </div>
-                <Button onClick={handleAddSpace} className="rounded-xl bg-[#004A96] text-white"><Plus className="w-4 h-4 mr-1" />Add Hall</Button>
+                <Button
+                  onClick={handleAddSpace}
+                  className="rounded-xl bg-[#004A96] hover:bg-[#003d7a] text-white"
+                  disabled={!newSpace.name.trim()}
+                >
+                  <Plus className="w-4 h-4 mr-1" /> Add Hall
+                </Button>
               </div>
             )}
           </div>
         </TabsContent>
 
-        {/* Floor Plans Tab - unchanged */}
+        {/* Floor Plans Tab */}
         <TabsContent value="floorplan">
           <div className="bg-white rounded-2xl border border-[#E2E8F0] p-4 sm:p-5 min-w-0">
             <h3 className="text-base font-semibold text-[#1E293B] mb-4">Floor Plans</h3>
@@ -885,7 +1005,7 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
           </div>
         </TabsContent>
 
-        {/* Details Tab - unchanged */}
+        {/* Details Tab */}
         <TabsContent value="details">
           <div className="bg-white rounded-2xl border border-[#E2E8F0] p-5 space-y-5">
             <h3 className="text-base font-semibold text-[#1E293B]">Venue Details</h3>
@@ -938,7 +1058,6 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
                   <p className="mt-1 text-sm text-[#1E293B] font-medium">{profileData?.address}</p>
                 )}
               </div>
-              {/* Country / State / City selects (editing) */}
               {isEditing ? (
                 <>
                   <div>

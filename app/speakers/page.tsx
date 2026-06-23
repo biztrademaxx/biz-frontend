@@ -276,7 +276,7 @@ export default function SpeakersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(23,76,154,0.08),transparent_24%),linear-gradient(180deg,#FFFFFF_0%,#F8FAFD_100%)] text-[#102A5E]">
+    <div className="min-h-screen bg-[#f9f9f9] text-[#102A5E]">
       <div className="mx-auto max-w-[1380px] px-4 py-6 sm:px-8 lg:px-14 lg:py-8">
         <div className="px-1 sm:px-2 lg:px-0">
           <section className="border-b border-[#DFE6F1] pb-6 lg:flex lg:items-start lg:justify-between lg:gap-10">

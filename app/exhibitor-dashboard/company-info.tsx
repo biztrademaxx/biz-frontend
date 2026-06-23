@@ -37,6 +37,7 @@ import {
   ProfileLocationFields,
   profileLocationFromLegacy,
 } from "@/components/location/ProfileLocationFields"
+import { uploadFileViaProxy } from "@/components/organizer-create-event/upload-backend"
 import {
   exGlassCardPremium,
   exGlassNested,
@@ -121,6 +122,28 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
     }
   }, [])
 
+
+  const handleBannerUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    try {
+      setUploading(true)
+
+      const bannerUrl = await uploadFileViaProxy(file, "image")
+
+      
+
+      // save banner url here
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setUploading(false)
+    }
+  }
+  // const bannerUrl = await uploadFileViaProxy(file, "image")
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -302,12 +325,12 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
               <div className="flex min-h-[5.5rem] items-center justify-center rounded-2xl bg-gradient-to-br from-[#004A96] via-[#003d7a] to-[#002f5e] px-4 text-center font-semibold text-white shadow-[0_12px_40px_rgba(0,74,150,0.25)]">
                 <span className="drop-shadow-sm">{formData.company || "Company Name"}</span>
               </div>
-              {isEditing && (
+              {/* {isEditing && (
                 <Button variant="outline" size="sm" className="w-full border-[#004A96]/30 bg-white/40 backdrop-blur-sm">
                   <Upload className="w-4 h-4" />
                   Upload Banner
                 </Button>
-              )}
+              )} */}
             </div>
           </CardContent>
         </Card>

@@ -234,7 +234,7 @@ export default function ExhibitorsPage() {
     }
 
     return (
-        <main className="min-h-screen bg-[#f6f8fb]">
+        <main className="min-h-screen bg-[#f9f9f9]">
             {/* HERO */}
             <section className="relative overflow-hidden bg-gradient-to-r from-[#042f8c] via-[#0b3ea8] to-[#06378f]">
                 <div className="absolute inset-0 bg-[url('/images/exhibitors-bg.jpg')] bg-cover bg-center opacity-15" />
@@ -341,7 +341,8 @@ export default function ExhibitorsPage() {
                             </button>
 
                             {filtersOpen && (
-                                <div className="absolute right-0 z-20 mt-2 w-72 rounded-xl border border-gray-100 bg-white p-4 shadow-xl">
+                                <div className="absolute right-0 z-20 mt-2 w-72 rounded-xl border border-gray-100 bg-white p-4 shadow-xl
+                                sm:absolute sm:right-1/2 max-sm:left-auto max-sm:right-1/2 max-sm:translate-x-1/2">
                                     <div className="mb-1">
                                         <label className="mb-1.5 block text-xs font-medium text-gray-500">
                                             Country

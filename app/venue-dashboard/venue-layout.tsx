@@ -214,6 +214,11 @@ export default function VenueDashboardPage({ routeSegment }: UserDashboardProps)
     fetchVenueData()
   }, [routeSegment, authLoading, role, router, toast])
 
+  // Refresh venue data when returning from edit (triggered by child components)
+  const refreshVenueData = () => {
+    fetchVenueData()
+  }
+
   useEffect(() => {
     if (!venueData?.id || authLoading) return
     const sessionUser = getCurrentUserId()
@@ -243,6 +248,20 @@ export default function VenueDashboardPage({ routeSegment }: UserDashboardProps)
       const raw = payload as RawVenueData
       const mgr = raw.manager
 
+      // Parse meetingSpaces if it's a JSON string
+      let meetingSpaces = raw.meetingSpaces ?? []
+      if (typeof meetingSpaces === 'string') {
+        try {
+          meetingSpaces = JSON.parse(meetingSpaces)
+        } catch {
+          meetingSpaces = []
+        }
+      }
+
+      // Calculate maxCapacity and totalHalls from meetingSpaces
+      const totalHallsFromSpaces = meetingSpaces.length || 0
+      const maxCapacityFromSpaces = meetingSpaces.reduce((total: number, space: any) => total + (Number(space.capacity) || 0), 0)
+
       const merged: VenueData = {
         id: raw.id || "",
         venueName: (mgr?.venueName ?? raw.name ?? "") as string,
@@ -265,14 +284,15 @@ export default function VenueDashboardPage({ routeSegment }: UserDashboardProps)
         longitude: (raw.longitude ?? 0) as number,
         basePrice: (raw.basePrice ?? 0) as number,
         currency: (raw.currency ?? "₹") as string,
-        maxCapacity: (raw.maxCapacity ?? raw.capacity?.total ?? 0) as number,
-        totalHalls: (raw.totalHalls ?? raw.capacity?.halls ?? 0) as number,
+        // Use calculated values from meetingSpaces if available, otherwise fallback to raw values
+        maxCapacity: maxCapacityFromSpaces > 0 ? maxCapacityFromSpaces : (raw.maxCapacity ?? raw.capacity?.total ?? 0) as number,
+        totalHalls: totalHallsFromSpaces > 0 ? totalHallsFromSpaces : (raw.totalHalls ?? raw.capacity?.halls ?? 0) as number,
         totalEvents: (raw.totalEvents ?? raw.stats?.totalEvents ?? 0) as number,
         activeBookings: (raw.activeBookings ?? raw.stats?.activeBookings ?? 0) as number,
         averageRating: (raw.averageRating ?? raw.stats?.averageRating ?? 0) as number,
         totalReviews: (raw.totalReviews ?? raw.stats?.totalReviews ?? 0) as number,
         amenities: (raw.amenities ?? []) as string[],
-        meetingSpaces: (raw.meetingSpaces ?? []) as MeetingSpace[],
+        meetingSpaces: meetingSpaces as MeetingSpace[],
         timezone: (raw.timezone ?? raw.location?.timezone ?? "") as string,
         manager: mgr,
       }
@@ -355,7 +375,7 @@ export default function VenueDashboardPage({ routeSegment }: UserDashboardProps)
 
   const renderContent = () => {
     switch (activeSection) {
-      case "dashboard": return <VenueDashboardHome venueData={venueData} setActiveSection={setActiveSection} />
+      case "dashboard": return <VenueDashboardHome venueData={venueData} onRefresh={refreshVenueData} setActiveSection={setActiveSection} />
       case "venue-profile": return <VenueProfile venueData={venueData} />
       case "event-management": return <EventManagement />
       case "booking-system": return <BookingSystem venueId={venueData.id} />
@@ -365,7 +385,7 @@ export default function VenueDashboardPage({ routeSegment }: UserDashboardProps)
       case "legal-documentation": return <LegalDocumentation venueId={venueData.id} />
       case "help-support": return <HelpSupport variant="venue" />
       case "settings": return <VenueSettings />
-      default: return <VenueDashboardHome venueData={venueData} setActiveSection={setActiveSection} />
+      default: return <VenueDashboardHome venueData={venueData} onRefresh={refreshVenueData} setActiveSection={setActiveSection} />
     }
   }
 
@@ -480,16 +500,16 @@ export default function VenueDashboardPage({ routeSegment }: UserDashboardProps)
 
           <main className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden p-0">
             <div className="min-h-0 w-full min-w-0 max-w-full px-3 py-4 sm:px-4 sm:py-5 md:px-6 md:py-6">
-            {accountUnderReview && (
-              <Alert className="mb-5 border-amber-200 bg-amber-50" role="status">
-                <AlertCircle className="h-4 w-4 text-amber-600" />
-                <AlertTitle className="text-amber-800">Your account is under review</AlertTitle>
-                <AlertDescription className="text-amber-700">
-                  Our team is reviewing your venue before it can appear on the public venues directory. You can continue using this dashboard.
-                </AlertDescription>
-              </Alert>
-            )}
-            {renderContent()}
+              {accountUnderReview && (
+                <Alert className="mb-5 border-amber-200 bg-amber-50" role="status">
+                  <AlertCircle className="h-4 w-4 text-amber-600" />
+                  <AlertTitle className="text-amber-800">Your account is under review</AlertTitle>
+                  <AlertDescription className="text-amber-700">
+                    Our team is reviewing your venue before it can appear on the public venues directory. You can continue using this dashboard.
+                  </AlertDescription>
+                </Alert>
+              )}
+              {renderContent()}
             </div>
           </main>
         </div>
@@ -511,7 +531,15 @@ function getVenueThumbUrl(venueData: VenueData): string | null {
 /* ─────────────────────────────────────────────
    Dashboard Home - NEW DESIGN with Bar Chart & Monthly Data
 ───────────────────────────────────────────── */
-function VenueDashboardHome({ venueData, setActiveSection }: { venueData: VenueData; setActiveSection: (s: string) => void }) {
+function VenueDashboardHome({
+  venueData,
+  onRefresh,
+  setActiveSection
+}: {
+  venueData: VenueData;
+  onRefresh?: () => void;
+  setActiveSection: (s: string) => void
+}) {
   const { toast } = useToast()
   const [showAllBookings, setShowAllBookings] = useState(false)
   const [expandedBookingId, setExpandedBookingId] = useState<string | null>(null)
@@ -555,7 +583,10 @@ function VenueDashboardHome({ venueData, setActiveSection }: { venueData: VenueD
     scaledHeight: scaleValue(item.value)
   }))
 
-  // Calculate real stats from venueData
+  // Calculate real stats from venueData - ENSURE we're using the latest data
+  const totalHalls = venueData.totalHalls || venueData.meetingSpaces?.length || 0
+  const maxCapacity = venueData.maxCapacity || venueData.meetingSpaces?.reduce((total, space) => total + (Number(space.capacity) || 0), 0) || 0
+
   const stats = [
     {
       label: "Total Events",
@@ -573,15 +604,15 @@ function VenueDashboardHome({ venueData, setActiveSection }: { venueData: VenueD
     },
     {
       label: "Total Halls",
-      value: venueData.totalHalls ?? 0,
-      change: `${venueData.totalHalls ?? 0} ${(venueData.totalHalls ?? 0) === 1 ? 'hall' : 'halls'} available`,
+      value: totalHalls,
+      change: `${totalHalls} ${totalHalls === 1 ? 'hall' : 'halls'} available`,
       icon: Building2,
       color: "bg-[#FFF7ED] text-[#EA580C]"
     },
     {
       label: "Max Capacity",
-      value: (venueData.maxCapacity ?? 0).toLocaleString(),
-      change: `up to ${(venueData.maxCapacity ?? 0).toLocaleString()} people`,
+      value: maxCapacity.toLocaleString(),
+      change: `up to ${maxCapacity.toLocaleString()} people`,
       icon: Users,
       color: "bg-[#F0F9FF] text-[#0284C7]"
     },
@@ -620,6 +651,8 @@ function VenueDashboardHome({ venueData, setActiveSection }: { venueData: VenueD
       })
       toast({ title: "Success", description: `Booking ${newStatus.toLowerCase()} successfully` })
       fetchBookings()
+      // Refresh venue data to update stats
+      if (onRefresh) onRefresh()
     } catch (error) {
       toast({ title: "Error", description: `Failed to ${newStatus.toLowerCase()} booking`, variant: "destructive" })
     }
@@ -816,7 +849,6 @@ function VenueDashboardHome({ venueData, setActiveSection }: { venueData: VenueD
                             </p>
                           </div>
                         </div>
-                        {/* <ChevronRight className={cn("w-4 h-4 text-[#94A3B8] transition-transform shrink-0", isExpanded && "rotate-90")} /> */}
                       </div>
 
                       {isExpanded && (
@@ -841,7 +873,6 @@ function VenueDashboardHome({ venueData, setActiveSection }: { venueData: VenueD
                               <p className="text-[11px] text-[#475569]">{booking.notes}</p>
                             </div>
                           )}
-                          
                         </div>
                       )}
                     </div>
@@ -899,8 +930,8 @@ function VenueDashboardHome({ venueData, setActiveSection }: { venueData: VenueD
             <div className="flex-1">
               <p className="text-sm font-medium text-[#1E293B]">{venueData.venueName}</p>
               <p className="text-xs text-[#94A3B8] mt-0.5">
-                {venueData.totalHalls || 0} {venueData.totalHalls === 1 ? 'Hall' : 'Halls'} •
-                Capacity {venueData.maxCapacity?.toLocaleString() || 0}
+                {totalHalls} {totalHalls === 1 ? 'Hall' : 'Halls'} •
+                Capacity {maxCapacity.toLocaleString() || 0}
               </p>
               <p className="text-xs text-[#94A3B8] flex items-center gap-1 mt-0.5">
                 <MapPin className="w-3 h-3" />

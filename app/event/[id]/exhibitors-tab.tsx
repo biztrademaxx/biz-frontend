@@ -157,111 +157,158 @@ export default function ExhibitorsTab({ eventId }: ExhibitorsTabProps) {
           </p>
         </div>
       ) : (
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mt-6">
-        {realExhibitors.map((exhibitor) => (
-          <Card
-            key={exhibitor.exhibitorId}
-            className="relative border border-gray-200 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 p-4 flex flex-col items-center text-center group cursor-pointer hover:border-blue-300"
-          >
-            {/* Clickable area covering the entire card */}
-            <Link 
-              href={getPublicProfilePath("exhibitor", {
-                id: exhibitor.exhibitorId,
-                publicSlug: exhibitor.publicSlug,
-                company: exhibitor.company,
-              })}
-              className="absolute inset-0 z-10"
-              aria-label={`View ${exhibitor.company} details`}
-            />
-            
-            {/* Logo Circle */}
-            <div className="relative w-28 h-28 -mt-12 bg-white border-4 border-blue-600 rounded-full flex items-center justify-center z-20 group-hover:border-blue-700 transition-colors overflow-hidden">
-              {exhibitor.avatar ? (
-                <Image
-                  src={exhibitor.avatar}
-                  alt={`${getDisplayCompanyName(exhibitor)} logo`}
-                  width={80}
-                  height={80}
-                  className="object-contain rounded-full"
-                />
-              ) : (
-                <div className="px-3 text-center text-[11px] leading-4 font-semibold text-blue-700 line-clamp-3">
-                  {getDisplayCompanyName(exhibitor)}
-                </div>
-              )}
-            </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+          {realExhibitors.map((exhibitor) => (
+            <Card
+              key={exhibitor.exhibitorId}
+              className="border hover:shadow-lg transition-shadow cursor-pointer rounded-xl overflow-hidden p-0"
+            >
+              <CardContent className="p-0">
+                {/* Banner with gradient + company name text */}
+                <div className="h-24 relative flex items-center justify-center bg-gradient-to-br from-[#004A96] via-[#003d7a] to-[#002f5e] px-4 text-center font-semibold text-white">
+                  <span className="drop-shadow-sm text-sm">{getDisplayCompanyName(exhibitor)}</span>
 
-            {/* Verified Badge */}
-            <div className="absolute top-4 right-4 bg-green-500 text-white rounded-full p-1.5 z-20">
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
+                  {/* Verified badge */}
+                  <div className="absolute top-3 right-3 bg-green-500 text-white rounded-full p-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
 
-            <CardContent className="mt-4 w-full relative z-20">
-              {/* Followers Section */}
-              <div className="flex justify-center items-center space-x-1 mb-2">
-                <div className="flex -space-x-2">
-                  {(exhibitor.followerPreview ?? []).slice(0, 3).map((f) => (
-                    <div key={f.id} className="w-6 h-6 rounded-full border border-white overflow-hidden bg-gray-200">
-                      {f.avatar ? (
+                  {/* Profile image overlapping banner */}
+                  <div className="absolute left-1/2 -translate-x-1/2 bottom-0 translate-y-1/2">
+                    <div className="w-20 h-20 rounded-full border-4 border-white shadow-md overflow-hidden bg-white">
+                      {exhibitor.avatar ? (
                         <Image
-                          src={f.avatar}
-                          alt={`${f.firstName ?? ""} ${f.lastName ?? ""}`.trim() || "Follower"}
-                          width={24}
-                          height={24}
-                          className="w-6 h-6 object-cover"
+                          src={exhibitor.avatar}
+                          alt={`${getDisplayCompanyName(exhibitor)} logo`}
+                          width={80}
+                          height={80}
+                          className="object-cover w-full h-full rounded-full"
                         />
                       ) : (
-                        <div className="w-6 h-6 flex items-center justify-center text-[10px] font-semibold text-gray-700">
-                          {`${f.firstName?.[0] ?? ""}${f.lastName?.[0] ?? ""}`.toUpperCase() || "U"}
+                        <div className="w-full h-full bg-blue-50 flex items-center justify-center">
+                          <span className="text-[10px] font-semibold text-blue-700 px-1 text-center leading-tight line-clamp-3">
+                            {getDisplayCompanyName(exhibitor)}
+                          </span>
                         </div>
                       )}
                     </div>
-                  ))}
-                </div>
-                <span className="text-sm text-gray-500 ml-1">
-                  {exhibitor.followersCount ?? 0} Followers
-                </span>
-              </div>
-
-              {/* Company Name */}
-              <h3 className="text-lg font-semibold text-gray-800 group-hover:text-blue-600 transition-colors mb-2">
-                {getDisplayCompanyName(exhibitor)}
-              </h3>
-
-              {/* Location & Booth */}
-              <div className="flex flex-col items-center mt-2 space-y-1 text-sm text-gray-600 mb-4">
-                <div className="flex items-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 mr-1 text-gray-500" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v3H6a1 1 0 100 2h3v3a1 1 0 102 0v-3h3a1 1 0 100-2h-3V7z" clipRule="evenodd" />
-                  </svg>
-                  <span>{exhibitor.name || "Bangalore"}</span>
+                  </div>
                 </div>
 
-                <div className="flex items-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 mr-1 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 21h8M12 17v4m-6-4h12V5a2 2 0 00-2-2H8a2 2 0 00-2 2v12z" />
-                  </svg>
-                  <span>Booth {exhibitor.boothNumber || "No."}</span>
-                </div>
-              </div>
+                {/* Card body */}
+                <div className="pt-12 pb-4 px-4">
+                  {/* Followers */}
+                  <div className="flex justify-center items-center gap-1 mb-2">
+                    <div className="flex -space-x-2">
+                      {(exhibitor.followerPreview ?? []).slice(0, 3).map((f) => (
+                        <div key={f.id} className="w-6 h-6 rounded-full border border-white overflow-hidden bg-gray-200">
+                          {f.avatar ? (
+                            <Image
+                              src={f.avatar}
+                              alt={`${f.firstName ?? ""} ${f.lastName ?? ""}`.trim() || "Follower"}
+                              width={24}
+                              height={24}
+                              className="w-6 h-6 object-cover"
+                            />
+                          ) : (
+                            <div className="w-6 h-6 flex items-center justify-center text-[10px] font-semibold text-gray-700">
+                              {`${f.firstName?.[0] ?? ""}${f.lastName?.[0] ?? ""}`.toUpperCase() || "U"}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                    <span className="text-xs text-gray-500 ml-1">
+                      {exhibitor.followersCount ?? 0} Followers
+                    </span>
+                  </div>
 
-              {/* Schedule Meeting Button - positioned above the link */}
-              <div className="mt-4 relative z-20" onClick={(e) => e.stopPropagation()}>
-                <ScheduleMeetingButton
-                  exhibitor={{
-                    id: exhibitor.exhibitorId,
-                    companyName: exhibitor.company,
-                    isSample: Boolean(exhibitor.isSample),
-                  }}
-                  eventId={eventId}
-                />
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+                  {/* Company name */}
+                  <h3 className="text-base font-bold text-gray-900 text-center">
+                    {getDisplayCompanyName(exhibitor)}
+                  </h3>
+
+                  {/* Booth + Status on same row */}
+                  <div className="flex items-center justify-between mt-2">
+                    <p className="text-sm text-gray-600">
+                      Booth: <span className="font-medium">{exhibitor.boothNumber || "No."}</span>
+                    </p>
+                    {exhibitor.status && (
+                      <span
+                        className={`text-xs font-semibold px-3 py-1 rounded-full ${
+                          exhibitor.status === "BOOKED"
+                            ? "bg-green-100 text-green-700"
+                            : exhibitor.status === "CANCELLED"
+                            ? "bg-red-100 text-red-700"
+                            : "bg-gray-100 text-gray-700"
+                        }`}
+                      >
+                        {exhibitor.status}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Person name */}
+                  {exhibitor.name && (
+                    <p className="text-sm text-gray-600 mt-1">{exhibitor.name}</p>
+                  )}
+
+                  {/* Divider */}
+                  <hr className="my-3 border-gray-200" />
+
+                  {/* Details block */}
+                  <div className="mb-3">
+                    <p className="text-sm font-bold text-gray-800 mb-1">Details</p>
+                    <ul className="text-sm text-gray-600 space-y-0.5">
+                      {exhibitor.company && (
+                        <li className="flex items-start gap-1">
+                          <span className="mt-0.5">•</span>
+                          <span>{exhibitor.company}</span>
+                        </li>
+                      )}
+                      {exhibitor.name && (
+                        <li className="flex items-start gap-1">
+                          <span className="mt-0.5">•</span>
+                          <span>{exhibitor.name}</span>
+                        </li>
+                      )}
+                    </ul>
+                  </div>
+
+                  {/* Schedule Meeting Button */}
+                  <div className="mb-3" onClick={(e) => e.stopPropagation()}>
+                    <ScheduleMeetingButton
+                      exhibitor={{
+                        id: exhibitor.exhibitorId,
+                        companyName: exhibitor.company,
+                        isSample: Boolean(exhibitor.isSample),
+                      }}
+                      eventId={eventId}
+                    />
+                  </div>
+
+                  {/* Divider + View Profile button */}
+                  <hr className="border-gray-200 mb-3" />
+                  <div className="flex justify-center">
+                    <Link
+                      href={getPublicProfilePath("exhibitor", {
+                        id: exhibitor.exhibitorId,
+                        publicSlug: exhibitor.publicSlug,
+                        company: exhibitor.company,
+                      })}
+                      className="flex-1 py-2 rounded-full font-semibold text-sm bg-blue-600 text-white hover:bg-blue-700 transition text-center"
+                      aria-label={`View ${exhibitor.company} details`}
+                    >
+                      View Profile
+                    </Link>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       )}
 
       {hasRealExhibitors && realExhibitors.length > 6 && (
@@ -272,5 +319,5 @@ export default function ExhibitorsTab({ eventId }: ExhibitorsTabProps) {
         </div>
       )}
     </div>
-  )
-}
+  ) 
+} 

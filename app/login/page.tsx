@@ -3,7 +3,7 @@
 import type React from "react"
 import { useEffect, useState } from "react"
 import { signIn } from "next-auth/react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -28,6 +28,10 @@ import {
 
 export default function LoginPage() {
   const router = useRouter()
+  // ─── NEW: read ?callbackUrl from the URL (set by the Follow button redirect) ───
+  const searchParams = useSearchParams()
+  const callbackUrl = searchParams.get("callbackUrl") ?? null
+
   useEffect(() => {
     clearOAuthSignupIntentRole()
     void clearOAuthSignupIntentRoleServer()
@@ -57,6 +61,24 @@ export default function LoginPage() {
     }
   }, [])
 
+  // ─── NEW: helper — decide where to send the user after a successful login.
+  // If a callbackUrl param exists (e.g. /exhibitor/uem?autoFollow=123) use that.
+  // Otherwise fall back to the original role-based routing logic.
+  const getPostLoginRedirect = (role: string, userId: string): string => {
+    if (callbackUrl) {
+      // Decode in case it was encoded by encodeURIComponent in the exhibitor page.
+      return decodeURIComponent(callbackUrl)
+    }
+    // Original role-based routing (unchanged):
+    if (role === "ATTENDEE") return getCurrentVisitorDashboardPath() ?? `/dashboard/${userId}`
+    if (role === "ORGANIZER") return `/organizer-dashboard/${userId}`
+    if (role === "SUPER_ADMIN" || role === "SUPERADMIN" || role === "SUB_ADMIN") return "/admin-dashboard"
+    if (role === "EXHIBITOR") return `/exhibitor-dashboard/${userId}`
+    if (role === "SPEAKER") return `/speaker-dashboard/${userId}`
+    if (role === "VENUE_MANAGER") return "/venue-dashboard"
+    return "/"
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
@@ -69,21 +91,25 @@ export default function LoginPage() {
       const role = (user?.role || "").toString().toUpperCase()
       const userId = user?.sub ?? (user as any)?.id
 
-      if (role === "ATTENDEE") {
-        router.push(getCurrentVisitorDashboardPath() ?? `/dashboard/${userId}`)
-      } else if (role === "ORGANIZER") {
-        router.push(`/organizer-dashboard/${userId}`)
-      } else if (role === "SUPER_ADMIN" || role === "SUPERADMIN" || role === "SUB_ADMIN") {
-        router.push("/admin-dashboard")
-      } else if (role === "EXHIBITOR") {
-        router.push(`/exhibitor-dashboard/${userId}`)
-      } else if (role === "SPEAKER") {
-        router.push(`/speaker-dashboard/${userId}`)
-      } else if (role === "VENUE_MANAGER") {
-        router.push("/venue-dashboard")
-      } else {
-        router.push("/")
-      }
+      // ─── CHANGED: was a chain of if/else role checks that called router.push() directly.
+      // Now routes through getPostLoginRedirect() so callbackUrl takes priority.
+      // Previous code:
+      //   if (role === "ATTENDEE") {
+      //     router.push(getCurrentVisitorDashboardPath() ?? `/dashboard/${userId}`)
+      //   } else if (role === "ORGANIZER") {
+      //     router.push(`/organizer-dashboard/${userId}`)
+      //   } else if (role === "SUPER_ADMIN" || role === "SUPERADMIN" || role === "SUB_ADMIN") {
+      //     router.push("/admin-dashboard")
+      //   } else if (role === "EXHIBITOR") {
+      //     router.push(`/exhibitor-dashboard/${userId}`)
+      //   } else if (role === "SPEAKER") {
+      //     router.push(`/speaker-dashboard/${userId}`)
+      //   } else if (role === "VENUE_MANAGER") {
+      //     router.push("/venue-dashboard")
+      //   } else {
+      //     router.push("/")
+      //   }
+      router.push(getPostLoginRedirect(role, userId))
     } catch (err: any) {
       setError(err?.message || "Invalid email or password. Please try again.")
     } finally {
@@ -94,7 +120,11 @@ export default function LoginPage() {
   const handleGoogleLogin = async () => {
     setIsLoading(true)
     try {
-      await signIn("google", { callbackUrl: "/" })
+      // ─── CHANGED: was hardcoded callbackUrl: "/".
+      // Now passes callbackUrl param if present, so Google OAuth also lands back
+      // on the exhibitor page with ?autoFollow intact after OAuth completes.
+      // Previous code: await signIn("google", { callbackUrl: "/" })
+      await signIn("google", { callbackUrl: callbackUrl ? decodeURIComponent(callbackUrl) : "/" })
     } catch (err) {
       console.error("Error during Google login:", err)
       setError("Failed to login with Google.")
@@ -106,7 +136,9 @@ export default function LoginPage() {
   const handleLinkedInLogin = async () => {
     setIsLoading(true)
     try {
-      await signIn("linkedin", { callbackUrl: "/" })
+      // ─── CHANGED: same as Google — was hardcoded callbackUrl: "/".
+      // Previous code: await signIn("linkedin", { callbackUrl: "/" })
+      await signIn("linkedin", { callbackUrl: callbackUrl ? decodeURIComponent(callbackUrl) : "/" })
     } catch (err) {
       console.error("Error during LinkedIn login:", err)
       setError("Failed to login with LinkedIn.")
@@ -263,7 +295,13 @@ export default function LoginPage() {
         <CardFooter className="flex justify-center border-t pt-6">
           <p className="text-sm text-gray-600">
             Don't have an account?{" "}
-            <Link href="/signup" className="text-blue-600 hover:text-blue-800 font-medium">
+            {/* ─── CHANGED: preserve callbackUrl on the signup link too, so if the user
+                clicks "Sign up" instead of logging in, the same flow works after signup.
+                Previous code: <Link href="/signup" ...>Sign up</Link> */}
+            <Link
+              href={callbackUrl ? `/signup?callbackUrl=${callbackUrl}` : "/signup"}
+              className="text-blue-600 hover:text-blue-800 font-medium"
+            >
               Sign up
             </Link>
           </p>
