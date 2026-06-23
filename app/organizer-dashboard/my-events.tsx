@@ -1,261 +1,679 @@
 "use client"
 
+<<<<<<< Updated upstream
 import { devLog } from "@/lib/dev-log"
 
 import { useState, useEffect, ReactNode } from "react"
+=======
+import React, { useState, useEffect, useCallback, useMemo, memo } from 'react';
+import { Eye, EyeOff, User, Mail, CheckCircle, ChevronLeft } from 'lucide-react';
+>>>>>>> Stashed changes
 import { useRouter } from "next/navigation"
 import { apiFetch } from "@/lib/api"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Calendar, MapPin, Search, TrendingUp, Tag, SlidersHorizontal, ChevronLeft, ChevronRight } from "lucide-react"
-import Image from "next/image"
-import { getEventDisplayImageUrl } from "@/lib/default-event-image"
 
-interface Event {
-  slug: string
-  subTitle: ReactNode
-  id: string
-  title: string
-  shortTitle: string
-  description: string
-  startDate: string
-  endDate: string
-  location: string
-  city: string
-  venueAddress: string
-  eventType: string[]
-  category?: string[]
-  images: string[]
-  bannerImage?: string
-  thumbnailImage?: string
-  tags: string[]
-  timelineStatus?: "upcoming" | "ongoing" | "past"
-  status: "draft" | "published" | "cancelled" | "archived" | "approved" | "rejected" | "pending"
-  attendees?: number
-  registrations?: number
-  leads?: number
-  leadCounts?: {
-    ATTENDEE: number
-    EXHIBITOR: number
-    SPEAKER: number
-    SPONSOR: number
-    PARTNER: number
-  }
-  revenue?: number
-  maxAttendees?: number
-  isPublic?: boolean
-  currency?: string
-}
+// Memoized form input components to prevent re-renders
+const FormInput = memo(({ 
+  icon: Icon, 
+  type, 
+  name, 
+  value, 
+  onChange, 
+  placeholder, 
+  required,
+  disabled,
+  className = ""
+}: any) => (
+  <div className="relative">
+    {Icon && <Icon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />}
+    <input
+      type={type}
+      name={name}
+      value={value}
+      onChange={onChange}
+      placeholder={placeholder}
+      required={required}
+      disabled={disabled}
+      className={`w-full ${Icon ? 'pl-10' : 'pl-4'} pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${className}`}
+    />
+  </div>
+));
 
-interface MyEventsProps {
-  organizerId: string
-}
+FormInput.displayName = 'FormInput';
 
-function asStringArray(value: unknown): string[] {
-  if (Array.isArray(value)) {
-    return value
-      .map((item) => (typeof item === "string" ? item.trim() : ""))
-      .filter((item) => item.length > 0)
-  }
-  if (typeof value === "string" && value.trim()) {
-    return [value.trim()]
-  }
-  return []
-}
+const PasswordInput = memo(({ 
+  showPassword, 
+  togglePassword, 
+  value, 
+  onChange, 
+  placeholder,
+  name,
+  disabled
+}: any) => (
+  <div className="relative">
+    <input
+      type={showPassword ? "text" : "password"}
+      name={name}
+      value={value}
+      onChange={onChange}
+      placeholder={placeholder}
+      required
+      disabled={disabled}
+      minLength={8}
+      className="w-full px-4 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+    />
+    <button
+      type="button"
+      onClick={togglePassword}
+      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+      tabIndex={-1}
+    >
+      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+    </button>
+  </div>
+));
 
-function getPrimaryEventType(eventType: unknown): string {
-  const types = asStringArray(eventType)
-  return types[0] || "Event"
-}
+PasswordInput.displayName = 'PasswordInput';
 
-// Pagination: 6 events per page (3 columns x 2 rows)
-const EVENTS_PER_PAGE = 6
+const EmailExistsPopup = memo(({ isOpen, onClose, onLogin }: any) => {
+  if (!isOpen) return null;
+  
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 animate-fade-in">
+      <div className="bg-white rounded-xl p-6 w-80 text-center shadow-xl animate-scale-in">
+        <h3 className="text-lg font-semibold text-gray-800 mb-3">
+          Already Registered
+        </h3>
+        <p className="text-sm text-gray-600 mb-6">
+          This email is already registered. Please login to continue.
+        </p>
+        <div className="flex gap-3">
+          <button
+            onClick={onClose}
+            className="flex-1 bg-gray-200 text-gray-800 py-2 rounded-lg hover:bg-gray-300 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onLogin}
+            className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Login
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+});
 
-export default function MyEvents({ organizerId }: MyEventsProps) {
-  const [events, setEvents] = useState<Event[]>([])
-  const [filteredEvents, setFilteredEvents] = useState<Event[]>([])
-  const [searchTerm, setSearchTerm] = useState("")
-  const [timelineStatusFilter, setTimelineStatusFilter] = useState("all")
-  const [publicationStatusFilter, setPublicationStatusFilter] = useState("all")
-  const [typeFilter, setTypeFilter] = useState("all")
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [currentPage, setCurrentPage] = useState(1)
-  const router = useRouter()
+EmailExistsPopup.displayName = 'EmailExistsPopup';
 
+const AnimatedMessage = memo(({ messages }: any) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  
   useEffect(() => {
-    const fetchEvents = async () => {
-      try {
-        setLoading(true)
-        setError(null)
-        devLog("[v0] Fetching events for organizer:", organizerId)
+    const interval = setInterval(() => {
+      setCurrentIndex(prev => (prev + 1) % messages.length);
+    }, 4000);
+    
+    return () => clearInterval(interval);
+  }, [messages.length]);
+  
+  return (
+    <div
+      key={currentIndex}
+      className="transition-all duration-700 ease-in-out opacity-100"
+    >
+      {/* <h1 className="text-3xl font-bold leading-tight mb-6 text-white"> */}
+      <h1 className="text-2xl lg:text-3xl font-bold leading-tight mb-3 lg:mb-6 text-white">
+        {messages[currentIndex].title}
+        <br />
+        <span className="font-normal text-xl">
+          {messages[currentIndex].subtitle}
+        </span>
+      </h1>
+    </div>
+  );
+});
 
-        const data = await apiFetch<{ success?: boolean; events?: Event[]; error?: string }>(
-          `/api/organizers/${organizerId}/events?page=1&limit=100`,
-          { auth: true },
-        )
-        devLog("[v0] Fetched events data:", data)
+AnimatedMessage.displayName = 'AnimatedMessage';
 
-        if (data.events && Array.isArray(data.events)) {
-          devLog("[v0] Setting events:", data.events.length)
-          const eventsWithStatus = data.events.map((event: Event) => ({
-            ...event,
-            timelineStatus: calculateTimelineStatus(event.startDate, event.endDate),
-          }))
-          setEvents(eventsWithStatus)
-        } else {
-          throw new Error("Invalid response format")
-        }
-      } catch (err) {
-        console.error("[v0] Error fetching events:", err)
-        setError(err instanceof Error ? err.message : "Failed to load events")
-      } finally {
-        setLoading(false)
+const OrganizerSignup = () => {
+  const messages = useMemo(() => [
+    { title: "Enhance", subtitle: "visibility, credibility, & connect with new audiences" },
+    { title: "Boost", subtitle: "your event outreach with multi-channel promotions" },
+    { title: "Grow", subtitle: "your audience and build genuine trust" },
+  ], []);
+
+  const [currentStep, setCurrentStep] = useState(1);
+  const [formState, setFormState] = useState({
+    showPassword: false,
+    showConfirmPassword: false,
+    showOtpSection: false,
+    showPasswordFields: false,
+    showEmailExistsPopup: false,
+    isSubmitting: false,
+  });
+  
+  const [otp, setOtp] = useState("");
+  const [formData, setFormData] = useState({
+    fullName: '',
+    email: '',
+    designation: '',
+    companyName: '',
+    city: '',
+    password: '',
+    confirmPassword: '',
+    phone: ''
+  });
+
+  const router = useRouter();
+
+  // Optimized handlers
+  const updateFormState = useCallback((updates: any) => {
+    setFormState(prev => ({ ...prev, ...updates }));
+  }, []);
+
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  }, []);
+
+  const handleOtpChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+    setOtp(value);
+  }, []);
+
+  const handleInitialSubmit = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault();
+    updateFormState({ isSubmitting: true });
+
+    try {
+      await apiFetch("/api/auth/send-otp", {
+        method: "POST",
+        body: { email: formData.email },
+        auth: false,
+      });
+      updateFormState({ showOtpSection: true });
+    } catch (err: any) {
+      console.error(err);
+      if (err?.status === 409 && err.body?.alreadyRegistered) {
+        updateFormState({ showEmailExistsPopup: true });
+        return;
       }
+      alert(err?.body?.message || err?.message || "Error sending OTP");
+    } finally {
+      updateFormState({ isSubmitting: false });
+    }
+  }, [formData.email, updateFormState]);
+
+  const handleOtpVerify = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (otp.length !== 6) {
+      alert("Please enter a valid 6-digit OTP");
+      return;
+    }
+    
+    updateFormState({ isSubmitting: true });
+
+    try {
+      await apiFetch("/api/auth/verify-otp", {
+        method: "POST",
+        body: { email: formData.email, otp },
+        auth: false,
+      });
+      updateFormState({ showOtpSection: false });
+      setCurrentStep(2);
+    } catch (err: any) {
+      console.error(err);
+      alert(err?.body?.message || err?.message || "OTP verification failed");
+    } finally {
+      updateFormState({ isSubmitting: false });
+    }
+  }, [formData.email, otp, updateFormState]);
+
+  const handleResendOtp = useCallback(async () => {
+    try {
+      await apiFetch("/api/auth/send-otp", {
+        method: "POST",
+        body: { email: formData.email },
+        auth: false,
+      });
+      alert("OTP resent successfully!");
+    } catch (err: any) {
+      console.error(err);
+      alert(err?.body?.message || err?.message || "Error resending OTP");
+    }
+  }, [formData.email]);
+
+  const handleStep2Submit = useCallback((e: React.FormEvent) => {
+    e.preventDefault();
+    const { fullName, designation, companyName, city } = formData;
+    
+    if (!fullName || !designation || !companyName || !city) {
+      alert("Please fill in all fields");
+      return;
+    }
+    
+    updateFormState({ showPasswordFields: true });
+  }, [formData, updateFormState]);
+
+  const handlePasswordSubmit = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const { password, confirmPassword } = formData;
+    
+    if (password !== confirmPassword) {
+      alert("Passwords don't match!");
+      return;
     }
 
-    if (organizerId) {
-      fetchEvents()
+    if (password.length < 8) {
+      alert("Password must be at least 8 characters long");
+      return;
     }
-  }, [organizerId])
 
-  useEffect(() => {
-    const filtered = events.filter((event) => {
-      const categoryLabels = asStringArray(event.category)
-      const matchesSearch =
-        !searchTerm ||
-        [
-          event.title,
-          event.description,
-          event.location,
-          event.city,
-          event.venueAddress,
-          ...asStringArray(event.eventType),
-          ...categoryLabels,
-        ].some((field) => field?.toLowerCase().includes(searchTerm.toLowerCase()))
+    updateFormState({ isSubmitting: true });
 
-      const matchesTimeline = timelineStatusFilter === "all" || event.timelineStatus === timelineStatusFilter
-      const matchesPublication = publicationStatusFilter === "all" || event.status === publicationStatusFilter
-      const matchesType =
-        typeFilter === "all" ||
-        (Array.isArray(event.eventType) &&
-          event.eventType.some((type) => type?.toLowerCase() === typeFilter.toLowerCase()))
+    try {
+      const registrationData = {
+        fullName: formData.fullName,
+        email: formData.email,
+        password: formData.password,
+        phone: formData.phone || undefined,
+        companyName: formData.companyName,
+        designation: formData.designation,
+        userType: "organiser",
+        city: formData.city,
+      };
 
-      return matchesSearch && matchesTimeline && matchesPublication && matchesType
-    })
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(registrationData),
+      });
 
-    setFilteredEvents(filtered)
-    setCurrentPage(1)
-  }, [events, searchTerm, timelineStatusFilter, publicationStatusFilter, typeFilter])
+      const data = await res.json();
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
-  }
-
-  // kept for potential future use
-  // const formatCurrency = (amount: number, currency = "USD") => {
-  //   return new Intl.NumberFormat("en-US", { style: "currency", currency }).format(amount)
-  // }
-
-  const getTimelineStatusLabel = (status: string) => {
-    const labels: Record<string, string> = {
-      upcoming: "Upcoming",
-      ongoing: "Ongoing",
-      past: "Past",
+      if (res.ok) {
+        router.push("/login?registered=organizer")
+        return
+      }
+      alert(data.error || data.details || "Registration failed. Please try again.")
+    } catch (err) {
+      console.error("Registration error:", err);
+      alert("An error occurred during registration. Please try again.");
+    } finally {
+      updateFormState({ isSubmitting: false });
     }
-    return labels[status] || status
-  }
+  }, [formData, router, updateFormState]);
 
-  const getTimelineStatusColor = (status: string) => {
-    const colors: Record<string, { bg: string; text: string; border: string }> = {
-      upcoming: { bg: "#EFF6FF", text: "#1D4ED8", border: "#BFDBFE" },
-      ongoing:  { bg: "#F0FDF4", text: "#166534", border: "#BBF7D0" },
-      past:     { bg: "#F3F4F6", text: "#6B7280", border: "#E5E7EB" },
-    }
-    return colors[status] || colors.past
-  }
+  // Memoized UI sections
+  const renderStep1 = useMemo(() => {
+    if (currentStep !== 1) return null;
+    
+    return (
+      <div className="relative flex min-h-screen flex-col overflow-hidden">
+  {/* Background Design */}
+  <div className="absolute inset-0 overflow-hidden">
+    {/* Base Background */}
+    <div className="absolute inset-0 bg-[#001B70]" />
 
-  const getPublicationStatusLabel = (status: string) => {
-    const labels: Record<string, string> = {
-      draft: "Draft",
-      published: "Published",
-      cancelled: "Cancelled",
-      archived: "Archived",
-      approved: "Approved",
-      rejected: "Rejected",
-      pending: "Pending Review",
-    }
-    return labels[status] || status
-  }
+    {/* Main Glow */}
+    <div
+      className="absolute left-1/2 top-1/2 h-[900px] w-[900px] -translate-x-1/2 -translate-y-1/2 rounded-full"
+      style={{
+        background:
+          "radial-gradient(circle, rgba(59,130,246,0.35) 0%, rgba(59,130,246,0.12) 45%, transparent 75%)",
+        filter: "blur(30px)",
+      }}
+    />
 
-  const getPublicationStatusColor = (status: string) => {
-    const colors: Record<string, { bg: string; text: string; border: string }> = {
-      draft:     { bg: "#FEF3C7", text: "#92400E",  border: "#FDE68A" },
-      published: { bg: "#ECFDF5", text: "#065F46",  border: "#A7F3D0" },
-      cancelled: { bg: "#FEF2F2", text: "#991B1B",  border: "#FECACA" },
-      archived:  { bg: "#F3F4F6", text: "#6B7280",  border: "#E5E7EB" },
-      // Light green bg + dark green text (matches design "Approved" pill)
-      // OLD: approved: { bg: "#166534", text: "#FFFFFF", border: "#166534" },
-      approved:  { bg: "#DCFCE7", text: "#166534",  border: "#BBF7D0" },
-      rejected:  { bg: "#FEF2F2", text: "#DC2626",  border: "#FECACA" },
-      pending:   { bg: "#FEF9C3", text: "#A16207",  border: "#FEF08A" },
-    }
-    return colors[status] || colors.draft
-  }
+    {/* Circular Rings */}
+    <div className="absolute left-1/2 top-1/2 h-[1200px] w-[1200px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-blue-400/10" />
+    <div className="absolute left-1/2 top-1/2 h-[950px] w-[950px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-blue-400/10" />
+    <div className="absolute left-1/2 top-1/2 h-[700px] w-[700px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-blue-400/10" />
 
-  // kept for potential future use
-  // const getLeadTypeLabel = (type: string) => {
-  //   const labels: Record<string, string> = {
-  //     ATTENDEE: "Attendee",
-  //     EXHIBITOR: "Exhibitor",
-  //     SPEAKER: "Speaker",
-  //     SPONSOR: "Sponsor",
-  //     PARTNER: "Partner",
-  //   }
-  //   return labels[type] || type
-  // }
+    {/* World Map Style Dot Pattern */}
+    <div
+      className="absolute inset-0 opacity-[0.08]"
+      style={{
+        backgroundImage:
+          "radial-gradient(circle, rgba(255,255,255,0.8) 1px, transparent 1px)",
+        backgroundSize: "14px 14px",
+      }}
+    />
 
-  const uniqueTypes = [
-    ...new Set(
-      events
-        .flatMap((event) => event.eventType || [])
-        .filter((type): type is string => typeof type === "string" && type.length > 0),
-    ),
-  ]
+    {/* Left Glow */}
+    <div className="absolute left-[-200px] top-[20%] h-[500px] w-[500px] rounded-full bg-blue-500/10 blur-[120px]" />
 
-  const calculateTimelineStatus = (startDate: string, endDate: string): "upcoming" | "ongoing" | "past" => {
-    const now = new Date()
-    const start = new Date(startDate)
-    const end = new Date(endDate)
-    if (now < start) return "upcoming"
-    if (now >= start && now <= end) return "ongoing"
-    return "past"
-  }
+    {/* Right Glow */}
+    <div className="absolute right-[-200px] top-[40%] h-[500px] w-[500px] rounded-full bg-cyan-400/10 blur-[120px]" />
 
-  const getEventImage = (event: Event) => getEventDisplayImageUrl(event)
+    {/* Bottom Wave */}
+    <svg
+      className="absolute bottom-0 left-0 w-full opacity-40"
+      viewBox="0 0 1440 320"
+      preserveAspectRatio="none"
+    >
+      <path
+        fill="rgba(59,130,246,0.5)"
+        d="M0,256L80,224C160,192,320,128,480,128C640,128,800,192,960,224C1120,256,1280,256,1360,240L1440,224V320H0Z"
+      />
+    </svg>
 
-  // Pagination
-  const totalPages = Math.ceil(filteredEvents.length / EVENTS_PER_PAGE)
-  const paginatedEvents = filteredEvents.slice(
-    (currentPage - 1) * EVENTS_PER_PAGE,
-    currentPage * EVENTS_PER_PAGE,
-  )
+    {/* Floating Dots */}
+    <div className="absolute left-[8%] top-[22%] h-2 w-2 rounded-full bg-blue-400 shadow-[0_0_20px_#60A5FA]" />
+    <div className="absolute left-[28%] top-[10%] h-2 w-2 rounded-full bg-blue-400 shadow-[0_0_20px_#60A5FA]" />
+    <div className="absolute left-[75%] top-[15%] h-2 w-2 rounded-full bg-blue-400 shadow-[0_0_20px_#60A5FA]" />
+    <div className="absolute left-[90%] top-[60%] h-2 w-2 rounded-full bg-blue-400 shadow-[0_0_20px_#60A5FA]" />
+    <div className="absolute left-[55%] top-[80%] h-2 w-2 rounded-full bg-blue-400 shadow-[0_0_20px_#60A5FA]" />
 
-  const getPageNumbers = () => {
-    const maxVisible = 3
-    let start = Math.max(1, currentPage - 1)
-    const end = Math.min(totalPages, start + maxVisible - 1)
-    if (end - start < maxVisible - 1) start = Math.max(1, end - maxVisible + 1)
-    const pages: number[] = []
-    for (let i = start; i <= end; i++) pages.push(i)
-    return pages
-  }
+    {/* Overlay */}
+    <div className="absolute inset-0 bg-black/20" />
+  </div>
+        {/* <br /> <br /><br /> <br />  */}
+
+        {/* <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 sm:py-8 lg:flex-row lg:items-center lg:justify-between lg:gap-10"> */}
+        <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-col gap-4 px-4 py-4 sm:px-6 sm:py-8 lg:flex-row lg:items-center lg:justify-between lg:gap-10">
+
+          {/* <div className="hidden max-w-lg flex-1 text-white lg:block lg:pr-8"> */}
+          <div className="w-full text-white lg:max-w-lg lg:flex-1 lg:pr-8">
+            <AnimatedMessage messages={messages} />
+
+            {/* <p className="mb-8 text-base leading-relaxed"> */}
+            <p className="mb-4 text-sm leading-relaxed lg:mb-8 lg:text-base">
+              Showcase your event to an engaged audience and build genuine trust using targeted, multi-channel
+              outreach. Reach potential attendees through platforms they prefer—social media, mobile updates, our
+              dynamic website, curated newsletters, and direct database access.
+            </p>
+
+            <button
+              type="button"
+              className="rounded-full border-2 border-white bg-transparent px-7 py-2 font-semibold text-white transition-colors hover:bg-white hover:text-blue-900"
+            >
+              LEARN MORE
+            </button>
+          </div>
+
+          {/* <p className="text-center text-sm font-medium text-white lg:hidden">
+            Join BizTradeFairs — list events and reach exhibitors worldwide
+          </p> */}
+
+          <div className="relative mx-auto w-full max-w-md shrink-0 rounded-3xl bg-white p-6 shadow-2xl sm:p-8 lg:mx-0">
+            <h2 className="text-2xl font-bold text-gray-900 text-center mb-6">
+              {formState.showOtpSection ? 'Verify Your Email' : "Let's get started"}
+            </h2>
+
+            {!formState.showOtpSection ? (
+              <form onSubmit={handleInitialSubmit} className="space-y-5">
+                <FormInput
+                  icon={User}
+                  type="text"
+                  name="fullName"
+                  value={formData.fullName}
+                  onChange={handleInputChange}
+                  placeholder="Enter your full name"
+                  required
+                />
+                
+                <FormInput
+                  icon={Mail}
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  placeholder="Enter your business email"
+                  required
+                />
+
+                <button
+                  type="submit"
+                  disabled={formState.isSubmitting}
+                  className="w-full bg-blue-900 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {formState.isSubmitting ? 'PROCESSING...' : 'PROCEED'}
+                </button>
+              </form>
+            ) : (
+              <div className="space-y-5">
+                <button
+                  onClick={() => updateFormState({ showOtpSection: false })}
+                  className="flex items-center text-gray-600 hover:text-gray-800 transition-colors mb-2"
+                >
+                  <ChevronLeft className="w-4 h-4 mr-1" />
+                  Back to form
+                </button>
+
+                <div className="bg-green-500 text-white p-3 rounded-lg mb-4">
+                  <p className="text-sm">
+                    We have sent an OTP to <strong>{formData.email}</strong>.
+                    Please check your inbox and enter it below to verify.
+                  </p>
+                </div>
+
+                <form onSubmit={handleOtpVerify} className="space-y-5">
+                  <div>
+                    <label className="block text-sm text-gray-600 mb-2">
+                      Enter 6-digit OTP
+                    </label>
+                    <input
+                      type="text"
+                      value={otp}
+                      onChange={handleOtpChange}
+                      maxLength={6}
+                      placeholder="123456"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent tracking-widest text-center text-lg font-semibold"
+                      required
+                    />
+                  </div>
+
+                  <div className="flex space-x-3">
+                    <button
+                      type="button"
+                      onClick={() => updateFormState({ showOtpSection: false })}
+                      className="flex-1 bg-gray-200 text-gray-800 py-3 px-6 rounded-lg font-semibold hover:bg-gray-300 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={formState.isSubmitting}
+                      className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {formState.isSubmitting ? 'Verifying...' : 'Verify & Continue'}
+                    </button>
+                  </div>
+                </form>
+
+                <div className="text-center">
+                  <button
+                    onClick={handleResendOtp}
+                    className="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors"
+                  >
+                    Resend OTP
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <p className="text-gray-500 text-sm mt-6 text-center">
+              Already have an account?{' '}
+              <a href="/login" className="text-blue-600 hover:underline font-semibold transition-colors">
+                Sign in here
+              </a>
+            </p>
+          </div>
+        </div>
+        
+        <EmailExistsPopup
+          isOpen={formState.showEmailExistsPopup}
+          onClose={() => updateFormState({ showEmailExistsPopup: false })}
+          onLogin={() => router.push("/login")}
+        />
+      </div>
+    );
+  }, [currentStep, formState, formData, otp, messages, handleInitialSubmit, handleOtpVerify, handleResendOtp, router, updateFormState, handleInputChange]);
+
+  const renderStep2 = useMemo(() => {
+    if (currentStep !== 2) return null;
+    
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center p-6">
+        <div className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-2xl">
+          <div className="mb-6">
+            <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <span className="text-gray-600">Email</span>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="break-all font-medium text-sm">{formData.email}</span>
+                <span className="flex items-center rounded-full bg-green-100 px-3 py-1 text-xs text-green-600">
+                  <CheckCircle className="mr-1 h-3 w-3" />
+                  email verified
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-6">
+            <div className={`transition-opacity duration-300 ${formState.showPasswordFields ? 'opacity-50' : 'opacity-100'}`}>
+              <form onSubmit={handleStep2Submit} className="space-y-6">
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm text-gray-600 mb-2">
+                      Full Name
+                    </label>
+                    <FormInput
+                      type="text"
+                      name="fullName"
+                      value={formData.fullName}
+                      onChange={handleInputChange}
+                      placeholder="John Doe"
+                      required
+                      disabled={formState.showPasswordFields}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-600 mb-2">
+                      Designation
+                    </label>
+                    <FormInput
+                      type="text"
+                      name="designation"
+                      value={formData.designation}
+                      onChange={handleInputChange}
+                      placeholder="Event Manager"
+                      required
+                      disabled={formState.showPasswordFields}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm text-gray-600 mb-2">
+                    Company Name
+                  </label>
+                  <FormInput
+                    type="text"
+                    name="companyName"
+                    value={formData.companyName}
+                    onChange={handleInputChange}
+                    placeholder="Event Solutions Inc"
+                    required
+                    disabled={formState.showPasswordFields}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm text-gray-600 mb-2">City</label>
+                  <FormInput
+                    type="text"
+                    name="city"
+                    value={formData.city}
+                    onChange={handleInputChange}
+                    placeholder="New York, United States"
+                    required
+                    disabled={formState.showPasswordFields}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm text-gray-600 mb-2">Phone (Optional)</label>
+                  <FormInput
+                    type="tel"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleInputChange}
+                    placeholder="+1 234 567 8900"
+                    disabled={formState.showPasswordFields}
+                  />
+                </div>
+
+                {!formState.showPasswordFields && (
+                  <button
+                    type="submit"
+                    className="w-full mt-6 bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                  >
+                    Continue to Password Setup
+                  </button>
+                )}
+              </form>
+            </div>
+
+            {formState.showPasswordFields && (
+              <div className="pt-6 border-t border-gray-200">
+                <form onSubmit={handlePasswordSubmit} className="space-y-6">
+                  <div>
+                    <label className="block text-sm text-gray-600 mb-2">Password</label>
+                    <PasswordInput
+                      showPassword={formState.showPassword}
+                      togglePassword={() => updateFormState({ showPassword: !formState.showPassword })}
+                      value={formData.password}
+                      onChange={handleInputChange}
+                      placeholder="Enter your password (min 8 characters)"
+                      name="password"
+                      disabled={formState.isSubmitting}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm text-gray-600 mb-2">Confirm Password</label>
+                    <PasswordInput
+                      showPassword={formState.showConfirmPassword}
+                      togglePassword={() => updateFormState({ showConfirmPassword: !formState.showConfirmPassword })}
+                      value={formData.confirmPassword}
+                      onChange={handleInputChange}
+                      placeholder="Enter your password again"
+                      name="confirmPassword"
+                      disabled={formState.isSubmitting}
+                    />
+                  </div>
+
+                  <div className="flex space-x-4">
+                    <button
+                      type="button"
+                      onClick={() => updateFormState({ showPasswordFields: false })}
+                      className="flex-1 bg-gray-200 text-gray-800 py-3 px-6 rounded-lg font-semibold hover:bg-gray-300 transition-colors"
+                    >
+                      Back to Details
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={formState.isSubmitting}
+                      className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {formState.isSubmitting ? 'Creating...' : 'Create Account'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }, [currentStep, formState, formData, handleStep2Submit, handlePasswordSubmit, updateFormState, handleInputChange]);
 
   return (
+<<<<<<< Updated upstream
     // Outer wrapper — white background, no card border (matches design: content sits on plain white bg)
     <div className="w-full min-w-0 max-w-full space-y-4 bg-white rounded-xl p-3 sm:p-4 md:p-6">
 
@@ -516,3 +934,13 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
     </div>
   )
 }
+=======
+    <>
+      {renderStep1}
+      {renderStep2}
+    </>
+  );
+};
+
+export default OrganizerSignup;
+>>>>>>> Stashed changes

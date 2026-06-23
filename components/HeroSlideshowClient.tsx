@@ -401,7 +401,7 @@ export default function HeroSlideshowClient({
               </Link>
               <Link
                 href="/organizer-signup"
-                className="flex-1 text-center bg-white border-2 border-gray-300 hover:border-blue-400 hover:text-blue-600 transition-colors text-gray-800 text-[0.85rem] sm:text-[0.9rem] font-bold h-11 sm:h-12 rounded-sm flex items-center justify-center"
+                className="flex-1 text-center bg-white border-2 border-gray-300 hover:border-[#004a96] hover:text-[#004a96] transition-colors text-gray-800 text-[0.85rem] sm:text-[0.9rem] font-bold h-11 sm:h-12 rounded-sm flex items-center justify-center"
               >
                 List Your Event
               </Link>
@@ -464,7 +464,7 @@ export default function HeroSlideshowClient({
                       <div className="flex flex-col gap-2 min-[400px]:flex-row min-[400px]:flex-wrap">
                         <Link
                           href={eventPublicPath(featured)}
-                          className="rounded-md  bg-[#004A96] px-3 py-2 text-center text-[0.72rem] font-bold text-white shadow transition-colors hover:bg-blue-700 sm:rounded-lg sm:px-5 sm:py-2 sm:text-[0.8rem]"
+                          className="rounded-md  bg-[#004A96] px-3 py-2 text-center text-[0.72rem] font-bold text-white shadow transition-colors hover:bg-[#003a75] sm:rounded-lg sm:px-5 sm:py-2 sm:text-[0.8rem]"
                         >
                           Register Now
                         </Link>
