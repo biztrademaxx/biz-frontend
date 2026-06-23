@@ -77,7 +77,7 @@ function SpeakerCtaAsideSkeleton() {
 export default function SpeakersListingPageSkeleton() {
   return (
     <div
-      className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(23,76,154,0.08),transparent_24%),linear-gradient(180deg,#FFFFFF_0%,#F8FAFD_100%)] text-[#102A5E]"
+      className="min-h-screen bg-[#f9f9f9] text-[#102A5E]"
       aria-busy="true"
       aria-label="Loading speakers"
     >

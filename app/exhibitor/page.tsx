@@ -234,7 +234,7 @@ export default function ExhibitorsPage() {
     }
 
     return (
-        <main className="min-h-screen bg-[#f6f8fb]">
+        <main className="min-h-screen bg-[#f9f9f9]">
             {/* HERO */}
             <section className="relative overflow-hidden bg-gradient-to-r from-[#042f8c] via-[#0b3ea8] to-[#06378f]">
                 <div className="absolute inset-0 bg-[url('/images/exhibitors-bg.jpg')] bg-cover bg-center opacity-15" />

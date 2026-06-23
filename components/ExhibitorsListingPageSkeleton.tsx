@@ -16,7 +16,7 @@ function ExhibitorCardSkeleton() {
 
 export default function ExhibitorsListingPageSkeleton() {
   return (
-    <main className="min-h-screen bg-[#f6f8fb]" aria-busy="true" aria-label="Loading exhibitors">
+    <main className="min-h-screen bg-[#f9f9f9]" aria-busy="true" aria-label="Loading exhibitors">
       <section className="relative overflow-hidden bg-gradient-to-r from-[#042f8c] via-[#0b3ea8] to-[#06378f]">
         <div className="absolute inset-0 bg-[url('/images/exhibitors-bg.jpg')] bg-cover bg-center opacity-15" />
         <div className="relative mx-auto max-w-7xl px-4 pt-12 pb-14 sm:px-6 sm:pt-16 sm:pb-16 lg:px-8 lg:pt-20 lg:pb-20">
