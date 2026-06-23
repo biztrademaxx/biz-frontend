@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { PromotionPaymentDialog } from "@/components/payment/promotion-payment-dialog"
 import { useToast } from "@/hooks/use-toast"
 import { apiFetch } from "@/lib/api"
 import { cn } from "@/lib/utils"
@@ -126,7 +126,6 @@ export default function EventPromotion({ eventId }: { eventId: string }) {
   const [selectedPackage, setSelectedPackage] = useState("")
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false)
   const [loading, setLoading] = useState(true)
-  const [creating, setCreating] = useState(false)
 
   const [promotionPackages, setPromotionPackages] = useState<PromotionPackage[]>([])
   const [packagesLoading, setPackagesLoading] = useState(true)
@@ -276,30 +275,31 @@ export default function EventPromotion({ eventId }: { eventId: string }) {
       .filter((name): name is string => !!name)
   }
 
-  const createPromotion = async () => {
-    const selectedPackageData = promotionPackages.find((p) => p.id === selectedPackage)
-    if (!selectedPackageData) return
+  const getDurationDays = (pkg: PromotionPackage): number => {
+    if (pkg.duration === "month") return 30
+    if (pkg.duration.includes("campaign")) return 14
+    const parsed = Number.parseInt(pkg.duration.split(" ")[0], 10)
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : 30
+  }
 
+  const buildPaymentContext = () => {
+    if (!selectedPackageData || !event) return null
+    return {
+      promotionChannel: "EVENT" as const,
+      eventId,
+      packageType: selectedPackageData.id,
+      targetCategories: resolveTargetCategories(),
+      durationDays: getDurationDays(selectedPackageData),
+      amountInr: selectedPackageData.price,
+    }
+  }
+
+  const createPromotion = async (paymentTransactionId: string) => {
     try {
-      setCreating(true)
-      let durationDays = 30
-      if (selectedPackageData.duration === "month") {
-        durationDays = 30
-      } else if (selectedPackageData.duration.includes("campaign")) {
-        durationDays = 14
-      } else {
-        const parsed = Number.parseInt(selectedPackageData.duration.split(" ")[0], 10)
-        durationDays = Number.isFinite(parsed) && parsed > 0 ? parsed : 30
-      }
-
       await apiFetch(`/api/events/${eventId}/promotions`, {
         method: "POST",
-        body: {
-          packageType: selectedPackageData.id,
-          targetCategories: resolveTargetCategories(),
-          amount: selectedPackageData.price,
-          duration: durationDays,
-        },
+        auth: true,
+        body: { paymentTransactionId },
       })
 
       toast({
@@ -307,19 +307,18 @@ export default function EventPromotion({ eventId }: { eventId: string }) {
         description: "Promotion campaign created successfully!",
       })
 
-      setIsPaymentDialogOpen(false)
       setSelectedCategories([])
       setSelectedPackage("")
       fetchPromotionData()
     } catch (error) {
       console.error("Error creating promotion:", error)
+      const message = error instanceof Error ? error.message : "Failed to create promotion campaign"
       toast({
         title: "Error",
-        description: "Failed to create promotion campaign",
+        description: message,
         variant: "destructive",
       })
-    } finally {
-      setCreating(false)
+      throw error instanceof Error ? error : new Error(message)
     }
   }
 
@@ -581,61 +580,28 @@ export default function EventPromotion({ eventId }: { eventId: string }) {
         </div>
       )}
 
-      {/* Payment Dialog */}
-      <Dialog open={isPaymentDialogOpen} onOpenChange={setIsPaymentDialogOpen}>
-        <DialogContent className="w-[calc(100vw-2rem)] max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Complete Your Promotion Purchase</DialogTitle>
-            <DialogDescription>
-              Review your selection and complete the payment to start promoting your event
-            </DialogDescription>
-          </DialogHeader>
-
-          {selectedPackageData && (
-            <div className="space-y-6">
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <h3 className="font-semibold mb-3">Order Summary</h3>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span>Package:</span>
-                    <span className="font-medium">{selectedPackageData.name}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Event:</span>
-                    <span className="font-medium">{event.title}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Duration:</span>
-                    <span className="font-medium">{selectedPackageData.duration}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Target Categories:</span>
-                    <span className="font-medium">{selectedCategories.length} selected</span>
-                  </div>
-                  <div className="flex justify-between text-lg font-bold pt-2 border-t">
-                    <span>Total:</span>
-                    <span>₹{selectedPackageData.price.toLocaleString()}</span>
-                  </div>
-                </div>
-              </div>
-
-              <Button className="w-full" onClick={createPromotion} disabled={creating}>
-                {creating ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Processing...
-                  </>
-                ) : (
-                  <>
-                    <CreditCard className="w-4 h-4 mr-2" />
-                    Complete Purchase
-                  </>
-                )}
-              </Button>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      <PromotionPaymentDialog
+        open={isPaymentDialogOpen}
+        onOpenChange={setIsPaymentDialogOpen}
+        receiptPrefix="event_promo"
+        termsCheckboxId="event-promotion-terms"
+        payButtonClassName="w-full"
+        payButtonLabel="Complete Purchase"
+        summary={
+          selectedPackageData && event
+            ? {
+                packageName: selectedPackageData.name,
+                eventTitle: event.title,
+                categoryCount: selectedCategories.length,
+                estimatedReach,
+                duration: selectedPackageData.duration,
+                amountInr: selectedPackageData.price,
+              }
+            : null
+        }
+        paymentContext={buildPaymentContext()}
+        onPaymentSuccess={createPromotion}
+      />
     </div>
   )
 }
