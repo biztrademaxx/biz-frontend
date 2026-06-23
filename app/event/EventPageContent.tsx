@@ -422,70 +422,41 @@ export default function EventPageContent({ event, session: _session, router, toa
         <div className="flex flex-col gap-6 lg:flex-row">
           <div className="min-w-0 flex-1">
             <Tabs defaultValue="about" className="w-full">
-              <div className="mb-6 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+              <div className="mb-6 overflow-hidden rounded-xl border border-[#E4EAF5] bg-white shadow-[0_4px_16px_rgba(16,42,94,0.06)]">
                 <div className="overflow-x-auto overscroll-x-contain [-webkit-overflow-scrolling:touch]">
-                  <TabsList className="inline-flex h-auto min-w-full w-max flex-nowrap gap-0 rounded-none bg-transparent p-0 sm:grid sm:w-full sm:grid-cols-5 sm:gap-0 lg:grid-cols-10">
-                  <TabsTrigger
-                    value="about"
-                    className="shrink-0 min-w-[4.25rem] data-[state=active]:bg-[#FF131C] data-[state=active]:text-white rounded-none px-3 py-3 text-xs font-medium sm:min-w-0 sm:px-2 sm:text-sm sm:truncate first:rounded-l-lg"
-                  >
-                    About
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="exhibitors"
-                    className="shrink-0 min-w-[4.25rem] data-[state=active]:bg-[#FF131C] data-[state=active]:text-white rounded-none px-3 py-3 text-xs font-medium sm:min-w-0 sm:px-2 sm:text-sm sm:truncate"
-                  >
-                    Exhibitors
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="space-cost"
-                    className="shrink-0 min-w-[4.25rem] data-[state=active]:bg-[#FF131C] data-[state=active]:text-white rounded-none px-3 py-3 text-xs font-medium sm:min-w-0 sm:px-2 sm:text-sm sm:truncate"
-                  >
-                    Space Cost
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="layout"
-                    className="shrink-0 min-w-[4.25rem] data-[state=active]:bg-[#FF131C] data-[state=active]:text-white rounded-none px-3 py-3 text-xs font-medium sm:min-w-0 sm:px-2 sm:text-sm sm:truncate"
-                  >
-                    Layout Plan
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="brochure"
-                    className="shrink-0 min-w-[4.25rem] data-[state=active]:bg-[#FF131C] data-[state=active]:text-white rounded-none px-3 py-3 text-xs font-medium sm:min-w-0 sm:px-2 sm:text-sm sm:truncate"
-                  >
-                    Brochure
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="venue"
-                    className="shrink-0 min-w-[4.25rem] data-[state=active]:bg-[#FF131C] data-[state=active]:text-white rounded-none px-3 py-3 text-xs font-medium sm:min-w-0 sm:px-2 sm:text-sm sm:truncate"
-                  >
-                    Venue
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="speakers"
-                    className="shrink-0 min-w-[4.25rem] data-[state=active]:bg-[#FF131C] data-[state=active]:text-white rounded-none px-3 py-3 text-xs font-medium sm:min-w-0 sm:px-2 sm:text-sm sm:truncate"
-                  >
-                    Speakers
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="organizer"
-                    className="shrink-0 min-w-[4.25rem] data-[state=active]:bg-[#FF131C] data-[state=active]:text-white rounded-none px-3 py-3 text-xs font-medium sm:min-w-0 sm:px-2 sm:text-sm sm:truncate"
-                  >
-                    Organizer
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="followers"
-                    className="shrink-0 min-w-[4.25rem] data-[state=active]:bg-[#FF131C] data-[state=active]:text-white rounded-none px-3 py-3 text-xs font-medium sm:min-w-0 sm:px-2 sm:text-sm sm:truncate"
-                  >
-                    Followers
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="reviews"
-                    className="shrink-0 min-w-[4.25rem] data-[state=active]:bg-[#FF131C] data-[state=active]:text-white rounded-none px-3 py-3 text-xs font-medium sm:min-w-0 sm:px-2 sm:text-sm sm:truncate last:rounded-r-lg"
-                  >
-                    Review
-                  </TabsTrigger>
-                </TabsList>
+                  <TabsList className="flex h-auto w-max min-w-full flex-nowrap rounded-none bg-transparent p-0.5 gap-1">
+                    {[
+                      { value: "about",      label: "About" },
+                      { value: "exhibitors", label: "Exhibitors" },
+                      { value: "space-cost", label: "Space Cost" },
+                      { value: "layout",     label: "Layout Plan" },
+                      { value: "brochure",   label: "Brochure" },
+                      { value: "venue",      label: "Venue" },
+                      { value: "speakers",   label: "Speakers" },
+                      { value: "organizer",  label: "Organizer" },
+                      { value: "followers",  label: "Followers" },
+                      { value: "reviews",    label: "Review" },
+                    ].map((tab) => (
+                      <TabsTrigger
+                        key={tab.value}
+                        value={tab.value}
+                        className="
+                          whitespace rounded-lg
+                          px-2 py-2 
+                          text-sm font-medium text-[#0a0a0b]
+                          bg-transparent border-0
+                          transition-all duration-150
+                          hover:bg-[#F3F6FB] hover:text-[#102A5E]
+                          data-[state=active]:bg-[#FF131C]
+                          data-[state=active]:text-white
+                          data-[state=active]:font-semibold
+                          data-[state=active]:shadow-sm
+                        "
+                      >
+                        {tab.label}
+                      </TabsTrigger>
+                    ))}
+                  </TabsList>
                 </div>
               </div>
 
