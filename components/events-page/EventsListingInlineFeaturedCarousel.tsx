@@ -70,7 +70,15 @@ export function EventsListingInlineFeaturedCarousel({
           }}
         >
           {pool.map((event) => (
-            <div key={event.id} className="shrink-0 px-0.5" style={{ width: `${100 / len}%` }}>
+            <div
+              key={event.id}
+              className="group relative shrink-0 overflow-hidden px-0.5"
+              style={{ width: `${100 / len}%` }}
+            >
+              <div className="absolute left-0 top-0 h-full w-1 overflow-hidden">
+                <div className="absolute bottom-0 h-0 w-full bg-red-500 transition-all duration-500 ease-out group-hover:h-full" />
+              </div>
+
               <EventsListingEventCard event={event} />
             </div>
           ))}
