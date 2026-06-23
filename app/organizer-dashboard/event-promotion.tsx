@@ -4,12 +4,10 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { PromotionPaymentDialog } from "@/components/payment/promotion-payment-dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { useToast } from "@/hooks/use-toast"
 import { apiFetch } from "@/lib/api"
 import {
@@ -296,22 +294,18 @@ export default function EventPromotion({ organizerId }: EventPromotionProps) {
     }
   }
 
-  const createPromotion = async () => {
+  const createPromotion = async (paymentTransactionId: string) => {
     const selectedPackageData = promotionPackages.find((p) => p.id === selectedPackage)
-    if (!selectedPackageData || !selectedEvent) return
+    if (!selectedPackageData || !selectedEvent) {
+      throw new Error("Please select an event and package")
+    }
 
     try {
       setCreating(true)
       await apiFetch(`/api/organizers/${organizerId}/promotions`, {
         method: "POST",
         auth: true,
-        body: {
-          eventId: selectedEvent,
-          packageType: selectedPackageData.id,
-          targetCategories: selectedCategories,
-          amount: selectedPackageData.price,
-          duration: Number.parseInt(selectedPackageData.duration.split(" ")[0]),
-        },
+        body: { paymentTransactionId },
       })
 
       toast({
@@ -319,18 +313,19 @@ export default function EventPromotion({ organizerId }: EventPromotionProps) {
         description: "Promotion campaign created successfully!",
       })
 
-      setIsPaymentDialogOpen(false)
       setSelectedEvent("")
       setSelectedCategories([])
       setSelectedPackage("")
-      fetchPromotionData() // Refresh data
+      fetchPromotionData()
     } catch (error) {
       console.error("Error creating promotion:", error)
+      const message = error instanceof Error ? error.message : "Failed to create promotion campaign"
       toast({
         title: "Error",
-        description: "Failed to create promotion campaign",
+        description: message,
         variant: "destructive",
       })
+      throw error instanceof Error ? error : new Error(message)
     } finally {
       setCreating(false)
     }
@@ -365,6 +360,19 @@ export default function EventPromotion({ organizerId }: EventPromotionProps) {
   }
 
   const selectedPackageData = promotionPackages.find((p) => p.id === selectedPackage)
+
+  const buildPaymentContext = () => {
+    if (!selectedPackageData || !selectedEvent) return null
+    return {
+      promotionChannel: "ORGANIZER" as const,
+      organizerId,
+      eventId: selectedEvent,
+      packageType: selectedPackageData.id,
+      targetCategories: selectedCategories,
+      durationDays: Number.parseInt(selectedPackageData.duration.split(" ")[0], 10) || 7,
+      amountInr: selectedPackageData.price,
+    }
+  }
 
   if (loading) {
     return (
@@ -625,107 +633,28 @@ export default function EventPromotion({ organizerId }: EventPromotionProps) {
         </TabsContent>
       </Tabs>
 
-      {/* Payment Dialog */}
-      <Dialog open={isPaymentDialogOpen} onOpenChange={setIsPaymentDialogOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Complete Your Promotion Purchase</DialogTitle>
-            <DialogDescription>
-              Review your selection and complete the payment to start promoting your event
-            </DialogDescription>
-          </DialogHeader>
-
-          {selectedPackageData && (
-            <div className="space-y-6">
-              {/* Order Summary */}
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <h3 className="font-semibold mb-3">Order Summary</h3>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span>Package:</span>
-                    <span className="font-medium">{selectedPackageData.name}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Event:</span>
-                    <span className="font-medium">{events.find((e) => e.id.toString() === selectedEvent)?.title}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Target Categories:</span>
-                    <span className="font-medium">{selectedCategories.length} selected</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Estimated Reach:</span>
-                    <span className="font-medium">{calculateEstimatedReach().toLocaleString()} users</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Duration:</span>
-                    <span className="font-medium">{selectedPackageData.duration}</span>
-                  </div>
-                  <div className="border-t pt-2 mt-2">
-                    <div className="flex justify-between font-semibold">
-                      <span>Total Amount:</span>
-                      <span className="text-[#004A96]">₹{selectedPackageData.price.toLocaleString()}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Payment Form */}
-              <div className="space-y-4">
-                <h3 className="font-semibold">Payment Details</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="card-number">Card Number</Label>
-                    <Input id="card-number" placeholder="1234 5678 9012 3456" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="card-name">Cardholder Name</Label>
-                    <Input id="card-name" placeholder="John Doe" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="expiry">Expiry Date</Label>
-                    <Input id="expiry" placeholder="MM/YY" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="cvv">CVV</Label>
-                    <Input id="cvv" placeholder="123" />
-                  </div>
-                </div>
-              </div>
-
-              {/* Terms and Conditions */}
-              <div className="flex items-center space-x-2">
-                <Checkbox id="terms" />
-                <Label htmlFor="terms" className="text-sm">
-                  I agree to the{" "}
-                  <a href="#" className="text-[#004A96] hover:underline">
-                    Terms and Conditions
-                  </a>{" "}
-                  and{" "}
-                  <a href="#" className="text-[#004A96] hover:underline">
-                    Promotion Policy
-                  </a>
-                </Label>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex justify-end gap-3">
-                <Button variant="outline" onClick={() => setIsPaymentDialogOpen(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={createPromotion} disabled={creating}>
-                  {creating ? (
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  ) : (
-                    <CreditCard className="w-4 h-4 mr-2" />
-                  )}
-                  Pay ₹{selectedPackageData.price.toLocaleString()}
-                </Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      <PromotionPaymentDialog
+        open={isPaymentDialogOpen}
+        onOpenChange={setIsPaymentDialogOpen}
+        receiptPrefix="org_promo"
+        termsCheckboxId="organizer-promotion-terms"
+        paymentContext={buildPaymentContext()}
+        summary={
+          selectedPackageData
+            ? {
+                packageName: selectedPackageData.name,
+                eventTitle: events.find((e) => e.id.toString() === selectedEvent)?.title ?? "Event",
+                categoryCount: selectedCategories.length,
+                estimatedReach: calculateEstimatedReach(),
+                duration: selectedPackageData.duration,
+                amountInr: selectedPackageData.price,
+              }
+            : null
+        }
+        onPaymentSuccess={async (paymentTransactionId) => {
+          await createPromotion(paymentTransactionId)
+        }}
+      />
     </div>
   )
 }
