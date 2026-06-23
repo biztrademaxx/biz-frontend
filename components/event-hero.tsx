@@ -82,34 +82,32 @@ function useCountdown(targetDate?: string) {
 }
 /** Navbar navy glass — matches `navbar.tsx` #002C71 / #004A96 system */
 const COUNTDOWN_OUTER_GLASS: React.CSSProperties = {
-  background: "linear-gradient(135deg, rgba(0, 26, 72, 0.92) 0%, rgba(0, 44, 113, 0.9) 50%, rgba(0, 74, 150, 0.88) 100%)",
-  backdropFilter: "blur(8px)",
-  WebkitBackdropFilter: "blur(8px)",
-  border: "1px solid rgba(255, 255, 255, 0.1)",
-  boxShadow: "0 8px 32px rgba(0, 26, 72, 0.35)",
+  background: "transparent",
+  border: "none",
+  boxShadow: "none",
 }
 
 const COUNTDOWN_UNIT_GLASS: React.CSSProperties = {
-  background: "rgba(255, 255, 255, 0.08)",
-  backdropFilter: "blur(20px)",
-  WebkitBackdropFilter: "blur(20px)",
-  border: "1px solid rgba(255, 255, 255, 0.15)",
-  boxShadow:
-    "0 8px 32px rgba(0, 26, 72, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.1)",
+  background: "rgba(255,255,255,0.75)",
+  backdropFilter: "blur(12px)",
+  WebkitBackdropFilter: "blur(12px)",
+  border: "1px solid rgba(226,232,240,0.8)",
+  boxShadow: "0 4px 12px rgba(15,23,42,0.08)",
 }
 
 function CountdownUnit({ value, label }: { value: number; label: string }) {
   return (
     <div className="flex flex-col items-center gap-1.5">
       <div
-        className="flex h-12 min-w-[3.25rem] items-center justify-center rounded-md px-3"
+        className="flex h-[58px] min-w-[62px] items-center justify-center rounded-xl px-3"
         style={COUNTDOWN_UNIT_GLASS}
       >
-        <span className="text-2xl font-bold tabular-nums text-white">
+        <span className="text-[22px] font-bold tabular-nums text-[#002C71]">
           {String(value).padStart(2, "0")}
         </span>
       </div>
-      <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-white">
+
+      <span className="text-[9px] font-semibold uppercase tracking-[0.12em] text-slate-500">
         {label}
       </span>
     </div>
@@ -124,11 +122,19 @@ function EventCountdownBanner({ startDate }: { startDate?: string }) {
 
   return (
     <div className="rounded-sm p-4" style={COUNTDOWN_OUTER_GLASS}>
-      <div className="flex items-center justify-center gap-2">
+      <div className="flex items-center justify-start gap-2 pt-1">
         <CountdownUnit value={timeLeft.days} label="Days" />
-        <span className="pb-5 text-3xl font-bold text-white/40 select-none">:</span>
+
+        <span className="pb-4 text-xl font-light text-slate-300">
+          :
+        </span>
+
         <CountdownUnit value={timeLeft.hours} label="Hours" />
-        <span className="pb-5 text-3xl font-bold text-white/40 select-none">:</span>
+
+        <span className="pb-4 text-xl font-light text-slate-300">
+          :
+        </span>
+
         <CountdownUnit value={timeLeft.minutes} label="Mins" />
       </div>
     </div>
