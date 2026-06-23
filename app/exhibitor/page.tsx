@@ -341,7 +341,8 @@ export default function ExhibitorsPage() {
                             </button>
 
                             {filtersOpen && (
-                                <div className="absolute right-0 z-20 mt-2 w-72 rounded-xl border border-gray-100 bg-white p-4 shadow-xl">
+                                <div className="absolute right-0 z-20 mt-2 w-72 rounded-xl border border-gray-100 bg-white p-4 shadow-xl
+                                sm:absolute sm:right-1/2 max-sm:left-auto max-sm:right-1/2 max-sm:translate-x-1/2">
                                     <div className="mb-1">
                                         <label className="mb-1.5 block text-xs font-medium text-gray-500">
                                             Country

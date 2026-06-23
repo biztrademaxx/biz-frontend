@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react"
 import { Button } from "@/components/ui/button"
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -28,7 +29,7 @@ import {
   MessageSquare,
   Reply,
 } from "lucide-react"
-import { useParams, useRouter, usePathname } from "next/navigation"
+import { useParams, useRouter, usePathname, useSearchParams } from "next/navigation"
 import { format } from "date-fns"
 import ScheduleMeetingButton from "@/components/ScheduleMeetingButton"
 import { FollowButton } from "@/components/follow-button"
@@ -618,6 +619,8 @@ export default function ExhibitorPage() {
   const params = useParams()
   const router = useRouter()
   const pathname = usePathname()
+  // ─── NEW: read ?autoFollow=<exhibitorId> from URL after login redirect ───
+  const searchParams = useSearchParams()
   const routeParam = (params.slug ?? params.id) as string
 
   const userId = getCurrentUserId()
@@ -635,6 +638,8 @@ export default function ExhibitorPage() {
   const [loading, setLoading] = useState(true)
   const [eventsLoading, setEventsLoading] = useState(false)
   const [reviewsLoading, setReviewsLoading] = useState(false)
+  // ─── NEW: track whether auto-follow has been triggered to avoid repeat calls ───
+  const [autoFollowTriggered, setAutoFollowTriggered] = useState(false)
   const eventsPerPage = 6
 
   // Resolve route param (id or slug) -> exhibitor + real id
@@ -678,6 +683,44 @@ export default function ExhibitorPage() {
       cancelled = true
     }
   }, [routeParam, pathname, router])
+
+  // ─── NEW: Auto-follow effect ─────────────────────────────────────────────
+  // When the user lands back here after login with ?autoFollow=<exhibitorId>,
+  // fire the follow API call once automatically so they don't need to click again.
+  useEffect(() => {
+    const autoFollowId = searchParams.get("autoFollow")
+
+    // Guard: must have the param, a logged-in user, the resolved exhibitorId,
+    // and must not have already triggered in this session.
+    if (!autoFollowId || !userId || !exhibitorId || autoFollowTriggered) return
+
+    // Only auto-follow if the param matches the exhibitor on this page.
+    if (autoFollowId !== exhibitorId) return
+
+    async function triggerAutoFollow() {
+      setAutoFollowTriggered(true)
+      try {
+        // Call your follow API — adjust endpoint to match your backend.
+        await apiFetch(`/api/follow`, {
+          method: "POST",
+          body: { targetId: exhibitorId, userId },
+          auth: true,
+        })
+      } catch (err) {
+        // Silently fail — the user can still click Follow manually.
+        console.error("Auto-follow failed:", err)
+      } finally {
+        // Clean up the ?autoFollow param from the URL so it doesn't re-trigger
+        // on refresh or navigation, without adding a new browser history entry.
+        const url = new URL(window.location.href)
+        url.searchParams.delete("autoFollow")
+        router.replace(url.pathname + (url.search || ""))
+      }
+    }
+
+    triggerAutoFollow()
+  }, [searchParams, userId, exhibitorId, autoFollowTriggered, router])
+  // ─────────────────────────────────────────────────────────────────────────
 
   // Fetch exhibitor booths (events) from backend
   useEffect(() => {
@@ -1025,13 +1068,47 @@ export default function ExhibitorPage() {
             {/* Action Buttons */}
             <div className="flex flex-col gap-3">
               <div className="flex items-center gap-3">
-                <FollowButton
-                  userId={exhibitor.id}
-                  currentUserId={userId ?? undefined}
-                  variant="default"
-                  size="default"
-                  className="shadow-sm"
-                />
+                {/* ─── CHANGED: wrap FollowButton to redirect unauthenticated users to login ───
+                    Previously this was just:
+                      <FollowButton
+                        userId={exhibitor.id}
+                        currentUserId={userId ?? undefined}
+                        variant="default"
+                        size="default"
+                        className="shadow-sm"
+                      />
+                    Now we intercept the click when userId is absent, redirect to /login
+                    with a callbackUrl that includes ?autoFollow=<exhibitorId> so that
+                    after login the auto-follow effect above fires automatically. ─── */}
+                {userId ? (
+                  // User is logged in — render FollowButton normally.
+                  <FollowButton
+                    userId={exhibitor.id}
+                    currentUserId={userId}
+                    variant="default"
+                    size="default"
+                    className="shadow-sm"
+                  />
+                ) : (
+                  // User is NOT logged in — show a button that redirects to login.
+                  <Button
+                    variant="default"
+                    size="default"
+                    className="border-white text-blue-900 bg-white hover:bg-white hover:text-blue-600 shadow-sm"
+                    onClick={() => {
+                      // Build the return URL: current path + autoFollow param so that
+                      // after a successful login the auto-follow effect fires once.
+                      const callbackUrl = encodeURIComponent(
+                        `${window.location.pathname}?autoFollow=${exhibitor.id}`
+                      )
+                      router.push(`/login?callbackUrl=${callbackUrl}`)
+                    }}
+                  >
+                    Follow
+                  </Button>
+                )}
+                {/* ─────────────────────────────────────────────────────────────────── */}
+
                 <Button
                   variant="outline"
                   className="border-white text-white hover:bg-white hover:text-blue-600 bg-transparent"
