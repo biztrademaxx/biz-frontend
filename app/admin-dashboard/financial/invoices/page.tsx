@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { DollarSign, FileText, Download, Eye, Search, Calendar, User, CreditCard, Receipt } from "lucide-react"
 import { apiFetch } from "@/lib/api"
+import { formatMoney, formatMoneyTotals, sumByCurrency } from "@/lib/format-currency"
 
 interface Invoice {
   id: string
@@ -59,7 +60,9 @@ export default function FinancialInvoicesPage() {
   const fetchInvoices = async () => {
     try {
       setLoading(true)
-      const data = await apiFetch<{ success?: boolean; data?: Invoice[] }>("/api/admin/financial/invoices", {
+      const data = await apiFetch<{ success?: boolean; data?: Invoice[] }>(
+        "/api/admin/financial/invoices?limit=500",
+        {
         auth: true,
       })
       setInvoices(data.data ?? [])
@@ -109,12 +112,20 @@ export default function FinancialInvoicesPage() {
     devLog("Downloading invoice:", invoiceId)
   }
 
-  // Calculate statistics
   const stats = {
     totalInvoices: invoices.length,
-    totalRevenue: invoices.filter((inv) => inv.status === "paid").reduce((sum, inv) => sum + inv.total, 0),
-    pendingAmount: invoices.filter((inv) => inv.status === "pending").reduce((sum, inv) => sum + inv.total, 0),
-    overdueAmount: invoices.filter((inv) => inv.status === "overdue").reduce((sum, inv) => sum + inv.total, 0),
+    totalRevenue: sumByCurrency(
+      invoices.filter((inv) => inv.status === "paid"),
+      "total",
+    ),
+    pendingAmount: sumByCurrency(
+      invoices.filter((inv) => inv.status === "pending"),
+      "total",
+    ),
+    overdueAmount: sumByCurrency(
+      invoices.filter((inv) => inv.status === "overdue"),
+      "total",
+    ),
   }
 
   if (loading) {
@@ -152,7 +163,7 @@ export default function FinancialInvoicesPage() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${stats.totalRevenue.toLocaleString()}</div>
+            <div className="text-2xl font-bold">{formatMoneyTotals(stats.totalRevenue)}</div>
             <p className="text-xs text-muted-foreground">Paid invoices</p>
           </CardContent>
         </Card>
@@ -163,7 +174,7 @@ export default function FinancialInvoicesPage() {
             <Receipt className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${stats.pendingAmount.toLocaleString()}</div>
+            <div className="text-2xl font-bold">{formatMoneyTotals(stats.pendingAmount)}</div>
             <p className="text-xs text-muted-foreground">Awaiting payment</p>
           </CardContent>
         </Card>
@@ -174,7 +185,7 @@ export default function FinancialInvoicesPage() {
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-destructive">${stats.overdueAmount.toLocaleString()}</div>
+            <div className="text-2xl font-bold text-destructive">{formatMoneyTotals(stats.overdueAmount)}</div>
             <p className="text-xs text-muted-foreground">Past due date</p>
           </CardContent>
         </Card>
@@ -243,9 +254,7 @@ export default function FinancialInvoicesPage() {
                         <div className="text-sm text-muted-foreground">{invoice.userEmail}</div>
                       </div>
                     </TableCell>
-                    <TableCell className="font-semibold">
-                      ${invoice.total.toLocaleString()} {invoice.currency}
-                    </TableCell>
+                    <TableCell className="font-semibold">{formatMoney(invoice.total, invoice.currency)}</TableCell>
                     <TableCell>{getStatusBadge(invoice.status)}</TableCell>
                     <TableCell>{new Date(invoice.invoiceDate).toLocaleDateString()}</TableCell>
                     <TableCell>{new Date(invoice.dueDate).toLocaleDateString()}</TableCell>
@@ -345,8 +354,8 @@ export default function FinancialInvoicesPage() {
                         <TableRow key={index}>
                           <TableCell>{item.description}</TableCell>
                           <TableCell className="text-right">{item.quantity}</TableCell>
-                          <TableCell className="text-right">${item.unitPrice.toFixed(2)}</TableCell>
-                          <TableCell className="text-right">${item.total.toFixed(2)}</TableCell>
+                          <TableCell className="text-right">{formatMoney(item.unitPrice, selectedInvoice.currency)}</TableCell>
+                          <TableCell className="text-right">{formatMoney(item.total, selectedInvoice.currency)}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -358,17 +367,15 @@ export default function FinancialInvoicesPage() {
               <div className="space-y-2 border-t pt-4">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Subtotal:</span>
-                  <span>${selectedInvoice.subtotal.toFixed(2)}</span>
+                  <span>{formatMoney(selectedInvoice.subtotal, selectedInvoice.currency)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Tax:</span>
-                  <span>${selectedInvoice.tax.toFixed(2)}</span>
+                  <span>{formatMoney(selectedInvoice.tax, selectedInvoice.currency)}</span>
                 </div>
                 <div className="flex justify-between text-lg font-bold border-t pt-2">
                   <span>Total:</span>
-                  <span>
-                    ${selectedInvoice.total.toFixed(2)} {selectedInvoice.currency}
-                  </span>
+                  <span>{formatMoney(selectedInvoice.total, selectedInvoice.currency)}</span>
                 </div>
               </div>
 

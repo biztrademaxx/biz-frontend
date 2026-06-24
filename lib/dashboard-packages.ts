@@ -24,6 +24,8 @@ export type DashboardPlanDefinition = {
   name: string
   tagline: string
   priceDisplay: string
+  /** INR amount for checkout display — 0 for free plans */
+  priceInr: number
   billingNote: string
   popular?: boolean
   /** Shown as “current plan” — replace with real subscription when API exists */
@@ -44,6 +46,7 @@ export const VISITOR_PACKAGE_PLANS: DashboardPlanDefinition[] = [
     name: "Free Plan",
     tagline: "Best for casual visitors.",
     priceDisplay: "₹0",
+    priceInr: 0,
     billingNote: "Lifetime",
     defaultCurrent: true,
     topStats: [
@@ -86,6 +89,7 @@ export const VISITOR_PACKAGE_PLANS: DashboardPlanDefinition[] = [
     name: "User Plan",
     tagline: "Best for active business visitors.",
     priceDisplay: "₹2,000",
+    priceInr: 2000,
     billingNote: "One-time",
     popular: true,
     topStats: [
@@ -128,6 +132,7 @@ export const VISITOR_PACKAGE_PLANS: DashboardPlanDefinition[] = [
     name: "Premium Plan",
     tagline: "Best for networking professionals.",
     priceDisplay: "₹5,000",
+    priceInr: 5000,
     billingNote: "One-time",
     topStats: [
       "Unlimited views & reveals",
@@ -171,6 +176,7 @@ export const EXHIBITOR_PACKAGE_PLANS: DashboardPlanDefinition[] = [
     name: "Basic Plan",
     tagline: "Best for small businesses getting started.",
     priceDisplay: "₹0",
+    priceInr: 0,
     billingNote: "Free",
     defaultCurrent: true,
     topStats: ["3 images", "5 products", "2 services", "3 enquiries / yr"],
@@ -210,6 +216,7 @@ export const EXHIBITOR_PACKAGE_PLANS: DashboardPlanDefinition[] = [
     name: "Standard Plan",
     tagline: "Best for growing exhibitors.",
     priceDisplay: "₹10,000",
+    priceInr: 10000,
     billingNote: "per year",
     popular: true,
     topStats: ["15 images", "3 videos", "30 products", "15 services", "15 enquiries / yr"],
@@ -248,6 +255,7 @@ export const EXHIBITOR_PACKAGE_PLANS: DashboardPlanDefinition[] = [
     name: "Premium Plan",
     tagline: "Best for large exhibitors and brands.",
     priceDisplay: "₹12,999",
+    priceInr: 12999,
     billingNote: "per year",
     topStats: ["Unlimited media & listings", "Top featured placement", "Unlimited enquiries"],
     groups: [
@@ -283,6 +291,7 @@ export const ORGANIZER_PACKAGE_PLANS: DashboardPlanDefinition[] = [
     name: "Free Plan",
     tagline: "Best for small / local events.",
     priceDisplay: "Free",
+    priceInr: 0,
     billingNote: "",
     defaultCurrent: true,
     topStats: ["1 event", "100 exhibitors", "500 visitors / event", "1 staff", "2 days / event"],
@@ -319,6 +328,7 @@ export const ORGANIZER_PACKAGE_PLANS: DashboardPlanDefinition[] = [
     name: "Silver Plan",
     tagline: "Best for medium-scale organizers.",
     priceDisplay: "₹25,000",
+    priceInr: 25000,
     billingNote: "per year",
     popular: true,
     topStats: ["2 events", "200 exhibitors", "1k visitors / event", "5 staff", "5 days / event"],
@@ -355,6 +365,7 @@ export const ORGANIZER_PACKAGE_PLANS: DashboardPlanDefinition[] = [
     name: "Gold Plan",
     tagline: "Best for enterprise organizers.",
     priceDisplay: "₹50,000",
+    priceInr: 50000,
     billingNote: "per year",
     topStats: ["10 events", "500 exhibitors", "10k visitors / event", "20 staff", "10 days / event"],
     groups: [
@@ -384,6 +395,23 @@ export const ORGANIZER_PACKAGE_PLANS: DashboardPlanDefinition[] = [
     ],
   },
 ]
+
+export function isFreeDashboardPlan(plan: DashboardPlanDefinition): boolean {
+  return plan.priceInr <= 0
+}
+
+export type CurrentDashboardPlan = {
+  planSlug: string
+  planName: string
+  billingNote?: string | null
+  amountInr?: number
+  status?: string
+  isDefault?: boolean
+  startedAt?: string | null
+  expiresAt?: string | null
+  paymentTransactionId?: string | null
+  razorpayPaymentId?: string | null
+}
 
 export function getDashboardPlansForRole(role: DashboardPackageRole): DashboardPlanDefinition[] {
   switch (role) {

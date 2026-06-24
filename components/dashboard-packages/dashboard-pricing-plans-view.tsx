@@ -1,6 +1,7 @@
 "use client"
 
-import { Check, Crown, Minus, Sparkles, X } from "lucide-react"
+import { useCallback, useEffect, useState } from "react"
+import { Check, Crown, Loader2, Minus, Sparkles, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
@@ -12,7 +13,13 @@ import {
   dashboardPlansPageSubtitle,
   dashboardPlansPageTitle,
   getDashboardPlansForRole,
+  isFreeDashboardPlan,
 } from "@/lib/dashboard-packages"
+import { PlanPaymentDialog } from "@/components/dashboard-packages/plan-payment-dialog"
+import {
+  activateFreeDashboardPlan,
+  fetchCurrentDashboardPlan,
+} from "@/lib/subscription-checkout"
 
 function FeatureIcon({ state }: { state: PlanFeatureState }) {
   if (state === true) {
@@ -39,11 +46,15 @@ function FeatureIcon({ state }: { state: PlanFeatureState }) {
 function PlanCard({
   plan,
   accent,
+  isCurrent,
+  loading,
   onCta,
 }: {
   plan: DashboardPlanDefinition
   accent: "visitor" | "exhibitor" | "organizer"
-  onCta: (planId: string) => void
+  isCurrent: boolean
+  loading: boolean
+  onCta: (plan: DashboardPlanDefinition) => void
 }) {
   const borderPopular =
     accent === "visitor" || accent === "exhibitor" || accent === "organizer"
@@ -72,7 +83,7 @@ function PlanCard({
           <Badge className="border-0 bg-amber-100 text-amber-900 hover:bg-amber-100">Most popular</Badge>
         </div>
       ) : null}
-      {plan.defaultCurrent ? (
+      {isCurrent ? (
         <div className="absolute left-3 top-3">
           <Badge variant="secondary" className="border border-emerald-200 bg-emerald-50 text-emerald-800">
             Current plan
@@ -121,7 +132,7 @@ function PlanCard({
       </div>
 
       <div className="mt-auto border-t border-gray-100 px-5 py-4">
-        {plan.defaultCurrent ? (
+        {isCurrent ? (
           <Button variant="outline" className="w-full" disabled>
             Active plan
           </Button>
@@ -129,9 +140,19 @@ function PlanCard({
           <Button
             type="button"
             className={cn("w-full text-white shadow-sm", ctaClass)}
-            onClick={() => onCta(plan.id)}
+            disabled={loading}
+            onClick={() => onCta(plan)}
           >
-            Get started
+            {loading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
+                Please wait…
+              </>
+            ) : isFreeDashboardPlan(plan) ? (
+              "Switch to this plan"
+            ) : (
+              "Upgrade & pay"
+            )}
           </Button>
         )}
       </div>
@@ -141,7 +162,6 @@ function PlanCard({
 
 export interface DashboardPricingPlansViewProps {
   role: DashboardPackageRole
-  /** Optional: when payment flow exists, parent can handle checkout */
   onPlanSelect?: (planId: string) => void
 }
 
@@ -151,41 +171,116 @@ export function DashboardPricingPlansView({ role, onPlanSelect }: DashboardPrici
   const accent: "visitor" | "exhibitor" | "organizer" =
     role === "VISITOR" ? "visitor" : role === "EXHIBITOR" ? "exhibitor" : "organizer"
 
-  const handleCta = (planId: string) => {
-    onPlanSelect?.(planId)
+  const [currentPlanSlug, setCurrentPlanSlug] = useState<string | null>(null)
+  const [loadingPlan, setLoadingPlan] = useState(true)
+  const [actionPlanId, setActionPlanId] = useState<string | null>(null)
+  const [checkoutPlan, setCheckoutPlan] = useState<DashboardPlanDefinition | null>(null)
+  const [paymentOpen, setPaymentOpen] = useState(false)
+
+  const loadCurrentPlan = useCallback(async () => {
+    try {
+      const current = await fetchCurrentDashboardPlan(role)
+      setCurrentPlanSlug(current.planSlug)
+    } catch {
+      const fallback = plans.find((p) => p.defaultCurrent)?.id ?? plans[0]?.id ?? null
+      setCurrentPlanSlug(fallback)
+    } finally {
+      setLoadingPlan(false)
+    }
+  }, [role, plans])
+
+  useEffect(() => {
+    void loadCurrentPlan()
+  }, [loadCurrentPlan])
+
+  const handlePlanActivated = async () => {
+    await loadCurrentPlan()
     toast({
-      title: "Checkout coming soon",
-      description: "Plan selection will open payment once billing is connected for your account.",
+      title: "Plan updated",
+      description: "Your subscription is now active on this account.",
     })
   }
 
+  const handleCta = async (plan: DashboardPlanDefinition) => {
+    onPlanSelect?.(plan.id)
+    if (plan.id === currentPlanSlug) return
+
+    if (isFreeDashboardPlan(plan)) {
+      setActionPlanId(plan.id)
+      try {
+        await activateFreeDashboardPlan(role, plan.id)
+        await handlePlanActivated()
+      } catch (error) {
+        toast({
+          variant: "destructive",
+          title: "Could not switch plan",
+          description: error instanceof Error ? error.message : "Please try again.",
+        })
+      } finally {
+        setActionPlanId(null)
+      }
+      return
+    }
+
+    setCheckoutPlan(plan)
+    setPaymentOpen(true)
+  }
+
+  const resolvedCurrentSlug =
+    currentPlanSlug ?? plans.find((p) => p.defaultCurrent)?.id ?? plans[0]?.id
+
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-8 px-4 py-6 md:px-6 md:py-8">
-      <div className="flex flex-col gap-2 border-b border-gray-200 pb-6 md:flex-row md:items-end md:justify-between">
-        <div>
-          <div className="mb-2 flex items-center gap-2">
-            <Crown className="h-6 w-6 shrink-0 text-amber-500" aria-hidden />
-            <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-              {role === "VISITOR" ? "Visitor" : role === "EXHIBITOR" ? "Exhibitor" : "Organizer"}
-            </span>
+    <>
+      <div className="mx-auto w-full max-w-6xl space-y-8 px-4 py-6 md:px-6 md:py-8">
+        <div className="flex flex-col gap-2 border-b border-gray-200 pb-6 md:flex-row md:items-end md:justify-between">
+          <div>
+            <div className="mb-2 flex items-center gap-2">
+              <Crown className="h-6 w-6 shrink-0 text-amber-500" aria-hidden />
+              <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                {role === "VISITOR" ? "Visitor" : role === "EXHIBITOR" ? "Exhibitor" : "Organizer"}
+              </span>
+            </div>
+            <h1 className="text-2xl font-bold tracking-tight text-gray-900 md:text-3xl">
+              {dashboardPlansPageTitle(role)}
+            </h1>
+            <p className="mt-2 max-w-2xl text-sm text-gray-600 md:text-base">
+              {dashboardPlansPageSubtitle(role)}
+            </p>
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900 md:text-3xl">
-            {dashboardPlansPageTitle(role)}
-          </h1>
-          <p className="mt-2 max-w-2xl text-sm text-gray-600 md:text-base">{dashboardPlansPageSubtitle(role)}</p>
+          {loadingPlan ? (
+            <div className="flex items-center gap-2 text-sm text-gray-500">
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+              Loading your plan…
+            </div>
+          ) : null}
         </div>
+
+        <div className="grid gap-6 lg:grid-cols-3">
+          {plans.map((plan) => (
+            <PlanCard
+              key={plan.id}
+              plan={plan}
+              accent={accent}
+              isCurrent={plan.id === resolvedCurrentSlug}
+              loading={actionPlanId === plan.id}
+              onCta={handleCta}
+            />
+          ))}
+        </div>
+
+        <p className="text-center text-xs text-gray-500">
+          Paid plans are processed securely via Razorpay. Subscription details appear in Admin → Subscriptions
+          &amp; plans with payment reference and plan name.
+        </p>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        {plans.map((plan) => (
-          <PlanCard key={plan.id} plan={plan} accent={accent} onCta={handleCta} />
-        ))}
-      </div>
-
-      <p className="text-center text-xs text-gray-500">
-        Payments and GST invoices will be connected from Admin → Subscriptions &amp; plans. Plan limits can be enforced
-        per module once billing is live.
-      </p>
-    </div>
+      <PlanPaymentDialog
+        open={paymentOpen}
+        onOpenChange={setPaymentOpen}
+        role={role}
+        plan={checkoutPlan}
+        onSuccess={handlePlanActivated}
+      />
+    </>
   )
 }

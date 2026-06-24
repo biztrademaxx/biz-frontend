@@ -66,7 +66,9 @@ export default function FinancialSubscriptionsPage() {
   const fetchSubscriptions = async () => {
     try {
       setLoading(true)
-      const data = await apiFetch<{ success?: boolean; data?: Subscription[] }>("/api/admin/financial/subscriptions", {
+      const data = await apiFetch<{ success?: boolean; data?: Subscription[] }>(
+        "/api/admin/financial/subscriptions?limit=500",
+        {
         auth: true,
       })
       setSubscriptions(data.data || [])
