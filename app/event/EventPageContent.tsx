@@ -374,35 +374,7 @@ export default function EventPageContent({ event, session: _session, router, toa
 
   return (
     <div className="min-h-screen bg-[#f9f9f9] pb-6 md:pb-8">
-      <EventHero 
-  event={event} 
-  onInterested={handleVisitClick}
-  onRequestBooth={handleExhibitClick}
-  onSave={handleSaveEvent}
-  onShare={() => {
-    toast({
-      title: "Link copied!",
-      description: "Event link has been copied to clipboard",
-    })
-  }}
-  onAddReview={() => {
-    // Scroll to reviews section
-    const reviewsTab = document.querySelector('button[value="reviews"]')
-    if (reviewsTab && reviewsTab instanceof HTMLButtonElement) {
-      reviewsTab.click()
-      setTimeout(() => {
-        const reviewForm = document.querySelector('form, [class*="review-form"]')
-        if (reviewForm) {
-          reviewForm.scrollIntoView({ behavior: 'smooth', block: 'center' })
-        }
-      }, 200)
-    }
-  }}
-  isSaved={isSaved}
-  saving={saving}
-  averageRating={averageRating}
-  totalReviews={totalReviews}
-/>
+      <EventHero event={event} />
       <EventPageSummaryBar
         event={event}
         averageRating={averageRating}
