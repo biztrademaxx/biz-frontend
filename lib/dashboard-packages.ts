@@ -400,6 +400,16 @@ export function isFreeDashboardPlan(plan: DashboardPlanDefinition): boolean {
   return plan.priceInr <= 0
 }
 
+export type PlanBadgeTier = "free" | "standard" | "premium"
+
+/** Visual tier for subscription badges (navbar, profile, etc.). */
+export function getPlanBadgeTier(planSlug: string): PlanBadgeTier {
+  const slug = planSlug.toLowerCase()
+  if (slug.includes("premium") || slug.includes("gold")) return "premium"
+  if (slug.includes("free") || slug.includes("basic")) return "free"
+  return "standard"
+}
+
 export type CurrentDashboardPlan = {
   planSlug: string
   planName: string

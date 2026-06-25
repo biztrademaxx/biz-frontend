@@ -45,6 +45,8 @@ import {
   exInput,
   exCtaGradient,
 } from "./dashboard-theme"
+import { DashboardPlanBadge } from "@/components/dashboard-packages"
+import { useDashboardPlan } from "@/hooks/use-dashboard-plan"
 
 interface ExhibitorData {
   id: string
@@ -87,6 +89,7 @@ interface CompanyInfoProps {
 
 export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProps) {
   const { toast } = useToast()
+  const { plan: currentPlan, loading: planLoading } = useDashboardPlan("EXHIBITOR")
   const [isEditing, setIsEditing] = useState(false)
   const [loading, setLoading] = useState(false)
   const [uploading, setUploading] = useState(false)
@@ -265,9 +268,12 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
       <div className={exCompanyGlowLayer} aria-hidden />
       <div className="relative z-10 space-y-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className="text-2xl font-bold tracking-tight text-slate-800 md:text-3xl">
-            Company Information
-          </h1>
+          <div className="space-y-2">
+            <h1 className="text-2xl font-bold tracking-tight text-slate-800 md:text-3xl">
+              Company Information
+            </h1>
+            <DashboardPlanBadge plan={currentPlan} loading={planLoading} />
+          </div>
           <Button
             onClick={() => (isEditing ? handleSave() : setIsEditing(true))}
             className={cn("flex w-full items-center justify-center gap-2 shadow-md sm:w-auto", exCtaGradient)}
@@ -282,9 +288,10 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
           {/* Company Logo & Banner */}
           <Card className={cn(exGlassCardPremium, "min-w-0 overflow-hidden")}>
             <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-slate-800">
+              <CardTitle className="flex flex-wrap items-center gap-2 text-slate-800">
                 <Building2 className="h-5 w-5 text-[#004A96]" />
                 Company Logo & Banner
+                <DashboardPlanBadge plan={currentPlan} loading={planLoading} size="sm" className="ml-auto" />
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">

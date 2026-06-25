@@ -47,7 +47,8 @@ import ActivePromotions from "./active-promotion"
 import { ExhibitorHelpSupport } from "./help-support"
 import ViewFeedback from "./view-feedback"
 import { DashboardManagedBanner } from "@/components/dashboard-managed-banner"
-import { DashboardPricingPlansView } from "@/components/dashboard-packages"
+import { DashboardPricingPlansView, DashboardPlanBadge } from "@/components/dashboard-packages"
+import { useDashboardPlan } from "@/hooks/use-dashboard-plan"
 import { AppImage } from "@/components/app-image"
 import { cn } from "@/lib/utils"
 import {
@@ -164,6 +165,7 @@ export function ExhibitorLayout({ routeSegment }: UserDashboardProps) {
   const router = useRouter()
   const pathname = usePathname()
   const { toast } = useToast()
+  const { plan: currentPlan, loading: planLoading } = useDashboardPlan("EXHIBITOR")
 
   useEffect(() => {
     if (authLoading) return
@@ -614,7 +616,9 @@ case "view-feedback":
                 </div>
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold text-slate-900">{exhibitorDisplayName}</p>
-                  <p className="truncate text-xs text-slate-500">Exhibitor</p>
+                  <div className="mt-1">
+                    <DashboardPlanBadge plan={currentPlan} loading={planLoading} size="sm" />
+                  </div>
                 </div>
               </div>
             )}

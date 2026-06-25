@@ -18,6 +18,8 @@ import {
 import { NAVBAR_LOGO_LINK_CLASSNAME, getNavbarLogoImageProps } from "@/lib/brand-logo"
 import ExploreMegaMenu from "./ExploreMegaMenu"
 import NavbarCountryLabel from "./location/NavbarCountryLabel"
+import { DashboardPlanBadge } from "@/components/dashboard-packages"
+import { dashboardRoleFromUserRole, useDashboardPlan } from "@/hooks/use-dashboard-plan"
 
 export default function Navbar() {
   const router = useRouter()
@@ -50,6 +52,10 @@ export default function Navbar() {
   const role = getCurrentUserRole()
   const displayName = getCurrentUserDisplayName()
   const userEmail = getCurrentUserEmail()
+  const dashboardPlanRole = dashboardRoleFromUserRole(role)
+  const { plan: currentPlan, loading: planLoading } = useDashboardPlan(
+    authenticated ? dashboardPlanRole : null,
+  )
 
   const handleDashboard = useCallback(() => {
     const roleUpper = (role || "").toUpperCase()
@@ -112,6 +118,11 @@ export default function Navbar() {
       <div className="border-b border-gray-100 px-4 py-3">
         <p className="truncate text-sm font-semibold text-gray-900">{displayName}</p>
         {userEmail ? <p className="truncate text-xs text-gray-500">{userEmail}</p> : null}
+        {dashboardPlanRole ? (
+          <div className="mt-2">
+            <DashboardPlanBadge plan={currentPlan} loading={planLoading} size="sm" />
+          </div>
+        ) : null}
       </div>
       <button
         type="button"
