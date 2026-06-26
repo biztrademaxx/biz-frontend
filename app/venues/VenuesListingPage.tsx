@@ -48,7 +48,7 @@ export default function VenuesListingPage() {
 
   return (
     <div className="min-h-screen bg-[#f9f9f9]">
-      <div className="border-b bg-white">
+      <div className="border-b bg-[#f9f9f9]">
         <div className="mx-auto max-w-7xl px-4 py-5 sm:py-6">
           <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">Find Perfect Venues</h1>
           <p className="mt-1 text-sm text-gray-600 sm:text-base">

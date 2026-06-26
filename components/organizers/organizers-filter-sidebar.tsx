@@ -71,7 +71,7 @@ function CheckboxFilterRow({
       <Checkbox id={id} checked={checked} onCheckedChange={onCheckedChange} className="border-gray-300" />
       <span className="min-w-0 flex-1 text-sm text-gray-700">{label}</span>
       {count !== undefined ? (
-        <span className="shrink-0 text-sm font-medium tabular-nums text-[#2563eb]">
+        <span className="shrink-0 text-sm font-medium tabular-nums text-[#004A96]">
           {formatFacetCount(count)}
         </span>
       ) : null}

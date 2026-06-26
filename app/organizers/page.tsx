@@ -300,7 +300,7 @@ export default function OrganizersPage() {
   return (
     <div className="min-h-screen bg-[#f9f9f9]">
             {/* Mobile filter bar */}
-      <div className="sticky top-0 z-30 flex items-center gap-2 border-b border-gray-200/80 bg-white/95 px-4 py-3 backdrop-blur lg:hidden">
+      <div className="sticky top-0 z-30 flex items-center gap-2 border-b border-gray-200/80 bg-[#f9f9f9]/95 px-4 py-3 backdrop-blur lg:hidden">
         <Sheet open={mobileFiltersOpen} onOpenChange={setMobileFiltersOpen}>
           <SheetTrigger asChild>
             <Button variant="outline" size="sm" className="gap-2 border-[#004A96]/30 text-[#004A96]">
@@ -352,7 +352,7 @@ export default function OrganizersPage() {
 
       <div className="flex flex-col lg:flex-row">
         {/* Desktop sidebar */}
-        <aside className="hidden w-64 shrink-0 border-r border-gray-200 bg-white lg:block xl:w-72">
+        <aside className="hidden w-64 shrink-0 border-r border-gray-200 bg-[#f9f9f9] lg:block xl:w-72">
           <div className="sticky top-0 max-h-[100dvh]">
             <div className="border-b border-gray-100 px-5 py-5">
               <h2 className="text-lg font-semibold text-gray-900">Discover organizers</h2>
@@ -370,7 +370,7 @@ export default function OrganizersPage() {
         </aside>
 
         <main className="min-w-0 flex-1">
-          <div className="border-b border-gray-200 bg-white px-4 py-6 sm:px-8">
+          <div className="border-b border-gray-200 bg-[#f9f9f9] px-4 py-6 sm:px-8">
             <h1 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">Find expert organizers</h1>
             <p className="mt-2 max-w-2xl text-sm text-muted-foreground sm:text-base">
               Connect with verified teams for trade shows, conferences, and corporate events.

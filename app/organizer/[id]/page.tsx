@@ -428,7 +428,7 @@ export default function OrganizerPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
-      <div className="bg-[#002C71] text-white">
+      <div className="bg-[#004A96] text-white">
         <div className="max-w-7xl mx-auto px-4 py-12">
           <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
             {/* Organizer Avatar — contain logo so wide/tall assets are not cropped */}
@@ -498,7 +498,7 @@ export default function OrganizerPage() {
       </div>
 
       {/* Stats Section - Updated */}
-      <div className="bg-white border-b">
+      <div className="bg-[#F9F9F9] border-b">
         <div className="max-w-7xl mx-auto px-4 py-6">
           <div className={`grid grid-cols-2 gap-6 ${organizer.founded ? "md:grid-cols-4" : "md:grid-cols-3"}`}>
             <div className="text-center">
