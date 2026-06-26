@@ -179,6 +179,12 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [totalItems, setTotalItems] = useState(0)
+  const [listStats, setListStats] = useState({
+    total: 0,
+    verified: 0,
+    premium: 0,
+    pending: 0,
+  })
   const [activeTab, setActiveTab] = useState<"all" | "bulk-import">(initialTab)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [sendingEmailFor, setSendingEmailFor] = useState<string | null>(null)
@@ -234,12 +240,19 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
         data?: Organizer[]
         organizers?: Organizer[]
         pagination?: { page?: number; limit?: number; total?: number; totalPages?: number }
+        stats?: { total?: number; verified?: number; premium?: number; pending?: number }
       }>(`/organizers?${query.toString()}`)
       const list = data?.data ?? (data as any)?.organizers ?? []
       setOrganizers(Array.isArray(list) ? list : [])
       const incomingTotal = Number(data?.pagination?.total ?? list?.length ?? 0)
       const incomingPages = Math.max(1, Number(data?.pagination?.totalPages ?? 1))
       setTotalItems(Number.isFinite(incomingTotal) ? incomingTotal : 0)
+      setListStats({
+        total: Number(data?.stats?.total ?? incomingTotal) || 0,
+        verified: Number(data?.stats?.verified ?? 0) || 0,
+        premium: Number(data?.stats?.premium ?? 0) || 0,
+        pending: Number(data?.stats?.pending ?? 0) || 0,
+      })
       setTotalPages(incomingPages)
       if (page > incomingPages) {
         setCurrentPage(incomingPages)
@@ -335,10 +348,10 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
   }
 
   const stats = {
-    total: totalItems,
-    verified: organizers.filter((o) => o.isVerified).length,
-    premium: organizers.filter((o) => o.isActive && o.isVerified).length,
-    pending: organizers.filter((o) => !o.isVerified).length,
+    total: listStats.total || totalItems,
+    verified: listStats.verified,
+    premium: listStats.premium,
+    pending: listStats.pending,
   }
 
   const handleExport = async () => {

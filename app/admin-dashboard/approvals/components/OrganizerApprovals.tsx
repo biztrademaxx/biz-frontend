@@ -75,12 +75,27 @@ interface PaginatedResponse {
         limit: number
         totalPages: number
     }
+    stats?: {
+        total: number
+        verified: number
+        premium: number
+        pending: number
+    }
+}
+
+function getOrganizerName(org: Organizer): string {
+    if (org?.organizationName?.trim()) return org.organizationName
+    if (org?.company?.trim()) return org.company
+    const name = `${org?.firstName || ""} ${org?.lastName || ""}`.trim()
+    return name || "Unnamed Organizer"
 }
 
 export default function OrganizerApprovals() {
     const [organizers, setOrganizers] = useState<Organizer[]>([])
-    const [allPendingOrganizers, setAllPendingOrganizers] = useState<Organizer[]>([])
-    const [allActiveOrganizers, setAllActiveOrganizers] = useState<Organizer[]>([])
+    const [totalOrganizers, setTotalOrganizers] = useState(0)
+    const [pendingTotal, setPendingTotal] = useState(0)
+    const [activeTotal, setActiveTotal] = useState(0)
+    const [listTotal, setListTotal] = useState(0)
     const [activeTab, setActiveTab] = useState<"pending" | "active">("pending")
     const [loading, setLoading] = useState(true)
     const [refreshing, setRefreshing] = useState(false)
@@ -96,7 +111,6 @@ export default function OrganizerApprovals() {
     const itemsPerPage = 10
     const { toast } = useToast()
 
-    // Debounce search
     useEffect(() => {
         const timer = setTimeout(() => {
             setDebouncedSearch(searchTerm)
@@ -105,75 +119,76 @@ export default function OrganizerApprovals() {
         return () => clearTimeout(timer)
     }, [searchTerm])
 
-    // Fetch ALL organizers to get accurate counts
-    const fetchAllOrganizers = useCallback(async () => {
-        try {
-            // Fetch pending organizers (unverified)
-            const pendingResponse = await adminApi<PaginatedResponse>(`/organizers?verified=false&limit=1000`)
-            const pendingData = pendingResponse?.data || []
+    const buildOrganizersQuery = useCallback(
+        (tab: "pending" | "active", page: number, search: string) => {
+            const params = new URLSearchParams({
+                page: String(page),
+                limit: String(itemsPerPage),
+                sort: "createdAt",
+                order: "desc",
+            })
+            const trimmedSearch = search.trim()
+            if (trimmedSearch) params.set("search", trimmedSearch)
+            if (tab === "pending") {
+                params.set("verified", "false")
+                params.set("isActive", "true")
+            } else {
+                params.set("verified", "true")
+                params.set("isActive", "true")
+            }
+            return params
+        },
+        [itemsPerPage],
+    )
 
-            // Fetch active organizers (verified and active)
-            const activeResponse = await adminApi<PaginatedResponse>(`/organizers?verified=true&isActive=true&limit=1000`)
-            const activeData = activeResponse?.data || []
-
-            setAllPendingOrganizers(pendingData)
-            setAllActiveOrganizers(activeData)
-
-            return { pending: pendingData, active: activeData }
-        } catch (error) {
-            console.error("Error fetching all organizers:", error)
-            return { pending: [], active: [] }
-        }
+    const fetchCounts = useCallback(async () => {
+        const [allRes, pendingRes, activeRes] = await Promise.all([
+            adminApi<PaginatedResponse>(`/organizers?limit=1&page=1`),
+            adminApi<PaginatedResponse>(`/organizers?verified=false&isActive=true&limit=1&page=1`),
+            adminApi<PaginatedResponse>(`/organizers?verified=true&isActive=true&limit=1&page=1`),
+        ])
+        setTotalOrganizers(allRes.stats?.total ?? allRes.pagination?.total ?? 0)
+        setPendingTotal(pendingRes.pagination?.total ?? 0)
+        setActiveTotal(activeRes.pagination?.total ?? 0)
     }, [])
 
-    // Get paginated data based on search
-    const getPaginatedData = useCallback(() => {
-        const sourceData = activeTab === "pending" ? allPendingOrganizers : allActiveOrganizers
-
-        // Apply search filter
-        let filtered = sourceData
-        if (debouncedSearch) {
-            const searchLower = debouncedSearch.toLowerCase()
-            filtered = sourceData.filter(org =>
-                getOrganizerName(org).toLowerCase().includes(searchLower) ||
-                org.email.toLowerCase().includes(searchLower) ||
-                (org.organizationName && org.organizationName.toLowerCase().includes(searchLower)) ||
-                (org.company && org.company.toLowerCase().includes(searchLower))
-            )
-        }
-
-        // Calculate pagination
-        const totalItems = filtered.length
-        const totalPagesCount = Math.ceil(totalItems / itemsPerPage)
-        const start = (currentPage - 1) * itemsPerPage
-        const end = start + itemsPerPage
-        const paginatedItems = filtered.slice(start, end)
-
-        setTotalPages(totalPagesCount)
-
-        return paginatedItems
-    }, [activeTab, allPendingOrganizers, allActiveOrganizers, debouncedSearch, currentPage])
-
-    useEffect(() => {
-        const loadData = async () => {
+    const fetchPage = useCallback(async () => {
+        try {
             setLoading(true)
-            await fetchAllOrganizers()
+            const params = buildOrganizersQuery(activeTab, currentPage, debouncedSearch)
+            const response = await adminApi<PaginatedResponse>(`/organizers?${params.toString()}`)
+            const list = response?.data ?? []
+            setOrganizers(Array.isArray(list) ? list : [])
+            const total = Number(response?.pagination?.total ?? list.length)
+            const pages = Math.max(1, Number(response?.pagination?.totalPages ?? 1))
+            setListTotal(Number.isFinite(total) ? total : 0)
+            setTotalPages(pages)
+            if (currentPage > pages) setCurrentPage(pages)
+        } catch (error) {
+            console.error("Error fetching organizers:", error)
+            setOrganizers([])
+            setListTotal(0)
+            setTotalPages(1)
+            toast({ title: "Error", description: "Failed to load organizers", variant: "destructive" })
+        } finally {
             setLoading(false)
         }
-        loadData()
-    }, [fetchAllOrganizers])
+    }, [activeTab, buildOrganizersQuery, currentPage, debouncedSearch])
 
     useEffect(() => {
-        const paginated = getPaginatedData()
-        setOrganizers(paginated)
-    }, [getPaginatedData])
+        void fetchCounts()
+    }, [fetchCounts])
+
+    useEffect(() => {
+        void fetchPage()
+    }, [fetchPage])
 
     const refreshAllData = async () => {
         setRefreshing(true)
-        await fetchAllOrganizers()
         setCurrentPage(1)
         setSearchTerm("")
         setDebouncedSearch("")
+        await fetchCounts()
         toast({ title: "Refreshed", description: "Data has been updated" })
         setRefreshing(false)
     }
@@ -186,7 +201,8 @@ export default function OrganizerApprovals() {
                 body: { isVerified: true, isActive: true },
             })
             toast({ title: "Success", description: "Organizer approved successfully" })
-            await fetchAllOrganizers()
+            await fetchCounts()
+            await fetchPage()
         } catch (error) {
             toast({ title: "Error", description: "Failed to approve organizer", variant: "destructive" })
         } finally {
@@ -203,7 +219,8 @@ export default function OrganizerApprovals() {
                 body: { reason: rejectReason },
             })
             toast({ title: "Success", description: "Organizer rejected successfully" })
-            await fetchAllOrganizers()
+            await fetchCounts()
+            await fetchPage()
             setRejectDialogOpen(false)
             setRejectReason("")
             setSelectedOrganizer(null)
@@ -212,13 +229,6 @@ export default function OrganizerApprovals() {
         } finally {
             setProcessingId(null)
         }
-    }
-
-    const getOrganizerName = (org: Organizer): string => {
-        if (org?.organizationName?.trim()) return org.organizationName
-        if (org?.company?.trim()) return org.company
-        const name = `${org?.firstName || ""} ${org?.lastName || ""}`.trim()
-        return name || "Unnamed Organizer"
     }
 
     const getOrganization = (org: Organizer): string => {
@@ -231,39 +241,15 @@ export default function OrganizerApprovals() {
     }
 
     const handlePageChange = (newPage: number) => {
-        const pages = Math.max(1, Math.ceil(
-            (activeTab === "pending" ? allPendingOrganizers : allActiveOrganizers).length / itemsPerPage
-        ))
-        if (newPage >= 1 && newPage <= pages) {
+        if (newPage >= 1 && newPage <= totalPages) {
             setCurrentPage(newPage)
             window.scrollTo({ top: 0, behavior: "smooth" })
         }
     }
 
-    const pendingCount = allPendingOrganizers.length
-    const activeCount = allActiveOrganizers.length
-    const totalCount = pendingCount + activeCount
-
-    // Get current display data for search/pagination
-    const getCurrentDisplayData = () => {
-        const sourceData = activeTab === "pending" ? allPendingOrganizers : allActiveOrganizers
-        if (!debouncedSearch) return { filtered: sourceData, total: sourceData.length }
-
-        const searchLower = debouncedSearch.toLowerCase()
-        const filtered = sourceData.filter(org =>
-            getOrganizerName(org).toLowerCase().includes(searchLower) ||
-            org.email.toLowerCase().includes(searchLower) ||
-            (org.organizationName && org.organizationName.toLowerCase().includes(searchLower)) ||
-            (org.company && org.company.toLowerCase().includes(searchLower))
-        )
-        return { filtered, total: filtered.length }
-    }
-
-    const { filtered: currentFilteredData, total: currentTotal } = getCurrentDisplayData()
-    const startIndex = (currentPage - 1) * itemsPerPage
-    const endIndex = startIndex + itemsPerPage
-    const displayedOrganizers = currentFilteredData.slice(startIndex, endIndex)
-    const pages = Math.max(1, Math.ceil(currentTotal / itemsPerPage))
+    const pendingCount = pendingTotal
+    const activeCount = activeTotal
+    const totalCount = totalOrganizers
 
     return (
         <div className="space-y-6">
@@ -376,7 +362,7 @@ export default function OrganizerApprovals() {
                         <div className="flex items-center justify-center py-20">
                             <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
                         </div>
-                    ) : displayedOrganizers.length === 0 ? (
+                    ) : organizers.length === 0 ? (
                         <div className="text-center py-20">
                             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 mb-4">
                                 <Check className="h-8 w-8 text-green-600" />
@@ -387,7 +373,7 @@ export default function OrganizerApprovals() {
                     ) : (
                         <>
                             <div className="space-y-3">
-                                {displayedOrganizers.map((organizer) => (
+                                {organizers.map((organizer) => (
                                     <OrganizerCard
                                         key={organizer.id}
                                         organizer={organizer}
@@ -409,11 +395,12 @@ export default function OrganizerApprovals() {
                                 ))}
                             </div>
 
-                            {pages > 1 && (
+                            {(listTotal > 0 || totalPages > 1) && (
                                 <div className="flex items-center justify-between mt-6 pt-4 border-t">
                                     <p className="text-sm text-gray-500">
-                                        Showing {displayedOrganizers.length} of {currentTotal} organizers
+                                        Showing {organizers.length} of {listTotal} organizers
                                     </p>
+                                    {totalPages > 1 && (
                                     <div className="flex gap-2">
                                         <Button
                                             variant="outline"
@@ -425,18 +412,19 @@ export default function OrganizerApprovals() {
                                             Previous
                                         </Button>
                                         <span className="text-sm text-gray-600 px-3 py-1">
-                                            Page {currentPage} of {pages}
+                                            Page {currentPage} of {totalPages}
                                         </span>
                                         <Button
                                             variant="outline"
                                             size="sm"
                                             onClick={() => handlePageChange(currentPage + 1)}
-                                            disabled={currentPage === pages}
+                                            disabled={currentPage === totalPages}
                                         >
                                             Next
                                             <ChevronRight className="h-4 w-4 ml-1" />
                                         </Button>
                                     </div>
+                                    )}
                                 </div>
                             )}
                         </>
@@ -449,7 +437,7 @@ export default function OrganizerApprovals() {
                         <div className="flex items-center justify-center py-20">
                             <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
                         </div>
-                    ) : displayedOrganizers.length === 0 ? (
+                    ) : organizers.length === 0 ? (
                         <div className="text-center py-20">
                             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4">
                                 <Users className="h-8 w-8 text-gray-500" />
@@ -460,7 +448,7 @@ export default function OrganizerApprovals() {
                     ) : (
                         <>
                             <div className="space-y-3">
-                                {displayedOrganizers.map((organizer) => (
+                                {organizers.map((organizer) => (
                                     <OrganizerCard
                                         key={organizer.id}
                                         organizer={organizer}
@@ -480,11 +468,12 @@ export default function OrganizerApprovals() {
                                 ))}
                             </div>
 
-                            {pages > 1 && (
+                            {(listTotal > 0 || totalPages > 1) && (
                                 <div className="flex items-center justify-between mt-6 pt-4 border-t">
                                     <p className="text-sm text-gray-500">
-                                        Showing {displayedOrganizers.length} of {currentTotal} organizers
+                                        Showing {organizers.length} of {listTotal} organizers
                                     </p>
+                                    {totalPages > 1 && (
                                     <div className="flex gap-2">
                                         <Button
                                             variant="outline"
@@ -496,18 +485,19 @@ export default function OrganizerApprovals() {
                                             Previous
                                         </Button>
                                         <span className="text-sm text-gray-600 px-3 py-1">
-                                            Page {currentPage} of {pages}
+                                            Page {currentPage} of {totalPages}
                                         </span>
                                         <Button
                                             variant="outline"
                                             size="sm"
                                             onClick={() => handlePageChange(currentPage + 1)}
-                                            disabled={currentPage === pages}
+                                            disabled={currentPage === totalPages}
                                         >
                                             Next
                                             <ChevronRight className="h-4 w-4 ml-1" />
                                         </Button>
                                     </div>
+                                    )}
                                 </div>
                             )}
                         </>
