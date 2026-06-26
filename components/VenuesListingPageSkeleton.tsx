@@ -4,7 +4,7 @@
 export default function VenuesListingPageSkeleton() {
   return (
     <div className="min-h-screen bg-[#f9f9f9]" aria-busy="true" aria-label="Loading venues">
-      <div className="border-b bg-white">
+      <div className="border-b bg-[#f9f9f9]">
         <div className="mx-auto max-w-7xl px-4 py-6">
           <div className="home-shimmer mb-2 h-9 w-72 max-w-[90%] rounded-md" />
           <div className="home-shimmer h-5 w-96 max-w-[95%] rounded-md" />

@@ -236,7 +236,7 @@ export default function ExhibitorsPage() {
     return (
         <main className="min-h-screen bg-[#f9f9f9]">
             {/* HERO */}
-            <section className="relative overflow-hidden bg-gradient-to-r from-[#042f8c] via-[#0b3ea8] to-[#06378f]">
+            <section className="relative overflow-hidden bg-[#004A96]">
                 <div className="absolute inset-0 bg-[url('/images/exhibitors-bg.jpg')] bg-cover bg-center opacity-15" />
                 <div className="relative mx-auto max-w-7xl px-4 pt-12 pb-14 sm:px-6 sm:pt-16 sm:pb-16 lg:px-8 lg:pt-20 lg:pb-20">
                     <h1 className="text-3xl font-bold text-white sm:text-4xl md:text-5xl">Exhibitors</h1>
@@ -282,7 +282,7 @@ export default function ExhibitorsPage() {
                                     setDebouncedSearch(searchTerm.trim());
                                     setCurrentPage(1);
                                 }}
-                                className="shrink-0 rounded-lg bg-[#0B63F6] px-6 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700"
+                                className="shrink-0 rounded-lg bg-[#004A96] px-6 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700"
                             >
                                 Search
                             </button>
@@ -307,7 +307,7 @@ export default function ExhibitorsPage() {
                             type="button"
                             onClick={() => setViewMode("grid")}
                             className={`flex h-10 w-10 items-center justify-center rounded-lg transition sm:h-11 sm:w-11 ${viewMode === "grid"
-                                    ? "bg-[#0B63F6] text-white"
+                                    ? "bg-[#004A96] text-white"
                                     : "border border-gray-200 bg-white text-gray-500 hover:bg-gray-50"
                                 }`}
                             aria-label="Grid view"
@@ -318,7 +318,7 @@ export default function ExhibitorsPage() {
                             type="button"
                             onClick={() => setViewMode("list")}
                             className={`flex h-10 w-10 items-center justify-center rounded-lg transition sm:h-11 sm:w-11 ${viewMode === "list"
-                                    ? "bg-[#0B63F6] text-white"
+                                    ? "bg-[#004A96] text-white"
                                     : "border border-gray-200 bg-white text-gray-500 hover:bg-gray-50"
                                 }`}
                             aria-label="List view"
@@ -531,7 +531,7 @@ function ExhibitorCard({ exhibitor, onClick }: { exhibitor: Exhibitor; onClick: 
             <button
                 type="button"
                 onClick={onClick}
-                className="mt-4 flex items-center gap-1 text-sm font-medium text-[#0B63F6] hover:underline"
+                className="mt-4 flex items-center gap-1 text-sm font-medium text-[#004A96] hover:underline"
             >
                 View Profile
                 <ChevronRight size={15} />

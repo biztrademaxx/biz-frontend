@@ -20,6 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch"
 import { apiFetch } from "@/lib/api"
 import { Bell, Send, Eye, Edit, Trash2, Plus, Clock, TrendingUp, Calendar, Users, FileText } from "lucide-react"
+import { toast } from "sonner"
 
 interface PushNotification {
   id: string | number
@@ -132,7 +133,24 @@ export default function PushNotifications() {
       setIsLoading(false)
     }
   }
+  const handleDeleteTemplate = async (id: string | number) => {
+    try {
+      const result = await apiFetch(
+        `/api/admin/marketing/push-templates/${id}`,
+        {
+          method: "DELETE",
+          auth: true,
+        }
+      );
 
+      if (result.success) {
+        toast.success("Template deleted");
+        fetchTemplates();
+      }
+    } catch (err) {
+      toast.error("Failed to delete template");
+    }
+  };
   const handleCreateNotification = async () => {
     try {
       const result = await apiFetch<{ success?: boolean }>(
@@ -427,17 +445,16 @@ export default function PushNotifications() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" className="gap-1 bg-transparent">
+                    {/* <Button variant="outline" size="sm" className="gap-1 bg-transparent">
                       <Edit className="w-4 h-4" />
                       Edit
-                    </Button>
+                    </Button> */}
                     <Button
                       variant="outline"
                       size="sm"
-                      className="gap-1 text-red-600 hover:text-red-700 bg-transparent"
+                      onClick={() => handleDeleteTemplate(notification.id)}
                     >
                       <Trash2 className="w-4 h-4" />
-                      Delete
                     </Button>
                   </div>
                 </div>
