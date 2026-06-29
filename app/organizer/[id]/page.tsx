@@ -462,7 +462,7 @@ export default function OrganizerPage() {
                 <h1 className="text-4xl font-bold">{organizer.company}</h1>
                 <Badge className="bg-yellow-500 text-yellow-900">Verified</Badge>
               </div>
-              <p className="text-xl text-blue-100 mb-4">{organizer.description}</p>
+              {/* <p className="text-xl text-blue-100 mb-4">{organizer.description}</p> */}
 
               {/* Contact Info - Simplified */}
               <div className="flex flex-wrap gap-6 text-blue-100">
