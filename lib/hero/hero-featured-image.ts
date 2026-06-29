@@ -1,5 +1,5 @@
 import type { HeroSlideshowEvent } from "@/lib/hero/types"
-import { getHeroSlideshowImageUrl, getVipCardImageUrl } from "@/lib/cloudinary-image-url"
+import { getHeroCardImageUrl, getHeroSlideshowImageUrl, getVipCardImageUrl } from "@/lib/cloudinary-image-url"
 
 function baseFeaturedImageUrl(event: HeroSlideshowEvent): string {
   if (event.vipImage?.trim()) return event.vipImage.trim()
@@ -19,6 +19,12 @@ export function getHeroFeaturedImageUrl(event: HeroSlideshowEvent): string {
 export function getVipStripCardImageUrl(event: HeroSlideshowEvent): string {
   const base = baseFeaturedImageUrl(event)
   return base ? getVipCardImageUrl(base) : ""
+}
+
+/** Hero slideshow cards — large sharp cover (not strip thumbnails). */
+export function getHeroSlideshowCardImageUrl(event: HeroSlideshowEvent): string {
+  const base = baseFeaturedImageUrl(event)
+  return base ? getHeroCardImageUrl(base) : ""
 }
 
 /** Thumbnail row under the hero — banner / gallery (not VIP-only art). */

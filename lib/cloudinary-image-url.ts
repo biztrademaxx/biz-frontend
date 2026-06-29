@@ -26,6 +26,15 @@ export function getVipCardImageUrl(url: string): string {
   )
 }
 
+/** Hero slideshow destination cards — sharp cover crop for large card frames. */
+export function getHeroCardImageUrl(url: string): string {
+  if (!url.trim()) return ""
+  return withCloudinaryTransform(
+    url,
+    "w_1200,h_900,c_fill,g_auto,q_auto:best,f_auto,dpr_2",
+  )
+}
+
 /** Hero featured carousel (large cover). */
 export function getHeroSlideshowImageUrl(url: string): string {
   if (!url.trim()) return ""

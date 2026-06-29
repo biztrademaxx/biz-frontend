@@ -30,11 +30,10 @@ export default function Home() {
   return (
     <div className="min-h-screen w-full min-w-0 overflow-x-hidden bg-[#f9f9f9]">
       <div className="bg-[#f9f9f9] pb-1">
+        <Suspense fallback={<HeroSlideshowSkeleton />}>
+          <HeroSlideshow />
+        </Suspense>
         <div className="mx-auto w-full min-w-0 max-w-7xl px-3 sm:px-4 lg:px-6">
-          {/* <HeroSection/> */}
-          <Suspense fallback={<HeroSlideshowSkeleton />}>
-            <HeroSlideshow />
-          </Suspense>
           <Suspense
             fallback={
               <div className="mt-4 space-y-4 sm:mt-6" aria-hidden>
