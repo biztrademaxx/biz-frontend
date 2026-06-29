@@ -389,7 +389,7 @@ export default function FinancialPaymentsPage() {
 
       {/* Payment Details Dialog */}
       <Dialog open={detailsDialogOpen} onOpenChange={setDetailsDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto rounded-xl">
           <DialogHeader>
             <DialogTitle>Payment Details</DialogTitle>
             <DialogDescription>Complete information about this payment transaction</DialogDescription>

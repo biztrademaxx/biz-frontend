@@ -5,5 +5,5 @@
 export function eventPublicPath(event: { id: string; slug?: string | null }): string {
   const raw =
     typeof event.slug === "string" && event.slug.trim() !== "" ? event.slug.trim() : event.id
-  return `/event/${encodeURIComponent(raw)}`
+  return `/event`
 }

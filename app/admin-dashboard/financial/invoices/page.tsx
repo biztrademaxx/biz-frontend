@@ -1,9 +1,7 @@
 "use client"
 
-
 import { devLog } from "@/lib/dev-log"
-
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -11,9 +9,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { DollarSign, FileText, Download, Eye, Search, Calendar, User, CreditCard, Receipt } from "lucide-react"
+import { DollarSign, FileText, Download, Eye, Search, Calendar, CreditCard, Mail, Phone, MapPin, Building2, Receipt, CheckCircle, Clock, AlertCircle, Loader2 } from "lucide-react"
 import { apiFetch } from "@/lib/api"
 import { formatMoney, formatMoneyTotals, sumByCurrency } from "@/lib/format-currency"
+import Image from "next/image"
 
 interface Invoice {
   id: string
@@ -48,6 +47,8 @@ export default function FinancialInvoicesPage() {
   const [statusFilter, setStatusFilter] = useState("all")
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null)
   const [detailsOpen, setDetailsOpen] = useState(false)
+  const [downloadLoading, setDownloadLoading] = useState(false)
+  const invoiceRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     fetchInvoices()
@@ -63,8 +64,8 @@ export default function FinancialInvoicesPage() {
       const data = await apiFetch<{ success?: boolean; data?: Invoice[] }>(
         "/api/admin/financial/invoices?limit=500",
         {
-        auth: true,
-      })
+          auth: true,
+        })
       setInvoices(data.data ?? [])
     } catch (error) {
       console.error("Error fetching invoices:", error)
@@ -108,8 +109,72 @@ export default function FinancialInvoicesPage() {
     setDetailsOpen(true)
   }
 
-  const handleDownloadInvoice = (invoiceId: string) => {
-    devLog("Downloading invoice:", invoiceId)
+  const handleDownloadInvoice = async (invoice?: Invoice) => {
+    const currentInvoice = invoice || selectedInvoice;
+
+    if (!currentInvoice) {
+      console.error("No invoice selected");
+      return;
+    }
+
+    try {
+      setDownloadLoading(true)
+
+      // Dynamically import html2canvas and jspdf
+      const html2canvas = (await import('html2canvas')).default
+      const jsPDF = (await import('jspdf')).jsPDF
+
+      // Find the invoice element by ID
+      const element = document.getElementById(`invoice-${currentInvoice.id}`)
+      if (!element) {
+        console.error("Invoice element not found")
+        alert("Could not find invoice element. Please try again.")
+        return
+      }
+
+      // Create canvas from the element
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+        width: element.scrollWidth,
+        height: element.scrollHeight,
+        onclone: (clonedDoc) => {
+          // Ensure all images are loaded
+          const images = clonedDoc.querySelectorAll('img')
+          return Promise.all(Array.from(images).map(img => {
+            if (img.complete) return Promise.resolve()
+            return new Promise((resolve) => {
+              img.onload = resolve
+              img.onerror = resolve
+            })
+          }))
+        }
+      })
+
+      // Create PDF
+      const imgData = canvas.toDataURL('image/png')
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'px',
+        format: [canvas.width * 0.75, canvas.height * 0.75]
+      })
+
+      const pdfWidth = pdf.internal.pageSize.getWidth()
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width
+
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight)
+      pdf.save(`invoice-${currentInvoice.invoiceNumber}.pdf`)
+
+      setDownloadLoading(false)
+
+    } catch (error) {
+      console.error("Error downloading invoice:", error)
+      alert("Failed to download invoice. Please try again.")
+      setDownloadLoading(false)
+    }
   }
 
   const stats = {
@@ -264,7 +329,7 @@ export default function FinancialInvoicesPage() {
                         <Button variant="ghost" size="sm" onClick={() => handleViewDetails(invoice)}>
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleDownloadInvoice(invoice.id)}>
+                        <Button variant="ghost" size="sm" onClick={() => handleDownloadInvoice(invoice)}>
                           <Download className="h-4 w-4" />
                         </Button>
                       </div>
@@ -277,117 +342,173 @@ export default function FinancialInvoicesPage() {
         </CardContent>
       </Card>
 
-      {/* Invoice Details Dialog */}
+      {/* Invoice Details Dialog - Clean & Professional */}
       <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0 bg-white">
+          <DialogHeader className="sr-only">
             <DialogTitle>Invoice Details</DialogTitle>
           </DialogHeader>
-
           {selectedInvoice && (
-            <div className="space-y-6">
-              {/* Invoice Header */}
-              <div className="flex justify-between items-start border-b pb-4">
-                <div>
-                  <h3 className="text-2xl font-bold">{selectedInvoice.invoiceNumber}</h3>
-                  <p className="text-sm text-muted-foreground">{selectedInvoice.description}</p>
-                </div>
-                {getStatusBadge(selectedInvoice.status)}
-              </div>
-
-              {/* Customer & Payment Info */}
-              <div className="grid md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <h4 className="font-semibold flex items-center gap-2">
-                    <User className="h-4 w-4" />
-                    Customer Information
-                  </h4>
-                  <div className="text-sm space-y-1">
-                    <p className="font-medium">{selectedInvoice.userName}</p>
-                    <p className="text-muted-foreground">{selectedInvoice.userEmail}</p>
+            <>
+              <div id={`invoice-${selectedInvoice.id}`} className="p-8" ref={invoiceRef}>
+                {/* Header with Logo and Invoice Info */}
+                <div className="flex justify-between items-start border-b pb-6">
+                  <div className="flex items-center gap-3">
+                    <Image
+                      src="https://res.cloudinary.com/deo4vpw8f/image/upload/v1782713887/biztradefairs_new2_tjo8lq.png"
+                      alt="Biz Trade Fairs"
+                      width={150}
+                      height={50}
+                      className="object-contain"
+                      unoptimized
+                    />
+                  </div>
+                  <div className="text-right">
+                    <div className="text-sm font-medium text-gray-500">INVOICE</div>
+                    <div className="text-2xl font-bold text-gray-900">{selectedInvoice.invoiceNumber}</div>
+                    <div className="mt-1">{getStatusBadge(selectedInvoice.status)}</div>
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <h4 className="font-semibold flex items-center gap-2">
-                    <CreditCard className="h-4 w-4" />
-                    Payment Information
-                  </h4>
-                  <div className="text-sm space-y-1">
-                    <p>
-                      <span className="text-muted-foreground">Method: </span>
-                      <span className="capitalize">{selectedInvoice.paymentMethod}</span>
-                    </p>
-                    <p>
-                      <span className="text-muted-foreground">Invoice Date: </span>
-                      {new Date(selectedInvoice.invoiceDate).toLocaleDateString()}
-                    </p>
-                    <p>
-                      <span className="text-muted-foreground">Due Date: </span>
-                      {new Date(selectedInvoice.dueDate).toLocaleDateString()}
-                    </p>
-                    {selectedInvoice.paidDate && (
-                      <p>
-                        <span className="text-muted-foreground">Paid Date: </span>
-                        {new Date(selectedInvoice.paidDate).toLocaleDateString()}
-                      </p>
-                    )}
+                {/* Invoice Dates */}
+                <div className="flex justify-between mt-4 text-sm">
+                  <div>
+                    <span className="text-gray-500">Invoice Date:</span>
+                    <span className="ml-2 font-medium">
+                      {new Date(selectedInvoice.invoiceDate).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      })}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Due Date:</span>
+                    <span className="ml-2 font-medium">
+                      {new Date(selectedInvoice.dueDate).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      })}
+                    </span>
                   </div>
                 </div>
-              </div>
 
-              {/* Invoice Items */}
-              <div className="space-y-2">
-                <h4 className="font-semibold">Invoice Items</h4>
-                <div className="border rounded-md">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Description</TableHead>
-                        <TableHead className="text-right">Quantity</TableHead>
-                        <TableHead className="text-right">Unit Price</TableHead>
-                        <TableHead className="text-right">Total</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {selectedInvoice.items.map((item, index) => (
-                        <TableRow key={index}>
-                          <TableCell>{item.description}</TableCell>
-                          <TableCell className="text-right">{item.quantity}</TableCell>
-                          <TableCell className="text-right">{formatMoney(item.unitPrice, selectedInvoice.currency)}</TableCell>
-                          <TableCell className="text-right">{formatMoney(item.total, selectedInvoice.currency)}</TableCell>
+                {/* From & To */}
+                <div className="grid grid-cols-2 gap-8 mt-6">
+                  <div>
+                    <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">From</h4>
+                    <div className="space-y-1 text-sm">
+                      <p className="font-semibold text-gray-900">Biz Trade Fairs.</p>
+                      <p className="text-gray-600">T9, Swastik Manandi Arcade,</p>
+                      <p className="text-gray-600">Subedar Chatram Rd, VV Giri Colony,</p>
+                      <p className="text-gray-600">Seshadripuram, Bengaluru, Karnataka, 560020</p>
+                      <p className="text-gray-600">noreply@biztradefairs.com</p>
+                      <p className="text-gray-600">+91 91483 19993</p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Bill To</h4>
+                    <div className="space-y-1 text-sm">
+                      <p className="font-semibold text-gray-900">{selectedInvoice.userName}</p>
+                      <p className="text-gray-600">{selectedInvoice.userEmail}</p>
+                      <p className="text-gray-600">Payment: <span className="capitalize">{selectedInvoice.paymentMethod}</span></p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Invoice Items */}
+                <div className="mt-8">
+                  <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Invoice Items</h4>
+                  <div className="border rounded-lg overflow-hidden">
+                    <Table>
+                      <TableHeader className="bg-gray-50">
+                        <TableRow>
+                          <TableHead className="text-xs font-semibold text-gray-600">Description</TableHead>
+                          <TableHead className="text-xs font-semibold text-gray-600 text-right">Quantity</TableHead>
+                          <TableHead className="text-xs font-semibold text-gray-600 text-right">Unit Price</TableHead>
+                          <TableHead className="text-xs font-semibold text-gray-600 text-right">Total</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </div>
+                      </TableHeader>
+                      <TableBody>
+                        {selectedInvoice.items.map((item, index) => (
+                          <TableRow key={index}>
+                            <TableCell className="font-medium">{item.description}</TableCell>
+                            <TableCell className="text-right">{item.quantity}</TableCell>
+                            <TableCell className="text-right">{formatMoney(item.unitPrice, selectedInvoice.currency)}</TableCell>
+                            <TableCell className="text-right font-semibold">{formatMoney(item.total, selectedInvoice.currency)}</TableCell>
+                          </TableRow>
+                        ))}
+                        <TableRow className="border-t">
+                          <TableCell colSpan={3} className="text-right font-medium">Subtotal:</TableCell>
+                          <TableCell className="text-right">{formatMoney(selectedInvoice.subtotal, selectedInvoice.currency)}</TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell colSpan={3} className="text-right font-medium">Tax ({selectedInvoice.tax > 0 ? '10%' : '0%'}):</TableCell>
+                          <TableCell className="text-right">{formatMoney(selectedInvoice.tax, selectedInvoice.currency)}</TableCell>
+                        </TableRow>
+                        <TableRow className="border-t-2 border-gray-300">
+                          <TableCell colSpan={3} className="text-right font-bold text-lg">Total:</TableCell>
+                          <TableCell className="text-right font-bold text-lg text-blue-600">{formatMoney(selectedInvoice.total, selectedInvoice.currency)}</TableCell>
+                        </TableRow>
+                      </TableBody>
+                    </Table>
+                  </div>
 
-              {/* Totals */}
-              <div className="space-y-2 border-t pt-4">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Subtotal:</span>
-                  <span>{formatMoney(selectedInvoice.subtotal, selectedInvoice.currency)}</span>
+                  {selectedInvoice.paidDate && (
+                    <div className="mt-4 flex items-center justify-end gap-2 text-sm text-green-700">
+                      <CheckCircle className="w-4 h-4" />
+                      <span>Paid on {new Date(selectedInvoice.paidDate).toLocaleDateString()}</span>
+                    </div>
+                  )}
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Tax:</span>
-                  <span>{formatMoney(selectedInvoice.tax, selectedInvoice.currency)}</span>
-                </div>
-                <div className="flex justify-between text-lg font-bold border-t pt-2">
-                  <span>Total:</span>
-                  <span>{formatMoney(selectedInvoice.total, selectedInvoice.currency)}</span>
+
+                {/* Footer */}
+                <div className="mt-8 pt-6 border-t">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Image
+                        src="https://res.cloudinary.com/deo4vpw8f/image/upload/v1782713562/maxx_karjly.png"
+                        alt="Maxx Business Media"
+                        width={100}
+                        height={30}
+                        className="object-contain"
+                        unoptimized
+                      />
+                      <span className="text-sm font-medium text-gray-700">Maxx Business Media Pvt Ltd</span>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm text-gray-600">Thank you for your business!</p>
+                      <p className="text-xs text-gray-400">This is a computer-generated invoice.</p>
+                    </div>
+                  </div>
                 </div>
               </div>
 
               {/* Actions */}
-              <div className="flex gap-2 justify-end border-t pt-4">
-                <Button variant="outline" onClick={() => handleDownloadInvoice(selectedInvoice.id)}>
-                  <Download className="h-4 w-4 mr-2" />
-                  Download PDF
-                </Button>
+              <div className="flex gap-3 justify-end p-6 bg-gray-50 border-t">
+                {/* <Button
+                  variant="outline"
+                  onClick={() => handleDownloadInvoice(invoices)}
+                  disabled={downloadLoading}
+                  className="gap-2"
+                >
+                  {downloadLoading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Downloading...
+                    </>
+                  ) : (
+                    <>
+                      <Download className="h-4 w-4" />
+                      Download PDF
+                    </>
+                  )}
+                </Button> */}
                 <Button onClick={() => setDetailsOpen(false)}>Close</Button>
               </div>
-            </div>
+            </>
           )}
         </DialogContent>
       </Dialog>
