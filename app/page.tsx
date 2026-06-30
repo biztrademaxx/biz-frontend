@@ -14,6 +14,7 @@ import FeaturedSpeakers from "@/components/FeaturedSpeaker";
 import CategoryGrid from "@/components/catagories";
 import HeroSlideshow from "@/components/HeroSlideshow";
 import HeroSlideshowSkeleton from "@/components/HeroSlideshowSkeleton";
+import HomeHeroUnified from "@/components/hero/HomeHeroUnified";
 import EventReviews from "@/components/EventReviews";
 import {
   CategoryBrowseSkeleton,
@@ -28,12 +29,14 @@ import UpcomingVipEvents from "@/components/home/UpcomingVipEvents";
 
 export default function Home() {
   return (
-    <div className="min-h-screen w-full min-w-0 overflow-x-hidden bg-[#f9f9f9]">
-      <div className="bg-[#f9f9f9] pb-1">
-        <Suspense fallback={<HeroSlideshowSkeleton />}>
-          <HeroSlideshow />
-        </Suspense>
-        <div className="mx-auto w-full min-w-0 max-w-7xl px-3 sm:px-4 lg:px-6">
+    <div className="min-h-screen w-full min-w-0 overflow-x-hidden">
+      <div className="pb-1">
+        <HomeHeroUnified>
+          <Suspense fallback={<HeroSlideshowSkeleton />}>
+            <HeroSlideshow />
+          </Suspense>
+        </HomeHeroUnified>
+        <div className="mx-auto w-full min-w-0 max-w-7xl bg-[#f9f9f9] px-3 sm:px-4 lg:px-6">
           <Suspense
             fallback={
               <div className="mt-4 space-y-4 sm:mt-6" aria-hidden>
@@ -55,6 +58,7 @@ export default function Home() {
           </div>
         </div>
       </div>
+      <div className="bg-[#f9f9f9]">
       {/* <AboutBizTrade/> */}
       <Suspense fallback={<CategoryBrowseSkeleton />}>
         <div className="-mt-8">
@@ -100,10 +104,9 @@ export default function Home() {
           {/* <InlineBanner page="speakers" maxBanners={3} dismissible={true} /> */}
         </Suspense>
       </div>
+      </div>
     </div>
-
-
-  );
+  )
 }
 
 

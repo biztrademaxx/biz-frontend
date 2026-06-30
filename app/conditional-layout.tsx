@@ -3,6 +3,8 @@
 import { usePathname } from "next/navigation"
 import Navbar from "@/components/navbar"
 import Footer from "@/components/Footer"
+import HomeHeroInViewObserver from "@/components/hero/HomeHeroInViewObserver"
+import { HeroTransitionProvider } from "@/lib/hero/hero-transition-context"
 
 export default function ConditionalLayout({
   children,
@@ -10,6 +12,7 @@ export default function ConditionalLayout({
   children: React.ReactNode
 }) {
   const pathname = usePathname()
+  const isHome = pathname === "/"
 
   // Hide Navbar/Footer on dashboard routes
   const hideLayout =
@@ -26,10 +29,11 @@ export default function ConditionalLayout({
     
 
   return (
-    <>
-      {!hideLayout && <Navbar />}
+    <HeroTransitionProvider>
+      <HomeHeroInViewObserver />
+      {!hideLayout && !isHome && <Navbar />}
       {children}
       {!hideLayout && <Footer />}
-    </>
+    </HeroTransitionProvider>
   )
 }
