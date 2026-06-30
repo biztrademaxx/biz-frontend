@@ -161,10 +161,10 @@ function DestinationCard({ event, priority }: { event: Event; priority?: boolean
     <div className="h-full w-full min-w-0">
       <Link
         href={eventPublicPath(event)}
-        className="group relative block h-full w-full overflow-hidden rounded-[12px] shadow-[0_4px_24px_rgba(0,0,0,0.08)] sm:rounded-[15px]"
+        className="group relative block h-full w-full overflow-hidden rounded-[6px] shadow-[0_4px_24px_rgba(0,0,0,0.08)] sm:rounded-[8px]"
         aria-label={dateAria ? `${place}, ${dateAria}` : place}
       >
-        <div className="relative h-[300px] w-full overflow-hidden rounded-sm sm:h-[420px] sm:rounded-sm lg:h-[400px] xl:h-[520px]">
+        <div className="relative h-[340px] w-full overflow-hidden rounded-[6px] sm:h-[460px] sm:rounded-[8px] lg:h-[480px] xl:h-[580px]">
           {imageUrl ? (
             <AppImage
               src={imageUrl}
@@ -211,7 +211,7 @@ function DestinationCard({ event, priority }: { event: Event; priority?: boolean
 function SlideText({ slideIndex }: { slideIndex: number }) {
   const theme = SLIDE_THEMES[slideIndex % SLIDE_THEMES.length]
   return (
-    <div className="w-full shrink-0 lg:w-[33.333%] lg:pr-10 xl:pr-14">
+    <div className="w-full shrink-0 lg:flex lg:w-[33.333%] lg:flex-col lg:justify-center lg:pr-10 lg:pt-8 xl:pr-14 xl:pt-10">
       <h1
         className="mb-3 text-[1.75rem] font-extrabold leading-[0.95] tracking-[-0.03em] sm:mb-6 sm:text-[clamp(2rem,5vw,6.25rem)] sm:leading-[0.9]"
         style={{ color: HERO_INK_HEADING }}
@@ -226,7 +226,7 @@ function SlideText({ slideIndex }: { slideIndex: number }) {
       </p>
       <Link
         href="/event"
-        className="inline-flex w-full items-center justify-center rounded-full border border-white/30 px-8 py-3 text-base font-bold text-white shadow-[0_7px_20px_rgba(255,91,143,0.41)] transition-transform duration-200 hover:scale-[1.02] active:scale-[0.98] sm:w-auto sm:px-16 sm:py-4 sm:text-lg"
+        className="inline-flex w-fit items-center justify-center rounded-full border border-white/30 px-5 py-2.5 text-sm font-bold text-white shadow-[0_5px_16px_rgba(255,91,143,0.35)] transition-transform duration-200 hover:scale-[1.02] active:scale-[0.98] sm:px-7 sm:py-3 sm:text-base"
         style={{ backgroundImage: HERO_CTA_GRADIENT }}
       >
         Explore
@@ -254,12 +254,12 @@ function SlideCards({
     <div className="w-full min-w-0 lg:w-[66.666%]">
       <div
         className={[
-          "flex gap-0 lg:gap-2",
-          "min-h-[300px] overflow-x-auto overscroll-x-contain pb-1",
+          "flex gap-3 lg:gap-4",
+          "min-h-[340px] overflow-x-auto overscroll-x-contain pb-1",
           "snap-x snap-mandatory scroll-smooth touch-pan-x",
           "[scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden",
-          "lg:min-h-[400px] lg:overflow-visible lg:snap-none lg:pb-0",
-          "xl:min-h-[520px]",
+          "lg:min-h-[480px] lg:overflow-visible lg:snap-none lg:pb-0",
+          "xl:min-h-[580px]",
         ].join(" ")}
       >
         {cards.map((event, index) => {
@@ -303,7 +303,7 @@ function SlideRow({
   imagePriority?: boolean
 }) {
   return (
-    <div className="flex w-full min-w-full shrink-0 flex-col gap-5 sm:gap-8 lg:flex-row lg:items-start lg:gap-0">
+    <div className="flex w-full min-w-full shrink-0 flex-col gap-5 sm:gap-8 lg:flex-row lg:items-center lg:gap-0">
       <SlideText slideIndex={slideIndex} />
       <SlideCards
         slideIndex={slideIndex}
@@ -431,7 +431,7 @@ export default function HeroSlideshowClient({
       className="pb-6 sm:pb-12 lg:min-h-[600px] lg:pb-14 xl:min-h-[680px] xl:pb-20 pt-4 sm:pt-8 lg:pt-10 xl:pt-12"
     >
       <div className="relative mx-auto w-full px-4 sm:px-[clamp(1rem,5vw,200px)]">
-        <div className="relative overflow-hidden lg:min-h-[480px] xl:min-h-[560px]">
+        <div className="relative overflow-hidden lg:min-h-[520px] xl:min-h-[600px]">
           {phase === "idle" && (
             <SlideRow slideIndex={displayIdx} cards={slides[displayIdx]} imagePriority={displayIdx === 0} />
           )}
