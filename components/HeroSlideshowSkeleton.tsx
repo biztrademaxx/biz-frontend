@@ -1,9 +1,5 @@
 import { cn } from "@/lib/utils"
-import {
-  HERO_AMBIENT_CYAN,
-  HERO_AMBIENT_PEACH,
-  HERO_SURFACE_STYLE,
-} from "@/lib/hero/hero-surface"
+import HeroSlideSurface from "@/components/hero/HeroSlideSurface"
 
 function Shimmer({ className }: { className?: string }) {
   return <div className={cn("hero-premium-shimmer", className)} aria-hidden />
@@ -13,21 +9,11 @@ function Shimmer({ className }: { className?: string }) {
 export default function HeroSlideshowSkeleton() {
   return (
     <section
-      className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen min-w-0 overflow-hidden -mt-[5.5rem] pt-[calc(5.5rem+1.5rem)] pb-6 sm:pt-[calc(5.5rem+3rem)] sm:pb-12 lg:min-h-[760px] lg:pt-[calc(5.5rem+3.5rem)] lg:pb-14 xl:min-h-[820px] xl:pt-[calc(5.5rem+5rem)] xl:pb-20"
-      style={HERO_SURFACE_STYLE}
+      className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen min-w-0 pt-[calc(5.5rem+1.5rem)] pb-6 sm:pt-[calc(5.5rem+3rem)] sm:pb-12 lg:min-h-[760px] lg:pt-[calc(5.5rem+3.5rem)] lg:pb-14 xl:min-h-[820px] xl:pt-[calc(5.5rem+5rem)] xl:pb-20"
       aria-busy="true"
       aria-label="Loading featured events"
     >
-      <div className="pointer-events-none absolute inset-0 z-[1] overflow-hidden" aria-hidden>
-        <div
-          className="absolute -left-[18%] -top-[32%] h-[min(140vw,90rem)] w-[min(140vw,90rem)]"
-          style={{ background: HERO_AMBIENT_PEACH }}
-        />
-        <div
-          className="absolute -right-[12%] -top-[30%] h-[min(140vw,90rem)] w-[min(140vw,90rem)]"
-          style={{ background: HERO_AMBIENT_CYAN }}
-        />
-      </div>
+      <HeroSlideSurface displayIdx={0} pendingIdx={0} phase="idle" direction={1} />
 
       <div className="relative z-10 mx-auto w-full px-4 sm:px-[clamp(1rem,5vw,200px)]">
         <div className="flex min-h-0 flex-col gap-5 sm:gap-8 lg:min-h-[480px] lg:flex-row lg:items-start xl:min-h-[560px]">

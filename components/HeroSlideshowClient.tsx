@@ -5,21 +5,18 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import { motion, useReducedMotion } from "framer-motion"
 import { ChevronLeft, ChevronRight, MapPin } from "lucide-react"
 import { AppImage } from "@/components/app-image"
-import HeroWipeFrame from "@/components/hero/HeroWipeFrame"
+import HeroSlideSurface from "@/components/hero/HeroSlideSurface"
 import HomeSectionEmptyState, { homeEmptyDescription } from "@/components/home/HomeSectionEmptyState"
 import { hasDisplayableEventImage } from "@/lib/event-card-meta"
 import { eventPublicPath } from "@/lib/event-path"
 import { getHeroSlideshowCardImageUrl } from "@/lib/hero/hero-featured-image"
 import {
   HERO_ACCENT,
-  HERO_AMBIENT_CYAN,
-  HERO_AMBIENT_PEACH,
   HERO_CTA_GRADIENT,
   HERO_INK,
   HERO_INK_BORDER,
   HERO_INK_HEADING,
   HERO_INK_MUTED,
-  HERO_SURFACE_STYLE,
 } from "@/lib/hero/hero-surface"
 import { useHeroTransition } from "@/lib/hero/hero-transition-context"
 import { parseLocalDateKey } from "@/lib/format-local-date-key"
@@ -320,43 +317,6 @@ function SlideRow({
   )
 }
 
-function AmbientParallax() {
-  const reduceMotion = useReducedMotion()
-  const [offset, setOffset] = useState({ x: 0, y: 0 })
-
-  useEffect(() => {
-    if (reduceMotion) return
-    const onMove = (e: MouseEvent) => {
-      setOffset({
-        x: (e.clientX / window.innerWidth - 0.5) * 48,
-        y: (e.clientY / window.innerHeight - 0.5) * 36,
-      })
-    }
-    window.addEventListener("mousemove", onMove, { passive: true })
-    return () => window.removeEventListener("mousemove", onMove)
-  }, [reduceMotion])
-
-  const peachTransform = reduceMotion
-    ? undefined
-    : `translate(${offset.x * 0.55}px, ${offset.y * 0.35}px)`
-  const cyanTransform = reduceMotion
-    ? undefined
-    : `translate(${offset.x * -0.35}px, ${offset.y * 0.25}px)`
-
-  return (
-    <div className="pointer-events-none absolute inset-0 z-[1] overflow-hidden" aria-hidden>
-      <div
-        className="absolute -left-[18%] -top-[32%] h-[min(140vw,90rem)] w-[min(140vw,90rem)]"
-        style={{ background: HERO_AMBIENT_PEACH, transform: peachTransform }}
-      />
-      <div
-        className="absolute -right-[12%] -top-[30%] h-[min(140vw,90rem)] w-[min(140vw,90rem)]"
-        style={{ background: HERO_AMBIENT_CYAN, transform: cyanTransform }}
-      />
-    </div>
-  )
-}
-
 function IncomingSlide({
   slideIndex,
   cards,
@@ -399,18 +359,18 @@ export default function HeroSlideshowClient({
   const [phase, setPhase] = useState<Phase>("idle")
   const [direction, setDirection] = useState<1 | -1>(1)
   const reduceMotion = useReducedMotion()
-  const { setHeroTransition } = useHeroTransition()
+  const { setHeroSurface } = useHeroTransition()
 
   const isAnimating = phase !== "idle"
   const footerIdx = phase === "swap" ? pendingIdx : displayIdx
 
   useEffect(() => {
-    setHeroTransition(phase, direction)
-  }, [phase, direction, setHeroTransition])
+    setHeroSurface({ displayIdx, pendingIdx, phase, direction })
+  }, [displayIdx, pendingIdx, phase, direction, setHeroSurface])
 
   useEffect(() => {
-    return () => setHeroTransition("idle")
-  }, [setHeroTransition])
+    return () => setHeroSurface({ phase: "idle", displayIdx: 0, pendingIdx: 0, direction: 1 })
+  }, [setHeroSurface])
 
   const goTo = useCallback(
     (next: number, dir: 1 | -1) => {
@@ -469,11 +429,14 @@ export default function HeroSlideshowClient({
   return (
     <section
       aria-label="Featured trade fairs"
-      className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen min-w-0 overflow-hidden -mt-[5.5rem] pt-[calc(5.5rem+1.5rem)] pb-6 sm:pt-[calc(5.5rem+3rem)] sm:pb-12 lg:min-h-[760px] lg:pt-[calc(5.5rem+3.5rem)] lg:pb-14 xl:min-h-[820px] xl:pt-[calc(5.5rem+5rem)] xl:pb-20"
-      style={HERO_SURFACE_STYLE}
+      className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen min-w-0 pt-[calc(5.5rem+1.5rem)] pb-6 sm:pt-[calc(5.5rem+3rem)] sm:pb-12 lg:min-h-[760px] lg:pt-[calc(5.5rem+3.5rem)] lg:pb-14 xl:min-h-[820px] xl:pt-[calc(5.5rem+5rem)] xl:pb-20"
     >
-      <AmbientParallax />
-      {phase === "swap" && <HeroWipeFrame direction={direction} />}
+      <HeroSlideSurface
+        displayIdx={displayIdx}
+        pendingIdx={pendingIdx}
+        phase={phase}
+        direction={direction}
+      />
 
       <div className="relative z-10 mx-auto w-full px-4 sm:px-[clamp(1rem,5vw,200px)]">
         <div className="relative overflow-hidden lg:min-h-[480px] xl:min-h-[560px]">

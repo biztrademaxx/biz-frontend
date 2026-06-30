@@ -11,26 +11,39 @@ import {
 
 export type HeroTransitionPhase = "idle" | "exit" | "swap"
 
-type HeroTransitionContextValue = {
+type HeroSurfaceState = {
+  displayIdx: number
+  pendingIdx: number
   phase: HeroTransitionPhase
   direction: 1 | -1
-  setHeroTransition: (phase: HeroTransitionPhase, direction?: 1 | -1) => void
+}
+
+type HeroTransitionContextValue = HeroSurfaceState & {
+  heroInView: boolean
+  setHeroSurface: (patch: Partial<HeroSurfaceState>) => void
+  setHeroInView: (inView: boolean) => void
+}
+
+const defaultSurface: HeroSurfaceState = {
+  displayIdx: 0,
+  pendingIdx: 0,
+  phase: "idle",
+  direction: 1,
 }
 
 const HeroTransitionContext = createContext<HeroTransitionContextValue | null>(null)
 
 export function HeroTransitionProvider({ children }: { children: ReactNode }) {
-  const [phase, setPhase] = useState<HeroTransitionPhase>("idle")
-  const [direction, setDirection] = useState<1 | -1>(1)
+  const [surface, setSurface] = useState<HeroSurfaceState>(defaultSurface)
+  const [heroInView, setHeroInView] = useState(true)
 
-  const setHeroTransition = useCallback((nextPhase: HeroTransitionPhase, nextDirection?: 1 | -1) => {
-    setPhase(nextPhase)
-    if (nextDirection !== undefined) setDirection(nextDirection)
+  const setHeroSurface = useCallback((patch: Partial<HeroSurfaceState>) => {
+    setSurface((prev) => ({ ...prev, ...patch }))
   }, [])
 
   const value = useMemo(
-    () => ({ phase, direction, setHeroTransition }),
-    [phase, direction, setHeroTransition],
+    () => ({ ...surface, heroInView, setHeroSurface, setHeroInView }),
+    [surface, heroInView, setHeroSurface],
   )
 
   return <HeroTransitionContext.Provider value={value}>{children}</HeroTransitionContext.Provider>
@@ -40,9 +53,10 @@ export function useHeroTransition() {
   const ctx = useContext(HeroTransitionContext)
   if (!ctx) {
     return {
-      phase: "idle" as const,
-      direction: 1 as const,
-      setHeroTransition: () => {},
+      ...defaultSurface,
+      heroInView: true,
+      setHeroSurface: () => {},
+      setHeroInView: () => {},
     }
   }
   return ctx

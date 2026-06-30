@@ -20,9 +20,7 @@ import { cn } from "@/lib/utils"
 import ExploreMegaMenu from "./ExploreMegaMenu"
 import NavbarCountryLabel from "./location/NavbarCountryLabel"
 import { DashboardPlanBadge } from "@/components/dashboard-packages"
-import HeroWipeFrame from "@/components/hero/HeroWipeFrame"
 import { dashboardRoleFromUserRole, useDashboardPlan } from "@/hooks/use-dashboard-plan"
-import { useHeroTransition } from "@/lib/hero/hero-transition-context"
 
 export default function Navbar() {
   const router = useRouter()
@@ -52,8 +50,6 @@ export default function Navbar() {
 
   const authenticated = hydrated && isAuthenticated()
   const isHome = pathname === "/"
-  const { phase: heroPhase, direction: heroDirection } = useHeroTransition()
-  const heroWiping = isHome && heroPhase === "swap"
   const userId = getCurrentUserId()
   const role = getCurrentUserRole()
   const displayName = getCurrentUserDisplayName()
@@ -180,13 +176,12 @@ export default function Navbar() {
   return (
     <nav
       className={cn(
-        "sticky top-0 z-50 overflow-hidden",
+        "sticky top-0 z-50",
         isHome
-          ? "border-b-0 bg-transparent shadow-none"
-          : "border-b-0 bg-white shadow-[0_4px_12px_rgba(0,0,0,0.12)]",
+          ? "overflow-visible border-b-0 bg-transparent shadow-none"
+          : "overflow-hidden border-b-0 bg-white shadow-[0_4px_12px_rgba(0,0,0,0.12)]",
       )}
     >
-      {heroWiping ? <HeroWipeFrame direction={heroDirection} /> : null}
       <div ref={navShellRef} className="relative z-10 mx-auto max-w-7xl px-3 sm:px-4 lg:px-6">
         <div className="flex h-[5.5rem] min-h-[5.5rem] items-center justify-between gap-1.5 sm:gap-3">
           {/* Left Section - Logo, Explore, and Mobile Menu */}

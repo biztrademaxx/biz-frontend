@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation"
 import Navbar from "@/components/navbar"
 import Footer from "@/components/Footer"
+import HomeHeroInViewObserver from "@/components/hero/HomeHeroInViewObserver"
 import { HeroTransitionProvider } from "@/lib/hero/hero-transition-context"
 
 export default function ConditionalLayout({
@@ -28,6 +29,7 @@ export default function ConditionalLayout({
 
   return (
     <HeroTransitionProvider>
+      <HomeHeroInViewObserver />
       {!hideLayout && <Navbar />}
       {children}
       {!hideLayout && <Footer />}
