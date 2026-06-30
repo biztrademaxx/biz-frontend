@@ -1,7 +1,4 @@
 import { Suspense } from "react";
-
-/** Home uses request-scoped geo (`headers`) and legacy `noStore()` in trending; cannot be fully static. */
-export const dynamic = "force-dynamic";
 import BrowseByCountry from "../components/browse-by-country";
 import { BrowseByCountrySkeleton } from "@/components/home-skeletons";
 import BrowseEventsByCity from "../components/BrowseEventsByCity";
@@ -22,10 +19,10 @@ import {
   FeaturedSpeakersSkeleton,
   TrendingEventsSkeleton,
 } from "@/components/home-skeletons";
-import HeroSection from "@/components/Herosection";
-import AboutBizTrade from "@/components/aboutBiztradefairs";
 import HomeTradeFairsSearch from "@/components/home/HomeTradeFairsSearch";
-import UpcomingVipEvents from "@/components/home/UpcomingVipEvents";
+
+/** Home uses request-scoped geo (`headers`) and legacy `noStore()` in trending; cannot be fully static. */
+export const dynamic = "force-dynamic";
 
 export default function Home() {
   return (
@@ -59,63 +56,51 @@ export default function Home() {
         </div>
       </div>
       <div className="bg-[#f9f9f9]">
-      {/* <AboutBizTrade/> */}
-      <Suspense fallback={<CategoryBrowseSkeleton />}>
-        <div className="-mt-8">
-          <CategoryGrid />
-        </div>
-      </Suspense>
-
-      <Suspense fallback={<FeaturedEventsSkeleton />}>
-        <FeaturedEvents />
-      </Suspense>
-
-      <Suspense fallback={<BrowseByCitySkeleton />}>
-        <BrowseEventsByCity />
-      </Suspense>
-
-      <HomePageBannerSlot position="after_city" fallbackPosition="middle" />
-
-      <Suspense fallback={<BrowseByCountrySkeleton />}>
-        <BrowseByCountry />
-      </Suspense>
-
-      <HomePageBannerSlot position="after_country" />
-
-      <ExploreVenues />
-      <FeaturedOrganizers />
-
-      <HomePageBannerSlot position="after_featured_organizers" />
-      <Suspense fallback={<TrendingEventsSkeleton />}>
-        <EventReviews />
-      </Suspense>
-      <Suspense fallback={<FeaturedSpeakersSkeleton />}>
-        <FeaturedSpeakers />
-      </Suspense>
-
-      <div className="mx-auto w-full min-w-0 max-w-7xl px-3 py-6 sm:px-4 lg:px-6">
-        <Suspense
-          fallback={
-            <div className="w-full space-y-4" aria-hidden>
-              <div className="home-shimmer h-32 rounded-sm sm:h-36 md:h-40" />
-            </div>
-          }
-        >
-          {/* <InlineBanner page="speakers" maxBanners={3} dismissible={true} /> */}
+        <Suspense fallback={<CategoryBrowseSkeleton />}>
+          <div className="-mt-8">
+            <CategoryGrid />
+          </div>
         </Suspense>
-      </div>
+
+        <Suspense fallback={<FeaturedEventsSkeleton />}>
+          <FeaturedEvents />
+        </Suspense>
+
+        <Suspense fallback={<BrowseByCitySkeleton />}>
+          <BrowseEventsByCity />
+        </Suspense>
+
+        <HomePageBannerSlot position="after_city" fallbackPosition="middle" />
+
+        <Suspense fallback={<BrowseByCountrySkeleton />}>
+          <BrowseByCountry />
+        </Suspense>
+
+        <HomePageBannerSlot position="after_country" />
+
+        <ExploreVenues />
+        <FeaturedOrganizers />
+
+        <HomePageBannerSlot position="after_featured_organizers" />
+        <Suspense fallback={<TrendingEventsSkeleton />}>
+          <EventReviews />
+        </Suspense>
+        <Suspense fallback={<FeaturedSpeakersSkeleton />}>
+          <FeaturedSpeakers />
+        </Suspense>
+
+        <div className="mx-auto w-full min-w-0 max-w-7xl px-3 py-6 sm:px-4 lg:px-6">
+          <Suspense
+            fallback={
+              <div className="w-full space-y-4" aria-hidden>
+                <div className="home-shimmer h-32 rounded-sm sm:h-36 md:h-40" />
+              </div>
+            }
+          >
+            {/* <InlineBanner page="speakers" maxBanners={3} dismissible={true} /> */}
+          </Suspense>
+        </div>
       </div>
     </div>
   )
 }
-
-
-// import ComingSoonBanner from "@/components/ComingSoonBanner";
-
-// export default function Home() {
-//   return (
-//     <div>
-//       <ComingSoonBanner />
-//     </div>
-//   );
-// }

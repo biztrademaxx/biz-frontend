@@ -19,6 +19,7 @@ import {
 } from "@/lib/hero/hero-surface"
 import { useHeroTransition } from "@/lib/hero/hero-transition-context"
 import { parseLocalDateKey } from "@/lib/format-local-date-key"
+import { cn } from "@/lib/utils"
 import type { HeroSlideshowEvent } from "@/lib/hero/types"
 
 export type Event = HeroSlideshowEvent
@@ -32,7 +33,13 @@ const SWAP_S = 0.95
 const CARD_STAGGER = 0.09
 const CARD_IN_STEP = 90
 const CARD_ITEM_CLASS =
-  "h-full shrink-0 snap-center snap-always basis-full min-w-full lg:min-w-0 lg:max-w-none lg:basis-0 lg:flex-1"
+  "shrink-0 snap-center snap-always w-full min-w-full max-w-full basis-full lg:min-w-0 lg:max-w-none lg:basis-0 lg:flex-1"
+
+/** Fixed slot — hover grows inside without shifting siblings or left column. */
+const CARD_SLOT_CLASS = cn(
+  CARD_ITEM_CLASS,
+  "relative h-[340px] overflow-visible sm:h-[460px] lg:h-[480px] xl:h-[580px]",
+)
 
 type Phase = "idle" | "exit" | "swap"
 
@@ -158,13 +165,12 @@ function DestinationCard({ event, priority }: { event: Event; priority?: boolean
   const dateAria = dates?.aria ?? null
 
   return (
-    <div className="h-full w-full min-w-0">
-      <Link
-        href={eventPublicPath(event)}
-        className="group relative block h-full w-full overflow-hidden rounded-[6px] shadow-[0_4px_24px_rgba(0,0,0,0.08)] sm:rounded-[8px]"
-        aria-label={dateAria ? `${place}, ${dateAria}` : place}
-      >
-        <div className="relative h-[340px] w-full overflow-hidden rounded-[6px] sm:h-[460px] sm:rounded-[8px] lg:h-[480px] xl:h-[580px]">
+    <Link
+      href={eventPublicPath(event)}
+      className="group absolute inset-x-0 bottom-0 z-0 block overflow-visible rounded-[6px] shadow-[0_4px_24px_rgba(0,0,0,0.08)] transition-shadow duration-300 ease-out motion-safe:hover:z-20 motion-safe:group-hover:shadow-[0_10px_32px_rgba(0,0,0,0.14)] sm:rounded-[8px]"
+      aria-label={dateAria ? `${place}, ${dateAria}` : place}
+    >
+      <div className="relative h-[340px] w-full overflow-hidden rounded-[6px] transition-[height,transform] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-safe:group-hover:-translate-y-2.5 motion-safe:group-hover:h-[362px] sm:h-[460px] sm:rounded-[8px] motion-safe:sm:group-hover:h-[482px] lg:h-[480px] motion-safe:lg:group-hover:h-[502px] xl:h-[580px] motion-safe:xl:group-hover:h-[602px]">
           {imageUrl ? (
             <AppImage
               src={imageUrl}
@@ -172,7 +178,7 @@ function DestinationCard({ event, priority }: { event: Event; priority?: boolean
               fill
               priority={priority}
               sizes="(max-width: 1023px) 100vw, 33vw"
-              className="object-cover object-center transition-transform duration-700 ease-out group-hover:scale-[1.03]"
+              className="object-cover object-center"
             />
           ) : (
             <div className="absolute inset-0 bg-gradient-to-br from-slate-300 to-slate-500" />
@@ -203,15 +209,14 @@ function DestinationCard({ event, priority }: { event: Event; priority?: boolean
             </div>
           </div>
         </div>
-      </Link>
-    </div>
+    </Link>
   )
 }
 
 function SlideText({ slideIndex }: { slideIndex: number }) {
   const theme = SLIDE_THEMES[slideIndex % SLIDE_THEMES.length]
   return (
-    <div className="w-full shrink-0 lg:flex lg:w-[33.333%] lg:flex-col lg:justify-center lg:pr-10 lg:pt-8 xl:pr-14 xl:pt-10">
+    <div className="w-full shrink-0 lg:w-[33.333%] lg:self-center lg:pr-10 xl:pr-14">
       <h1
         className="mb-3 text-[1.75rem] font-extrabold leading-[0.95] tracking-[-0.03em] sm:mb-6 sm:text-[clamp(2rem,5vw,6.25rem)] sm:leading-[0.9]"
         style={{ color: HERO_INK_HEADING }}
@@ -254,11 +259,12 @@ function SlideCards({
     <div className="w-full min-w-0 lg:w-[66.666%]">
       <div
         className={[
-          "flex gap-3 lg:gap-4",
+          "flex w-full gap-3 lg:gap-4",
           "min-h-[340px] overflow-x-auto overscroll-x-contain pb-1",
           "snap-x snap-mandatory scroll-smooth touch-pan-x",
           "[scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden",
-          "lg:min-h-[480px] lg:overflow-visible lg:snap-none lg:pb-0",
+          "sm:min-h-[460px]",
+          "lg:min-h-[480px] lg:overflow-visible lg:snap-none lg:pb-0 lg:pt-0",
           "xl:min-h-[580px]",
         ].join(" ")}
       >
@@ -266,7 +272,7 @@ function SlideCards({
           const inner = <DestinationCard event={event} priority={imagePriority && index === 0} />
           if (!stagger || !direction) {
             return (
-              <div key={`${slideIndex}-${event.id}`} className={CARD_ITEM_CLASS}>
+              <div key={`${slideIndex}-${event.id}`} className={CARD_SLOT_CLASS}>
                 {inner}
               </div>
             )
@@ -275,7 +281,7 @@ function SlideCards({
           return (
             <motion.div
               key={`${slideIndex}-${event.id}`}
-              className={`${CARD_ITEM_CLASS} will-change-transform`}
+              className={`${CARD_SLOT_CLASS} will-change-transform`}
               initial={{ x: sign * (CARD_IN_STEP + index * 70), y: 0 }}
               animate={{ x: 0, y: 0 }}
               transition={{ type: "tween", duration: SWAP_S * 0.9, delay, ease: ENTER_EASE }}
@@ -303,7 +309,7 @@ function SlideRow({
   imagePriority?: boolean
 }) {
   return (
-    <div className="flex w-full min-w-full shrink-0 flex-col gap-5 sm:gap-8 lg:flex-row lg:items-center lg:gap-0">
+    <div className="flex w-full min-w-full shrink-0 flex-col gap-5 sm:gap-8 lg:flex-row lg:items-start lg:gap-0">
       <SlideText slideIndex={slideIndex} />
       <SlideCards
         slideIndex={slideIndex}
@@ -331,7 +337,7 @@ function IncomingSlide({
 
   return (
     <motion.div
-      className="absolute inset-0 z-20 will-change-transform"
+      className="absolute inset-0 z-20 min-h-full w-full will-change-transform"
       initial={{ x: from, y: 0 }}
       animate={{ x: 0, y: 0 }}
       transition={{ type: "tween", duration: SWAP_S, ease: ENTER_EASE }}
@@ -431,7 +437,7 @@ export default function HeroSlideshowClient({
       className="pb-6 sm:pb-12 lg:min-h-[600px] lg:pb-14 xl:min-h-[680px] xl:pb-20 pt-4 sm:pt-8 lg:pt-10 xl:pt-12"
     >
       <div className="relative mx-auto w-full px-4 sm:px-[clamp(1rem,5vw,200px)]">
-        <div className="relative overflow-hidden lg:min-h-[520px] xl:min-h-[600px]">
+        <div className="relative min-h-[620px] overflow-hidden sm:min-h-[700px] lg:min-h-[520px] xl:min-h-[600px]">
           {phase === "idle" && (
             <SlideRow slideIndex={displayIdx} cards={slides[displayIdx]} imagePriority={displayIdx === 0} />
           )}
@@ -439,7 +445,7 @@ export default function HeroSlideshowClient({
           {phase === "exit" && (
             <motion.div
               key={`exit-${displayIdx}`}
-              className="absolute inset-0 z-30 will-change-transform"
+              className="absolute inset-0 z-30 min-h-full w-full will-change-transform"
               initial={{ x: 0, y: 0 }}
               animate={{ x: exitX, y: 0 }}
               transition={{ duration: EXIT_S, ease: SLIDE_EASE }}
