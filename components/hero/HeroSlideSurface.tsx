@@ -35,8 +35,8 @@ export default function HeroSlideSurface({
         <HeroAmbientLayer surface={surface} pointer={pointer} />
       </div>
       {phase === "swap" ? (
-        <HeroWipeFrame direction={direction} wipeColor={surface.wipeBg} />
+        <HeroWipeFrame direction={direction} wipeColor="#1a093f" />
       ) : null}
     </div>
   )
-}
+} 

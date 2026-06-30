@@ -48,7 +48,16 @@ export default function Home() {
           >
             {/* <UpcomingVipEvents /> */}
           </Suspense>
-          <div className="relative bg-[#F9F9F9] left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen  pt-4 pb-6 mt-5">
+          <div
+            className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen pt-4 pb-6 mt-5"
+            style={{
+              background: `
+      radial-gradient(circle at 12% 25%, rgba(249,188,137,0.28) 0%, transparent 38%),
+      radial-gradient(circle at 88% 20%, rgba(186,218,198,0.26) 0%, transparent 38%),
+      linear-gradient(180deg, #f6f3ec 0%, #f1efe8 100%)
+    `,
+            }}
+          >
             <div className="mx-auto max-w-7xl px-3 sm:px-4 lg:px-6">
               <HomeTradeFairsSearch />
             </div>

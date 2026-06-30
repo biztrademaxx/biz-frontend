@@ -192,20 +192,25 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground font-sans font-normal antialiased;
   }
+
   h1 {
     @apply font-display font-extrabold tracking-tight;
   }
+
   h2 {
     @apply font-display font-bold tracking-tight;
   }
+
   nav,
   nav a,
   nav button {
     @apply font-sans font-medium;
   }
+
   label,
   small,
   figcaption {
@@ -258,6 +263,7 @@
     transform: translateX(0%);
     opacity: 1;
   }
+
   100% {
     transform: translateX(100%);
     opacity: 0;
@@ -293,6 +299,7 @@
   from {
     transform: translateX(0);
   }
+
   to {
     transform: translateX(-50%);
   }
@@ -336,6 +343,7 @@
   background-size: 4px 4px;
   background-position: 0 0, 0 2px, 2px -2px, -2px 0px;
 }
+
 .input-box {
   @apply w-full border rounded-lg px-3 py-2 bg-white text-sm focus:outline-none focus:ring-1 focus:ring-black;
 }
@@ -345,6 +353,7 @@
     opacity: 0.8;
     transform: translateY(10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -359,6 +368,7 @@
   0% {
     transform: translateX(0);
   }
+
   100% {
     transform: translateX(-50%);
   }
@@ -372,6 +382,7 @@
   0% {
     transform: translateX(-100%);
   }
+
   100% {
     transform: translateX(100%);
   }
@@ -390,12 +401,10 @@
   position: absolute;
   inset: 0;
   transform: translateX(-100%);
-  background: linear-gradient(
-    90deg,
-    transparent,
-    oklch(98.5% 0.002 247.839 / 0.9),
-    transparent
-  );
+  background: linear-gradient(90deg,
+      transparent,
+      oklch(98.5% 0.002 247.839 / 0.9),
+      transparent);
   animation: skeleton-shimmer 1.35s ease-in-out infinite;
 }
 
@@ -413,14 +422,12 @@
   position: absolute;
   inset: 0;
   transform: translateX(-100%);
-  background: linear-gradient(
-    105deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.35) 35%,
-    rgba(255, 255, 255, 0.75) 50%,
-    rgba(255, 255, 255, 0.35) 65%,
-    transparent 100%
-  );
+  background: linear-gradient(105deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.35) 35%,
+      rgba(255, 255, 255, 0.75) 50%,
+      rgba(255, 255, 255, 0.35) 65%,
+      transparent 100%);
   animation: skeleton-shimmer 2.1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
@@ -443,8 +450,10 @@
 }
 
 .no-scrollbar {
-  -ms-overflow-style: none;  /* IE & Edge */
-  scrollbar-width: none;     /* Firefox */
+  -ms-overflow-style: none;
+  /* IE & Edge */
+  scrollbar-width: none;
+  /* Firefox */
 }
 
 /* Visitor dashboard — collapsed sidebar (no horizontal scroll on nav-scroll) */
@@ -503,21 +512,16 @@
   align-items: center;
   justify-content: center;
   background:
-    radial-gradient(
-      circle at 0 0,
+    radial-gradient(circle at 0 0,
       transparent var(--visitor-tab-curve),
-      #ffffff var(--visitor-tab-curve)
-    )
-      0 0 / var(--visitor-tab-curve) var(--visitor-tab-curve) no-repeat,
-    radial-gradient(
-      circle at 0 100%,
+      #ffffff var(--visitor-tab-curve)) 0 0 / var(--visitor-tab-curve) var(--visitor-tab-curve) no-repeat,
+    radial-gradient(circle at 0 100%,
       transparent var(--visitor-tab-curve),
-      #ffffff var(--visitor-tab-curve)
-    )
-      0 100% / var(--visitor-tab-curve) var(--visitor-tab-curve) no-repeat,
+      #ffffff var(--visitor-tab-curve)) 0 100% / var(--visitor-tab-curve) var(--visitor-tab-curve) no-repeat,
     #ffffff;
   border-radius: 0 var(--visitor-tab-curve) var(--visitor-tab-curve) 0;
 }
+
 .scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;
@@ -526,6 +530,7 @@
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
 .hide-scrollbar {
   scrollbar-width: none;
   -ms-overflow-style: none;
@@ -567,6 +572,7 @@
 .scrollbar-hover:hover::-webkit-scrollbar-thumb:hover {
   background: rgb(148 163 184 / 0.85);
 }
+
 /* Add to your globals.css */
 .organizers-marquee-track {
   animation: marquee-scroll var(--organizers-marquee-duration, 30s) linear infinite;

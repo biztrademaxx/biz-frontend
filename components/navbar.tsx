@@ -22,6 +22,7 @@ import NavbarCountryLabel from "./location/NavbarCountryLabel"
 import { DashboardPlanBadge } from "@/components/dashboard-packages"
 import { dashboardRoleFromUserRole, useDashboardPlan } from "@/hooks/use-dashboard-plan"
 import { HERO_SHELL_X_PADDING_CLASS } from "@/lib/hero/hero-surface"
+import { motion } from "framer-motion"
 
 export default function Navbar() {
   const router = useRouter()
@@ -215,7 +216,24 @@ export default function Navbar() {
   )
 
   return (
-    <nav
+  <>
+      {isHome && (
+        <div className="fixed top-0 left-0 right-0 z-[9999] h-[3px] overflow-hidden">
+          <motion.div
+            key={pathname}
+            className="h-full bg-[#bc1c4f]"
+            initial={{ width: "0%" }}
+            animate={{ width: "100%" }}
+            transition={{
+              duration: 7,
+              ease: "linear",
+              repeat: Infinity, // remove if you sync it with the hero
+            }}
+          />
+        </div>
+      )}
+
+      <nav
       className={cn(
         isHome ? "relative z-50" : "sticky top-0 z-50",
         isHome
@@ -250,7 +268,7 @@ export default function Navbar() {
             <Link href="/" className={NAVBAR_LOGO_LINK_CLASSNAME}>
               <Image {...brandLogo} alt="BizTradeFairs.com" priority />
             </Link>
-            <div className="hidden min-w-0 sm:flex">
+            <div className="ml-3 flex items-end pt-4">
               <NavbarCountryLabel />
             </div>
           </div>
@@ -264,10 +282,10 @@ export default function Navbar() {
             <Link href="/" className={NAVBAR_LOGO_LINK_CLASSNAME}>
               <Image {...brandLogo} alt="BizTradeFairs.com" priority />
             </Link>
-            <div className="hidden min-w-0 shrink-0 md:flex">
-              <NavbarCountryLabel showChevron />
+            <div className="hidden min-w-0 shrink-0 md:flex items-center self-end pb-3 ml-2">
+              <NavbarCountryLabel />
             </div>
-            <div ref={exploreRef} className="shrink-0">
+            {/* <div ref={exploreRef} className="shrink-0">
               <button
                 type="button"
                 className={`inline-flex items-center gap-0.5 rounded-md px-1.5 py-1 text-sm font-medium ${navLinkClass}`}
@@ -279,25 +297,28 @@ export default function Navbar() {
                 Explore
                 <ChevronDown className={`h-4 w-4 transition-transform ${exploreOpen ? "rotate-180" : ""}`} />
               </button>
-            </div>
+            </div> */}
           </div>
 
           {/* Center — viewport-centered primary links */}
-          <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+          {/* <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
             <div className="pointer-events-auto flex items-center gap-5 xl:gap-7">
               {centerNavLinks}
             </div>
-          </div>
+          </div> */}
 
           {/* Right — CTAs + account */}
-          <div className="relative z-10 ml-auto flex shrink-0 items-center gap-2 xl:gap-3">
+          <div className="relative z-10 ml-auto flex items-center gap-6">
+            {centerNavLinks}
             <Link href="/event" className={navLinkClass}>
               <span className="text-sm whitespace-nowrap">Top 100 Must Visit</span>
             </Link>
             <Link href="/organizer-signup" className={navLinkClass}>
               <span className="text-sm whitespace-nowrap">Add Event</span>
             </Link>
+
             {accountButton(desktopAccountRef)}
+
           </div>
         </div>
 
@@ -422,5 +443,6 @@ export default function Navbar() {
 
       <ExploreMegaMenu open={exploreOpen} onClose={() => setExploreOpen(false)} />
     </nav>
+    </>
   )
 }
