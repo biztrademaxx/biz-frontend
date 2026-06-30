@@ -1,10 +1,16 @@
 "use client"
 
-import { MapPin } from "lucide-react"
+import { ChevronDown, MapPin } from "lucide-react"
 import { useHomeLocation } from "@/contexts/home-location-context"
 
 /** Navbar: detected country from IP/VPN (read-only, beside Explore). */
-export default function NavbarCountryLabel({ className = "" }: { className?: string }) {
+export default function NavbarCountryLabel({
+  className = "",
+  showChevron = false,
+}: {
+  className?: string
+  showChevron?: boolean
+}) {
   const { countryName, isLoading } = useHomeLocation()
   const label = countryName?.trim() || null
   const showLoading = isLoading && !label
@@ -19,6 +25,7 @@ export default function NavbarCountryLabel({ className = "" }: { className?: str
       <span className="truncate font-medium">
         {showLoading ? "Location…" : label ?? "—"}
       </span>
+      {showChevron ? <ChevronDown className="h-4 w-4 shrink-0 opacity-70" aria-hidden /> : null}
     </span>
   )
 }

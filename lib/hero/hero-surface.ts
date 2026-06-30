@@ -4,6 +4,10 @@ import type { CSSProperties } from "react"
 
 export const HERO_FRAME_WIPE_BG = "#edece5"
 
+/** Background wipe + incoming slide duration (seconds). */
+export const HERO_SWAP_DURATION = 0.7
+export const HERO_SWAP_EASE = [0.76, 0, 0.24, 1] as const
+
 /** Primary ink — headings, nav, body, controls (reference: rgb(26, 9, 63)). */
 export const HERO_INK = "#1a093f"
 export const HERO_INK_HEADING = "#1a093f"
@@ -15,6 +19,9 @@ export const HERO_CTA_GRADIENT = "linear-gradient(225deg, rgb(255, 94, 58) 0%, r
 
 /** Sticky navbar height — hero pulls up under navbar for one continuous surface. */
 export const HERO_NAVBAR_CLEARANCE = "5.5rem"
+
+/** Shared horizontal inset — home navbar + hero slideshow align to the same edges. */
+export const HERO_SHELL_X_PADDING_CLASS = "px-4 sm:px-[clamp(1rem,5vw,200px)]"
 
 export type HeroSlideSurface = {
   base: string
@@ -35,7 +42,7 @@ export const HERO_SLIDE_SURFACES: HeroSlideSurface[] = [
   {
     base: "#edece5",
     baseEnd: "#cdcfd3",
-    wipeBg: "#edece5",
+    wipeBg: "#1a093f",
     radialA: { at: "14% 22%", rgb: "249, 188, 137", opacity: 0.48 },
     radialB: { at: "88% 18%", rgb: "155, 247, 241", opacity: 0.42 },
     ambientPeach:
@@ -48,7 +55,7 @@ export const HERO_SLIDE_SURFACES: HeroSlideSurface[] = [
   {
     base: "#f0ebe4",
     baseEnd: "#d4d0cb",
-    wipeBg: "#f0ebe4",
+    wipeBg: "#1a093f",
     radialA: { at: "38% 78%", rgb: "255, 178, 128", opacity: 0.5 },
     radialB: { at: "84% 14%", rgb: "168, 228, 222", opacity: 0.46 },
     ambientPeach:
@@ -61,7 +68,7 @@ export const HERO_SLIDE_SURFACES: HeroSlideSurface[] = [
   {
     base: "#e8ebe6",
     baseEnd: "#cfcbc5",
-    wipeBg: "#e8ebe6",
+    wipeBg: "#1a093f",
     radialA: { at: "10% 16%", rgb: "186, 218, 198", opacity: 0.5 },
     radialB: { at: "90% 20%", rgb: "155, 240, 232", opacity: 0.44 },
     radialC: { at: "78% 85%", rgb: "235, 195, 155", opacity: 0.4 },

@@ -1,10 +1,9 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { HERO_FRAME_WIPE_BG } from "@/lib/hero/hero-surface"
+import { HERO_FRAME_WIPE_BG, HERO_SWAP_DURATION, HERO_SWAP_EASE } from "@/lib/hero/hero-surface"
 
-export const HERO_SWAP_DURATION = 0.95
-export const HERO_SWAP_EASE = [0.76, 0, 0.24, 1] as const
+export { HERO_SWAP_DURATION, HERO_SWAP_EASE }
 
 /** Cream panel wipe — sweeps across during slide swap. */
 export default function HeroWipeFrame({

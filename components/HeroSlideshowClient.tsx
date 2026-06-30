@@ -16,6 +16,7 @@ import {
   HERO_INK_BORDER,
   HERO_INK_HEADING,
   HERO_INK_MUTED,
+  HERO_SWAP_DURATION,
 } from "@/lib/hero/hero-surface"
 import { useHeroTransition } from "@/lib/hero/hero-transition-context"
 import { parseLocalDateKey } from "@/lib/format-local-date-key"
@@ -29,7 +30,7 @@ const CARDS_PER_SLIDE = 3
 const SLIDE_EASE = [0.76, 0, 0.24, 1] as const
 const ENTER_EASE = [0.22, 1, 0.36, 1] as const
 const EXIT_S = 0.5
-const SWAP_S = 0.95
+const SWAP_S = HERO_SWAP_DURATION
 const CARD_STAGGER = 0.09
 const CARD_IN_STEP = 90
 const CARD_ITEM_CLASS =
@@ -468,7 +469,7 @@ export default function HeroSlideshowClient({
           )}
         </div>
 
-        <div className="mt-6 flex flex-col gap-3 sm:mt-10 sm:gap-4 sm:flex-row sm:items-center sm:justify-between lg:mt-12">
+        {/* <div className="mt-6 flex flex-col gap-3 sm:mt-10 sm:gap-4 sm:flex-row sm:items-center sm:justify-between lg:mt-12">
           <div
             className="hidden text-sm font-bold lowercase tracking-[-0.03em] sm:block lg:w-[33.333%]"
             style={{ color: HERO_INK }}
@@ -514,7 +515,7 @@ export default function HeroSlideshowClient({
               </button>
             </div>
           </div>
-        </div>
+        </div> */}
       </div>
     </section>
   )
