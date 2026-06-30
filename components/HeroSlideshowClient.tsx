@@ -515,54 +515,7 @@ export default function HeroSlideshowClient({
             )}
           </div>
 
-          {/* Controls - keep existing markup */}
-          <div className="mt-6 flex flex-col gap-3 sm:mt-10 sm:gap-4 sm:flex-row sm:items-center sm:justify-between lg:mt-12">
-            <div
-              className="hidden text-sm font-bold lowercase tracking-[-0.03em] sm:block lg:w-[33.333%]"
-              style={{ color: HERO_INK }}
-            >
-              trade.
-            </div>
-            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-4 lg:w-[66.666%] lg:justify-end">
-              <span
-                className="text-center text-[11px] font-medium uppercase tracking-[0.14em] sm:text-left sm:text-xs"
-                style={{ color: HERO_INK }}
-              >
-                Featured Events
-              </span>
-              <div className="flex items-center justify-center gap-2 sm:justify-end sm:gap-3">
-                <span className="text-sm font-medium uppercase tracking-[0.2em]" style={{ color: HERO_INK }}>
-                  {slideLabel}
-                </span>
-                <span className="text-sm font-medium uppercase tracking-[0.2em]" style={{ color: HERO_ACCENT }}>
-                  /
-                </span>
-                <span className="text-sm font-medium uppercase tracking-[0.2em]" style={{ color: HERO_INK }}>
-                  {totalLabel}
-                </span>
-                <button
-                  type="button"
-                  aria-label="Previous slide"
-                  disabled={isAnimating}
-                  onClick={() => advance("prev")}
-                  className="flex h-11 w-11 items-center justify-center rounded-full border transition-colors hover:bg-white/35 disabled:opacity-40"
-                  style={{ color: HERO_INK, borderColor: HERO_INK_BORDER }}
-                >
-                  <ChevronLeft className="h-5 w-5" strokeWidth={2} />
-                </button>
-                <button
-                  type="button"
-                  aria-label="Next slide"
-                  disabled={isAnimating}
-                  onClick={() => advance("next")}
-                  className="flex h-11 w-11 items-center justify-center rounded-full border transition-colors hover:bg-white/35 disabled:opacity-40"
-                  style={{ color: HERO_INK, borderColor: HERO_INK_BORDER }}
-                >
-                  <ChevronRight className="h-5 w-5" strokeWidth={2} />
-                </button>
-              </div>
-            </div>
-          </div>
+          
         </div>
       </section>
     </>
