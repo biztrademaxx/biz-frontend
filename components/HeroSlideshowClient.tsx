@@ -5,7 +5,6 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import { motion, useReducedMotion } from "framer-motion"
 import { ChevronLeft, ChevronRight, MapPin } from "lucide-react"
 import { AppImage } from "@/components/app-image"
-import HeroSlideSurface from "@/components/hero/HeroSlideSurface"
 import HomeSectionEmptyState, { homeEmptyDescription } from "@/components/home/HomeSectionEmptyState"
 import { hasDisplayableEventImage } from "@/lib/event-card-meta"
 import { eventPublicPath } from "@/lib/event-path"
@@ -429,16 +428,9 @@ export default function HeroSlideshowClient({
   return (
     <section
       aria-label="Featured trade fairs"
-      className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen min-w-0 pt-[calc(5.5rem+1.5rem)] pb-6 sm:pt-[calc(5.5rem+3rem)] sm:pb-12 lg:min-h-[760px] lg:pt-[calc(5.5rem+3.5rem)] lg:pb-14 xl:min-h-[820px] xl:pt-[calc(5.5rem+5rem)] xl:pb-20"
+      className="pb-6 sm:pb-12 lg:min-h-[600px] lg:pb-14 xl:min-h-[680px] xl:pb-20 pt-4 sm:pt-8 lg:pt-10 xl:pt-12"
     >
-      <HeroSlideSurface
-        displayIdx={displayIdx}
-        pendingIdx={pendingIdx}
-        phase={phase}
-        direction={direction}
-      />
-
-      <div className="relative z-10 mx-auto w-full px-4 sm:px-[clamp(1rem,5vw,200px)]">
+      <div className="relative mx-auto w-full px-4 sm:px-[clamp(1rem,5vw,200px)]">
         <div className="relative overflow-hidden lg:min-h-[480px] xl:min-h-[560px]">
           {phase === "idle" && (
             <SlideRow slideIndex={displayIdx} cards={slides[displayIdx]} imagePriority={displayIdx === 0} />

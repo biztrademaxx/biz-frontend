@@ -14,6 +14,7 @@ import FeaturedSpeakers from "@/components/FeaturedSpeaker";
 import CategoryGrid from "@/components/catagories";
 import HeroSlideshow from "@/components/HeroSlideshow";
 import HeroSlideshowSkeleton from "@/components/HeroSlideshowSkeleton";
+import HomeHeroUnified from "@/components/hero/HomeHeroUnified";
 import EventReviews from "@/components/EventReviews";
 import {
   CategoryBrowseSkeleton,
@@ -30,11 +31,11 @@ export default function Home() {
   return (
     <div className="min-h-screen w-full min-w-0 overflow-x-hidden">
       <div className="pb-1">
-        <div id="home-hero-section" className="relative -mt-[5.5rem]">
+        <HomeHeroUnified>
           <Suspense fallback={<HeroSlideshowSkeleton />}>
             <HeroSlideshow />
           </Suspense>
-        </div>
+        </HomeHeroUnified>
         <div className="mx-auto w-full min-w-0 max-w-7xl bg-[#f9f9f9] px-3 sm:px-4 lg:px-6">
           <Suspense
             fallback={

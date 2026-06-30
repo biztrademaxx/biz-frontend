@@ -176,7 +176,7 @@ export default function Navbar() {
   return (
     <nav
       className={cn(
-        "sticky top-0 z-50",
+        isHome ? "relative z-50" : "sticky top-0 z-50",
         isHome
           ? "overflow-visible border-b-0 bg-transparent shadow-none"
           : "overflow-hidden border-b-0 bg-white shadow-[0_4px_12px_rgba(0,0,0,0.12)]",
