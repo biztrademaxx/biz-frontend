@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState, useRef } from "react"
 import { motion, useReducedMotion } from "framer-motion"
 import { ChevronLeft, ChevronRight, MapPin } from "lucide-react"
 import { AppImage } from "@/components/app-image"
@@ -16,11 +16,13 @@ import {
   HERO_INK_BORDER,
   HERO_INK_HEADING,
   HERO_INK_MUTED,
+  HERO_SWAP_DURATION,
 } from "@/lib/hero/hero-surface"
 import { useHeroTransition } from "@/lib/hero/hero-transition-context"
 import { parseLocalDateKey } from "@/lib/format-local-date-key"
 import { cn } from "@/lib/utils"
 import type { HeroSlideshowEvent } from "@/lib/hero/types"
+import { HeroCursorGlow } from "@/components/HeroCursorGlow"
 
 export type Event = HeroSlideshowEvent
 
@@ -29,7 +31,7 @@ const CARDS_PER_SLIDE = 3
 const SLIDE_EASE = [0.76, 0, 0.24, 1] as const
 const ENTER_EASE = [0.22, 1, 0.36, 1] as const
 const EXIT_S = 0.5
-const SWAP_S = 0.95
+const SWAP_S = HERO_SWAP_DURATION
 const CARD_STAGGER = 0.09
 const CARD_IN_STEP = 90
 const CARD_ITEM_CLASS =
@@ -38,7 +40,7 @@ const CARD_ITEM_CLASS =
 /** Fixed slot — hover grows inside without shifting siblings or left column. */
 const CARD_SLOT_CLASS = cn(
   CARD_ITEM_CLASS,
-  "relative h-[340px] overflow-visible sm:h-[460px] lg:h-[480px] xl:h-[580px]",
+  "relative h-[355px] overflow-visible sm:h-[475px] lg:h-[495px] xl:h-[595px]",
 )
 
 type Phase = "idle" | "exit" | "swap"
@@ -167,48 +169,79 @@ function DestinationCard({ event, priority }: { event: Event; priority?: boolean
   return (
     <Link
       href={eventPublicPath(event)}
-      className="group absolute inset-x-0 bottom-0 z-0 block overflow-visible rounded-[6px] shadow-[0_4px_24px_rgba(0,0,0,0.08)] transition-shadow duration-300 ease-out motion-safe:hover:z-20 motion-safe:group-hover:shadow-[0_10px_32px_rgba(0,0,0,0.14)] sm:rounded-[8px]"
+      className="
+  group
+  absolute
+  inset-x-0
+  bottom-0
+  z-0
+  block
+  overflow-visible
+  rounded-[8px]
+  transition-all
+  duration-300
+  ease-out
+  motion-safe:hover:z-20
+  shadow-[0_8px_25px_rgba(0,0,0,.08)]
+  motion-safe:group-hover:shadow-[0_20px_45px_rgba(0,0,0,.18)]
+"
       aria-label={dateAria ? `${place}, ${dateAria}` : place}
     >
-      <div className="relative h-[340px] w-full overflow-hidden rounded-[6px] transition-[height,transform] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-safe:group-hover:-translate-y-2.5 motion-safe:group-hover:h-[362px] sm:h-[460px] sm:rounded-[8px] motion-safe:sm:group-hover:h-[482px] lg:h-[480px] motion-safe:lg:group-hover:h-[502px] xl:h-[580px] motion-safe:xl:group-hover:h-[602px]">
-          {imageUrl ? (
-            <AppImage
-              src={imageUrl}
-              alt={place}
-              fill
-              priority={priority}
-              sizes="(max-width: 1023px) 100vw, 33vw"
-              className="object-cover object-center"
-            />
-          ) : (
-            <div className="absolute inset-0 bg-gradient-to-br from-slate-300 to-slate-500" />
-          )}
-          <div
-            className="pointer-events-none absolute inset-x-0 bottom-0 h-[55%] bg-gradient-to-t from-[rgba(12,12,12,0.72)] via-[rgba(12,12,12,0.28)] to-transparent"
-            aria-hidden
+      <div
+        className="
+    relative
+    h-[340px]
+    w-full
+    overflow-hidden
+    rounded-[6px]
+    transition-transform
+    duration-300
+    ease-[cubic-bezier(0.22,1,0.36,1)]
+    motion-safe:group-hover:-translate-y-3
+    sm:h-[460px]
+    sm:rounded-[8px]
+    lg:h-[480px]
+    xl:h-[580px]
+  "
+      >
+        {imageUrl ? (
+          <AppImage
+            src={imageUrl}
+            alt={place}
+            fill
+            priority={priority}
+            sizes="(max-width: 1023px) 100vw, 33vw"
+            className="object-cover object-center"
           />
-          <div className="absolute bottom-0 left-0 right-0 z-10 p-3 sm:p-6 lg:p-8">
-            {dates ? (
-              <div className="mb-2 sm:mb-3">
-                <p className="text-base font-bold leading-none tracking-[0.06em] text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)] sm:text-lg lg:text-xl">
-                  {dates.dayLine}
-                </p>
-                <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-white/95 drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)] sm:text-xs">
-                  {dates.monthYearLine}
-                </p>
-              </div>
-            ) : null}
-            <p className="line-clamp-2 text-base font-bold leading-tight tracking-[-0.02em] text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.55)] sm:text-[clamp(1.25rem,2.2vw,2.5rem)]">
-              {place}
-            </p>
-            <div className="mt-1 flex items-center gap-1.5">
-              <MapPin className="h-3.5 w-3.5 shrink-0 text-[#ff2323] drop-shadow-sm" strokeWidth={2.5} aria-hidden />
-              <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-white/95 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)] sm:text-xs">
-                {region}
-              </span>
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-br from-slate-300 to-slate-500" />
+        )}
+        <div
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-[55%] bg-gradient-to-t from-[rgba(12,12,12,0.72)] via-[rgba(12,12,12,0.28)] to-transparent"
+          aria-hidden
+        />
+        <div className="absolute bottom-0 left-0 right-0 z-10 p-3 sm:p-6 lg:p-8">
+          {dates ? (
+            <div className="mb-2 sm:mb-3">
+              <p className="text-base font-bold leading-none tracking-[0.06em] text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)] sm:text-lg lg:text-xl">
+                {dates.dayLine}
+              </p>
+              <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-white/95 drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)] sm:text-xs">
+                {dates.monthYearLine}
+              </p>
             </div>
+          ) : null}
+          <p className="line-clamp-2 text-base font-bold leading-tight tracking-[-0.02em] text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.55)] sm:text-[clamp(1.25rem,2.2vw,2.5rem)]">
+            {place}
+          </p>
+          <div className="mt-1 flex items-center gap-1.5">
+            <MapPin className="h-3.5 w-3.5 shrink-0 text-[#ff2323] drop-shadow-sm" strokeWidth={2.5} aria-hidden />
+            <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-white/95 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)] sm:text-xs">
+              {region}
+            </span>
           </div>
         </div>
+      </div>
     </Link>
   )
 }
@@ -260,12 +293,11 @@ function SlideCards({
       <div
         className={[
           "flex w-full gap-3 lg:gap-4",
-          "min-h-[340px] overflow-x-auto overscroll-x-contain pb-1",
-          "snap-x snap-mandatory scroll-smooth touch-pan-x",
+          "min-h-[340px] overflow-x-auto overscroll-x-contain pb-1 pt-4",
           "[scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden",
-          "sm:min-h-[460px]",
-          "lg:min-h-[480px] lg:overflow-visible lg:snap-none lg:pb-0 lg:pt-0",
-          "xl:min-h-[580px]",
+          "sm:min-h-[480px] sm:pt-4",
+          "lg:min-h-[510px] lg:overflow-visible lg:snap-none lg:pt-5 lg:pb-0",
+          "xl:min-h-[610px] xl:pt-5",
         ].join(" ")}
       >
         {cards.map((event, index) => {
@@ -366,6 +398,9 @@ export default function HeroSlideshowClient({
   const reduceMotion = useReducedMotion()
   const { setHeroSurface } = useHeroTransition()
 
+  // Add ref for cursor glow container
+  const heroRef = useRef<HTMLElement | null>(null)
+
   const isAnimating = phase !== "idle"
   const footerIdx = phase === "swap" ? pendingIdx : displayIdx
 
@@ -431,91 +466,105 @@ export default function HeroSlideshowClient({
   const sign = direction > 0 ? 1 : -1
   const exitX = sign > 0 ? "-100%" : "100%"
 
+  // Determine which slide index to use for cursor glow
+  const activeSlideIndex = phase === "swap" ? pendingIdx : displayIdx
+
   return (
-    <section
-      aria-label="Featured trade fairs"
-      className="pb-6 sm:pb-12 lg:min-h-[600px] lg:pb-14 xl:min-h-[680px] xl:pb-20 pt-4 sm:pt-8 lg:pt-10 xl:pt-12"
-    >
-      <div className="relative mx-auto w-full px-4 sm:px-[clamp(1rem,5vw,200px)]">
-        <div className="relative min-h-[620px] overflow-hidden sm:min-h-[700px] lg:min-h-[520px] xl:min-h-[600px]">
-          {phase === "idle" && (
-            <SlideRow slideIndex={displayIdx} cards={slides[displayIdx]} imagePriority={displayIdx === 0} />
-          )}
+    <>
+      <section
+        ref={heroRef}
+        aria-label="Featured trade fairs"
+        className="relative pb-6 sm:pb-12 lg:min-h-[600px] lg:pb-14 xl:min-h-[680px] xl:pb-20 pt-4 sm:pt-8 lg:pt-10 xl:pt-12"
+      >
+        {/* Cursor Glow - positioned above background but below content */}
+        <HeroCursorGlow
+          slideIndex={activeSlideIndex}
+          containerRef={heroRef}
+          className="pointer-events-none"
+        />
 
-          {phase === "exit" && (
-            <motion.div
-              key={`exit-${displayIdx}`}
-              className="absolute inset-0 z-30 min-h-full w-full will-change-transform"
-              initial={{ x: 0, y: 0 }}
-              animate={{ x: exitX, y: 0 }}
-              transition={{ duration: EXIT_S, ease: SLIDE_EASE }}
-              onAnimationComplete={() => setPhase("swap")}
-            >
-              <SlideRow slideIndex={displayIdx} cards={slides[displayIdx]} />
-            </motion.div>
-          )}
+        <div className="relative mx-auto w-full px-4 sm:px-[clamp(1rem,5vw,200px)]">
+          <div className="relative min-h-[640px] overflow-hidden sm:min-h-[720px] lg:min-h-[540px] xl:min-h-[620px]">
+            {phase === "idle" && (
+              <SlideRow slideIndex={displayIdx} cards={slides[displayIdx]} imagePriority={displayIdx === 0} />
+            )}
 
-          {phase === "swap" && (
-            <IncomingSlide
-              slideIndex={pendingIdx}
-              cards={slides[pendingIdx]}
-              direction={direction}
-              onComplete={() => {
-                setDisplayIdx(pendingIdx)
-                setPhase("idle")
-              }}
-            />
-          )}
-        </div>
+            {phase === "exit" && (
+              <motion.div
+                key={`exit-${displayIdx}`}
+                className="absolute inset-0 z-30 min-h-full w-full will-change-transform"
+                initial={{ x: 0, y: 0 }}
+                animate={{ x: exitX, y: 0 }}
+                transition={{ duration: EXIT_S, ease: SLIDE_EASE }}
+                onAnimationComplete={() => setPhase("swap")}
+              >
+                <SlideRow slideIndex={displayIdx} cards={slides[displayIdx]} />
+              </motion.div>
+            )}
 
-        <div className="mt-6 flex flex-col gap-3 sm:mt-10 sm:gap-4 sm:flex-row sm:items-center sm:justify-between lg:mt-12">
-          <div
-            className="hidden text-sm font-bold lowercase tracking-[-0.03em] sm:block lg:w-[33.333%]"
-            style={{ color: HERO_INK }}
-          >
-            trade.
+            {phase === "swap" && (
+              <IncomingSlide
+                slideIndex={pendingIdx}
+                cards={slides[pendingIdx]}
+                direction={direction}
+                onComplete={() => {
+                  setDisplayIdx(pendingIdx)
+                  setPhase("idle")
+                }}
+              />
+            )}
           </div>
-          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-4 lg:w-[66.666%] lg:justify-end">
-            <span
-              className="text-center text-[11px] font-medium uppercase tracking-[0.14em] sm:text-left sm:text-xs"
+
+          {/* Controls - keep existing markup */}
+          <div className="mt-6 flex flex-col gap-3 sm:mt-10 sm:gap-4 sm:flex-row sm:items-center sm:justify-between lg:mt-12">
+            <div
+              className="hidden text-sm font-bold lowercase tracking-[-0.03em] sm:block lg:w-[33.333%]"
               style={{ color: HERO_INK }}
             >
-              Featured Events
-            </span>
-            <div className="flex items-center justify-center gap-2 sm:justify-end sm:gap-3">
-              <span className="text-sm font-medium uppercase tracking-[0.2em]" style={{ color: HERO_INK }}>
-                {slideLabel}
-              </span>
-              <span className="text-sm font-medium uppercase tracking-[0.2em]" style={{ color: HERO_ACCENT }}>
-                /
-              </span>
-              <span className="text-sm font-medium uppercase tracking-[0.2em]" style={{ color: HERO_INK }}>
-                {totalLabel}
-              </span>
-              <button
-                type="button"
-                aria-label="Previous slide"
-                disabled={isAnimating}
-                onClick={() => advance("prev")}
-                className="flex h-11 w-11 items-center justify-center rounded-full border transition-colors hover:bg-white/35 disabled:opacity-40"
-                style={{ color: HERO_INK, borderColor: HERO_INK_BORDER }}
+              trade.
+            </div>
+            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-4 lg:w-[66.666%] lg:justify-end">
+              <span
+                className="text-center text-[11px] font-medium uppercase tracking-[0.14em] sm:text-left sm:text-xs"
+                style={{ color: HERO_INK }}
               >
-                <ChevronLeft className="h-5 w-5" strokeWidth={2} />
-              </button>
-              <button
-                type="button"
-                aria-label="Next slide"
-                disabled={isAnimating}
-                onClick={() => advance("next")}
-                className="flex h-11 w-11 items-center justify-center rounded-full border transition-colors hover:bg-white/35 disabled:opacity-40"
-                style={{ color: HERO_INK, borderColor: HERO_INK_BORDER }}
-              >
-                <ChevronRight className="h-5 w-5" strokeWidth={2} />
-              </button>
+                Featured Events
+              </span>
+              <div className="flex items-center justify-center gap-2 sm:justify-end sm:gap-3">
+                <span className="text-sm font-medium uppercase tracking-[0.2em]" style={{ color: HERO_INK }}>
+                  {slideLabel}
+                </span>
+                <span className="text-sm font-medium uppercase tracking-[0.2em]" style={{ color: HERO_ACCENT }}>
+                  /
+                </span>
+                <span className="text-sm font-medium uppercase tracking-[0.2em]" style={{ color: HERO_INK }}>
+                  {totalLabel}
+                </span>
+                <button
+                  type="button"
+                  aria-label="Previous slide"
+                  disabled={isAnimating}
+                  onClick={() => advance("prev")}
+                  className="flex h-11 w-11 items-center justify-center rounded-full border transition-colors hover:bg-white/35 disabled:opacity-40"
+                  style={{ color: HERO_INK, borderColor: HERO_INK_BORDER }}
+                >
+                  <ChevronLeft className="h-5 w-5" strokeWidth={2} />
+                </button>
+                <button
+                  type="button"
+                  aria-label="Next slide"
+                  disabled={isAnimating}
+                  onClick={() => advance("next")}
+                  className="flex h-11 w-11 items-center justify-center rounded-full border transition-colors hover:bg-white/35 disabled:opacity-40"
+                  style={{ color: HERO_INK, borderColor: HERO_INK_BORDER }}
+                >
+                  <ChevronRight className="h-5 w-5" strokeWidth={2} />
+                </button>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </>
   )
 }

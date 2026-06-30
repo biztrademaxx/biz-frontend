@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect, useCallback } from "react"
+import { useState, useRef, useEffect, useCallback, type RefObject } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { ChevronDown, Menu, User, X } from "lucide-react"
@@ -21,6 +21,8 @@ import ExploreMegaMenu from "./ExploreMegaMenu"
 import NavbarCountryLabel from "./location/NavbarCountryLabel"
 import { DashboardPlanBadge } from "@/components/dashboard-packages"
 import { dashboardRoleFromUserRole, useDashboardPlan } from "@/hooks/use-dashboard-plan"
+import { HERO_SHELL_X_PADDING_CLASS } from "@/lib/hero/hero-surface"
+import { motion } from "framer-motion"
 
 export default function Navbar() {
   const router = useRouter()
@@ -173,8 +175,65 @@ export default function Navbar() {
     </>
   )
 
+  const accountButton = (ref: RefObject<HTMLDivElement | null>) => (
+    <div className="relative inline-block text-left" ref={ref}>
+      <button
+        type="button"
+        onClick={() => setShowAccountMenu((v) => !v)}
+        className="rounded-full bg-[#002C71] p-2 text-white transition-colors hover:bg-[#001a48] focus:outline-none"
+        aria-expanded={showAccountMenu}
+        aria-haspopup="menu"
+        aria-label="Account menu"
+      >
+        <User className="h-5 w-5" strokeWidth={2} />
+      </button>
+      {showAccountMenu ? (
+        <div
+          className="absolute right-0 z-[100] mt-2 w-56 rounded-lg border border-gray-200 bg-white py-1 shadow-lg"
+          role="menu"
+        >
+          {accountMenuInner}
+        </div>
+      ) : null}
+    </div>
+  )
+
+  const centerNavLinks = (
+    <>
+      <Link href="/organizers" className={navLinkClass}>
+        <span className="text-sm font-medium">Organizers</span>
+      </Link>
+      <Link href="/venues" className={navLinkClass}>
+        <span className="text-sm font-medium">Venues</span>
+      </Link>
+      <Link href="/exhibitor" className={navLinkClass}>
+        <span className="text-sm font-medium">Exhibitors</span>
+      </Link>
+      <Link href="/speakers" className={navLinkClass}>
+        <span className="text-sm font-medium">Speakers</span>
+      </Link>
+    </>
+  )
+
   return (
-    <nav
+  <>
+      {isHome && (
+        <div className="fixed top-0 left-0 right-0 z-[9999] h-[3px] overflow-hidden">
+          <motion.div
+            key={pathname}
+            className="h-full bg-[#bc1c4f]"
+            initial={{ width: "0%" }}
+            animate={{ width: "100%" }}
+            transition={{
+              duration: 7,
+              ease: "linear",
+              repeat: Infinity, // remove if you sync it with the hero
+            }}
+          />
+        </div>
+      )}
+
+      <nav
       className={cn(
         isHome ? "relative z-50" : "sticky top-0 z-50",
         isHome
@@ -182,14 +241,20 @@ export default function Navbar() {
           : "overflow-hidden border-b-0 bg-white shadow-[0_4px_12px_rgba(0,0,0,0.12)]",
       )}
     >
-      <div ref={navShellRef} className="relative z-10 mx-auto max-w-7xl px-3 sm:px-4 lg:px-6">
-        <div className="flex h-[5.5rem] min-h-[5.5rem] items-center justify-between gap-1.5 sm:gap-3">
-          {/* Left Section - Logo, Explore, and Mobile Menu */}
-          <div className="flex min-w-0 items-center gap-2 sm:gap-4">
+      <div
+        ref={navShellRef}
+        className={cn(
+          "relative z-10 mx-auto w-full",
+          isHome ? HERO_SHELL_X_PADDING_CLASS : "max-w-7xl px-3 sm:px-4 lg:px-6",
+        )}
+      >
+        {/* Mobile / tablet — hamburger, logo, location, account */}
+        <div className="flex h-[5.5rem] min-h-[5.5rem] items-center justify-between gap-2 lg:hidden">
+          <div className="flex min-w-0 flex-1 items-center gap-1.5 sm:gap-2">
             <button
               type="button"
               className={cn(
-                "shrink-0 rounded-md p-2 lg:hidden",
+                "shrink-0 rounded-md p-2",
                 isHome
                   ? "text-[#1a093f] hover:bg-white/40"
                   : "text-gray-700 hover:bg-gray-100 hover:text-gray-900",
@@ -203,16 +268,27 @@ export default function Navbar() {
             <Link href="/" className={NAVBAR_LOGO_LINK_CLASSNAME}>
               <Image {...brandLogo} alt="BizTradeFairs.com" priority />
             </Link>
-            {/* Country from IP/VPN — visible sm+ */}
-            <div className="ml-1 hidden shrink-0 sm:ml-2 sm:flex">
+            <div className="ml-3 flex items-end pt-4">
               <NavbarCountryLabel />
             </div>
+          </div>
+          <div className="flex shrink-0 items-center">{accountButton(mobileAccountRef)}</div>
+        </div>
 
-            {/* Explore Button - Desktop (next to logo) */}
-            <div ref={exploreRef} className="hidden lg:ml-4 lg:block">
+        {/* Desktop — left | centered | right (reference layout) */}
+        <div className="relative hidden h-[5.5rem] min-h-[5.5rem] w-full lg:flex lg:items-center">
+          {/* Left — logo, home, location, explore */}
+          <div className="relative z-10 flex min-w-0 items-center gap-2 xl:gap-3">
+            <Link href="/" className={NAVBAR_LOGO_LINK_CLASSNAME}>
+              <Image {...brandLogo} alt="BizTradeFairs.com" priority />
+            </Link>
+            <div className="hidden min-w-0 shrink-0 md:flex items-center self-end pb-3 ml-2">
+              <NavbarCountryLabel />
+            </div>
+            {/* <div ref={exploreRef} className="shrink-0">
               <button
                 type="button"
-                className={`inline-flex items-center gap-0.5 rounded-md px-2 py-1 text-sm font-medium ${navLinkClass}`}
+                className={`inline-flex items-center gap-0.5 rounded-md px-1.5 py-1 text-sm font-medium ${navLinkClass}`}
                 onClick={() => setExploreOpen((v) => !v)}
                 aria-expanded={exploreOpen}
                 aria-haspopup="true"
@@ -221,62 +297,32 @@ export default function Navbar() {
                 Explore
                 <ChevronDown className={`h-4 w-4 transition-transform ${exploreOpen ? "rotate-180" : ""}`} />
               </button>
+            </div> */}
+          </div>
+
+          {/* Center — viewport-centered primary links */}
+          {/* <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+            <div className="pointer-events-auto flex items-center gap-5 xl:gap-7">
+              {centerNavLinks}
             </div>
-          </div>
+          </div> */}
 
-          {/* Center Section - Navigation Links (Desktop) - Centered */}
-          <div className="hidden lg:flex lg:items-center lg:justify-center lg:flex-1 lg:gap-8">
-            <Link href="/organizers" className={navLinkClass}>
-              <span className="text-sm font-medium">Organizers</span>
-            </Link>
-            <Link href="/venues" className={navLinkClass}>
-              <span className="text-sm font-medium">Venues</span>
-            </Link>
-            <Link href="/exhibitor" className={navLinkClass}>
-              <span className="text-sm font-medium">Exhibitors</span>
-            </Link>
-            <Link href="/speakers" className={navLinkClass}>
-              <span className="text-sm font-medium">Speakers</span>
-            </Link>
-          </div>
-
-          {/* Right Section - Actions */}
-          <div className="flex shrink-0 items-center gap-2 sm:gap-4">
-            {/* Top 100 Must Visit - Desktop */}
-            <Link href="/event" className={`hidden lg:block ${navLinkClass}`}>
+          {/* Right — CTAs + account */}
+          <div className="relative z-10 ml-auto flex items-center gap-6">
+            {centerNavLinks}
+            <Link href="/event" className={navLinkClass}>
               <span className="text-sm whitespace-nowrap">Top 100 Must Visit</span>
             </Link>
-
-            {/* Add Event - Desktop */}
-            <Link href="/organizer-signup" className={`hidden lg:block ${navLinkClass}`}>
+            <Link href="/organizer-signup" className={navLinkClass}>
               <span className="text-sm whitespace-nowrap">Add Event</span>
             </Link>
 
-            {/* Account Menu */}
-            <div className="relative inline-block text-left" ref={desktopAccountRef}>
-              <button
-                type="button"
-                onClick={() => setShowAccountMenu((v) => !v)}
-                className="rounded-full bg-[#002C71] p-2 text-white transition-colors hover:bg-[#001a48] focus:outline-none"
-                aria-expanded={showAccountMenu}
-                aria-haspopup="menu"
-                aria-label="Account menu"
-              >
-                <User className="h-5 w-5" strokeWidth={2} />
-              </button>
-              {showAccountMenu ? (
-                <div
-                  className="absolute right-0 z-[100] mt-2 w-56 rounded-lg border border-gray-200 bg-white py-1 shadow-lg"
-                  role="menu"
-                >
-                  {accountMenuInner}
-                </div>
-              ) : null}
-            </div>
+            {accountButton(desktopAccountRef)}
+
           </div>
         </div>
 
-        {/* Mobile Menu */}
+        {/* Mobile drawer */}
         {mobileMenuOpen ? (
           <div
             className={cn(
@@ -397,5 +443,6 @@ export default function Navbar() {
 
       <ExploreMegaMenu open={exploreOpen} onClose={() => setExploreOpen(false)} />
     </nav>
+    </>
   )
 }

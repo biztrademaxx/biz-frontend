@@ -195,6 +195,38 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
   const [savingEdit, setSavingEdit] = useState(false)
   const [avatarFile, setAvatarFile] = useState<File | null>(null)
 
+
+  const fetchOrganizerStats = async () => {
+    try {
+      let page = 1;
+      const limit = 500;
+      let allOrganizers: Organizer[] = [];
+      let totalPages = 1;
+
+      do {
+        const res = await adminApi<{
+          data: Organizer[];
+          pagination: {
+            totalPages: number;
+          };
+        }>(`/organizers?page=${page}&limit=${limit}`);
+
+        allOrganizers.push(...(res.data || []));
+        totalPages = res.pagination.totalPages;
+        page++;
+      } while (page <= totalPages);
+
+      setListStats({
+        total: allOrganizers.length,
+        verified: allOrganizers.filter((o) => o.isVerified).length,
+        premium: allOrganizers.filter((o) => o.isVerified && o.isActive).length,
+        pending: allOrganizers.filter((o) => !o.isVerified).length,
+      });
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   useEffect(() => {
     const loadCountries = async () => {
       try {
@@ -211,8 +243,13 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
     const timer = setTimeout(() => {
       fetchOrganizers(currentPage, searchTerm, selectedCountry)
     }, 250)
+
     return () => clearTimeout(timer)
   }, [currentPage, searchTerm, selectedCountry])
+
+  useEffect(() => {
+    fetchOrganizerStats();
+  }, []);
 
   useEffect(() => {
     setActiveTab(initialTab)
@@ -247,12 +284,26 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
       const incomingTotal = Number(data?.pagination?.total ?? list?.length ?? 0)
       const incomingPages = Math.max(1, Number(data?.pagination?.totalPages ?? 1))
       setTotalItems(Number.isFinite(incomingTotal) ? incomingTotal : 0)
-      setListStats({
-        total: Number(data?.stats?.total ?? incomingTotal) || 0,
-        verified: Number(data?.stats?.verified ?? 0) || 0,
-        premium: Number(data?.stats?.premium ?? 0) || 0,
-        pending: Number(data?.stats?.pending ?? 0) || 0,
-      })
+      // const organizersList = Array.isArray(list) ? list : [];
+
+      // const verifiedCount = organizersList.filter(
+      //   (o) => o.isVerified
+      // ).length;
+
+      // const premiumCount = organizersList.filter(
+      //   (o) => o.isVerified && o.isActive
+      // ).length;
+
+      // const pendingCount = organizersList.filter(
+      //   (o) => !o.isVerified
+      // ).length;
+
+      // setListStats({
+      //   total: incomingTotal,
+      //   verified: data?.stats?.verified ?? verifiedCount,
+      //   premium: data?.stats?.premium ?? premiumCount,
+      //   pending: data?.stats?.pending ?? pendingCount,
+      // });
       setTotalPages(incomingPages)
       if (page > incomingPages) {
         setCurrentPage(incomingPages)

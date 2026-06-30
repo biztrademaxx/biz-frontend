@@ -1,7 +1,7 @@
 "use client"
 
 import { devLog } from "@/lib/dev-log"
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { DollarSign, FileText, Download, Eye, Search, Calendar, CreditCard, Mail, Phone, MapPin, Building2, Receipt, CheckCircle, Clock, AlertCircle, Loader2 } from "lucide-react"
 import { apiFetch } from "@/lib/api"
 import { formatMoney, formatMoneyTotals, sumByCurrency } from "@/lib/format-currency"
+import { downloadInvoicePdf } from "@/lib/generate-invoice-pdf"
 import Image from "next/image"
 
 interface Invoice {
@@ -48,7 +49,6 @@ export default function FinancialInvoicesPage() {
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null)
   const [detailsOpen, setDetailsOpen] = useState(false)
   const [downloadLoading, setDownloadLoading] = useState(false)
-  const invoiceRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     fetchInvoices()
@@ -109,70 +109,27 @@ export default function FinancialInvoicesPage() {
     setDetailsOpen(true)
   }
 
+  const handleDownloadClick = async (invoice: Invoice) => {
+    handleDownloadInvoice(invoice)
+  }
+
+  // Direct PDF download — builds the PDF file bytes manually (no packages,
+  // no print dialog) and triggers an immediate browser download.
   const handleDownloadInvoice = async (invoice?: Invoice) => {
-    const currentInvoice = invoice || selectedInvoice;
+    const currentInvoice = invoice || selectedInvoice
 
     if (!currentInvoice) {
-      console.error("No invoice selected");
-      return;
+      console.error("No invoice selected")
+      return
     }
 
     try {
       setDownloadLoading(true)
-
-      // Dynamically import html2canvas and jspdf
-      const html2canvas = (await import('html2canvas')).default
-      const jsPDF = (await import('jspdf')).jsPDF
-
-      // Find the invoice element by ID
-      const element = document.getElementById(`invoice-${currentInvoice.id}`)
-      if (!element) {
-        console.error("Invoice element not found")
-        alert("Could not find invoice element. Please try again.")
-        return
-      }
-
-      // Create canvas from the element
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#ffffff',
-        logging: false,
-        width: element.scrollWidth,
-        height: element.scrollHeight,
-        onclone: (clonedDoc) => {
-          // Ensure all images are loaded
-          const images = clonedDoc.querySelectorAll('img')
-          return Promise.all(Array.from(images).map(img => {
-            if (img.complete) return Promise.resolve()
-            return new Promise((resolve) => {
-              img.onload = resolve
-              img.onerror = resolve
-            })
-          }))
-        }
-      })
-
-      // Create PDF
-      const imgData = canvas.toDataURL('image/png')
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'px',
-        format: [canvas.width * 0.75, canvas.height * 0.75]
-      })
-
-      const pdfWidth = pdf.internal.pageSize.getWidth()
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width
-
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight)
-      pdf.save(`invoice-${currentInvoice.invoiceNumber}.pdf`)
-
-      setDownloadLoading(false)
-
+      await downloadInvoicePdf(currentInvoice)
     } catch (error) {
       console.error("Error downloading invoice:", error)
       alert("Failed to download invoice. Please try again.")
+    } finally {
       setDownloadLoading(false)
     }
   }
@@ -329,7 +286,7 @@ export default function FinancialInvoicesPage() {
                         <Button variant="ghost" size="sm" onClick={() => handleViewDetails(invoice)}>
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleDownloadInvoice(invoice)}>
+                        <Button variant="ghost" size="sm" onClick={() => handleDownloadClick(invoice)}>
                           <Download className="h-4 w-4" />
                         </Button>
                       </div>
@@ -350,7 +307,7 @@ export default function FinancialInvoicesPage() {
           </DialogHeader>
           {selectedInvoice && (
             <>
-              <div id={`invoice-${selectedInvoice.id}`} className="p-8" ref={invoiceRef}>
+              <div id={`invoice-${selectedInvoice.id}`} className="p-8">
                 {/* Header with Logo and Invoice Info */}
                 <div className="flex justify-between items-start border-b pb-6">
                   <div className="flex items-center gap-3">
@@ -488,9 +445,9 @@ export default function FinancialInvoicesPage() {
 
               {/* Actions */}
               <div className="flex gap-3 justify-end p-6 bg-gray-50 border-t">
-                {/* <Button
+                <Button
                   variant="outline"
-                  onClick={() => handleDownloadInvoice(invoices)}
+                  onClick={() => handleDownloadInvoice(selectedInvoice ?? undefined)}
                   disabled={downloadLoading}
                   className="gap-2"
                 >
@@ -505,7 +462,7 @@ export default function FinancialInvoicesPage() {
                       Download PDF
                     </>
                   )}
-                </Button> */}
+                </Button>
                 <Button onClick={() => setDetailsOpen(false)}>Close</Button>
               </div>
             </>
