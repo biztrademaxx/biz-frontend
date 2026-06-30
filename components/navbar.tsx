@@ -16,10 +16,13 @@ import {
   isAuthenticated,
 } from "@/lib/api"
 import { NAVBAR_LOGO_LINK_CLASSNAME, getNavbarLogoImageProps } from "@/lib/brand-logo"
+import { cn } from "@/lib/utils"
 import ExploreMegaMenu from "./ExploreMegaMenu"
 import NavbarCountryLabel from "./location/NavbarCountryLabel"
 import { DashboardPlanBadge } from "@/components/dashboard-packages"
+import HeroWipeFrame from "@/components/hero/HeroWipeFrame"
 import { dashboardRoleFromUserRole, useDashboardPlan } from "@/hooks/use-dashboard-plan"
+import { useHeroTransition } from "@/lib/hero/hero-transition-context"
 
 export default function Navbar() {
   const router = useRouter()
@@ -48,6 +51,9 @@ export default function Navbar() {
   }, [pathname, hydrated])
 
   const authenticated = hydrated && isAuthenticated()
+  const isHome = pathname === "/"
+  const { phase: heroPhase, direction: heroDirection } = useHeroTransition()
+  const heroWiping = isHome && heroPhase === "swap"
   const userId = getCurrentUserId()
   const role = getCurrentUserRole()
   const displayName = getCurrentUserDisplayName()
@@ -111,7 +117,18 @@ export default function Navbar() {
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [mobileMenuOpen])
 
-  const navLinkClass = "font-sans font-medium text-gray-700 transition-colors hover:text-gray-900"
+  const navLinkClass = isHome
+    ? "font-sans font-medium text-[#1a093f] transition-colors hover:text-[#bc1c4f]"
+    : "font-sans font-medium text-gray-700 transition-colors hover:text-gray-900"
+
+  const mobileNavItemClass = isHome
+    ? "text-[#1a093f] hover:bg-white/40"
+    : "text-gray-800 hover:bg-gray-50"
+
+  const mobileMenuItemClass = cn(
+    "block px-4 py-3 text-sm font-medium",
+    mobileNavItemClass,
+  )
 
   const accountMenuInner = authenticated ? (
     <>
@@ -161,14 +178,27 @@ export default function Navbar() {
   )
 
   return (
-    <nav className="sticky top-0 z-50 bg-white shadow-[0_4px_12px_rgba(0,0,0,0.12)]">
-      <div ref={navShellRef} className="mx-auto max-w-7xl px-3 sm:px-4 lg:px-6">
+    <nav
+      className={cn(
+        "sticky top-0 z-50 overflow-hidden",
+        isHome
+          ? "border-b-0 bg-transparent shadow-none"
+          : "border-b-0 bg-white shadow-[0_4px_12px_rgba(0,0,0,0.12)]",
+      )}
+    >
+      {heroWiping ? <HeroWipeFrame direction={heroDirection} /> : null}
+      <div ref={navShellRef} className="relative z-10 mx-auto max-w-7xl px-3 sm:px-4 lg:px-6">
         <div className="flex h-[5.5rem] min-h-[5.5rem] items-center justify-between gap-1.5 sm:gap-3">
           {/* Left Section - Logo, Explore, and Mobile Menu */}
           <div className="flex min-w-0 items-center gap-2 sm:gap-4">
             <button
               type="button"
-              className="shrink-0 rounded-md p-2 text-gray-700 hover:bg-gray-100 hover:text-gray-900 lg:hidden"
+              className={cn(
+                "shrink-0 rounded-md p-2 lg:hidden",
+                isHome
+                  ? "text-[#1a093f] hover:bg-white/40"
+                  : "text-gray-700 hover:bg-gray-100 hover:text-gray-900",
+              )}
               onClick={() => setMobileMenuOpen((v) => !v)}
               aria-expanded={mobileMenuOpen}
               aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
@@ -253,19 +283,27 @@ export default function Navbar() {
 
         {/* Mobile Menu */}
         {mobileMenuOpen ? (
-          <div className="max-h-[min(70vh,480px)] overflow-y-auto border-t border-gray-200 bg-white py-2 lg:hidden">
+          <div
+            className={cn(
+              "max-h-[min(70vh,480px)] overflow-y-auto py-2 lg:hidden",
+              isHome ? "border-t-0 bg-white/35 backdrop-blur-md" : "border-t border-gray-200 bg-white",
+            )}
+          >
             {/* Explore - Mobile */}
             <button
               ref={exploreMobileRef}
               type="button"
-              className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium text-gray-800 hover:bg-gray-50"
+              className={cn(
+                "flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium",
+                mobileNavItemClass,
+              )}
               onClick={() => {
                 setExploreOpen(true)
                 setMobileMenuOpen(false)
               }}
             >
               Explore
-              <ChevronDown className="h-4 w-4 text-gray-500" />
+              <ChevronDown className={cn("h-4 w-4", isHome ? "text-[#1a093f]/70" : "text-gray-500")} />
             </button>
 
             {/* Country Label - Mobile */}
@@ -276,28 +314,28 @@ export default function Navbar() {
             {/* Mobile Navigation Links */}
             <Link
               href="/organizers"
-              className="block px-4 py-3 text-sm font-medium text-gray-800 hover:bg-gray-50"
+              className={mobileMenuItemClass}
               onClick={() => setMobileMenuOpen(false)}
             >
               Organizers
             </Link>
             <Link
               href="/venues"
-              className="block px-4 py-3 text-sm font-medium text-gray-800 hover:bg-gray-50"
+              className={mobileMenuItemClass}
               onClick={() => setMobileMenuOpen(false)}
             >
               Venues
             </Link>
             <Link
               href="/exhibitor"
-              className="block px-4 py-3 text-sm font-medium text-gray-800 hover:bg-gray-50"
+              className={mobileMenuItemClass}
               onClick={() => setMobileMenuOpen(false)}
             >
               Exhibitors
             </Link>
             <Link
               href="/speakers"
-              className="block px-4 py-3 text-sm font-medium text-gray-800 hover:bg-gray-50"
+              className={mobileMenuItemClass}
               onClick={() => setMobileMenuOpen(false)}
             >
               Speakers
@@ -309,14 +347,14 @@ export default function Navbar() {
             {/* Additional Mobile Links */}
             <Link
               href="/event"
-              className="block px-4 py-3 text-sm font-medium text-gray-800 hover:bg-gray-50"
+              className={mobileMenuItemClass}
               onClick={() => setMobileMenuOpen(false)}
             >
               Top 100 Must Visit
             </Link>
             <Link
               href="/organizer-signup"
-              className="block px-4 py-3 text-sm font-medium text-gray-800 hover:bg-gray-50"
+              className={mobileMenuItemClass}
               onClick={() => setMobileMenuOpen(false)}
             >
               Add Event
@@ -328,7 +366,7 @@ export default function Navbar() {
                 <button
                   type="button"
                   onClick={handleDashboard}
-                  className="block w-full px-4 py-3 text-left text-sm font-medium text-gray-800 hover:bg-gray-50"
+                  className={cn("block w-full px-4 py-3 text-left text-sm font-medium", mobileNavItemClass)}
                 >
                   Dashboard
                 </button>
@@ -344,14 +382,14 @@ export default function Navbar() {
               <>
                 <Link
                   href="/login"
-                  className="block px-4 py-3 text-sm font-medium text-gray-800 hover:bg-gray-50"
+                  className={mobileMenuItemClass}
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   Sign in
                 </Link>
                 <Link
                   href="/signup"
-                  className="block px-4 py-3 text-sm font-medium text-gray-800 hover:bg-gray-50"
+                  className={mobileMenuItemClass}
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   Create an account

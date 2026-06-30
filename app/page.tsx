@@ -29,7 +29,7 @@ import UpcomingVipEvents from "@/components/home/UpcomingVipEvents";
 export default function Home() {
   return (
     <div className="min-h-screen w-full min-w-0 overflow-x-hidden bg-[#f9f9f9]">
-      <div className="bg-[#f9f9f9] pb-1">
+      <div className="pb-1">
         <Suspense fallback={<HeroSlideshowSkeleton />}>
           <HeroSlideshow />
         </Suspense>
