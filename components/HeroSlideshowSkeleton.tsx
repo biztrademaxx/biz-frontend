@@ -13,21 +13,21 @@ export default function HeroSlideshowSkeleton() {
       aria-label="Loading featured events"
     >
       <div className="mx-auto w-full px-4 sm:px-[clamp(1rem,5vw,200px)]">
-        <div className="flex min-h-0 flex-col gap-5 sm:gap-8 lg:min-h-[480px] lg:flex-row lg:items-start xl:min-h-[560px]">
-          <div className="w-full shrink-0 lg:w-[33.333%] lg:pr-10">
+        <div className="flex min-h-0 flex-col gap-5 sm:gap-8 lg:min-h-[520px] lg:flex-row lg:items-center xl:min-h-[600px]">
+          <div className="w-full shrink-0 lg:flex lg:w-[33.333%] lg:flex-col lg:justify-center lg:pr-10 lg:pt-8">
             <Shimmer className="mb-3 h-10 w-[min(100%,16rem)] rounded-sm sm:mb-6 sm:h-16 lg:h-20" />
             <Shimmer className="mb-2 h-3 w-full max-w-md rounded-sm" />
             <Shimmer className="mb-2 h-3 w-[92%] max-w-md rounded-sm" />
             <Shimmer className="mb-5 h-3 w-[70%] max-w-sm rounded-sm sm:mb-8" />
-            <Shimmer className="h-11 w-full rounded-full sm:h-14 sm:w-48" />
+            <Shimmer className="h-9 w-44 rounded-full sm:h-10 sm:w-28" />
           </div>
 
           <div className="w-full min-w-0 lg:w-[66.666%]">
-            <Shimmer className="h-[300px] w-full rounded-[12px] sm:h-[420px] lg:hidden" />
-            <div className="hidden gap-2 lg:flex lg:w-full">
+            <Shimmer className="h-[340px] w-full rounded-[6px] sm:h-[460px] sm:rounded-[8px] lg:hidden" />
+            <div className="hidden gap-4 lg:flex lg:w-full">
               {[1, 2, 3].map((i) => (
                 <div key={i} className="min-w-0 flex-1">
-                  <Shimmer className="h-[400px] w-full rounded-[12px] xl:h-[520px]" />
+                  <Shimmer className="h-[480px] w-full rounded-[6px] sm:rounded-[8px] xl:h-[580px]" />
                 </div>
               ))}
             </div>
