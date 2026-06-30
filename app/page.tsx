@@ -49,7 +49,7 @@ export default function Home() {
             {/* <UpcomingVipEvents /> */}
           </Suspense>
           <div
-            className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen pt-4 pb-6 mt-5"
+            className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen pt-8 pb-10"
             style={{
               background: `
       radial-gradient(circle at 12% 25%, rgba(249,188,137,0.28) 0%, transparent 38%),
@@ -58,7 +58,7 @@ export default function Home() {
     `,
             }}
           >
-            <div className="mx-auto max-w-7xl px-3 sm:px-4 lg:px-6">
+            <div className="mx-auto max-w-7xl px-3 sm:px-4 lg:px-6 " >
               <HomeTradeFairsSearch />
             </div>
           </div>
@@ -66,7 +66,7 @@ export default function Home() {
       </div>
       <div className="bg-[#f9f9f9]">
         <Suspense fallback={<CategoryBrowseSkeleton />}>
-          <div className="-mt-8">
+          <div className="mt-5">
             <CategoryGrid />
           </div>
         </Suspense>

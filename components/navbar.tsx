@@ -218,7 +218,7 @@ export default function Navbar() {
   return (
   <>
       {isHome && (
-        <div className="fixed top-0 left-0 right-0 z-[9999] h-[3px] overflow-hidden">
+        <div className=" top-0 left-0 right-0 z-[9999] h-[3px] overflow-hidden">
           <motion.div
             key={pathname}
             className="h-full bg-[#bc1c4f]"
