@@ -68,9 +68,22 @@ export default function HomeTradeFairsSearch() {
   return (
     <section
       aria-label="Find trade fairs worldwide"
-      className="w-full min-w-0 rounded-sm border border-gray-200 bg-white p-4 transition-all duration-300"
+      className="
+    mt-6
+    w-full
+    min-w-0
+    rounded-2xl
+    border
+    border-white/70
+    bg-white/95
+    p-5
+    transition-all
+    duration-300
+    shadow-[0_12px_35px_rgba(26,9,63,0.08),0_4px_12px_rgba(0,0,0,0.04)]
+    hover:shadow-[0_22px_55px_rgba(26,9,63,0.12),0_8px_20px_rgba(0,0,0,0.06)]
+  "
     >
-      <div className="mb-3 flex flex-col gap-1 sm:mb-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mb-3 flex flex-col gap-1 sm:mb-4 sm:flex-row sm:items-center sm:justify-between mt-5">
         <h2 className="text-base font-bold text-[#004A96] sm:text-lg md:text-xl">Find Trade Fairs Worldwide</h2>
         <p className="text-xs text-slate-500 sm:text-sm">Every industry. Every city. One search.</p>
       </div>
