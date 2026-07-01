@@ -328,8 +328,8 @@ export default function OrganizersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f9f9f9]">
-            {/* Mobile filter bar */}
+    <div className="min-h-screen bg-[#f9f9f9] pb-12 sm:pb-16">
+      {/* Mobile filter bar */}
       <div className="sticky top-0 z-30 flex items-center gap-2 border-b border-gray-200/80 bg-[#f9f9f9]/95 px-4 py-3 backdrop-blur lg:hidden">
         <Sheet open={mobileFiltersOpen} onOpenChange={setMobileFiltersOpen}>
           <SheetTrigger asChild>
@@ -580,61 +580,61 @@ export default function OrganizersPage() {
                   const title = organizerDisplayName(organizer)
                   const locationLabel = organizerLocationLine(organizer)
                   return (
-                  <Card
-                    key={organizer.id}
-                    className="group flex h-full cursor-pointer flex-col overflow-hidden border-gray-200/80 bg-white p-0 shadow-sm transition-shadow hover:shadow-md"
-                    onClick={() => handleCardClick(organizer)}
-                  >
-                    <div className="relative aspect-[5/4] w-full shrink-0 overflow-hidden bg-gradient-to-br from-slate-50 to-slate-100">
-                      <AppImage
-                        src={organizer.image}
-                        alt={title}
-                        fill
-                        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
-                        className="object-contain object-center p-2"
-                      />
-                      {organizer.featured && (
-                        <Badge className="absolute left-1.5 top-1.5 px-1.5 py-0 text-[10px] bg-orange-500 text-white hover:bg-orange-600">
-                          Featured
-                        </Badge>
-                      )}
-                      {organizer.verified && (
-                        <Badge className="absolute right-1.5 top-1.5 px-1.5 py-0 text-[10px] bg-emerald-600 text-white hover:bg-emerald-700">
-                          <Award className="mr-0.5 h-2.5 w-2.5" />
-                          Verified
-                        </Badge>
-                      )}
-                    </div>
+                    <Card
+                      key={organizer.id}
+                      className="group flex h-full cursor-pointer flex-col overflow-hidden border-gray-200/80 bg-white p-0 shadow-sm transition-shadow hover:shadow-md"
+                      onClick={() => handleCardClick(organizer)}
+                    >
+                      <div className="relative aspect-[5/4] w-full shrink-0 overflow-hidden bg-gradient-to-br from-slate-50 to-slate-100">
+                        <AppImage
+                          src={organizer.image}
+                          alt={title}
+                          fill
+                          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
+                          className="object-contain object-center p-2"
+                        />
+                        {organizer.featured && (
+                          <Badge className="absolute left-1.5 top-1.5 px-1.5 py-0 text-[10px] bg-orange-500 text-white hover:bg-orange-600">
+                            Featured
+                          </Badge>
+                        )}
+                        {organizer.verified && (
+                          <Badge className="absolute right-1.5 top-1.5 px-1.5 py-0 text-[10px] bg-emerald-600 text-white hover:bg-emerald-700">
+                            <Award className="mr-0.5 h-2.5 w-2.5" />
+                            Verified
+                          </Badge>
+                        )}
+                      </div>
 
-                    <CardContent className="flex flex-1 flex-col p-3">
-                      <div className="mb-1.5 flex items-start justify-between gap-1.5">
-                        <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-gray-900">{title}</h3>
-                        <div className="flex shrink-0 items-center gap-0.5 text-xs">
-                          <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-                          <span className="font-medium tabular-nums">
-                            {Number(organizer.avgRating || 0).toFixed(1)}
-                          </span>
-                          <span className="text-muted-foreground">({organizer.totalReviews ?? 0})</span>
+                      <CardContent className="flex flex-1 flex-col p-3">
+                        <div className="mb-1.5 flex items-start justify-between gap-1.5">
+                          <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-gray-900">{title}</h3>
+                          <div className="flex shrink-0 items-center gap-0.5 text-xs">
+                            <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                            <span className="font-medium tabular-nums">
+                              {Number(organizer.avgRating || 0).toFixed(1)}
+                            </span>
+                            <span className="text-muted-foreground">({organizer.totalReviews ?? 0})</span>
+                          </div>
                         </div>
-                      </div>
 
-                      <div className="mb-1.5 flex items-start gap-1 text-xs text-muted-foreground">
-                        <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#004A96]/70" />
-                        <span className="line-clamp-2">{locationLabel}</span>
-                      </div>
+                        <div className="mb-1.5 flex items-start gap-1 text-xs text-muted-foreground">
+                          <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#004A96]/70" />
+                          <span className="line-clamp-2">{locationLabel}</span>
+                        </div>
 
-                      <div className="mt-auto flex flex-wrap gap-x-2 gap-y-0.5 text-[11px] text-muted-foreground">
-                        <span className="inline-flex items-center gap-1">
-                          <Calendar className="h-3.5 w-3.5 shrink-0" />
-                          {organizer.yearsOfExperience} yrs
-                        </span>
-                        <span className="inline-flex items-center gap-1">
-                          <TrendingUp className="h-3.5 w-3.5 shrink-0" />
-                          {organizer.eventsOrganized} events
-                        </span>
-                      </div>
-                    </CardContent>
-                  </Card>
+                        <div className="mt-auto flex flex-wrap gap-x-2 gap-y-0.5 text-[11px] text-muted-foreground">
+                          <span className="inline-flex items-center gap-1">
+                            <Calendar className="h-3.5 w-3.5 shrink-0" />
+                            {organizer.yearsOfExperience} yrs
+                          </span>
+                          <span className="inline-flex items-center gap-1">
+                            <TrendingUp className="h-3.5 w-3.5 shrink-0" />
+                            {organizer.eventsOrganized} events
+                          </span>
+                        </div>
+                      </CardContent>
+                    </Card>
                   )
                 })}
               </div>

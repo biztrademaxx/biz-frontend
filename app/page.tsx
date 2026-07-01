@@ -26,13 +26,13 @@ export const dynamic = "force-dynamic";
 
 export default function Home() {
   return (
-    <div className="min-h-screen w-full min-w-0 overflow-x-hidden">
+    <div className="min-h-screen w-full min-w-0 overflow-x-hidden bg-[#f9f9f9]">
       <div className="pb-1">
-        <HomeHeroUnified>
-          <Suspense fallback={<HeroSlideshowSkeleton />}>
-            <HeroSlideshow />
-          </Suspense>
-        </HomeHeroUnified>
+
+        <Suspense fallback={<HeroSlideshowSkeleton />}>
+          <HeroSlideshow />
+        </Suspense>
+
         <div className="mx-auto w-full min-w-0 max-w-7xl bg-[#f9f9f9] px-3 sm:px-4 lg:px-6">
           <Suspense
             fallback={
@@ -49,14 +49,7 @@ export default function Home() {
             {/* <UpcomingVipEvents /> */}
           </Suspense>
           <div
-            className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen pt-8 pb-10"
-            style={{
-              background: `
-      radial-gradient(circle at 12% 25%, rgba(249,188,137,0.28) 0%, transparent 38%),
-      radial-gradient(circle at 88% 20%, rgba(186,218,198,0.26) 0%, transparent 38%),
-      linear-gradient(180deg, #f6f3ec 0%, #f1efe8 100%)
-    `,
-            }}
+            className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen pt-8 bg-[#f9f9f9] sm:pt-10 lg:pt-12"
           >
             <div className="mx-auto max-w-7xl px-3 sm:px-4 lg:px-6 " >
               <HomeTradeFairsSearch />
@@ -66,9 +59,8 @@ export default function Home() {
       </div>
       <div className="bg-[#f9f9f9]">
         <Suspense fallback={<CategoryBrowseSkeleton />}>
-          <div className="mt-5">
-            <CategoryGrid />
-          </div>
+
+          <CategoryGrid />
         </Suspense>
 
         <Suspense fallback={<FeaturedEventsSkeleton />}>
