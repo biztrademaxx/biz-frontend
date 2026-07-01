@@ -218,7 +218,10 @@ export default function HeroSlideshowClient({
   }
 
   return (
-    <div className="relative w-full min-w-0" aria-label="VIP events">
+    // "group/slideshow" scopes :hover so the two arrow buttons only reveal
+    // themselves when the pointer is over the whole slideshow — on any
+    // screen size — instead of always being visible.
+    <div className="group/slideshow relative w-full min-w-0" aria-label="VIP events">
       <div
         ref={scrollRef}
         className="no-scrollbar flex w-full scroll-smooth snap-x snap-mandatory gap-0 overflow-x-auto overflow-y-hidden pt-0 pb-3"
@@ -227,7 +230,7 @@ export default function HeroSlideshowClient({
         {events.map(({ event, imageUrl }) => (
           <div
             key={event.id}
-            className="w-[min(100%,88vw)] shrink-0 snap-start sm:w-80 lg:w-1/5 lg:min-w-0"
+            className="w-full shrink-0 snap-start sm:w-80 lg:w-1/5 lg:min-w-0"
           >
             <EventCard event={event} imageUrl={imageUrl} />
           </div>
@@ -238,7 +241,7 @@ export default function HeroSlideshowClient({
         type="button"
         aria-label="Scroll left"
         onClick={() => advance("left")}
-        className="absolute left-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/95 p-2 shadow-lg ring-1 ring-black/5 hover:bg-white"
+        className="absolute left-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/95 p-2 opacity-0 shadow-lg ring-1 ring-black/5 transition-opacity duration-200 hover:bg-white group-hover/slideshow:opacity-100 focus-visible:opacity-100"
       >
         <ChevronLeft className="h-6 w-6 text-gray-700" strokeWidth={2} />
       </button>
@@ -246,7 +249,7 @@ export default function HeroSlideshowClient({
         type="button"
         aria-label="Scroll right"
         onClick={() => advance("right")}
-        className="absolute right-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/95 p-2 shadow-lg ring-1 ring-black/5 hover:bg-white"
+        className="absolute right-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/95 p-2 opacity-0 shadow-lg ring-1 ring-black/5 transition-opacity duration-200 hover:bg-white group-hover/slideshow:opacity-100 focus-visible:opacity-100"
       >
         <ChevronRight className="h-6 w-6 text-gray-700" strokeWidth={2} />
       </button>
