@@ -41,8 +41,10 @@ export function VenueHeroGallery({
     .filter(Boolean)
     .join(", ")
 
+  const hasDots = images.length > 1
+
   return (
-    <div className="relative h-56 overflow-hidden sm:h-72 md:h-96">
+    <div className="relative h-64 overflow-hidden xs:h-72 sm:h-80 md:h-96">
       {images.length > 0 ? (
         <Image
           src={getGalleryImage(images, currentImageIndex)}
@@ -55,9 +57,9 @@ export function VenueHeroGallery({
       ) : (
         <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-gray-100 to-gray-300">
           <div className="px-4 text-center">
-            <Building className="mx-auto mb-3 h-16 w-16 text-gray-400 sm:h-24 sm:w-24" />
-            <h2 className="mb-1 text-lg font-bold text-gray-700 sm:text-2xl">{displayName}</h2>
-            <p className="text-sm text-gray-600">No images available</p>
+            <Building className="mx-auto mb-3 h-14 w-14 text-gray-400 sm:h-20 sm:w-20 md:h-24 md:w-24" />
+            <h2 className="mb-1 text-base font-bold text-gray-700 sm:text-xl md:text-2xl">{displayName}</h2>
+            <p className="text-xs text-gray-600 sm:text-sm">No images available</p>
           </div>
         </div>
       )}
@@ -69,27 +71,30 @@ export function VenueHeroGallery({
             type="button"
             onClick={onPrev}
             aria-label="Previous image"
-            className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-white/20 p-2 backdrop-blur-sm transition-colors hover:bg-white/30 sm:left-4"
+            className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-white/20 p-1.5 backdrop-blur-sm transition-colors hover:bg-white/30 sm:left-4 sm:p-2"
           >
-            <ChevronLeft className="h-5 w-5 text-white sm:h-6 sm:w-6" />
+            <ChevronLeft className="h-4 w-4 text-white sm:h-6 sm:w-6" />
           </button>
           <button
             type="button"
             onClick={onNext}
             aria-label="Next image"
-            className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-white/20 p-2 backdrop-blur-sm transition-colors hover:bg-white/30 sm:right-4"
+            className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-white/20 p-1.5 backdrop-blur-sm transition-colors hover:bg-white/30 sm:right-4 sm:p-2"
           >
-            <ChevronRight className="h-5 w-5 text-white sm:h-6 sm:w-6" />
+            <ChevronRight className="h-4 w-4 text-white sm:h-6 sm:w-6" />
           </button>
         </>
       ) : null}
 
-      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/85 to-transparent px-4 pb-6 pt-16 sm:px-6 sm:pb-8 md:px-8">
+      <div
+        className={`absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/85 to-transparent px-3 pt-12 sm:px-6 sm:pt-16 md:px-8 ${hasDots ? "pb-8 sm:pb-9" : "pb-4 sm:pb-8"
+          }`}
+      >
         <div className="mx-auto max-w-7xl">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
             <div className="min-w-0 flex-1">
-              <div className="mb-2 flex flex-wrap items-center gap-2">
-                <h1 className="text-xl font-bold leading-tight text-white sm:text-3xl md:text-4xl">
+              <div className="mb-1.5 flex flex-wrap items-center gap-2 sm:mb-2">
+                <h1 className="line-clamp-2 text-lg font-bold leading-tight text-white sm:text-2xl md:text-4xl">
                   {displayName}
                 </h1>
                 {venue.manager.isVerified ? (
@@ -99,17 +104,17 @@ export function VenueHeroGallery({
                   </Badge>
                 ) : null}
               </div>
-              <div className="mb-2 flex items-start gap-2 text-sm text-white/90 sm:text-base">
-                <MapPin className="mt-0.5 h-4 w-4 shrink-0 sm:h-5 sm:w-5" />
-                <span className="line-clamp-2 sm:line-clamp-none">{locationLine || "—"}</span>
+              <div className="mb-1.5 flex items-start gap-1.5 text-xs text-white/90 sm:mb-2 sm:gap-2 sm:text-base">
+                <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 sm:h-5 sm:w-5" />
+                <span className="line-clamp-2">{locationLine || "—"}</span>
               </div>
-              <div className="flex items-center gap-2 text-sm text-white/90 sm:text-base">
-                <Star className="h-4 w-4 shrink-0 fill-current text-yellow-400 sm:h-5 sm:w-5" />
+              <div className="flex items-center gap-1.5 text-xs text-white/90 sm:gap-2 sm:text-base">
+                <Star className="h-3.5 w-3.5 shrink-0 fill-current text-yellow-400 sm:h-5 sm:w-5" />
                 <span className="font-medium">{venue.stats.averageRating.toFixed(1)}</span>
                 <span>({venue.stats.totalReviews} reviews)</span>
               </div>
             </div>
-            <div className="flex w-full shrink-0 items-center gap-2 sm:w-auto sm:justify-end">
+            <div className="flex w-full shrink-0 flex-wrap items-center gap-2 sm:w-auto sm:flex-nowrap sm:justify-end">
               <ShareButton id={venue.id} title={displayName} type="venue" />
               {showScheduleMeeting ? (
                 <Button
@@ -136,17 +141,16 @@ export function VenueHeroGallery({
         </div>
       </div>
 
-      {images.length > 1 ? (
-        <div className="absolute bottom-2 left-1/2 flex -translate-x-1/2 gap-1.5 sm:bottom-4 sm:gap-2">
+      {hasDots ? (
+        <div className="absolute bottom-2 left-1/2 flex -translate-x-1/2 gap-1.5 sm:bottom-3 sm:gap-2">
           {images.map((_, index) => (
             <button
               key={index}
               type="button"
               aria-label={`Show image ${index + 1}`}
               onClick={() => onSelectImage(index)}
-              className={`h-1.5 w-1.5 rounded-full transition-colors sm:h-2 sm:w-2 ${
-                index === currentImageIndex ? "bg-white" : "bg-white/50"
-              }`}
+              className={`h-1.5 w-1.5 rounded-full transition-colors sm:h-2 sm:w-2 ${index === currentImageIndex ? "bg-white" : "bg-white/50"
+                }`}
             />
           ))}
         </div>

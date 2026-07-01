@@ -233,8 +233,12 @@ export default function EventHero({ event }: EventHeroProps) {
       <div className="mx-auto max-w-7xl px-3 sm:px-4 lg:px-6">
         <div className="relative z-10 -mt-[72px] flex w-full flex-col overflow-hidden rounded-sm bg-white shadow-md sm:-mt-[96px] md:-mt-[120px] md:flex-row md:items-stretch">
 
-          {/* Slider Section */}
-          <div className="relative w-full min-h-[260px] md:w-2/3 md:min-h-0 self-stretch">
+          {/* Slider Section — fixed height on mobile/tablet (flex-col stacks
+              this above the info panel, so it needs a real height of its
+              own); at md+ the layout switches to a row and `items-stretch`
+              on the parent makes this match the info panel's height instead,
+              so we drop back to h-auto there. */}
+          <div className="relative w-full h-[260px] sm:h-[320px] md:h-auto md:w-2/3 self-stretch">
             <div
               ref={sliderRef}
               className="keen-slider absolute inset-0 h-full w-full"
