@@ -26,6 +26,7 @@ import {
   parseUploadErrorMessage,
   prepareImageFileForUpload,
 } from "@/lib/prepare-image-upload"
+import { isLegacyDummyImage } from "@/lib/placeholder"
 import { cn } from "@/lib/utils"
 import { venueTabsList, venueTabsScrollWrapper, venueTabsTrigger } from "./venue-dashboard-theme"
 
@@ -69,7 +70,9 @@ interface VenueProfileProps {
 const LOCATION_NONE = "__none__"
 
 function sanitizeImageList(list: string[] | undefined | null): string[] {
-  return (list ?? []).map((item) => (typeof item === "string" ? item.trim() : "")).filter(Boolean)
+  return (list ?? [])
+    .map((item) => (typeof item === "string" ? item.trim() : ""))
+    .filter((item) => item && !isLegacyDummyImage(item))
 }
 
 function cloudinaryPublicIdFromUrl(imageUrl: string): string | null {

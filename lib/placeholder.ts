@@ -20,6 +20,8 @@ export function isLegacyDummyImage(url: string | null | undefined): boolean {
   if (LEGACY_PLACEHOLDER_PATHS.some((p) => t === p || t.endsWith(p))) return true
   // Seed data used /city/cN.jpg stock paths that are not in public/
   if (/^\/city\/c\d+\.jpg$/i.test(t)) return true
+  // Demo / seed URLs that are not real hosts
+  if (/^https?:\/\/(cdn\.)?example\.com\//i.test(t)) return true
   return false
 }
 

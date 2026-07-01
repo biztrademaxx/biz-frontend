@@ -162,9 +162,13 @@ export default function OrganizersPage() {
   const [total, setTotal] = useState(0)
   const [totalPages, setTotalPages] = useState(1)
   const [facets, setFacets] = useState<OrganizerFacets>(EMPTY_FACETS)
+  const [geoReady, setGeoReady] = useState(false)
 
   useEffect(() => {
-    fetchGeoHint().then(setVisitorGeo).catch(() => setVisitorGeo(null))
+    fetchGeoHint()
+      .then(setVisitorGeo)
+      .catch(() => setVisitorGeo(null))
+      .finally(() => setGeoReady(true))
   }, [])
 
   useEffect(() => {
@@ -181,6 +185,8 @@ export default function OrganizersPage() {
   }, [])
 
   useEffect(() => {
+    if (!geoReady) return
+
     const fetchOrganizers = async () => {
       setLoading(true)
       try {
@@ -216,6 +222,7 @@ export default function OrganizersPage() {
 
     fetchOrganizers()
   }, [
+    geoReady,
     page,
     searchTerm,
     selectedCities,
