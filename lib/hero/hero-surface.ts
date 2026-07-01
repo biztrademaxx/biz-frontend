@@ -40,8 +40,8 @@ export type HeroSlideSurface = {
 /** Three distinct mesh gradients — one per slider revolution slide. */
 export const HERO_SLIDE_SURFACES: HeroSlideSurface[] = [
   {
-    base: "#edece5",
-    baseEnd: "#cdcfd3",
+    base: "#E3E1FF",
+    baseEnd: "#B2D9FF",
     wipeBg: "#1a093f",
     radialA: { at: "14% 22%", rgb: "249, 188, 137", opacity: 0.48 },
     radialB: { at: "88% 18%", rgb: "155, 247, 241", opacity: 0.42 },
@@ -53,8 +53,8 @@ export const HERO_SLIDE_SURFACES: HeroSlideSurface[] = [
     cyanAnchor: "top-right",
   },
   {
-    base: "#f0ebe4",
-    baseEnd: "#d4d0cb",
+    base: "#CFE7FF",
+    baseEnd: "#9ECFFF",
     wipeBg: "#1a093f",
     radialA: { at: "38% 78%", rgb: "255, 178, 128", opacity: 0.5 },
     radialB: { at: "84% 14%", rgb: "168, 228, 222", opacity: 0.46 },
@@ -66,8 +66,8 @@ export const HERO_SLIDE_SURFACES: HeroSlideSurface[] = [
     cyanAnchor: "top-right",
   },
   {
-    base: "#e8ebe6",
-    baseEnd: "#cfcbc5",
+    base: "#A3D1FF",
+    baseEnd: "#64AFFA",
     wipeBg: "#1a093f",
     radialA: { at: "10% 16%", rgb: "186, 218, 198", opacity: 0.5 },
     radialB: { at: "90% 20%", rgb: "155, 240, 232", opacity: 0.44 },

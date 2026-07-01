@@ -31,7 +31,7 @@ export default function ConditionalLayout({
   return (
     <HeroTransitionProvider>
       <HomeHeroInViewObserver />
-      {!hideLayout && !isHome && <Navbar />}
+      {!hideLayout && <Navbar />}
       {children}
       {!hideLayout && <Footer />}
     </HeroTransitionProvider>

@@ -29,11 +29,11 @@ import { NotificationsDropdown } from "@/components/notifications-dropdown"
 import { DashboardResponsiveNavbar } from "@/components/dashboard-responsive-navbar"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
-const EXPLORE_LINKS = [
-  { href: "/trade-fairs", label: "Trade Fairs" },
-  { href: "/conferences", label: "Conferences" },
-  { href: "/webinars", label: "Webinars" },
-]
+// const EXPLORE_LINKS = [
+//   { href: "/trade-fairs", label: "Trade Fairs" },
+//   { href: "/conferences", label: "Conferences" },
+//   { href: "/webinars", label: "Webinars" },
+// ]
 
 export default function Navbar() {
   const [userName, setUserName] = useState("Speaker")
@@ -133,7 +133,7 @@ export default function Navbar() {
 
   return (
     <DashboardResponsiveNavbar
-      exploreLinks={EXPLORE_LINKS}
+      // exploreLinks={EXPLORE_LINKS}
       onAddEvent={handleAddevent}
       actions={
         <>
