@@ -18,7 +18,7 @@ export default function ExhibitorsListingPageSkeleton() {
   return (
     <main className="min-h-screen bg-[#f9f9f9]" aria-busy="true" aria-label="Loading exhibitors">
       <section className="relative overflow-hidden bg-gradient-to-r from-[#042f8c] via-[#0b3ea8] to-[#06378f]">
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-100/80 to-slate-200/40" />
+        {/* <div className="absolute inset-0 bg-gradient-to-br from-slate-100/80 to-slate-200/40" /> */}
         <div className="relative mx-auto max-w-7xl px-4 pt-12 pb-14 sm:px-6 sm:pt-16 sm:pb-16 lg:px-8 lg:pt-20 lg:pb-20">
           <div className="h-9 w-48 animate-pulse rounded-md bg-white/20 sm:h-11 sm:w-56" />
           <div className="mt-3 space-y-2">
