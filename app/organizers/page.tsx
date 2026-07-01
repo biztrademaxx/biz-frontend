@@ -26,7 +26,6 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
-import { apiFetch } from "@/lib/api"
 import { fetchGeoHint, type GeoHint } from "@/lib/browse-geo"
 import { getPublicProfilePath } from "@/lib/profile-path"
 import {
@@ -36,6 +35,20 @@ import {
 import OrganizersListingPageSkeleton from "@/components/OrganizersListingPageSkeleton"
 
 const PAGE_SIZE = 20
+const SEARCH_DEBOUNCE_MS = 400
+
+async function fetchPublicJson<T>(path: string): Promise<T> {
+  const res = await fetch(path)
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    const message =
+      (typeof data?.error === "string" && data.error) ||
+      (typeof data?.message === "string" && data.message) ||
+      `Request failed (${res.status})`
+    throw new Error(message)
+  }
+  return data as T
+}
 
 interface Organizer {
   id: string
@@ -163,6 +176,14 @@ export default function OrganizersPage() {
   const [totalPages, setTotalPages] = useState(1)
   const [facets, setFacets] = useState<OrganizerFacets>(EMPTY_FACETS)
   const [geoReady, setGeoReady] = useState(false)
+  const [debouncedSearch, setDebouncedSearch] = useState("")
+  const [fetchError, setFetchError] = useState<string | null>(null)
+  const [retryTick, setRetryTick] = useState(0)
+
+  useEffect(() => {
+    const id = window.setTimeout(() => setDebouncedSearch(searchTerm), SEARCH_DEBOUNCE_MS)
+    return () => window.clearTimeout(id)
+  }, [searchTerm])
 
   useEffect(() => {
     fetchGeoHint()
@@ -174,7 +195,7 @@ export default function OrganizersPage() {
   useEffect(() => {
     const fetchFacets = async () => {
       try {
-        const data = await apiFetch<unknown>("/api/organizers/facets", { auth: false })
+        const data = await fetchPublicJson<unknown>("/api/organizers/facets")
         setFacets(normalizeFacetsPayload(data))
       } catch (error) {
         console.error("Error fetching organizer facets:", error)
@@ -189,28 +210,29 @@ export default function OrganizersPage() {
 
     const fetchOrganizers = async () => {
       setLoading(true)
+      setFetchError(null)
       try {
         const query = buildOrganizersQuery({
           page,
-          search: searchTerm,
+          search: debouncedSearch,
           cities: selectedCities,
           countries: selectedCountries,
           eventBuckets: selectedEventBuckets,
           followerBuckets: selectedFollowerBuckets,
           visitorGeo,
         })
-        const data = await apiFetch<{
+        const data = await fetchPublicJson<{
           organizers: Organizer[]
           total: number
           totalPages: number
-        }>(`/api/organizers?${query}`, {
-          auth: false,
-        })
+        }>(`/api/organizers?${query}`)
         setOrganizers(data.organizers || [])
         setTotal(data.total ?? 0)
         setTotalPages(data.totalPages ?? 1)
       } catch (error) {
+        const message = error instanceof Error ? error.message : "Failed to load organizers"
         console.error("Error fetching organizers:", error)
+        setFetchError(message)
         setOrganizers([])
         setTotal(0)
         setTotalPages(1)
@@ -224,12 +246,13 @@ export default function OrganizersPage() {
   }, [
     geoReady,
     page,
-    searchTerm,
+    debouncedSearch,
     selectedCities,
     selectedCountries,
     selectedEventBuckets,
     selectedFollowerBuckets,
     visitorGeo,
+    retryTick,
   ])
 
   const handleCardClick = (organizer: Organizer) => {
@@ -521,7 +544,24 @@ export default function OrganizersPage() {
               )}
             </div>
 
-            {organizers.length === 0 ? (
+            {fetchError ? (
+              <Card className="border-destructive/30 bg-destructive/5">
+                <CardContent className="flex flex-col items-center py-14 text-center">
+                  <Users className="mb-4 h-14 w-14 text-destructive/50" />
+                  <h3 className="text-lg font-semibold text-gray-900">Could not load organizers</h3>
+                  <p className="mt-2 max-w-md text-sm text-muted-foreground">{fetchError}</p>
+                  <Button
+                    className="mt-6 bg-[#004A96] hover:bg-[#003a75]"
+                    onClick={() => {
+                      setFetchError(null)
+                      setRetryTick((t) => t + 1)
+                    }}
+                  >
+                    Try again
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : organizers.length === 0 ? (
               <Card className="border-dashed bg-white/80">
                 <CardContent className="flex flex-col items-center py-14 text-center">
                   <Users className="mb-4 h-14 w-14 text-muted-foreground/40" />
