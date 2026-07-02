@@ -21,6 +21,7 @@ import {
   Clock,
 } from "lucide-react"
 
+import CookieSettingsButton from "@/components/cookies/CookieSettingsButton"
 import FooterChatBot from "@/components/footer-chat-bot"
 import { usePathname } from "next/navigation"
 import { getFooterLogoSrc, isBrandLogoRemoteUrl } from "@/lib/brand-logo"
@@ -387,6 +388,11 @@ const Footer: React.FC<FooterProps> = ({ categories }) => {
                       </Link>
                     </li>
                   ))}
+                  <li>
+                    <CookieSettingsButton className="text-left text-[13.5px] text-white/70 transition-colors duration-150 hover:text-white">
+                      Cookie Settings
+                    </CookieSettingsButton>
+                  </li>
                 </ul>
               </div>
             </div>
