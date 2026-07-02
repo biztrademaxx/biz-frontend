@@ -283,25 +283,25 @@ export function ConnectionsSection({ userId: _userId, surface = "default" }: Con
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {searchResults.map((user) => (
                   <Card key={user.id} className={gridItemCard}>
-                    <CardContent className="p-4 flex items-center gap-4">
-                      <Avatar className="h-12 w-12 shrink-0">
+                    <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+                      <Avatar className="h-12 w-12 shrink-0 mx-auto sm:mx-0">
                         <AvatarImage src={user.avatar} />
                         <AvatarFallback>
                           {user.firstName?.[0] ?? ""}{user.lastName?.[0] ?? "?"}
                         </AvatarFallback>
                       </Avatar>
-                      <div className="min-w-0 flex-1">
-                        <p className="font-medium text-gray-900 truncate">
+                      <div className="min-w-0 flex-1 text-center sm:text-left">
+                        <p className="font-medium text-gray-900 break-words leading-snug sm:truncate">
                           {user.firstName ?? ""} {user.lastName ?? ""}
                         </p>
                         {user.company && (
-                          <p className="text-sm text-gray-500 truncate">{user.company}</p>
+                          <p className="text-sm text-gray-500 break-words leading-snug sm:truncate">{user.company}</p>
                         )}
                       </div>
                       <Button
                         size="sm"
                         onClick={() => handleConnectionAction(user.id, "connect")}
-                        className={cn("shrink-0", isExhibitorShell && exBtnPrimary)}
+                        className={cn("w-full sm:w-auto shrink-0", isExhibitorShell && exBtnPrimary)}
                       >
                         <UserPlus className="h-4 w-4 mr-1" />
                         Connect

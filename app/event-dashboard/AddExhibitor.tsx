@@ -51,6 +51,8 @@ interface ExhibitionSpace {
   area: number
   basePrice: number
   currency?: string
+  additionalPowerRate?: number
+  compressedAirRate?: number
   location?: string
   isAvailable: boolean
   maxBooths?: number
@@ -67,6 +69,7 @@ export default function AddExhibitor({ eventId }: AddExhibitorProps) {
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedExhibitor, setSelectedExhibitor] = useState<Exhibitor | null>(null)
   const [selectedSpace, setSelectedSpace] = useState("")
+  const [eventCurrency, setEventCurrency] = useState("")
   const [loading, setLoading] = useState(false)
   const [activeTab, setActiveTab] = useState("existing")
   const [registeredExhibitors, setRegisteredExhibitors] = useState<Set<string>>(new Set())
@@ -107,7 +110,41 @@ export default function AddExhibitor({ eventId }: AddExhibitorProps) {
   })
 
   const selectedSpaceData = exhibitionSpaces.find((s) => s.id === selectedSpace)
-  const selectedCurrencyCode = (selectedSpaceData?.currency || "INR").toUpperCase()
+  const normalizeCurrencyCode = (value?: string) => {
+    const raw = String(value || "").trim()
+    if (!raw) return ""
+    const upper = raw.toUpperCase()
+
+    const aliasMap: Record<string, string> = {
+      "₹": "INR",
+      INR: "INR",
+      RUPEE: "INR",
+      RUPEES: "INR",
+      "INDIAN RUPEE": "INR",
+      "$": "USD",
+      USD: "USD",
+      DOLLAR: "USD",
+      DOLLARS: "USD",
+      "US DOLLAR": "USD",
+      "US DOLLARS": "USD",
+      "€": "EUR",
+      EUR: "EUR",
+      EURO: "EUR",
+      EUROS: "EUR",
+      "£": "GBP",
+      GBP: "GBP",
+      POUND: "GBP",
+      POUNDS: "GBP",
+    }
+
+    return aliasMap[upper] || upper
+  }
+  const selectedCurrencyCode =
+    normalizeCurrencyCode(selectedSpaceData?.currency) ||
+    normalizeCurrencyCode(eventCurrency) ||
+    "USD"
+  const selectedAdditionalPowerRate = selectedSpaceData?.additionalPowerRate ?? 50
+  const selectedCompressedAirRate = selectedSpaceData?.compressedAirRate ?? 100
 
   const formatCurrency = (amount: number) => {
     try {
@@ -117,7 +154,16 @@ export default function AddExhibitor({ eventId }: AddExhibitorProps) {
         maximumFractionDigits: 2,
       }).format(Number.isFinite(amount) ? amount : 0)
     } catch {
-      const symbol = selectedCurrencyCode === "INR" ? "₹" : selectedCurrencyCode === "USD" ? "$" : ""
+      const symbol =
+        selectedCurrencyCode === "INR"
+          ? "₹"
+          : selectedCurrencyCode === "USD"
+            ? "$"
+            : selectedCurrencyCode === "EUR"
+              ? "€"
+              : selectedCurrencyCode === "GBP"
+                ? "£"
+                : ""
       return `${symbol}${Number.isFinite(amount) ? amount : 0}`
     }
   }
@@ -126,6 +172,7 @@ export default function AddExhibitor({ eventId }: AddExhibitorProps) {
     fetchExhibitors()
     if (eventId) {
       fetchRegisteredExhibitors()
+      fetchEventCurrency()
     }
   }, [eventId])
 
@@ -134,6 +181,16 @@ export default function AddExhibitor({ eventId }: AddExhibitorProps) {
       fetchExhibitionSpaces(eventId)
     }
   }, [eventId, selectedExhibitor])
+
+  // Reset dependent booth pricing selections when exhibitor changes.
+  useEffect(() => {
+    setSelectedSpace("")
+    setBoothDetails((prev) => ({
+      ...prev,
+      additionalPower: "",
+      compressedAir: "",
+    }))
+  }, [selectedExhibitor?.id])
 
   const fetchExhibitors = async () => {
     try {
@@ -155,6 +212,15 @@ export default function AddExhibitor({ eventId }: AddExhibitorProps) {
         console.error("Error fetching exhibition spaces:", error)
       }
       setExhibitionSpaces([])
+    }
+  }
+
+  const fetchEventCurrency = async () => {
+    try {
+      const data = await apiFetch<{ currency?: string }>(`/api/events/${eventId}`, { auth: true })
+      setEventCurrency(typeof data?.currency === "string" ? data.currency : "")
+    } catch {
+      setEventCurrency("")
     }
   }
 
@@ -239,8 +305,10 @@ export default function AddExhibitor({ eventId }: AddExhibitorProps) {
     if (!space) return 0
 
     const baseCost = space.basePrice
-    const powerCost = Number.parseFloat(boothDetails.additionalPower) * 50 || 0 // $50 per KW
-    const airCost = Number.parseFloat(boothDetails.compressedAir) * 100 || 0 // $100 per HP
+    const powerRate = space.additionalPowerRate ?? 50
+    const airRate = space.compressedAirRate ?? 100
+    const powerCost = Number.parseFloat(boothDetails.additionalPower) * powerRate || 0
+    const airCost = Number.parseFloat(boothDetails.compressedAir) * airRate || 0
 
     return baseCost + powerCost + airCost
   }
@@ -734,7 +802,7 @@ export default function AddExhibitor({ eventId }: AddExhibitorProps) {
                       onChange={(e) => setBoothDetails({ ...boothDetails, additionalPower: e.target.value })}
                       placeholder="0"
                     />
-                    <p className="text-xs text-gray-500 mt-1">{formatCurrency(50)} per KW</p>
+                    <p className="text-xs text-gray-500 mt-1">{formatCurrency(selectedAdditionalPowerRate)} per KW</p>
                   </div>
 
                   <div>
@@ -747,7 +815,7 @@ export default function AddExhibitor({ eventId }: AddExhibitorProps) {
                       onChange={(e) => setBoothDetails({ ...boothDetails, compressedAir: e.target.value })}
                       placeholder="0"
                     />
-                    <p className="text-xs text-gray-500 mt-1">{formatCurrency(100)} per HP</p>
+                    <p className="text-xs text-gray-500 mt-1">{formatCurrency(selectedCompressedAirRate)} per HP</p>
                   </div>
                 </div>
 
@@ -783,13 +851,13 @@ export default function AddExhibitor({ eventId }: AddExhibitorProps) {
                       {boothDetails.additionalPower && (
                         <div className="flex justify-between">
                           <span>Additional power ({boothDetails.additionalPower} KW)</span>
-                          <span>{formatCurrency(Number.parseFloat(boothDetails.additionalPower) * 50)}</span>
+                          <span>{formatCurrency(Number.parseFloat(boothDetails.additionalPower) * selectedAdditionalPowerRate)}</span>
                         </div>
                       )}
                       {boothDetails.compressedAir && (
                         <div className="flex justify-between">
                           <span>Compressed air ({boothDetails.compressedAir} HP)</span>
-                          <span>{formatCurrency(Number.parseFloat(boothDetails.compressedAir) * 100)}</span>
+                          <span>{formatCurrency(Number.parseFloat(boothDetails.compressedAir) * selectedCompressedAirRate)}</span>
                         </div>
                       )}
                       <div className="border-t pt-1 flex justify-between font-semibold">

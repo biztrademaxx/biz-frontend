@@ -599,7 +599,11 @@ export default function OrganizerPage() {
                     <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Specialties</h3>
                     <div className="flex flex-wrap gap-2">
                       {organizer.specialties.map((specialty, index) => (
-                        <Badge key={index} variant="secondary">
+                        <Badge
+                          key={index}
+                          variant="secondary"
+                          className="max-w-full whitespace-normal break-words text-left h-auto py-1 leading-snug"
+                        >
                           {specialty}
                         </Badge>
                       ))}
