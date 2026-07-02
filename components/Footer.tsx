@@ -229,13 +229,11 @@ const Footer: React.FC<FooterProps> = ({ categories }) => {
           <div className="mx-auto max-w-7xl px-6 py-4 lg:px-10">
 
           
-            <p className="max-w-7xl text-[12.5px] leading-6 text-white/45">
-              BizTradeFairs.com provides verified information on trade fairs, expos, conferences,
-              and industrial events worldwide.Users are advised to confirm event schedules, venue details, participation terms,
-
-              <span className="block pl-80">
-                and travel requirements directly with organizers before planning attendance.
-              </span>
+            <p className="mx-auto max-w-5xl text-center text-[12px] leading-6 text-white/45 sm:text-[12.5px]">
+              BizTradeFairs.com provides verified information on trade fairs, expos,
+              conferences, and industrial events worldwide. Users are advised to confirm
+              event schedules, venue details, participation terms, and travel requirements
+              directly with organizers before planning attendance.
             </p>
           </div>
         </div>
@@ -276,7 +274,7 @@ const Footer: React.FC<FooterProps> = ({ categories }) => {
                     { href: "https://www.linkedin.com/company/biztradefairs/", Icon: FaLinkedin },
                     { href: "https://x.com/biztradefair", Icon: FaTwitterSquare },
                     { href: "https://www.instagram.com/biztradefairs/", Icon: FaInstagramSquare },
-                    { href: "#", Icon: FaYoutube },
+                    { href: "https://www.youtube.com/@biztradefairs", Icon: FaYoutube },
                   ].map(({ href, Icon }) => (
                     <a
                       key={href}
@@ -299,7 +297,7 @@ const Footer: React.FC<FooterProps> = ({ categories }) => {
                 <ul className="space-y-[10px]">
                   {[
                     ["Find Events", "/event"],
-                    ["Event Calendar", "/event"],
+                    ["Find Speakers", "/speakers"],
                     ["For Organizers", "/organizers"],
                     ["Exhibition Venues", "/venues"],
                   ].map(([label, href]) => (

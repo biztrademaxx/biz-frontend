@@ -586,18 +586,19 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
 
           {isEditing && (
-            <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
+            <div className="absolute top-3 right-3 z-10 flex flex-wrap items-center justify-end gap-2 max-w-[calc(100%-1.5rem)] sm:top-4 sm:right-4">
               {heroBg?.trim() ? (
                 <button
                   type="button"
                   onClick={handleRemoveCoverImage}
-                  className="bg-red-600/90 hover:bg-red-700 backdrop-blur-sm text-white px-3 py-1.5 rounded-lg text-xs flex items-center gap-1 transition-colors"
+                  className="flex shrink-0 items-center gap-1 rounded-lg bg-red-600/90 px-2 py-1.5 text-xs text-white backdrop-blur-sm transition-colors hover:bg-red-700 sm:px-3"
+                  aria-label="Remove cover image"
                 >
-                  <Trash2 className="w-3.5 h-3.5" /> Remove Cover
+                  <Trash2 className="w-3.5 h-3.5 shrink-0" /> <span className="hidden sm:inline">Remove Cover</span>
                 </button>
               ) : null}
-              <label className="bg-black/50 hover:bg-black/70 backdrop-blur-sm text-white px-3 py-1.5 rounded-lg text-xs flex items-center gap-1 transition-colors cursor-pointer">
-                <Camera className="w-3.5 h-3.5" /> Change Cover
+              <label className="flex shrink-0 cursor-pointer items-center gap-1 rounded-lg bg-black/50 px-2 py-1.5 text-xs text-white backdrop-blur-sm transition-colors hover:bg-black/70 sm:px-3">
+                <Camera className="w-3.5 h-3.5 shrink-0" /> <span className="hidden sm:inline">Change Cover</span>
                 <input
                   type="file"
                   accept="image/*"
@@ -617,18 +618,18 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_220px] gap-4 items-stretch">
             <div className="bg-white rounded-2xl shadow-lg border border-[#E2E8F0] p-4 sm:p-5">
               <div className="flex items-start gap-2 mb-2 min-w-0">
-                <h2 className="text-xl font-bold text-[#1E293B] break-words sm:text-2xl">
+                <h2 className="text-lg font-bold text-[#1E293B] break-words sm:text-2xl">
                   {profileData?.venueName || venueData.venueName}
                 </h2>
-                <CheckCircle className="w-5 h-5 text-[#10B981]" />
+                <CheckCircle className="w-5 h-5 text-[#10B981] shrink-0 mt-0.5 sm:mt-1" />
               </div>
               <p className="text-sm text-[#64748B] mb-3 break-words">
                 {profileData?.address || venueData.address}
               </p>
-              <div className="flex flex-wrap items-center gap-4 text-sm text-[#64748B]">
-                <span className="flex items-center gap-1">
-                  <MapPin className="w-4 h-4 text-[#004A96]" />
-                  {profileData?.city || venueData.city}, {profileData?.country || venueData.country}
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-[#64748B]">
+                <span className="flex items-center gap-1 min-w-0">
+                  <MapPin className="w-4 h-4 text-[#004A96] shrink-0" />
+                  <span className="truncate">{profileData?.city || venueData.city}, {profileData?.country || venueData.country}</span>
                 </span>
                 {(profileData?.timezone || venueData.timezone) && (
                   <span className="flex items-center gap-1">
@@ -638,10 +639,10 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
               </div>
             </div>
 
-            <div className="bg-gradient-to-br from-[#004A96] to-[#003d7a] text-white rounded-2xl shadow-lg p-5 flex flex-col justify-center">
+            <div className="bg-gradient-to-br from-[#004A96] to-[#003d7a] text-white rounded-2xl shadow-lg p-4 sm:p-5 flex flex-col justify-center">
               <p className="text-sm font-medium opacity-90">Customer Rating</p>
               <div className="flex items-center gap-2 mt-2">
-                <span className="text-4xl font-bold">
+                <span className="text-3xl font-bold sm:text-4xl">
                   {(profileData?.averageRating || venueData.averageRating || 0).toFixed(1)}
                 </span>
                 <div className="flex">
@@ -690,10 +691,10 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
                 const Icon = AMENITY_ICONS[amenity] || CheckCircle
                 return (
                   <div key={i} className="flex items-center gap-1.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg px-3 py-1.5 text-sm text-[#475569]">
-                    <Icon className="w-3.5 h-3.5 text-[#004A96]" />
-                    {amenity}
+                    <Icon className="w-3.5 h-3.5 text-[#004A96] shrink-0" />
+                    <span className="truncate max-w-[10rem] sm:max-w-none">{amenity}</span>
                     {isEditing && (
-                      <button onClick={() => handleRemoveAmenity(i)} className="ml-1 text-[#EF4444] hover:text-red-700">
+                      <button onClick={() => handleRemoveAmenity(i)} className="ml-1 text-[#EF4444] hover:text-red-700 shrink-0">
                         <Trash2 className="w-3 h-3" />
                       </button>
                     )}
@@ -713,9 +714,9 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
                   value={newAmenity}
                   onChange={(e) => setNewAmenity(e.target.value)}
                   onKeyPress={(e) => e.key === "Enter" && handleAddAmenity()}
-                  className="rounded-xl border-[#E2E8F0] text-sm"
+                  className="rounded-xl border-[#E2E8F0] text-sm min-w-0"
                 />
-                <Button onClick={handleAddAmenity} size="sm" className="rounded-xl bg-[#004A96] text-white">
+                <Button onClick={handleAddAmenity} size="sm" className="rounded-xl bg-[#004A96] text-white shrink-0">
                   <Plus className="w-4 h-4" />
                 </Button>
               </div>
@@ -751,11 +752,11 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
               { label: "Max Capacity", value: (profileData?.maxCapacity ?? venueData.maxCapacity)?.toLocaleString() || "0", icon: Users, color: "text-[#0284C7] bg-[#F0F9FF]" },
               { label: "Total Halls", value: profileData?.totalHalls ?? venueData.totalHalls, icon: Building2, color: "text-[#EA580C] bg-[#FFF7ED]" },
             ].map((stat) => (
-              <div key={stat.label} className="bg-white rounded-xl border border-[#E2E8F0] p-3">
+              <div key={stat.label} className="bg-white rounded-xl border border-[#E2E8F0] p-3 min-w-0">
                 <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center mb-2", stat.color)}>
                   <stat.icon className="w-4 h-4" />
                 </div>
-                <p className="text-lg font-bold text-[#1E293B]">{stat.value}</p>
+                <p className="text-lg font-bold text-[#1E293B] truncate">{stat.value}</p>
                 <p className="text-xs text-[#94A3B8] mt-0.5">{stat.label}</p>
               </div>
             ))}
@@ -799,11 +800,11 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
                   <button
                     type="button"
                     onClick={() => void handleImageDelete(image, "venue", index)}
-                    className="absolute top-2 right-2 z-10 flex items-center gap-1 rounded-lg bg-red-600 px-2 py-1 text-xs font-medium text-white shadow hover:bg-red-700"
+                    className="absolute top-1.5 right-1.5 z-10 flex items-center gap-1 rounded-lg bg-red-600 px-1.5 py-1 text-xs font-medium text-white shadow hover:bg-red-700 sm:top-2 sm:right-2 sm:px-2"
                     aria-label={`Delete venue image ${index + 1}`}
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
-                    Delete
+                    <Trash2 className="w-3.5 h-3.5 shrink-0" />
+                    <span className="hidden sm:inline">Delete</span>
                   </button>
                   {index === 0 ? (
                     <span className="absolute bottom-2 left-2 rounded bg-black/60 px-2 py-0.5 text-[10px] text-white">
@@ -835,13 +836,13 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
               {amenities.map((amenity, index) => {
                 const Icon = AMENITY_ICONS[amenity] || CheckCircle
                 return (
-                  <div key={index} className="flex items-center justify-between p-3 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0]">
-                    <div className="flex items-center gap-2">
-                      <Icon className="w-4 h-4 text-[#004A96]" />
-                      <span className="text-sm text-[#475569]">{amenity}</span>
+                  <div key={index} className="flex items-center justify-between p-3 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0] min-w-0 gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Icon className="w-4 h-4 text-[#004A96] shrink-0" />
+                      <span className="text-sm text-[#475569] truncate">{amenity}</span>
                     </div>
                     {isEditing && (
-                      <button onClick={() => handleRemoveAmenity(index)} className="text-[#EF4444] hover:text-red-700">
+                      <button onClick={() => handleRemoveAmenity(index)} className="text-[#EF4444] hover:text-red-700 shrink-0">
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     )}
@@ -851,8 +852,8 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
             </div>
             {isEditing && (
               <div className="flex gap-2">
-                <Input placeholder="Add new amenity..." value={newAmenity} onChange={(e) => setNewAmenity(e.target.value)} onKeyPress={(e) => e.key === "Enter" && handleAddAmenity()} className="rounded-xl border-[#E2E8F0]" />
-                <Button onClick={handleAddAmenity} className="rounded-xl bg-[#004A96] text-white"><Plus className="w-4 h-4 mr-1" />Add</Button>
+                <Input placeholder="Add new amenity..." value={newAmenity} onChange={(e) => setNewAmenity(e.target.value)} onKeyPress={(e) => e.key === "Enter" && handleAddAmenity()} className="rounded-xl border-[#E2E8F0] min-w-0" />
+                <Button onClick={handleAddAmenity} className="rounded-xl bg-[#004A96] text-white shrink-0"><Plus className="w-4 h-4 mr-1" />Add</Button>
               </div>
             )}
           </div>
@@ -881,16 +882,16 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
                 </div>
               ) : (
                 meetingSpaces.map((space, index) => (
-                  <div key={space.id || index} className="border border-[#E2E8F0] rounded-xl p-4 hover:border-[#004A96] transition-colors">
-                    <div className="flex items-center justify-between mb-3">
-                      <div>
-                        <h4 className="font-semibold text-[#1E293B]">{space.name || `Hall ${index + 1}`}</h4>
-                        {space.id && <p className="text-xs text-[#94A3B8]">ID: {space.id}</p>}
+                  <div key={space.id || index} className="border border-[#E2E8F0] rounded-xl p-4 hover:border-[#004A96] transition-colors min-w-0">
+                    <div className="flex items-center justify-between mb-3 gap-2 min-w-0">
+                      <div className="min-w-0">
+                        <h4 className="font-semibold text-[#1E293B] truncate">{space.name || `Hall ${index + 1}`}</h4>
+                        {space.id && <p className="text-xs text-[#94A3B8] truncate">ID: {space.id}</p>}
                       </div>
                       {isEditing && (
                         <button
                           onClick={() => handleRemoveSpace(space.id || index.toString())}
-                          className="text-[#EF4444] hover:text-red-700 transition-colors p-1 rounded-lg hover:bg-red-50"
+                          className="text-[#EF4444] hover:text-red-700 transition-colors p-1 rounded-lg hover:bg-red-50 shrink-0"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -918,7 +919,7 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
             </div>
 
             {isEditing && (
-              <div className="border-2 border-dashed border-[#E2E8F0] rounded-xl p-5 hover:border-[#004A96] transition-colors">
+              <div className="border-2 border-dashed border-[#E2E8F0] rounded-xl p-4 sm:p-5 hover:border-[#004A96] transition-colors">
                 <h4 className="font-semibold text-[#1E293B] mb-3">Add New Hall</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
                   <Input
@@ -930,6 +931,7 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
                   <Input
                     placeholder="Capacity"
                     type="number"
+                    inputMode="numeric"
                     value={newSpace.capacity}
                     onChange={(e) => setNewSpace({ ...newSpace, capacity: e.target.value })}
                     className="rounded-xl border-[#E2E8F0] focus:border-[#004A96]"
@@ -937,6 +939,7 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
                   <Input
                     placeholder="Area (sq ft)"
                     type="number"
+                    inputMode="numeric"
                     value={newSpace.area}
                     onChange={(e) => setNewSpace({ ...newSpace, area: e.target.value })}
                     className="rounded-xl border-[#E2E8F0] focus:border-[#004A96]"
@@ -944,6 +947,7 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
                   <Input
                     placeholder="Hourly Rate (optional)"
                     type="number"
+                    inputMode="numeric"
                     value={newSpace.hourlyRate}
                     onChange={(e) => setNewSpace({ ...newSpace, hourlyRate: e.target.value })}
                     className="rounded-xl border-[#E2E8F0] focus:border-[#004A96]"
@@ -959,7 +963,7 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
                 </div>
                 <Button
                   onClick={handleAddSpace}
-                  className="rounded-xl bg-[#004A96] hover:bg-[#003d7a] text-white"
+                  className="w-full rounded-xl bg-[#004A96] hover:bg-[#003d7a] text-white sm:w-auto"
                   disabled={!newSpace.name.trim()}
                 >
                   <Plus className="w-4 h-4 mr-1" /> Add Hall
@@ -973,7 +977,7 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
         <TabsContent value="floorplan">
           <div className="bg-white rounded-2xl border border-[#E2E8F0] p-4 sm:p-5 min-w-0">
             <h3 className="text-base font-semibold text-[#1E293B] mb-4">Floor Plans</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {floorPlans.map((plan, index) => (
                 <div key={index} className="relative rounded-xl overflow-hidden border border-[#E2E8F0] aspect-square bg-[#F8FAFC] group">
                   {plan?.trim() ? (
@@ -985,11 +989,11 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
                   <button
                     type="button"
                     onClick={() => void handleImageDelete(plan, "floorplan", index)}
-                    className="absolute top-2 right-2 z-10 flex items-center gap-1 rounded-lg bg-red-600 px-2 py-1 text-xs font-medium text-white shadow hover:bg-red-700"
+                    className="absolute top-1.5 right-1.5 z-10 flex items-center gap-1 rounded-lg bg-red-600 px-1.5 py-1 text-xs font-medium text-white shadow hover:bg-red-700 sm:top-2 sm:right-2 sm:px-2"
                     aria-label={`Delete floor plan ${index + 1}`}
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
-                    Delete
+                    <Trash2 className="w-3.5 h-3.5 shrink-0" />
+                    <span className="hidden sm:inline">Delete</span>
                   </button>
                 </div>
               ))}
@@ -1010,74 +1014,74 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
 
         {/* Details Tab */}
         <TabsContent value="details">
-          <div className="bg-white rounded-2xl border border-[#E2E8F0] p-5 space-y-5">
+          <div className="bg-white rounded-2xl border border-[#E2E8F0] p-4 sm:p-5 space-y-5">
             <h3 className="text-base font-semibold text-[#1E293B]">Venue Details</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
+              <div className="min-w-0">
                 <Label className="text-xs text-[#94A3B8] uppercase tracking-wide">Venue Name</Label>
                 {isEditing ? (
                   <Input value={profileData?.venueName || ""} onChange={(e) => setProfileData((prev) => prev ? { ...prev, venueName: e.target.value } : prev)} className="mt-1 rounded-xl border-[#E2E8F0]" />
                 ) : (
-                  <p className="mt-1 text-sm text-[#1E293B] font-medium">{profileData?.venueName}</p>
+                  <p className="mt-1 text-sm text-[#1E293B] font-medium break-words">{profileData?.venueName}</p>
                 )}
               </div>
-              <div>
+              <div className="min-w-0">
                 <Label className="text-xs text-[#94A3B8] uppercase tracking-wide">Contact Person</Label>
                 {isEditing ? (
                   <Input value={profileData?.contactPerson || ""} onChange={(e) => setProfileData((prev) => prev ? { ...prev, contactPerson: e.target.value } : prev)} className="mt-1 rounded-xl border-[#E2E8F0]" />
                 ) : (
-                  <p className="mt-1 text-sm text-[#1E293B] font-medium">{profileData?.contactPerson}</p>
+                  <p className="mt-1 text-sm text-[#1E293B] font-medium break-words">{profileData?.contactPerson}</p>
                 )}
               </div>
-              <div>
+              <div className="min-w-0">
                 <Label className="text-xs text-[#94A3B8] uppercase tracking-wide">Email</Label>
-                <div className="mt-1 flex items-center gap-2">
-                  <p className="text-sm text-[#1E293B] font-medium">{profileData?.email}</p>
-                  <CheckCircle className="w-4 h-4 text-green-500" />
+                <div className="mt-1 flex items-center gap-2 min-w-0">
+                  <p className="text-sm text-[#1E293B] font-medium break-all">{profileData?.email}</p>
+                  <CheckCircle className="w-4 h-4 text-green-500 shrink-0" />
                 </div>
                 {isEditing && <p className="text-xs text-[#94A3B8]">Email cannot be edited</p>}
               </div>
-              <div>
+              <div className="min-w-0">
                 <Label className="text-xs text-[#94A3B8] uppercase tracking-wide">Mobile</Label>
-                <div className="mt-1 flex items-center gap-2">
-                  <p className="text-sm text-[#1E293B] font-medium">{profileData?.mobile}</p>
-                  <CheckCircle className="w-4 h-4 text-green-500" />
+                <div className="mt-1 flex items-center gap-2 min-w-0">
+                  <p className="text-sm text-[#1E293B] font-medium break-all">{profileData?.mobile}</p>
+                  <CheckCircle className="w-4 h-4 text-green-500 shrink-0" />
                 </div>
                 {isEditing && <p className="text-xs text-[#94A3B8]">Mobile cannot be edited</p>}
               </div>
-              <div className="md:col-span-2">
+              <div className="md:col-span-2 min-w-0">
                 <Label className="text-xs text-[#94A3B8] uppercase tracking-wide">Website</Label>
                 {isEditing ? (
                   <Input value={profileData?.website || ""} onChange={(e) => setProfileData((prev) => prev ? { ...prev, website: e.target.value } : prev)} className="mt-1 rounded-xl border-[#E2E8F0]" />
                 ) : (
-                  <p className="mt-1 text-sm text-[#004A96] font-medium">{profileData?.website}</p>
+                  <p className="mt-1 text-sm text-[#004A96] font-medium break-all">{profileData?.website}</p>
                 )}
               </div>
-              <div className="md:col-span-2">
+              <div className="md:col-span-2 min-w-0">
                 <Label className="text-xs text-[#94A3B8] uppercase tracking-wide">Street Address</Label>
                 {isEditing ? (
                   <Input value={profileData?.address || ""} onChange={(e) => setProfileData((prev) => prev ? { ...prev, address: e.target.value } : prev)} className="mt-1 rounded-xl border-[#E2E8F0]" />
                 ) : (
-                  <p className="mt-1 text-sm text-[#1E293B] font-medium">{profileData?.address}</p>
+                  <p className="mt-1 text-sm text-[#1E293B] font-medium break-words">{profileData?.address}</p>
                 )}
               </div>
               {isEditing ? (
                 <>
-                  <div>
+                  <div className="min-w-0">
                     <Label className="text-xs text-[#94A3B8] uppercase tracking-wide mb-1 block">Country</Label>
                     <Select value={countryPick} onValueChange={(v) => { setCountryPick(v); if (v !== LOCATION_NONE) { const row = countryOptions.find((c) => c.code === v); if (row) { setProfileData((prev) => prev ? { ...prev, country: row.name, state: "", city: "" } : prev); setStatePick(LOCATION_NONE); setCityPick(LOCATION_NONE) } } }}>
                       <SelectTrigger className="rounded-xl border-[#E2E8F0]"><SelectValue placeholder="Choose country" /></SelectTrigger>
                       <SelectContent><SelectItem value={LOCATION_NONE}>-- None --</SelectItem>{countryOptions.map((c) => <SelectItem key={c.code} value={c.code}>{c.name}</SelectItem>)}</SelectContent>
                     </Select>
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <Label className="text-xs text-[#94A3B8] uppercase tracking-wide mb-1 block">State</Label>
                     <Select disabled={!resolvedCountryCode} value={statePick} onValueChange={(v) => { setStatePick(v); if (v !== LOCATION_NONE) { const s = stateOptions.find((s) => s.code === v); if (s) { setProfileData((prev) => prev ? { ...prev, state: s.name, city: "" } : prev); setCityPick(LOCATION_NONE) } } }}>
                       <SelectTrigger className="rounded-xl border-[#E2E8F0]"><SelectValue placeholder="Choose state" /></SelectTrigger>
                       <SelectContent><SelectItem value={LOCATION_NONE}>-- None --</SelectItem>{stateOptions.map((s) => <SelectItem key={s.code} value={s.code}>{s.name}</SelectItem>)}</SelectContent>
                     </Select>
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <Label className="text-xs text-[#94A3B8] uppercase tracking-wide mb-1 block">City</Label>
                     <Select disabled={!resolvedCountryCode || !resolvedStateCode} value={cityPick} onValueChange={async (v) => { setCityPick(v); if (v !== LOCATION_NONE) { const city = cityOptions.find((c) => c.name === v); if (city) { setProfileData((prev) => prev ? { ...prev, city: city.name } : prev); await tryAutoFillPostalCode(city.name, stateOptions.find((s) => s.code === resolvedStateCode)?.name || "", countryOptions.find((c) => c.code === resolvedCountryCode)?.name || "") } } }}>
                       <SelectTrigger className="rounded-xl border-[#E2E8F0]"><SelectValue placeholder="Choose city" /></SelectTrigger>
@@ -1087,12 +1091,12 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
                 </>
               ) : (
                 <>
-                  <div><Label className="text-xs text-[#94A3B8] uppercase tracking-wide">Country</Label><p className="mt-1 text-sm text-[#1E293B] font-medium">{profileData?.country || "Not specified"}</p></div>
-                  <div><Label className="text-xs text-[#94A3B8] uppercase tracking-wide">State</Label><p className="mt-1 text-sm text-[#1E293B] font-medium">{profileData?.state || "Not specified"}</p></div>
-                  <div><Label className="text-xs text-[#94A3B8] uppercase tracking-wide">City</Label><p className="mt-1 text-sm text-[#1E293B] font-medium">{profileData?.city || "Not specified"}</p></div>
+                  <div className="min-w-0"><Label className="text-xs text-[#94A3B8] uppercase tracking-wide">Country</Label><p className="mt-1 text-sm text-[#1E293B] font-medium break-words">{profileData?.country || "Not specified"}</p></div>
+                  <div className="min-w-0"><Label className="text-xs text-[#94A3B8] uppercase tracking-wide">State</Label><p className="mt-1 text-sm text-[#1E293B] font-medium break-words">{profileData?.state || "Not specified"}</p></div>
+                  <div className="min-w-0"><Label className="text-xs text-[#94A3B8] uppercase tracking-wide">City</Label><p className="mt-1 text-sm text-[#1E293B] font-medium break-words">{profileData?.city || "Not specified"}</p></div>
                 </>
               )}
-              <div>
+              <div className="min-w-0">
                 <Label className="text-xs text-[#94A3B8] uppercase tracking-wide">Postal Code</Label>
                 {isEditing ? (
                   <Input value={profileData?.zipCode || ""} onChange={(e) => setProfileData((prev) => prev ? { ...prev, zipCode: e.target.value } : prev)} className="mt-1 rounded-xl border-[#E2E8F0]" />
@@ -1100,29 +1104,29 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
                   <p className="mt-1 text-sm text-[#1E293B] font-medium">{profileData?.zipCode || "Not specified"}</p>
                 )}
               </div>
-              <div className="md:col-span-2">
+              <div className="md:col-span-2 min-w-0">
                 <Label className="text-xs text-[#94A3B8] uppercase tracking-wide">Venue Timezone</Label>
                 {isEditing ? (
                   <Popover open={tzPickerOpen} onOpenChange={setTzPickerOpen}>
                     <PopoverTrigger asChild>
                       <Button type="button" variant="outline" className="mt-1 w-full justify-between rounded-xl border-[#E2E8F0] font-normal text-sm">
-                        {profileData?.timezone?.trim() ? profileData.timezone : "Select IANA time zone"}
+                        <span className="truncate">{profileData?.timezone?.trim() ? profileData.timezone : "Select IANA time zone"}</span>
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-72 p-2">
+                    <PopoverContent className="w-[min(18rem,85vw)] p-2">
                       <Input placeholder="Search zones..." value={tzFilter} onChange={(e) => setTzFilter(e.target.value)} className="mb-2 rounded-xl" />
                       <ScrollArea className="h-56">
                         <div className="flex flex-col gap-0.5">
                           <button type="button" className="rounded-lg px-2 py-1.5 text-left text-sm hover:bg-[#F1F5F9]" onClick={() => { setProfileData((prev) => prev ? { ...prev, timezone: "" } : prev); setTzPickerOpen(false) }}>Clear selection</button>
                           {filteredIanaZones.map((z) => (
-                            <button key={z} type="button" className="rounded-lg px-2 py-1.5 text-left text-sm hover:bg-[#F1F5F9]" onClick={() => { setProfileData((prev) => prev ? { ...prev, timezone: z } : prev); setTzPickerOpen(false); setTzFilter("") }}>{z}</button>
+                            <button key={z} type="button" className="rounded-lg px-2 py-1.5 text-left text-sm hover:bg-[#F1F5F9] break-words" onClick={() => { setProfileData((prev) => prev ? { ...prev, timezone: z } : prev); setTzPickerOpen(false); setTzFilter("") }}>{z}</button>
                           ))}
                         </div>
                       </ScrollArea>
                     </PopoverContent>
                   </Popover>
                 ) : (
-                  <p className="mt-1 text-sm text-[#1E293B] font-medium">{profileData?.timezone?.trim() || "Not specified"}</p>
+                  <p className="mt-1 text-sm text-[#1E293B] font-medium break-words">{profileData?.timezone?.trim() || "Not specified"}</p>
                 )}
               </div>
             </div>

@@ -319,122 +319,123 @@ export default function OrganizerInfo({ organizerData: initialData, onOrganizerU
       </div>
 
       {/* Profile Header */}
-    <Card className="gap-0 py-0">
-  <CardContent className="p-4 sm:p-6">
-    <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start sm:gap-6">
-      <div className="relative shrink-0">
-        {/* Avatar Container */}
-        <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
-          {organizerData.avatar ? (
-            <Image
-              src={organizerData.avatar }
-              alt="Organization Logo"
-              width={128}
-              height={128}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#004A96] to-[#004A96]">
-              <span className="text-4xl font-bold text-white">
-                {organizerData.firstName?.[0] || ''}{organizerData.lastName?.[0] || ''}
-              </span>
-            </div>
-          )}
-        </div>
-        
-        {/* Camera Button */}
-        <Dialog open={showImageUpload} onOpenChange={setShowImageUpload}>
-          <DialogTrigger asChild>
-            <Button size="sm" className="absolute -bottom-2 -right-2 rounded-full w-8 h-8 p-0 bg-[#004A96] hover:bg-[#003d7a]">
-              <Camera className="w-4 h-4" />
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="w-[calc(100vw-2rem)] max-w-lg">
-            <DialogHeader>
-              <DialogTitle>Upload Organization Logo</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-                {uploading ? (
-                  <div className="flex flex-col items-center">
-                    <Loader2 className="w-12 h-12 mx-auto text-[#004A96] mb-4 animate-spin" />
-                    <p className="text-gray-600">Uploading avatar...</p>
-                  </div>
+      <Card className="gap-0 py-0">
+        <CardContent className="p-4 sm:p-6">
+          <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start sm:gap-6">
+            <div className="relative shrink-0">
+              {/* Avatar Container */}
+              <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
+                {organizerData.avatar ? (
+                  <Image
+                    src={organizerData.avatar}
+                    alt="Organization Logo"
+                    width={128}
+                    height={128}
+                    className="w-full h-full object-cover"
+                  />
                 ) : (
-                  <>
-                    <Upload className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-                    <p className="text-gray-600 mb-2">Drag and drop your logo here, or click to browse</p>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      className="hidden"
-                      id="image-upload"
-                      disabled={uploading}
-                    />
-                    <label
-                      htmlFor="image-upload"
-                      className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 cursor-pointer"
-                    >
-                      Choose Image
-                    </label>
-                  </>
+                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#004A96] to-[#004A96]">
+                    <span className="text-4xl font-bold text-white">
+                      {organizerData.firstName?.[0] || ''}{organizerData.lastName?.[0] || ''}
+                    </span>
+                  </div>
                 )}
               </div>
-              <p className="text-sm text-gray-500">
-                Recommended: Square image, at least 200x200px, PNG or JPG format
-              </p>
-            </div>
-          </DialogContent>
-        </Dialog>
-      </div>
 
-      <div className="flex-1 min-w-0 w-full text-center sm:text-left">
-        {isEditing === "basic" ? (
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="company">Organization Name</Label>
-              <Input
-                id="company"
-                value={organizerData.company}
-                onChange={(e) => setOrganizerData((prev) => ({ ...prev, company: e.target.value }))}
-              />
+              {/* Camera Button */}
+              <Dialog open={showImageUpload} onOpenChange={setShowImageUpload}>
+                <DialogTrigger asChild>
+                  <Button size="sm" className="absolute -bottom-2 -right-2 rounded-full w-8 h-8 p-0 bg-[#004A96] hover:bg-[#003d7a]">
+                    <Camera className="w-4 h-4" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="w-[calc(100vw-2rem)] max-w-lg">
+                  <DialogHeader>
+                    <DialogTitle>Upload Organization Logo</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                      {uploading ? (
+                        <div className="flex flex-col items-center">
+                          <Loader2 className="w-12 h-12 mx-auto text-[#004A96] mb-4 animate-spin" />
+                          <p className="text-gray-600">Uploading avatar...</p>
+                        </div>
+                      ) : (
+                        <>
+                          <Upload className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+                          <p className="text-gray-600 mb-2">Drag and drop your logo here, or click to browse</p>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleImageUpload}
+                            className="hidden"
+                            id="image-upload"
+                            disabled={uploading}
+                          />
+                          <label
+                            htmlFor="image-upload"
+                            className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 cursor-pointer"
+                          >
+                            Choose Image
+                          </label>
+                        </>
+                      )}
+                    </div>
+                    <p className="text-sm text-gray-500">
+                      Recommended: Square image, at least 200x200px, PNG or JPG format
+                    </p>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
-            <div>
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                value={organizerData.description}
-                onChange={(e) => setOrganizerData((prev) => ({ ...prev, description: e.target.value }))}
-                rows={3}
-              />
-            </div>
-            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-              <Button onClick={() => handleSave("basic")} disabled={loading} className="w-full sm:w-auto">
-                {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-                Save
-              </Button>
-              <Button variant="outline" onClick={handleCancel} className="w-full sm:w-auto">
-                Cancel
-              </Button>
+
+            <div className="flex-1 min-w-0 w-full text-center sm:text-left">
+              {isEditing === "basic" ? (
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="company">Organization Name</Label>
+                    <Input
+                      id="company"
+                      value={organizerData.company}
+                      onChange={(e) => setOrganizerData((prev) => ({ ...prev, company: e.target.value }))}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="description">Description</Label>
+                    <Textarea
+                      id="description"
+                      value={organizerData.description}
+                      onChange={(e) => setOrganizerData((prev) => ({ ...prev, description: e.target.value }))}
+                      rows={3}
+                      className="min-h-24 resize-y"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                    <Button onClick={() => handleSave("basic")} disabled={loading} className="w-full sm:w-auto">
+                      {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+                      Save
+                    </Button>
+                    <Button variant="outline" onClick={handleCancel} className="w-full sm:w-auto">
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="min-w-0">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-2">
+                    <h3 className="text-xl font-bold text-gray-900 sm:text-2xl break-words min-w-0">{organizerData.company}</h3>
+                    <Button variant="outline" size="sm" onClick={() => setIsEditing("basic")} className="w-full sm:w-auto shrink-0">
+                      <Edit className="w-4 h-4 mr-2" />
+                      Edit
+                    </Button>
+                  </div>
+                  <p className="text-gray-600 leading-relaxed text-sm sm:text-base break-words whitespace-pre-wrap min-w-0">{organizerData.description}</p>
+                </div>
+              )}
             </div>
           </div>
-        ) : (
-          <div>
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-2">
-              <h3 className="text-xl font-bold text-gray-900 sm:text-2xl break-words">{organizerData.company}</h3>
-              <Button variant="outline" size="sm" onClick={() => setIsEditing("basic")} className="w-full sm:w-auto shrink-0">
-                <Edit className="w-4 h-4 mr-2" />
-                Edit
-              </Button>
-            </div>
-            <p className="text-gray-600 leading-relaxed text-sm sm:text-base break-words">{organizerData.description}</p>
-          </div>
-        )}
-      </div>
-    </div>
-  </CardContent>
-</Card>
+        </CardContent>
+      </Card>
 
       {/* Contact Information */}
       <Card className="gap-0 py-0">
@@ -762,11 +763,15 @@ export default function OrganizerInfo({ organizerData: initialData, onOrganizerU
         <CardContent className="px-4 sm:px-6">
           <div className="flex flex-wrap gap-2 mb-4">
             {organizerData.specialties.map((specialty, index) => (
-              <Badge key={index} variant="secondary" className="flex items-center gap-1">
-                {specialty}
+              <Badge
+                key={index}
+                variant="secondary"
+                className="flex max-w-full items-start gap-1 whitespace-normal break-words text-left"
+              >
+                <span className="break-words">{specialty}</span>
                 {isEditing === "specialties" && (
                   <X
-                    className="w-3 h-3 cursor-pointer hover:text-red-500"
+                    className="w-3 h-3 mt-0.5 shrink-0 cursor-pointer hover:text-red-500"
                     onClick={(e) => {
                       e.stopPropagation()
                       removeSpecialty(index)
@@ -832,14 +837,14 @@ export default function OrganizerInfo({ organizerData: initialData, onOrganizerU
               <div key={index} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg min-w-0">
                 <div className="w-2 h-2 bg-[#004A96] rounded-full mt-2 shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-gray-800 break-words text-sm sm:text-base">{achievement}</p>
+                  <p className="text-gray-800 break-words whitespace-pre-wrap text-sm sm:text-base">{achievement}</p>
                 </div>
                 {isEditing === "achievements" && (
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => removeAchievement(index)}
-                    className="text-red-500 hover:text-red-700"
+                    className="text-red-500 hover:text-red-700 shrink-0"
                   >
                     <X className="w-3 h-3" />
                   </Button>
@@ -903,14 +908,14 @@ export default function OrganizerInfo({ organizerData: initialData, onOrganizerU
               >
                 <div className="flex items-start gap-3 min-w-0 flex-1">
                   <Award className="w-5 h-5 text-green-600 shrink-0 mt-0.5" />
-                  <p className="font-medium text-gray-800 break-words text-sm sm:text-base">{certification}</p>
+                  <p className="font-medium text-gray-800 break-words whitespace-pre-wrap text-sm sm:text-base">{certification}</p>
                 </div>
                 {isEditing === "certifications" && (
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => removeCertification(index)}
-                    className="text-red-500 hover:text-red-700"
+                    className="text-red-500 hover:text-red-700 shrink-0"
                   >
                     <X className="w-3 h-3" />
                   </Button>
