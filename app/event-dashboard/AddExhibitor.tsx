@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { useRouter, useParams } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -15,6 +15,9 @@ import { useToast } from "@/hooks/use-toast"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { apiFetch } from "@/lib/api"
 import { cn } from "@/lib/utils"
+import { getCountryOptions } from "@/lib/location-data"
+
+const FILTER_ALL_COUNTRIES = "__all__"
 
 interface Exhibitor {
   id: string
@@ -27,6 +30,9 @@ interface Exhibitor {
   company?: string
   jobTitle?: string
   location?: string
+  profileCity?: string
+  profileState?: string
+  profileCountry?: string
   website?: string
   linkedin?: string
   twitter?: string
@@ -67,6 +73,7 @@ export default function AddExhibitor({ eventId }: AddExhibitorProps) {
   const [exhibitors, setExhibitors] = useState<Exhibitor[]>([])
   const [exhibitionSpaces, setExhibitionSpaces] = useState<ExhibitionSpace[]>([])
   const [searchTerm, setSearchTerm] = useState("")
+  const [countryFilter, setCountryFilter] = useState(FILTER_ALL_COUNTRIES)
   const [selectedExhibitor, setSelectedExhibitor] = useState<Exhibitor | null>(null)
   const [selectedSpace, setSelectedSpace] = useState("")
   const [eventCurrency, setEventCurrency] = useState("")
@@ -240,13 +247,43 @@ export default function AddExhibitor({ eventId }: AddExhibitorProps) {
     }
   }
 
-  const filteredExhibitors = exhibitors.filter(
-    (exhibitor) =>
+  const countryOptions = useMemo(() => getCountryOptions(), [])
+
+  const exhibitorCountryLabel = (exhibitor: Exhibitor) => {
+    const fromProfile = (exhibitor.profileCountry || "").trim()
+    if (fromProfile) return fromProfile
+    const loc = (exhibitor.location || "").trim()
+    if (!loc) return ""
+    const segments = loc.split(",").map((s) => s.trim()).filter(Boolean)
+    return segments.length > 0 ? segments[segments.length - 1] : loc
+  }
+
+  const exhibitorMatchesCountry = (exhibitor: Exhibitor, countryName: string) => {
+    const target = countryName.trim().toLowerCase()
+    if (!target) return true
+    const country = exhibitorCountryLabel(exhibitor).toLowerCase()
+    if (country === target || country.includes(target) || target.includes(country)) return true
+    const loc = (exhibitor.location || "").toLowerCase()
+    return loc.includes(target)
+  }
+
+  const selectedCountryName =
+    countryFilter === FILTER_ALL_COUNTRIES
+      ? ""
+      : countryOptions.find((c) => c.code === countryFilter)?.name ?? ""
+
+  const filteredExhibitors = exhibitors.filter((exhibitor) => {
+    const matchesSearch =
+      !searchTerm.trim() ||
       `${exhibitor.firstName} ${exhibitor.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
       exhibitor.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       exhibitor.company?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      exhibitor.businessEmail?.toLowerCase().includes(searchTerm.toLowerCase()),
-  )
+      exhibitor.businessEmail?.toLowerCase().includes(searchTerm.toLowerCase())
+
+    const matchesCountry = exhibitorMatchesCountry(exhibitor, selectedCountryName)
+
+    return matchesSearch && matchesCountry
+  })
 
   const handleCreateExhibitor = async () => {
     if (!newExhibitor.firstName || !newExhibitor.lastName || !newExhibitor.email || !newExhibitor.company) {
@@ -391,18 +428,49 @@ export default function AddExhibitor({ eventId }: AddExhibitorProps) {
             </TabsList>
 
             <TabsContent value="existing" className="space-y-4 sm:space-y-6 min-w-0">
-              <div className="relative min-w-0">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <Input
-                  placeholder="Search by name, email, or company..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 w-full min-w-0"
-                />
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-end min-w-0">
+                <div className="relative min-w-0 flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Input
+                    placeholder="Search by name, email, or company..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 w-full min-w-0"
+                  />
+                </div>
+                <div className="w-full sm:w-56 shrink-0 space-y-1">
+                  <Label htmlFor="exhibitorCountryFilter" className="text-xs text-muted-foreground">
+                    Country
+                  </Label>
+                  <Select value={countryFilter} onValueChange={setCountryFilter}>
+                    <SelectTrigger id="exhibitorCountryFilter" className="w-full">
+                      <SelectValue placeholder="All countries" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-[280px]">
+                      <SelectItem value={FILTER_ALL_COUNTRIES}>All countries</SelectItem>
+                      {countryOptions.map((country) => (
+                        <SelectItem key={country.code} value={country.code}>
+                          {country.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
-              <div className="grid gap-3 sm:gap-4 max-h-96 overflow-y-auto min-w-0">
-                {filteredExhibitors.map((exhibitor) => {
+              <p className="text-xs text-muted-foreground">
+                Showing {filteredExhibitors.length} of {exhibitors.length} exhibitors
+              </p>
+
+              <div className="grid gap-3 sm:gap-4 min-h-[28rem] max-h-[min(70vh,48rem)] overflow-y-auto min-w-0 pr-1">
+                {filteredExhibitors.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-16 text-center text-gray-500">
+                    <MapPin className="h-10 w-10 text-gray-300 mb-3" />
+                    <p className="font-medium text-gray-700">No exhibitors match your filters</p>
+                    <p className="text-sm mt-1">Try a different search term or country.</p>
+                  </div>
+                ) : (
+                filteredExhibitors.map((exhibitor) => {
                   const isRegistered = registeredExhibitors.has(exhibitor.id)
 
                   return (
@@ -504,7 +572,8 @@ export default function AddExhibitor({ eventId }: AddExhibitorProps) {
                       </CardContent>
                     </Card>
                   )
-                })}
+                })
+                )}
               </div>
             </TabsContent>
 
