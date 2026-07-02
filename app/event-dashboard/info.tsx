@@ -1564,9 +1564,9 @@ export default function EventPage({ params }: EventPageProps) {
                   <CardHeader>
                     <CardTitle>Event Organizer</CardTitle>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="px-4 sm:px-6">
                     <div
-                      className="flex items-start gap-4 cursor-pointer hover:bg-gray-50 p-4 rounded-lg transition-colors"
+                      className="flex flex-col sm:flex-row items-start gap-3 sm:gap-4 cursor-pointer hover:bg-gray-50 p-3 sm:p-4 rounded-lg transition-colors min-w-0"
                       onClick={() =>
                         router.push(
                           getPublicProfilePath("organizer", {
@@ -1577,27 +1577,27 @@ export default function EventPage({ params }: EventPageProps) {
                         )
                       }
                     >
-                      <Avatar className="w-16 h-16">
+                      <Avatar className="w-14 h-14 sm:w-16 sm:h-16 shrink-0 mx-auto sm:mx-0">
                         <AvatarImage src={event.organizer?.avatar } />
                         <AvatarFallback className="text-lg">
                           {event.organizer?.company}
                           {/* {event.organizer?.firstName?.charAt(0) || "O"} */}
                         </AvatarFallback>
                       </Avatar>
-                      <div className="flex-1">
-                        <h4 className="font-semibold text-lg hover:text-blue-600 transition-colors">
+                      <div className="min-w-0 flex-1 w-full text-center sm:text-left">
+                        <h4 className="font-semibold text-base sm:text-lg hover:text-blue-600 transition-colors break-words">
                           {event.organizer?.company || event.organizer?.firstName}
                         </h4>
                         {(() => {
                           const line = formatOrganizerCityCountryLine(event.organizer)
                           return line ? (
-                            <p className="text-gray-600 mb-3 text-sm">{line}</p>
+                            <p className="text-gray-600 mb-3 text-sm break-words">{line}</p>
                           ) : null
                         })()}
-                        <div className="flex flex-wrap items-center gap-4">
-                          <div className="flex items-center gap-2 text-sm">
-                            <Mail className="w-4 h-4 text-green-600" />
-                            <span>{event.organizer?.email || "Contact via platform"}</span>
+                        <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2 sm:gap-4 min-w-0">
+                          <div className="flex items-start sm:items-center gap-2 text-sm min-w-0 justify-center sm:justify-start">
+                            <Mail className="w-4 h-4 text-green-600 shrink-0 mt-0.5 sm:mt-0" />
+                            <span className="break-all leading-snug">{event.organizer?.email || "Contact via platform"}</span>
                           </div>
                         </div>
                       </div>
