@@ -44,6 +44,7 @@ export default function EventPageContent({ event, session: _session, router, toa
   const [interestVisit, setInterestVisit] = useState(false)
   const [interestExhibit, setInterestExhibit] = useState(false)
   const [interestSubmitting, setInterestSubmitting] = useState<"visit" | "exhibit" | null>(null)
+  const [stallBookRequestSubmitting, setStallBookRequestSubmitting] = useState(false)
   const [brochureDownloading, setBrochureDownloading] = useState(false)
   const [sidebarBanners, setSidebarBanners] = useState<ContentBanner[]>([])
   const [sidebarBannerSlide, setSidebarBannerSlide] = useState(0)
@@ -349,6 +350,40 @@ export default function EventPageContent({ event, session: _session, router, toa
     }
   }
 
+  const handleSendStallBookRequest = async () => {
+    if (!isLoggedIn || !userId) {
+      toast({
+        title: "Sign in required",
+        description: "Please log in to send a stall booking request.",
+        variant: "destructive",
+      })
+      router.push("/login")
+      return
+    }
+
+    setStallBookRequestSubmitting(true)
+    try {
+      const { ok } = await postEventLeadThroughNext(event.id, {
+        type: "stall_book_request",
+        userId,
+        eventId: event.id,
+      })
+      if (!ok) throw new Error("Lead request failed")
+      toast({
+        title: "Request sent",
+        description: "Your stall booking request has been sent to the organizer.",
+      })
+    } catch {
+      toast({
+        title: "Couldn’t send request",
+        description: "Failed to submit your stall booking request. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setStallBookRequestSubmitting(false)
+    }
+  }
+
   const handleBrochureDownload = async () => {
     if (!brochureUrl) return
     setBrochureDownloading(true)
@@ -478,7 +513,11 @@ export default function EventPageContent({ event, session: _session, router, toa
               </TabsContent>
 
               <TabsContent value="organizer">
-                <EventPageOrganizerTab event={event} />
+                <EventPageOrganizerTab
+                  event={event}
+                  onSendStallBookRequest={handleSendStallBookRequest}
+                  stallBookRequestSubmitting={stallBookRequestSubmitting}
+                />
               </TabsContent>
 
               <TabsContent value="followers">

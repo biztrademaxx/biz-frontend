@@ -10,13 +10,14 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Search, Download, Mail, Phone, MoreHorizontal, Users, Calendar, DollarSign, Eye, Briefcase } from "lucide-react"
+import { Search, Download, Briefcase } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { formatCityCountryLine } from "@/lib/location-data"
 
 interface Exhibitor {
   id: string
+  source: "ORGANIZER_ADDED" | "STALL_BOOK_REQUEST"
+  leadType?: string
   firstName: string
   lastName: string
   email: string
@@ -43,18 +44,26 @@ interface ExhibitorManagementProps {
   eventId: string
 }
 
+type ExhibitorTab = "EVENT_EXHIBITORS" | "STALL_REQUESTS"
+
+const EVENT_EXHIBITOR_STATUSES = ["BOOKED", "CONFIRMED", "SETUP", "ACTIVE", "COMPLETED", "CANCELLED"] as const
+const STALL_REQUEST_STATUSES = ["NEW", "CONTACTED", "QUALIFIED", "CONVERTED", "FOLLOW_UP", "REJECTED"] as const
+
 export default function ExhibitorManagement({ eventId }: ExhibitorManagementProps) {
   const [exhibitors, setExhibitors] = useState<Exhibitor[]>([])
   const [filteredExhibitors, setFilteredExhibitors] = useState<Exhibitor[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedStatus, setSelectedStatus] = useState<string>("all")
+  const [activeTab, setActiveTab] = useState<ExhibitorTab>("EVENT_EXHIBITORS")
   const { toast } = useToast()
 
   // Stats
-  const totalExhibitors = exhibitors.length
+  const organizerAddedExhibitors = exhibitors.filter((e) => e.source === "ORGANIZER_ADDED")
+  const stallRequestLeads = exhibitors.filter((e) => e.source === "STALL_BOOK_REQUEST")
+  const totalExhibitors = organizerAddedExhibitors.length
   const confirmedExhibitors = exhibitors.filter((e) => e.registration.status === "CONVERTED").length
-  const newExhibitors = exhibitors.filter((e) => e.registration.status === "NEW").length
+  const newExhibitors = stallRequestLeads.filter((e) => e.registration.status === "NEW").length
 
   useEffect(() => {
     fetchExhibitors()
@@ -62,7 +71,11 @@ export default function ExhibitorManagement({ eventId }: ExhibitorManagementProp
 
   useEffect(() => {
     filterExhibitors()
-  }, [exhibitors, searchTerm, selectedStatus])
+  }, [exhibitors, searchTerm, selectedStatus, activeTab])
+
+  useEffect(() => {
+    setSelectedStatus("all")
+  }, [activeTab])
 
   const fetchExhibitors = async () => {
     try {
@@ -79,16 +92,19 @@ export default function ExhibitorManagement({ eventId }: ExhibitorManagementProp
       const data = await response.json()
       devLog('API Response data:', data)
 
-      // Backend /api/events/:id/exhibitors returns { success, data: { exhibitors } }
+      // Backend /api/events/:id/exhibitors now returns:
+      // { success, data: { exhibitors: ExhibitorBooths[], stallBookRequests: EventLead[] } }
       const rawExhibitors = data.data?.exhibitors ?? data.exhibitors ?? []
+      const rawStallBookRequests = data.data?.stallBookRequests ?? []
 
       if (data.success !== false && Array.isArray(rawExhibitors)) {
-        const transformedExhibitors = rawExhibitors.map((item: any) => {
+        const transformedBooths = rawExhibitors.map((item: any) => {
           const user = item.exhibitor || item.user || {}
           const event = item.event || {}
 
           return {
             id: user.id || item.id || "",
+            source: "ORGANIZER_ADDED",
             firstName: user.firstName || "Unknown",
             lastName: user.lastName || "",
             email: user.email || "No email",
@@ -108,12 +124,45 @@ export default function ExhibitorManagement({ eventId }: ExhibitorManagementProp
             },
             registration: {
               id: item.id || "",
-              status: item.status || "NEW",
+              status: item.status || "BOOKED",
               registeredAt: item.createdAt || new Date().toISOString(),
             },
           } as Exhibitor
         })
 
+        const transformedStallLeads = Array.isArray(rawStallBookRequests)
+          ? rawStallBookRequests.map((lead: any) => {
+              const user = lead.user || {}
+              const event = lead.event || {}
+              return {
+                id: user.id || lead.userId || lead.id || "",
+                source: "STALL_BOOK_REQUEST",
+                leadType: lead.type || "",
+                firstName: user.firstName || "Unknown",
+                lastName: user.lastName || "",
+                email: user.email || "No email",
+                phone: user.phone || "",
+                company: user.company || "No company",
+                jobTitle: user.jobTitle || "",
+                avatar: user.avatar,
+                locationDisplay: user.locationDisplay,
+                city: user.city || user.profileCity,
+                country: user.country || user.profileCountry,
+                event: {
+                  id: event.id || eventId,
+                  title: event.title || "Event",
+                  startDate: event.startDate || new Date().toISOString(),
+                },
+                registration: {
+                  id: lead.id || "",
+                  status: lead.status || "NEW",
+                  registeredAt: lead.createdAt || new Date().toISOString(),
+                },
+              } as Exhibitor
+            })
+          : []
+
+        const transformedExhibitors = [...transformedBooths, ...transformedStallLeads]
         devLog('Transformed exhibitors:', transformedExhibitors)
         setExhibitors(transformedExhibitors)
       } else {
@@ -138,7 +187,10 @@ export default function ExhibitorManagement({ eventId }: ExhibitorManagementProp
   }
 
   const filterExhibitors = () => {
-    let filtered = exhibitors
+    let filtered =
+      activeTab === "EVENT_EXHIBITORS"
+        ? organizerAddedExhibitors
+        : stallRequestLeads
 
     if (searchTerm) {
       filtered = filtered.filter(
@@ -179,6 +231,10 @@ export default function ExhibitorManagement({ eventId }: ExhibitorManagementProp
     switch (status) {
       case "CONVERTED":
         return "Confirmed"
+      case "BOOKED":
+        return "Booked"
+      case "CONFIRMED":
+        return "Confirmed"
       case "NEW":
         return "New"
       case "CONTACTED":
@@ -196,13 +252,14 @@ export default function ExhibitorManagement({ eventId }: ExhibitorManagementProp
 
   const exportExhibitors = () => {
     const csvContent = [
-      ["Name", "Email", "Phone", "Company", "Job Title", "Status", "Registration Date"],
+      ["Name", "Email", "Phone", "Company", "Job Title", "Source", "Status", "Registration Date"],
       ...filteredExhibitors.map((exhibitor) => [
         `${exhibitor.firstName} ${exhibitor.lastName}`,
         exhibitor.email,
         exhibitor.phone || "",
         exhibitor.company || "",
         exhibitor.jobTitle || "",
+        exhibitor.source === "ORGANIZER_ADDED" ? "Organizer Added" : "Stall Request",
         getStatusDisplayName(exhibitor.registration.status),
         new Date(exhibitor.registration.registeredAt).toLocaleDateString(),
       ]),
@@ -281,10 +338,30 @@ export default function ExhibitorManagement({ eventId }: ExhibitorManagementProp
       {/* Filters */}
       <Card>
         <CardContent className="p-4 flex gap-4 flex-col sm:flex-row">
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant={activeTab === "EVENT_EXHIBITORS" ? "default" : "outline"}
+              onClick={() => setActiveTab("EVENT_EXHIBITORS")}
+            >
+              Event Exhibitors ({organizerAddedExhibitors.length})
+            </Button>
+            <Button
+              type="button"
+              variant={activeTab === "STALL_REQUESTS" ? "default" : "outline"}
+              onClick={() => setActiveTab("STALL_REQUESTS")}
+            >
+              Stall Booking Requests ({stallRequestLeads.length})
+            </Button>
+          </div>
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
             <Input
-              placeholder="Search exhibitors by name, email, or company..."
+              placeholder={
+                activeTab === "EVENT_EXHIBITORS"
+                  ? "Search event exhibitors by name, email, or company..."
+                  : "Search stall booking requests by name, email, or company..."
+              }
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
@@ -296,12 +373,11 @@ export default function ExhibitorManagement({ eventId }: ExhibitorManagementProp
             className="px-3 py-2 border rounded-md"
           >
             <option value="all">All Status</option>
-            <option value="NEW">New</option>
-            <option value="CONTACTED">Contacted</option>
-            <option value="QUALIFIED">Qualified</option>
-            <option value="CONVERTED">Confirmed</option>
-            <option value="FOLLOW_UP">Follow Up</option>
-            <option value="REJECTED">Rejected</option>
+            {(activeTab === "EVENT_EXHIBITORS" ? EVENT_EXHIBITOR_STATUSES : STALL_REQUEST_STATUSES).map((status) => (
+              <option key={status} value={status}>
+                {getStatusDisplayName(status)}
+              </option>
+            ))}
           </select>
         </CardContent>
       </Card>
@@ -309,7 +385,9 @@ export default function ExhibitorManagement({ eventId }: ExhibitorManagementProp
       {/* Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Exhibitors ({filteredExhibitors.length})</CardTitle>
+          <CardTitle>
+            {activeTab === "EVENT_EXHIBITORS" ? "Event Exhibitors" : "Stall Booking Requests"} ({filteredExhibitors.length})
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
@@ -318,15 +396,15 @@ export default function ExhibitorManagement({ eventId }: ExhibitorManagementProp
                 <TableHead>Exhibitor</TableHead>
                 <TableHead>Contact</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead>Source</TableHead>
                 <TableHead>Company</TableHead>
                 <TableHead>Location</TableHead>
                 <TableHead>Registered</TableHead>
-                {/* <TableHead>Actions</TableHead> */}
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredExhibitors.map((exhibitor) => (
-                <TableRow key={exhibitor.id}>
+                <TableRow key={`${exhibitor.source}-${exhibitor.registration.id || exhibitor.id}`}>
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <Avatar className="w-8 h-8">
@@ -356,6 +434,11 @@ export default function ExhibitorManagement({ eventId }: ExhibitorManagementProp
                     </Badge>
                   </TableCell>
                   <TableCell>
+                    <Badge className={exhibitor.source === "ORGANIZER_ADDED" ? "bg-blue-100 text-blue-800" : "bg-amber-100 text-amber-900"}>
+                      {exhibitor.source === "ORGANIZER_ADDED" ? "Organizer Added" : "Stall Request"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
                     <p className="text-sm">{exhibitor.company || "N/A"}</p>
                   </TableCell>
                   <TableCell>
@@ -367,25 +450,6 @@ export default function ExhibitorManagement({ eventId }: ExhibitorManagementProp
                       {new Date(exhibitor.registration.registeredAt).toLocaleTimeString()}
                     </p>
                   </TableCell>
-                  {/* <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm">
-                          <MoreHorizontal className="w-4 h-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent>
-                        <DropdownMenuItem>
-                          <Eye className="w-4 h-4 mr-2" />
-                          View Details
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <Mail className="w-4 h-4 mr-2" />
-                          Send Email
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell> */}
                 </TableRow>
               ))}
             </TableBody>
@@ -394,9 +458,13 @@ export default function ExhibitorManagement({ eventId }: ExhibitorManagementProp
           {filteredExhibitors.length === 0 && (
             <div className="text-center py-8">
               <p className="text-gray-500">
-                {exhibitors.length === 0 
-                  ? "No exhibitors have registered for this event yet." 
-                  : "No exhibitors found matching your criteria."}
+                {activeTab === "EVENT_EXHIBITORS"
+                  ? (organizerAddedExhibitors.length === 0
+                    ? "No exhibitors have been added to this event yet."
+                    : "No event exhibitors found matching your criteria.")
+                  : (stallRequestLeads.length === 0
+                    ? "No stall booking requests received yet."
+                    : "No stall booking requests found matching your criteria.")}
               </p>
             </div>
           )}
