@@ -48,13 +48,13 @@ export default function Home() {
           >
             {/* <UpcomingVipEvents /> */}
           </Suspense>
-          <div
+          {/* <div
             className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen pt-8 bg-[#f9f9f9] sm:pt-10 lg:pt-12"
           >
             <div className="mx-auto max-w-7xl px-3 sm:px-4 lg:px-6 " >
               <HomeTradeFairsSearch />
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
       <div className="bg-[#f9f9f9]">

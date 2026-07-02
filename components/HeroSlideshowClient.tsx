@@ -6,15 +6,26 @@ import { useCallback, useEffect, useRef } from "react"
 import { ChevronLeft, ChevronRight, MapPin } from "lucide-react"
 import { eventPublicPath } from "@/lib/event-path"
 import HomeSectionEmptyState, { homeEmptyDescription } from "@/components/home/HomeSectionEmptyState"
-import { hasDisplayableEventImage } from "@/lib/event-card-meta"
 import type { HeroSlideshowEvent } from "@/lib/hero/types"
 
 export type Event = HeroSlideshowEvent
 
+/**
+ * VIP cards use the dedicated `vipImage` field set by super-admin
+ * (Event.vipImage in the Prisma schema — "Dedicated image for homepage
+ * VIP cards only"). Falls back to bannerImage / images[0] only if an
+ * event hasn't had a VIP image set yet, so older/incomplete records
+ * still render instead of vanishing from the slideshow.
+ */
 function cardImageUrl(event: Event): string {
-  if (event.bannerImage?.trim()) return event.bannerImage.trim()
-  const first = event.images?.[0]
+  const e = event as any
+
+  if (typeof e.vipImage === "string" && e.vipImage.trim()) return e.vipImage.trim()
+  if (typeof e.bannerImage === "string" && e.bannerImage.trim()) return e.bannerImage.trim()
+
+  const first = e.images?.[0]
   if (typeof first === "string" && first.trim()) return first.trim()
+
   return ""
 }
 
@@ -80,16 +91,17 @@ function EventCard({ event, imageUrl }: { event: Event; imageUrl: string }) {
       className="block h-full min-w-0 w-full snap-start"
       aria-label={vipCardTitleDisplay(event.title)}
     >
-      <div className="group relative h-[448px] w-full min-w-0 overflow-hidden shadow-lg transition-all duration-300 ease-out hover:z-10 hover:scale-[1.02] hover:shadow-2xl md:h-[488px] lg:h-[528px] lg:hover:scale-105">
+      {/* Card pops out on hover; image stays locked to the card (no independent zoom). */}
+      <div className="group relative h-[448px] w-full min-w-0 overflow-hidden transition-transform duration-300 ease-out hover:z-10 hover:scale-[1.02] md:h-[488px] lg:h-[528px] lg:hover:scale-105">
         <AppImage
           src={imageUrl}
           alt={event.title}
           fill
-          sizes="(max-width: 768px) 100vw, 50vw"
-          className="object-cover transition-transform duration-500 group-hover:scale-110"
+          // sizes="(max-width: 600px) 100vw, 50vw"
+          className="h-full w-[320px]object-cover"
         />
         <div
-          className="absolute inset-0 bg-gradient-to-t from-blue-950/90 via-blue-950/40 to-transparent transition-all duration-300 group-hover:from-blue-950/95 group-hover:via-blue-950/50"
+          className="absolute inset-0 bg-gradient-to-t from-blue-950/90 via-blue-950/40 to-transparent"
           aria-hidden
         />
 
@@ -159,16 +171,7 @@ export default function HeroSlideshowClient({
 }) {
   const scrollRef = useRef<HTMLDivElement>(null)
 
-  // Single source of truth for "does this event get a slot": resolve the
-  // image URL once per event, and only keep events where one was found.
-  // Previously the outer filter (`hasDisplayableEventImage`) and the inner
-  // check inside EventCard (`cardImageUrl`) could disagree — an event would
-  // pass the outer filter, get a sized wrapper `<div>` in the row, and then
-  // EventCard would render `null` inside it, leaving a blank, correctly
-  // sized gap in the slider. Filtering here with the exact same function
-  // EventCard uses guarantees every rendered slot has real content.
   const events = initialEvents
-    .filter((e) => hasDisplayableEventImage(e))
     .map((event) => ({ event, imageUrl: cardImageUrl(event) }))
     .filter((entry): entry is { event: Event; imageUrl: string } => Boolean(entry.imageUrl))
 
@@ -218,9 +221,6 @@ export default function HeroSlideshowClient({
   }
 
   return (
-    // "group/slideshow" scopes :hover so the two arrow buttons only reveal
-    // themselves when the pointer is over the whole slideshow — on any
-    // screen size — instead of always being visible.
     <div className="group/slideshow relative w-full min-w-0" aria-label="VIP events">
       <div
         ref={scrollRef}
