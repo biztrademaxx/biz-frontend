@@ -254,11 +254,11 @@ export default function AddVenue({ organizerId, onVenueChange, selectedVenueId }
     if (!searchLower) return true
 
     return (
-      venue.venueName?.toLowerCase().includes(searchLower) ||
-      `${venue.firstName} ${venue.lastName}`.toLowerCase().includes(searchLower) ||
-      venue.email.toLowerCase().includes(searchLower) ||
+      (venue.venueName || "").toLowerCase().includes(searchLower) ||
+      `${venue.firstName || ""} ${venue.lastName || ""}`.toLowerCase().includes(searchLower) ||
+      (venue.email || "").toLowerCase().includes(searchLower) ||
       (venue.venueCity || venue.city || "").toLowerCase().includes(searchLower) ||
-      venue.venueAddress?.toLowerCase().includes(searchLower) ||
+      (venue.venueAddress || "").toLowerCase().includes(searchLower) ||
       getVenueCountryLabel(venue).toLowerCase().includes(searchLower)
     )
   })

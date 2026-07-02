@@ -368,17 +368,17 @@ export function ConnectionsSection({ userId: _userId, surface = "default" }: Con
                             </AvatarFallback>
                           </Avatar>
                           <div className="min-w-0 flex-1 text-center sm:text-left">
-                            <p className="font-medium text-gray-900 truncate">
+                            <p className="font-medium text-gray-900 break-words leading-snug sm:truncate">
                               {connectionName(c)}
                             </p>
                             {c.company && (
-                              <p className="text-sm text-gray-500 truncate">{c.company}</p>
+                              <p className="text-sm text-gray-500 break-words leading-snug sm:truncate">{c.company}</p>
                             )}
                             {c.jobTitle && (
-                              <p className="text-xs text-gray-400 truncate">{c.jobTitle}</p>
+                              <p className="text-xs text-gray-400 break-words leading-snug sm:truncate">{c.jobTitle}</p>
                             )}
                             {formatCityCountryLine(c) && (
-                              <p className="text-xs text-gray-400 truncate">{formatCityCountryLine(c)}</p>
+                              <p className="text-xs text-gray-400 break-words leading-snug sm:truncate">{formatCityCountryLine(c)}</p>
                             )}
                           </div>
                           <div className="flex justify-center sm:justify-end gap-2 shrink-0">

@@ -50,6 +50,7 @@ interface ExhibitionSpace {
   dimensions: string
   area: number
   basePrice: number
+  currency?: string
   location?: string
   isAvailable: boolean
   maxBooths?: number
@@ -104,6 +105,22 @@ export default function AddExhibitor({ eventId }: AddExhibitorProps) {
     setupRequirements: "",
     specialRequests: "",
   })
+
+  const selectedSpaceData = exhibitionSpaces.find((s) => s.id === selectedSpace)
+  const selectedCurrencyCode = (selectedSpaceData?.currency || "INR").toUpperCase()
+
+  const formatCurrency = (amount: number) => {
+    try {
+      return new Intl.NumberFormat("en-IN", {
+        style: "currency",
+        currency: selectedCurrencyCode,
+        maximumFractionDigits: 2,
+      }).format(Number.isFinite(amount) ? amount : 0)
+    } catch {
+      const symbol = selectedCurrencyCode === "INR" ? "₹" : selectedCurrencyCode === "USD" ? "$" : ""
+      return `${symbol}${Number.isFinite(amount) ? amount : 0}`
+    }
+  }
 
   useEffect(() => {
     fetchExhibitors()
@@ -646,7 +663,7 @@ export default function AddExhibitor({ eventId }: AddExhibitorProps) {
                             className="py-2.5"
                           >
                             <span className="block truncate">
-                              {space.name} — {space.spaceType} · ${space.basePrice}
+                              {space.name} — {space.spaceType} · {formatCurrency(space.basePrice)}
                               {!space.isAvailable && " · Unavailable"}
                             </span>
                           </SelectItem>
@@ -717,7 +734,7 @@ export default function AddExhibitor({ eventId }: AddExhibitorProps) {
                       onChange={(e) => setBoothDetails({ ...boothDetails, additionalPower: e.target.value })}
                       placeholder="0"
                     />
-                    <p className="text-xs text-gray-500 mt-1">$50 per KW</p>
+                    <p className="text-xs text-gray-500 mt-1">{formatCurrency(50)} per KW</p>
                   </div>
 
                   <div>
@@ -730,7 +747,7 @@ export default function AddExhibitor({ eventId }: AddExhibitorProps) {
                       onChange={(e) => setBoothDetails({ ...boothDetails, compressedAir: e.target.value })}
                       placeholder="0"
                     />
-                    <p className="text-xs text-gray-500 mt-1">$100 per HP</p>
+                    <p className="text-xs text-gray-500 mt-1">{formatCurrency(100)} per HP</p>
                   </div>
                 </div>
 
@@ -761,23 +778,23 @@ export default function AddExhibitor({ eventId }: AddExhibitorProps) {
                     <div className="space-y-1 text-sm">
                       <div className="flex justify-between">
                         <span>Base space cost</span>
-                        <span>${exhibitionSpaces.find((s) => s.id === selectedSpace)?.basePrice || 0}</span>
+                        <span>{formatCurrency(selectedSpaceData?.basePrice || 0)}</span>
                       </div>
                       {boothDetails.additionalPower && (
                         <div className="flex justify-between">
                           <span>Additional power ({boothDetails.additionalPower} KW)</span>
-                          <span>${Number.parseFloat(boothDetails.additionalPower) * 50}</span>
+                          <span>{formatCurrency(Number.parseFloat(boothDetails.additionalPower) * 50)}</span>
                         </div>
                       )}
                       {boothDetails.compressedAir && (
                         <div className="flex justify-between">
                           <span>Compressed air ({boothDetails.compressedAir} HP)</span>
-                          <span>${Number.parseFloat(boothDetails.compressedAir) * 100}</span>
+                          <span>{formatCurrency(Number.parseFloat(boothDetails.compressedAir) * 100)}</span>
                         </div>
                       )}
                       <div className="border-t pt-1 flex justify-between font-semibold">
                         <span>Total</span>
-                        <span>${calculateTotalCost()}</span>
+                        <span>{formatCurrency(calculateTotalCost())}</span>
                       </div>
                     </div>
                   </div>

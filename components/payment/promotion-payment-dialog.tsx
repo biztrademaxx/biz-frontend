@@ -172,7 +172,7 @@ export function PromotionPaymentDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-lg gap-0 overflow-hidden p-0 sm:max-w-xl">
+      <DialogContent className="w-[95vw] max-w-lg sm:max-w-xl max-h-[90vh] gap-0 overflow-y-auto p-0">
         <div className="border-b border-slate-200 bg-gradient-to-br from-[#004A96] to-[#003670] px-6 py-5 text-white">
           <DialogHeader className="space-y-1 text-left">
             <DialogTitle className="text-xl font-semibold text-white">
