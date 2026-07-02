@@ -357,7 +357,7 @@ const fetchAppointments = async () => {
                 </Button>
               </>
             )}
-            <Button
+            {/* <Button
               variant="outline"
               size="sm"
               className="flex w-full items-center justify-center gap-2 bg-transparent sm:w-auto"
@@ -365,7 +365,7 @@ const fetchAppointments = async () => {
             >
               <MessageSquare className="w-4 h-4" />
               Message
-            </Button>
+            </Button> */}
           </div>
         </div>
       </CardContent>

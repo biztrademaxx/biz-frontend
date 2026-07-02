@@ -46,7 +46,7 @@ export default function ContactPage() {
           </Card>
 
           <Card title="📞 Call Us">
-            +91 XXXXX XXXXX
+            +91 9742711211
           </Card>
 
           <Card title="📍 Office Address">
@@ -126,10 +126,10 @@ export default function ContactPage() {
       {/* Social */}
       <Section title="Follow Us">
         <div className="flex gap-4 flex-wrap text-blue-600">
-          <Link href="#">LinkedIn</Link>
-          <Link href="#">Instagram</Link>
-          <Link href="#">Facebook</Link>
-          <Link href="#">YouTube</Link>
+          <Link href="https://www.linkedin.com/company/biztradefairs/">LinkedIn</Link>
+          <Link href="https://www.instagram.com/biztradefairs/">Instagram</Link>
+          <Link href="https://www.facebook.com/biztradefair/">Facebook</Link>
+          <Link href="https://www.youtube.com/@biztradefairs">YouTube</Link>
         </div>
       </Section>
 

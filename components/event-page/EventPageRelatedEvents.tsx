@@ -267,13 +267,18 @@ export function EventPageRelatedEvents({ currentEventId, categories }: Props) {
                                             <Calendar className="h-6 w-6" />
                                         </div>
                                     )} */}
-                                     <Image
-                                            src={event.image || event.thumbnail || "/logo/default-user.png"}
-                                            alt={event.title}
-                                            fill
-                                            sizes="64px"
-                                            className="object-cover group-hover:scale-105 transition-transform duration-200"
-                                        />
+                                    <Image
+                                        src={
+                                            event.image ||
+                                            event.thumbnail ||
+                                            (event as any).thumbnailImage ||
+                                            "/logo/default-user.png"
+                                        }
+                                        alt={event.title}
+                                        fill
+                                        sizes="64px"
+                                        className="object-cover group-hover:scale-105 transition-transform duration-200"
+                                    />
                                 </div>
                                 <div className="min-w-0 flex-1">
                                     <p className="line-clamp-2 text-sm font-medium text-gray-900 group-hover:text-[#FF131C] transition-colors">

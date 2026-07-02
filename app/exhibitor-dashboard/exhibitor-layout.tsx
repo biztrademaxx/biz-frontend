@@ -86,14 +86,14 @@ const EXHIBITOR_SIDEBAR_GROUPS: { id: string; label: string; items: ExhibitorNav
       { id: "products", title: "Products", icon: Package },
     ],
   },
-  {
-    id: "marketingCampaigns",
-    label: "Marketing",
-    items: [
-      { id: "promotions", title: "Promotions", icon: TrendingUp },
-      { id: "active-promotions", title: "Active Promotions", icon: Star },
-    ],
-  },
+  // {
+  //   id: "marketingCampaigns",
+  //   label: "Marketing",
+  //   items: [
+  //     { id: "promotions", title: "Promotions", icon: TrendingUp },
+  //     { id: "active-promotions", title: "Active Promotions", icon: Star },
+  //   ],
+  // },
   {
     id: "network",
     label: "Network",

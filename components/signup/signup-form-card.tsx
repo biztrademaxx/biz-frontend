@@ -787,7 +787,7 @@ export default function SignupFormCard({ variant, onRegistrationSuccess }: Signu
                   <input type="checkbox" required className="mt-1" />
                   <span className="text-gray-600">
                     I agree to the{" "}
-                    <Link href="/terms" className="text-blue-600 hover:text-blue-800">
+                    <Link href="/terms-of-service" className="text-blue-600 hover:text-blue-800">
                       Terms of Service
                     </Link>{" "}
                     and{" "}
