@@ -37,7 +37,7 @@ export default function AdminDashboardPage() {
   const isSuperAdmin = userRole === "SUPER_ADMIN"
 
   return (
-      <div className="admin-dashboard-root flex min-h-screen flex-col bg-background">
+      <div className="admin-dashboard-root flex min-h-screen flex-col overflow-x-hidden bg-background">
         <Navbar onLogout={logout} />
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">
           <AdminDashboard userRole={userRole} userPermissions={userPermissions} />

@@ -74,9 +74,9 @@ export default function Navbar({ onLogout }: NavbarProps) {
           "bg-background/90 backdrop-blur-md supports-[backdrop-filter]:bg-background/75",
         )}
       >
-        <div className="flex h-16 items-center gap-3 px-4 sm:px-6 lg:gap-4 lg:px-8">
+        <div className="flex h-14 items-center gap-2 px-3 sm:h-16 sm:gap-3 sm:px-6 lg:gap-4 lg:px-8">
           <div className="min-w-0 flex-1 md:flex md:justify-center">
-            <div className="relative mx-auto w-full max-w-xl">
+            <div className="relative mx-auto w-full max-w-xl min-w-0">
               <div className="relative hidden md:block">
                 <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input

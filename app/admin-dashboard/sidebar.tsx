@@ -30,6 +30,7 @@ import {
   MessageCircle,
   CheckCircle,
   TrendingUp,
+  X,
 } from "lucide-react"
 
 // Import all section components
@@ -248,6 +249,7 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
   const [activeSection, setActiveSection] = useState("dashboard")
   const [activeSubSection, setActiveSubSection] = useState("")
   const [openMenus, setOpenMenus] = useState<Set<string>>(new Set(["dashboard"]))
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   const hasPermission = (itemId: string): boolean => {
     if (userRole === "SUPER_ADMIN") return true
@@ -530,6 +532,7 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
       next.add(sectionId)
       return next
     })
+    setSidebarOpen(false)
   }
 
   const navigateToSubSection = (parentId: string, subId: string) => {
@@ -540,6 +543,7 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
       next.add(parentId)
       return next
     })
+    setSidebarOpen(false)
   }
 
   const navigateToEventPromotions = () => {
@@ -748,11 +752,24 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
   const handleSectionClick = (id: string) => {
     setActiveSection(id)
     setActiveSubSection("")
+    setSidebarOpen(false)
   }
 
   const handleSubSectionClick = (parentId: string, subId: string) => {
     setActiveSection(parentId)
     setActiveSubSection(subId)
+    setSidebarOpen(false)
+  }
+
+  const getCurrentSectionTitle = () => {
+    for (const item of filteredSidebarItems) {
+      if (item.subItems?.length) {
+        const sub = item.subItems.find((s) => s.id === activeSubSection)
+        if (sub) return sub.title
+      }
+      if (activeSection === item.id && !activeSubSection) return item.title
+    }
+    return "Dashboard"
   }
 
   const isMenuOpen = (menuId: string) => openMenus.has(menuId)
@@ -760,16 +777,37 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
   const isSubActive = (id: string) => activeSubSection === id
 
   return (
-    <div className={cn("flex min-h-0 min-w-0 flex-1 overflow-hidden", adminPageBg)}>
-      <aside className={cn("flex w-[272px] min-w-[272px] shrink-0 flex-col shadow-[4px_0_24px_-12px_rgba(15,23,42,0.06)]", adminSidebarSurface)}>
-        <div className="flex items-center gap-3 border-b border-border px-4 py-4">
-          <button
+    <div className={cn("relative flex min-h-0 min-w-0 flex-1 overflow-hidden", adminPageBg)}>
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+          aria-hidden
+        />
+      )}
+
+      <aside
+        className={cn(
+          "fixed inset-y-0 left-0 z-50 flex h-full w-[min(100vw,272px)] max-w-[85vw] shrink-0 flex-col shadow-[4px_0_24px_-12px_rgba(15,23,42,0.06)] transition-transform duration-300 ease-in-out lg:static lg:max-w-none lg:w-[272px] lg:min-w-[272px] lg:translate-x-0",
+          adminSidebarSurface,
+          sidebarOpen ? "translate-x-0" : "-translate-x-full",
+        )}
+      >
+        <div className="flex items-center justify-between border-b border-border px-4 py-3 lg:hidden">
+          <span className="text-sm font-semibold text-foreground">Menu</span>
+          <Button
             type="button"
-            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-border bg-muted/50 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-            aria-label="Menu"
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9 shrink-0"
+            onClick={() => setSidebarOpen(false)}
+            aria-label="Close menu"
           >
-            <Menu className="h-4 w-4" />
-          </button>
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+
+        <div className="hidden items-center gap-3 border-b border-border px-4 py-4 lg:flex">
           <div className="flex min-w-0 items-center gap-2">
             <Image
               src={sidebarLogo.src}
@@ -887,9 +925,28 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
         </div>
       </aside>
 
-      <main className={cn("min-h-0 flex-1 overflow-y-auto overflow-x-hidden p-5 sm:p-6 lg:p-8", adminPageBg)}>
-        {renderContent()}
-      </main>
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+        <div className="flex items-center justify-between gap-2 border-b border-border bg-background px-3 py-3 lg:hidden">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9 shrink-0"
+            onClick={() => setSidebarOpen(true)}
+            aria-label="Open menu"
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
+          <span className="min-w-0 flex-1 truncate text-center text-sm font-semibold text-foreground">
+            {getCurrentSectionTitle()}
+          </span>
+          <div className="h-9 w-9 shrink-0" aria-hidden />
+        </div>
+
+        <main className={cn("min-h-0 flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-5 lg:p-8", adminPageBg)}>
+          <div className="min-h-0 w-full min-w-0 max-w-full">{renderContent()}</div>
+        </main>
+      </div>
     </div>
   )
 }
