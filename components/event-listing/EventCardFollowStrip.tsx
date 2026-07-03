@@ -106,24 +106,57 @@ export function EventCardFollowStrip({
     }
   }, [eventId, toast, userId])
 
-  const onFollowClick = (e: React.MouseEvent) => {
+  const onFollowClick = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault()
     e.stopPropagation()
 
-    router.push(eventPath)
+    // Don't redirect when clicking Follow
+    // router.push(eventPath) <-- REMOVE THIS
 
     if (!isAuthenticated() || !userId) {
+      toast({
+        title: "Login required",
+        description: "Please log in to follow this event.",
+        variant: "destructive",
+      })
+      router.push("/login")
       return
     }
 
-    if (isSaved || visiting) {
+    if (busy || isSaved || visiting) {
       return
     }
 
     setBusy(true)
-    setCount((c) => c + 1)
+
+    // Optimistic UI
     setIsSaved(true)
-    void runBackgroundFollow()
+    setCount((c) => c + 1)
+
+    try {
+      await apiFetch(`/api/events/${eventId}/save`, {
+        method: "POST",
+        auth: true,
+      })
+
+      toast({
+        title: "Following",
+        description: `You are now following "${eventTitle}".`,
+      })
+    } catch (err) {
+      console.error(err)
+
+      setIsSaved(false)
+      setCount((c) => Math.max(0, c - 1))
+
+      toast({
+        title: "Could not follow",
+        description: "Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setBusy(false)
+    }
   }
 
   const faces = followerPreview.slice(0, 3)
