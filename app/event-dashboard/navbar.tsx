@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { User, LogOut, Settings } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { isAuthenticated, getCurrentUserRole, clearTokens, markLogoutSuccessBanner } from "@/lib/api"
@@ -21,8 +22,14 @@ import { DashboardResponsiveNavbar } from "@/components/dashboard-responsive-nav
 
 export default function Navbar() {
   const router = useRouter()
-  const authenticated = isAuthenticated()
-  const role = getCurrentUserRole()
+  const [hydrated, setHydrated] = useState(false)
+
+  useEffect(() => {
+    setHydrated(true)
+  }, [])
+
+  const authenticated = hydrated && isAuthenticated()
+  const role = hydrated ? getCurrentUserRole() : null
 
   const handleAddevent = () => {
     if (!authenticated) {
@@ -51,7 +58,7 @@ export default function Navbar() {
       onAddEvent={handleAddevent}
       actions={
         <>
-          <NotificationsDropdown />
+          {authenticated ? <NotificationsDropdown /> : null}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button

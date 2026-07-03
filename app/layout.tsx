@@ -84,7 +84,7 @@ export default async function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning className={`${inter.variable} ${montserrat.variable}`}>
-      <body className={`${inter.className} font-sans antialiased`}>
+      <body suppressHydrationWarning className={`${inter.className} font-sans antialiased`}>
         <JsonLd data={[organizationJsonLd(), websiteJsonLd()]} />
 
         <ReactQueryProvider>

@@ -40,15 +40,21 @@ export default function Navbar() {
   const [userEmail, setUserEmail] = useState("")
   const [userAvatar, setUserAvatar] = useState("")
   const [userRole, setUserRole] = useState<string | null>(null)
+  const [hydrated, setHydrated] = useState(false)
   const router = useRouter()
   const pathname = usePathname()
 
   useEffect(() => {
+    setHydrated(true)
+  }, [])
+
+  useEffect(() => {
+    if (!hydrated) return
     if (isAuthenticated() && getCurrentUserId()) {
       void fetchUserData()
       setUserRole(getCurrentUserRole())
     }
-  }, [])
+  }, [hydrated])
 
   const fetchUserData = async () => {
     try {
@@ -90,6 +96,7 @@ export default function Navbar() {
 
   const isOnDashboard = pathname?.includes("/dashboard") || pathname?.includes("/speaker-dashboard")
   const isOnSpeakerDashboard = pathname?.includes("/speaker-dashboard")
+  const authenticated = hydrated && isAuthenticated()
 
   const dispatchSection = (section: string) => {
     window.dispatchEvent(new CustomEvent("navigateDashboard", { detail: { section } }))
@@ -137,7 +144,7 @@ export default function Navbar() {
       onAddEvent={handleAddevent}
       actions={
         <>
-          {isAuthenticated() ? <NotificationsDropdown /> : null}
+          {authenticated ? <NotificationsDropdown /> : null}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
