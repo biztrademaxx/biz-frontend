@@ -3,6 +3,11 @@
 import { useState } from "react"
 import { useEffect } from "react"
 import { Calendar, Clock, MapPin, Users, Video, Mic, Monitor, Coffee, CalendarX, Filter } from "lucide-react"
+import {
+  formatWallClockDateShort,
+  formatWallClockDateTimeRange,
+  resolveEventTimezone,
+} from "@/lib/event-datetime-timezone"
 
 interface CoSpeaker {
   id?: string
@@ -20,7 +25,7 @@ interface Session {
   startTime: string
   endTime: string
   room?: string
-  event: { title: string }
+  event: { title: string; timezone?: string | null; country?: string | null }
   speaker: { firstName: string; lastName: string }
   coSpeakers?: CoSpeaker[]
 }
@@ -156,6 +161,7 @@ export default function MySessions({ speakerId }: { speakerId: string }) {
           const type = getType(session.sessionType)
           const status = getStatusStyle(session.status)
           const isPast = new Date(session.startTime) < new Date()
+          const eventTimezone = resolveEventTimezone(session.event?.timezone, session.event?.country)
 
           return (
             <div
@@ -242,7 +248,7 @@ export default function MySessions({ speakerId }: { speakerId: string }) {
                     >
                       <Calendar className="h-3.5 w-3.5 text-blue-500" />
                     </div>
-                    {new Date(session.startTime).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
+                    {formatWallClockDateShort(session.startTime, eventTimezone)}
                   </div>
 
                   <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
@@ -252,9 +258,7 @@ export default function MySessions({ speakerId }: { speakerId: string }) {
                     >
                       <Clock className="h-3.5 w-3.5 text-purple-500" />
                     </div>
-                    {new Date(session.startTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                    {" – "}
-                    {new Date(session.endTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                    {formatWallClockDateTimeRange(session.startTime, session.endTime, eventTimezone)}
                     {session.duration ? <span className="text-slate-400 ml-1">({session.duration} min)</span> : null}
                   </div>
 

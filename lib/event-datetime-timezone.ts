@@ -107,3 +107,44 @@ export function wallClockFromIso(iso: string, timeZone: string): { date: string;
     time: `${pad2(parts.hours)}:${pad2(parts.minutes)}`,
   }
 }
+
+export function wallClockDurationMinutes(
+  startDateYmd: string,
+  startTimeHm: string,
+  endDateYmd: string,
+  endTimeHm: string,
+  timeZone: string,
+): number {
+  const startDate = parseDateYmd(startDateYmd)
+  const endDate = parseDateYmd(endDateYmd)
+  if (!startDate || !endDate) return 0
+  const start = combineDateAndTimeInTimeZone(startDate, parseTimeHm(startTimeHm), timeZone)
+  const end = combineDateAndTimeInTimeZone(endDate, parseTimeHm(endTimeHm), timeZone)
+  return Math.round((end.getTime() - start.getTime()) / 60000)
+}
+
+export function formatWallClockDateShort(iso: string, timeZone: string): string {
+  const { date } = wallClockFromIso(iso, timeZone)
+  const parts = parseDateYmd(date)
+  if (!parts) return ""
+  return new Date(Date.UTC(parts.year, parts.month - 1, parts.day)).toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  })
+}
+
+export function formatWallClockTimeDisplay(iso: string, timeZone: string): string {
+  return wallClockFromIso(iso, timeZone).time
+}
+
+export function formatWallClockDateTimeRange(
+  startIso: string,
+  endIso: string,
+  timeZone: string,
+): string {
+  const start = wallClockFromIso(startIso, timeZone)
+  const end = wallClockFromIso(endIso, timeZone)
+  return `${start.time} – ${end.time}`
+}

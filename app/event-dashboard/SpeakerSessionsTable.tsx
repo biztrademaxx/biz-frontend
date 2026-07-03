@@ -5,6 +5,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
+import { apiFetch } from "@/lib/api"
+import {
+  formatWallClockDateShort,
+  formatWallClockDateTimeRange,
+  resolveEventTimezone,
+} from "@/lib/event-datetime-timezone"
 
 interface Speaker {
   id: string
@@ -22,6 +28,8 @@ interface Event {
   startDate: string
   endDate: string
   organizerId: string
+  timezone?: string | null
+  country?: string | null
 }
 
 interface SpeakerSession {
@@ -48,6 +56,28 @@ export default function SpeakerSessionsTable({
 }) {
   const [sessions, setSessions] = useState<SpeakerSession[]>([])
   const [loading, setLoading] = useState(true)
+  const [eventTimezone, setEventTimezone] = useState("Asia/Kolkata")
+
+  useEffect(() => {
+    if (!eventId) return
+    let cancelled = false
+    ;(async () => {
+      try {
+        const data = await apiFetch<{ timezone?: string; country?: string }>(
+          `/api/events/${eventId}`,
+          { auth: true },
+        )
+        if (!cancelled) {
+          setEventTimezone(resolveEventTimezone(data.timezone, data.country))
+        }
+      } catch {
+        // keep default
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [eventId])
 
   useEffect(() => {
     async function fetchSessions() {
@@ -115,7 +145,11 @@ export default function SpeakerSessionsTable({
                   </TableCell>
                   <TableCell>{session.duration} min</TableCell>
                   <TableCell>{session.room || "-"}</TableCell>
-                  <TableCell>{new Date(session.startTime).toLocaleString()}</TableCell>
+                  <TableCell>
+                    {formatWallClockDateShort(session.startTime, eventTimezone)}
+                    {" "}
+                    {formatWallClockDateTimeRange(session.startTime, session.endTime, eventTimezone)}
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

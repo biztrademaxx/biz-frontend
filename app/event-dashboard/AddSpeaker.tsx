@@ -13,6 +13,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Search, Plus, User, Mail, Phone, Building, Globe, Linkedin, Twitter, Clock } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { apiFetch } from "@/lib/api"
+import {
+  DEFAULT_EVENT_TIMEZONE,
+  isoFromWallClock,
+  resolveEventTimezone,
+  wallClockDurationMinutes,
+} from "@/lib/event-datetime-timezone"
 
 interface Speaker {
   id: string
@@ -51,6 +57,7 @@ export default function AddSpeaker({ eventId }: AddSpeakerProps) {
   const [selectedSpeaker, setSelectedSpeaker] = useState<Speaker | null>(null)
   const [loading, setLoading] = useState(false)
   const [activeTab, setActiveTab] = useState("existing")
+  const [eventTimezone, setEventTimezone] = useState(DEFAULT_EVENT_TIMEZONE)
   const { toast } = useToast()
 
   // New speaker form state
@@ -97,12 +104,36 @@ export default function AddSpeaker({ eventId }: AddSpeakerProps) {
     fetchSpeakers()
   }, [])
 
-  // Auto-calculate duration from startTime and endTime
   useEffect(() => {
-    if (sessionDetails.startTime && sessionDetails.endTime) {
-      const start = new Date(sessionDetails.startTime).getTime()
-      const end = new Date(sessionDetails.endTime).getTime()
-      const diffMinutes = Math.round((end - start) / (1000 * 60))
+    if (!eventId) return
+    let cancelled = false
+    ;(async () => {
+      try {
+        const data = await apiFetch<{ timezone?: string; country?: string }>(
+          `/api/events/${eventId}`,
+          { auth: true },
+        )
+        if (!cancelled) {
+          setEventTimezone(resolveEventTimezone(data.timezone, data.country))
+        }
+      } catch {
+        if (!cancelled) setEventTimezone(DEFAULT_EVENT_TIMEZONE)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [eventId])
+
+  // Auto-calculate duration from startTime and endTime (event timezone wall clock)
+  useEffect(() => {
+    const startDate = sessionDetails.startTime.split("T")[0]
+    const startHm = sessionDetails.startTime.split("T")[1]?.slice(0, 5)
+    const endDate = sessionDetails.endTime.split("T")[0] || startDate
+    const endHm = sessionDetails.endTime.split("T")[1]?.slice(0, 5)
+
+    if (startDate && startHm && endHm) {
+      const diffMinutes = wallClockDurationMinutes(startDate, startHm, endDate, endHm, eventTimezone)
       if (diffMinutes > 0) {
         setSessionDetails((prev) => ({ ...prev, duration: String(diffMinutes) }))
       } else {
@@ -111,7 +142,7 @@ export default function AddSpeaker({ eventId }: AddSpeakerProps) {
     } else {
       setSessionDetails((prev) => ({ ...prev, duration: "" }))
     }
-  }, [sessionDetails.startTime, sessionDetails.endTime])
+  }, [sessionDetails.startTime, sessionDetails.endTime, eventTimezone])
 
   const fetchSpeakers = async () => {
     try {
@@ -203,6 +234,11 @@ export default function AddSpeaker({ eventId }: AddSpeakerProps) {
 
     setLoading(true)
     try {
+      const startDate = sessionDetails.startTime.split("T")[0]
+      const startHm = sessionDetails.startTime.split("T")[1]?.slice(0, 5) || "00:00"
+      const endDate = sessionDetails.endTime.split("T")[0] || startDate
+      const endHm = sessionDetails.endTime.split("T")[1]?.slice(0, 5) || "00:00"
+
       await apiFetch("/api/events/speakers", {
         method: "POST",
         body: {
@@ -212,8 +248,8 @@ export default function AddSpeaker({ eventId }: AddSpeakerProps) {
           description: sessionDetails.description,
           sessionType: sessionDetails.sessionType,
           duration: sessionDetails.duration || 60,
-          startTime: sessionDetails.startTime || new Date().toISOString(),
-          endTime: sessionDetails.endTime || new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+          startTime: isoFromWallClock(startDate, startHm, eventTimezone),
+          endTime: isoFromWallClock(endDate, endHm, eventTimezone),
           room: sessionDetails.room,
           abstract: sessionDetails.abstract,
           learningObjectives: sessionDetails.learningObjectives || [],
