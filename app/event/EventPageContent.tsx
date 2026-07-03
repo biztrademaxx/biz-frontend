@@ -32,8 +32,13 @@ import ExhibitorsTab from "./[id]/exhibitors-tab"
 import SpeakersTab from "./[id]/speakers-tab"
 
 export default function EventPageContent({ event, session: _session, router, toast }: EventPageContentProps) {
-  const userId = getCurrentUserId()
-  const isLoggedIn = isAuthenticated()
+  const [userId, setUserId] = useState("")
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+
+  useEffect(() => {
+    setUserId(getCurrentUserId() || "")
+    setIsLoggedIn(isAuthenticated())
+  }, [])
 
   const [isSaved, setIsSaved] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -86,31 +91,32 @@ export default function EventPageContent({ event, session: _session, router, toa
   }, [event.id, userId])
 
   useEffect(() => {
-    if (!event?.id || !userId) {
-      setInterestVisit(false)
-      setInterestExhibit(false)
-      return
-    }
+    if (!event?.id) return
+    if (!userId) return
+
     let cancelled = false
-    const email = getCurrentUserEmail()
-    ;(async () => {
+
+    const loadInterest = async () => {
+      const email = getCurrentUserEmail()
+
       const { ok, data } = await fetchEventLeadsThroughNext(event.id)
+
       if (cancelled) return
-      let visiting = false
-      let exhibiting = false
-      if (ok && data != null) {
+
+      if (ok) {
         const flags = interestFlagsFromLeads(data, userId, email)
-        visiting = flags.visiting
-        exhibiting = flags.exhibiting
+
+        setInterestVisit(flags.visiting)
+        setInterestExhibit(flags.exhibiting)
       }
-      const ls = readInterestLocalStorage(event.id)
-      setInterestVisit(visiting || ls.visiting)
-      setInterestExhibit(exhibiting || ls.exhibiting)
-    })()
+    }
+
+    loadInterest()
+
     return () => {
       cancelled = true
     }
-  }, [event?.id, userId])
+  }, [event.id, userId])
 
   useEffect(() => {
     let cancelled = false
