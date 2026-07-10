@@ -46,6 +46,12 @@ import { AdminTableAvatar } from "@/components/admin-dashboard/admin-table-avata
 
 const PAGE_SIZE = 15
 
+// Keys used to persist "where the admin was" across the trip to the
+// public exhibitor profile page and back, since the admin dashboard is a
+// single-page app (no per-section URLs) and can't rely on query params.
+const EXHIBITORS_RETURN_SECTION_KEY = "admin:returnSection"
+const EXHIBITORS_LIST_STATE_KEY = "admin:exhibitors:listState"
+
 const avatarColors = [
   "bg-emerald-100 text-emerald-700",
   "bg-blue-100 text-blue-700",
@@ -59,7 +65,6 @@ function getAvatarColor(company?: string) {
   if (!company) return avatarColors[0]
   return avatarColors[company.length % avatarColors.length]
 }
-
 
 interface Exhibitor {
   id: string
@@ -142,9 +147,10 @@ const emptyEditForm = (): ExhibitorEditForm => ({
   isActive: true,
 })
 
-export default function ExhibitorManagement() {
+export default function ExhibitorManagement({ initialTab = "all" }: { initialTab?: "all" | "bulk-import" }) {
   const router = useRouter()
-  const [activeTab, setActiveTab] = useState("exhibitors")
+  const { toast } = useToast()
+  const [activeTab, setActiveTab] = useState(initialTab)
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [industryFilter, setIndustryFilter] = useState("all")
@@ -171,18 +177,48 @@ export default function ExhibitorManagement() {
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [totalItems, setTotalItems] = useState(0)
-  const { toast } = useToast()
+  // Gates the debounced fetch effect until we've had a chance to restore
+  // saved list state from sessionStorage, so it doesn't fetch page 1 first.
+  const [hydratedFromUrl, setHydratedFromUrl] = useState(false)
+
+  // Restore list state (page/search/status/industry) from sessionStorage on
+  // mount. This is set right before navigating to a profile page, so coming
+  // back lands on the exact same page/search/filter instead of resetting.
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(EXHIBITORS_LIST_STATE_KEY)
+      if (raw) {
+        const saved = JSON.parse(raw) as {
+          page?: number
+          search?: string
+          status?: string
+          industry?: string
+          tab?: string
+        }
+        if (saved.page) setCurrentPage(saved.page)
+        if (saved.search) setSearchTerm(saved.search)
+        if (saved.status) setStatusFilter(saved.status)
+        if (saved.industry) setIndustryFilter(saved.industry)
+        if (saved.tab) setActiveTab(saved.tab as "all" | "bulk-import")
+        sessionStorage.removeItem(EXHIBITORS_LIST_STATE_KEY)
+      }
+    } catch {
+      /* ignore malformed/blocked storage */
+    }
+    setHydratedFromUrl(true)
+  }, [])
 
   useEffect(() => {
     void fetchStats()
   }, [])
 
   useEffect(() => {
+    if (!hydratedFromUrl) return
     const timer = setTimeout(() => {
       void fetchExhibitors(currentPage, searchTerm, statusFilter, industryFilter)
     }, 250)
     return () => clearTimeout(timer)
-  }, [currentPage, searchTerm, statusFilter, industryFilter])
+  }, [currentPage, searchTerm, statusFilter, industryFilter, hydratedFromUrl])
 
   const fetchExhibitors = async (
     pageArg?: number,
@@ -325,8 +361,32 @@ export default function ExhibitorManagement() {
       lastName: exhibitor.lastName,
     })
 
+  // Updated: Navigate to exhibitor profile with return state preservation
   const handleOpenExhibitorProfile = (exhibitor: Exhibitor) => {
-    router.push(getExhibitorProfilePath(exhibitor))
+    try {
+      // Remember exactly where we are in this list so we can restore it.
+      sessionStorage.setItem(
+        EXHIBITORS_LIST_STATE_KEY,
+        JSON.stringify({
+          page: currentPage,
+          search: searchTerm.trim(),
+          status: statusFilter,
+          industry: industryFilter,
+          tab: activeTab,
+        })
+      )
+      // Tell the dashboard shell which section/sub-section to reopen.
+      sessionStorage.setItem(
+        EXHIBITORS_RETURN_SECTION_KEY,
+        JSON.stringify({ section: "exhibitors", sub: "exhibitors-all" })
+      )
+    } catch {
+      /* ignore storage errors (e.g. private browsing) */
+    }
+
+    const profilePath = getExhibitorProfilePath(exhibitor)
+    const separator = profilePath.includes("?") ? "&" : "?"
+    router.push(`${profilePath}${separator}returnTo=${encodeURIComponent("/admin-dashboard")}`)
   }
 
   const handleViewDetails = async (exhibitor: Exhibitor) => {
@@ -473,24 +533,23 @@ export default function ExhibitorManagement() {
       </div>
     )
   }
-if (showAddForm) {
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-900">Add New Exhibitor</h1>
 
-        <Button variant="outline" onClick={() => setShowAddForm(false)}>
-          Back
-        </Button>
+  if (showAddForm) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold text-gray-900">Add New Exhibitor</h1>
+          <Button variant="outline" onClick={() => setShowAddForm(false)}>
+            Back
+          </Button>
+        </div>
+        <AddExhibitorForm
+          onSuccess={() => setShowAddForm(false)}
+          onCancel={() => setShowAddForm(false)}
+        />
       </div>
-
-      <AddExhibitorForm
-        onSuccess={() => setShowAddForm(false)}
-        onCancel={() => setShowAddForm(false)}
-      />
-    </div>
-  )
-}
+    )
+  }
 
   return (
     <div className="min-h-screen bg-[#F5F4F0] p-8 space-y-6">
@@ -519,131 +578,25 @@ if (showAddForm) {
         ))}
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "all" | "bulk-import")} className="w-full">
         <TabsList className="bg-white border border-gray-200 rounded-lg p-1 gap-1 w-fit mb-4">
           <TabsTrigger
-            value="exhibitors"
+            value="all"
             className="text-sm px-4 py-1.5 rounded-md data-[state=active]:bg-gray-900 data-[state=active]:text-white text-gray-500"
           >
             All Exhibitors
           </TabsTrigger>
           <TabsTrigger
-            value="overview"
+            value="bulk-import"
             className="text-sm px-4 py-1.5 rounded-md data-[state=active]:bg-gray-900 data-[state=active]:text-white text-gray-500"
           >
-            Overview
+            Bulk Import
           </TabsTrigger>
         </TabsList>
 
-        {/* Overview Tab */}
-        <TabsContent value="overview" className="space-y-6">
-          {/* Statistics Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Exhibitors</CardTitle>
-                <Building2 className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.total ?? 0}</div>
-                <p className="text-xs text-muted-foreground">+12% from last month</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Active Exhibitors</CardTitle>
-                <CheckCircle className="h-4 w-4 text-green-600" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.active ?? 0}</div>
-                <p className="text-xs text-muted-foreground">
-                  {(stats.total ?? 0) > 0 ? Math.round(((stats.active ?? 0) / (stats.total ?? 1)) * 100) : 0}% of total
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Average Rating</CardTitle>
-                <Star className="h-4 w-4 text-yellow-600" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{(stats.avgRating ?? 0).toFixed(1)}</div>
-                <p className="text-xs text-muted-foreground">Across all exhibitors</p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Status Overview */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Exhibitor Status Distribution</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-green-600" />
-                    <span>Active</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">{stats.active ?? 0}</span>
-                    <div className="w-20 bg-gray-200 rounded-full h-2">
-                      <div
-                        className="bg-green-600 h-2 rounded-full"
-                        style={{ width: `${(stats.total ?? 0) > 0 ? ((stats.active ?? 0) / (stats.total ?? 1)) * 100 : 0}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-yellow-600" />
-                    <span>Pending</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">{stats.pending ?? 0}</span>
-                    <div className="w-20 bg-gray-200 rounded-full h-2">
-                      <div
-                        className="bg-yellow-600 h-2 rounded-full"
-                        style={{ width: `${(stats.total ?? 0) > 0 ? ((stats.pending ?? 0) / (stats.total ?? 1)) * 100 : 0}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <XCircle className="w-4 h-4 text-red-600" />
-                    <span>Suspended</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">{stats.suspended ?? 0}</span>
-                    <div className="w-20 bg-gray-200 rounded-full h-2">
-                      <div
-                        className="bg-red-600 h-2 rounded-full"
-                        style={{ width: `${(stats.total ?? 0) > 0 ? ((stats.suspended ?? 0) / (stats.total ?? 1)) * 100 : 0}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
         {/* Exhibitors Tab */}
-        <TabsContent value="exhibitors" className="space-y-4">
+        <TabsContent value="all" className="space-y-4">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            {/* <TabsList className="bg-white border border-gray-200 rounded-lg p-1 gap-1 w-fit">
-              <TabsTrigger
-                value="exhibitors"
-                className="text-sm px-4 py-1.5 rounded-md data-[state=active]:bg-gray-900 data-[state=active]:text-white text-gray-500"
-              >
-                All Exhibitors
-              </TabsTrigger>
-            </TabsList> */}
-
             <div className="flex flex-col sm:flex-row gap-2">
               <Select
                 value={statusFilter}
@@ -724,17 +677,7 @@ if (showAddForm) {
                   return (
                     <tr key={exhibitor.id} className="hover:bg-gray-50/60 transition-colors">
                       <td
-                        className="px-4 py-4 cursor-pointer"
-                        onClick={() => handleOpenExhibitorProfile(exhibitor)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") {
-                            e.preventDefault()
-                            handleOpenExhibitorProfile(exhibitor)
-                          }
-                        }}
-                        role="link"
-                        tabIndex={0}
-                        title={`View ${exhibitor.companyName} profile`}
+                        className="px-4 py-4 "
                       >
                         <div className="flex items-center gap-3">
                           <AdminTableAvatar
@@ -772,9 +715,9 @@ if (showAddForm) {
                       <td className="px-4 py-4 text-sm text-gray-500">
                         {exhibitor.joinDate
                           ? new Date(exhibitor.joinDate).toLocaleDateString("en-US", {
-                              month: "short",
-                              year: "numeric",
-                            })
+                            month: "short",
+                            year: "numeric",
+                          })
                           : "—"}
                       </td>
                       <td className="px-4 py-4">
@@ -858,34 +801,16 @@ if (showAddForm) {
           </div>
         </TabsContent>
 
-        {/* Reports Tab */}
-        <TabsContent value="reports" className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <Card className="cursor-pointer hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Download className="w-5 h-5" />
-                  Exhibitor Directory
-                </CardTitle>
-                <CardDescription>Complete list of all exhibitors with contact information</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button className="w-full">Download CSV</Button>
-              </CardContent>
-            </Card>
-
-            <Card className="cursor-pointer hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="w-5 h-5" />
-                  Performance Report
-                </CardTitle>
-                <CardDescription>Exhibitor performance metrics and analytics</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button className="w-full">Generate Report</Button>
-              </CardContent>
-            </Card>
+        <TabsContent value="bulk-import">
+          <div className="bg-white rounded-xl border border-gray-100 p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Bulk Import Exhibitors</h3>
+            <p className="text-sm text-gray-500 mb-4">
+              Import exhibitors in bulk using a CSV file. The first row must contain column headers.
+            </p>
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+              <p className="text-sm text-gray-500">Drag & drop your CSV file here, or click to browse</p>
+              <Button variant="outline" className="mt-4">Choose File</Button>
+            </div>
           </div>
         </TabsContent>
       </Tabs>

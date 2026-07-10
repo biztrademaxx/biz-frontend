@@ -28,6 +28,7 @@ import {
   Link,
   MessageSquare,
   Reply,
+  ArrowLeft,
 } from "lucide-react"
 import { useParams, useRouter, usePathname, useSearchParams } from "next/navigation"
 import { format } from "date-fns"
@@ -623,6 +624,18 @@ export default function ExhibitorPage() {
   const searchParams = useSearchParams()
   const routeParam = (params.slug ?? params.id) as string
 
+  // ─── Back navigation: if we arrived here with ?returnTo=..., use it ───
+  const returnTo = searchParams.get("returnTo")
+
+  const handleBack = () => {
+    if (returnTo) {
+      router.push(returnTo)
+    } else {
+      router.back()
+    }
+  }
+  // ────────────────────────────────────────────────────────────────────
+
   const userId = getCurrentUserId()
 
   const [activeTab, setActiveTab] = useState("overview")
@@ -1005,6 +1018,19 @@ export default function ExhibitorPage() {
       {/* Hero Section */}
       <div className="bg-[#002C71] text-white">
         <div className="max-w-7xl mx-auto px-4 py-12">
+          {/* Back button — only shown when we arrived here from somewhere with a
+              known return destination (e.g. the admin organizers/exhibitors list) */}
+          {returnTo && (
+            <button
+              type="button"
+              onClick={handleBack}
+              className="mb-6 inline-flex items-center gap-2 text-sm font-medium text-blue-100 hover:text-white transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back
+            </button>
+          )}
+
           <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
             {/* Exhibitor Avatar */}
             <div className="relative">
@@ -1044,16 +1070,6 @@ export default function ExhibitorPage() {
                     <span>{displayHeadquarters}</span>
                   </div>
                 )}
-                {/* {exhibitor.phone && (
-                  <div className="flex items-center gap-2">
-                    <Phone className="w-4 h-4" />
-                    <span>{exhibitor.phone}</span>
-                  </div>
-                )} */}
-                {/* <div className="flex items-center gap-2">
-                  <Mail className="w-4 h-4" />
-                  <span>{exhibitor.email}</span>
-                </div> */}
                 {exhibitor.website && (
                   <div className="flex items-center gap-2">
                     <Globe className="w-4 h-4" />
@@ -1068,20 +1084,7 @@ export default function ExhibitorPage() {
             {/* Action Buttons */}
             <div className="flex flex-col gap-3">
               <div className="flex items-center gap-3">
-                {/* ─── CHANGED: wrap FollowButton to redirect unauthenticated users to login ───
-                    Previously this was just:
-                      <FollowButton
-                        userId={exhibitor.id}
-                        currentUserId={userId ?? undefined}
-                        variant="default"
-                        size="default"
-                        className="shadow-sm"
-                      />
-                    Now we intercept the click when userId is absent, redirect to /login
-                    with a callbackUrl that includes ?autoFollow=<exhibitorId> so that
-                    after login the auto-follow effect above fires automatically. ─── */}
                 {userId ? (
-                  // User is logged in — render FollowButton normally.
                   <FollowButton
                     userId={exhibitor.id}
                     currentUserId={userId}
@@ -1090,14 +1093,11 @@ export default function ExhibitorPage() {
                     className="shadow-sm"
                   />
                 ) : (
-                  // User is NOT logged in — show a button that redirects to login.
                   <Button
                     variant="default"
                     size="default"
                     className="border-white text-blue-900 bg-white hover:bg-white hover:text-blue-600 shadow-sm"
                     onClick={() => {
-                      // Build the return URL: current path + autoFollow param so that
-                      // after a successful login the auto-follow effect fires once.
                       const callbackUrl = encodeURIComponent(
                         `${window.location.pathname}?autoFollow=${exhibitor.id}`
                       )
@@ -1107,7 +1107,6 @@ export default function ExhibitorPage() {
                     Follow
                   </Button>
                 )}
-                {/* ─────────────────────────────────────────────────────────────────── */}
 
                 <Button
                   variant="outline"
@@ -1393,16 +1392,6 @@ export default function ExhibitorPage() {
                                     Booth: {booth.boothNumber}
                                   </div>
                                 </div>
-                                {/* <div className="flex items-center justify-between">
-                                  <div className="flex items-center gap-1">
-                                    <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                                    <span className="text-sm font-medium">{event.averageRating || "N/A"}</span>
-                                    <span className="text-sm text-gray-500">({event.totalReviews || 0})</span>
-                                  </div>
-                                  <Badge variant="default">
-                                    Upcoming
-                                  </Badge>
-                                </div> */}
                               </div>
                             </CardContent>
                           </div>
@@ -1603,13 +1592,6 @@ export default function ExhibitorPage() {
                         <p className="text-lg font-semibold text-gray-900">—</p>
                       )}
                     </div>
-                    {/* <div>
-                      <label className="text-sm font-medium text-gray-500">Contact</label>
-                      <div className="space-y-1">
-                        <p className="text-lg font-semibold text-gray-900">{exhibitor.phone || "+91 98765 43210"}</p>
-                        <p className="text-sm text-gray-600">{exhibitor.email}</p>
-                      </div>
-                    </div> */}
                   </div>
                 </div>
               </CardContent>
