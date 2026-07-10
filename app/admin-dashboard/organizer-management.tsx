@@ -166,6 +166,12 @@ function getInitials(company?: string) {
     .toUpperCase()
 }
 
+// Keys used to persist "where the admin was" across the trip to the
+// public organizer profile page and back, since the admin dashboard is a
+// single-page app (no per-section URLs) and can't rely on query params.
+const ORGANIZERS_RETURN_SECTION_KEY = "admin:returnSection"
+const ORGANIZERS_LIST_STATE_KEY = "admin:organizers:listState"
+
 export default function OrganizerManagement({ initialTab = "all" }: { initialTab?: "all" | "bulk-import" }) {
   const PAGE_SIZE = 10
   const router = useRouter()
@@ -194,7 +200,9 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [savingEdit, setSavingEdit] = useState(false)
   const [avatarFile, setAvatarFile] = useState<File | null>(null)
-
+  // Gates the debounced fetch effect until we've had a chance to restore
+  // saved list state from sessionStorage, so it doesn't fetch page 1 first.
+  const [hydratedFromUrl, setHydratedFromUrl] = useState(false)
 
   const fetchOrganizerStats = async () => {
     try {
@@ -227,6 +235,31 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
     }
   };
 
+  // Restore list state (page/search/country/tab) from sessionStorage on
+  // mount. This is set right before navigating to a profile page, so coming
+  // back lands on the exact same page/search/tab/filter instead of resetting.
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(ORGANIZERS_LIST_STATE_KEY)
+      if (raw) {
+        const saved = JSON.parse(raw) as {
+          page?: number
+          search?: string
+          country?: string
+          tab?: "all" | "bulk-import"
+        }
+        if (saved.page) setCurrentPage(saved.page)
+        if (saved.search) setSearchTerm(saved.search)
+        if (saved.country) setSelectedCountry(saved.country)
+        if (saved.tab === "all" || saved.tab === "bulk-import") setActiveTab(saved.tab)
+        sessionStorage.removeItem(ORGANIZERS_LIST_STATE_KEY)
+      }
+    } catch {
+      /* ignore malformed/blocked storage */
+    }
+    setHydratedFromUrl(true)
+  }, [])
+
   useEffect(() => {
     const loadCountries = async () => {
       try {
@@ -240,12 +273,13 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
   }, [])
 
   useEffect(() => {
+    if (!hydratedFromUrl) return
     const timer = setTimeout(() => {
       fetchOrganizers(currentPage, searchTerm, selectedCountry)
     }, 250)
 
     return () => clearTimeout(timer)
-  }, [currentPage, searchTerm, selectedCountry])
+  }, [currentPage, searchTerm, selectedCountry, hydratedFromUrl])
 
   useEffect(() => {
     fetchOrganizerStats();
@@ -284,26 +318,6 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
       const incomingTotal = Number(data?.pagination?.total ?? list?.length ?? 0)
       const incomingPages = Math.max(1, Number(data?.pagination?.totalPages ?? 1))
       setTotalItems(Number.isFinite(incomingTotal) ? incomingTotal : 0)
-      // const organizersList = Array.isArray(list) ? list : [];
-
-      // const verifiedCount = organizersList.filter(
-      //   (o) => o.isVerified
-      // ).length;
-
-      // const premiumCount = organizersList.filter(
-      //   (o) => o.isVerified && o.isActive
-      // ).length;
-
-      // const pendingCount = organizersList.filter(
-      //   (o) => !o.isVerified
-      // ).length;
-
-      // setListStats({
-      //   total: incomingTotal,
-      //   verified: data?.stats?.verified ?? verifiedCount,
-      //   premium: data?.stats?.premium ?? premiumCount,
-      //   pending: data?.stats?.pending ?? pendingCount,
-      // });
       setTotalPages(incomingPages)
       if (page > incomingPages) {
         setCurrentPage(incomingPages)
@@ -395,7 +409,29 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
     })
 
   const handleOpenOrganizerProfile = (organizer: TransformedOrganizer) => {
-    router.push(getOrganizerProfilePath(organizer))
+    try {
+      // Remember exactly where we are in this list so we can restore it.
+      sessionStorage.setItem(
+        ORGANIZERS_LIST_STATE_KEY,
+        JSON.stringify({
+          page: currentPage,
+          search: searchTerm.trim(),
+          country: selectedCountry,
+          tab: activeTab,
+        })
+      )
+      // Tell the dashboard shell which section/sub-section to reopen.
+      sessionStorage.setItem(
+        ORGANIZERS_RETURN_SECTION_KEY,
+        JSON.stringify({ section: "organizers", sub: "organizers-all" })
+      )
+    } catch {
+      /* ignore storage errors (e.g. private browsing) */
+    }
+
+    const profilePath = getOrganizerProfilePath(organizer)
+    const separator = profilePath.includes("?") ? "&" : "?"
+    router.push(`${profilePath}${separator}returnTo=${encodeURIComponent("/admin-dashboard")}`)
   }
 
   const stats = {
@@ -731,7 +767,6 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
           <div key={s.label} className="bg-white rounded-xl p-5 border border-gray-100">
             <p className="text-[10px] font-semibold tracking-[0.12em] uppercase text-gray-400 mb-2">{s.label}</p>
             <p className="font-mono text-3xl font-semibold tabular-nums text-gray-900">{s.value}</p>
-            {/* <p className={`text-xs mt-1 font-medium ${s.subColor}`}>{s.sub}</p> */}
           </div>
         ))}
       </div>
@@ -827,19 +862,7 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
                           aria-label={`Select ${organizer.name}`}
                         />
                       </td>
-                      <td
-                        className="px-4 py-4 cursor-pointer"
-                        onClick={() => handleOpenOrganizerProfile(organizer)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") {
-                            e.preventDefault()
-                            handleOpenOrganizerProfile(organizer)
-                          }
-                        }}
-                        role="link"
-                        tabIndex={0}
-                        title={`View ${organizer.name} profile`}
-                      >
+                      <td className="px-4 py-4">
                         <div className="flex items-center gap-3">
                           <AdminTableAvatar
                             src={organizer.avatar}
@@ -1032,26 +1055,6 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                {/* <div>
-                  <label className="text-xs text-gray-500">First Name</label>
-                  <input value={editingOrganizer.firstName} onChange={(e) => handleEditField("firstName", e.target.value)} className="w-full mt-1 px-3 py-2 text-sm border border-gray-200 rounded-lg" />
-                </div>
-                <div>
-                  <label className="text-xs text-gray-500">Last Name</label>
-                  <input value={editingOrganizer.lastName} onChange={(e) => handleEditField("lastName", e.target.value)} className="w-full mt-1 px-3 py-2 text-sm border border-gray-200 rounded-lg" />
-                </div>
-                <div>
-                  <label className="text-xs text-gray-500">Email</label>
-                  <input value={editingOrganizer.email} onChange={(e) => handleEditField("email", e.target.value)} className="w-full mt-1 px-3 py-2 text-sm border border-gray-200 rounded-lg" />
-                </div>
-                <div>
-                  <label className="text-xs text-gray-500">Phone</label>
-                  <input value={editingOrganizer.phone} onChange={(e) => handleEditField("phone", e.target.value)} className="w-full mt-1 px-3 py-2 text-sm border border-gray-200 rounded-lg" />
-                </div>
-                <div>
-                  <label className="text-xs text-gray-500">Organization Name</label>
-                  <input value={editingOrganizer.organizationName} onChange={(e) => handleEditField("organizationName", e.target.value)} className="w-full mt-1 px-3 py-2 text-sm border border-gray-200 rounded-lg" />
-                </div> */}
                 <div>
                   <label className="text-xs text-gray-500">Company</label>
                   <input value={editingOrganizer.company} onChange={(e) => handleEditField("company", e.target.value)} className="w-full mt-1 px-3 py-2 text-sm border border-gray-200 rounded-lg" />
