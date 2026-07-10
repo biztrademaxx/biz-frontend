@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 import SuperAdminManagement from "./superadminmanagement"
@@ -243,6 +243,11 @@ const LEGACY_PERMISSION_ALIASES: Record<string, string[]> = {
   "settings-deactivations": ["settings-modules"],
 }
 
+// sessionStorage key set by child pages (e.g. OrganizerManagement) right
+// before navigating away to a full page route, so we can reopen the same
+// section/sub-section when the admin comes back.
+const RETURN_SECTION_KEY = "admin:returnSection"
+
 export default function AdminDashboard({ userRole, userPermissions }: AdminDashboardProps) {
   const sidebarLogo = getNavbarLogoImageProps()
   const router = useRouter()
@@ -250,6 +255,29 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
   const [activeSubSection, setActiveSubSection] = useState("")
   const [openMenus, setOpenMenus] = useState<Set<string>>(new Set(["dashboard"]))
   const [sidebarOpen, setSidebarOpen] = useState(false)
+
+  // Restore section/sub-section if we're returning from a page we navigated
+  // away to (e.g. an organizer's public profile). Runs once on mount.
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(RETURN_SECTION_KEY)
+      if (raw) {
+        const saved = JSON.parse(raw) as { section?: string; sub?: string }
+        if (saved.section) {
+          setActiveSection(saved.section)
+          setActiveSubSection(saved.sub || "")
+          setOpenMenus((prev) => {
+            const next = new Set(prev)
+            next.add(saved.section!)
+            return next
+          })
+        }
+        sessionStorage.removeItem(RETURN_SECTION_KEY)
+      }
+    } catch {
+      /* ignore malformed/blocked storage */
+    }
+  }, [])
 
   const hasPermission = (itemId: string): boolean => {
     if (userRole === "SUPER_ADMIN") return true

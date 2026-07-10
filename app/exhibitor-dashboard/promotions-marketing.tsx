@@ -1,7 +1,7 @@
 "use client"
 
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, ReactNode } from "react"
 import { apiFetch } from "@/lib/api"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -50,16 +50,25 @@ interface PromotionsMarketingProps {
   onPromotionCreated?: () => void
 }
 
-interface Event {
+interface Booth {
   id: string
-  title: string
-  date: string
-  location: string
+  boothNumber: string
+  companyName: string
   status: string
-  attendees?: number
-  revenue?: number
-  registrations?: number
-  type?: string
+
+  event: {
+    id: string
+    title: string
+    startDate: string
+    endDate: string
+    bannerImage?: string
+  }
+
+  space: {
+    id: string
+    name: string
+    spaceType: string
+  }
 }
 
 interface PromotionPackage {
@@ -86,11 +95,11 @@ interface CategoryFilter {
 
 export default function PromotionsMarketing({ exhibitorId, onPromotionCreated }: PromotionsMarketingProps) {
   const [selectedTab, setSelectedTab] = useState("platform-promotion")
-  const [selectedEvent, setSelectedEvent] = useState("")
+  const [selectedBooth, setSelectedBooth] = useState("")
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [selectedPackage, setSelectedPackage] = useState("")
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false)
-  const [exhibitorEvents, setExhibitorEvents] = useState<Event[]>([])
+  const [booths, setBooths] = useState<Booth[]>([])
   const [loadingEvents, setLoadingEvents] = useState(true)
   const [promotionPackages, setPromotionPackages] = useState<PromotionPackage[]>([])
   const [loadingPackages, setLoadingPackages] = useState(true)
@@ -137,16 +146,16 @@ export default function PromotionsMarketing({ exhibitorId, onPromotionCreated }:
     const fetchEvents = async () => {
       try {
         setLoadingEvents(true)
-        const data = await apiFetch<{ events?: Event[] }>(
-          `/api/exhibitors/promotions?exhibitorId=${encodeURIComponent(exhibitorId)}`,
+        const data = await apiFetch<{ booths?: Booth[] }>(
+          `/api/exhibitors/promotions?exhibitorId=${encodeURIComponent(exhibitorId)}`
         )
 
-        setExhibitorEvents(data.events || [])
+        setBooths(data.booths || [])
       } catch (error) {
-        console.error("Error fetching exhibitor events:", error)
+        console.error("Error fetching exhibitor booths:", error)
         toast({
           title: "Error",
-          description: "Failed to load events",
+          description: "Failed to load booths",
           variant: "destructive",
         })
       } finally {
@@ -280,10 +289,10 @@ export default function PromotionsMarketing({ exhibitorId, onPromotionCreated }:
   }
 
   const handlePackageSelect = (packageId: string) => {
-    if (!selectedEvent) {
+    if (!selectedBooth) {
       toast({
-        title: "Event Required",
-        description: "Please select an event first",
+        title: "Booth Required",
+        description: "Please select a booth first",
         variant: "destructive",
       })
       return
@@ -317,7 +326,7 @@ export default function PromotionsMarketing({ exhibitorId, onPromotionCreated }:
       description: "Your promotion has been activated successfully",
     })
 
-    setSelectedEvent("")
+    setSelectedBooth("")
     setSelectedCategories([])
     setSelectedPackage("")
 
@@ -328,12 +337,14 @@ export default function PromotionsMarketing({ exhibitorId, onPromotionCreated }:
 
   const selectedPackageData = promotionPackages.find((p) => p.id === selectedPackage)
 
+  const selectedBoothData = booths.find((b) => b.id.toString() === selectedBooth)
+
   const buildPaymentContext = () => {
-    if (!selectedPackageData || !selectedEvent || selectedCategories.length === 0) return null
+    if (!selectedPackageData || !selectedBooth || selectedCategories.length === 0) return null
     return {
       promotionChannel: "EXHIBITOR" as const,
       exhibitorId,
-      eventId: selectedEvent,
+      eventId: selectedBoothData?.event?.id ?? selectedBooth,
       packageType: selectedPackageData.name,
       targetCategories: selectedCategories,
       durationDays: selectedPackageData.durationDays,
@@ -368,40 +379,63 @@ export default function PromotionsMarketing({ exhibitorId, onPromotionCreated }:
         </div>
 
         <TabsContent value="platform-promotion" className="space-y-6">
-          {/* Event Selection */}
+          {/* Booth Selection */}
           <Card className={exGlassCard}>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Calendar className="w-5 h-5" />
-                Select Event to Promote
+                Select Booth to Promote
               </CardTitle>
             </CardHeader>
             <CardContent>
               {loadingEvents ? (
                 <div className="flex items-center justify-center py-4">
                   <Loader2 className="w-6 h-6 animate-spin text-gray-500 mr-2" />
-                  <span className="text-gray-500">Loading events...</span>
+                  <span className="text-gray-500">Loading booths...</span>
                 </div>
               ) : (
-                <Select value={selectedEvent} onValueChange={setSelectedEvent}>
+                <Select value={selectedBooth} onValueChange={setSelectedBooth}>
                   <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Choose an event to promote" />
+                    <SelectValue placeholder="Choose a booth to promote">
+                      {selectedBoothData && (
+                        <span className="truncate">
+                          {selectedBoothData.companyName} — {selectedBoothData.event.title} (Booth{" "}
+                          {selectedBoothData.boothNumber})
+                        </span>
+                      )}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
-                    {exhibitorEvents.length === 0 ? (
+                    {booths.length === 0 ? (
                       <SelectItem value="no-events" disabled>
-                        No events found for your account
+                        No booths found for your account
                       </SelectItem>
                     ) : (
-                      exhibitorEvents.map((event) => (
-                        <SelectItem key={event.id} value={event.id.toString()}>
-                          <div className="flex items-center justify-between w-full">
-                            <span className="font-medium">{event.title}</span>
-                            <div className="flex items-center gap-2 text-sm text-gray-500">
-                              <MapPin className="w-4 h-4" />
-                              {event.location}
-                              <Calendar className="w-4 h-4" />
-                              {event.date}
+                      booths.map((booth) => (
+                        <SelectItem key={booth.id} value={booth.id.toString()}>
+                          <div className="flex flex-col w-full">
+                            <span className="font-semibold">
+                              {booth.companyName}
+                            </span>
+
+                            <span className="text-sm text-gray-500">
+                              {booth.event.title}
+                            </span>
+
+                            <div className="flex items-center gap-3 text-xs text-gray-500 mt-1">
+
+                              <span>
+                                Booth: {booth.boothNumber}
+                              </span>
+
+                              <span>
+                                {booth.space.name}
+                              </span>
+
+                              <span>
+                                {new Date(booth.event.startDate).toLocaleDateString()}
+                              </span>
+
                             </div>
                           </div>
                         </SelectItem>
@@ -410,15 +444,15 @@ export default function PromotionsMarketing({ exhibitorId, onPromotionCreated }:
                   </SelectContent>
                 </Select>
               )}
-              {exhibitorEvents.length === 0 && !loadingEvents && (
+              {booths.length === 0 && !loadingEvents && (
                 <p className="text-sm text-gray-500 mt-2">
-                  You need to have events in your account to create promotions.
+                  You need to have booths in your account to create promotions.
                 </p>
               )}
             </CardContent>
           </Card>
 
-          {selectedEvent && (
+          {selectedBooth && (
             <>
               {/* Category Selection */}
               <Card className={exGlassCard}>
@@ -437,11 +471,10 @@ export default function PromotionsMarketing({ exhibitorId, onPromotionCreated }:
                     {userCategories.map((category) => (
                       <div
                         key={category.id}
-                        className={`cursor-pointer rounded-lg border-2 p-4 transition-all ${
-                          selectedCategories.includes(category.id)
+                        className={`cursor-pointer rounded-lg border-2 p-4 transition-all ${selectedCategories.includes(category.id)
                             ? "border-[#004A96] bg-[#004A96]/10"
                             : "border-white/50 bg-white/25 hover:border-[#004A96]/35"
-                        }`}
+                          }`}
                         onClick={() => handleCategoryToggle(category.id)}
                       >
                         <div className="flex items-center gap-3 mb-3">
@@ -526,11 +559,10 @@ export default function PromotionsMarketing({ exhibitorId, onPromotionCreated }:
                         {promotionPackages.map((pkg) => (
                           <div
                             key={pkg.id}
-                            className={`relative rounded-lg border-2 p-6 transition-all ${
-                              pkg.recommended
+                            className={`relative rounded-lg border-2 p-6 transition-all ${pkg.recommended
                                 ? "border-[#004A96] bg-[#004A96]/10 shadow-md"
                                 : "border-white/50 bg-white/25 hover:border-[#004A96]/35"
-                            }`}
+                              }`}
                           >
                             {pkg.recommended && (
                               <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
@@ -622,14 +654,13 @@ export default function PromotionsMarketing({ exhibitorId, onPromotionCreated }:
         summary={
           selectedPackageData
             ? {
-                packageName: selectedPackageData.name,
-                eventTitle:
-                  exhibitorEvents.find((e) => e.id.toString() === selectedEvent)?.title ?? "Event",
-                categoryCount: selectedCategories.length,
-                estimatedReach: calculateEstimatedReach(),
-                duration: selectedPackageData.duration,
-                amountInr: selectedPackageData.price,
-              }
+              packageName: selectedPackageData.name,
+              eventTitle: selectedBoothData?.event?.title ?? "Event",
+              categoryCount: selectedCategories.length,
+              estimatedReach: calculateEstimatedReach(),
+              duration: selectedPackageData.duration,
+              amountInr: selectedPackageData.price,
+            }
             : null
         }
         onPaymentSuccess={createPromotionAfterPayment}
