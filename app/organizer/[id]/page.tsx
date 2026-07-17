@@ -33,6 +33,7 @@ import OrganizerPageSkeleton from "@/components/OrganizerPageSkeleton"
 import { PublicApiErrorPanel } from "@/components/public/PublicApiErrorPanel"
 import { getEventDisplayImageUrl } from "@/lib/default-event-image"
 import { hasUsableProfileImage } from "@/lib/has-usable-profile-image"
+import { MarkdownRenderer } from "@/components/MarkdownRenderer"
 
 interface Organizer {
   id: string
@@ -548,7 +549,9 @@ export default function OrganizerPage() {
                       <Building className="w-5 h-5 shrink-0" />
                       <span className="break-words">About {organizer.organizationName}</span>
                     </h3>
-                    <p className="text-sm sm:text-base text-gray-600 leading-relaxed">{organizer.description}</p>
+                    <div className="markdown-content">
+                      <MarkdownRenderer content={organizer.description} />
+                    </div>
                   </CardContent>
                 </Card>
 
@@ -794,7 +797,9 @@ export default function OrganizerPage() {
             <Card>
               <CardContent className="p-4 sm:p-6">
                 <h3 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Full Description</h3>
-                <p className="text-sm sm:text-base text-gray-600 leading-relaxed">{organizer.description}</p>
+                <div className="markdown-content">
+                  <MarkdownRenderer content={organizer.description} />
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
