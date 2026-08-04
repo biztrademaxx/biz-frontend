@@ -1,0 +1,40 @@
+/* Custom checkmark styling */
+.check::before {
+  content: "\2714";
+  font-size: larger;
+  color: green;
+}
+
+/* Table styling */
+#compare-plan {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+#compare-plan td,
+#compare-plan th {
+  position: relative;
+  text-align: center;
+  border: 1px solid #ddd;
+  padding: 10px;
+  empty-cells: show;
+}
+
+#compare-plan td:first-child,
+#compare-plan th:first-child {
+  text-align: left;
+}
+
+/* Hover effect for rows */
+#compare-plan tbody tr:hover {
+  background-color: #f9fafb;
+}
+
+/* Button styling */
+#compare-plan tfoot button {
+  transition: all 0.2s ease;
+}
+
+#compare-plan tfoot button:hover {
+  transform: scale(1.02);
+}
