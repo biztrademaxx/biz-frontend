@@ -28,7 +28,7 @@ export type DashboardPlanDefinition = {
   priceInr: number
   billingNote: string
   popular?: boolean
-  /** Shown as “current plan” — replace with real subscription when API exists */
+  /** Shown as "current plan" — replace with real subscription when API exists */
   defaultCurrent?: boolean
   topStats: string[]
   groups: PlanFeatureGroup[]
@@ -289,36 +289,42 @@ export const ORGANIZER_PACKAGE_PLANS: DashboardPlanDefinition[] = [
   {
     id: "organizer-free",
     name: "Free Plan",
-    tagline: "Best for small / local events.",
+    tagline: "Free Forever",
     priceDisplay: "Free",
     priceInr: 0,
-    billingNote: "",
+    billingNote: "Forever",
     defaultCurrent: true,
-    topStats: ["1 event", "100 exhibitors", "500 visitors / event", "1 staff", "2 days / event"],
+    topStats: [
+      "Basic listing",
+      "1x visibility",
+      "0 credits/month"
+    ],
     groups: [
       {
-        title: "Event stats",
+        title: "Features",
         rows: [
-          check("Events per year", "partial", "1"),
-          check("Storage", "partial", "1 GB"),
-          check("Booth & floor plan tools", false),
+          check("Type of Listing", "partial", "Basic"),
+          check("Event Visibility Boost", "partial", "1x"),
+          check("Credit per Month", "partial", "0"),
+          check("Event Marked Premium", false),
+          check("Boost Search Result", false),
+          check("Banners on Event Search Pages", false),
+          check("Feature Showcase on Country Search Pages", false),
+          check("Feature Showcase on City Search Pages", false),
+          check("Feature Showcase on Industry Search Pages", false),
+          check("Feature Showcase in Newsletter 1x-monthly", false),
+          check("Event Recommendation Widget Coverage", false),
+          check("Event Coverage on 10Times Social Channels", false),
+          check("Priority Display Across Relevant Search Pages", false),
+          check("Feature Showcase on 10Times Homepage", false),
+          check("Search Pinned Slots", false),
+          check("Top 100 Page Banner", false),
         ],
       },
       {
-        title: "Lead generation & marketing",
+        title: "Support",
         rows: [
-          check("Basic event listing", true),
-          check("Lead dashboards & enquiries", "partial", "Limited"),
-          check("WhatsApp & email campaigns", false),
-          check("Featured homepage placement", false),
-        ],
-      },
-      {
-        title: "Analytics & support",
-        rows: [
-          check("Visitor / exhibitor reports", false),
-          check("Exports & advanced analytics", false),
-          check("Support", "partial", "Email"),
+          check("Support", "partial", "Community"),
         ],
       },
     ],
@@ -326,36 +332,44 @@ export const ORGANIZER_PACKAGE_PLANS: DashboardPlanDefinition[] = [
   {
     id: "organizer-silver",
     name: "Silver Plan",
-    tagline: "Best for medium-scale organizers.",
-    priceDisplay: "₹25,000",
-    priceInr: 25000,
+    tagline: "Grow Your Presence",
+    priceDisplay: "₹10,000",
+    priceInr: 10000,
     billingNote: "per year",
-    popular: true,
-    topStats: ["2 events", "200 exhibitors", "1k visitors / event", "5 staff", "5 days / event"],
+    topStats: [
+      "Standard listing",
+      "2x visibility",
+      "100 credits/month"
+    ],
     groups: [
       {
-        title: "Event stats",
+        title: "Features",
         rows: [
-          check("Higher caps on events, exhibitors & visitors", true),
-          check("Storage", "partial", "10 GB"),
-          check("Booth management & floor plans", true),
+          check("Type of Listing", "partial", "Standard"),
+          check("Event Visibility Boost", "partial", "2x"),
+          check("Credit per Month", "partial", "100"),
+          check("Event Marked Premium", false),
+          check("Boost Search Result", false),
+          check("Banners on Event Search Pages", false),
+          check("Feature Showcase on Country Search Pages", false),
+          check("Feature Showcase on City Search Pages", false),
+          check("Feature Showcase on Industry Search Pages", false),
+          check("Feature Showcase in Newsletter 1x-monthly", false),
+          check("Event Recommendation Widget Coverage", false),
+          check("Event Coverage on 10Times Social Channels", false),
+          check("Priority Display Across Relevant Search Pages", false),
+          check("Feature Showcase on 10Times Homepage", false),
+          check("Search Pinned Slots", false),
+          check("Top 100 Page Banner", false),
         ],
       },
       {
-        title: "Lead generation & marketing",
+        title: "Add-ons & Support",
         rows: [
-          check("Lead generation tools", true),
-          check("SEO & featured listings", true),
-          check("Email campaigns", true),
-          check("WhatsApp integration", "partial", "Add-on"),
-        ],
-      },
-      {
-        title: "Analytics & support",
-        rows: [
-          check("Analytics dashboard", true),
-          check("Export visitor & exhibitor reports", true),
-          check("Support", "partial", "Priority email"),
+          check("Add-on Platform Value", true),
+          check("Leads & Messaging", true),
+          check("Advanced Platform Features", true),
+          check("Support", "partial", "Email Support"),
         ],
       },
     ],
@@ -363,33 +377,90 @@ export const ORGANIZER_PACKAGE_PLANS: DashboardPlanDefinition[] = [
   {
     id: "organizer-gold",
     name: "Gold Plan",
-    tagline: "Best for enterprise organizers.",
-    priceDisplay: "₹50,000",
-    priceInr: 50000,
-    billingNote: "per year",
-    topStats: ["10 events", "500 exhibitors", "10k visitors / event", "20 staff", "10 days / event"],
+    tagline: "Boost Your Reach",
+    priceDisplay: "₹25,000",
+    priceInr: 25000,
+    billingNote: "month",
+    popular: true,
+    topStats: [
+      "Highlighted listing",
+      "5x visibility",
+      "500 credits/month"
+    ],
     groups: [
       {
-        title: "Event stats",
+        title: "Features",
         rows: [
-          check("Large-scale caps & 50 GB storage", true),
-          check("Full booth, floor plan & brochure tooling", true),
+          check("Type of Listing", "partial", "Highlighted"),
+          check("Event Visibility Boost", "partial", "5x"),
+          check("Credit per Month", "partial", "500"),
+          check("Event Marked Premium", true),
+          check("Boost Search Result", true),
+          check("Banners on Event Search Pages", true),
+          check("Feature Showcase on Country Search Pages", true),
+          check("Feature Showcase on City Search Pages", true),
+          check("Feature Showcase on Industry Search Pages", true),
+          check("Feature Showcase in Newsletter 1x-monthly", true),
+          check("Event Recommendation Widget Coverage", true),
+          check("Event Coverage on 10Times Social Channels", true),
+          check("Priority Display Across Relevant Search Pages", false),
+          check("Feature Showcase on 10Times Homepage", false),
+          check("Search Pinned Slots", false),
+          check("Top 100 Page Banner", false),
         ],
       },
       {
-        title: "Lead generation & marketing",
+        title: "Add-ons & Support",
         rows: [
-          check("Premium homepage & SEO visibility", true),
-          check("WhatsApp & email campaigns", true),
-          check("Sponsor & supplier modules", true),
+          check("Add-on Platform Value", true),
+          check("Leads & Messaging", true),
+          check("Advanced Platform Features", true),
+          check("Support", "partial", "Priority Support"),
+        ],
+      },
+    ],
+  },
+  {
+    id: "organizer-platinum",
+    name: "Platinum Plan",
+    tagline: "Maximize Your Impact",
+    priceDisplay: "₹50,000",
+    priceInr: 50000,
+    billingNote: "month",
+    topStats: [
+      "Premium Highlighted listing",
+      "10x visibility",
+      "1000 credits/month"
+    ],
+    groups: [
+      {
+        title: "Features",
+        rows: [
+          check("Type of Listing", "partial", "Premium Highlighted"),
+          check("Event Visibility Boost", "partial", "10x"),
+          check("Credit per Month", "partial", "1000"),
+          check("Event Marked Premium", true),
+          check("Boost Search Result", true),
+          check("Banners on Event Search Pages", true),
+          check("Feature Showcase on Country Search Pages", true),
+          check("Feature Showcase on City Search Pages", true),
+          check("Feature Showcase on Industry Search Pages", true),
+          check("Feature Showcase in Newsletter 1x-monthly", true),
+          check("Event Recommendation Widget Coverage", true),
+          check("Event Coverage on 10Times Social Channels", true),
+          check("Priority Display Across Relevant Search Pages", true),
+          check("Feature Showcase on 10Times Homepage", true),
+          check("Search Pinned Slots", true),
+          check("Top 100 Page Banner", true),
         ],
       },
       {
-        title: "Analytics & support",
+        title: "Add-ons & Support",
         rows: [
-          check("Advanced analytics & revenue views", true),
-          check("Full exports & API-ready data", true),
-          check("Dedicated account manager", true),
+          check("Add-on Platform Value", true),
+          check("Leads & Messaging", true),
+          check("Advanced Platform Features", true),
+          check("Support", "partial", "Dedicated Account Manager"),
         ],
       },
     ],
@@ -405,7 +476,7 @@ export type PlanBadgeTier = "free" | "standard" | "premium"
 /** Visual tier for subscription badges (navbar, profile, etc.). */
 export function getPlanBadgeTier(planSlug: string): PlanBadgeTier {
   const slug = planSlug.toLowerCase()
-  if (slug.includes("premium") || slug.includes("gold")) return "premium"
+  if (slug.includes("premium") || slug.includes("gold") || slug.includes("platinum")) return "premium"
   if (slug.includes("free") || slug.includes("basic")) return "free"
   return "standard"
 }
