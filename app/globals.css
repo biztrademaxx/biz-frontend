@@ -606,3 +606,17 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+
+/* In your global CSS file */
+.event-table-row:hover .row-actions { 
+  opacity: 1 !important; 
+  pointer-events: auto !important; 
+}
+
+/* Always show actions on touch devices */
+@media (hover: none) {
+  .row-actions { 
+    opacity: 1 !important; 
+    pointer-events: auto !important; 
+  }
+}

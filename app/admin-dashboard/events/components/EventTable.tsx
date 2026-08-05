@@ -1,3 +1,4 @@
+// app/admin-dashboard/events/components/EventTable.tsx
 "use client"
 
 import { useEffect, useMemo, useState, type CSSProperties } from "react"
@@ -10,6 +11,7 @@ import { getOrganizerDisplay, getCategoryDisplay } from "../types/event.types"
 import type { AdminCountry, EventMailCandidate, EventPagination } from "../services/events.api"
 import { useToast } from "@/hooks/use-toast"
 import { Pagination } from "../../shared/components/Pagination"
+import { getOrganizerPlansBatch } from "@/lib/get-organizer-plan"
 
 interface EventTableProps {
   events: Event[]
@@ -185,10 +187,102 @@ export function EventTable({
   const [selectedMailKeys, setSelectedMailKeys] = useState<Set<string>>(new Set())
   const [localSort, setLocalSort] = useState("date")
   const [localSearch, setLocalSearch] = useState(searchTerm)
+  const [organizerPlans, setOrganizerPlans] = useState<Map<string, any>>(new Map())
+  const [isLoadingPlans, setIsLoadingPlans] = useState(false)
+  const [isInitialLoad, setIsInitialLoad] = useState(true)
 
   useEffect(() => {
     setLocalSearch(searchTerm)
   }, [searchTerm])
+
+  // Helper function to extract organizer identifier from event
+  const getOrganizerIdentifier = (event: Event): string | null => {
+    // 1. Check if organizerId exists directly
+    if (event.organizerId && event.organizerId.includes('-')) {
+      return event.organizerId
+    }
+
+    // 2. Check if organizer is an object with email or ID
+    if (typeof event.organizer === 'object' && event.organizer) {
+      const org = event.organizer as any
+      // Prefer email as it's more reliable
+      if (org.email) return org.email
+      if (org.id && org.id.includes('-')) return org.id
+      if (org._id && org._id.includes('-')) return org._id
+      // Fallback to name
+      if (org.company) return org.company.trim()
+      if (org.name) return org.name.trim()
+      if (org.organizationName) return org.organizationName.trim()
+    }
+
+    // 3. If organizer is a string, use it as the identifier
+    if (typeof event.organizer === 'string') {
+      return event.organizer.trim()
+    }
+
+    return null
+  }
+
+  // Fetch organizer plans when events change
+  useEffect(() => {
+    if (events.length === 0 || activeTab === "send-email" || activeTab === "email-verified") {
+      setOrganizerPlans(new Map())
+      setIsLoadingPlans(false)
+      return
+    }
+
+    // Log event structure to debug
+    console.log('📋 Sample event structure:', events[0])
+    console.log('📋 Organizer field:', events[0].organizer)
+    console.log('📋 Organizer type:', typeof events[0].organizer)
+
+    // Get unique organizer identifiers from events
+    const organizerIds = events
+      .map(getOrganizerIdentifier)
+      .filter((id): id is string => Boolean(id))
+
+    // Remove duplicates
+    const uniqueOrganizerIds = [...new Set(organizerIds)]
+
+    console.log('🔍 Extracted organizer identifiers from events:', uniqueOrganizerIds)
+
+    if (uniqueOrganizerIds.length === 0) {
+      console.log('⚠️ No organizer identifiers found in events.')
+      console.log('📋 Event data sample:', events.map(e => ({
+        title: e.title,
+        organizerId: e.organizerId,
+        organizer: e.organizer,
+        organizerType: typeof e.organizer
+      })))
+      setOrganizerPlans(new Map())
+      setIsLoadingPlans(false)
+      return
+    }
+
+    const fetchPlans = async () => {
+      setIsLoadingPlans(true)
+      setIsInitialLoad(false)
+      try {
+        console.log('📡 Fetching plans for organizer identifiers:', uniqueOrganizerIds)
+        const plans = await getOrganizerPlansBatch(uniqueOrganizerIds)
+        console.log('✅ Received plans map size:', plans.size)
+        
+        // Log each plan
+        for (const [id, plan] of plans) {
+          console.log(`📋 Organizer "${id}":`, plan)
+        }
+        
+        setOrganizerPlans(plans)
+      } catch (error) {
+        console.error('❌ Failed to fetch organizer plans:', error)
+        setOrganizerPlans(new Map())
+      } finally {
+        setIsLoadingPlans(false)
+      }
+    }
+
+    fetchPlans()
+  }, [events, activeTab])
 
   const isMailTab = activeTab === "send-email" || activeTab === "email-verified"
 
@@ -215,10 +309,62 @@ export function EventTable({
     [mailCandidates],
   )
 
+  // Enrich events with plan data - with case-insensitive matching
+  const enrichedEvents = useMemo(() => {
+    if (isMailTab) return []
+    
+    console.log('🔄 Enriching events with plan data...')
+    console.log('📋 Organizer plans map size:', organizerPlans.size)
+    console.log('📋 Organizer plans keys:', Array.from(organizerPlans.keys()))
+    
+    return events.map(event => {
+      const organizerIdentifier = getOrganizerIdentifier(event)
+      
+      console.log(`🔍 Event "${event.title}" - Organizer Identifier:`, organizerIdentifier)
+      
+      // Check if plan is still loading
+      const isLoading = isLoadingPlans && organizerIdentifier && !organizerPlans.has(organizerIdentifier)
+      
+      // Get plan from map or fallback to free
+      let plan = null
+      let planSlug = 'organizer-free'
+      
+      if (organizerIdentifier) {
+        // Try exact match first
+        plan = organizerPlans.get(organizerIdentifier)
+        
+        // If not found, try case-insensitive match
+        if (!plan) {
+          const lowerIdentifier = organizerIdentifier.toLowerCase()
+          for (const [key, value] of organizerPlans) {
+            if (key.toLowerCase() === lowerIdentifier) {
+              plan = value
+              console.log(`📋 Found case-insensitive match: "${key}" -> "${organizerIdentifier}"`)
+              break
+            }
+          }
+        }
+        
+        console.log(`📋 Event "${event.title}" - Plan found:`, plan)
+        if (plan) {
+          planSlug = plan.planSlug
+        }
+      }
+      
+      console.log(`📋 Event "${event.title}" - Final plan slug:`, planSlug)
+      
+      return {
+        ...event,
+        organizerPlanSlug: planSlug,
+        _loadingPlan: isLoading
+      }
+    })
+  }, [events, organizerPlans, isMailTab, isLoadingPlans])
+
   const filteredEvents = useMemo(() => {
     if (isMailTab) return []
-    return sortEventsClient(events, localSort)
-  }, [events, isMailTab, localSort])
+    return sortEventsClient(enrichedEvents, localSort)
+  }, [enrichedEvents, isMailTab, localSort])
 
   const allSelected = filteredEvents.length > 0 && filteredEvents.every((e) => selectedEvents.has(e.id))
   const selectedCount = selectedEvents.size
@@ -459,6 +605,12 @@ export function EventTable({
                 {activeTab === "send-email" && mailSelectedCount > 0 && (
                   <span style={{ fontSize: "11px", fontWeight: 600, padding: "2px 8px", borderRadius: "999px", background: "#DBEAFE", color: "#2563EB" }}>
                     {mailSelectedCount} selected
+                  </span>
+                )}
+                {isLoadingPlans && (
+                  <span style={{ fontSize: "11px", color: "#A1A1AA", display: "flex", alignItems: "center", gap: "4px" }}>
+                    <Loader2 style={{ width: 12, height: 12, animation: "spin 1s linear infinite" }} />
+                    Loading plans...
                   </span>
                 )}
               </div>

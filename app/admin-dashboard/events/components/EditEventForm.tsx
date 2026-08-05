@@ -1,3 +1,5 @@
+// app/admin-dashboard/events/components/EditEventForm.tsx
+
 "use client"
 
 import { useEffect, useState } from "react"
@@ -22,10 +24,13 @@ import {
 import { apiFetch } from "@/lib/api"
 import { uploadEventFileToBackend } from "@/components/organizer-create-event/upload-backend"
 import { ArrowLeft } from "lucide-react"
-import { editEventFormSchema, type EditEventFormValues } from "../edit-event-schema"
 import {
-  type EditEventCategory,
+  editEventFormSchema,
+  type EditEventFormValues,
   type EditEventRecord,
+  type EditEventCategory,
+} from "../edit-event-schema"
+import {
   fileToBase64,
   mapPatchedEventToEditRecord,
   normalizeEventCategoryNames,
@@ -57,31 +62,34 @@ export function EditEventForm({ event, onSave, onCancel, categories }: EditEvent
   const [existingVideos, setExistingVideos] = useState<string[]>(event.videos || [])
   const [existingDocuments, setExistingDocuments] = useState<string[]>(event.documents || [])
 
+  // Get category names from event
+  const categoryNames = normalizeEventCategoryNames(event)
+
   const form = useForm<EditEventFormValues>({
     resolver: zodResolver(editEventFormSchema),
     defaultValues: {
-      title: event.title,
+      title: event.title || "",
       slug: event.slug || "",
-      description: event.description,
+      description: event.description || "",
       shortDescription: event.shortDescription || "",
-      subTitle: event.subTitle || event.shortDescription || "",
+      subTitle: event.subTitle || "",
       edition: event.edition || "",
-      date: toDateOnly(event.date),
-      endDate: toDateOnly(event.endDate),
+      date: toDateOnly(event.date) || "",
+      endDate: toDateOnly(event.endDate) || "",
       timezone: event.timezone || "IST",
-      maxCapacity: event.maxCapacity,
+      maxCapacity: event.maxCapacity || 1,
       attendees: event.attendees ?? 0,
       ticketPrice: event.ticketPrice ?? 0,
-      eventType: scalarEventType(event.eventType),
+      eventType: scalarEventType(event.eventType) || "in-person",
       currency: event.currency || "USD",
-      categoryNames: normalizeEventCategoryNames(event),
+      categoryNames: categoryNames.length > 0 ? categoryNames : [],
       tagsInput: (event.tags || []).join(", "),
-      status: event.status,
+      status: event.status || "Pending Review",
       featured: !!event.featured,
       vip: !!event.vip,
       isPublic: event.isPublic ?? true,
       isVerified: !!event.isVerified,
-      youtubeVideoUrl: event.youtubeVideoUrl ?? "",
+      youtubeVideoUrl: event.youtubeVideoUrl || "",
       bannerImage: event.bannerImage || "",
       thumbnailImage: event.thumbnailImage || "",
       vipImage: event.vipImage || "",
@@ -94,35 +102,38 @@ export function EditEventForm({ event, onSave, onCancel, categories }: EditEvent
   const watchVip = form.watch("vip")
   const watchVipImage = form.watch("vipImage")
 
+  // Reset form when event changes
   useEffect(() => {
+    const newCategoryNames = normalizeEventCategoryNames(event)
     setSlugManuallyEdited(false)
     setVipImageFile(null)
     setExistingImages(event.images || [])
     setExistingVideos(event.videos || [])
     setExistingDocuments(event.documents || [])
+    
     form.reset({
-      title: event.title,
+      title: event.title || "",
       slug: event.slug || "",
-      description: event.description,
+      description: event.description || "",
       shortDescription: event.shortDescription || "",
-      subTitle: event.subTitle || event.shortDescription || "",
+      subTitle: event.subTitle || "",
       edition: event.edition || "",
-      date: toDateOnly(event.date),
-      endDate: toDateOnly(event.endDate),
+      date: toDateOnly(event.date) || "",
+      endDate: toDateOnly(event.endDate) || "",
       timezone: event.timezone || "IST",
-      maxCapacity: event.maxCapacity,
+      maxCapacity: event.maxCapacity || 1,
       attendees: event.attendees ?? 0,
       ticketPrice: event.ticketPrice ?? 0,
-      eventType: scalarEventType(event.eventType),
+      eventType: scalarEventType(event.eventType) || "in-person",
       currency: event.currency || "USD",
-      categoryNames: normalizeEventCategoryNames(event),
+      categoryNames: newCategoryNames.length > 0 ? newCategoryNames : [],
       tagsInput: (event.tags || []).join(", "),
-      status: event.status,
+      status: event.status || "Pending Review",
       featured: !!event.featured,
       vip: !!event.vip,
       isPublic: event.isPublic ?? true,
       isVerified: !!event.isVerified,
-      youtubeVideoUrl: event.youtubeVideoUrl ?? "",
+      youtubeVideoUrl: event.youtubeVideoUrl || "",
       bannerImage: event.bannerImage || "",
       thumbnailImage: event.thumbnailImage || "",
       vipImage: event.vipImage || "",
@@ -131,10 +142,12 @@ export function EditEventForm({ event, onSave, onCancel, categories }: EditEvent
     })
   }, [event.id, form, event])
 
+  // Auto-generate slug from title
   useEffect(() => {
     if (slugManuallyEdited) return
     const autoSlug = slugifyTitle(watchTitle || "")
-    if (form.getValues("slug") !== autoSlug) {
+    const currentSlug = form.getValues("slug")
+    if (currentSlug !== autoSlug) {
       form.setValue("slug", autoSlug, { shouldValidate: true })
     }
   }, [watchTitle, slugManuallyEdited, form])
@@ -142,7 +155,7 @@ export function EditEventForm({ event, onSave, onCancel, categories }: EditEvent
   const activeCategories = categories.filter((c) => c.isActive)
 
   const onSubmit = async (values: EditEventFormValues) => {
-    if (values.vip && !vipImageFile && !values.vipImage.trim()) {
+    if (values.vip && !vipImageFile && !values.vipImage?.trim()) {
       form.setError("vipImage", { message: "Upload a VIP image when VIP is enabled" })
       return
     }
@@ -155,7 +168,7 @@ export function EditEventForm({ event, onSave, onCancel, categories }: EditEvent
         Promise.all(newDocuments.map(fileToBase64)),
       ])
 
-      let vipImageUrl = values.vipImage.trim()
+      let vipImageUrl = values.vipImage?.trim() || ""
       if (values.vip) {
         if (vipImageFile) {
           vipImageUrl = await uploadEventFileToBackend(vipImageFile, "image")
@@ -172,7 +185,7 @@ export function EditEventForm({ event, onSave, onCancel, categories }: EditEvent
         title: values.title,
         description: values.description,
         shortDescription: values.shortDescription ?? "",
-        subTitle: values.subTitle ?? values.shortDescription ?? "",
+        subTitle: values.subTitle ?? "",
         slug: values.slug,
         edition: values.edition ?? "",
         startDate: values.date,
@@ -184,7 +197,7 @@ export function EditEventForm({ event, onSave, onCancel, categories }: EditEvent
         vip: values.vip,
         isPublic: values.isPublic,
         category: values.categoryNames,
-        tags: values.tagsInput
+        tags: (values.tagsInput || "")
           .split(",")
           .map((t) => t.trim())
           .filter(Boolean),

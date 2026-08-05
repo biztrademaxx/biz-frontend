@@ -1,3 +1,4 @@
+// app/admin-dashboard/events/components/EventRow.tsx
 "use client"
 
 import { useRouter } from "next/navigation"
@@ -10,6 +11,7 @@ import { EventActions } from "./EventActions"
 import { AppImage } from "@/components/app-image"
 import { getEventDisplayImageUrl } from "@/lib/default-event-image"
 import { eventPublicPath } from "@/lib/event-path"
+import { getPlanDisplayName, getPlanColor } from "@/lib/subscription-features"
 
 interface EventRowProps {
   event: Event
@@ -89,6 +91,57 @@ function OrganizerAvatar({ name }: { name: string }) {
     >
       {getOrganizerInitials(name) || "?"}
     </div>
+  )
+}
+
+// Plan Badge Component
+function PlanBadge({ planSlug, isLoading }: { planSlug?: string; isLoading?: boolean }) {
+  if (isLoading) {
+    return (
+      <span
+        style={{
+          display: 'inline-block',
+          padding: '1px 8px',
+          borderRadius: '12px',
+          fontSize: '9px',
+          fontWeight: 500,
+          background: '#F3F4F6',
+          color: '#9CA3AF',
+          marginLeft: '4px',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        ...
+      </span>
+    )
+  }
+  
+  if (!planSlug || planSlug === 'organizer-free' || planSlug === 'organizer-silver') return null
+  
+  const name = getPlanDisplayName(planSlug)
+  const colors = getPlanColor(planSlug)
+  
+  // Only show for Gold and Platinum
+  if (!['organizer-gold', 'organizer-platinum'].includes(planSlug)) return null
+  
+  return (
+    <span
+      style={{
+        display: 'inline-block',
+        padding: '1px 8px',
+        borderRadius: '12px',
+        fontSize: '9px',
+        fontWeight: 700,
+        background: colors.bg,
+        color: colors.text,
+        textTransform: 'uppercase',
+        letterSpacing: '0.05em',
+        marginLeft: '4px',
+        whiteSpace: 'nowrap',
+      }}
+    >
+      {name}
+    </span>
   )
 }
 
@@ -196,6 +249,12 @@ export function EventRow({
   const attendees = event.attendees || event.currentAttendees || 0
   const categoryDisplay = getCategoryDisplay(event.category)
   const liveStatus = getEventStatusByDate(event)
+
+  // Get plan slug from event
+  const planSlug = (event as any).organizerPlanSlug || 'organizer-free'
+  const isLoadingPlan = (event as any)._loadingPlan === true
+
+  console.log(`🎯 EventRow: ${event.title} - Plan: ${planSlug}, Loading: ${isLoadingPlan}`)
 
   const dateRange = formatDateRange(
     event.startDate || event.date,
@@ -332,15 +391,33 @@ export function EventRow({
         <StatusPill status={liveStatus} />
       </td>
 
-      {/* ── Organizer (hidden ≤1024px) ── */}
+      {/* ── Organizer (hidden ≤1024px) with Plan Badge ── */}
       <td className="col-hide-lg" style={{ padding: "10px 8px", verticalAlign: "middle", ...truncStyle }}>
         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
           <OrganizerAvatar name={organizerName} />
           <span
-            title={organizerName}
-            style={{ fontSize: "12px", color: "#52525B", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '2px',
+              overflow: 'hidden',
+              minWidth: 0,
+            }}
           >
-            {organizerName}
+            <span
+              title={organizerName}
+              style={{
+                fontSize: "12px",
+                color: "#52525B",
+                fontWeight: 500,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {organizerName}
+            </span>
+            <PlanBadge planSlug={planSlug} isLoading={isLoadingPlan} />
           </span>
         </div>
       </td>
@@ -371,7 +448,6 @@ export function EventRow({
             display: "flex",
             alignItems: "center",
             gap: "2px",
-            // Visible at reduced opacity by default; full opacity on row hover (via CSS class)
             opacity: 0.45,
             transition: "opacity 0.15s",
           }}
@@ -414,7 +490,10 @@ export function EventRow({
 
           {/* More actions dropdown */}
           <EventActions
-            event={event}
+            event={{
+              ...event,
+              _loadingPlan: isLoadingPlan
+            }}
             onStatusChange={onStatusChange}
             onFeatureToggle={onFeatureToggle}
             onVipToggle={onVipToggle}
