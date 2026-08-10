@@ -1,16 +1,14 @@
-"use client"
+﻿"use client"
 
 import { devLog } from "@/lib/dev-log"
-import { useState, useMemo, useEffect, type CSSProperties } from "react"
+import { useState, useMemo, useEffect, useRef, type CSSProperties } from "react"
 import { Button } from "@/components/ui/button"
 import { useSearchParams, useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
 import { isAuthenticated, getCurrentUserId, apiFetch } from "@/lib/api"
 import {
-  classifyExploreEventType,
   exploreKeyFromQueryParam,
   formatNameFromExploreKey,
-  exploreKeyFromFormatName,
 } from "@/lib/explore-event-types"
 import { normalizeBrowseCategory } from "@/lib/categories/normalize-browse-category"
 import EventsListingPageSkeleton from "@/components/EventsListingPageSkeleton"
@@ -18,29 +16,28 @@ import type { Event, EventsPageContentProps, NameCount } from "@/components/even
 import {
   EVENTS_LISTING_BANNER_GRADIENT,
   EVENTS_LISTING_BANNER_GRADIENT_OVER_IMAGE,
-  getEventsListingApiUrl,
   EVENTS_LISTING_PAGE_CHUNK_BEFORE_FEATURED_AD,
-  EVENTS_LISTING_PAGE_CHUNK_AFTER_FEATURED_AD,
   EVENTS_LISTING_INLINE_PROMO_FALLBACK_MAX,
+  EVENTS_LISTING_PAGE_SIZE,
   EVENTS_TOP_MUST_VISIT_LIMIT,
 } from "@/components/events-page/listing-constants"
 import {
+  emptyListingPagination,
+  extractPaginationFromResponse,
+  getEventsListingApiUrl,
+  getEventsListingPremiumApiUrl,
+  getEventsListingRailsApiUrl,
+  toLocalIsoDate,
+  type EventsListingPagination,
+} from "@/components/events-page/listing-query"
+import {
   extractEventsFromResponse,
   mapApiEventToListingEvent,
-  normalizeEventFormatName,
-  isEventInTab,
-  isEventOnDate,
-  isEventInDateRange,
-  isEventInCustomDateRange,
-  eventMatchesCountry,
-  eventMatchesCity,
-  eventMatchesCategory,
-  eventMatchesSearchQuery,
-  applyTopMustVisitRanking,
   formatListingFollowerTotal,
   getEventsListingBannerTitle,
-  isEventNotPast,
-  sortEventsByFollowersAndRating,
+  sortEventsByPlanTierThenStartDate,
+  listingPlanTierRank,
+  applyTopMustVisitRanking,
 } from "@/components/events-page/listing-utils"
 import { EventsListingDesktopFiltersSidebar } from "@/components/events-page/EventsListingDesktopFiltersSidebar"
 import { EventsListingTabs } from "@/components/events-page/EventsListingTabs"
@@ -57,6 +54,9 @@ export type { EventsPageContentProps } from "@/components/events-page/listing-ty
 export default function EventsPageContent({
   initialBrowseCategoryMeta: initialBrowseCategoryMetaProp = [],
   initialEvents: initialEventsProp = [],
+  initialPagination: initialPaginationProp,
+  initialRailEvents: initialRailEventsProp = [],
+  initialPremiumEvents: initialPremiumEventsProp = [],
 }: EventsPageContentProps) {
   const [activeTab, setActiveTab] = useState("All Events")
   const [selectedFormat, setSelectedFormat] = useState("All Formats")
@@ -74,6 +74,15 @@ export default function EventsPageContent({
   const [selectedCategory, setSelectedCategory] = useState(categoryFromUrl || "All Events")
 
   const [events, setEvents] = useState<Event[]>(() => initialEventsProp)
+  const [railEvents, setRailEvents] = useState<Event[]>(() =>
+    initialRailEventsProp.length > 0 ? initialRailEventsProp : initialEventsProp,
+  )
+  const [premiumSidebarEvents, setPremiumSidebarEvents] = useState<Event[]>(
+    () => initialPremiumEventsProp,
+  )
+  const [pagination, setPagination] = useState<EventsListingPagination>(
+    () => initialPaginationProp ?? emptyListingPagination(EVENTS_LISTING_PAGE_SIZE),
+  )
   const [loading, setLoading] = useState(() => initialEventsProp.length === 0)
   const [error, setError] = useState<string | null>(null)
 
@@ -102,6 +111,10 @@ export default function EventsPageContent({
   const [currentSlide, setCurrentSlide] = useState(0)
   const [isHovered, setIsHovered] = useState(false)
   const [isTransitioning, setIsTransitioning] = useState(false)
+
+  const [facetCategories, setFacetCategories] = useState<NameCount[]>([])
+  const [facetFormats, setFacetFormats] = useState<NameCount[]>([{ name: "All Formats", count: 0 }])
+  const [facetLocations, setFacetLocations] = useState<NameCount[]>([])
 
   const [visitorCounts, setVisitorCounts] = useState<Record<string, number>>({})
   useEffect(() => {
@@ -150,13 +163,44 @@ export default function EventsPageContent({
     setCurrentPage(page)
   }
 
-  const fetchEvents = async (options?: { silent?: boolean }) => {
+  const buildListingQuery = (page: number) => {
+    const relatedCats = selectedRelatedTopics.map((topic) => topic.replace(" Related", "").trim()).filter(Boolean)
+    const categories =
+      selectedCategories.length > 0
+        ? [...selectedCategories, ...relatedCats]
+        : selectedCategory && selectedCategory !== "All Events"
+          ? [selectedCategory, ...relatedCats]
+          : relatedCats
+
+    return {
+      page,
+      limit: EVENTS_LISTING_PAGE_SIZE,
+      sort: "ranked" as const,
+      excludePast: true,
+      search: searchQuery,
+      categories,
+      location: selectedLocation || venueQ || "",
+      country: selectedCountry,
+      format: selectedFormat,
+      from: customFromDate,
+      to: customToDate,
+      tab: activeTab,
+      dateRange: selectedDateRange,
+      selectedDateIso: selectedDate ? toLocalIsoDate(selectedDate) : undefined,
+      verified: activeTab === "Verified",
+      minRating: rating || undefined,
+      price: priceRange || undefined,
+    }
+  }
+
+  const fetchEvents = async (options?: { silent?: boolean; page?: number }) => {
+    const page = options?.page ?? currentPage
     try {
       if (!options?.silent) {
         setLoading(true)
       }
       setError(null)
-      const response = await fetch(getEventsListingApiUrl())
+      const response = await fetch(getEventsListingApiUrl(buildListingQuery(page)))
       const payload = await response.json().catch(() => ({}))
       if (!response.ok) {
         const message =
@@ -168,6 +212,7 @@ export default function EventsPageContent({
       const rawEvents = extractEventsFromResponse(payload)
       const transformedEvents = rawEvents.map((row) => mapApiEventToListingEvent(row))
       setEvents(transformedEvents)
+      setPagination(extractPaginationFromResponse(payload))
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred")
       console.error("[v0] Error fetching events:", err)
@@ -185,9 +230,83 @@ export default function EventsPageContent({
     }
   }
 
+  const fetchRailEvents = async () => {
+    try {
+      const response = await fetch(getEventsListingRailsApiUrl())
+      if (!response.ok) return
+      const payload = await response.json().catch(() => ({}))
+      const rawEvents = extractEventsFromResponse(payload)
+      setRailEvents(rawEvents.map((row) => mapApiEventToListingEvent(row)))
+    } catch (e) {
+      console.error("[v0] Error fetching listing rails:", e)
+    }
+  }
+
+  const fetchPremiumEvents = async () => {
+    try {
+      const relatedCats = selectedRelatedTopics
+        .map((topic) => topic.replace(" Related", "").trim())
+        .filter(Boolean)
+      const categories =
+        selectedCategories.length > 0
+          ? [...selectedCategories, ...relatedCats]
+          : selectedCategory && selectedCategory !== "All Events"
+            ? [selectedCategory, ...relatedCats]
+            : relatedCats
+      const response = await fetch(
+        getEventsListingPremiumApiUrl({
+          categories,
+          location: selectedLocation || venueQ || "",
+          country: selectedCountry,
+        }),
+      )
+      if (!response.ok) return
+      const payload = await response.json().catch(() => ({}))
+      const rawEvents = extractEventsFromResponse(payload)
+      setPremiumSidebarEvents(rawEvents.map((row) => mapApiEventToListingEvent(row)))
+    } catch (e) {
+      console.error("[v0] Error fetching premium listing events:", e)
+    }
+  }
+
+  const fetchFacets = async () => {
+    try {
+      const response = await fetch("/api/events/facets?excludePast=true")
+      if (!response.ok) return
+      const payload = (await response.json().catch(() => ({}))) as {
+        success?: boolean
+        categories?: NameCount[]
+        formats?: NameCount[]
+        locations?: NameCount[]
+      }
+      if (payload.success === false) return
+      if (Array.isArray(payload.categories)) setFacetCategories(payload.categories)
+      if (Array.isArray(payload.formats) && payload.formats.length > 0) {
+        setFacetFormats(payload.formats)
+      }
+      if (Array.isArray(payload.locations)) setFacetLocations(payload.locations)
+    } catch (e) {
+      console.error("[v0] Error fetching listing facets:", e)
+    }
+  }
+
   useEffect(() => {
-    void fetchEvents({ silent: initialEventsProp.length > 0 })
+    void fetchRailEvents()
+    void fetchFacets()
   }, [])
+
+  // Premium rail follows category / location filters (gold + platinum only).
+  useEffect(() => {
+    void fetchPremiumEvents()
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- filter-driven premium refetch
+  }, [
+    selectedCategory,
+    selectedCategories,
+    selectedRelatedTopics,
+    selectedLocation,
+    selectedCountry,
+    venueQ,
+  ])
 
   useEffect(() => {
     if (initialBrowseCategoryMetaProp.length > 0) return
@@ -240,6 +359,51 @@ export default function EventsPageContent({
     }
   }, [categoryFromUrl, typeFromUrl, locationQ, countryQ, venueQ, searchQ, fromQ, toQ])
 
+  // Reset to page 1 when filters change (not when only page changes).
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [
+    activeTab,
+    searchQuery,
+    selectedCategory,
+    selectedCategories,
+    selectedRelatedTopics,
+    selectedCountry,
+    selectedLocation,
+    selectedFormat,
+    selectedDate,
+    selectedDateRange,
+    priceRange,
+    rating,
+    customFromDate,
+    customToDate,
+  ])
+
+  // Server-side list fetch whenever filters or page change.
+  const listingFetchReadyRef = useRef(false)
+  useEffect(() => {
+    const isFirstPaint = !listingFetchReadyRef.current
+    listingFetchReadyRef.current = true
+    const silent = isFirstPaint && initialEventsProp.length > 0 && currentPage === 1
+    void fetchEvents({ silent, page: currentPage })
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional filter/page-driven refetch
+  }, [
+    currentPage,
+    activeTab,
+    searchQuery,
+    selectedCategory,
+    selectedCategories,
+    selectedRelatedTopics,
+    selectedCountry,
+    selectedLocation,
+    selectedFormat,
+    selectedDate,
+    selectedDateRange,
+    priceRange,
+    rating,
+    customFromDate,
+    customToDate,
+  ])
   const handleVisitClick = async (eventId: string, eventTitle: string) => {
     if (!eventId) {
       toast({
@@ -290,216 +454,31 @@ export default function EventsPageContent({
     }
   }
 
-  const itemsPerPage =
-    EVENTS_LISTING_PAGE_CHUNK_BEFORE_FEATURED_AD + EVENTS_LISTING_PAGE_CHUNK_AFTER_FEATURED_AD
 
-  const listingEvents = useMemo(
-    () => events.filter((event) => isEventNotPast(event)),
-    [events],
-  )
+  /** Rail source for trending / featured / must-visit widgets. */
+  const listingEvents = railEvents
 
   const categories = useMemo((): NameCount[] => {
-    if (!listingEvents || listingEvents.length === 0) return []
-    const categoryMap = new Map<string, number>()
-    listingEvents.forEach((event) => {
-      if (event.categories && Array.isArray(event.categories)) {
-        event.categories.forEach((category) => {
-          if (category && typeof category === "string") {
-            const normalized = category.trim()
-            if (normalized) {
-              categoryMap.set(normalized, (categoryMap.get(normalized) || 0) + 1)
-            }
-          }
-        })
-      }
-    })
+    if (facetCategories.length > 0) return facetCategories
+    return browseCategoryMeta.map((c) => ({ name: c.name, count: 0 }))
+  }, [facetCategories, browseCategoryMeta])
 
-    if (categoryMap.size > 0) {
-      return Array.from(categoryMap.entries())
-        .map(([name, count]) => ({ name, count }))
-        .sort((a, b) => b.count - a.count)
-    }
+  const formats = facetFormats
 
-    const hardcodedCategories = [
-      "All Events",
-      "Education Training",
-      "Medical & Pharma",
-      "IT & Technology",
-      "Banking & Finance",
-      "Business Services",
-      "Industrial Engineering",
-      "Building & Construction",
-      "Power & Energy",
-      "Entertainment & Media",
-      "Wellness, Health & Fitness",
-    ]
-
-    return hardcodedCategories
-      .map((categoryName) => {
-        const count = listingEvents.filter((event) => {
-          if (!event.categories || !Array.isArray(event.categories)) return false
-          return event.categories.some((cat) => {
-            if (!cat || typeof cat !== "string") return false
-            return cat.toLowerCase().includes(categoryName.toLowerCase())
-          })
-        }).length
-        return { name: categoryName, count }
-      })
-      .filter((cat) => cat.count > 0)
-  }, [listingEvents])
-
-  const formats = useMemo(() => {
-    const formatMap = new Map<string, number>()
-    formatMap.set("All Formats", listingEvents.length)
-    listingEvents.forEach((event) => {
-      const formatName = normalizeEventFormatName(event)
-      formatMap.set(formatName, (formatMap.get(formatName) || 0) + 1)
-    })
-    const allFormatsCount = formatMap.get("All Formats") || 0
-    formatMap.delete("All Formats")
-    const formatArray = Array.from(formatMap.entries())
-      .map(([name, count]) => ({ name, count }))
-      .sort((a, b) => b.count - a.count)
-    return [{ name: "All Formats", count: allFormatsCount }, ...formatArray]
-  }, [listingEvents])
-
-  const locations = useMemo(() => {
-    if (!listingEvents || listingEvents.length === 0) return []
-    const locationMap = new Map<string, number>()
-    listingEvents.forEach((event) => {
-      let locationKey = ""
-      if (event.venue?.venueCity) {
-        locationKey = event.venue.venueCity.trim()
-      } else if (event.location?.city) {
-        locationKey = event.location.city.trim()
-      } else if (event.venue?.venueCountry) {
-        locationKey = event.venue.venueCountry.trim()
-      } else if (event.location?.address) {
-        const addressParts = event.location.address.split(",")
-        locationKey = addressParts[0]?.trim() || "Unknown"
-      }
-      if (locationKey && locationKey !== "Not Added" && locationKey !== "Unknown") {
-        locationMap.set(locationKey, (locationMap.get(locationKey) || 0) + 1)
-      }
-    })
-    return Array.from(locationMap.entries())
-      .map(([name, count]) => ({ name, count }))
-      .sort((a, b) => {
-        if (b.count !== a.count) {
-          return b.count - a.count
-        }
-        return a.name.localeCompare(b.name)
-      })
-  }, [listingEvents])
+  const locations = facetLocations
 
   const filteredCategories = useMemo(() => categories, [categories])
 
-  const filteredEvents = useMemo(() => {
-    let filtered = listingEvents
+  /** Main list is already filtered + paginated by the API (sort=ranked). */
+  const paginatedEvents = events
+  const filteredCount = pagination.total
+  const totalPages = Math.max(1, pagination.totalPages)
+  const eventsBeforeFeaturedAd = paginatedEvents.slice(0, EVENTS_LISTING_PAGE_CHUNK_BEFORE_FEATURED_AD)
+  const eventsAfterFeaturedAd = paginatedEvents.slice(EVENTS_LISTING_PAGE_CHUNK_BEFORE_FEATURED_AD)
 
-    filtered = filtered.filter((event) => isEventInTab(event, activeTab))
-
-    if (activeTab === "Verified") {
-      filtered = filtered.filter((event) => event.isVerified)
-    }
-
-    if (selectedDate) {
-      filtered = filtered.filter((event) => isEventOnDate(event, selectedDate))
-    }
-
-    if (selectedDateRange && !selectedDate) {
-      filtered = filtered.filter((event) => isEventInDateRange(event, selectedDateRange))
-    }
-
-    if (searchQuery.trim()) {
-      filtered = filtered.filter((event) => eventMatchesSearchQuery(event, searchQuery))
-    }
-
-    if (selectedCategories.length > 0) {
-      filtered = filtered.filter((event) =>
-        selectedCategories.some((selectedCat) => eventMatchesCategory(event, selectedCat)),
-      )
-    } else if (selectedCategory && selectedCategory !== "All Events") {
-      filtered = filtered.filter((event) => eventMatchesCategory(event, selectedCategory))
-    }
-
-    if (selectedRelatedTopics.length > 0) {
-      const relatedCats = selectedRelatedTopics.map((topic) => topic.replace(" Related", ""))
-      filtered = filtered.filter((event) => event.categories.some((cat) => relatedCats.includes(cat)))
-    }
-
-    if (selectedCountry.trim()) {
-      filtered = filtered.filter((event) => eventMatchesCountry(event, selectedCountry))
-    }
-
-    if (selectedLocation.trim()) {
-      filtered = filtered.filter((event) => eventMatchesCity(event, selectedLocation))
-    }
-
-    if (customFromDate || customToDate) {
-      filtered = filtered.filter((event) =>
-        isEventInCustomDateRange(event, customFromDate || undefined, customToDate || undefined),
-      )
-    }
-
-    if (selectedFormat && selectedFormat !== "All Formats") {
-      const wantKey = exploreKeyFromFormatName(selectedFormat)
-      filtered = filtered.filter((event) => {
-        const normalizedEventFormat = normalizeEventFormatName(event)
-        if (normalizedEventFormat.toLowerCase() === selectedFormat.toLowerCase().trim()) {
-          return true
-        }
-        const eventKey = classifyExploreEventType(event.eventType || event.categories?.[0])
-        if (wantKey && eventKey) return eventKey === wantKey
-        return false
-      })
-    }
-
-    if (priceRange) {
-      filtered = filtered.filter((event) => {
-        const price = event.pricing.general
-        switch (priceRange) {
-          case "free":
-            return price === 0
-          case "under-1000":
-            return price < 1000
-          case "1000-5000":
-            return price >= 1000 && price <= 5000
-          case "above-5000":
-            return price > 5000
-          default:
-            return true
-        }
-      })
-    }
-
-    if (rating) {
-      const minRating = Number.parseFloat(rating)
-      filtered = filtered.filter((event) => event.rating.average >= minRating)
-    }
-
-    return filtered
-  }, [
-    listingEvents,
-    activeTab,
-    selectedDate,
-    selectedDateRange,
-    searchQuery,
-    selectedCategory,
-    selectedCategories,
-    selectedRelatedTopics,
-    selectedCountry,
-    selectedLocation,
-    selectedFormat,
-    priceRange,
-    rating,
-    customFromDate,
-    customToDate,
-  ])
-
-  const rankedEvents = useMemo(() => {
-    return applyTopMustVisitRanking(filteredEvents, EVENTS_TOP_MUST_VISIT_LIMIT)
-  }, [filteredEvents])
+  const mustVisitRail = useMemo(() => {
+    return applyTopMustVisitRanking(listingEvents, EVENTS_TOP_MUST_VISIT_LIMIT)
+  }, [listingEvents])
 
   const bannerTitle = useMemo(
     () =>
@@ -535,7 +514,7 @@ export default function EventsPageContent({
     ],
   )
 
-  const followerLabel = useMemo(() => formatListingFollowerTotal(rankedEvents), [rankedEvents])
+  const followerLabel = useMemo(() => formatListingFollowerTotal(mustVisitRail), [mustVisitRail])
 
   const categoryBannerImageUrl = useMemo(() => {
     if (browseCategoryMeta.length === 0) return null
@@ -572,23 +551,30 @@ export default function EventsPageContent({
     }
   }, [categoryBannerImageUrl])
 
-  const totalPages = Math.max(1, Math.ceil(rankedEvents.length / itemsPerPage))
-  const paginatedEvents = rankedEvents.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
-  const eventsBeforeFeaturedAd = paginatedEvents.slice(0, EVENTS_LISTING_PAGE_CHUNK_BEFORE_FEATURED_AD)
-  const eventsAfterFeaturedAd = paginatedEvents.slice(EVENTS_LISTING_PAGE_CHUNK_BEFORE_FEATURED_AD)
-
   const featuredEvents = listingEvents.filter((event) => event.featured)
 
+  /**
+   * Mid-list carousel: Platinum/Gold for the active category/location first,
+   * then nearest start date. Falls back to silver from the ranked page list.
+   */
   const inlinePromoEvents = useMemo(() => {
-    if (listingEvents.length === 0) return []
-    const tagged = listingEvents.filter((e) => e.featured)
-    if (tagged.length > 0) return tagged
-    return sortEventsByFollowersAndRating(listingEvents).slice(0, EVENTS_LISTING_INLINE_PROMO_FALLBACK_MAX)
-  }, [listingEvents])
+    const limit = EVENTS_LISTING_INLINE_PROMO_FALLBACK_MAX
+    const premium = sortEventsByPlanTierThenStartDate(
+      premiumSidebarEvents.filter((e) => listingPlanTierRank(e.organizerPlanTier) >= 2),
+    )
+    if (premium.length > 0) return premium.slice(0, limit)
 
-  const trendingSidebarEvents = useMemo(() => {
-    return sortEventsByFollowersAndRating(listingEvents).slice(0, 5)
-  }, [listingEvents])
+    const fromPage = sortEventsByPlanTierThenStartDate(
+      events.filter((e) => listingPlanTierRank(e.organizerPlanTier) >= 1),
+    )
+    if (fromPage.length > 0) return fromPage.slice(0, limit)
+
+    const tagged = listingEvents.filter((e) => e.featured)
+    if (tagged.length > 0) {
+      return sortEventsByPlanTierThenStartDate(tagged).slice(0, limit)
+    }
+    return sortEventsByPlanTierThenStartDate(listingEvents).slice(0, limit)
+  }, [premiumSidebarEvents, events, listingEvents])
 
   useEffect(() => {
     if (featuredEvents.length === 0 || isHovered || isTransitioning) return
@@ -687,25 +673,6 @@ export default function EventsPageContent({
     setCurrentPage(1)
     router.push("/event")
   }
-
-  useEffect(() => {
-    setCurrentPage(1)
-  }, [
-    activeTab,
-    searchQuery,
-    selectedCategory,
-    selectedCategories,
-    selectedRelatedTopics,
-    selectedCountry,
-    selectedLocation,
-    selectedFormat,
-    selectedDate,
-    selectedDateRange,
-    priceRange,
-    rating,
-    customFromDate,
-    customToDate,
-  ])
 
   const handleListingShare = async () => {
     const title = bannerTitle
@@ -806,14 +773,14 @@ export default function EventsPageContent({
               surfaceStyle={listingBannerSurfaceStyle}
               title={bannerTitle}
               followerLabel={followerLabel}
-              filteredCount={rankedEvents.length}
+              filteredCount={filteredCount}
               paginatedCount={paginatedEvents.length}
               onShare={handleListingShare}
             />
 
             <EventsListingResultsHeader
               paginatedCount={paginatedEvents.length}
-              filteredCount={rankedEvents.length}
+              filteredCount={filteredCount}
               activeTab={activeTab}
               currentPage={currentPage}
               totalPages={totalPages}
@@ -847,8 +814,14 @@ export default function EventsPageContent({
                 </div>
               ) : (
                 <>
-                  {eventsBeforeFeaturedAd.map((event) => (
-                    <EventsListingEventCard key={event.id} event={event} />
+                  {eventsBeforeFeaturedAd.map((event, index) => (
+                    <EventsListingEventCard
+                      key={event.id}
+                      event={event}
+                      searchQuery={searchQuery}
+                      position={(currentPage - 1) * EVENTS_LISTING_PAGE_SIZE + index}
+                      page={currentPage}
+                    />
                   ))}
                   {inlinePromoEvents.length > 0 ? (
                     <EventsListingInlineFeaturedCarousel
@@ -857,8 +830,18 @@ export default function EventsPageContent({
                       promoSource={featuredEvents.length > 0 ? "featured" : "curated"}
                     />
                   ) : null}
-                  {eventsAfterFeaturedAd.map((event) => (
-                    <EventsListingEventCard key={event.id} event={event} />
+                  {eventsAfterFeaturedAd.map((event, index) => (
+                    <EventsListingEventCard
+                      key={event.id}
+                      event={event}
+                      searchQuery={searchQuery}
+                      position={
+                        (currentPage - 1) * EVENTS_LISTING_PAGE_SIZE +
+                        EVENTS_LISTING_PAGE_CHUNK_BEFORE_FEATURED_AD +
+                        index
+                      }
+                      page={currentPage}
+                    />
                   ))}
                 </>
               )}
@@ -875,7 +858,7 @@ export default function EventsPageContent({
           </div>
 
           <EventsListingRightRail
-            trendingSidebarEvents={trendingSidebarEvents}
+            premiumSidebarEvents={premiumSidebarEvents}
             featuredFirst={featuredEvents[0]}
             onVisit={handleVisitClick}
           />
@@ -884,4 +867,3 @@ export default function EventsPageContent({
     </div>
   )
 }
-

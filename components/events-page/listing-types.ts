@@ -49,6 +49,8 @@ export interface Event {
   ticketTypes?: unknown[]
   followerPreview?: ListingFollowerFace[]
   followersCount?: number
+  /** Denormalized organizer dashboard plan: free | silver | gold | platinum */
+  organizerPlanTier?: "free" | "silver" | "gold" | "platinum" | string
 }
 
 export type EventsPageContentProps = {
@@ -56,6 +58,19 @@ export type EventsPageContentProps = {
   initialBrowseCategoryMeta?: Array<{ name: string; icon: string | null }>
   /** From RSC: preloaded listing rows so the page does not wait for a client fetch. */
   initialEvents?: Event[]
+  /** From RSC: pagination meta for the initial server page. */
+  initialPagination?: {
+    page: number
+    limit: number
+    total: number
+    totalPages: number
+    hasNextPage: boolean
+    hasPreviousPage: boolean
+  }
+  /** From RSC: compact popular set for facets / featured rails. */
+  initialRailEvents?: Event[]
+  /** From RSC: Gold + Platinum events for the right rail. */
+  initialPremiumEvents?: Event[]
 }
 
 export type NameCount = { name: string; count: number }

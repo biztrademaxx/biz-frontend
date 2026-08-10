@@ -100,6 +100,7 @@ import SettingsLanguagePage from "./settings/languages"
 import SettingsBackupPage from "./settings/backup"
 import AccountDeactivationsPage from "./settings/account-deactivations"
 import ReportsAnalyticsPage from "./reports/ReportsAnalyticsPage"
+import SearchAnalyticsPanel from "./reports/SearchAnalyticsPanel"
 import BannersPage from "./content/banners"
 import NewsAnnouncementsPage from "./content/news/page"
 import BlogArticlesPage from "./content/blog/page"
@@ -474,6 +475,7 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
         { title: "User Engagement", id: "reports-engagement" },
         { title: "Revenue Reports", id: "reports-revenue" },
         { title: "System Health", id: "reports-system" },
+        { title: "Search Analytics", id: "reports-search" },
         { title: "Traffic Analytics", id: "marketing-traffic" },
       ],
     },
@@ -682,6 +684,8 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
           return <ReportsAnalyticsPage view="revenue" />
         case "reports-system":
           return <ReportsAnalyticsPage view="system" />
+        case "reports-search":
+          return <SearchAnalyticsPanel />
         case "support-tickets":
           return <SupportTickets />
         case "support-contacts":

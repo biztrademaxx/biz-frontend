@@ -5,7 +5,6 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Heart, ShieldCheck, UserPlus } from "lucide-react"
 import { AppImage } from "@/components/app-image"
 import AdCard from "@/components/add-card"
-import { EVENT_VENUE_LOCATION_PENDING } from "@/lib/event-location-copy"
 import { resolvedVerifiedBadgeImageUrl } from "@/lib/verified-event-badge"
 import type { Event } from "./listing-types"
 import { TrendingEventsSideCard } from "./TrendingEventsSideCard"
@@ -13,12 +12,16 @@ import { EVENTS_LISTING_STICKY_TOP_CLASS } from "./listing-constants"
 import { getListingEventPrimaryImage } from "./listing-utils"
 
 export type EventsListingRightRailProps = {
-  trendingSidebarEvents: Event[]
+  premiumSidebarEvents: Event[]
   featuredFirst: Event | undefined
   onVisit: (eventId: string, eventTitle: string) => void
 }
 
-export function EventsListingRightRail({ trendingSidebarEvents, featuredFirst, onVisit }: EventsListingRightRailProps) {
+export function EventsListingRightRail({
+  premiumSidebarEvents,
+  featuredFirst,
+  onVisit,
+}: EventsListingRightRailProps) {
   return (
     <div className="lg:col-span-4 order-3 w-full">
       <div className={`lg:sticky ${EVENTS_LISTING_STICKY_TOP_CLASS} z-10 space-y-6 self-start`}>
@@ -26,32 +29,36 @@ export function EventsListingRightRail({ trendingSidebarEvents, featuredFirst, o
           <AdCard />
         </div>
 
-        <div className="flex items-center justify-between">
-          <h3 className="type-section-heading text-2xl text-gray-900">🔥 Trending Events</h3>
-        </div>
+        {premiumSidebarEvents.length > 0 && (
+          <>
+            <div className="flex items-center justify-between">
+              <h3 className="type-section-heading text-2xl text-gray-900">Premium Events</h3>
+            </div>
 
-        <div className="hidden lg:block">
-          {trendingSidebarEvents.map((event) => (
-            <TrendingEventsSideCard
-              key={event.id}
-              event={event}
-              imageUrl={getListingEventPrimaryImage(event) }
-            />
-          ))}
-        </div>
-
-        <div className="lg:hidden">
-          <div className="flex gap-3 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide">
-            {trendingSidebarEvents.map((event) => (
-              <div key={event.id} className="w-[min(100%,340px)] shrink-0 snap-start">
+            <div className="hidden lg:block">
+              {premiumSidebarEvents.map((event) => (
                 <TrendingEventsSideCard
+                  key={event.id}
                   event={event}
-                  imageUrl={getListingEventPrimaryImage(event) }
+                  imageUrl={getListingEventPrimaryImage(event)}
                 />
+              ))}
+            </div>
+
+            <div className="lg:hidden">
+              <div className="flex gap-3 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide">
+                {premiumSidebarEvents.map((event) => (
+                  <div key={event.id} className="w-[min(100%,340px)] shrink-0 snap-start">
+                    <TrendingEventsSideCard
+                      event={event}
+                      imageUrl={getListingEventPrimaryImage(event)}
+                    />
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        </div>
+            </div>
+          </>
+        )}
 
         {featuredFirst && (
           <Card className="bg-white shadow-xl border border-gray-300 rounded-sm overflow-hidden">

@@ -10,17 +10,38 @@ import type { Event } from "./listing-types"
 import { EventListingCardImages } from "./EventListingCardImages"
 import { EventListingVerifiedBadge } from "./EventListingVerifiedBadge"
 import { formatListingDateShort, formatListingYear, normalizeEventImageUrls } from "./listing-utils"
+import { trackSearchClick } from "@/lib/search-click"
 
-export function EventsListingEventCard({ event }: { event: Event }) {
+export function EventsListingEventCard({
+  event,
+  searchQuery,
+  position,
+  page,
+}: {
+  event: Event
+  searchQuery?: string
+  position?: number
+  page?: number
+}) {
   const path = eventPublicPath(event)
   const evRecord = event as unknown as Record<string, unknown>
+
+  const onNavigate = () => {
+    trackSearchClick({
+      eventId: event.id,
+      query: searchQuery,
+      position,
+      page,
+      listingSource: "events_list",
+    })
+  }
 
   return (
     // Updated: Added border, shadow, and hover effects
     <div className="bg-white border border-gray-200 rounded-sm overflow-hidden w-full shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_40px_rgba(0,0,0,0.15)] hover:border-[#002C71]/30">
       {/* Reduced padding and spacing */}
       <div className="px-3 pt-2 sm:px-4 sm:pt-2.5">
-        <Link href={path} className="group block">
+        <Link href={path} className="group block" onClick={onNavigate}>
           <p className="mb-0.5 text-[10px] font-medium text-gray-600 sm:text-xs">
             {formatListingDateShort(event.timings.startDate)}
             {event.timings.endDate && <> - {formatListingDateShort(event.timings.endDate)}</>} {formatListingYear(event.timings.startDate)}
@@ -43,7 +64,7 @@ export function EventsListingEventCard({ event }: { event: Event }) {
       {/* Reduced min-height */}
       <div className="flex flex-col md:flex-row md:items-start">
         <div className="flex min-h-0 min-w-0 flex-1 flex-col px-3 pb-2 pt-1 sm:px-4 sm:pb-2 sm:pt-2">
-          <Link href={path} className="group flex min-h-0 min-w-0 flex-1 flex-col">
+          <Link href={path} className="group flex min-h-0 min-w-0 flex-1 flex-col" onClick={onNavigate}>
             <p className="mb-1 flex items-center text-[11px] font-normal font-sans text-[#212529] sm:text-xs">
               <MapPin className="mr-1 h-3 w-3 shrink-0 text-[#6C757D] sm:h-3.5 sm:w-3.5" />
               <span className="line-clamp-1">

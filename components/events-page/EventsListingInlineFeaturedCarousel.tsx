@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { EventsListingEventCard } from "./EventsListingEventCard"
@@ -19,9 +19,8 @@ export function EventsListingInlineFeaturedCarousel({
   featuredEvents,
   autoAdvanceMs = EVENTS_LISTING_INLINE_FEATURED_AUTO_MS,
 }: EventsListingInlineFeaturedCarouselProps) {
-  const pool = useMemo(() => {
-    return [...featuredEvents].sort((a, b) => (b.isVerified ? 1 : 0) - (a.isVerified ? 1 : 0))
-  }, [featuredEvents])
+  // Keep caller order (plan tier → nearest start date). Do not re-rank by verified.
+  const pool = featuredEvents
 
   const [index, setIndex] = useState(0)
   const [paused, setPaused] = useState(false)

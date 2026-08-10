@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo, useCallback, useRef } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { Calendar, MapPin } from "lucide-react"
+import { MapPin } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { apiFetch } from "@/lib/api"
 
@@ -18,11 +18,52 @@ type RelatedEvent = {
     image?: string
     categories?: string[]
     _id?: string
+    organizerPlanTier?: string
+    venue?: { venueCity?: string }
+    location?: { city?: string }
 }
 
 type Props = {
     currentEventId: string
     categories: string[] | undefined
+}
+
+/** Higher = preferred in "You May Also Like": platinum → gold → silver → rest. */
+function planTierRank(tier: string | undefined): number {
+    switch ((tier || "").toLowerCase()) {
+        case "platinum":
+            return 3
+        case "gold":
+            return 2
+        case "silver":
+            return 1
+        default:
+            return 0
+    }
+}
+
+function startDateMs(event: RelatedEvent): number {
+    const t = event.startDate ? Date.parse(event.startDate) : Number.NaN
+    return Number.isFinite(t) ? t : Number.POSITIVE_INFINITY
+}
+
+/** Platinum → Gold → Silver → rest; within the same tier, nearest start date first. */
+function sortRelatedByPlanTier(events: RelatedEvent[]): RelatedEvent[] {
+    return [...events].sort((a, b) => {
+        const tierDiff = planTierRank(b.organizerPlanTier) - planTierRank(a.organizerPlanTier)
+        if (tierDiff !== 0) return tierDiff
+        return startDateMs(a) - startDateMs(b)
+    })
+}
+
+function relatedEventCity(event: RelatedEvent): string | undefined {
+    const city =
+        event.city ||
+        event.venue?.venueCity ||
+        event.location?.city ||
+        ""
+    const trimmed = city.trim()
+    return trimmed || undefined
 }
 
 export function EventPageRelatedEvents({ currentEventId, categories }: Props) {
@@ -59,7 +100,7 @@ export function EventPageRelatedEvents({ currentEventId, categories }: Props) {
     const fetchAllEvents = useCallback(async (): Promise<RelatedEvent[]> => {
         try {
             const data = await apiFetch<{ events?: RelatedEvent[]; data?: RelatedEvent[] }>(
-                `/api/events?limit=10`,
+                `/api/events?limit=24&sort=ranked&excludePast=true`,
                 { auth: false }
             )
 
@@ -72,10 +113,12 @@ export function EventPageRelatedEvents({ currentEventId, categories }: Props) {
                 events = data
             }
 
-            return events.filter(e => {
-                const eventId = e.id || e._id
-                return eventId !== currentEventId
-            })
+            return sortRelatedByPlanTier(
+                events.filter((e) => {
+                    const eventId = e.id || e._id
+                    return eventId !== currentEventId
+                }),
+            )
         } catch (error) {
             console.error("Error fetching all events:", error)
             return []
@@ -97,7 +140,7 @@ export function EventPageRelatedEvents({ currentEventId, categories }: Props) {
                     const fetchPromises = categoryStrings.map(async (categoryName) => {
                         try {
                             const data = await apiFetch<{ events?: RelatedEvent[]; data?: RelatedEvent[] }>(
-                                `/api/events?category=${encodeURIComponent(categoryName)}&limit=10`,
+                                `/api/events?category=${encodeURIComponent(categoryName)}&limit=24&sort=ranked&excludePast=true`,
                                 { auth: false }
                             )
 
@@ -129,7 +172,7 @@ export function EventPageRelatedEvents({ currentEventId, categories }: Props) {
                         }
                     }
 
-                    events = Array.from(eventsMap.values())
+                    events = sortRelatedByPlanTier(Array.from(eventsMap.values()))
                 }
 
                 if (events.length === 0) {
@@ -137,7 +180,6 @@ export function EventPageRelatedEvents({ currentEventId, categories }: Props) {
                     events = await fetchAllEvents()
                 }
 
-                // CHANGED: removed slice(0,4) to store all events for rotation
                 setRelatedEvents(events)
                 setHasFetched(true)
 
@@ -145,7 +187,6 @@ export function EventPageRelatedEvents({ currentEventId, categories }: Props) {
                 console.error("Error fetching related events:", error)
                 try {
                     const allEvents = await fetchAllEvents()
-                    // CHANGED: removed slice(0,4) to store all events for rotation
                     setRelatedEvents(allEvents)
                     setHasFetched(true)
                 } catch (fallbackError) {
@@ -244,7 +285,7 @@ export function EventPageRelatedEvents({ currentEventId, categories }: Props) {
                 {visibleEvents.map((event) => {
                     const eventId = event.id || event._id
                     const eventSlug = event.slug || eventId
-                    const imageUrl = event.image || event.thumbnail || null
+                    const city = relatedEventCity(event)
 
                     return (
                         <Link
@@ -254,19 +295,6 @@ export function EventPageRelatedEvents({ currentEventId, categories }: Props) {
                         >
                             <div className="flex gap-3 p-2 rounded-lg transition-all duration-200 hover:bg-gray-50 hover:shadow-sm">
                                 <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-md bg-gray-100">
-                                    {/* {imageUrl ? (
-                                        <Image
-                                            src={event.image || event.thumbnail || "/placeholder.png"}
-                                            alt={event.title}
-                                            fill
-                                            sizes="64px"
-                                            className="object-cover group-hover:scale-105 transition-transform duration-200"
-                                        />
-                                    ) : (
-                                        <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 text-gray-400">
-                                            <Calendar className="h-6 w-6" />
-                                        </div>
-                                    )} */}
                                     <Image
                                         src={
                                             event.image ||
@@ -284,10 +312,10 @@ export function EventPageRelatedEvents({ currentEventId, categories }: Props) {
                                     <p className="line-clamp-2 text-sm font-medium text-gray-900 group-hover:text-[#FF131C] transition-colors">
                                         {event.title}
                                     </p>
-                                    {event.city && (
+                                    {city && (
                                         <div className="mt-1 flex items-center gap-1 text-xs text-gray-500">
                                             <MapPin className="h-3 w-3 flex-shrink-0" />
-                                            <span className="truncate">{event.city}</span>
+                                            <span className="truncate">{city}</span>
                                         </div>
                                     )}
                                     {event.startDate && (

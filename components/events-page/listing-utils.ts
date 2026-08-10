@@ -309,6 +309,35 @@ export function sortEventsByFollowersAndRating(events: Event[]): Event[] {
   })
 }
 
+/** platinum=3 → gold=2 → silver=1 → free/other=0 */
+export function listingPlanTierRank(tier: string | null | undefined): number {
+  switch ((tier || "").toLowerCase()) {
+    case "platinum":
+      return 3
+    case "gold":
+      return 2
+    case "silver":
+      return 1
+    default:
+      return 0
+  }
+}
+
+/** Premium listing order: plan tier, then nearest start date. */
+export function sortEventsByPlanTierThenStartDate(events: Event[]): Event[] {
+  return [...events].sort((a, b) => {
+    const tierDiff = listingPlanTierRank(b.organizerPlanTier) - listingPlanTierRank(a.organizerPlanTier)
+    if (tierDiff !== 0) return tierDiff
+    const aStart = new Date(a.timings?.startDate ?? a.startDate).getTime()
+    const bStart = new Date(b.timings?.startDate ?? b.startDate).getTime()
+    const aOk = Number.isFinite(aStart)
+    const bOk = Number.isFinite(bStart)
+    if (aOk && bOk && aStart !== bStart) return aStart - bStart
+    if (aOk !== bOk) return aOk ? -1 : 1
+    return a.id.localeCompare(b.id)
+  })
+}
+
 export function applyTopMustVisitRanking(
   events: Event[],
   limit: number = EVENTS_TOP_MUST_VISIT_LIMIT,
@@ -643,6 +672,10 @@ export function mapApiEventToListingEvent(event: any): Event {
     ticketTypes: Array.isArray(e.ticketTypes) ? e.ticketTypes : [],
     followerPreview: normalizeListingFollowerPreview(event as Record<string, unknown>),
     followersCount,
+    organizerPlanTier:
+      typeof e.organizerPlanTier === "string" && e.organizerPlanTier.trim()
+        ? e.organizerPlanTier.trim().toLowerCase()
+        : undefined,
     featured: e.tags?.includes("featured") || false,
     categories,
     tags: e.tags || [],

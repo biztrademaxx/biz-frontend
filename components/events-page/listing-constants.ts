@@ -15,32 +15,36 @@ export const EVENTS_LISTING_BANNER_GRADIENT_OVER_IMAGE =
 
 export const EVENTS_LISTING_REVALIDATE_SEC = 45
 
-/** Matches public listing payload used across explore menu and /event filters. */
-export const EVENTS_LISTING_FETCH_LIMIT = 500
-
-/** Top 100 Must Visit — ranked by saved-event followers, then rating. */
-export const EVENTS_TOP_MUST_VISIT_LIMIT = 100
-
-export function getEventsListingApiUrl(): string {
-  const qs = new URLSearchParams({
-    limit: String(EVENTS_LISTING_FETCH_LIMIT),
-    sort: "newest",
-    excludePast: "true",
-  })
-  return `/api/events?${qs.toString()}`
-}
-
-/** @deprecated Use getEventsListingApiUrl() — excludes past events by default. */
-export const EVENTS_API = getEventsListingApiUrl()
-
-/** Fallback image for listing / trending cards when event has no media. */
-export const LISTING_DEFAULT_EVENT_IMAGE = DEFAULT_EVENT_IMAGE
-
 /** Regular listing events shown above the inline featured ad on each page. */
 export const EVENTS_LISTING_PAGE_CHUNK_BEFORE_FEATURED_AD = 5
 
 /** Regular listing events shown below the inline featured ad on each page. */
 export const EVENTS_LISTING_PAGE_CHUNK_AFTER_FEATURED_AD = 5
+
+/**
+ * @deprecated Phase 1 no longer bulk-fetches 500 rows for the main list.
+ * Kept for any legacy callers; prefer EVENTS_LISTING_PAGE_SIZE + query builder.
+ */
+export const EVENTS_LISTING_FETCH_LIMIT = 50
+
+/** Main /event list page size (5 cards + inline ad + 5 cards). */
+export const EVENTS_LISTING_PAGE_SIZE =
+  EVENTS_LISTING_PAGE_CHUNK_BEFORE_FEATURED_AD + EVENTS_LISTING_PAGE_CHUNK_AFTER_FEATURED_AD
+
+/** Compact fetch for sidebar facets / trending / inline promo rails. */
+export const EVENTS_LISTING_RAILS_LIMIT = 50
+
+/** Right-rail Gold + Platinum subscription events. */
+export const EVENTS_LISTING_PREMIUM_LIMIT = 5
+
+/** Top Must Visit rail cap (client sort over rails payload until Phase 2 ranking). */
+export const EVENTS_TOP_MUST_VISIT_LIMIT = 100
+
+/** @deprecated Use getEventsListingApiUrl() from listing-query. */
+export const EVENTS_API = `/api/events?limit=${EVENTS_LISTING_PAGE_SIZE}&sort=ranked&excludePast=true`
+
+/** Fallback image for listing / trending cards when event has no media. */
+export const LISTING_DEFAULT_EVENT_IMAGE = DEFAULT_EVENT_IMAGE
 
 /** Auto-advance interval for the inline featured-events carousel (ms). */
 export const EVENTS_LISTING_INLINE_FEATURED_AUTO_MS = 5500

@@ -12,17 +12,29 @@ import {
   trendingLocationLine,
 } from "./listing-utils"
 
+function premiumBadge(tier: string | undefined): { label: string; swatchClass: string } {
+  const t = (tier || "").toLowerCase()
+  if (t === "platinum") {
+    return { label: "Platinum", swatchClass: "bg-slate-400" }
+  }
+  if (t === "gold") {
+    return { label: "Gold", swatchClass: "bg-amber-400" }
+  }
+  return { label: "Premium", swatchClass: "bg-amber-400" }
+}
+
 export function TrendingEventsSideCard({ event, imageUrl }: { event: Event; imageUrl: string }) {
   const path = eventPublicPath(event)
   const followers = typeof event.followersCount === "number" ? event.followersCount : 0
   const subtitle = trendingCardSubtitle(event)
+  const badge = premiumBadge(event.organizerPlanTier)
 
   return (
     <Link href={path} className="group block">
       <article className="mb-3 rounded-sm border border-gray-100 bg-white p-3 shadow-[0_2px_12px_rgba(0,0,0,0.08),0_4px_20px_rgba(0,0,0,0.06)] transition-shadow hover:shadow-[0_4px_20px_rgba(0,0,0,0.12)]">
         <div className="mb-1.5 flex items-center justify-end gap-1.5 text-xs font-medium leading-none text-gray-800">
-          <span className="h-3.5 w-3.5 shrink-0 rounded-sm bg-amber-400" aria-hidden />
-          <span>Trending</span>
+          <span className={`h-3.5 w-3.5 shrink-0 rounded-sm ${badge.swatchClass}`} aria-hidden />
+          <span>{badge.label}</span>
         </div>
         <p className="mb-1 text-xs font-medium leading-tight text-gray-800">
           {formatTrendingEventDateRange(event.timings.startDate, event.timings.endDate)}

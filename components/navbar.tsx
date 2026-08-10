@@ -24,6 +24,7 @@ import { DashboardPlanBadge } from "@/components/dashboard-packages"
 import { dashboardRoleFromUserRole, useDashboardPlan } from "@/hooks/use-dashboard-plan"
 import { HERO_SHELL_X_PADDING_CLASS } from "@/lib/hero/hero-surface"
 import { eventPublicPath } from "@/lib/event-path"
+import { trackSearchClick } from "@/lib/search-click"
 // import { getCurrentUserRole } from "@/lib/api";
 import { motion } from "framer-motion"
 
@@ -180,14 +181,20 @@ export default function Navbar() {
   }, [router, searchQuery, closeSearchUi])
 
   const handleEventClick = useCallback(
-    (ev: { id: string; slug?: string | null }) => {
+    (ev: { id: string; slug?: string | null }, position?: number) => {
+      trackSearchClick({
+        eventId: ev.id,
+        query: searchQuery,
+        position,
+        listingSource: "navbar",
+      })
       router.push(eventPublicPath(ev))
       setSearchQuery("")
       closeSearchUi()
       setMobileMenuOpen(false)
       setExploreOpen(false)
     },
-    [router, closeSearchUi],
+    [router, closeSearchUi, searchQuery],
   )
 
   // Debounced search — fires a request ~300ms after the user stops typing,
@@ -303,7 +310,7 @@ export default function Navbar() {
           No results found. Try different keywords.
         </div>
       ) : (
-        searchResultItems.map((item) =>
+        searchResultItems.map((item, index) =>
           item.kind === "venue" ? (
             <button
               key={`v-${item.v.id}`}
@@ -322,7 +329,7 @@ export default function Navbar() {
             <button
               key={`e-${item.ev.id}`}
               type="button"
-              onClick={() => handleEventClick(item.ev)}
+              onClick={() => handleEventClick(item.ev, index)}
               className="flex w-full items-start gap-3 border-b border-gray-100 p-3 text-left hover:bg-gray-50"
             >
               <Calendar className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
