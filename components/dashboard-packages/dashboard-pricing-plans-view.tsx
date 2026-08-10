@@ -21,6 +21,25 @@ import {
   fetchCurrentDashboardPlan,
 } from "@/lib/subscription-checkout"
 
+// Normalized comparison so slugs like "organizer-silver" and names like "Silver Plan"
+// (or an API returning a bare "silver") all match correctly, case/punctuation-insensitive.
+function normalizePlanKey(value: string): string {
+  return value.trim().toLowerCase().replace(/[^a-z0-9]/g, "")
+}
+
+function isSamePlan(plan: DashboardPlanDefinition, slugOrName: string | null | undefined): boolean {
+  if (!slugOrName) return false
+  const target = normalizePlanKey(slugOrName)
+  if (!target) return false
+  const idKey = normalizePlanKey(plan.id)
+  const nameKey = normalizePlanKey(plan.name)
+  return (
+    idKey === target || nameKey === target ||
+    idKey.includes(target) || target.includes(idKey) ||
+    nameKey.includes(target) || target.includes(nameKey)
+  )
+}
+
 function FeatureIcon({ state }: { state: PlanFeatureState }) {
   if (state === true) {
     return (
@@ -203,7 +222,7 @@ export function DashboardPricingPlansView({ role, onPlanSelect }: DashboardPrici
 
   const handleCta = async (plan: DashboardPlanDefinition) => {
     onPlanSelect?.(plan.id)
-    if (plan.id === currentPlanSlug) return
+    if (isSamePlan(plan, currentPlanSlug)) return
 
     if (isFreeDashboardPlan(plan)) {
       setActionPlanId(plan.id)
@@ -228,6 +247,11 @@ export function DashboardPricingPlansView({ role, onPlanSelect }: DashboardPrici
 
   const resolvedCurrentSlug =
     currentPlanSlug ?? plans.find((p) => p.defaultCurrent)?.id ?? plans[0]?.id
+
+  // Only rule: the Free plan is never shown as a card. Every other plan shows —
+  // whichever one matches the account's current plan is marked "Current plan"
+  // (disabled); the rest behave as normal upgrade options.
+  const visiblePlans = plans.filter((plan) => !isFreeDashboardPlan(plan))
 
   return (
     <>
@@ -256,12 +280,12 @@ export function DashboardPricingPlansView({ role, onPlanSelect }: DashboardPrici
         </div>
 
         <div className="grid gap-6 lg:grid-cols-3">
-          {plans.map((plan) => (
+          {visiblePlans.map((plan) => (
             <PlanCard
               key={plan.id}
               plan={plan}
               accent={accent}
-              isCurrent={plan.id === resolvedCurrentSlug}
+              isCurrent={isSamePlan(plan, resolvedCurrentSlug)}
               loading={actionPlanId === plan.id}
               onCta={handleCta}
             />
