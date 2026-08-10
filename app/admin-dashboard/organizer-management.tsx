@@ -37,6 +37,7 @@ import { OrganizerLocationSelects } from "@/components/admin-dashboard/organizer
 import { hasUsableProfileImage } from "@/lib/has-usable-profile-image"
 import { resolveOrganizerLocationFields } from "@/lib/organizer-location-resolve"
 import { getPublicProfilePath } from "@/lib/profile-path"
+import { getPlanColor, getPlanDisplayName } from "@/lib/subscription-features"
 
 interface Organizer {
   company: string | null
@@ -90,6 +91,10 @@ interface Organizer {
     exhibitors: number
     venueManagers: number
   }
+  /** Active ORGANIZER subscription from UserPlanSubscription (defaults to free). */
+  planSlug?: string | null
+  planName?: string | null
+  planTier?: "free" | "silver" | "gold" | "platinum" | string | null
 }
 
 interface TransformedOrganizer {
@@ -847,8 +852,9 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
               <tbody className="divide-y divide-gray-50">
                 {visibleOrganizers.map((organizer) => {
                   const isVerified = organizer.originalData.isVerified
-                  const isActive = organizer.originalData.isActive
-                  const isPremium = isVerified && isActive
+                  const planSlug = organizer.originalData.planSlug || "organizer-free"
+                  const planLabel = getPlanDisplayName(planSlug)
+                  const planColors = getPlanColor(planSlug)
                   const colorClass = getAvatarColor(organizer.name)
 
                   return (
@@ -878,15 +884,13 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
                         </div>
                       </td>
                       <td className="px-4 py-4">
-                        {isPremium ? (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
-                            Premium
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
-                            Basic
-                          </span>
-                        )}
+                        <span
+                          className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                          style={{ backgroundColor: planColors.bg, color: planColors.text }}
+                          title={organizer.originalData.planName || planLabel}
+                        >
+                          {planLabel}
+                        </span>
                       </td>
                       <td className="px-4 py-4 font-mono text-sm font-medium tabular-nums text-gray-700">
                         {organizer.totalEvents}

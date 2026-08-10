@@ -129,7 +129,7 @@ const PLAN_TIER_LEVELS: Record<string, number> = {
 
 const TIER_COLORS: Record<string, { bg: string; text: string }> = {
   'organizer-free': { bg: '#F3F4F6', text: '#6B7280' },
-  'organizer-silver': { bg: '#F3F4F6', text: '#6B7280' },
+  'organizer-silver': { bg: '#E5E7EB', text: '#374151' },
   'organizer-gold': { bg: '#FEF3C7', text: '#92400E' },
   'organizer-platinum': { bg: '#DBEAFE', text: '#1E40AF' },
 }
