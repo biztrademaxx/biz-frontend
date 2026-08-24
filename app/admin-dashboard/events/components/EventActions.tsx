@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { MoreHorizontal, Star, Crown, ShieldCheck, Trash2, Megaphone, Lock, Sparkles, ArrowUpRight, Loader2 } from "lucide-react"
+import { MoreHorizontal, Star, Crown, ShieldCheck, Trash2, Megaphone, Lock, Sparkles, ArrowUpRight, Loader2, CheckCircle2 } from "lucide-react"
 import type { Event } from "../types/event.types"
 import { 
   canFeatureEvent, 
@@ -43,6 +43,7 @@ interface EventActionsProps {
   onVipToggle: (eventId: string, current: boolean) => void
   onPublicToggle: (eventId: string, current: boolean) => void
   onDelete: (eventId: string) => void
+  onApprove?: (eventId: string) => void
   onPromote: (event: Event) => void
   onVerify: (event: Event) => void
 }
@@ -148,6 +149,7 @@ export function EventActions({
   onVipToggle,
   onPublicToggle,
   onDelete,
+  onApprove,
   onPromote,
   onVerify,
 }: EventActionsProps) {
@@ -194,6 +196,19 @@ export function EventActions({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-72">
+        {event.status === "Pending Review" && onApprove && (
+          <>
+            <DropdownMenuItem
+              className="text-emerald-700 focus:text-emerald-800"
+              onClick={() => onApprove(event.id)}
+            >
+              <CheckCircle2 className="w-4 h-4 mr-2" />
+              Approve & Publish
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+          </>
+        )}
+
         {/* Featured - Gold & Platinum */}
         <ActionItem
           onClick={() => canFeature && onFeatureToggle(event.id, isFeatured)}

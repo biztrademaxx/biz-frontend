@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/sheet"
 import { fetchGeoHint, type GeoHint } from "@/lib/browse-geo"
 import { getPublicProfilePath } from "@/lib/profile-path"
+import { getPlanColor, getPlanDisplayName } from "@/lib/subscription-features"
 import {
   OrganizersFilterSidebar,
   type OrganizerFacets,
@@ -66,6 +67,9 @@ interface Organizer {
   featured: boolean
   avgRating: number
   totalReviews: number
+  /** Active organizer subscription — free | silver | gold | platinum */
+  planSlug?: string
+  planTier?: string
 }
 
 function organizerDisplayName(o: Organizer): string {
@@ -579,6 +583,10 @@ export default function OrganizersPage() {
                 {organizers.map((organizer) => {
                   const title = organizerDisplayName(organizer)
                   const locationLabel = organizerLocationLine(organizer)
+                  const planSlug = organizer.planSlug || "organizer-free"
+                  const planLabel = getPlanDisplayName(planSlug)
+                  const planColors = getPlanColor(planSlug)
+                  const showPlanBadge = planSlug !== "organizer-free"
                   return (
                     <Card
                       key={organizer.id}
@@ -608,7 +616,17 @@ export default function OrganizersPage() {
 
                       <CardContent className="flex flex-1 flex-col p-3">
                         <div className="mb-1.5 flex items-start justify-between gap-1.5">
-                          <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-gray-900">{title}</h3>
+                          <div className="min-w-0 flex-1">
+                            <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-gray-900">{title}</h3>
+                            {showPlanBadge ? (
+                              <span
+                                className="mt-1 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                                style={{ backgroundColor: planColors.bg, color: planColors.text }}
+                              >
+                                {planLabel}
+                              </span>
+                            ) : null}
+                          </div>
                           <div className="flex shrink-0 items-center gap-0.5 text-xs">
                             <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
                             <span className="font-medium tabular-nums">

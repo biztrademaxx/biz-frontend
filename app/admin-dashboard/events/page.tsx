@@ -48,6 +48,9 @@ export default function EventManagementPage({ onPromote }: EventManagementPagePr
     handlePublicToggle,
     handleVerifyToggle,
     handleDeleteEvent,
+    handleBulkDeleteEvents,
+    handleApproveEvent,
+    handleBulkApproveEvents,
     handleEditEvent,
     handleSaveEvent,
     handleCancelEdit,
@@ -99,6 +102,9 @@ export default function EventManagementPage({ onPromote }: EventManagementPagePr
         onVipToggle={handleVipToggle}
         onPublicToggle={handlePublicToggle}
         onDelete={handleDeleteEvent}
+        onBulkDelete={handleBulkDeleteEvents}
+        onApprove={handleApproveEvent}
+        onBulkApprove={handleBulkApproveEvents}
         onPromote={onPromote ?? (() => {})}
         onVerify={handleVerifyEvent}
         onSearchChange={setSearchTerm}

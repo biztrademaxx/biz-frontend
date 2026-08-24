@@ -364,6 +364,100 @@ export function useEvents() {
     [refreshAfterMutation]
   )
 
+  const handleApproveEvent = useCallback(
+    async (eventId: string) => {
+      try {
+        await api.approveEvent(eventId)
+        setEvents((prev) =>
+          prev.map((e) =>
+            e.id === eventId ? { ...e, status: "Approved", isPublic: true, isVerified: true } : e
+          )
+        )
+        toast({
+          title: "Event Approved",
+          description: "Event is published and will appear on the public events page",
+        })
+        await refreshAfterMutation()
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: error instanceof Error ? error.message : "Failed to approve event",
+          variant: "destructive",
+        })
+      }
+    },
+    [refreshAfterMutation]
+  )
+
+  const handleBulkApproveEvents = useCallback(
+    async (eventIds: string[]) => {
+      if (!Array.isArray(eventIds) || eventIds.length === 0) return
+      try {
+        const result = await api.bulkApproveEvents(eventIds)
+        const approvedCount = result.approved ?? eventIds.length
+        const ok = new Set(eventIds)
+        setEvents((prev) =>
+          prev.map((e) =>
+            ok.has(e.id) ? { ...e, status: "Approved", isPublic: true, isVerified: true } : e
+          )
+        )
+        toast({
+          title: "Events Approved",
+          description: `${approvedCount} event(s) approved and published`,
+        })
+        await refreshAfterMutation()
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: error instanceof Error ? error.message : "Failed to approve events",
+          variant: "destructive",
+        })
+      }
+    },
+    [refreshAfterMutation]
+  )
+
+  const handleBulkDeleteEvents = useCallback(
+    async (eventIds: string[]) => {
+      if (!Array.isArray(eventIds) || eventIds.length === 0) return
+      try {
+        const results = await Promise.allSettled(eventIds.map((id) => api.deleteEvent(id)))
+        const succeededIds = eventIds.filter((_, i) => results[i]?.status === "fulfilled")
+        const failed = eventIds.length - succeededIds.length
+        if (succeededIds.length > 0) {
+          const ok = new Set(succeededIds)
+          setEvents((prev) => prev.filter((e) => !ok.has(e.id)))
+        }
+        if (failed === 0) {
+          toast({
+            title: "Events Deleted",
+            description: `${succeededIds.length} event(s) deleted successfully`,
+          })
+        } else if (succeededIds.length === 0) {
+          toast({
+            title: "Error",
+            description: "Failed to delete selected events",
+            variant: "destructive",
+          })
+        } else {
+          toast({
+            title: "Partial delete",
+            description: `Deleted ${succeededIds.length}, failed ${failed}`,
+            variant: "destructive",
+          })
+        }
+        await refreshAfterMutation()
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: error instanceof Error ? error.message : "Failed to delete events",
+          variant: "destructive",
+        })
+      }
+    },
+    [refreshAfterMutation]
+  )
+
   const handleEditEvent = useCallback((event: Event) => {
     setSelectedEvent(event)
     setIsEditing(true)
@@ -490,6 +584,9 @@ export function useEvents() {
     handlePublicToggle,
     handleVerifyToggle,
     handleDeleteEvent,
+    handleBulkDeleteEvents,
+    handleApproveEvent,
+    handleBulkApproveEvents,
     handleEditEvent,
     handleSaveEvent,
     handleCancelEdit,

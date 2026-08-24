@@ -4,7 +4,7 @@
 import { useEffect, useMemo, useState, type CSSProperties } from "react"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Trash2, Download, Search, Mail, Loader2, BadgeCheck } from "lucide-react"
+import { Trash2, Download, Search, Mail, Loader2, BadgeCheck, CheckCircle2 } from "lucide-react"
 import { EventRow } from "./EventRow"
 import type { Event, Category } from "../types/event.types"
 import { getOrganizerDisplay, getCategoryDisplay } from "../types/event.types"
@@ -36,6 +36,8 @@ interface EventTableProps {
   onPublicToggle: (eventId: string, current: boolean) => void
   onDelete: (eventId: string) => void
   onBulkDelete?: (eventIds: string[]) => void
+  onApprove?: (eventId: string) => void
+  onBulkApprove?: (eventIds: string[]) => void
   onPromote: (event: Event) => void
   onVerify: (event: Event) => void
   onSearchChange: (value: string) => void
@@ -170,6 +172,8 @@ export function EventTable({
   onPublicToggle,
   onDelete,
   onBulkDelete,
+  onApprove,
+  onBulkApprove,
   onPromote,
   onVerify,
   onSearchChange,
@@ -385,12 +389,27 @@ export function EventTable({
 
   const handleBulkDelete = () => {
     if (selectedCount === 0) return
-    if (confirm(`Are you sure you want to delete ${selectedCount} event(s)?`)) {
-      const ids = Array.from(selectedEvents)
-      ids.forEach((id) => onDelete(id))
-      setSelectedEvents(new Set())
-      if (onBulkDelete) onBulkDelete(ids)
+    if (!confirm(`Are you sure you want to delete ${selectedCount} event(s)?`)) return
+    const ids = Array.from(selectedEvents)
+    setSelectedEvents(new Set())
+    if (onBulkDelete) {
+      onBulkDelete(ids)
+      return
     }
+    // Fallback: single deletes (each may prompt again)
+    ids.forEach((id) => onDelete(id))
+  }
+
+  const handleBulkApprove = () => {
+    if (selectedCount === 0) return
+    if (!confirm(`Approve and publish ${selectedCount} event(s)? They will appear on the public events page.`)) return
+    const ids = Array.from(selectedEvents)
+    setSelectedEvents(new Set())
+    if (onBulkApprove) {
+      onBulkApprove(ids)
+      return
+    }
+    ids.forEach((id) => onApprove?.(id))
   }
 
   const handleSendListingEmailForSelection = () => {
@@ -626,6 +645,14 @@ export function EventTable({
                   <>
                     <Button
                       type="button" variant="outline" size="sm"
+                      className="gap-2 border-green-200 text-green-700 hover:bg-green-50"
+                      onClick={handleBulkApprove}
+                    >
+                      <CheckCircle2 className="h-4 w-4" />
+                      Approve Selected
+                    </Button>
+                    <Button
+                      type="button" variant="outline" size="sm"
                       className="gap-2 border-blue-200 text-blue-700 hover:bg-blue-50"
                       disabled={sendingMail}
                       onClick={handleSendListingEmailForSelection}
@@ -813,6 +840,7 @@ export function EventTable({
                           onVipToggle={onVipToggle}
                           onPublicToggle={onPublicToggle}
                           onDelete={onDelete}
+                          onApprove={onApprove}
                           onPromote={onPromote}
                           onVerify={onVerify}
                           getStatusColor={getStatusColor}

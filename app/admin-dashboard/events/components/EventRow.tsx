@@ -4,7 +4,7 @@
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Edit, Star, Eye, Trash2 } from "lucide-react"
+import { Edit, Star, Eye, Trash2, CheckCircle2 } from "lucide-react"
 import { getCategoryDisplay } from "../types/event.types"
 import type { Event } from "../types/event.types"
 import { EventActions } from "./EventActions"
@@ -24,12 +24,14 @@ interface EventRowProps {
   onVipToggle: (eventId: string, current: boolean) => void
   onPublicToggle: (eventId: string, current: boolean) => void
   onDelete: (eventId: string) => void
+  onApprove?: (eventId: string) => void
   onPromote: (event: Event) => void
   onVerify: (event: Event) => void
   getStatusColor: (status: Event["status"]) => "default" | "secondary" | "destructive" | "outline"
 }
 
-function getEventStatusByDate(event: Event): "Live" | "Upcoming" | "Ended" | "Draft" {
+function getEventStatusByDate(event: Event): "Live" | "Upcoming" | "Ended" | "Draft" | "Pending" {
+  if (event.status === "Pending Review") return "Pending"
   if (event.status === "Draft") return "Draft"
   const today = new Date(); today.setHours(0, 0, 0, 0)
   const startDate = new Date(event.date); startDate.setHours(0, 0, 0, 0)
@@ -189,12 +191,13 @@ function CategoryPill({ name }: { name: string }) {
   )
 }
 
-function StatusPill({ status }: { status: "Live" | "Upcoming" | "Ended" | "Draft" }) {
+function StatusPill({ status }: { status: "Live" | "Upcoming" | "Ended" | "Draft" | "Pending" }) {
   const STYLES = {
     Live: { bg: "#dcfce7", dot: "#16a34a", text: "#15803d" },
     Upcoming: { bg: "#dbeafe", dot: "#3b82f6", text: "#1d4ed8" },
     Ended: { bg: "#f3f4f6", dot: "#9ca3af", text: "#6b7280" },
     Draft: { bg: "#fef9c3", dot: "#ca8a04", text: "#a16207" },
+    Pending: { bg: "#fef3c7", dot: "#eab308", text: "#a16207" },
   }
   const s = STYLES[status]
   return (
@@ -241,6 +244,7 @@ export function EventRow({
   onVipToggle,
   onPublicToggle,
   onDelete,
+  onApprove,
   onPromote,
   onVerify,
 }: EventRowProps) {
@@ -476,6 +480,20 @@ export function EventRow({
             <Edit className="h-3.5 w-3.5" />
           </Button>
 
+          {/* Approve pending */}
+          {event.status === "Pending Review" && onApprove && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => onApprove(event.id)}
+              className="h-7 w-7 hover:bg-emerald-50 hover:text-emerald-600"
+              title="Approve & publish event"
+              style={{ color: "#059669" }}
+            >
+              <CheckCircle2 className="h-3.5 w-3.5" />
+            </Button>
+          )}
+
           {/* Delete */}
           <Button
             variant="ghost"
@@ -499,6 +517,7 @@ export function EventRow({
             onVipToggle={onVipToggle}
             onPublicToggle={onPublicToggle}
             onDelete={onDelete}
+            onApprove={onApprove}
             onPromote={onPromote}
             onVerify={onVerify}
           />

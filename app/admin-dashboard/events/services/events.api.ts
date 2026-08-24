@@ -96,6 +96,33 @@ export async function deleteEvent(id: string) {
   return adminApi(`/events/${id}`, { method: "DELETE", auth: true })
 }
 
+export async function approveEvent(eventId: string) {
+  return adminApi<{ success?: boolean; data?: unknown; error?: string }>("/events/approve", {
+    method: "POST",
+    body: { eventId },
+    auth: true,
+  })
+}
+
+export async function bulkApproveEvents(eventIds: string[]) {
+  return adminApi<{ success?: boolean; approved?: number; results?: unknown[]; error?: string }>(
+    "/events/bulk-approve",
+    {
+      method: "POST",
+      body: { eventIds },
+      auth: true,
+    }
+  )
+}
+
+export async function rejectEvent(eventId: string, reason?: string) {
+  return adminApi<{ success?: boolean; data?: unknown; error?: string }>("/events/reject", {
+    method: "POST",
+    body: { eventId, reason },
+    auth: true,
+  })
+}
+
 export async function getEventCategories(): Promise<unknown[] | GetCategoriesResponse> {
   return adminApi<unknown[] | GetCategoriesResponse>("/event-categories", { auth: true })
 }
