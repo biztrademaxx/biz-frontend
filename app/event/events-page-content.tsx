@@ -115,6 +115,9 @@ export default function EventsPageContent({
   const [facetCategories, setFacetCategories] = useState<NameCount[]>([])
   const [facetFormats, setFacetFormats] = useState<NameCount[]>([{ name: "All Formats", count: 0 }])
   const [facetLocations, setFacetLocations] = useState<NameCount[]>([])
+  const [facetCities, setFacetCities] = useState<NameCount[]>([])
+  const [facetCountries, setFacetCountries] = useState<NameCount[]>([])
+  const [nearYouLoading, setNearYouLoading] = useState(false)
 
   const [visitorCounts, setVisitorCounts] = useState<Record<string, number>>({})
   useEffect(() => {
@@ -278,13 +281,26 @@ export default function EventsPageContent({
         categories?: NameCount[]
         formats?: NameCount[]
         locations?: NameCount[]
+        cities?: NameCount[]
+        countries?: NameCount[]
       }
       if (payload.success === false) return
       if (Array.isArray(payload.categories)) setFacetCategories(payload.categories)
       if (Array.isArray(payload.formats) && payload.formats.length > 0) {
         setFacetFormats(payload.formats)
       }
-      if (Array.isArray(payload.locations)) setFacetLocations(payload.locations)
+      const cities = Array.isArray(payload.cities)
+        ? payload.cities
+        : Array.isArray(payload.locations)
+          ? payload.locations
+          : []
+      if (cities.length > 0) {
+        setFacetCities(cities)
+        setFacetLocations(cities)
+      } else if (Array.isArray(payload.locations)) {
+        setFacetLocations(payload.locations)
+      }
+      if (Array.isArray(payload.countries)) setFacetCountries(payload.countries)
     } catch (e) {
       console.error("[v0] Error fetching listing facets:", e)
     }
@@ -465,7 +481,42 @@ export default function EventsPageContent({
 
   const formats = facetFormats
 
-  const locations = facetLocations
+  const locations = facetLocations.length > 0 ? facetLocations : facetCities
+  const cities = facetCities.length > 0 ? facetCities : facetLocations
+  const countries = facetCountries
+
+  const handleNearYou = async () => {
+    setNearYouLoading(true)
+    try {
+      const { fetchGeoHint } = await import("@/lib/browse-geo")
+      const geo = await fetchGeoHint()
+      const city = geo?.city?.trim()
+      const country = geo?.countryName?.trim()
+      if (city) {
+        setSelectedLocation(city)
+        setSelectedCountry("")
+        toast({ title: "Near you", description: `Showing events near ${city}` })
+      } else if (country) {
+        setSelectedCountry(country)
+        setSelectedLocation("")
+        toast({ title: "Near you", description: `Showing events in ${country}` })
+      } else {
+        toast({
+          title: "Location unavailable",
+          description: "Could not detect your location. Try searching in View More.",
+          variant: "destructive",
+        })
+      }
+    } catch {
+      toast({
+        title: "Location unavailable",
+        description: "Could not detect your location.",
+        variant: "destructive",
+      })
+    } finally {
+      setNearYouLoading(false)
+    }
+  }
 
   const filteredCategories = useMemo(() => categories, [categories])
 
@@ -754,8 +805,14 @@ export default function EventsPageContent({
             locationOpen={locationOpen}
             setLocationOpen={setLocationOpen}
             locations={locations}
+            cities={cities}
+            countries={countries}
             selectedLocation={selectedLocation}
             setSelectedLocation={setSelectedLocation}
+            selectedCountry={selectedCountry}
+            setSelectedCountry={setSelectedCountry}
+            onNearYou={() => void handleNearYou()}
+            nearYouLoading={nearYouLoading}
             categoryOpen={categoryOpen}
             setCategoryOpen={setCategoryOpen}
             filteredCategories={filteredCategories}

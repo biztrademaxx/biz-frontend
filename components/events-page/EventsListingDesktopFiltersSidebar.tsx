@@ -1,8 +1,12 @@
 "use client"
 
+import { useState } from "react"
 import type { NameCount } from "./listing-types"
 import { EVENTS_LISTING_STICKY_TOP_CLASS } from "./listing-constants"
 import { SidebarCheckboxRow, SidebarSection } from "./EventsListingSidebarPrimitives"
+import { LocationViewMoreModal } from "./LocationViewMoreModal"
+
+const SIDEBAR_LOCATION_PREVIEW = 8
 
 export type EventsListingDesktopFiltersSidebarProps = {
   calendarOpen: boolean
@@ -18,8 +22,14 @@ export type EventsListingDesktopFiltersSidebarProps = {
   locationOpen: boolean
   setLocationOpen: (v: boolean) => void
   locations: NameCount[]
+  cities?: NameCount[]
+  countries?: NameCount[]
   selectedLocation: string
   setSelectedLocation: (v: string) => void
+  selectedCountry?: string
+  setSelectedCountry?: (v: string) => void
+  onNearYou?: () => void
+  nearYouLoading?: boolean
   categoryOpen: boolean
   setCategoryOpen: (v: boolean) => void
   filteredCategories: NameCount[]
@@ -46,8 +56,14 @@ export function EventsListingDesktopFiltersSidebar({
   locationOpen,
   setLocationOpen,
   locations,
+  cities,
+  countries,
   selectedLocation,
   setSelectedLocation,
+  selectedCountry = "",
+  setSelectedCountry,
+  onNearYou,
+  nearYouLoading,
   categoryOpen,
   setCategoryOpen,
   filteredCategories,
@@ -59,6 +75,13 @@ export function EventsListingDesktopFiltersSidebar({
   setPriceRange,
   clearAllFilters,
 }: EventsListingDesktopFiltersSidebarProps) {
+  const [locationModalOpen, setLocationModalOpen] = useState(false)
+
+  const cityList = cities && cities.length > 0 ? cities : locations
+  const countryList = countries ?? []
+  const previewLocations = locations.slice(0, SIDEBAR_LOCATION_PREVIEW)
+  const hasMoreLocations = true
+
   return (
     <div className="lg:col-span-3 hidden lg:block">
       <div className={`sticky ${EVENTS_LISTING_STICKY_TOP_CLASS} z-10 self-start`}>
@@ -103,15 +126,31 @@ export function EventsListingDesktopFiltersSidebar({
             open={locationOpen}
             onToggle={() => setLocationOpen(!locationOpen)}
           >
-            {locations.map((loc) => (
+            {previewLocations.map((loc) => (
               <SidebarCheckboxRow
                 key={loc.name}
                 label={loc.name}
                 count={loc.count}
-                checked={selectedLocation === loc.name}
-                onChange={() => setSelectedLocation(loc.name)}
+                checked={selectedLocation === loc.name || selectedCountry === loc.name}
+                onChange={() => {
+                  if (selectedLocation === loc.name) {
+                    setSelectedLocation("")
+                    return
+                  }
+                  setSelectedLocation(loc.name)
+                  setSelectedCountry?.("")
+                }}
               />
             ))}
+            {hasMoreLocations && (
+              <button
+                type="button"
+                onClick={() => setLocationModalOpen(true)}
+                className="mx-4 mb-2 mt-1 w-[calc(100%-2rem)] rounded-full border border-gray-200 px-4 py-2 text-sm font-medium text-[#2563EB] transition-colors hover:bg-blue-50"
+              >
+                View More
+              </button>
+            )}
           </SidebarSection>
 
           <SidebarSection
@@ -162,6 +201,25 @@ export function EventsListingDesktopFiltersSidebar({
           </div>
         </div>
       </div>
+
+      <LocationViewMoreModal
+        open={locationModalOpen}
+        onClose={() => setLocationModalOpen(false)}
+        cities={cityList}
+        countries={countryList}
+        selectedLocation={selectedLocation}
+        selectedCountry={selectedCountry}
+        onSelectCity={(name) => {
+          setSelectedLocation(name)
+          if (name) setSelectedCountry?.("")
+        }}
+        onSelectCountry={(name) => {
+          setSelectedCountry?.(name)
+          if (name) setSelectedLocation("")
+        }}
+        onNearYou={onNearYou}
+        nearYouLoading={nearYouLoading}
+      />
     </div>
   )
 }
