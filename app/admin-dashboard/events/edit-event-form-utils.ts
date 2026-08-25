@@ -76,6 +76,34 @@ export function normalizeEventCategoryNames(event: EditEventRecord): string[] {
   return []
 }
 
+/**
+ * For PATCH: omit unchanged media, and never send `data:` / `blob:` payloads
+ * (those blow past Express JSON limits). Prefer Cloudinary/http(s) URLs only.
+ * Returns `undefined` when the field should be left off the request body.
+ */
+export function mediaFieldForPatch(
+  next: string | null | undefined,
+  original: string | null | undefined,
+): string | null | undefined {
+  const n = (next ?? "").trim()
+  const o = (original ?? "").trim()
+  if (n === o) return undefined
+  if (isInlineMediaDataUrl(n)) return undefined
+  return n
+}
+
+/** True for base64 data URLs or temporary blob: object URLs — never persist these via JSON PATCH. */
+export function isInlineMediaDataUrl(value: string | null | undefined): boolean {
+  const v = (value ?? "").trim()
+  return v.startsWith("data:") || v.startsWith("blob:")
+}
+
+/** Keep only http(s) (or other non-inline) URLs for media arrays in PATCH bodies. */
+export function httpMediaUrlsOnly(urls: string[] | null | undefined): string[] {
+  if (!Array.isArray(urls)) return []
+  return urls.map((u) => String(u).trim()).filter((u) => u && !isInlineMediaDataUrl(u))
+}
+
 /** Map Express admin PATCH `data` (Prisma shape) onto the edit form / list record. */
 export function mapPatchedEventToEditRecord(
   raw: Record<string, unknown>,

@@ -10,38 +10,39 @@ export const editEventStatusEnum = z.enum([
   "Draft",
 ])
 
+// No `.default()` here: defaults live in the form's `defaultValues`. Zod defaults
+// make input optional vs output required and break `zodResolver` + RHF typing.
 export const editEventFormSchema = z
   .object({
     title: z.string().trim().min(1, "Event title is required"),
     slug: z.string().trim().min(1, "Slug is required"),
     description: z.string().trim().min(1, "Full description is required"),
-    shortDescription: z.string().max(200, "Max 200 characters").default(""),
-    subTitle: z.string().max(200, "Max 200 characters").default(""),
-    edition: z.string().default(""),
+    shortDescription: z.string().max(200, "Max 200 characters"),
+    subTitle: z.string().max(200, "Max 200 characters"),
+    edition: z.string(),
     date: z.string().min(1, "Start date is required"),
     endDate: z.string().min(1, "End date is required"),
     timezone: z.string().min(1, "Timezone is required"),
     maxCapacity: z.coerce.number().int().min(1, "Max capacity must be at least 1"),
-    attendees: z.coerce.number().int().min(0).default(0),
-    ticketPrice: z.coerce.number().min(0).default(0),
+    attendees: z.coerce.number().int().min(0),
+    ticketPrice: z.coerce.number().min(0),
     eventType: z.string().min(1, "Event type is required"),
     currency: z.string().min(1, "Currency is required"),
     categoryNames: z.array(z.string()).min(1, "Select at least one category"),
-    tagsInput: z.string().default(""),
+    tagsInput: z.string(),
     status: editEventStatusEnum,
-    featured: z.boolean().default(false),
-    vip: z.boolean().default(false),
-    isPublic: z.boolean().default(true),
-    isVerified: z.boolean().default(false),
+    featured: z.boolean(),
+    vip: z.boolean(),
+    isPublic: z.boolean(),
+    isVerified: z.boolean(),
     youtubeVideoUrl: z
       .string()
-      .default("")
       .refine((v) => !v.trim() || /^https?:\/\//i.test(v.trim()), "Enter a valid URL"),
-    bannerImage: z.string().default(""),
-    thumbnailImage: z.string().default(""),
-    vipImage: z.string().default(""),
-    brochure: z.string().default(""),
-    layout: z.string().default(""),
+    bannerImage: z.string(),
+    thumbnailImage: z.string(),
+    vipImage: z.string(),
+    brochure: z.string(),
+    layout: z.string(),
   })
   .superRefine((data, ctx) => {
     if (data.date && data.endDate && data.endDate < data.date) {

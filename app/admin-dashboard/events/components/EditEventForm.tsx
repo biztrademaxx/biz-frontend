@@ -3,7 +3,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useForm } from "react-hook-form"
+import { useForm, type Resolver } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { AppImage } from "@/components/app-image"
 import { Card, CardContent } from "@/components/ui/card"
@@ -31,8 +31,9 @@ import {
   type EditEventCategory,
 } from "../edit-event-schema"
 import {
-  fileToBase64,
+  httpMediaUrlsOnly,
   mapPatchedEventToEditRecord,
+  mediaFieldForPatch,
   normalizeEventCategoryNames,
   scalarEventType,
   slugifyTitle,
@@ -66,7 +67,8 @@ export function EditEventForm({ event, onSave, onCancel, categories }: EditEvent
   const categoryNames = normalizeEventCategoryNames(event)
 
   const form = useForm<EditEventFormValues>({
-    resolver: zodResolver(editEventFormSchema),
+    // Cast: Zod `coerce` makes input/output differ; RHF expects a single values type.
+    resolver: zodResolver(editEventFormSchema) as Resolver<EditEventFormValues>,
     defaultValues: {
       title: event.title || "",
       slug: event.slug || "",
@@ -154,6 +156,25 @@ export function EditEventForm({ event, onSave, onCancel, categories }: EditEvent
 
   const activeCategories = categories.filter((c) => c.isActive)
 
+  const uploadSingleToUrl = async (
+    file: File,
+    kind: "image" | "brochure" | "layout",
+    fieldName: keyof EditEventFormValues,
+  ) => {
+    setUploading(true)
+    form.clearErrors(fieldName)
+    form.clearErrors("root")
+    try {
+      const url = await uploadEventFileToBackend(file, kind)
+      form.setValue(fieldName, url as never, { shouldDirty: true, shouldValidate: true })
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : "Upload failed"
+      form.setError(fieldName, { message: msg })
+    } finally {
+      setUploading(false)
+    }
+  }
+
   const onSubmit = async (values: EditEventFormValues) => {
     if (values.vip && !vipImageFile && !values.vipImage?.trim()) {
       form.setError("vipImage", { message: "Upload a VIP image when VIP is enabled" })
@@ -162,10 +183,17 @@ export function EditEventForm({ event, onSave, onCancel, categories }: EditEvent
 
     setUploading(true)
     try {
-      const [newImageBase64, newVideoBase64, newDocumentBase64] = await Promise.all([
-        Promise.all(newImages.map(fileToBase64)),
-        Promise.all(newVideos.map(fileToBase64)),
-        Promise.all(newDocuments.map(fileToBase64)),
+      // Upload new files to Cloudinary / brochure storage — never embed base64 in PATCH JSON.
+      const [uploadedImages, uploadedVideos, uploadedDocuments] = await Promise.all([
+        Promise.all(newImages.map((f) => uploadEventFileToBackend(f, "image"))),
+        Promise.all(
+          newVideos.map((f) =>
+            f.type.startsWith("image/")
+              ? uploadEventFileToBackend(f, "image")
+              : uploadEventFileToBackend(f, "brochure"),
+          ),
+        ),
+        Promise.all(newDocuments.map((f) => uploadEventFileToBackend(f, "brochure"))),
       ])
 
       let vipImageUrl = values.vipImage?.trim() || ""
@@ -180,6 +208,13 @@ export function EditEventForm({ event, onSave, onCancel, categories }: EditEvent
       } else {
         vipImageUrl = ""
       }
+
+      const nextImages = [...httpMediaUrlsOnly(existingImages), ...uploadedImages]
+      const nextVideos = [...httpMediaUrlsOnly(existingVideos), ...uploadedVideos]
+      const nextDocuments = [...httpMediaUrlsOnly(existingDocuments), ...uploadedDocuments]
+      const prevImages = httpMediaUrlsOnly(event.images)
+      const prevVideos = httpMediaUrlsOnly(event.videos)
+      const prevDocuments = httpMediaUrlsOnly(event.documents)
 
       const updateData: Record<string, unknown> = {
         title: values.title,
@@ -204,18 +239,46 @@ export function EditEventForm({ event, onSave, onCancel, categories }: EditEvent
         eventType: [values.eventType],
         timezone: values.timezone,
         currency: values.currency,
-        images: [...existingImages, ...newImageBase64],
-        videos: [...existingVideos, ...newVideoBase64],
-        documents: [...existingDocuments, ...newDocumentBase64],
-        brochure: values.brochure ?? "",
-        layout: values.layout ?? "",
-        bannerImage: values.bannerImage ?? "",
-        vipImage: vipImageUrl || null,
-        thumbnailImage: values.thumbnailImage ?? "",
         isVerified: values.isVerified,
         verifiedBadgeImage: event.verifiedBadgeImage ?? null,
         youtubeVideoUrl: values.youtubeVideoUrl?.trim() ? values.youtubeVideoUrl.trim() : null,
       }
+
+      // Only rewrite media arrays when the user added/removed items (avoid wiping legacy data: URLs accidentally).
+      if (
+        uploadedImages.length > 0 ||
+        existingImages.length !== (event.images?.length ?? 0) ||
+        JSON.stringify(nextImages) !== JSON.stringify(prevImages)
+      ) {
+        updateData.images = nextImages
+      }
+      if (
+        uploadedVideos.length > 0 ||
+        existingVideos.length !== (event.videos?.length ?? 0) ||
+        JSON.stringify(nextVideos) !== JSON.stringify(prevVideos)
+      ) {
+        updateData.videos = nextVideos
+      }
+      if (
+        uploadedDocuments.length > 0 ||
+        existingDocuments.length !== (event.documents?.length ?? 0) ||
+        JSON.stringify(nextDocuments) !== JSON.stringify(prevDocuments)
+      ) {
+        updateData.documents = nextDocuments
+      }
+
+      const brochure = mediaFieldForPatch(values.brochure, event.brochure)
+      if (brochure !== undefined) updateData.brochure = brochure
+      const layout = mediaFieldForPatch(values.layout, event.layout)
+      if (layout !== undefined) updateData.layout = layout
+      const bannerImage = mediaFieldForPatch(values.bannerImage, event.bannerImage)
+      if (bannerImage !== undefined) updateData.bannerImage = bannerImage
+      const thumbnailImage = mediaFieldForPatch(values.thumbnailImage, event.thumbnailImage)
+      if (thumbnailImage !== undefined) updateData.thumbnailImage = thumbnailImage
+
+      const vipPatch = mediaFieldForPatch(vipImageUrl || "", event.vipImage)
+      if (vipPatch !== undefined) updateData.vipImage = vipPatch || null
+      else if (!values.vip) updateData.vipImage = null
 
       const result = await apiFetch<{ event?: Record<string, unknown>; data?: Record<string, unknown> }>(
         `/api/admin/events/${event.id}`,
@@ -225,6 +288,9 @@ export function EditEventForm({ event, onSave, onCancel, categories }: EditEvent
       if (savedRaw && typeof savedRaw === "object") {
         const savedEvent = mapPatchedEventToEditRecord(savedRaw, event)
         setVipImageFile(null)
+        setNewImages([])
+        setNewVideos([])
+        setNewDocuments([])
         form.setValue("vipImage", savedEvent.vipImage || "")
         onSave(savedEvent)
       } else {
@@ -611,7 +677,7 @@ export function EditEventForm({ event, onSave, onCancel, categories }: EditEvent
                               label="Banner Image"
                               accept="image/*"
                               onFileUpload={async (files) => {
-                                if (files[0]) field.onChange(await fileToBase64(files[0]))
+                                if (files[0]) await uploadSingleToUrl(files[0], "image", "bannerImage")
                               }}
                             />
                           </div>
@@ -634,7 +700,7 @@ export function EditEventForm({ event, onSave, onCancel, categories }: EditEvent
                               label="Thumbnail Image"
                               accept="image/*"
                               onFileUpload={async (files) => {
-                                if (files[0]) field.onChange(await fileToBase64(files[0]))
+                                if (files[0]) await uploadSingleToUrl(files[0], "image", "thumbnailImage")
                               }}
                             />
                           </div>
@@ -690,7 +756,7 @@ export function EditEventForm({ event, onSave, onCancel, categories }: EditEvent
                           accept=".pdf,.doc,.docx"
                           currentFiles={field.value ? [field.value] : []}
                           onFileUpload={async (files) => {
-                            if (files[0]) field.onChange(await fileToBase64(files[0]))
+                            if (files[0]) await uploadSingleToUrl(files[0], "brochure", "brochure")
                           }}
                           onFileRemove={() => field.onChange("")}
                         />
@@ -708,7 +774,10 @@ export function EditEventForm({ event, onSave, onCancel, categories }: EditEvent
                           accept=".pdf,.jpg,.jpeg,.png"
                           currentFiles={field.value ? [field.value] : []}
                           onFileUpload={async (files) => {
-                            if (files[0]) field.onChange(await fileToBase64(files[0]))
+                            if (files[0]) {
+                              const kind = files[0].type.startsWith("image/") ? "layout" : "brochure"
+                              await uploadSingleToUrl(files[0], kind, "layout")
+                            }
                           }}
                           onFileRemove={() => field.onChange("")}
                         />
