@@ -610,6 +610,8 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
           return <CountriesManagement activeTab="cities" />
         case "organizers-add":
           return <AddOrganizerForm />
+        case "organizers-all":
+          return <OrganizerManagement />
         case "organizers-bulk-import":
           return <OrganizerManagement initialTab="bulk-import" />
         case "organizers-connections":
@@ -624,6 +626,8 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
           return <OrganizerFeedbackPage />
         case "exhibitors-add":
           return <AddExhibitorForm />
+        case "exhibitors-all":
+          return <ExhibitorManagement />
         case "exhibitors-promotions":
           return <ExhibitorPromotionsPage />
         case "exhibitors-followers":
@@ -640,6 +644,8 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
           return <SpeakerFeedbackPage />
         case "venues-add":
           return <AddVenueComponent />
+        case "venues-all":
+          return <VenueManagement />
         case "venues-bulk-import":
           return <VenueManagement initialTab="bulk-import" />
         case "venues-events":
@@ -656,6 +662,10 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
           return <OrganizerApprovals />
         case "approvals-exhibitors":
           return <ExhibitorApprovals />
+        case "visitors-all":
+          return <VisitorManagement />
+        case "visitors-suggestions":
+          return <VisitorManagement />
         case "visitors-events":
           return <VisitorEventsPage />
         case "visitors-connections":
@@ -870,7 +880,7 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
                         <item.icon
                           className={cn(
                             "h-[18px] w-[18px] shrink-0",
-                            isActive(item.id) ? "text-white" : "text-slate-500",
+                            isActive(item.id) ? "text-white dark:text-[#010639]" : "text-slate-500 dark:text-muted-foreground",
                           )}
                         />
                         <span className="truncate text-sm">{item.title}</span>
@@ -882,7 +892,7 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
                     </button>
 
                     {isMenuOpen(item.id) && (
-                      <div className="ml-2 mt-1 space-y-0.5 border-l border-slate-200 py-1 pl-3">
+                      <div className="ml-2 mt-1 space-y-0.5 border-l border-slate-200 py-1 pl-3 dark:border-border">
                         {item.subItems.map((subItem) => (
                           <button
                             key={subItem.id}
@@ -891,8 +901,8 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
                             className={cn(
                               "block w-full rounded-lg px-2.5 py-2 text-left text-sm transition-colors",
                               isSubActive(subItem.id)
-                                ? "bg-[#004A96]/10 font-semibold text-[#004A96] ring-1 ring-[#004A96]/20"
-                                : "text-slate-600 hover:bg-slate-100 hover:text-[#004A96]",
+                                ? "bg-[#004A96]/10 font-semibold text-[#004A96] ring-1 ring-[#004A96]/20 dark:bg-[#17F0F6]/15 dark:text-[#17F0F6] dark:ring-[#17F0F6]/25"
+                                : "text-slate-600 hover:bg-slate-100 hover:text-[#004A96] dark:text-muted-foreground dark:hover:bg-sidebar-accent dark:hover:text-sidebar-accent-foreground",
                             )}
                           >
                             {subItem.title}
@@ -913,7 +923,7 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
                     <item.icon
                       className={cn(
                         "h-[18px] w-[18px] shrink-0",
-                        isActive(item.id) ? "text-white" : "text-slate-500",
+                        isActive(item.id) ? "text-white dark:text-[#010639]" : "text-slate-500 dark:text-muted-foreground",
                       )}
                     />
                     <span className="text-sm font-medium">{item.title}</span>
@@ -927,11 +937,11 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
         <div className="shrink-0 space-y-3 border-t border-border p-3">
           <div className={cn("rounded-2xl p-4", adminUpgradeCard)}>
             <div className="flex items-start gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-blue-100">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-blue-100 dark:bg-[#010639]/40 dark:ring-[#17F0F6]/20">
                 <Star className={cn("h-5 w-5", adminAccentText)} strokeWidth={1.5} />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold text-slate-900">Pro Plan</p>
+                <p className="text-sm font-semibold text-slate-900 dark:text-foreground">Pro Plan</p>
                 <Button
                   type="button"
                   className={cn("mt-2 h-8 w-full rounded-xl text-xs font-semibold shadow-sm", adminPrimaryBtn)}

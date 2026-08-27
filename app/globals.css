@@ -146,6 +146,285 @@
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.32);
 }
 
+/*
+ * Hardcoded light utilities appear across most admin tabs (text-gray-*, bg-white, etc.).
+ * Remap them under the admin root so dark mode applies without editing every page.
+ * Status colors (green/yellow/red/purple/blue badges) are intentionally left alone.
+ */
+.dark .admin-dashboard-root {
+  color: var(--foreground);
+}
+
+.dark .admin-dashboard-root .bg-white,
+.dark .admin-dashboard-root .bg-\[\#f8fafc\],
+.dark .admin-dashboard-root .bg-\[\#F5F4F0\],
+.dark .admin-dashboard-root .bg-\[\#f5f4f0\],
+.dark .admin-dashboard-root .bg-gray-50,
+.dark .admin-dashboard-root .bg-slate-50 {
+  background-color: var(--card);
+}
+
+/* Page chrome uses bg-[#f8fafc] / cream — keep it as the canvas, not card */
+.dark .admin-dashboard-root main.bg-\[\#f8fafc\],
+.dark .admin-dashboard-root .bg-\[\#f8fafc\].dark\:bg-background,
+.dark .admin-dashboard-root .min-h-screen.bg-\[\#F5F4F0\],
+.dark .admin-dashboard-root .min-h-screen.bg-\[\#f5f4f0\] {
+  background-color: var(--background);
+}
+
+.dark .admin-dashboard-root .bg-gray-100,
+.dark .admin-dashboard-root .bg-slate-100 {
+  background-color: var(--muted);
+}
+
+/* Primary / active tab pills that use near-black in light mode */
+.dark .admin-dashboard-root .bg-gray-900,
+.dark .admin-dashboard-root .bg-gray-800 {
+  background-color: #17f0f6;
+  color: #010639;
+}
+.dark .admin-dashboard-root .hover\:bg-gray-800:hover,
+.dark .admin-dashboard-root .hover\:bg-gray-900:hover {
+  background-color: color-mix(in oklab, #17f0f6 88%, black);
+  color: #010639;
+}
+.dark .admin-dashboard-root .border-gray-900 {
+  border-color: #17f0f6;
+}
+.dark .admin-dashboard-root .data-\[state\=active\]\:bg-gray-900[data-state="active"] {
+  background-color: #17f0f6;
+  color: #010639;
+}
+
+.dark .admin-dashboard-root .hover\:bg-gray-50:hover,
+.dark .admin-dashboard-root .hover\:bg-gray-50\/60:hover,
+.dark .admin-dashboard-root .hover\:bg-gray-100:hover,
+.dark .admin-dashboard-root .hover\:bg-slate-50:hover,
+.dark .admin-dashboard-root .hover\:bg-slate-100:hover,
+.dark .admin-dashboard-root .hover\:bg-blue-50:hover,
+.dark .admin-dashboard-root .hover\:bg-red-50:hover {
+  background-color: var(--accent);
+}
+
+.dark .admin-dashboard-root .text-gray-900,
+.dark .admin-dashboard-root .text-slate-900,
+.dark .admin-dashboard-root .text-gray-800,
+.dark .admin-dashboard-root .text-slate-800 {
+  color: var(--foreground);
+}
+
+.dark .admin-dashboard-root .text-gray-700,
+.dark .admin-dashboard-root .text-slate-700,
+.dark .admin-dashboard-root .text-gray-600,
+.dark .admin-dashboard-root .text-slate-600 {
+  color: color-mix(in oklab, var(--foreground) 78%, transparent);
+}
+
+.dark .admin-dashboard-root .text-gray-500,
+.dark .admin-dashboard-root .text-slate-500,
+.dark .admin-dashboard-root .text-gray-400,
+.dark .admin-dashboard-root .text-slate-400 {
+  color: var(--muted-foreground);
+}
+
+.dark .admin-dashboard-root .border-gray-100,
+.dark .admin-dashboard-root .border-gray-200,
+.dark .admin-dashboard-root .border-slate-100,
+.dark .admin-dashboard-root .border-slate-200,
+.dark .admin-dashboard-root .border-blue-100 {
+  border-color: var(--border);
+}
+
+.dark .admin-dashboard-root .divide-gray-100 > :not([hidden]) ~ :not([hidden]),
+.dark .admin-dashboard-root .divide-gray-200 > :not([hidden]) ~ :not([hidden]),
+.dark .admin-dashboard-root .divide-slate-100 > :not([hidden]) ~ :not([hidden]),
+.dark .admin-dashboard-root .divide-slate-200 > :not([hidden]) ~ :not([hidden]) {
+  border-color: var(--border);
+}
+
+.dark .admin-dashboard-root .ring-blue-100,
+.dark .admin-dashboard-root .ring-gray-100,
+.dark .admin-dashboard-root .ring-slate-100 {
+  --tw-ring-color: color-mix(in oklab, var(--ring) 25%, transparent);
+}
+
+.dark .admin-dashboard-root .from-gray-50,
+.dark .admin-dashboard-root .from-slate-50,
+.dark .admin-dashboard-root .from-blue-50,
+.dark .admin-dashboard-root .from-green-50,
+.dark .admin-dashboard-root .from-yellow-50,
+.dark .admin-dashboard-root .from-purple-50,
+.dark .admin-dashboard-root .from-pink-50,
+.dark .admin-dashboard-root .from-slate-100 {
+  --tw-gradient-from: var(--muted);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+
+.dark .admin-dashboard-root .to-gray-100,
+.dark .admin-dashboard-root .to-gray-50,
+.dark .admin-dashboard-root .to-slate-50,
+.dark .admin-dashboard-root .to-sky-50,
+.dark .admin-dashboard-root .to-blue-100,
+.dark .admin-dashboard-root .to-green-100,
+.dark .admin-dashboard-root .to-yellow-100,
+.dark .admin-dashboard-root .to-purple-100,
+.dark .admin-dashboard-root .to-pink-50,
+.dark .admin-dashboard-root .to-pink-100,
+.dark .admin-dashboard-root .to-slate-200 {
+  --tw-gradient-to: var(--card);
+}
+
+.dark .admin-dashboard-root .text-blue-900,
+.dark .admin-dashboard-root .text-green-900,
+.dark .admin-dashboard-root .text-yellow-900,
+.dark .admin-dashboard-root .text-purple-700,
+.dark .admin-dashboard-root .text-purple-500,
+.dark .admin-dashboard-root .text-blue-700,
+.dark .admin-dashboard-root .text-red-700,
+.dark .admin-dashboard-root .text-amber-950,
+.dark .admin-dashboard-root .text-emerald-950 {
+  color: var(--foreground);
+}
+
+.dark .admin-dashboard-root .bg-purple-50,
+.dark .admin-dashboard-root .bg-pink-50,
+.dark .admin-dashboard-root .bg-green-50,
+.dark .admin-dashboard-root .bg-yellow-50,
+.dark .admin-dashboard-root .bg-amber-50\/90,
+.dark .admin-dashboard-root .bg-emerald-50\/90,
+.dark .admin-dashboard-root .bg-blue-50\/80 {
+  background-color: color-mix(in oklab, var(--primary) 10%, transparent);
+}
+
+.dark .admin-dashboard-root .border-purple-200,
+.dark .admin-dashboard-root .border-green-200,
+.dark .admin-dashboard-root .border-yellow-200,
+.dark .admin-dashboard-root .border-amber-100,
+.dark .admin-dashboard-root .border-amber-200\/80,
+.dark .admin-dashboard-root .border-emerald-100,
+.dark .admin-dashboard-root .border-emerald-200\/80,
+.dark .admin-dashboard-root .border-slate-200\/90,
+.dark .admin-dashboard-root .border-red-200 {
+  border-color: var(--border);
+}
+
+.dark .admin-dashboard-root .shadow-sm {
+  --tw-shadow-color: rgb(0 0 0 / 0.35);
+}
+
+/* Keep status / semantic badge colors readable on dark surfaces */
+.dark .admin-dashboard-root .bg-green-100 {
+  background-color: color-mix(in oklab, #22c55e 18%, transparent);
+}
+.dark .admin-dashboard-root .text-green-800,
+.dark .admin-dashboard-root .text-green-600 {
+  color: #86efac;
+}
+.dark .admin-dashboard-root .border-green-200 {
+  border-color: color-mix(in oklab, #22c55e 35%, transparent);
+}
+
+.dark .admin-dashboard-root .bg-yellow-100 {
+  background-color: color-mix(in oklab, #eab308 18%, transparent);
+}
+.dark .admin-dashboard-root .text-yellow-800,
+.dark .admin-dashboard-root .text-yellow-600 {
+  color: #fde047;
+}
+.dark .admin-dashboard-root .border-yellow-200 {
+  border-color: color-mix(in oklab, #eab308 35%, transparent);
+}
+
+.dark .admin-dashboard-root .bg-red-100 {
+  background-color: color-mix(in oklab, #ef4444 18%, transparent);
+}
+.dark .admin-dashboard-root .text-red-800,
+.dark .admin-dashboard-root .text-red-600 {
+  color: #fca5a5;
+}
+.dark .admin-dashboard-root .border-red-200 {
+  border-color: color-mix(in oklab, #ef4444 35%, transparent);
+}
+
+.dark .admin-dashboard-root .bg-purple-100 {
+  background-color: color-mix(in oklab, #a855f7 18%, transparent);
+}
+.dark .admin-dashboard-root .text-purple-800,
+.dark .admin-dashboard-root .text-purple-600,
+.dark .admin-dashboard-root .text-purple-900 {
+  color: #d8b4fe;
+}
+.dark .admin-dashboard-root .border-purple-200 {
+  border-color: color-mix(in oklab, #a855f7 35%, transparent);
+}
+
+.dark .admin-dashboard-root .bg-blue-50,
+.dark .admin-dashboard-root .bg-blue-100 {
+  background-color: color-mix(in oklab, #17f0f6 12%, transparent);
+}
+.dark .admin-dashboard-root .text-blue-600,
+.dark .admin-dashboard-root .text-blue-800 {
+  color: #17f0f6;
+}
+.dark .admin-dashboard-root .border-blue-200 {
+  border-color: color-mix(in oklab, #17f0f6 30%, transparent);
+}
+
+.dark .admin-dashboard-root .bg-orange-100 {
+  background-color: color-mix(in oklab, #f97316 18%, transparent);
+}
+.dark .admin-dashboard-root .text-orange-600,
+.dark .admin-dashboard-root .text-orange-800 {
+  color: #fdba74;
+}
+
+.dark .admin-dashboard-root .bg-amber-100 {
+  background-color: color-mix(in oklab, #f59e0b 18%, transparent);
+}
+.dark .admin-dashboard-root .text-amber-600,
+.dark .admin-dashboard-root .text-amber-800 {
+  color: #fcd34d;
+}
+
+.dark .admin-dashboard-root .bg-indigo-100 {
+  background-color: color-mix(in oklab, #6366f1 18%, transparent);
+}
+.dark .admin-dashboard-root .text-indigo-600,
+.dark .admin-dashboard-root .text-indigo-800 {
+  color: #a5b4fc;
+}
+
+.dark .admin-dashboard-root .bg-violet-100 {
+  background-color: color-mix(in oklab, #8b5cf6 18%, transparent);
+}
+.dark .admin-dashboard-root .text-violet-600,
+.dark .admin-dashboard-root .text-violet-800 {
+  color: #c4b5fd;
+}
+
+.dark .admin-dashboard-root .bg-emerald-100 {
+  background-color: color-mix(in oklab, #10b981 18%, transparent);
+}
+.dark .admin-dashboard-root .text-emerald-600,
+.dark .admin-dashboard-root .text-emerald-800 {
+  color: #6ee7b7;
+}
+
+/* Brand accent used across forms / links */
+.dark .admin-dashboard-root .text-\[\#004A96\] {
+  color: #17f0f6;
+}
+.dark .admin-dashboard-root .hover\:text-\[\#004A96\]:hover {
+  color: #17f0f6;
+}
+.dark .admin-dashboard-root .bg-\[\#004A96\] {
+  background-color: #17f0f6;
+  color: #010639;
+}
+.dark .admin-dashboard-root .hover\:bg-\[\#003d7a\]:hover {
+  background-color: color-mix(in oklab, #17f0f6 90%, black);
+}
+
 @theme inline {
   --font-sans: var(--font-inter), ui-sans-serif, sans-serif;
   --font-display: var(--font-montserrat), var(--font-inter), ui-sans-serif, sans-serif;

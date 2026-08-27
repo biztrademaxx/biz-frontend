@@ -199,7 +199,7 @@ export default function VisitorManagement() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64" style={{ background: "#F5F4F0" }}>
+      <div className="flex justify-center items-center h-64 bg-transparent">
         <div className="animate-spin rounded-full h-7 w-7 border-2 border-gray-900 border-t-transparent" />
       </div>
     )
@@ -211,7 +211,7 @@ export default function VisitorManagement() {
   const totalInactive = visitors.filter((v) => !v.isActive).length
 
   return (
-    <div className="min-h-screen bg-[#F5F4F0] p-8">
+    <div className="min-h-screen bg-transparent p-8">
 
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
@@ -498,13 +498,13 @@ export default function VisitorManagement() {
       {/* Suggestions Modal */}
       {showSuggestionsModal && suggestionsVisitor && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl max-w-5xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white border-b border-gray-100 p-4 flex items-center gap-3 z-10">
-              <button onClick={() => setShowSuggestionsModal(false)} className="p-2 hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-2 text-sm text-gray-600">
+          <div className="bg-white rounded-2xl max-w-5xl w-full max-h-[90vh] overflow-y-auto dark:bg-card dark:border dark:border-border">
+            <div className="sticky top-0 bg-white border-b border-gray-100 p-4 flex items-center gap-3 z-10 dark:bg-card dark:border-border">
+              <button onClick={() => setShowSuggestionsModal(false)} className="p-2 hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-2 text-sm text-gray-600 dark:text-muted-foreground dark:hover:bg-accent">
                 <ArrowLeft className="w-4 h-4" /> Back
               </button>
-              <h2 className="text-base font-semibold text-gray-900">Exhibitor Suggestions — {suggestionsVisitor.name}</h2>
-              <button onClick={() => setShowSuggestionsModal(false)} className="ml-auto p-2 hover:bg-gray-100 rounded-lg transition-colors">
+              <h2 className="text-base font-semibold text-gray-900 dark:text-foreground">Exhibitor Suggestions — {suggestionsVisitor.name}</h2>
+              <button onClick={() => setShowSuggestionsModal(false)} className="ml-auto p-2 hover:bg-gray-100 rounded-lg transition-colors dark:hover:bg-accent">
                 <XCircle className="w-5 h-5 text-gray-400" />
               </button>
             </div>

@@ -720,7 +720,7 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
   }
 
   return (
-    <div className="min-h-screen bg-[#F5F4F0] p-8">
+    <div className="min-h-screen bg-transparent p-8">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>

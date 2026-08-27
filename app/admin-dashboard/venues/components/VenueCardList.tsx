@@ -31,24 +31,24 @@ import { VenueStatusBadge } from "./venue-status-badges"
 const VENUE_CARD_ACCENT = {
   blue: {
     bar: "from-blue-500 to-indigo-500",
-    ring: "ring-blue-100",
-    icon: "text-blue-600",
-    pill: "bg-blue-50/80 text-blue-900 border-blue-100",
-    border: "border-slate-200/90",
+    ring: "ring-blue-100 dark:ring-primary/30",
+    icon: "text-blue-600 dark:text-primary",
+    pill: "bg-blue-50/80 text-blue-900 border-blue-100 dark:bg-muted dark:text-foreground dark:border-border",
+    border: "border-slate-200/90 dark:border-border",
   },
   amber: {
     bar: "from-amber-400 to-orange-500",
-    ring: "ring-amber-100",
-    icon: "text-amber-600",
-    pill: "bg-amber-50/90 text-amber-950 border-amber-100",
-    border: "border-amber-200/80",
+    ring: "ring-amber-100 dark:ring-amber-500/30",
+    icon: "text-amber-600 dark:text-amber-300",
+    pill: "bg-amber-50/90 text-amber-950 border-amber-100 dark:bg-muted dark:text-foreground dark:border-border",
+    border: "border-amber-200/80 dark:border-border",
   },
   emerald: {
     bar: "from-emerald-500 to-teal-500",
-    ring: "ring-emerald-100",
-    icon: "text-emerald-600",
-    pill: "bg-emerald-50/90 text-emerald-950 border-emerald-100",
-    border: "border-emerald-200/80",
+    ring: "ring-emerald-100 dark:ring-emerald-500/30",
+    icon: "text-emerald-600 dark:text-emerald-300",
+    pill: "bg-emerald-50/90 text-emerald-950 border-emerald-100 dark:bg-muted dark:text-foreground dark:border-border",
+    border: "border-emerald-200/80 dark:border-border",
   },
 } as const
 
@@ -65,7 +65,7 @@ function VenueThumbnail({
   return (
     <div
       className={cn(
-        "relative h-[72px] w-[72px] shrink-0 overflow-hidden rounded-full border-2 border-white shadow-md ring-2",
+        "relative h-[72px] w-[72px] shrink-0 overflow-hidden rounded-full border-2 border-white shadow-md ring-2 dark:border-card",
         theme.ring,
       )}
     >
@@ -200,7 +200,7 @@ export function VenueCardList({
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-8 gap-1.5 border-blue-200 px-2.5 text-xs text-blue-700 hover:bg-blue-50"
+                  className="h-8 gap-1.5 border-blue-200 px-2.5 text-xs text-blue-700 hover:bg-blue-50 dark:border-border dark:text-primary dark:hover:bg-accent"
                   onClick={() => onEdit(venue)}
                 >
                   <Edit className="h-3.5 w-3.5" />
@@ -219,7 +219,7 @@ export function VenueCardList({
                     <Button
                       variant="outline"
                       size="sm"
-                      className="h-8 gap-1.5 border-red-200 px-2.5 text-xs text-red-700 hover:bg-red-50"
+                      className="h-8 gap-1.5 border-red-200 px-2.5 text-xs text-red-700 hover:bg-red-50 dark:border-border dark:text-red-300 dark:hover:bg-accent"
                       onClick={() => onReject(venue)}
                     >
                       <ThumbsDown className="h-3.5 w-3.5" />

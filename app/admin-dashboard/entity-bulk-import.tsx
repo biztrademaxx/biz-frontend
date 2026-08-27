@@ -80,16 +80,16 @@ export default function EntityBulkImport({
   };
 
   return (
-    <div className="space-y-4 rounded-sm border bg-white p-5">
+    <div className="space-y-4 rounded-sm border border-border bg-card p-5 text-card-foreground">
       <div>
         <h3 className="text-lg font-semibold">{title}</h3>
-        <p className="text-sm text-gray-600">{description}</p>
+        <p className="text-sm text-muted-foreground">{description}</p>
       </div>
 
       <div className="flex flex-wrap gap-2">
         <button
           type="button"
-          className="rounded-sm bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+          className="rounded-sm bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 dark:bg-primary dark:text-primary-foreground dark:hover:bg-primary/90"
           onClick={() => download(templateTsv, `${title.toLowerCase().replace(/\s+/g, "-")}-template.tsv`, "text/tab-separated-values")}
         >
           Download TSV Template
@@ -103,37 +103,37 @@ export default function EntityBulkImport({
         </button>
       </div>
 
-      <div className="rounded-sm border border-dashed p-4">
+      <div className="rounded-sm border border-dashed border-border p-4">
         <input
           type="file"
           accept=".csv,.tsv,.xlsx,.xls"
           onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-          className="block w-full text-sm"
+          className="block w-full text-sm text-foreground"
         />
-        <p className="mt-2 text-xs text-gray-500">Supported: CSV, TSV, XLSX, XLS</p>
+        <p className="mt-2 text-xs text-muted-foreground">Supported: CSV, TSV, XLSX, XLS</p>
       </div>
 
       <button
         type="button"
         disabled={loading}
         onClick={handleUpload}
-        className="rounded-sm bg-gray-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+        className="rounded-sm bg-gray-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-60 dark:bg-primary dark:text-primary-foreground"
       >
         {loading ? "Importing..." : "Start Import"}
       </button>
 
-      {message ? <p className="text-sm text-gray-700">{message}</p> : null}
+      {message ? <p className="text-sm text-muted-foreground">{message}</p> : null}
 
       {result?.success ? (
-        <div className="rounded-sm border bg-gray-50 p-3 text-sm">
+        <div className="rounded-sm border border-border bg-muted/50 p-3 text-sm text-foreground">
           <p>Processed: {result.processed ?? 0}</p>
           <p>Created: {result.createdCount ?? 0}</p>
           <p>Updated: {result.updatedCount ?? 0}</p>
           <p>Errors: {result.errorCount ?? 0}</p>
           {Array.isArray(result.errors) && result.errors.length > 0 ? (
-            <div className="mt-2 max-h-48 overflow-auto rounded border bg-white p-2">
+            <div className="mt-2 max-h-48 overflow-auto rounded border border-border bg-card p-2">
               {result.errors.map((e, idx) => (
-                <p key={`${e.row}-${idx}`} className="text-xs text-red-700">
+                <p key={`${e.row}-${idx}`} className="text-xs text-red-700 dark:text-red-300">
                   Row {e.row}: {e.message}
                 </p>
               ))}

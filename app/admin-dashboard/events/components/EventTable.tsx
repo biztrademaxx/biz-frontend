@@ -472,24 +472,15 @@ export function EventTable({
     textAlign: "left",
     fontSize: "11px",
     fontWeight: 600,
-    color: "#A1A1AA",
+    color: "var(--muted-foreground)",
     letterSpacing: "0.06em",
     textTransform: "uppercase",
     whiteSpace: "nowrap",
-    borderBottom: "1px solid #F0F0F0",
+    borderBottom: "1px solid var(--border)",
   }
 
-  const selectStyle: CSSProperties = {
-    height: "34px",
-    padding: "0 10px",
-    fontSize: "13px",
-    border: "1.5px solid #E5E5E5",
-    borderRadius: "8px",
-    background: "#fff",
-    color: "#374151",
-    cursor: "pointer",
-    fontFamily: "inherit",
-  }
+  const selectClassName =
+    "h-[34px] cursor-pointer rounded-lg border border-border bg-card px-2.5 text-[13px] text-foreground font-[inherit]"
 
   return (
     <>
@@ -506,54 +497,54 @@ export function EventTable({
         }
       `}</style>
 
-      <div className="min-h-screen bg-[#F5F4F0] p-4 md:p-6">
-        <div style={{ maxWidth: "1400px", margin: "0 auto" }}>
+      <div className="admin-events-page min-h-screen bg-transparent p-4 md:p-6">
+        <div className="mx-auto max-w-[1400px]">
 
           {/* ── Search bar ── */}
-          <div style={{ marginBottom: "14px" }}>
-            <div style={{ position: "relative", maxWidth: "340px" }}>
-              <Search style={{ position: "absolute", left: "11px", top: "50%", transform: "translateY(-50%)", width: "14px", height: "14px", color: "#a1a1aa" }} />
+          <div className="mb-3.5">
+            <div className="relative max-w-[340px]">
+              <Search className="pointer-events-none absolute left-[11px] top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
               <input
                 placeholder="Search events or organizers…"
                 value={localSearch}
                 onChange={(e) => { setLocalSearch(e.target.value); onSearchChange(e.target.value) }}
-                style={{
-                  width: "100%", paddingLeft: "34px", paddingRight: "12px",
-                  paddingTop: "8px", paddingBottom: "8px",
-                  fontSize: "13px", border: "1px solid #E5E5E5", borderRadius: "10px",
-                  background: "#fff", outline: "none", color: "#18181B", fontFamily: "inherit",
-                }}
+                className="w-full rounded-[10px] border border-border bg-card py-2 pl-[34px] pr-3 text-[13px] text-foreground outline-none placeholder:text-muted-foreground font-[inherit]"
               />
             </div>
           </div>
 
           {/* ── Tabs + Filters ── */}
-          <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap", marginBottom: "14px" }}>
+          <div className="mb-3.5 flex flex-wrap items-center gap-1.5">
             {tabs.map((tab) => {
               const isActive = activeTab === tab.id
+              const activeBg = tab.mail ? "#2563EB" : tab.verified ? "#059669" : "#22C55E"
               return (
                 <button
                   key={tab.id}
                   type="button"
                   onClick={() => { onTabChange(tab.id); setSelectedEvents(new Set()); setSelectedMailKeys(new Set()) }}
-                  style={{
-                    display: "inline-flex", alignItems: "center", gap: "5px",
-                    padding: "6px 14px", borderRadius: "999px", fontSize: "13px", fontWeight: 500,
-                    border: isActive ? "none" : "1.5px solid #E5E5E5",
-                    background: isActive ? (tab.mail ? "#2563EB" : tab.verified ? "#059669" : "#22C55E") : "#fff",
-                    color: isActive ? "#fff" : "#374151",
-                    cursor: "pointer", whiteSpace: "nowrap", transition: "all 0.15s",
-                    boxShadow: isActive ? "0 1px 4px rgba(34,197,94,0.18)" : "none",
-                  }}
+                  className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-1.5 text-[13px] font-medium transition-all ${
+                    isActive
+                      ? "border-transparent text-white shadow-sm"
+                      : "border-[1.5px] border-border bg-card text-foreground hover:bg-accent"
+                  }`}
+                  style={isActive ? { background: activeBg } : undefined}
                 >
-                  {tab.mail && <Mail style={{ width: "13px", height: "13px" }} />}
+                  {tab.mail && <Mail className="h-[13px] w-[13px]" />}
                   {tab.dot && (
-                    <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: isActive ? "#fff" : tab.dot, flexShrink: 0 }} />
+                    <span
+                      className="h-[7px] w-[7px] shrink-0 rounded-full"
+                      style={{ background: isActive ? "#fff" : tab.dot }}
+                    />
                   )}
-                  {tab.star && <span style={{ fontSize: "12px" }}>⭐</span>}
+                  {tab.star && <span className="text-xs">⭐</span>}
                   {tab.label}
                   {tab.count > 0 && (
-                    <span style={{ fontSize: "11px", fontWeight: 600, padding: "1px 5px", borderRadius: "999px", background: isActive ? "rgba(255,255,255,0.25)" : "#F4F4F5", color: isActive ? "#fff" : "#71717A" }}>
+                    <span
+                      className={`rounded-full px-1.5 py-px text-[11px] font-semibold ${
+                        isActive ? "bg-white/25 text-white" : "bg-muted text-muted-foreground"
+                      }`}
+                    >
                       {tab.count}
                     </span>
                   )}
@@ -561,14 +552,14 @@ export function EventTable({
               )
             })}
 
-            <div style={{ flex: 1 }} />
+            <div className="flex-1" />
 
             {!isMailTab && (
               <>
                 <select
                   value={selectedCategory}
                   onChange={(e) => onCategoryFilterChange(e.target.value)}
-                  style={selectStyle}
+                  className={selectClassName}
                 >
                   <option value="all">All Categories</option>
                   {categories.filter((c) => c.isActive).map((cat) => (
@@ -580,7 +571,7 @@ export function EventTable({
                 <select
                   value={selectedCountry}
                   onChange={(e) => onCountryFilterChange(e.target.value)}
-                  style={selectStyle}
+                  className={selectClassName}
                 >
                   <option value="all">All Countries</option>
                   {countries.map((c) => (
@@ -589,7 +580,7 @@ export function EventTable({
                     </option>
                   ))}
                 </select>
-                <select value={localSort} onChange={(e) => setLocalSort(e.target.value)} style={selectStyle}>
+                <select value={localSort} onChange={(e) => setLocalSort(e.target.value)} className={selectClassName}>
                   <option value="date">Sort: Date ↓</option>
                   <option value="name">Sort: Name</option>
                   <option value="attendance">Sort: Attendance</option>
@@ -599,42 +590,42 @@ export function EventTable({
           </div>
 
           {/* ── Main card ── */}
-          <div style={{ background: "#fff", border: "1px solid #ECECEC", borderRadius: "16px", overflow: "hidden" }}>
+          <div className="overflow-hidden rounded-2xl border border-border bg-card">
 
             {/* Card header */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 20px", borderBottom: "1px solid #F0F0F0", flexWrap: "wrap", gap: "8px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
-                <span style={{ fontSize: "15px", fontWeight: 600, color: "#18181B" }}>
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-5 py-3.5">
+              <div className="flex flex-wrap items-center gap-2.5">
+                <span className="text-[15px] font-semibold text-foreground">
                   {activeTab === "send-email"
                     ? "Send listing email"
                     : activeTab === "email-verified"
                       ? "Email verified organizers"
                       : "Event Listings"}
                 </span>
-                <span style={{ fontSize: "13px", color: "#A1A1AA" }}>
+                <span className="text-[13px] text-muted-foreground">
                   {isMailTab
                     ? `${groupedMail.length} organizer mail groups`
                     : `${filteredEvents.length.toLocaleString()} events found`}
                 </span>
                 {!isMailTab && selectedCount > 0 && (
-                  <span style={{ fontSize: "11px", fontWeight: 600, padding: "2px 8px", borderRadius: "999px", background: "#DBEAFE", color: "#2563EB" }}>
+                  <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[11px] font-semibold text-blue-600 dark:bg-[#17F0F6]/15 dark:text-[#17F0F6]">
                     {selectedCount} selected
                   </span>
                 )}
                 {activeTab === "send-email" && mailSelectedCount > 0 && (
-                  <span style={{ fontSize: "11px", fontWeight: 600, padding: "2px 8px", borderRadius: "999px", background: "#DBEAFE", color: "#2563EB" }}>
+                  <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[11px] font-semibold text-blue-600 dark:bg-[#17F0F6]/15 dark:text-[#17F0F6]">
                     {mailSelectedCount} selected
                   </span>
                 )}
                 {isLoadingPlans && (
-                  <span style={{ fontSize: "11px", color: "#A1A1AA", display: "flex", alignItems: "center", gap: "4px" }}>
-                    <Loader2 style={{ width: 12, height: 12, animation: "spin 1s linear infinite" }} />
+                  <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                    <Loader2 className="h-3 w-3 animate-spin" />
                     Loading plans...
                   </span>
                 )}
               </div>
 
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+              <div className="flex flex-wrap items-center gap-2">
                 {activeTab === "send-email" && mailSelectedCount > 0 && (
                   <Button type="button" size="sm" className="gap-2 bg-blue-600 hover:bg-blue-700" disabled={sendingMail} onClick={handleBulkSendMail}>
                     <Mail className="h-4 w-4" />
@@ -645,7 +636,7 @@ export function EventTable({
                   <>
                     <Button
                       type="button" variant="outline" size="sm"
-                      className="gap-2 border-green-200 text-green-700 hover:bg-green-50"
+                      className="gap-2 border-green-200 text-green-700 hover:bg-green-50 dark:border-emerald-500/40 dark:text-emerald-300 dark:hover:bg-emerald-500/10"
                       onClick={handleBulkApprove}
                     >
                       <CheckCircle2 className="h-4 w-4" />
@@ -653,7 +644,7 @@ export function EventTable({
                     </Button>
                     <Button
                       type="button" variant="outline" size="sm"
-                      className="gap-2 border-blue-200 text-blue-700 hover:bg-blue-50"
+                      className="gap-2 border-blue-200 text-blue-700 hover:bg-blue-50 dark:border-[#17F0F6]/40 dark:text-[#17F0F6] dark:hover:bg-[#17F0F6]/10"
                       disabled={sendingMail}
                       onClick={handleSendListingEmailForSelection}
                     >
@@ -661,20 +652,22 @@ export function EventTable({
                       {sendingMail ? "Sending…" : "Send listing email"}
                     </Button>
                     <button
-                      type="button" onClick={handleBulkDelete}
-                      style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "6px 12px", borderRadius: "8px", fontSize: "13px", fontWeight: 500, border: "1px solid #FEE2E2", background: "#FFF5F5", color: "#EF4444", cursor: "pointer" }}
+                      type="button"
+                      onClick={handleBulkDelete}
+                      className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-[13px] font-medium text-red-500 dark:border-red-500/40 dark:bg-red-500/10 dark:text-red-300"
                     >
-                      <Trash2 style={{ width: "13px", height: "13px" }} />
+                      <Trash2 className="h-[13px] w-[13px]" />
                       Delete Selected
                     </button>
                   </>
                 )}
                 {!isMailTab && (
                   <button
-                    type="button" onClick={() => exportToCSV(filteredEvents)}
-                    style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "6px 12px", borderRadius: "8px", fontSize: "13px", fontWeight: 500, border: "1.5px solid #E5E5E5", background: "#fff", color: "#374151", cursor: "pointer" }}
+                    type="button"
+                    onClick={() => exportToCSV(filteredEvents)}
+                    className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-[13px] font-medium text-foreground hover:bg-accent"
                   >
-                    <Download style={{ width: "13px", height: "13px" }} /> Export CSV
+                    <Download className="h-[13px] w-[13px]" /> Export CSV
                   </button>
                 )}
               </div>
@@ -684,8 +677,8 @@ export function EventTable({
             {isMailTab ? (
 
               /* Mail / verified organizer table */
-              <div style={{ padding: "0 20px 20px" }}>
-                <p style={{ fontSize: "13px", color: "#71717A", margin: "14px 0" }}>
+              <div className="px-5 pb-5">
+                <p className="my-3.5 text-[13px] text-muted-foreground">
                   {activeTab === "email-verified"
                     ? "Organizers who verified their email (OTP or password setup). These organizers are excluded from Send email."
                     : "Unverified organizers only. Select rows and send event listing emails with password setup links."}
@@ -699,9 +692,9 @@ export function EventTable({
                     {activeTab === "send-email" ? <col style={{ width: "90px" }} /> : <col style={{ width: "110px" }} />}
                   </colgroup>
                   <thead>
-                    <tr style={{ borderBottom: "1px solid #F0F0F0", background: "#FAFAFA" }}>
+                    <tr className="border-b border-border bg-muted/60">
                       {activeTab === "send-email" && (
-                        <th style={{ padding: "10px 0 10px 16px" }}>
+                        <th className="py-2.5 pl-4 pr-0">
                           <Checkbox checked={allMailSelected} onCheckedChange={(c) => handleSelectAllMail(c === true)} />
                         </th>
                       )}
@@ -716,7 +709,7 @@ export function EventTable({
                   <tbody>
                     {groupedMail.length === 0 ? (
                       <tr>
-                        <td colSpan={activeTab === "send-email" ? 5 : 4} style={{ textAlign: "center", padding: "56px", color: "#A1A1AA", fontSize: "14px" }}>
+                        <td colSpan={activeTab === "send-email" ? 5 : 4} className="px-4 py-14 text-center text-sm text-muted-foreground">
                           {activeTab === "email-verified"
                             ? "No verified organizers yet. Organizers appear here after they complete email OTP or password setup."
                             : "No unverified organizers pending email. All listing organizers have verified their email."}
@@ -724,24 +717,24 @@ export function EventTable({
                       </tr>
                     ) : (
                       groupedMail.map((row) => (
-                        <tr key={row.key} style={{ borderBottom: "1px solid #F5F5F5" }}>
+                        <tr key={row.key} className="border-b border-border">
                           {activeTab === "send-email" && (
-                            <td style={{ padding: "12px 0 12px 16px" }}>
+                            <td className="py-3 pl-4 pr-0">
                               <Checkbox checked={selectedMailKeys.has(row.key)} onCheckedChange={(c) => handleSelectMailRow(row.key, c === true)} />
                             </td>
                           )}
-                          <td style={{ padding: "12px 8px", fontSize: "13px", fontWeight: 500, color: "#18181B", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 0 }}>
+                          <td className="max-w-0 overflow-hidden text-ellipsis whitespace-nowrap px-2 py-3 text-[13px] font-medium text-foreground">
                             {row.organizerName || "—"}
                           </td>
-                          <td style={{ padding: "12px 8px", fontSize: "13px", color: "#52525B", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 0 }}>
+                          <td className="max-w-0 overflow-hidden text-ellipsis whitespace-nowrap px-2 py-3 text-[13px] text-muted-foreground">
                             {row.organizerEmail}
                           </td>
-                          <td style={{ padding: "12px 8px", fontSize: "13px", color: "#52525B" }}>
-                            <ul style={{ margin: 0, paddingLeft: "16px" }}>
+                          <td className="px-2 py-3 text-[13px] text-muted-foreground">
+                            <ul className="m-0 list-disc pl-4">
                               {row.eventTitles.map((t) => <li key={t}>{t}</li>)}
                             </ul>
                           </td>
-                          <td style={{ padding: "12px 8px" }}>
+                          <td className="px-2 py-3">
                             {activeTab === "send-email" ? (
                               <Button
                                 type="button" size="sm" variant="outline"
@@ -752,8 +745,8 @@ export function EventTable({
                                 {sendingMail && sendingMailFor === row.organizerEmail.toLowerCase() ? "Sending…" : "Send"}
                               </Button>
                             ) : (
-                              <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", fontSize: "12px", fontWeight: 600, color: "#059669", background: "#ECFDF5", padding: "4px 10px", borderRadius: "999px" }}>
-                                <BadgeCheck style={{ width: "13px", height: "13px" }} />
+                              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">
+                                <BadgeCheck className="h-[13px] w-[13px]" />
                                 Verified
                               </span>
                             )}
@@ -768,7 +761,7 @@ export function EventTable({
             ) : (
 
               /* Events table — horizontally scrollable on small screens */
-              <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
+              <div className="overflow-x-auto" style={{ WebkitOverflowScrolling: "touch" }}>
                 <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed", minWidth: "860px" }}>
                   <colgroup>
                     {/* checkbox */}
@@ -794,8 +787,8 @@ export function EventTable({
                   </colgroup>
 
                   <thead>
-                    <tr style={{ background: "#FAFAFA" }}>
-                      <th style={{ padding: "10px 0 10px 16px", borderBottom: "1px solid #F0F0F0" }}>
+                    <tr className="bg-muted/60">
+                      <th className="border-b border-border py-2.5 pl-4 pr-0">
                         <Checkbox checked={allSelected} onCheckedChange={handleSelectAll} />
                       </th>
                       <th style={thStyle}>Event</th>
@@ -813,16 +806,16 @@ export function EventTable({
                   <tbody>
                     {loading ? (
                       <tr>
-                        <td colSpan={10} style={{ textAlign: "center", padding: "56px", color: "#A1A1AA", fontSize: "14px" }}>
-                          <span style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}>
-                            <Loader2 style={{ width: 18, height: 18, animation: "spin 1s linear infinite" }} />
+                        <td colSpan={10} className="px-4 py-14 text-center text-sm text-muted-foreground">
+                          <span className="inline-flex items-center gap-2">
+                            <Loader2 className="h-[18px] w-[18px] animate-spin" />
                             Loading events…
                           </span>
                         </td>
                       </tr>
                     ) : filteredEvents.length === 0 ? (
                       <tr>
-                        <td colSpan={10} style={{ textAlign: "center", padding: "56px", color: "#A1A1AA", fontSize: "14px" }}>
+                        <td colSpan={10} className="px-4 py-14 text-center text-sm text-muted-foreground">
                           No events found
                         </td>
                       </tr>
@@ -853,7 +846,7 @@ export function EventTable({
             )}
 
             {!isMailTab && !loading && pagination.totalPages > 1 && (
-              <div style={{ borderTop: "1px solid #F0F0F0", padding: "0 16px" }}>
+              <div className="border-t border-border px-4">
                 <Pagination page={page} totalPages={pagination.totalPages} onPageChange={onPageChange} />
               </div>
             )}

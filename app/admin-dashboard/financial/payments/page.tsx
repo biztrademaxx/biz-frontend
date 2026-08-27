@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -11,6 +11,9 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Search, DollarSign, CreditCard, TrendingUp, AlertCircle, Eye, RefreshCw } from "lucide-react"
 import { apiFetch } from "@/lib/api"
 import { formatMoney, formatMoneyTotals, sumByCurrency } from "@/lib/format-currency"
+import { Pagination } from "../../shared/components/Pagination"
+
+const PAGE_SIZE = 20
 
 interface Payment {
   id: string
@@ -62,6 +65,7 @@ export default function FinancialPaymentsPage() {
   const [fetchError, setFetchError] = useState<string | null>(null)
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null)
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false)
+  const [page, setPage] = useState(1)
 
   useEffect(() => {
     fetchPayments()
@@ -70,6 +74,10 @@ export default function FinancialPaymentsPage() {
   useEffect(() => {
     filterPayments()
   }, [payments, searchQuery, statusFilter, gatewayFilter])
+
+  useEffect(() => {
+    setPage(1)
+  }, [searchQuery, statusFilter, gatewayFilter])
 
   const fetchPayments = async () => {
     try {
@@ -168,6 +176,15 @@ export default function FinancialPaymentsPage() {
     setSelectedPayment(payment)
     setDetailsDialogOpen(true)
   }
+
+  const totalPages = Math.max(1, Math.ceil(filteredPayments.length / PAGE_SIZE))
+  const safePage = Math.min(page, totalPages)
+  const paginatedPayments = useMemo(() => {
+    const start = (safePage - 1) * PAGE_SIZE
+    return filteredPayments.slice(start, start + PAGE_SIZE)
+  }, [filteredPayments, safePage])
+  const rangeStart = filteredPayments.length === 0 ? 0 : (safePage - 1) * PAGE_SIZE + 1
+  const rangeEnd = Math.min(safePage * PAGE_SIZE, filteredPayments.length)
 
   if (loading) {
     return (
@@ -325,14 +342,14 @@ export default function FinancialPaymentsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredPayments.length === 0 ? (
+                {paginatedPayments.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={8} className="text-center py-8 text-gray-500">
                       No payments found
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredPayments.map((payment) => (
+                  paginatedPayments.map((payment) => (
                     <TableRow key={payment.id}>
                       <TableCell className="font-mono text-xs" title={payment.gatewayTransactionId ?? payment.id}>
                         {paymentDisplayId(payment)}
@@ -384,6 +401,15 @@ export default function FinancialPaymentsPage() {
               </TableBody>
             </Table>
           </div>
+
+          {filteredPayments.length > 0 ? (
+            <div className="mt-4 flex flex-col items-center gap-2 sm:flex-row sm:justify-between">
+              <p className="text-sm text-gray-600">
+                Showing {rangeStart}–{rangeEnd} of {filteredPayments.length} payments
+              </p>
+              <Pagination page={safePage} totalPages={totalPages} onPageChange={setPage} />
+            </div>
+          ) : null}
         </CardContent>
       </Card>
 

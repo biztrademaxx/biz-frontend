@@ -33,7 +33,7 @@ export default function VenueManagementPage({
   }
 
   return (
-    <div className="space-y-6 p-4 md:p-6 bg-[#F5F4F0]">
+    <div className="space-y-6 p-4 md:p-6 bg-transparent">
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 md:text-3xl">Venue Management</h1>

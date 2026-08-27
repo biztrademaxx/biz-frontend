@@ -100,19 +100,7 @@ function OrganizerAvatar({ name }: { name: string }) {
 function PlanBadge({ planSlug, isLoading }: { planSlug?: string; isLoading?: boolean }) {
   if (isLoading) {
     return (
-      <span
-        style={{
-          display: 'inline-block',
-          padding: '1px 8px',
-          borderRadius: '12px',
-          fontSize: '9px',
-          fontWeight: 500,
-          background: '#F3F4F6',
-          color: '#9CA3AF',
-          marginLeft: '4px',
-          whiteSpace: 'nowrap',
-        }}
-      >
+      <span className="ml-1 inline-block whitespace-nowrap rounded-xl bg-muted px-2 py-px text-[9px] font-medium text-muted-foreground">
         ...
       </span>
     )
@@ -147,44 +135,32 @@ function PlanBadge({ planSlug, isLoading }: { planSlug?: string; isLoading?: boo
   )
 }
 
-const CATEGORY_STYLES: Record<string, { bg: string; text: string }> = {
-  "Summit": { bg: "#dcfce7", text: "#166534" },
-  "Expo": { bg: "#ede9fe", text: "#5b21b6" },
-  "Conference": { bg: "#dbeafe", text: "#1d4ed8" },
-  "Workshop": { bg: "#fce7f3", text: "#9d174d" },
-  "Trade Show": { bg: "#ffedd5", text: "#c2410c" },
-  "Virtual": { bg: "#e0e7ff", text: "#3730a3" },
-  "Auto & Automotive": { bg: "#fce7f3", text: "#be185d" },
-  "Agriculture & Forestry": { bg: "#dcfce7", text: "#166534" },
-  "Security & Defense": { bg: "#fee2e2", text: "#991b1b" },
-  "Technology": { bg: "#dbeafe", text: "#1e40af" },
-  "Healthcare": { bg: "#d1fae5", text: "#065f46" },
-  "Finance": { bg: "#fef3c7", text: "#92400e" },
-  "Minerals & Metals": { bg: "#fef3c7", text: "#92400e" },
-  "Packing & Packaging": { bg: "#e0e7ff", text: "#3730a3" },
-  "Food & Beverages": { bg: "#dcfce7", text: "#166534" },
-  "Chemicals": { bg: "#fee2e2", text: "#991b1b" },
-  "Industrial Engineering": { bg: "#f3f4f6", text: "#374151" },
-  "Building & Construction": { bg: "#dbeafe", text: "#1d4ed8" },
+const CATEGORY_CLASS: Record<string, string> = {
+  "Summit": "bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300",
+  "Expo": "bg-violet-100 text-violet-800 dark:bg-violet-500/20 dark:text-violet-300",
+  "Conference": "bg-blue-100 text-blue-800 dark:bg-blue-500/20 dark:text-blue-300",
+  "Workshop": "bg-pink-100 text-pink-800 dark:bg-pink-500/20 dark:text-pink-300",
+  "Trade Show": "bg-orange-100 text-orange-800 dark:bg-orange-500/20 dark:text-orange-300",
+  "Virtual": "bg-indigo-100 text-indigo-800 dark:bg-indigo-500/20 dark:text-indigo-300",
+  "Auto & Automotive": "bg-pink-100 text-pink-800 dark:bg-pink-500/20 dark:text-pink-300",
+  "Agriculture & Forestry": "bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300",
+  "Security & Defense": "bg-red-100 text-red-800 dark:bg-red-500/20 dark:text-red-300",
+  "Technology": "bg-blue-100 text-blue-800 dark:bg-blue-500/20 dark:text-blue-300",
+  "Healthcare": "bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300",
+  "Finance": "bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300",
+  "Minerals & Metals": "bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300",
+  "Packing & Packaging": "bg-indigo-100 text-indigo-800 dark:bg-indigo-500/20 dark:text-indigo-300",
+  "Food & Beverages": "bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300",
+  "Chemicals": "bg-red-100 text-red-800 dark:bg-red-500/20 dark:text-red-300",
+  "Industrial Engineering": "bg-muted text-foreground",
+  "Building & Construction": "bg-blue-100 text-blue-800 dark:bg-blue-500/20 dark:text-blue-300",
 }
 
 function CategoryPill({ name }: { name: string }) {
-  const style = CATEGORY_STYLES[name] || { bg: "#f3f4f6", text: "#374151" }
+  const colorClass = CATEGORY_CLASS[name] || "bg-muted text-foreground"
   return (
     <span
-      style={{
-        display: "inline-block",
-        padding: "3px 9px",
-        borderRadius: "20px",
-        fontSize: "11px",
-        fontWeight: 600,
-        background: style.bg,
-        color: style.text,
-        overflow: "hidden",
-        textOverflow: "ellipsis",
-        whiteSpace: "nowrap",
-        maxWidth: "100%",
-      }}
+      className={`inline-block max-w-full overflow-hidden text-ellipsis whitespace-nowrap rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${colorClass}`}
     >
       {name}
     </span>
@@ -193,23 +169,18 @@ function CategoryPill({ name }: { name: string }) {
 
 function StatusPill({ status }: { status: "Live" | "Upcoming" | "Ended" | "Draft" | "Pending" }) {
   const STYLES = {
-    Live: { bg: "#dcfce7", dot: "#16a34a", text: "#15803d" },
-    Upcoming: { bg: "#dbeafe", dot: "#3b82f6", text: "#1d4ed8" },
-    Ended: { bg: "#f3f4f6", dot: "#9ca3af", text: "#6b7280" },
-    Draft: { bg: "#fef9c3", dot: "#ca8a04", text: "#a16207" },
-    Pending: { bg: "#fef3c7", dot: "#eab308", text: "#a16207" },
+    Live: { className: "bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300", dot: "#16a34a" },
+    Upcoming: { className: "bg-blue-100 text-blue-800 dark:bg-blue-500/20 dark:text-blue-300", dot: "#3b82f6" },
+    Ended: { className: "bg-muted text-muted-foreground", dot: "#9ca3af" },
+    Draft: { className: "bg-yellow-100 text-yellow-800 dark:bg-yellow-500/20 dark:text-yellow-300", dot: "#ca8a04" },
+    Pending: { className: "bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300", dot: "#eab308" },
   }
   const s = STYLES[status]
   return (
     <span
-      style={{
-        display: "inline-flex", alignItems: "center", gap: "5px",
-        padding: "3px 9px", borderRadius: "20px",
-        fontSize: "11px", fontWeight: 600, whiteSpace: "nowrap",
-        background: s.bg, color: s.text,
-      }}
+      className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${s.className}`}
     >
-      <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: s.dot, flexShrink: 0 }} />
+      <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: s.dot }} />
       {status}
     </span>
   )
@@ -294,14 +265,9 @@ export function EventRow({
   }
 
   return (
-    <tr
-      className="event-table-row"
-      style={{ borderBottom: "1px solid #F5F5F5", background: "#fff", transition: "background 0.1s" }}
-      onMouseEnter={(e) => { (e.currentTarget as HTMLTableRowElement).style.background = "#FAFAFA" }}
-      onMouseLeave={(e) => { (e.currentTarget as HTMLTableRowElement).style.background = "#fff" }}
-    >
+    <tr className="event-table-row border-b border-border bg-card transition-colors hover:bg-muted/50">
       {/* ── Checkbox ── */}
-      <td style={{ padding: "0 0 0 16px", verticalAlign: "middle", width: "44px" }}>
+      <td className="w-11 py-0 pl-4 align-middle">
         {onSelect && (
           <Checkbox
             checked={selected}
@@ -312,7 +278,8 @@ export function EventRow({
 
       {/* ── Event: thumbnail + title + location ── */}
       <td
-        style={{ padding: "10px 8px 10px 10px", verticalAlign: "middle", cursor: "pointer", ...truncStyle }}
+        className="cursor-pointer px-2 py-2.5 pl-2.5 align-middle"
+        style={truncStyle}
         onClick={openEventPage}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
@@ -324,14 +291,8 @@ export function EventRow({
         tabIndex={0}
         title={`View ${eventDisplayTitle}`}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: "9px" }}>
-          <div
-            style={{
-              position: "relative", width: "38px", height: "38px",
-              borderRadius: "7px", background: "#F4F4F5", overflow: "hidden",
-              flexShrink: 0, border: "1px solid #ECECEC",
-            }}
-          >
+        <div className="flex items-center gap-2">
+          <div className="relative h-[38px] w-[38px] shrink-0 overflow-hidden rounded-[7px] border border-border bg-muted">
             <AppImage
               src={getEventDisplayImageUrl({
                 thumbnailImage: event.thumbnailImage,
@@ -345,19 +306,18 @@ export function EventRow({
               className="object-cover"
             />
           </div>
-          <div style={{ minWidth: 0 }}>
+          <div className="min-w-0">
             <div
               title={eventDisplayTitle}
-              style={{ fontSize: "13px", fontWeight: 600, color: "#18181B", lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
-              className="hover:text-[#004A96] hover:underline"
+              className="overflow-hidden text-ellipsis whitespace-nowrap text-[13px] font-semibold leading-tight text-foreground hover:text-[#004A96] hover:underline dark:hover:text-[#17F0F6]"
             >
               {eventDisplayTitle}
             </div>
             <div
               title={locationDisplay}
-              style={{ fontSize: "11px", color: "#A1A1AA", marginTop: "2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+              className="mt-0.5 overflow-hidden text-ellipsis whitespace-nowrap text-[11px] text-muted-foreground"
             >
-              {regionTag && <span style={{ marginRight: "4px", fontWeight: 600 }}>{regionTag}</span>}
+              {regionTag && <span className="mr-1 font-semibold">{regionTag}</span>}
               {city}{country && country !== city ? `, ${country}` : ""}
             </div>
           </div>
@@ -365,59 +325,44 @@ export function EventRow({
       </td>
 
       {/* ── Category ── */}
-      <td style={{ padding: "10px 8px", verticalAlign: "middle", overflow: "hidden" }}>
+      <td className="overflow-hidden px-2 py-2.5 align-middle">
         <CategoryPill name={categoryDisplay} />
       </td>
 
       {/* ── Date ── */}
-      <td style={{ padding: "10px 8px", verticalAlign: "middle", ...truncStyle }}>
-        <span title={dateRange} style={{ fontSize: "12px", color: "#52525B", fontWeight: 500 }}>
+      <td className="px-2 py-2.5 align-middle" style={truncStyle}>
+        <span title={dateRange} className="text-xs font-medium text-muted-foreground">
           {dateRange}
         </span>
       </td>
 
       {/* ── Location (hidden ≤768px) ── */}
-      <td className="col-hide-md" style={{ padding: "10px 8px", verticalAlign: "middle", ...truncStyle }}>
-        <span title={locationDisplay} style={{ fontSize: "12px", color: "#52525B" }}>
+      <td className="col-hide-md px-2 py-2.5 align-middle" style={truncStyle}>
+        <span title={locationDisplay} className="text-xs text-muted-foreground">
           {locationDisplay}
         </span>
       </td>
 
       {/* ── Attendance (hidden ≤640px) ── no truncStyle: numbers must never clip */}
-      <td className="col-hide-sm" style={{ padding: "10px 8px", verticalAlign: "middle" }}>
-        <span style={{ fontSize: "13px", fontWeight: 700, color: "#18181B" }}>
+      <td className="col-hide-sm px-2 py-2.5 align-middle">
+        <span className="text-[13px] font-bold text-foreground">
           {attendees.toLocaleString()}
         </span>
       </td>
 
       {/* ── Status ── no truncStyle: pill must not disappear */}
-      <td style={{ padding: "10px 8px", verticalAlign: "middle" }}>
+      <td className="px-2 py-2.5 align-middle">
         <StatusPill status={liveStatus} />
       </td>
 
       {/* ── Organizer (hidden ≤1024px) with Plan Badge ── */}
-      <td className="col-hide-lg" style={{ padding: "10px 8px", verticalAlign: "middle", ...truncStyle }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+      <td className="col-hide-lg px-2 py-2.5 align-middle" style={truncStyle}>
+        <div className="flex items-center gap-1.5">
           <OrganizerAvatar name={organizerName} />
-          <span
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '2px',
-              overflow: 'hidden',
-              minWidth: 0,
-            }}
-          >
+          <span className="flex min-w-0 items-center gap-0.5 overflow-hidden">
             <span
               title={organizerName}
-              style={{
-                fontSize: "12px",
-                color: "#52525B",
-                fontWeight: 500,
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-              }}
+              className="overflow-hidden text-ellipsis whitespace-nowrap text-xs font-medium text-muted-foreground"
             >
               {organizerName}
             </span>
@@ -427,43 +372,30 @@ export function EventRow({
       </td>
 
       {/* ── Featured star ── */}
-      <td style={{ padding: "10px 6px", textAlign: "center", verticalAlign: "middle" }}>
+      <td className="px-1.5 py-2.5 text-center align-middle">
         <button
           onClick={() => onFeatureToggle(event.id, isFeatured)}
-          style={{ background: "none", border: "none", cursor: "pointer", padding: "4px", lineHeight: 1 }}
+          className="cursor-pointer border-0 bg-transparent p-1 leading-none"
           title={isFeatured ? "Remove from featured" : "Mark as featured"}
         >
           <Star
-            style={{
-              width: "15px", height: "15px",
-              fill: isFeatured ? "#F59E0B" : "none",
-              color: isFeatured ? "#F59E0B" : "#D4D4D8",
-              transition: "all 0.15s",
-            }}
+            className={`h-[15px] w-[15px] transition-all ${
+              isFeatured ? "fill-amber-500 text-amber-500" : "text-muted-foreground/50"
+            }`}
           />
         </button>
       </td>
 
       {/* ── Actions ── always visible; hover reveals them more prominently via CSS ── */}
-      <td style={{ padding: "10px 10px 10px 2px", verticalAlign: "middle", whiteSpace: "nowrap" }}>
-        <div
-          className="row-actions"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "2px",
-            opacity: 0.45,
-            transition: "opacity 0.15s",
-          }}
-        >
+      <td className="whitespace-nowrap py-2.5 pl-0.5 pr-2.5 align-middle">
+        <div className="row-actions flex items-center gap-0.5 opacity-45 transition-opacity">
           {/* View */}
           <Button
             variant="ghost"
             size="icon"
             onClick={openEventPage}
-            className="h-7 w-7 hover:bg-blue-50 hover:text-blue-600"
+            className="h-7 w-7 text-muted-foreground hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-[#17F0F6]/10 dark:hover:text-[#17F0F6]"
             title="View public event page"
-            style={{ color: "#71717A" }}
           >
             <Eye className="h-3.5 w-3.5" />
           </Button>
@@ -473,9 +405,8 @@ export function EventRow({
             variant="ghost"
             size="icon"
             onClick={() => onEdit(event)}
-            className="h-7 w-7 hover:bg-green-50 hover:text-green-600"
+            className="h-7 w-7 text-muted-foreground hover:bg-green-50 hover:text-green-600 dark:hover:bg-emerald-500/10 dark:hover:text-emerald-300"
             title="Edit event"
-            style={{ color: "#71717A" }}
           >
             <Edit className="h-3.5 w-3.5" />
           </Button>
@@ -486,9 +417,8 @@ export function EventRow({
               variant="ghost"
               size="icon"
               onClick={() => onApprove(event.id)}
-              className="h-7 w-7 hover:bg-emerald-50 hover:text-emerald-600"
+              className="h-7 w-7 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-600 dark:text-emerald-300 dark:hover:bg-emerald-500/10"
               title="Approve & publish event"
-              style={{ color: "#059669" }}
             >
               <CheckCircle2 className="h-3.5 w-3.5" />
             </Button>
@@ -499,9 +429,8 @@ export function EventRow({
             variant="ghost"
             size="icon"
             onClick={() => onDelete(event.id)}
-            className="h-7 w-7 hover:bg-red-50 hover:text-red-600"
+            className="h-7 w-7 text-muted-foreground hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/10 dark:hover:text-red-300"
             title="Delete event"
-            style={{ color: "#71717A" }}
           >
             <Trash2 className="h-3.5 w-3.5" />
           </Button>

@@ -62,7 +62,7 @@ export default function EventManagementPage({ onPromote }: EventManagementPagePr
   if (categoriesLoading && events.length === 0 && !loading) {
     return (
       <div className="flex justify-center items-center h-[80vh]">
-        <p className="text-gray-500">Loading events...</p>
+        <p className="text-muted-foreground">Loading events...</p>
       </div>
     )
   }

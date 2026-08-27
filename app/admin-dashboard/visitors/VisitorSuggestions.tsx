@@ -235,29 +235,29 @@ export function VisitorSuggestionsAdmin({ visitorId, visitorName, onClose, onSug
 
       {/* Visitor Info Card */}
       {visitor && (
-        <Card className="bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200">
+        <Card className="bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200 dark:from-muted dark:to-card dark:border-border">
           <CardContent className="pt-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <p className="text-sm font-medium text-purple-700">Visitor</p>
-                <p className="text-lg font-semibold text-gray-900">{visitor.name}</p>
+                <p className="text-sm font-medium text-purple-700 dark:text-violet-300">Visitor</p>
+                <p className="text-lg font-semibold text-gray-900 dark:text-foreground">{visitor.name}</p>
                 {visitor.company && (
-                  <p className="text-sm text-gray-600">{visitor.company}</p>
+                  <p className="text-sm text-gray-600 dark:text-muted-foreground">{visitor.company}</p>
                 )}
                 {visitor.location && (
-                  <p className="text-sm text-gray-500 mt-1">{visitor.location}</p>
+                  <p className="text-sm text-gray-500 mt-1 dark:text-muted-foreground">{visitor.location}</p>
                 )}
               </div>
               <div>
-                <p className="text-sm font-medium text-purple-700">Previously Suggested</p>
-                <p className="text-2xl font-bold text-gray-900">{visitor.alreadySuggestedCount}</p>
-                <p className="text-xs text-gray-500">exhibitors already sent</p>
+                <p className="text-sm font-medium text-purple-700 dark:text-violet-300">Previously Suggested</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-foreground">{visitor.alreadySuggestedCount}</p>
+                <p className="text-xs text-gray-500 dark:text-muted-foreground">exhibitors already sent</p>
               </div>
               <div>
-                <p className="text-sm font-medium text-purple-700">Categories from Events</p>
+                <p className="text-sm font-medium text-purple-700 dark:text-violet-300">Categories from Events</p>
                 <div className="flex flex-wrap gap-1 mt-1">
                   {visitor.categories.slice(0, 5).map((category) => (
-                    <Badge key={category} variant="secondary" className="bg-white text-purple-700">
+                    <Badge key={category} variant="secondary" className="bg-white text-purple-700 dark:bg-card dark:text-violet-300">
                       {category}
                     </Badge>
                   ))}
@@ -265,18 +265,18 @@ export function VisitorSuggestionsAdmin({ visitorId, visitorName, onClose, onSug
                     <Badge variant="secondary">+{visitor.categories.length - 5}</Badge>
                   )}
                   {visitor.categories.length === 0 && (
-                    <span className="text-sm text-gray-500">No categories found</span>
+                    <span className="text-sm text-gray-500 dark:text-muted-foreground">No categories found</span>
                   )}
                 </div>
               </div>
             </div>
             
             {visitor.interests && visitor.interests.length > 0 && (
-              <div className="mt-4 pt-4 border-t border-purple-200">
-                <p className="text-sm font-medium text-purple-700">Interests</p>
+              <div className="mt-4 pt-4 border-t border-purple-200 dark:border-border">
+                <p className="text-sm font-medium text-purple-700 dark:text-violet-300">Interests</p>
                 <div className="flex flex-wrap gap-2 mt-1">
                   {visitor.interests.map((interest) => (
-                    <Badge key={interest} variant="secondary" className="bg-white">
+                    <Badge key={interest} variant="secondary" className="bg-white dark:bg-card">
                       {interest}
                     </Badge>
                   ))}
@@ -533,12 +533,12 @@ export function VisitorSuggestionsAdmin({ visitorId, visitorName, onClose, onSug
 
           {/* Selection Summary */}
           {selectedExhibitors.size > 0 && (
-            <div className="sticky bottom-4 bg-white border rounded-lg shadow-lg p-4 flex justify-between items-center">
+            <div className="sticky bottom-4 bg-white border rounded-lg shadow-lg p-4 flex justify-between items-center dark:bg-card dark:border-border">
               <div>
-                <p className="font-semibold">{selectedExhibitors.size} exhibitor(s) selected</p>
-                <p className="text-sm text-gray-500">Click "Send to Visitor" to publish these suggestions</p>
+                <p className="font-semibold dark:text-foreground">{selectedExhibitors.size} exhibitor(s) selected</p>
+                <p className="text-sm text-gray-500 dark:text-muted-foreground">Click "Send to Visitor" to publish these suggestions</p>
               </div>
-              <Button onClick={sendSuggestions} disabled={sending} className="bg-purple-600 hover:bg-purple-700">
+              <Button onClick={sendSuggestions} disabled={sending} className="bg-purple-600 hover:bg-purple-700 dark:bg-primary dark:text-primary-foreground dark:hover:bg-primary/90">
                 {sending ? (
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
                 ) : (

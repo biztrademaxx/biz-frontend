@@ -25,6 +25,7 @@ import {
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { apiFetch } from "@/lib/api"
+import { cn } from "@/lib/utils"
 import EventDetailsPanel from "./EventDetailsModal"
 
 interface Event {
@@ -76,22 +77,22 @@ interface Event {
 
 type TabType = "pending" | "approved" | "rejected"
 
-const categoryStyles: Record<string, { bg: string; text: string }> = {
-  Expo: { bg: "#e3f2fd", text: "#1565c0" },
-  Summit: { bg: "#f3e5f5", text: "#6a1b9a" },
-  Workshop: { bg: "#fce4ec", text: "#880e4f" },
-  Conference: { bg: "#e8f5e9", text: "#1b5e20" },
-  Virtual: { bg: "#fff3e0", text: "#e65100" },
-  "Expo + Conference": { bg: "#e8eaf6", text: "#283593" },
+const categoryStyles: Record<string, string> = {
+  Expo: "bg-blue-100 text-blue-800 dark:bg-blue-500/20 dark:text-blue-300",
+  Summit: "bg-purple-100 text-purple-800 dark:bg-purple-500/20 dark:text-purple-300",
+  Workshop: "bg-pink-100 text-pink-800 dark:bg-pink-500/20 dark:text-pink-300",
+  Conference: "bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300",
+  Virtual: "bg-orange-100 text-orange-800 dark:bg-orange-500/20 dark:text-orange-300",
+  "Expo + Conference": "bg-indigo-100 text-indigo-800 dark:bg-indigo-500/20 dark:text-indigo-300",
 }
 
-const orgColors = [
-  { bg: "#e3f2fd", text: "#1565c0" },
-  { bg: "#f3e5f5", text: "#6a1b9a" },
-  { bg: "#fce4ec", text: "#880e4f" },
-  { bg: "#e8f5e9", text: "#1b5e20" },
-  { bg: "#fff3e0", text: "#e65100" },
-  { bg: "#e8eaf6", text: "#283593" },
+const orgColorClasses = [
+  "bg-blue-100 text-blue-800 dark:bg-blue-500/20 dark:text-blue-300",
+  "bg-purple-100 text-purple-800 dark:bg-purple-500/20 dark:text-purple-300",
+  "bg-pink-100 text-pink-800 dark:bg-pink-500/20 dark:text-pink-300",
+  "bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300",
+  "bg-orange-100 text-orange-800 dark:bg-orange-500/20 dark:text-orange-300",
+  "bg-indigo-100 text-indigo-800 dark:bg-indigo-500/20 dark:text-indigo-300",
 ]
 
 export default function EventApprovalDashboard() {
@@ -205,7 +206,7 @@ export default function EventApprovalDashboard() {
     try {
       const data = await apiFetch<{ success?: boolean; error?: string }>(
         "/api/admin/events/bulk-approve",
-        { method: "POST", body: { eventIds: ids }, auth: true }
+        { method: "POST", body: { eventIds: ids }, auth: true },
       )
       if (data.success !== false) {
         toast({ title: "Success", description: `${ids.length} events approved successfully` })
@@ -226,7 +227,7 @@ export default function EventApprovalDashboard() {
     try {
       const data = await apiFetch<{ success?: boolean; error?: string }>(
         "/api/admin/events/bulk-reject",
-        { method: "POST", body: { eventIds: ids, reason: "Bulk rejection by admin" }, auth: true }
+        { method: "POST", body: { eventIds: ids, reason: "Bulk rejection by admin" }, auth: true },
       )
       if (data.success !== false) {
         toast({ title: "Success", description: `${ids.length} events rejected successfully` })
@@ -246,11 +247,15 @@ export default function EventApprovalDashboard() {
       setApproving(eventId)
       const data = await apiFetch<{ success?: boolean; error?: string }>(
         "/api/admin/events/approve",
-        { method: "POST", body: { eventId, action: "approve" }, auth: true }
+        { method: "POST", body: { eventId, action: "approve" }, auth: true },
       )
       if (data.success !== false) {
         toast({ title: "Success", description: "Event approved successfully" })
-        setSelectedIds(prev => { const next = new Set(prev); next.delete(eventId); return next })
+        setSelectedIds((prev) => {
+          const next = new Set(prev)
+          next.delete(eventId)
+          return next
+        })
         fetchEvents()
         fetchStats()
       } else {
@@ -269,11 +274,15 @@ export default function EventApprovalDashboard() {
       setRejecting(selectedEvent.id)
       const data = await apiFetch<{ success?: boolean; error?: string }>(
         "/api/admin/events/reject",
-        { method: "POST", body: { eventId: selectedEvent.id, reason: rejectReason }, auth: true }
+        { method: "POST", body: { eventId: selectedEvent.id, reason: rejectReason }, auth: true },
       )
       if (data.success !== false) {
         toast({ title: "Success", description: "Event rejected successfully" })
-        setSelectedIds(prev => { const next = new Set(prev); next.delete(selectedEvent.id); return next })
+        setSelectedIds((prev) => {
+          const next = new Set(prev)
+          next.delete(selectedEvent.id)
+          return next
+        })
         fetchEvents()
         fetchStats()
         setRejectDialogOpen(false)
@@ -294,7 +303,7 @@ export default function EventApprovalDashboard() {
       setApproving(eventId)
       const data = await apiFetch<{ success?: boolean; error?: string }>(
         "/api/admin/events/approve",
-        { method: "POST", body: { eventId, action: "approve" }, auth: true }
+        { method: "POST", body: { eventId, action: "approve" }, auth: true },
       )
       if (data.success !== false) {
         toast({ title: "Success", description: "Event re-approved successfully" })
@@ -314,7 +323,7 @@ export default function EventApprovalDashboard() {
   }
 
   const toggleSelect = (eventId: string) => {
-    setSelectedIds(prev => {
+    setSelectedIds((prev) => {
       const next = new Set(prev)
       next.has(eventId) ? next.delete(eventId) : next.add(eventId)
       return next
@@ -325,7 +334,7 @@ export default function EventApprovalDashboard() {
     if (selectedIds.size === events.length) {
       setSelectedIds(new Set())
     } else {
-      setSelectedIds(new Set(events.map(e => e.id)))
+      setSelectedIds(new Set(events.map((e) => e.id)))
     }
   }
 
@@ -362,79 +371,99 @@ export default function EventApprovalDashboard() {
 
   const getOrganizerInitials = (event: Event) => {
     const name = event.organizer.company || event.organizer.name
-    return name.split(" ").slice(0, 2).map((w: string) => w[0]).join("").toUpperCase()
+    return name
+      .split(" ")
+      .slice(0, 2)
+      .map((w: string) => w[0])
+      .join("")
+      .toUpperCase()
   }
 
   const getOrganizerName = (event: Event) => event.organizer.company || event.organizer.name
 
   const getOrgColor = (event: Event) => {
     const name = event.organizer.company || event.organizer.name
-    return orgColors[name.charCodeAt(0) % orgColors.length]
+    return orgColorClasses[name.charCodeAt(0) % orgColorClasses.length]
   }
+
+  const ghostBtn =
+    "inline-flex items-center gap-1 rounded-lg border border-border bg-card px-3.5 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-60"
+  const approveBtn =
+    "inline-flex items-center gap-1 rounded-lg border border-emerald-300 bg-card px-3.5 py-1.5 text-xs font-medium text-emerald-700 transition-colors hover:bg-emerald-50 disabled:opacity-60 dark:border-emerald-500/40 dark:text-emerald-300 dark:hover:bg-emerald-500/10"
+  const rejectBtn =
+    "inline-flex items-center gap-1 rounded-lg border border-red-200 bg-card px-3.5 py-1.5 text-xs font-medium text-red-700 transition-colors hover:bg-red-50 disabled:opacity-60 dark:border-red-500/40 dark:text-red-300 dark:hover:bg-red-500/10"
+  const reapproveBtn =
+    "inline-flex items-center gap-1 rounded-lg border border-blue-200 bg-card px-3.5 py-1.5 text-xs font-medium text-blue-700 transition-colors hover:bg-blue-50 disabled:opacity-60 dark:border-[#17F0F6]/40 dark:text-[#17F0F6] dark:hover:bg-[#17F0F6]/10"
 
   if (loading && events.length === 0) {
     return (
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "256px" }}>
-        <Loader2 style={{ width: "32px", height: "32px", color: "#aaa", animation: "spin 1s linear infinite" }} />
-        <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+      <div className="flex h-64 items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     )
   }
 
-  return (
-    <div style={{ minHeight: "100vh", background: "#f0ede8", padding: "24px" }}>
+  const statCards = [
+    {
+      icon: <Clock size={16} />,
+      value: stats.pending,
+      label: "Pending",
+      iconWrap: "bg-orange-100 text-orange-600 dark:bg-orange-500/15 dark:text-orange-300",
+    },
+    {
+      icon: <CheckCircle size={16} />,
+      value: stats.approved,
+      label: "Approved this month",
+      iconWrap: "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300",
+    },
+    {
+      icon: <XCircle size={16} />,
+      value: stats.rejected,
+      label: "Rejected",
+      iconWrap: "bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-300",
+    },
+    {
+      icon: <Clock size={16} />,
+      value: stats.avgReviewTime,
+      label: "Avg. review time",
+      iconWrap: "bg-blue-100 text-blue-700 dark:bg-[#17F0F6]/15 dark:text-[#17F0F6]",
+    },
+  ]
 
-      {/* Stats Row */}
-      <div style={{ display: "flex", gap: "12px", marginBottom: "24px" }}>
-        {[
-          { icon: <Clock size={16} />, value: stats.pending, label: "Pending", iconBg: "#fff3e0", iconColor: "#f57c00" },
-          { icon: <CheckCircle size={16} />, value: stats.approved, label: "Approved this month", iconBg: "#e8f5e9", iconColor: "#2e7d32" },
-          { icon: <XCircle size={16} />, value: stats.rejected, label: "Rejected", iconBg: "#fce4ec", iconColor: "#c62828" },
-          { icon: <Clock size={16} />, value: stats.avgReviewTime, label: "Avg. review time", iconBg: "#e3f2fd", iconColor: "#1565c0" },
-        ].map((s, i) => (
-          <div key={i} style={{
-            background: "#fff", border: "0.5px solid #e5e3dc", borderRadius: "12px",
-            padding: "12px 18px", display: "flex", alignItems: "center", gap: "12px",
-          }}>
-            <div style={{
-              width: "32px", height: "32px", borderRadius: "8px",
-              background: s.iconBg, color: s.iconColor,
-              display: "flex", alignItems: "center", justifyContent: "center",
-            }}>
-              {s.icon}
-            </div>
+  return (
+    <div className="min-h-full space-y-6 bg-transparent">
+      <div className="flex flex-wrap gap-3">
+        {statCards.map((s, i) => (
+          <div
+            key={i}
+            className="flex min-w-[160px] flex-1 items-center gap-3 rounded-xl border border-border bg-card px-[18px] py-3 shadow-sm"
+          >
+            <div className={cn("flex h-8 w-8 items-center justify-center rounded-lg", s.iconWrap)}>{s.icon}</div>
             <div>
-              <div style={{ fontSize: "22px", fontWeight: 600, color: "#111" }}>{s.value}</div>
-              <div style={{ fontSize: "12px", color: "#888" }}>{s.label}</div>
+              <div className="text-[22px] font-semibold text-foreground">{s.value}</div>
+              <div className="text-xs text-muted-foreground">{s.label}</div>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Main Card */}
-      <div style={{ background: "#fff", border: "0.5px solid #e5e3dc", borderRadius: "14px", overflow: "hidden" }}>
-
-        {/* Card Header */}
-        <div style={{ padding: "16px 20px 0", borderBottom: "0.5px solid #f0ede8" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingBottom: "14px" }}>
-            <span style={{ fontSize: "15px", fontWeight: 500 }}>Event Submissions</span>
+      <div className="overflow-hidden rounded-[14px] border border-border bg-card shadow-sm">
+        <div className="border-b border-border px-5 pt-4">
+          <div className="flex items-center justify-between pb-3.5">
+            <span className="text-[15px] font-medium text-foreground">Event Submissions</span>
             {selectedIds.size > 0 && activeTab === "pending" && (
-              <div style={{ display: "flex", gap: "8px" }}>
+              <div className="flex gap-2">
                 <button
+                  type="button"
                   onClick={handleBulkApprove}
-                  style={{
-                    background: "#2e7d32", color: "#fff", border: "none",
-                    borderRadius: "8px", padding: "7px 16px", fontSize: "13px", cursor: "pointer",
-                  }}
+                  className="rounded-lg bg-emerald-700 px-4 py-1.5 text-[13px] text-white hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500"
                 >
                   Approve Selected ({selectedIds.size})
                 </button>
                 <button
+                  type="button"
                   onClick={handleBulkReject}
-                  style={{
-                    background: "#fff", color: "#c62828", border: "1px solid #ffcdd2",
-                    borderRadius: "8px", padding: "7px 16px", fontSize: "13px", cursor: "pointer",
-                  }}
+                  className="rounded-lg border border-red-200 bg-card px-4 py-1.5 text-[13px] text-red-700 hover:bg-red-50 dark:border-red-500/40 dark:text-red-300 dark:hover:bg-red-500/10"
                 >
                   Reject Selected ({selectedIds.size})
                 </button>
@@ -442,19 +471,22 @@ export default function EventApprovalDashboard() {
             )}
           </div>
 
-          {/* Tabs */}
-          <div style={{ display: "flex", gap: "24px" }}>
-            {(["pending", "approved", "rejected"] as TabType[]).map(tab => (
+          <div className="flex gap-6">
+            {(["pending", "approved", "rejected"] as TabType[]).map((tab) => (
               <button
                 key={tab}
-                onClick={() => { setActiveTab(tab); setSelectedIds(new Set()); setPage(1) }}
-                style={{
-                  paddingBottom: "10px", fontSize: "13px", fontWeight: 500,
-                  background: "none", border: "none",
-                  borderBottom: activeTab === tab ? "2px solid #2e7d32" : "2px solid transparent",
-                  color: activeTab === tab ? "#2e7d32" : "#888",
-                  cursor: "pointer", textTransform: "capitalize",
+                type="button"
+                onClick={() => {
+                  setActiveTab(tab)
+                  setSelectedIds(new Set())
+                  setPage(1)
                 }}
+                className={cn(
+                  "border-b-2 pb-2.5 text-[13px] font-medium capitalize transition-colors",
+                  activeTab === tab
+                    ? "border-emerald-600 text-emerald-700 dark:border-[#17F0F6] dark:text-[#17F0F6]"
+                    : "border-transparent text-muted-foreground hover:text-foreground",
+                )}
               >
                 {tab === "pending" ? "Pending" : tab === "approved" ? "Approved" : "Rejected"}
               </button>
@@ -462,31 +494,27 @@ export default function EventApprovalDashboard() {
           </div>
         </div>
 
-        {/* Table */}
-        <div style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse">
             <thead>
-              <tr style={{ borderBottom: "0.5px solid #f0ede8" }}>
-                <th style={{ padding: "12px 0 12px 20px", width: "40px", textAlign: "left" }}>
+              <tr className="border-b border-border">
+                <th className="w-10 py-3 pl-5 text-left">
                   {activeTab === "pending" && events.length > 0 && (
                     <input
                       type="checkbox"
                       checked={selectedIds.size === events.length && events.length > 0}
                       onChange={toggleSelectAll}
-                      style={{ width: "15px", height: "15px", accentColor: "#2e7d32", cursor: "pointer" }}
+                      className="h-[15px] w-[15px] cursor-pointer accent-emerald-600 dark:accent-[#17F0F6]"
                     />
                   )}
                 </th>
                 {["Event Name", "Category", "Organizer", "Submitted", "Actions"].map((h, i) => (
                   <th
                     key={h}
-                    style={{
-                      padding: "12px 0",
-                      textAlign: i === 4 ? "right" : "left",
-                      paddingRight: i === 4 ? "20px" : "0",
-                      fontSize: "11px", fontWeight: 500, color: "#aaa",
-                      letterSpacing: "0.06em", textTransform: "uppercase",
-                    }}
+                    className={cn(
+                      "py-3 text-[11px] font-medium uppercase tracking-wider text-muted-foreground",
+                      i === 4 ? "pr-5 text-right" : "text-left",
+                    )}
                   >
                     {h}
                   </th>
@@ -496,113 +524,84 @@ export default function EventApprovalDashboard() {
             <tbody>
               {events.length === 0 ? (
                 <tr>
-                  <td colSpan={6} style={{ textAlign: "center", padding: "48px 0", color: "#aaa", fontSize: "14px" }}>
+                  <td colSpan={6} className="py-12 text-center text-sm text-muted-foreground">
                     No {activeTab} submissions
                   </td>
                 </tr>
               ) : (
-                events.map(event => {
+                events.map((event) => {
                   const category = getCategory(event)
-                  const cat = categoryStyles[category] ?? categoryStyles["Expo"]
+                  const catClass = categoryStyles[category] ?? categoryStyles.Expo
                   const orgColor = getOrgColor(event)
 
                   return (
-                    <tr
-                      key={event.id}
-                      style={{ borderBottom: "0.5px solid #f8f7f5", transition: "background 0.1s" }}
-                      onMouseEnter={e => (e.currentTarget.style.background = "#faf9f7")}
-                      onMouseLeave={e => (e.currentTarget.style.background = "")}
-                    >
-                      <td style={{ paddingLeft: "20px", paddingTop: "14px", paddingBottom: "14px" }}>
+                    <tr key={event.id} className="border-b border-border transition-colors hover:bg-muted/40">
+                      <td className="py-3.5 pl-5">
                         {activeTab === "pending" && (
                           <input
                             type="checkbox"
                             checked={selectedIds.has(event.id)}
                             onChange={() => toggleSelect(event.id)}
-                            style={{ width: "15px", height: "15px", accentColor: "#2e7d32", cursor: "pointer" }}
+                            className="h-[15px] w-[15px] cursor-pointer accent-emerald-600 dark:accent-[#17F0F6]"
                           />
                         )}
                       </td>
 
-                      <td style={{ paddingTop: "14px", paddingBottom: "14px" }}>
-                        <div style={{ fontWeight: 500, fontSize: "13px", color: "#111" }}>{event.title}</div>
-                        <div style={{ fontSize: "12px", color: "#888", marginTop: "2px" }}>
-                          {event.city}, {event.country}&nbsp;·&nbsp;{formatDateRange(event.startDate, event.endDate)}
+                      <td className="py-3.5">
+                        <div className="text-[13px] font-medium text-foreground">{event.title}</div>
+                        <div className="mt-0.5 text-xs text-muted-foreground">
+                          {event.city}, {event.country} · {formatDateRange(event.startDate, event.endDate)}
                         </div>
                       </td>
 
-                      <td style={{ paddingTop: "14px", paddingBottom: "14px" }}>
-                        <span style={{
-                          display: "inline-flex", alignItems: "center",
-                          padding: "3px 10px", borderRadius: "20px",
-                          fontSize: "12px", fontWeight: 500,
-                          background: cat.bg, color: cat.text,
-                        }}>
+                      <td className="py-3.5">
+                        <span
+                          className={cn(
+                            "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
+                            catClass,
+                          )}
+                        >
                           {category}
                         </span>
                       </td>
 
-                      <td style={{ paddingTop: "14px", paddingBottom: "14px" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                          <div style={{
-                            width: "28px", height: "28px", borderRadius: "50%",
-                            background: orgColor.bg, color: orgColor.text,
-                            display: "flex", alignItems: "center", justifyContent: "center",
-                            fontSize: "11px", fontWeight: 600, flexShrink: 0,
-                          }}>
+                      <td className="py-3.5">
+                        <div className="flex items-center gap-2">
+                          <div
+                            className={cn(
+                              "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold",
+                              orgColor,
+                            )}
+                          >
                             {getOrganizerInitials(event)}
                           </div>
-                          <span style={{ fontSize: "13px" }}>{getOrganizerName(event)}</span>
+                          <span className="text-[13px] text-foreground">{getOrganizerName(event)}</span>
                         </div>
                       </td>
 
-                      <td style={{ paddingTop: "14px", paddingBottom: "14px", fontSize: "13px", color: "#888" }}>
-                        {getTimeAgo(event.createdAt)}
-                      </td>
+                      <td className="py-3.5 text-[13px] text-muted-foreground">{getTimeAgo(event.createdAt)}</td>
 
-                      <td style={{ paddingTop: "14px", paddingBottom: "14px", paddingRight: "20px", textAlign: "right" }}>
-                        <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "6px" }}>
+                      <td className="py-3.5 pr-5 text-right">
+                        <div className="flex items-center justify-end gap-1.5">
                           {activeTab === "pending" && (
                             <>
                               <button
+                                type="button"
                                 onClick={() => handleApprove(event.id)}
                                 disabled={approving === event.id}
-                                style={{
-                                  padding: "6px 14px", borderRadius: "7px",
-                                  fontSize: "12px", fontWeight: 500,
-                                  border: "1px solid #a5d6a7", background: "#fff", color: "#2e7d32",
-                                  cursor: "pointer", display: "flex", alignItems: "center", gap: "4px",
-                                  opacity: approving === event.id ? 0.6 : 1,
-                                }}
+                                className={approveBtn}
                               >
-                                {approving === event.id
-                                  ? <Loader2 size={12} style={{ animation: "spin 1s linear infinite" }} />
-                                  : <Check size={12} />
-                                }
+                                {approving === event.id ? (
+                                  <Loader2 size={12} className="animate-spin" />
+                                ) : (
+                                  <Check size={12} />
+                                )}
                                 Approve
                               </button>
-
-                              <button
-                                onClick={() => handleViewEvent(event.id)}
-                                style={{
-                                  padding: "6px 14px", borderRadius: "7px",
-                                  fontSize: "12px", fontWeight: 500,
-                                  border: "1px solid #e0e0e0", background: "#fff", color: "#555",
-                                  cursor: "pointer",
-                                }}
-                              >
+                              <button type="button" onClick={() => handleViewEvent(event.id)} className={ghostBtn}>
                                 Review
                               </button>
-
-                              <button
-                                onClick={() => openRejectDialog(event)}
-                                style={{
-                                  padding: "6px 14px", borderRadius: "7px",
-                                  fontSize: "12px", fontWeight: 500,
-                                  border: "1px solid #ffcdd2", background: "#fff", color: "#c62828",
-                                  cursor: "pointer", display: "flex", alignItems: "center", gap: "4px",
-                                }}
-                              >
+                              <button type="button" onClick={() => openRejectDialog(event)} className={rejectBtn}>
                                 <X size={12} />
                                 Reject
                               </button>
@@ -610,49 +609,28 @@ export default function EventApprovalDashboard() {
                           )}
 
                           {activeTab === "approved" && (
-                            <button
-                              onClick={() => handleViewEvent(event.id)}
-                              style={{
-                                padding: "6px 14px", borderRadius: "7px",
-                                fontSize: "12px", fontWeight: 500,
-                                border: "1px solid #e0e0e0", background: "#fff", color: "#555",
-                                cursor: "pointer",
-                              }}
-                            >
-                              <Eye size={12} style={{ marginRight: "4px" }} />
+                            <button type="button" onClick={() => handleViewEvent(event.id)} className={ghostBtn}>
+                              <Eye size={12} />
                               View
                             </button>
                           )}
 
                           {activeTab === "rejected" && (
                             <>
-                              <button
-                                onClick={() => handleViewEvent(event.id)}
-                                style={{
-                                  padding: "6px 14px", borderRadius: "7px",
-                                  fontSize: "12px", fontWeight: 500,
-                                  border: "1px solid #e0e0e0", background: "#fff", color: "#555",
-                                  cursor: "pointer",
-                                }}
-                              >
+                              <button type="button" onClick={() => handleViewEvent(event.id)} className={ghostBtn}>
                                 Review
                               </button>
-
                               <button
+                                type="button"
                                 onClick={() => handleReapprove(event.id)}
                                 disabled={approving === event.id}
-                                style={{
-                                  padding: "6px 14px", borderRadius: "7px",
-                                  fontSize: "12px", fontWeight: 500,
-                                  border: "1px solid #bbdefb", background: "#fff", color: "#1565c0",
-                                  cursor: "pointer", display: "flex", alignItems: "center", gap: "4px",
-                                  opacity: approving === event.id ? 0.6 : 1,
-                                }}
+                                className={reapproveBtn}
                               >
-                                {approving === event.id
-                                  ? <Loader2 size={12} style={{ animation: "spin 1s linear infinite" }} />
-                                  : <Check size={12} />
-                                }
+                                {approving === event.id ? (
+                                  <Loader2 size={12} className="animate-spin" />
+                                ) : (
+                                  <Check size={12} />
+                                )}
                                 Re-approve
                               </button>
                             </>
@@ -667,52 +645,39 @@ export default function EventApprovalDashboard() {
           </table>
         </div>
 
-        {/* Pagination Footer */}
-        <div style={{
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-          padding: "14px 20px", borderTop: "0.5px solid #f0ede8",
-        }}>
-          <span style={{ fontSize: "13px", color: "#888" }}>
+        <div className="flex items-center justify-between border-t border-border px-5 py-3.5">
+          <span className="text-[13px] text-muted-foreground">
             Showing {(page - 1) * 10 + 1}–{Math.min(page * 10, totalItems)} of {totalItems} submissions
           </span>
-          <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+          <div className="flex items-center gap-1">
             <button
-              onClick={() => setPage(p => Math.max(1, p - 1))}
+              type="button"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
-              style={{
-                width: "32px", height: "32px", borderRadius: "8px",
-                border: "0.5px solid #e5e3dc", background: "#fff", color: "#aaa",
-                cursor: page === 1 ? "not-allowed" : "pointer", opacity: page === 1 ? 0.4 : 1,
-                display: "flex", alignItems: "center", justifyContent: "center",
-              }}
+              className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-card text-muted-foreground disabled:cursor-not-allowed disabled:opacity-40"
             >
               <ChevronLeft size={14} />
             </button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
               <button
                 key={p}
+                type="button"
                 onClick={() => setPage(p)}
-                style={{
-                  width: "32px", height: "32px", borderRadius: "8px",
-                  border: page === p ? "none" : "0.5px solid #e5e3dc",
-                  background: page === p ? "#2e7d32" : "#fff",
-                  color: page === p ? "#fff" : "#555",
-                  fontSize: "13px", cursor: "pointer",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                }}
+                className={cn(
+                  "flex h-8 w-8 items-center justify-center rounded-lg text-[13px]",
+                  page === p
+                    ? "bg-emerald-700 text-white dark:bg-[#17F0F6] dark:text-[#010639]"
+                    : "border border-border bg-card text-foreground hover:bg-muted",
+                )}
               >
                 {p}
               </button>
             ))}
             <button
-              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              type="button"
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
-              style={{
-                width: "32px", height: "32px", borderRadius: "8px",
-                border: "0.5px solid #e5e3dc", background: "#fff", color: "#aaa",
-                cursor: page === totalPages ? "not-allowed" : "pointer", opacity: page === totalPages ? 0.4 : 1,
-                display: "flex", alignItems: "center", justifyContent: "center",
-              }}
+              className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-card text-muted-foreground disabled:cursor-not-allowed disabled:opacity-40"
             >
               <ChevronRight size={14} />
             </button>
@@ -720,39 +685,45 @@ export default function EventApprovalDashboard() {
         </div>
       </div>
 
-      {/* Event Details Panel */}
       <EventDetailsPanel
         eventId={selectedEventForView}
         isOpen={isViewPanelOpen}
-        onClose={() => { setIsViewPanelOpen(false); setSelectedEventForView(null) }}
-        onActionComplete={() => { fetchEvents(); fetchStats() }}
+        onClose={() => {
+          setIsViewPanelOpen(false)
+          setSelectedEventForView(null)
+        }}
+        onActionComplete={() => {
+          fetchEvents()
+          fetchStats()
+        }}
       />
 
-      {/* Reject Dialog */}
       <AlertDialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Reject Event</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to reject{" "}
-              <span style={{ fontWeight: 500 }}>"{selectedEvent?.title}"</span>?
-              The organizer will be notified with your reason.
+              Are you sure you want to reject <span className="font-medium">"{selectedEvent?.title}"</span>? The
+              organizer will be notified with your reason.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px", margin: "8px 0" }}>
-            <label style={{ fontSize: "14px", fontWeight: 500, color: "#374151" }}>Rejection Reason</label>
+          <div className="my-2 flex flex-col gap-2">
+            <label className="text-sm font-medium text-foreground">Rejection Reason</label>
             <Textarea
               placeholder="Please provide a reason for rejection..."
               value={rejectReason}
-              onChange={e => setRejectReason(e.target.value)}
+              onChange={(e) => setRejectReason(e.target.value)}
               rows={4}
               className="resize-none"
             />
-            <p style={{ fontSize: "12px", color: "#888" }}>This reason will be shared with the organizer.</p>
+            <p className="text-xs text-muted-foreground">This reason will be shared with the organizer.</p>
           </div>
           <AlertDialogFooter>
             <AlertDialogCancel
-              onClick={() => { setRejectReason(""); setSelectedEvent(null) }}
+              onClick={() => {
+                setRejectReason("")
+                setSelectedEvent(null)
+              }}
               disabled={rejecting === selectedEvent?.id}
             >
               Cancel
@@ -760,11 +731,11 @@ export default function EventApprovalDashboard() {
             <AlertDialogAction
               onClick={handleReject}
               disabled={rejecting === selectedEvent?.id || !rejectReason.trim()}
-              style={{ background: "#c62828" }}
+              className="bg-red-700 text-white hover:bg-red-800 dark:bg-red-600 dark:hover:bg-red-500"
             >
               {rejecting === selectedEvent?.id ? (
-                <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                  <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} />
+                <span className="flex items-center gap-2">
+                  <Loader2 size={14} className="animate-spin" />
                   Rejecting...
                 </span>
               ) : (
@@ -774,8 +745,6 @@ export default function EventApprovalDashboard() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
     </div>
   )
 }

@@ -552,7 +552,7 @@ export default function ExhibitorManagement({ initialTab = "all" }: { initialTab
   }
 
   return (
-    <div className="min-h-screen bg-[#F5F4F0] p-8 space-y-6">
+    <div className="min-h-screen bg-transparent p-8 space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-xs font-medium tracking-[0.15em] uppercase text-gray-400 mb-1">Admin Panel</p>
