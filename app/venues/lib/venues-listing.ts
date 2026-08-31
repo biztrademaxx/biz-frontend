@@ -5,6 +5,7 @@ import type { GeoHint } from "@/lib/browse-geo"
 
 /** 3 cards × 7 rows per page */
 export const VENUES_PER_PAGE = 21
+export const VENUES_LISTING_REVALIDATE_SEC = 120
 
 export type PublicVenue = {
   id: string
@@ -28,8 +29,6 @@ export type PublicVenue = {
   isVerified: boolean
   venueImages: string[]
 }
-
-const PAGE_SIZE = 100
 
 export const DEFAULT_POPULAR_CITIES = [
   "Bangalore",
@@ -108,28 +107,96 @@ export function resolvePopularCountryName(geo: GeoHint | null): string | null {
   return null
 }
 
-export async function fetchAllPublicVenues(): Promise<PublicVenue[]> {
-  let page = 1
-  let totalPages = 1
-  const all: PublicVenue[] = []
+export function mapApiVenueToPublic(raw: unknown): PublicVenue | null {
+  if (!raw || typeof raw !== "object") return null
+  const v = raw as Record<string, unknown>
+  if (typeof v.id !== "string" || !v.id) return null
 
-  do {
-    const response = await fetch(`/api/venues?limit=${PAGE_SIZE}&page=${page}`, { cache: "no-store" })
-    if (!response.ok) throw new Error("Failed to fetch venues")
+  const images = Array.isArray(v.venueImages)
+    ? v.venueImages.filter((x): x is string => typeof x === "string" && x.trim().length > 0)
+    : Array.isArray(v.images)
+      ? v.images.filter((x): x is string => typeof x === "string" && x.trim().length > 0)
+      : []
+  const venueName =
+    String(v.venueName ?? v.name ?? "").trim() ||
+    String(v.company ?? "").trim() ||
+    "Unnamed Venue"
 
-    const data = await response.json()
-    const list: PublicVenue[] = Array.isArray(data.venues)
-      ? data.venues
-      : Array.isArray(data.data)
-        ? data.data
-        : []
+  return {
+    id: v.id,
+    venueName,
+    logo: String(v.logo ?? v.avatar ?? ""),
+    contactPerson: "",
+    address: String(v.venueAddress ?? v.address ?? ""),
+    city: String(v.venueCity ?? v.city ?? ""),
+    state: String(v.venueState ?? v.state ?? ""),
+    country: String(v.venueCountry ?? v.country ?? ""),
+    website: "",
+    description: "",
+    maxCapacity: Number(v.maxCapacity) || 0,
+    totalHalls: Number(v.totalHalls) || 0,
+    totalEvents: Number(v.totalEvents ?? v.eventCount) || 0,
+    activeBookings: 0,
+    averageRating: Number(v.averageRating ?? v.rating) || 0,
+    totalReviews: Number(v.totalReviews ?? v.reviewCount) || 0,
+    amenities: [],
+    meetingSpaces: [],
+    isVerified: true,
+    venueImages: images.slice(0, 4),
+  }
+}
 
-    all.push(...list)
-    totalPages = Math.max(1, Number(data.pagination?.totalPages) || 1)
-    page += 1
-  } while (page <= totalPages)
+export function extractVenuesFromApiPayload(data: unknown): {
+  venues: PublicVenue[]
+  total: number
+  totalPages: number
+} {
+  const payload = data && typeof data === "object" ? (data as Record<string, unknown>) : {}
+  const rawList = Array.isArray(payload.venues)
+    ? payload.venues
+    : Array.isArray(payload.data)
+      ? payload.data
+      : []
+  const venues = rawList.map(mapApiVenueToPublic).filter((v): v is PublicVenue => !!v)
+  const pagination =
+    payload.pagination && typeof payload.pagination === "object"
+      ? (payload.pagination as { total?: number; totalPages?: number; limit?: number })
+      : null
+  const total = Number(pagination?.total) || venues.length
+  const totalPages = Math.max(
+    1,
+    Number(pagination?.totalPages) || Math.ceil(total / VENUES_PER_PAGE) || 1,
+  )
+  return { venues, total, totalPages }
+}
 
-  return all
+export function buildVenuesListingQuery(params: {
+  page: number
+  search: string
+  cities: string[]
+  countries: string[]
+  visitorGeo: GeoHint | null
+  limit?: number
+}) {
+  const qs = new URLSearchParams()
+  qs.set("page", String(params.page))
+  qs.set("limit", String(params.limit ?? VENUES_PER_PAGE))
+  const q = params.search.trim()
+  if (q) qs.set("search", q)
+  if (params.countries.length) qs.set("country", params.countries.join(","))
+  if (params.cities.length) qs.set("city", params.cities.join(","))
+  if (params.countries.length === 0 && params.visitorGeo) {
+    if (params.visitorGeo.countryName?.trim()) {
+      qs.set("prioritizeCountry", params.visitorGeo.countryName.trim())
+    }
+    if (params.visitorGeo.countryCode?.trim()) {
+      qs.set("prioritizeCountryCode", params.visitorGeo.countryCode.trim())
+    }
+    if (params.visitorGeo.city?.trim()) {
+      qs.set("prioritizeCity", params.visitorGeo.city.trim())
+    }
+  }
+  return qs.toString()
 }
 
 function countryNeedlesForFilter(countryLabel: string): string[] {

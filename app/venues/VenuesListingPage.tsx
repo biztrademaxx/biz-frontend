@@ -8,7 +8,7 @@ import { CardContent } from "@/components/ui/card"
 import { MapPin, Star } from "lucide-react"
 import { VenuesDiscoverSidebar } from "./components/VenuesDiscoverSidebar"
 import { VenuesListPagination } from "./components/VenuesListPagination"
-import { useVenuesListing } from "./hooks/useVenuesListing"
+import { useVenuesListing, type VenuesListingInitial } from "./hooks/useVenuesListing"
 import { displayCountryLabel, type PublicVenue } from "./lib/venues-listing"
 
 function geoPrioritySubtitle(country: string | null): string {
@@ -28,10 +28,24 @@ function displayAddress(v: PublicVenue) {
   return parts.length > 0 ? parts.join(", ") : "Address not provided"
 }
 
-export default function VenuesListingPage() {
-  const vm = useVenuesListing()
+export default function VenuesListingPage({
+  initialVenues,
+  initialTotal,
+  initialTotalPages,
+  visitorGeo,
+}: VenuesListingInitial & {
+  initialVenues?: PublicVenue[]
+  initialTotal?: number
+  initialTotalPages?: number
+}) {
+  const vm = useVenuesListing({
+    venues: initialVenues,
+    total: initialTotal,
+    totalPages: initialTotalPages,
+    visitorGeo,
+  })
 
-  if (vm.loading) {
+  if (vm.loading && vm.paginatedVenues.length === 0) {
     return <VenuesListingPageSkeleton />
   }
 
@@ -53,7 +67,7 @@ export default function VenuesListingPage() {
           <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">Find Perfect Venues</h1>
           <p className="mt-1 text-sm text-gray-600 sm:text-base">
             Discover amazing venues for your next event
-            {vm.venues.length > 0 ? ` · ${vm.venues.length} listed` : ""}
+            {vm.total > 0 ? ` · ${vm.total} listed` : ""}
           </p>
         </div>
       </div>
@@ -81,7 +95,7 @@ export default function VenuesListingPage() {
 
             <div className="mb-4 sm:mb-6">
               <h2 className="text-lg font-semibold text-gray-900 sm:text-xl">
-                {vm.filteredVenues.length} venue{vm.filteredVenues.length !== 1 ? "s" : ""} found
+                {vm.total} venue{vm.total !== 1 ? "s" : ""} found
               </h2>
               <p className="text-sm text-gray-600 sm:text-base">{geoPrioritySubtitle(vm.detectedCountry)}</p>
             </div>
@@ -125,11 +139,11 @@ export default function VenuesListingPage() {
             <VenuesListPagination
               page={vm.currentPage}
               totalPages={vm.totalPages}
-              totalItems={vm.filteredVenues.length}
+              totalItems={vm.total}
               onPageChange={vm.goToPage}
             />
 
-            {vm.filteredVenues.length === 0 && (
+            {vm.total === 0 && !vm.loading && (
               <div className="py-12 text-center">
                 <MapPin className="mx-auto mb-4 h-16 w-16 text-gray-400" />
                 <h3 className="mb-2 text-xl font-semibold text-gray-900">No venues found</h3>

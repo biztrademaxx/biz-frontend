@@ -86,7 +86,7 @@ export async function GET(request: NextRequest) {
       headers: {
         "Content-Type": "application/json",
       },
-      cache: "no-store",
+      next: { revalidate: 120 },
     });
 
     const backend = await res.json().catch(() => ({}));
@@ -151,7 +151,12 @@ export async function GET(request: NextRequest) {
         data: venues,
         pagination: backend.pagination ?? null,
       },
-      { status: res.status },
+      {
+        status: res.status,
+        headers: {
+          "Cache-Control": "public, s-maxage=120, stale-while-revalidate=300",
+        },
+      },
     );
   } catch (error) {
     console.error("Error fetching venues via backend:", error);

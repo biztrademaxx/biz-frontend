@@ -939,7 +939,7 @@ export function EditEventForm({ event, onSave, onCancel, categories }: EditEvent
                 <Button type="button" variant="outline" onClick={onCancel} disabled={uploading} className="sm:min-w-[140px]">
                   Cancel
                 </Button>
-                <Button type="submit" disabled={uploading} className="sm:min-w-[160px]">
+                <Button type="submit" disabled={uploading} className="sm:min-w-[160px]"> 
                   {uploading ? "Saving…" : "Save Changes"}
                 </Button>
               </div>
