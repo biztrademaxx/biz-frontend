@@ -119,8 +119,7 @@ export function mapApiVenueToPublic(raw: unknown): PublicVenue | null {
       : []
   const venueName =
     String(v.venueName ?? v.name ?? "").trim() ||
-    String(v.company ?? "").trim() ||
-    "Unnamed Venue"
+    String(v.company ?? "").trim()
 
   return {
     id: v.id,

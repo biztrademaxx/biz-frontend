@@ -6,6 +6,7 @@ import bcrypt from "bcryptjs"
 
 import { prisma } from "@/lib/prisma"
 import { readOAuthIntendedRoleServer } from "@/lib/oauth-signup-intent.server"
+import { nameFromEmailLocalPart } from "@/lib/name-from-email"
 
 const providers: NextAuthOptions["providers"] = []
 
@@ -328,12 +329,21 @@ export const authOptions: NextAuthOptions = {
           await safePrisma.user.create({
             data: {
               email,
-              firstName: user.name?.split(" ")[0] || "User",
-              lastName: user.name?.split(" ")[1] || "",
+              firstName:
+                legacyRole === "VENUE_MANAGER"
+                  ? "Venue"
+                  : user.name?.split(" ")[0] || nameFromEmailLocalPart(email).split(" ")[0] || "User",
+              lastName:
+                legacyRole === "VENUE_MANAGER"
+                  ? "Manager"
+                  : user.name?.split(" ")[1] || nameFromEmailLocalPart(email).split(" ").slice(1).join(" ") || "",
               avatar: user.image ?? undefined,
               role: legacyRole as any,
               isVerified: true,
               emailVerified: true,
+              ...(legacyRole === "VENUE_MANAGER"
+                ? { venueName: nameFromEmailLocalPart(email) || undefined }
+                : {}),
               password: await bcrypt.hash(
                 Math.random().toString(36) + Date.now().toString(),
                 12

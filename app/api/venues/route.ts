@@ -15,7 +15,7 @@ function normalizeVenues(raw: any[]): any[] {
         (v.venueName ?? "").trim() ||
         (v.company ?? "").trim() ||
         fullName ||
-        "Unnamed Venue",
+        "",
       logo: v.logo ?? v.avatar ?? "",
       contactPerson: fullName || "Venue Manager",
       address: v.venueAddress ?? "",

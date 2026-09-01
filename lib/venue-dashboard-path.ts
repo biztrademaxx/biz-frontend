@@ -1,9 +1,17 @@
 import { slugify } from "@/utils/slugify"
 
+function venueUrlSegment(venueName?: string | null): string {
+  const raw = typeof venueName === "string" ? venueName.trim() : ""
+  if (!raw) return ""
+  if (/^unnamed(\s+venue)?$/i.test(raw)) return ""
+  const segment = slugify(raw)
+  if (!segment || segment === "unnamed-venue") return ""
+  return segment
+}
+
 /** Public URL segment for the venue manager dashboard: slug from venue name when set, else UUID. */
 export function getVenueDashboardPath(userId: string, venueName?: string | null): string {
-  const raw = typeof venueName === "string" ? venueName.trim() : ""
-  const segment = raw ? slugify(raw) : ""
+  const segment = venueUrlSegment(venueName)
   if (segment.length > 0) {
     return `/venue-dashboard/${encodeURIComponent(segment)}`
   }
@@ -12,8 +20,7 @@ export function getVenueDashboardPath(userId: string, venueName?: string | null)
 
 /** Public venue detail URL: `/venue/{slug}` when name exists, else `/venue/{uuid}`. */
 export function getVenuePublicPath(venueUserId: string, venueName?: string | null): string {
-  const raw = typeof venueName === "string" ? venueName.trim() : ""
-  const segment = raw ? slugify(raw) : ""
+  const segment = venueUrlSegment(venueName)
   if (segment.length > 0) {
     return `/venue/${encodeURIComponent(segment)}`
   }
