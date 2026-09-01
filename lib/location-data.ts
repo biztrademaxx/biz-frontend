@@ -1,12 +1,34 @@
 import { City, Country, State } from "country-state-city"
 
 export type CountryOption = { code: string; name: string }
+export type CountryCatalogOption = CountryOption & {
+  currency: string
+  timezone: string
+}
 export type StateOption = { code: string; name: string }
 export type CityOption = { name: string }
 
 export function getCountryOptions(): CountryOption[] {
   return Country.getAllCountries()
     .map((country) => ({ code: country.isoCode, name: country.name }))
+    .sort((a, b) => a.name.localeCompare(b.name))
+}
+
+/** Full country-state-city catalog with ISO code, currency, and a default timezone. */
+export function getCountryCatalog(): CountryCatalogOption[] {
+  return Country.getAllCountries()
+    .map((country) => {
+      const timezone =
+        country.isoCode === "IN"
+          ? "Asia/Kolkata"
+          : country.timezones?.[0]?.zoneName ?? "UTC"
+      return {
+        code: country.isoCode,
+        name: country.name,
+        currency: country.currency || "USD",
+        timezone,
+      }
+    })
     .sort((a, b) => a.name.localeCompare(b.name))
 }
 

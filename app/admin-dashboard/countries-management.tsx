@@ -1,7 +1,7 @@
 "use client"
 
 import { AppImage } from "@/components/app-image"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { 
   Plus, 
   Edit3, 
@@ -18,7 +18,7 @@ import {
 } from "lucide-react"
 import CloudinaryUpload from "@/components/cloudinary-upload"
 import { apiFetch } from "@/lib/api"
-import { getCountryOptions } from "@/lib/location-data"
+import { getCountryCatalog, getCountryOptions } from "@/lib/location-data"
 
 interface Country {
   id: string
@@ -374,6 +374,35 @@ export default function CountriesManagement({ activeTab = "countries" }: Countri
     countries.length > 0
       ? countries.map((c) => ({ code: c.code, name: c.name }))
       : getCountryOptions()
+
+  const countryCatalog = useMemo(() => getCountryCatalog(), [])
+  const countryDropdownOptions = useMemo(() => {
+    const existingCodes = new Set(countries.map((c) => c.code.trim().toUpperCase()))
+    const existingNames = new Set(countries.map((c) => c.name.trim().toLowerCase()))
+    const options = countryCatalog.filter((c) => {
+      if (editingCountry) {
+        if (c.code.toUpperCase() === editingCountry.code.trim().toUpperCase()) return true
+        if (c.name.toLowerCase() === editingCountry.name.trim().toLowerCase()) return true
+      }
+      return !existingCodes.has(c.code.toUpperCase()) && !existingNames.has(c.name.toLowerCase())
+    })
+    if (
+      editingCountry &&
+      !options.some(
+        (c) =>
+          c.code.toUpperCase() === editingCountry.code.trim().toUpperCase() ||
+          c.name.toLowerCase() === editingCountry.name.trim().toLowerCase(),
+      )
+    ) {
+      options.unshift({
+        code: editingCountry.code,
+        name: editingCountry.name,
+        currency: editingCountry.currency || "USD",
+        timezone: editingCountry.timezone || "UTC",
+      })
+    }
+    return options
+  }, [countryCatalog, countries, editingCountry])
 
   if (loading) {
     return (
@@ -740,13 +769,18 @@ export default function CountriesManagement({ activeTab = "countries" }: Countri
                 <div className="flex gap-2">
                   <button
                     onClick={() => {
+                      const catalogMatch = countryCatalog.find(
+                        (c) =>
+                          c.name.toLowerCase() === country.name.trim().toLowerCase() ||
+                          c.code.toUpperCase() === country.code.trim().toUpperCase(),
+                      )
                       setEditingCountry(country)
                       setCountryFormData({
-                        name: country.name,
-                        code: country.code,
+                        name: catalogMatch?.name || country.name,
+                        code: catalogMatch?.code || country.code,
                         flag: country.flag || "",
-                        currency: country.currency || "USD",
-                        timezone: country.timezone || "UTC",
+                        currency: country.currency || catalogMatch?.currency || "USD",
+                        timezone: country.timezone || catalogMatch?.timezone || "UTC",
                         isActive: country.isActive,
                         isPermitted: country.isPermitted
                       })
@@ -906,14 +940,35 @@ export default function CountriesManagement({ activeTab = "countries" }: Countri
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Country Name *
                   </label>
-                  <input
-                    type="text"
+                  <select
                     required
-                    value={countryFormData.name}
-                    onChange={(e) => setCountryFormData({ ...countryFormData, name: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Enter country name"
-                  />
+                    value={countryFormData.code}
+                    onChange={(e) => {
+                      const selected = countryDropdownOptions.find((c) => c.code === e.target.value)
+                      if (!selected) {
+                        setCountryFormData({ ...countryFormData, code: e.target.value })
+                        return
+                      }
+                      setCountryFormData({
+                        ...countryFormData,
+                        name: selected.name,
+                        code: selected.code,
+                        currency: selected.currency || countryFormData.currency,
+                        timezone: selected.timezone || countryFormData.timezone,
+                      })
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                  >
+                    <option value="">Select a country</option>
+                    {countryDropdownOptions.map((country) => (
+                      <option key={country.code} value={country.code}>
+                        {country.name} ({country.code})
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Choose from all countries. Currency and timezone fill in automatically.
+                  </p>
                 </div>
 
                 <div>
@@ -923,11 +978,10 @@ export default function CountriesManagement({ activeTab = "countries" }: Countri
                   <input
                     type="text"
                     required
-                    maxLength={3}
+                    readOnly
                     value={countryFormData.code}
-                    onChange={(e) => setCountryFormData({ ...countryFormData, code: e.target.value.toUpperCase() })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 uppercase"
-                    placeholder="e.g., USA, IND, UK"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700 uppercase"
+                    placeholder="Filled from the selected country"
                   />
                 </div>
 
