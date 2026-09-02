@@ -38,6 +38,13 @@ export async function patchVenue(venueId: string, body: Record<string, unknown>)
   return adminApi(`/venues/${venueId}`, { method: "PATCH", body })
 }
 
+export async function bulkApproveVenues(ids: string[]) {
+  return adminApi<{ success?: boolean; approvedCount?: number }>("/venues/bulk-approve", {
+    method: "POST",
+    body: { ids },
+  })
+}
+
 export async function deleteVenue(venueId: string) {
   return adminApi(`/venues/${venueId}`, { method: "DELETE" })
 }

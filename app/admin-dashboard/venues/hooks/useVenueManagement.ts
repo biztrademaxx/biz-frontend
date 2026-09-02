@@ -16,6 +16,7 @@ import {
   fetchAllVenues,
   fetchVenueById,
   patchVenue,
+  bulkApproveVenues,
   sendVenueAccountEmail,
 } from "../services/venues.api"
 import type { Venue, VenueEditFormData, VenueListingStatus, VenueTab } from "../types/venue.types"
@@ -195,6 +196,23 @@ export function useVenueManagement(initialTab: VenueTab = "all") {
     }
   }
 
+  const handleBulkApproveVenues = async (venueIds: string[]) => {
+    const ids = [...new Set(venueIds.filter(Boolean))]
+    if (ids.length === 0) {
+      toast.error("Select at least one venue to approve")
+      return
+    }
+    try {
+      const result = await bulkApproveVenues(ids)
+      setIsApproveDialogOpen(false)
+      await loadVenues()
+      toast.success(`${result.approvedCount ?? ids.length} venue(s) approved`)
+    } catch (error) {
+      console.error("Error bulk-approving venues:", error)
+      toast.error("Failed to approve selected venues")
+    }
+  }
+
   const handleRejectVenue = async (venueId: string, _reason: string) => {
     try {
       await patchVenue(venueId, { isVerified: false, isActive: true })
@@ -316,6 +334,7 @@ export function useVenueManagement(initialTab: VenueTab = "all") {
     cardActions,
     loadVenues,
     handleApproveVenue,
+    handleBulkApproveVenues,
     handleRejectVenue,
     handleEditVenue,
     handleAddVenue,

@@ -5,6 +5,7 @@ import { useState, useEffect, useCallback } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
@@ -45,6 +46,7 @@ import {
     MapPin,
     Briefcase,
     RefreshCw,
+    CheckCheck,
 } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 import { adminApi } from "@/lib/admin-api"
@@ -108,6 +110,10 @@ export default function OrganizerApprovals() {
     const [debouncedSearch, setDebouncedSearch] = useState("")
     const [currentPage, setCurrentPage] = useState(1)
     const [totalPages, setTotalPages] = useState(1)
+    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+    const [approveDialogOpen, setApproveDialogOpen] = useState(false)
+    const [bulkApproveMode, setBulkApproveMode] = useState<"selected" | "all" | null>(null)
+    const [bulkApproving, setBulkApproving] = useState(false)
     const itemsPerPage = 10
     const { toast } = useToast()
 
@@ -164,6 +170,12 @@ export default function OrganizerApprovals() {
             setListTotal(Number.isFinite(total) ? total : 0)
             setTotalPages(pages)
             if (currentPage > pages) setCurrentPage(pages)
+            const valid = new Set((Array.isArray(list) ? list : []).map((o) => o.id))
+            setSelectedIds((prev) => {
+                const next = new Set([...prev].filter((id) => valid.has(id)))
+                if (next.size === prev.size) return prev
+                return next
+            })
         } catch (error) {
             console.error("Error fetching organizers:", error)
             setOrganizers([])
@@ -231,6 +243,61 @@ export default function OrganizerApprovals() {
         }
     }
 
+    const pendingCount = pendingTotal
+    const activeCount = activeTotal
+    const totalCount = totalOrganizers
+    const searching = debouncedSearch.trim().length > 0
+    const approveAllCount = searching ? listTotal : pendingCount
+    const selectedCount = selectedIds.size
+    const allSelected = organizers.length > 0 && selectedCount === organizers.length
+    const someSelected = selectedCount > 0 && !allSelected
+
+    const toggleOne = (id: string, checked: boolean) => {
+        setSelectedIds((prev) => {
+            const next = new Set(prev)
+            if (checked) next.add(id)
+            else next.delete(id)
+            return next
+        })
+    }
+
+    const toggleAll = (checked: boolean) => {
+        setSelectedIds(checked ? new Set(organizers.map((o) => o.id)) : new Set())
+    }
+
+    const openBulkApprove = (mode: "selected" | "all") => {
+        if (mode === "selected" && selectedCount === 0) return
+        if (mode === "all" && approveAllCount === 0) return
+        setBulkApproveMode(mode)
+        setApproveDialogOpen(true)
+    }
+
+    const handleBulkApprove = async () => {
+        if (!bulkApproveMode) return
+        setBulkApproving(true)
+        try {
+            const body =
+                bulkApproveMode === "all"
+                    ? { allPending: true, search: debouncedSearch.trim() || undefined }
+                    : { ids: [...selectedIds] }
+            const result = await adminApi<{ success?: boolean; approvedCount?: number }>("/organizers/bulk-approve", {
+                method: "POST",
+                body,
+            })
+            const count = result.approvedCount ?? (bulkApproveMode === "all" ? approveAllCount : selectedCount)
+            toast({ title: "Success", description: `${count} organizer(s) approved` })
+            setSelectedIds(new Set())
+            setApproveDialogOpen(false)
+            setBulkApproveMode(null)
+            await fetchCounts()
+            await fetchPage()
+        } catch (error) {
+            toast({ title: "Error", description: "Failed to approve organizers", variant: "destructive" })
+        } finally {
+            setBulkApproving(false)
+        }
+    }
+
     const getOrganization = (org: Organizer): string => {
         return org?.organizationName || org?.company || "N/A"
     }
@@ -246,10 +313,6 @@ export default function OrganizerApprovals() {
             window.scrollTo({ top: 0, behavior: "smooth" })
         }
     }
-
-    const pendingCount = pendingTotal
-    const activeCount = activeTotal
-    const totalCount = totalOrganizers
 
     return (
         <div className="space-y-6">
@@ -333,6 +396,7 @@ export default function OrganizerApprovals() {
                     setCurrentPage(1)
                     setSearchTerm("")
                     setDebouncedSearch("")
+                    setSelectedIds(new Set())
                 }}
             >
                 <TabsList className="grid w-full max-w-md grid-cols-2">
@@ -372,6 +436,42 @@ export default function OrganizerApprovals() {
                         </div>
                     ) : (
                         <>
+                            <div className="flex flex-col gap-3 rounded-lg border bg-white p-4 sm:flex-row sm:items-center sm:justify-between mb-3">
+                                <label className="flex cursor-pointer items-center gap-2 text-sm font-medium">
+                                    <Checkbox
+                                        checked={allSelected ? true : someSelected ? "indeterminate" : false}
+                                        onCheckedChange={(value) => toggleAll(value === true)}
+                                        aria-label="Select all organizers on this page"
+                                    />
+                                    Select all ({organizers.length})
+                                    {selectedCount > 0 && (
+                                        <span className="text-muted-foreground font-normal">
+                                            · {selectedCount} selected
+                                        </span>
+                                    )}
+                                </label>
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        disabled={selectedCount === 0 || bulkApproving}
+                                        onClick={() => openBulkApprove("selected")}
+                                    >
+                                        Approve selected{selectedCount > 0 ? ` (${selectedCount})` : ""}
+                                    </Button>
+                                    <Button
+                                        size="sm"
+                                        className="bg-green-600 hover:bg-green-700"
+                                        disabled={approveAllCount === 0 || bulkApproving}
+                                        onClick={() => openBulkApprove("all")}
+                                    >
+                                        <CheckCheck className="mr-1.5 h-4 w-4" />
+                                        {searching
+                                            ? `Approve all matching (${approveAllCount})`
+                                            : `Approve all organizers (${approveAllCount})`}
+                                    </Button>
+                                </div>
+                            </div>
                             <div className="space-y-3">
                                 {organizers.map((organizer) => (
                                     <OrganizerCard
@@ -382,6 +482,8 @@ export default function OrganizerApprovals() {
                                         initials={getInitials(getOrganizerName(organizer))}
                                         isPending={true}
                                         isProcessing={processingId === organizer.id}
+                                        selected={selectedIds.has(organizer.id)}
+                                        onSelectedChange={(checked) => toggleOne(organizer.id, checked)}
                                         onView={() => {
                                             setSelectedOrganizer(organizer)
                                             setDetailsDialogOpen(true)
@@ -592,6 +694,61 @@ export default function OrganizerApprovals() {
                 </DialogContent>
             </Dialog>
 
+            <Dialog
+                open={approveDialogOpen}
+                onOpenChange={(open) => {
+                    if (bulkApproving) return
+                    setApproveDialogOpen(open)
+                    if (!open) setBulkApproveMode(null)
+                }}
+            >
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2 text-green-600">
+                            <CheckCheck className="h-5 w-5" />
+                            {bulkApproveMode === "all"
+                                ? `Approve ${approveAllCount} organizers`
+                                : `Approve ${selectedCount} organizers`}
+                        </DialogTitle>
+                        <DialogDescription>
+                            {bulkApproveMode === "all"
+                                ? searching
+                                    ? `Approve all ${approveAllCount} matching pending organizers? They will become verified and active.`
+                                    : `Approve all ${approveAllCount} pending organizers? They will become verified and active.`
+                                : `Approve ${selectedCount} selected organizers? They will become verified and active.`}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="flex flex-col gap-2 sm:flex-row">
+                        <Button
+                            variant="outline"
+                            onClick={() => {
+                                setApproveDialogOpen(false)
+                                setBulkApproveMode(null)
+                            }}
+                            disabled={bulkApproving}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            className="bg-green-600 hover:bg-green-700"
+                            onClick={() => void handleBulkApprove()}
+                            disabled={bulkApproving}
+                        >
+                            {bulkApproving ? (
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            ) : (
+                                <Check className="mr-2 h-4 w-4" />
+                            )}
+                            {bulkApproving
+                                ? "Approving…"
+                                : bulkApproveMode === "all"
+                                  ? `Approve ${approveAllCount} organizers`
+                                  : `Approve ${selectedCount} organizers`}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
             {/* Reject Dialog */}
             <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
                 <DialogContent className="sm:max-w-md">
@@ -646,6 +803,8 @@ function OrganizerCard({
     initials,
     isPending,
     isProcessing,
+    selected = false,
+    onSelectedChange,
     onView,
     onApprove,
     onReject,
@@ -657,6 +816,8 @@ function OrganizerCard({
     initials: string
     isPending: boolean
     isProcessing: boolean
+    selected?: boolean
+    onSelectedChange?: (checked: boolean) => void
     onView: () => void
     onApprove: () => void
     onReject: () => void
@@ -667,6 +828,14 @@ function OrganizerCard({
             <div className="p-4">
                 <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
                     <div className="flex items-start gap-4 flex-1 min-w-0">
+                        {isPending && onSelectedChange && (
+                            <Checkbox
+                                className="mt-4"
+                                checked={selected}
+                                onCheckedChange={(value) => onSelectedChange(value === true)}
+                                aria-label={`Select ${name}`}
+                            />
+                        )}
                         <Avatar className="h-12 w-12 flex-shrink-0 border border-gray-200">
                             <AvatarImage src={organizer.avatar || undefined} alt={name} />
                             <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-medium">

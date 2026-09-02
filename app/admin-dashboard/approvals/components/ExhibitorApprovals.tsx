@@ -16,7 +16,8 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
-import { Building2, Mail, Phone, Briefcase, Check, X, Eye, Clock, AlertTriangle, Loader2, Users } from "lucide-react"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Building2, Mail, Phone, Briefcase, Check, X, Eye, Clock, AlertTriangle, Loader2, Users, CheckCheck } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 import { adminApi } from "@/lib/admin-api"
 
@@ -44,6 +45,10 @@ export default function ExhibitorApprovals() {
     const [rejectDialogOpen, setRejectDialogOpen] = useState(false)
     const [rejectReason, setRejectReason] = useState("")
     const [processingId, setProcessingId] = useState<string | null>(null)
+    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+    const [approveDialogOpen, setApproveDialogOpen] = useState(false)
+    const [bulkApproveMode, setBulkApproveMode] = useState<"selected" | "all" | null>(null)
+    const [bulkApproving, setBulkApproving] = useState(false)
     const { toast } = useToast()
 
     useEffect(() => {
@@ -65,6 +70,12 @@ export default function ExhibitorApprovals() {
             // Ensure we have an array, even if data is null/undefined
             const exhibitorsList = data?.data || []
             setExhibitors(Array.isArray(exhibitorsList) ? exhibitorsList : [])
+            const valid = new Set((Array.isArray(exhibitorsList) ? exhibitorsList : []).map((e) => e.id))
+            setSelectedIds((prev) => {
+                const next = new Set([...prev].filter((id) => valid.has(id)))
+                if (next.size === prev.size) return prev
+                return next
+            })
         } catch (error) {
             console.error("Error fetching exhibitors:", error)
             toast({ title: "Error", description: "Failed to load exhibitors", variant: "destructive" })
@@ -88,6 +99,31 @@ export default function ExhibitorApprovals() {
             toast({ title: "Error", description: "Failed to approve exhibitor", variant: "destructive" })
         } finally {
             setProcessingId(null)
+        }
+    }
+
+    const handleBulkApprove = async () => {
+        if (!bulkApproveMode) return
+        setBulkApproving(true)
+        try {
+            const body =
+                bulkApproveMode === "all"
+                    ? { allPending: true }
+                    : { ids: [...selectedIds] }
+            const result = await adminApi<{ success?: boolean; approvedCount?: number }>("/exhibitors/bulk-approve", {
+                method: "POST",
+                body,
+            })
+            const count = result.approvedCount ?? (bulkApproveMode === "all" ? pendingExhibitors.length : selectedIds.size)
+            toast({ title: "Success", description: `${count} exhibitor(s) approved` })
+            setSelectedIds(new Set())
+            setApproveDialogOpen(false)
+            setBulkApproveMode(null)
+            await fetchExhibitors()
+        } catch (error) {
+            toast({ title: "Error", description: "Failed to approve exhibitors", variant: "destructive" })
+        } finally {
+            setBulkApproving(false)
         }
     }
 
@@ -172,6 +208,29 @@ export default function ExhibitorApprovals() {
     // Filter exhibitors safely
     const pendingExhibitors = exhibitors.filter(e => e && !e.isActive)
     const activeExhibitors = exhibitors.filter(e => e && e.isActive)
+    const selectedCount = selectedIds.size
+    const allSelected = pendingExhibitors.length > 0 && selectedCount === pendingExhibitors.length
+    const someSelected = selectedCount > 0 && !allSelected
+
+    const toggleOne = (id: string, checked: boolean) => {
+        setSelectedIds((prev) => {
+            const next = new Set(prev)
+            if (checked) next.add(id)
+            else next.delete(id)
+            return next
+        })
+    }
+
+    const toggleAll = (checked: boolean) => {
+        setSelectedIds(checked ? new Set(pendingExhibitors.map((e) => e.id)) : new Set())
+    }
+
+    const openBulkApprove = (mode: "selected" | "all") => {
+        if (mode === "selected" && selectedCount === 0) return
+        if (mode === "all" && pendingExhibitors.length === 0) return
+        setBulkApproveMode(mode)
+        setApproveDialogOpen(true)
+    }
 
     if (loading) {
         return (
@@ -183,7 +242,10 @@ export default function ExhibitorApprovals() {
 
     return (
         <div className="space-y-6">
-            <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "pending" | "active")} className="w-full">
+            <Tabs value={activeTab} onValueChange={(value) => {
+                setActiveTab(value as "pending" | "active")
+                setSelectedIds(new Set())
+            }} className="w-full">
                 <TabsList className="grid w-full max-w-md grid-cols-2">
                     <TabsTrigger value="pending" className="flex items-center gap-2">
                         <Clock className="h-4 w-4" />
@@ -216,6 +278,40 @@ export default function ExhibitorApprovals() {
                         </div>
                     ) : (
                         <div className="space-y-4">
+                            <div className="flex flex-col gap-3 rounded-lg border bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
+                                <label className="flex cursor-pointer items-center gap-2 text-sm font-medium">
+                                    <Checkbox
+                                        checked={allSelected ? true : someSelected ? "indeterminate" : false}
+                                        onCheckedChange={(value) => toggleAll(value === true)}
+                                        aria-label="Select all pending exhibitors"
+                                    />
+                                    Select all ({pendingExhibitors.length})
+                                    {selectedCount > 0 && (
+                                        <span className="text-muted-foreground font-normal">
+                                            · {selectedCount} selected
+                                        </span>
+                                    )}
+                                </label>
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        disabled={selectedCount === 0 || bulkApproving}
+                                        onClick={() => openBulkApprove("selected")}
+                                    >
+                                        Approve selected{selectedCount > 0 ? ` (${selectedCount})` : ""}
+                                    </Button>
+                                    <Button
+                                        size="sm"
+                                        className="bg-green-600 hover:bg-green-700"
+                                        disabled={pendingExhibitors.length === 0 || bulkApproving}
+                                        onClick={() => openBulkApprove("all")}
+                                    >
+                                        <CheckCheck className="mr-1.5 h-4 w-4" />
+                                        Approve all exhibitors ({pendingExhibitors.length})
+                                    </Button>
+                                </div>
+                            </div>
                             {pendingExhibitors.map((exhibitor) => {
                                 if (!exhibitor) return null
                                 const company = getCompanyName(exhibitor)
@@ -223,8 +319,13 @@ export default function ExhibitorApprovals() {
                                     <Card key={exhibitor.id} className="relative overflow-hidden">
                                         <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-yellow-500 to-orange-500" />
                                         <div className="p-6">
-                                            <div className="flex items-start justify-between">
-                                                <div className="flex items-center gap-4 flex-1">
+                                            <div className="flex items-start justify-between gap-4">
+                                                <div className="flex items-center gap-4 flex-1 min-w-0">
+                                                    <Checkbox
+                                                        checked={selectedIds.has(exhibitor.id)}
+                                                        onCheckedChange={(value) => toggleOne(exhibitor.id, value === true)}
+                                                        aria-label={`Select ${company}`}
+                                                    />
                                                     <Avatar className="h-14 w-14 border-2 border-gray-100">
                                                         <AvatarImage src={exhibitor.avatar || undefined} alt={company} />
                                                         <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-lg">
@@ -246,11 +347,11 @@ export default function ExhibitorApprovals() {
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <div className="flex items-center gap-2">
+                                                <div className="flex items-center gap-2 shrink-0">
                                                     <Button
                                                         size="sm"
                                                         onClick={() => handleApprove(exhibitor.id)}
-                                                        disabled={processingId === exhibitor.id}
+                                                        disabled={processingId === exhibitor.id || bulkApproving}
                                                         className="bg-green-600 hover:bg-green-700 text-white gap-2"
                                                     >
                                                         {processingId === exhibitor.id ? (
@@ -267,7 +368,7 @@ export default function ExhibitorApprovals() {
                                                             setSelectedExhibitor(exhibitor)
                                                             setRejectDialogOpen(true)
                                                         }}
-                                                        disabled={processingId === exhibitor.id}
+                                                        disabled={processingId === exhibitor.id || bulkApproving}
                                                         className="gap-2"
                                                     >
                                                         <X className="h-4 w-4" />
@@ -325,6 +426,59 @@ export default function ExhibitorApprovals() {
                     )}
                 </TabsContent>
             </Tabs>
+
+            <Dialog
+                open={approveDialogOpen}
+                onOpenChange={(open) => {
+                    if (bulkApproving) return
+                    setApproveDialogOpen(open)
+                    if (!open) setBulkApproveMode(null)
+                }}
+            >
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2 text-green-600">
+                            <CheckCheck className="h-5 w-5" />
+                            {bulkApproveMode === "all"
+                                ? `Approve ${pendingExhibitors.length} exhibitors`
+                                : `Approve ${selectedCount} exhibitors`}
+                        </DialogTitle>
+                        <DialogDescription>
+                            {bulkApproveMode === "all"
+                                ? `Approve all ${pendingExhibitors.length} pending exhibitors? They will become active.`
+                                : `Approve ${selectedCount} selected exhibitors? They will become active.`}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="flex flex-col gap-2 sm:flex-row">
+                        <Button
+                            variant="outline"
+                            onClick={() => {
+                                setApproveDialogOpen(false)
+                                setBulkApproveMode(null)
+                            }}
+                            disabled={bulkApproving}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            className="bg-green-600 hover:bg-green-700"
+                            onClick={() => void handleBulkApprove()}
+                            disabled={bulkApproving}
+                        >
+                            {bulkApproving ? (
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            ) : (
+                                <Check className="mr-2 h-4 w-4" />
+                            )}
+                            {bulkApproving
+                                ? "Approving…"
+                                : bulkApproveMode === "all"
+                                  ? `Approve ${pendingExhibitors.length} exhibitors`
+                                  : `Approve ${selectedCount} exhibitors`}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
 
             {/* Reject Dialog */}
             <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>

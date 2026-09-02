@@ -241,7 +241,7 @@ export default function ImportPage() {
             <p><strong>Default time:</strong> If startTime/endTime are blank, import uses 10:00 AM to 6:00 PM</p>
             <p><strong>Organizer/Venue mapping:</strong> Provide at least one identifier (email or name)</p>
             <p><strong>Many events, same organizer:</strong> Use one spreadsheet row per event. Repeat the same <code className="bg-blue-100 px-1 rounded text-xs">organizerEmail</code> on each row, set a unique <code className="bg-blue-100 px-1 rounded text-xs">eventTitle</code> and dates, and set <code className="bg-blue-100 px-1 rounded text-xs">venueEmail</code> or <code className="bg-blue-100 px-1 rounded text-xs">venueName</code> to the correct venue for that event (each row can point to a different venue). Prefer organizer email so every row attaches to the same organizer account.</p>
-            <p><strong>Duplicates:</strong> A row is skipped only when <code className="bg-blue-100 px-1 rounded text-xs">eventTitle</code> + <code className="bg-blue-100 px-1 rounded text-xs">startDate</code> + <code className="bg-blue-100 px-1 rounded text-xs">venueName</code> all match another row in the file or an existing event. Same title on a different year or venue is allowed (e.g. Tech Expo 2026, or same date at Mumbai vs Bangalore).</p>
+            <p><strong>Duplicates:</strong> Re-uploading the same Excel skips events that already exist (same <code className="bg-blue-100 px-1 rounded text-xs">eventTitle</code> + <code className="bg-blue-100 px-1 rounded text-xs">startDate</code>). A missing venue still counts as the same event. Same title on a different year, or the same day at a different named venue, is still imported.</p>
           </div>
         </div>
 
@@ -463,7 +463,7 @@ export default function ImportPage() {
             </li>
             <li className="flex items-start gap-2">
               <span className="text-blue-600 mt-1">•</span>
-              <span><strong>Duplicate protection:</strong> Import skips a row when <strong>eventTitle</strong>, <strong>startDate</strong> (calendar day), and <strong>venueName</strong> all match another row in the same file or an event already in Biz. Repeating yearly editions (different start date) or the same show at another venue is allowed.</span>
+              <span><strong>Duplicate protection:</strong> Import skips a row when <strong>eventTitle</strong> and <strong>startDate</strong> (calendar day) already exist in Biz, even if venue was blank on the first import. Re-uploading the same Excel will not create the events again. A later yearly edition (different start date) or the same show at another named venue is still allowed.</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-blue-600 mt-1">•</span>
