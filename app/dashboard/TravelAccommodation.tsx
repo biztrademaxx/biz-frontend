@@ -1,3 +1,4 @@
+import { AppImage } from "@/components/app-image";
 import React, { useState } from "react";
 import { JSX } from "react/jsx-runtime";
 
@@ -45,7 +46,7 @@ const TravelAccommodation: React.FC = () => {
   };
 
   return (
-    <div className="max-w-6xl mx-auto p-6 bg-[#F5F4F0]">
+    <div className="mx-auto min-w-0 max-w-6xl p-3 sm:p-6">
       <h3 className="text-xl font-semibold text-gray-700 mb-4">
         Featured Hotels
       </h3>
@@ -77,16 +78,19 @@ const HotelCard: React.FC<{ hotel: Hotel; defaultImage: string; renderStars: (ra
 
   return (
     <div className="border rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow bg-white">
-      <div className="h-40 w-full">
-        <img
+      <div className="relative h-40 w-full">
+        <AppImage
           src={imageSrc}
           alt={hotel.name}
-          className="w-full h-full object-cover"
+          fill
+          sizes="(max-width: 768px) 100vw, 33vw"
+          fallbackSrc={defaultImage}
+          className="object-cover"
           onError={handleImageError}
         />
       </div>
       <div className="p-4">
-        <h4 className="text-lg font-semibold text-gray-800">
+        <h4 className="break-words text-lg font-semibold text-gray-800">
           {hotel.name}
         </h4>
         {renderStars(hotel.rating)}

@@ -16,10 +16,20 @@ export async function GET(request: Request) {
       if (userType) {
         (where as { OR?: unknown[] }).OR = [{ userType: "BOTH" }, { userType }];
       }
-      const packages = await prisma.promotionPackage.findMany({
-        where,
-        orderBy: [{ recommended: "desc" }, { order: "asc" }, { price: "asc" }],
-      });
+      const canonicalIds = new Set([
+        "pkg_starter",
+        "pkg_professional",
+        "pkg_enterprise",
+        "pkg_visitor_reach",
+        "pkg_prospector",
+        "pkg_leadboost",
+      ]);
+      const packages = (
+        await prisma.promotionPackage.findMany({
+          where,
+          orderBy: [{ recommended: "desc" }, { order: "asc" }, { price: "asc" }],
+        })
+      ).filter((p) => canonicalIds.has(p.id));
       return NextResponse.json({ packages });
     } catch {
       // fall through to Express (Postgres) when Mongo/legacy Prisma fails or is misconfigured

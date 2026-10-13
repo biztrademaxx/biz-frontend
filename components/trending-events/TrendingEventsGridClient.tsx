@@ -3,7 +3,11 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { UserRound } from "lucide-react"
+import { AppImage } from "@/components/app-image"
 import { BookmarkButton } from "@/components/bookmark-button"
+import HomeSectionEmptyState, { homeEmptyDescription } from "@/components/home/HomeSectionEmptyState"
+import { hasDisplayableEventImage } from "@/lib/event-card-meta"
+import { resolveEventBannerImage } from "@/lib/events/resolve-event-banner-image"
 import { eventPublicPath } from "@/lib/event-path"
 import { trendingDateBadgeParts } from "@/lib/home-trending/trending-dates"
 import type { FollowerProfile, GoingBundle, TrendingHomeEvent } from "@/lib/home-trending/types"
@@ -55,9 +59,11 @@ function GoingFace({
 
   if (resolvedAvatar && !imgFailed) {
     return (
-      <img
+      <AppImage
         src={resolvedAvatar}
         alt=""
+        width={32}
+        height={32}
         className={`${dim} relative rounded-full border-2 border-white object-cover shadow-sm ring-1 ring-gray-200/60`}
         style={stackStyle}
         onError={() => setImgFailed(true)}
@@ -95,17 +101,17 @@ function TrendingGoingRow({ profiles, total }: { profiles: FollowerProfile[]; to
       <div className="flex shrink-0 items-center" aria-hidden>
         {faces.length > 0
           ? faces.map((p, i) => (
-              <GoingFace key={`${p.id}-${i}`} profile={p} index={i} stackSize={TRENDING_AVATAR_COUNT} />
-            ))
+            <GoingFace key={`${p.id}-${i}`} profile={p} index={i} stackSize={TRENDING_AVATAR_COUNT} />
+          ))
           : Array.from({ length: TRENDING_AVATAR_COUNT }).map((_, i) => (
-              <div
-                key={i}
-                className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-slate-100 shadow-sm ring-1 ring-gray-200/60"
-                style={{ marginLeft: i === 0 ? 0 : -10, zIndex: TRENDING_AVATAR_COUNT - i }}
-              >
-                <UserRound className="h-[42%] w-[42%] text-slate-400" strokeWidth={1.75} />
-              </div>
-            ))}
+            <div
+              key={i}
+              className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-slate-100 shadow-sm ring-1 ring-gray-200/60"
+              style={{ marginLeft: i === 0 ? 0 : -10, zIndex: TRENDING_AVATAR_COUNT - i }}
+            >
+              <UserRound className="h-[42%] w-[42%] text-slate-400" strokeWidth={1.75} />
+            </div>
+          ))}
       </div>
       {total > 0 ? (
         <span className="line-clamp-1 min-w-0 truncate text-sm font-bold leading-none tabular-nums text-red-600">
@@ -121,11 +127,21 @@ function TrendingGoingRow({ profiles, total }: { profiles: FollowerProfile[]; to
 export interface TrendingEventsGridClientProps {
   events: TrendingHomeEvent[]
   goingBundles: Record<string, GoingBundle>
+  homeCity?: string | null
+  homeCountry?: string | null
 }
 
-export default function TrendingEventsGridClient({ events, goingBundles }: TrendingEventsGridClientProps) {
+export default function TrendingEventsGridClient({
+  events,
+  goingBundles,
+  homeCity,
+  homeCountry,
+}: TrendingEventsGridClientProps) {
+  const subtitle = homeCountry
+    ? `Upcoming trade fairs and summits in ${homeCountry}`
+    : "Connecting the global B2B trade fair community—where new business opportunities begin every minute."
   const router = useRouter()
-  const displayEvents = events
+  const displayEvents = events.filter((e) => hasDisplayableEventImage(e))
 
   const handleCardClick = (event: TrendingHomeEvent) => {
     router.push(eventPublicPath(event))
@@ -142,129 +158,115 @@ export default function TrendingEventsGridClient({ events, goingBundles }: Trend
         <h2 className="home-tt-h2 mb-3">
           Trending Upcoming Events
           <br />
-          <span className="home-tt-sub max-w-3xl">
-            Connecting the global B2B trade fair community—where new business opportunities begin every minute.
-          </span>
+          <span className="home-tt-sub max-w-3xl">{subtitle}</span>
         </h2>
       </div>
 
       <div className="relative">
-        <div className="grid grid-cols-1 items-stretch gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-4 lg:gap-5">
-          {displayEvents.length > 0
-            ? displayEvents.map((event, index) => {
-                const { day, month } = trendingDateBadgeParts(event.startDate)
-                const locationLine = formatEventLocation(event)
+        {displayEvents.length === 0 ? (
+          <HomeSectionEmptyState
+            icon="trending"
+            title="No upcoming events here yet"
+            description={homeEmptyDescription("upcoming events with images", homeCity, homeCountry)}
+            homeCity={homeCity}
+            homeCountry={homeCountry}
+            actions={[
+              { label: "Browse all events", href: "/event" },
+              { label: "Add event", href: "/organizer-signup", variant: "secondary" },
+            ]}
+          />
+        ) : (
+          <div className="grid grid-cols-1 items-stretch gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-4 lg:gap-5">
+            {displayEvents.map((event, index) => {
+              const imageUrl = resolveEventBannerImage(event)
+              if (!imageUrl) return null
 
-                const bundle = goingBundles[event.id]
-                const total = bundle !== undefined ? bundle.total : eventGoingCount(event)
-                const profiles =
-                  bundle !== undefined ? bundle.profiles : fallbackGoingProfilesFromEvent(event)
+              const { day, month } = trendingDateBadgeParts(event.startDate)
+              const locationLine = formatEventLocation(event)
 
-                return (
-                  <div
-                    key={event.id || index}
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => handleCardClick(event)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault()
-                        handleCardClick(event)
-                      }
-                    }}
-                    className="group flex h-full cursor-pointer flex-col overflow-hidden rounded-sm border border-gray-100/90 bg-white shadow-sm ring-1 ring-black/[0.04] transition-all duration-300 hover:-translate-y-0.5 hover:border-[#002C71]/20 hover:shadow-lg hover:shadow-[#002C71]/[0.08]"
-                  >
-                    <div className="relative aspect-[5/3] w-full shrink-0 overflow-hidden bg-gradient-to-br from-slate-100 to-slate-200">
-                      <img
-                        src={event.bannerImage || event.logo || "/herosection-images/food.jpg"}
-                        alt=""
-                        className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement
-                          target.src = "/herosection-images/food.jpg"
-                        }}
-                      />
-                      <div
-                        className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-black/5 to-transparent"
-                        aria-hidden
-                      />
-                      <div className="pointer-events-none absolute left-3 top-3 z-20 sm:left-4 sm:top-4">
-                        <div className="pointer-events-auto flex min-w-[3.25rem] flex-col items-center justify-center rounded-sm bg-white px-2.5 py-2 shadow-md ring-1 ring-black/[0.06]">
-                          <span className="text-2xl font-bold leading-none text-gray-900">{day}</span>
-                          {month ? (
-                            <span className="mt-1 text-[10px] font-bold leading-none tracking-[0.12em] text-gray-900">
-                              {month}
-                            </span>
-                          ) : null}
-                        </div>
-                      </div>
-                      <div
-                        className="absolute right-3 top-3 z-20 sm:right-4 sm:top-4"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <BookmarkButton
-                          eventId={event.id}
-                          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-gray-900 shadow-md ring-1 ring-black/[0.06] transition hover:bg-gray-50 [&_svg]:h-[18px] [&_svg]:w-[18px]"
-                        />
+              const bundle = goingBundles[event.id]
+              const total = bundle !== undefined ? bundle.total : eventGoingCount(event)
+              const profiles =
+                bundle !== undefined ? bundle.profiles : fallbackGoingProfilesFromEvent(event)
+
+              return (
+                <div
+                  key={event.id || index}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => handleCardClick(event)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault()
+                      handleCardClick(event)
+                    }
+                  }}
+                  // Updated: Added border and improved shadow
+                  className="group flex h-full cursor-pointer flex-col overflow-hidden rounded-sm bg-white border border-gray-200 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_40px_rgba(0,0,0,0.15)] hover:border-[#002C71]/30 focus:outline-none focus:ring-2 focus:ring-[#002C71] focus:ring-offset-2"
+                >
+                  <div className="relative aspect-[5/3] w-full shrink-0 overflow-hidden bg-gradient-to-br from-slate-100 to-slate-200">
+                    <AppImage
+                      src={imageUrl}
+                      alt=""
+                      fill
+                      sizes="(max-width: 768px) 100vw, 33vw"
+                      className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
+                    />
+                    <div
+                      className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-black/5 to-transparent"
+                      aria-hidden
+                    />
+                    <div className="pointer-events-none absolute left-3 top-3 z-20 sm:left-4 sm:top-4">
+                      <div className="pointer-events-auto flex min-w-[3.25rem] flex-col items-center justify-center rounded-sm bg-white px-2.5 py-2 shadow-md ring-1 ring-black/[0.06]">
+                        <span className="text-2xl font-bold leading-none text-gray-900">{day}</span>
+                        {month ? (
+                          <span className="mt-1 text-[10px] font-bold leading-none tracking-[0.12em] text-gray-900">
+                            {month}
+                          </span>
+                        ) : null}
                       </div>
                     </div>
-                    <div className="flex min-h-0 flex-1 flex-col px-5 pb-5 pt-4">
-                      <h3 className="mb-2 line-clamp-2 min-h-[2.75rem] text-base font-bold leading-snug tracking-tight text-gray-900 md:min-h-[3rem] md:text-[1.05rem]">
-                        {event.title}
-                      </h3>
-                      <div className="mb-1 flex min-h-[2.5rem] items-start gap-2 text-gray-600 md:min-h-[2.75rem]">
-                        <svg
-                          className="mt-0.5 h-4 w-4 shrink-0 text-gray-800"
-                          fill="currentColor"
-                          viewBox="0 0 24 24"
-                          aria-hidden
-                        >
-                          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
-                        </svg>
-                        <p className="line-clamp-2 text-sm font-medium leading-relaxed">{locationLine}</p>
-                      </div>
-                      <div className="mt-auto flex items-center justify-between gap-3 border-t border-gray-100 pt-4">
-                        <TrendingGoingRow profiles={profiles} total={total} />
-                        <button
-                          type="button"
-                          onClick={(e) => handleRegister(e, event)}
-                          className="inline-flex h-10 shrink-0 items-center justify-center rounded-sm bg-[#002C71] px-4 text-sm font-bold text-white shadow-sm transition hover:bg-[#002255] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#002C71]"
-                        >
-                          Register
-                        </button>
-                      </div>
+                    <div
+                      className="absolute right-3 top-3 z-20 sm:right-4 sm:top-4"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <BookmarkButton
+                        eventId={event.id}
+                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-gray-900 shadow-md ring-1 ring-black/[0.06] transition hover:bg-gray-50 [&_svg]:h-[18px] [&_svg]:w-[18px]"
+                      />
                     </div>
                   </div>
-                )
-              })
-            : Array.from({ length: 4 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="flex h-full flex-col overflow-hidden rounded-sm border border-gray-100/90 bg-white shadow-sm ring-1 ring-black/[0.04]"
-                >
-                  <div className="home-shimmer aspect-[5/3] w-full shrink-0" />
-                  <div className="flex min-h-0 flex-1 flex-col space-y-3 px-5 pb-5 pt-4">
-                    <div className="home-shimmer h-5 min-h-[2.75rem] w-[82%] rounded-sm md:min-h-[3rem]" />
-                    <div className="home-shimmer h-4 min-h-[2.5rem] w-[88%] rounded-sm md:min-h-[2.75rem]" />
+                  <div className="flex min-h-0 flex-1 flex-col px-5 pb-5 pt-4">
+                    <h3 className="mb-2 line-clamp-2 min-h-[2.75rem] text-base font-bold leading-snug tracking-tight text-gray-900 md:min-h-[3rem] md:text-[1.05rem]">
+                      {event.title}
+                    </h3>
+                    <div className="mb-1 flex min-h-[2.5rem] items-start gap-2 text-gray-600 md:min-h-[2.75rem]">
+                      <svg
+                        className="mt-0.5 h-4 w-4 shrink-0 text-gray-800"
+                        fill="currentColor"
+                        viewBox="0 0 24 24"
+                        aria-hidden
+                      >
+                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
+                      </svg>
+                      <p className="line-clamp-2 text-sm font-medium leading-relaxed">{locationLine}</p>
+                    </div>
                     <div className="mt-auto flex items-center justify-between gap-3 border-t border-gray-100 pt-4">
-                      <div className="flex min-w-0 flex-1 items-center gap-2">
-                        <div className="flex shrink-0">
-                          {Array.from({ length: 3 }).map((_, j) => (
-                            <div
-                              key={j}
-                              className="home-shimmer h-8 w-8 rounded-full border-2 border-white"
-                              style={{ marginLeft: j === 0 ? 0 : -10, zIndex: 3 - j }}
-                            />
-                          ))}
-                        </div>
-                        <div className="home-shimmer h-4 w-24 rounded" />
-                      </div>
-                      <div className="home-shimmer h-10 w-[5.5rem] shrink-0 rounded-sm" />
+                      <TrendingGoingRow profiles={profiles} total={total} />
+                      <button
+                        type="button"
+                        onClick={(e) => handleRegister(e, event)}
+                        className="inline-flex h-10 shrink-0 items-center justify-center rounded-sm bg-[#004A96] px-4 text-sm font-bold text-white shadow-sm transition-all duration-200 hover:bg-[#002255] hover:shadow-[0_4px_12px_rgba(0,44,113,0.3)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#002C71]"
+                      >
+                        Register
+                      </button>
                     </div>
                   </div>
                 </div>
-              ))}
-        </div>
+              )
+            })}
+          </div>
+        )}
       </div>
     </section>
   )

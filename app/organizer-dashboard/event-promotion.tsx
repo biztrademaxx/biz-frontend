@@ -4,13 +4,12 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { PromotionPaymentDialog } from "@/components/payment/promotion-payment-dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { useToast } from "@/hooks/use-toast"
+import { apiFetch } from "@/lib/api"
 import {
   Megaphone,
   Users,
@@ -178,7 +177,7 @@ export default function EventPromotion({ organizerId }: EventPromotionProps) {
       icon: Code,
       userCount: 12500,
       avgEngagement: 78,
-      color: "bg-blue-500",
+      color: "bg-[#004A96]",
     },
     {
       id: "business",
@@ -202,7 +201,7 @@ export default function EventPromotion({ organizerId }: EventPromotionProps) {
       icon: GraduationCap,
       userCount: 9200,
       avgEngagement: 76,
-      color: "bg-purple-500",
+      color: "bg-blue-500",
     },
     {
       id: "arts",
@@ -258,7 +257,7 @@ export default function EventPromotion({ organizerId }: EventPromotionProps) {
       icon: Music,
       userCount: 8200,
       avgEngagement: 86,
-      color: "bg-violet-500",
+      color: "bg-blue-500",
     },
     {
       id: "retail",
@@ -277,10 +276,10 @@ export default function EventPromotion({ organizerId }: EventPromotionProps) {
   const fetchPromotionData = async () => {
     try {
       setLoading(true)
-      const response = await fetch(`/api/organizers/${organizerId}/promotions`)
-      if (!response.ok) throw new Error("Failed to fetch promotion data")
-
-      const data = await response.json()
+      const data = await apiFetch<{ events?: Event[]; promotions?: Promotion[] }>(
+        `/api/organizers/${organizerId}/promotions`,
+        { auth: true },
+      )
       setEvents(data.events || [])
       setPromotions(data.promotions || [])
     } catch (error) {
@@ -295,45 +294,38 @@ export default function EventPromotion({ organizerId }: EventPromotionProps) {
     }
   }
 
-  const createPromotion = async () => {
+  const createPromotion = async (paymentTransactionId: string) => {
     const selectedPackageData = promotionPackages.find((p) => p.id === selectedPackage)
-    if (!selectedPackageData || !selectedEvent) return
+    if (!selectedPackageData || !selectedEvent) {
+      throw new Error("Please select an event and package")
+    }
 
     try {
       setCreating(true)
-      const response = await fetch(`/api/organizers/${organizerId}/promotions`, {
+      await apiFetch(`/api/organizers/${organizerId}/promotions`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          eventId: selectedEvent,
-          packageType: selectedPackageData.id,
-          targetCategories: selectedCategories,
-          amount: selectedPackageData.price,
-          duration: Number.parseInt(selectedPackageData.duration.split(" ")[0]),
-        }),
+        auth: true,
+        body: { paymentTransactionId },
       })
-
-      if (!response.ok) throw new Error("Failed to create promotion")
 
       toast({
         title: "Success",
         description: "Promotion campaign created successfully!",
       })
 
-      setIsPaymentDialogOpen(false)
       setSelectedEvent("")
       setSelectedCategories([])
       setSelectedPackage("")
-      fetchPromotionData() // Refresh data
+      fetchPromotionData()
     } catch (error) {
       console.error("Error creating promotion:", error)
+      const message = error instanceof Error ? error.message : "Failed to create promotion campaign"
       toast({
         title: "Error",
-        description: "Failed to create promotion campaign",
+        description: message,
         variant: "destructive",
       })
+      throw error instanceof Error ? error : new Error(message)
     } finally {
       setCreating(false)
     }
@@ -369,6 +361,19 @@ export default function EventPromotion({ organizerId }: EventPromotionProps) {
 
   const selectedPackageData = promotionPackages.find((p) => p.id === selectedPackage)
 
+  const buildPaymentContext = () => {
+    if (!selectedPackageData || !selectedEvent) return null
+    return {
+      promotionChannel: "ORGANIZER" as const,
+      organizerId,
+      eventId: selectedEvent,
+      packageType: selectedPackageData.id,
+      targetCategories: selectedCategories,
+      durationDays: Number.parseInt(selectedPackageData.duration.split(" ")[0], 10) || 7,
+      amountInr: selectedPackageData.price,
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -382,7 +387,7 @@ export default function EventPromotion({ organizerId }: EventPromotionProps) {
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-gray-900">Event Promotion</h1>
         <div className="flex items-center gap-2">
-          <Badge variant="outline" className="bg-blue-50 text-blue-700">
+          <Badge variant="outline" className="bg-[#004A96]/10 text-[#004A96]">
             <Users className="w-4 h-4 mr-1" />
             {userCategories.reduce((total, cat) => total + cat.userCount, 0).toLocaleString()} Platform Users
           </Badge>
@@ -493,7 +498,7 @@ export default function EventPromotion({ organizerId }: EventPromotionProps) {
                         key={category.id}
                         className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
                           selectedCategories.includes(category.id)
-                            ? "border-blue-500 bg-blue-50"
+                            ? "border-[#004A96] bg-[#004A96]/10"
                             : "border-gray-200 hover:border-gray-300"
                         }`}
                         onClick={() => handleCategoryToggle(category.id)}
@@ -525,12 +530,12 @@ export default function EventPromotion({ organizerId }: EventPromotionProps) {
                   </div>
 
                   {selectedCategories.length > 0 && (
-                    <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+                    <div className="mt-6 p-4 bg-[#004A96]/10 rounded-lg">
                       <h3 className="font-semibold mb-2">Estimated Reach</h3>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                         <div>
                           <span className="text-gray-600">Total Users:</span>
-                          <div className="text-2xl font-bold text-blue-600">
+                          <div className="text-2xl font-bold text-[#004A96]">
                             {calculateEstimatedReach().toLocaleString()}
                           </div>
                         </div>
@@ -540,7 +545,7 @@ export default function EventPromotion({ organizerId }: EventPromotionProps) {
                         </div>
                         <div>
                           <span className="text-gray-600">Expected Registrations:</span>
-                          <div className="text-2xl font-bold text-purple-600">
+                          <div className="text-2xl font-bold text-blue-600">
                             {Math.round(calculateEstimatedReach() * (calculateEstimatedEngagement() / 100) * 0.15)}
                           </div>
                         </div>
@@ -568,12 +573,12 @@ export default function EventPromotion({ organizerId }: EventPromotionProps) {
                         <div
                           key={pkg.id}
                           className={`relative p-6 border-2 rounded-lg ${
-                            pkg.recommended ? "border-blue-500 bg-blue-50" : "border-gray-200"
+                            pkg.recommended ? "border-[#004A96] bg-[#004A96]/10" : "border-gray-200"
                           }`}
                         >
                           {pkg.recommended && (
                             <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                              <Badge className="bg-blue-500 text-white">
+                              <Badge className="bg-[#004A96] text-white">
                                 <Star className="w-3 h-3 mr-1" />
                                 Recommended
                               </Badge>
@@ -584,7 +589,7 @@ export default function EventPromotion({ organizerId }: EventPromotionProps) {
                             <h3 className="text-xl font-bold">{pkg.name}</h3>
                             <p className="text-sm text-gray-600 mt-1">{pkg.description}</p>
                             <div className="mt-3">
-                              <span className="text-3xl font-bold text-blue-600">₹{pkg.price.toLocaleString()}</span>
+                              <span className="text-3xl font-bold text-[#004A96]">₹{pkg.price.toLocaleString()}</span>
                               <span className="text-sm text-gray-500">/{pkg.duration}</span>
                             </div>
                           </div>
@@ -628,107 +633,28 @@ export default function EventPromotion({ organizerId }: EventPromotionProps) {
         </TabsContent>
       </Tabs>
 
-      {/* Payment Dialog */}
-      <Dialog open={isPaymentDialogOpen} onOpenChange={setIsPaymentDialogOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Complete Your Promotion Purchase</DialogTitle>
-            <DialogDescription>
-              Review your selection and complete the payment to start promoting your event
-            </DialogDescription>
-          </DialogHeader>
-
-          {selectedPackageData && (
-            <div className="space-y-6">
-              {/* Order Summary */}
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <h3 className="font-semibold mb-3">Order Summary</h3>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span>Package:</span>
-                    <span className="font-medium">{selectedPackageData.name}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Event:</span>
-                    <span className="font-medium">{events.find((e) => e.id.toString() === selectedEvent)?.title}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Target Categories:</span>
-                    <span className="font-medium">{selectedCategories.length} selected</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Estimated Reach:</span>
-                    <span className="font-medium">{calculateEstimatedReach().toLocaleString()} users</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Duration:</span>
-                    <span className="font-medium">{selectedPackageData.duration}</span>
-                  </div>
-                  <div className="border-t pt-2 mt-2">
-                    <div className="flex justify-between font-semibold">
-                      <span>Total Amount:</span>
-                      <span className="text-blue-600">₹{selectedPackageData.price.toLocaleString()}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Payment Form */}
-              <div className="space-y-4">
-                <h3 className="font-semibold">Payment Details</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="card-number">Card Number</Label>
-                    <Input id="card-number" placeholder="1234 5678 9012 3456" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="card-name">Cardholder Name</Label>
-                    <Input id="card-name" placeholder="John Doe" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="expiry">Expiry Date</Label>
-                    <Input id="expiry" placeholder="MM/YY" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="cvv">CVV</Label>
-                    <Input id="cvv" placeholder="123" />
-                  </div>
-                </div>
-              </div>
-
-              {/* Terms and Conditions */}
-              <div className="flex items-center space-x-2">
-                <Checkbox id="terms" />
-                <Label htmlFor="terms" className="text-sm">
-                  I agree to the{" "}
-                  <a href="#" className="text-blue-600 hover:underline">
-                    Terms and Conditions
-                  </a>{" "}
-                  and{" "}
-                  <a href="#" className="text-blue-600 hover:underline">
-                    Promotion Policy
-                  </a>
-                </Label>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex justify-end gap-3">
-                <Button variant="outline" onClick={() => setIsPaymentDialogOpen(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={createPromotion} disabled={creating}>
-                  {creating ? (
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  ) : (
-                    <CreditCard className="w-4 h-4 mr-2" />
-                  )}
-                  Pay ₹{selectedPackageData.price.toLocaleString()}
-                </Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      <PromotionPaymentDialog
+        open={isPaymentDialogOpen}
+        onOpenChange={setIsPaymentDialogOpen}
+        receiptPrefix="org_promo"
+        termsCheckboxId="organizer-promotion-terms"
+        paymentContext={buildPaymentContext()}
+        summary={
+          selectedPackageData
+            ? {
+                packageName: selectedPackageData.name,
+                eventTitle: events.find((e) => e.id.toString() === selectedEvent)?.title ?? "Event",
+                categoryCount: selectedCategories.length,
+                estimatedReach: calculateEstimatedReach(),
+                duration: selectedPackageData.duration,
+                amountInr: selectedPackageData.price,
+              }
+            : null
+        }
+        onPaymentSuccess={async (paymentTransactionId) => {
+          await createPromotion(paymentTransactionId)
+        }}
+      />
     </div>
   )
 }

@@ -1,35 +1,54 @@
 "use client"
 
+import { AppImage } from "@/components/app-image"
 import Link from "next/link"
 import { useCallback, useEffect, useRef } from "react"
-import { Noto_Sans } from "next/font/google"
 import { ChevronLeft, ChevronRight, MapPin } from "lucide-react"
 import { eventPublicPath } from "@/lib/event-path"
+import HomeSectionEmptyState, { homeEmptyDescription } from "@/components/home/HomeSectionEmptyState"
 import type { HeroSlideshowEvent } from "@/lib/hero/types"
-
-const vipDateFont = Noto_Sans({
-  subsets: ["latin"],
-  weight: ["600", "700", "800", "900"],
-})
 
 export type Event = HeroSlideshowEvent
 
-const FALLBACK_IMAGE = "/herosection-images/food.jpg"
-
+/**
+ * VIP cards use the dedicated `vipImage` field set by super-admin
+ * (Event.vipImage in the Prisma schema — "Dedicated image for homepage
+ * VIP cards only"). Falls back to bannerImage / images[0] only if an
+ * event hasn't had a VIP image set yet, so older/incomplete records
+ * still render instead of vanishing from the slideshow.
+ */
 function cardImageUrl(event: Event): string {
-  if (event.bannerImage?.trim()) return event.bannerImage.trim()
-  const first = event.images?.[0]
+  const e = event as any
+
+  if (typeof e.vipImage === "string" && e.vipImage.trim()) return e.vipImage.trim()
+  if (typeof e.bannerImage === "string" && e.bannerImage.trim()) return e.bannerImage.trim()
+
+  const first = e.images?.[0]
   if (typeof first === "string" && first.trim()) return first.trim()
-  return FALLBACK_IMAGE
+
+  return ""
 }
 
 /** Day, month, and year from event start only (end date is not shown). */
-function heroCardDateParts(startIso: string): { line1: string; line2: string; yearLine: string } {
+function heroCardDateParts(
+  startIso: string,
+  endIso?: string | null,
+): { line1: string; line2: string; yearLine: string } {
   const start = new Date(startIso)
-  if (Number.isNaN(start.getTime())) return { line1: "—", line2: "", yearLine: "" }
-  const monUpper = (x: Date) => x.toLocaleString("en-GB", { month: "short" }).toUpperCase()
+  const end = endIso ? new Date(endIso) : null
+
+  if (Number.isNaN(start.getTime())) {
+    return { line1: "—", line2: "", yearLine: "" }
+  }
+
+  const monUpper = (x: Date) =>
+    x.toLocaleString("en-GB", { month: "short" }).toUpperCase()
+
+  const startDay = start.getDate()
+  const endDay = end && !Number.isNaN(end.getTime()) ? end.getDate() : null
+
   return {
-    line1: String(start.getDate()),
+    line1: endDay ? `${startDay}-${endDay}` : `${startDay}`,
     line2: monUpper(start),
     yearLine: String(start.getFullYear()),
   }
@@ -53,8 +72,16 @@ function formatLocationLine(event: Event): string {
   return ""
 }
 
-function EventCard({ event }: { event: Event }) {
-  const { line1: dateLine1, line2: dateLine2, yearLine: dateYear } = heroCardDateParts(event.startDate)
+/**
+ * Renders one card. Caller is expected to have already verified the event
+ * has a usable image (via `cardImageUrl`) — this component assumes
+ * `imageUrl` is non-empty and does not render its own "empty" fallback, so
+ * that the parent never mounts an empty, correctly-sized slot for events
+ * without an image.
+ */
+function EventCard({ event, imageUrl }: { event: Event; imageUrl: string }) {
+  const { line1: dateLine1, line2: dateLine2, yearLine: dateYear } =
+    heroCardDateParts(event.startDate, event.endDate)
   const location = formatLocationLine(event)
   const locationDisplay = location || "Venue coming soon"
 
@@ -64,14 +91,17 @@ function EventCard({ event }: { event: Event }) {
       className="block h-full min-w-0 w-full snap-start"
       aria-label={vipCardTitleDisplay(event.title)}
     >
-      <div className="group relative h-[448px] w-full min-w-0 overflow-hidden bg-[#F2F2F2] transition-all duration-300 ease-out hover:z-10 hover:scale-[1.02] hover:shadow-2xl md:h-[488px] lg:h-[528px] lg:hover:scale-105">
-        <img
-          src={cardImageUrl(event)}
+      {/* Card pops out on hover; image stays locked to the card (no independent zoom). */}
+      <div className="group relative h-[448px] w-full min-w-0 overflow-hidden transition-transform duration-300 ease-out hover:z-10 hover:scale-[1.02] md:h-[488px] lg:h-[528px] lg:hover:scale-105">
+        <AppImage
+          src={imageUrl}
           alt={event.title}
-          className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+          fill
+          // sizes="(max-width: 600px) 100vw, 50vw"
+          className="h-full w-[320px]object-cover"
         />
         <div
-          className="absolute inset-0 bg-gradient-to-t from-blue-950/90 via-blue-950/40 to-transparent transition-all duration-300 group-hover:from-blue-950/95 group-hover:via-blue-950/50"
+          className="absolute inset-0 bg-gradient-to-t from-blue-950/90 via-blue-950/40 to-transparent"
           aria-hidden
         />
 
@@ -81,7 +111,7 @@ function EventCard({ event }: { event: Event }) {
               Top events
             </span>
             <div
-              className={`${vipDateFont.className} relative flex min-h-[5.25rem] w-full flex-col items-center justify-center overflow-hidden rounded-md bg-gradient-to-br from-[#0b3c8a] via-[#0a2f6b] to-[#081f4d] px-2 py-2 text-center shadow-[0_8px_22px_rgba(1,45,114,0.32),0_3px_10px_rgba(0,0,0,0.12)] ring-1 ring-white/10 md:min-h-[5.75rem] md:px-2.5 md:py-2.5 lg:min-h-[6rem]`}
+              className="relative flex min-h-[5.25rem] w-full flex-col items-center justify-center overflow-hidden rounded-md bg-gradient-to-br from-[#0b3c8a] via-[#0a2f6b] to-[#081f4d] px-2 py-2 text-center font-bold shadow-[0_8px_22px_rgba(1,45,114,0.32),0_3px_10px_rgba(0,0,0,0.12)] ring-1 ring-white/10 md:min-h-[5.75rem] md:px-2.5 md:py-2.5 lg:min-h-[6rem]"
               aria-hidden
             >
               <div
@@ -97,7 +127,7 @@ function EventCard({ event }: { event: Event }) {
                 aria-hidden
               />
               <div className="relative z-10 flex w-full flex-col items-center justify-center text-center">
-                <div className="text-2xl font-black leading-[0.92] tracking-tight text-white [text-shadow:0_2px_6px_rgba(0,0,0,0.45)] md:text-3xl md:leading-[0.9] lg:text-[2rem]">
+                <div className="text-lg font-black leading-[0.92] tracking-tight text-white [text-shadow:0_2px_6px_rgba(0,0,0,0.45)] md:text-xl md:leading-[0.9] lg:text-2xl">
                   {dateLine1}
                 </div>
                 {dateLine2 ? (
@@ -106,7 +136,7 @@ function EventCard({ event }: { event: Event }) {
                   </div>
                 ) : null}
                 {dateYear ? (
-                  <div className="mt-0.5 text-[9px] font-semibold tabular-nums tracking-[0.1em] text-white [text-shadow:0_1px_4px_rgba(0,0,0,0.5)] md:mt-0.5 md:text-[10px] lg:text-xs">
+                  <div className="mt-0.5 text-[8px] font-semibold tabular-nums tracking-[0.08em] text-white [text-shadow:0_1px_4px_rgba(0,0,0,0.5)] md:text-[9px] lg:text-[10px]">
                     {dateYear}
                   </div>
                 ) : null}
@@ -130,9 +160,20 @@ function EventCard({ event }: { event: Event }) {
 
 const AUTO_ADVANCE_MS = 5000
 
-export default function HeroSlideshowClient({ initialEvents }: { initialEvents: Event[] }) {
+export default function HeroSlideshowClient({
+  initialEvents,
+  homeCity,
+  homeCountry,
+}: {
+  initialEvents: Event[]
+  homeCity?: string | null
+  homeCountry?: string | null
+}) {
   const scrollRef = useRef<HTMLDivElement>(null)
+
   const events = initialEvents
+    .map((event) => ({ event, imageUrl: cardImageUrl(event) }))
+    .filter((entry): entry is { event: Event; imageUrl: string } => Boolean(entry.imageUrl))
 
   const advance = useCallback((dir: "left" | "right") => {
     const el = scrollRef.current
@@ -160,27 +201,38 @@ export default function HeroSlideshowClient({ initialEvents }: { initialEvents: 
     return () => window.clearInterval(id)
   }, [events.length, advance])
 
-  if (!initialEvents.length) {
+  if (!events.length) {
     return (
-      <div className="flex h-56 w-full items-center justify-center bg-neutral-100 text-gray-500">
-        No VIP events at the moment
+      <div className="w-full px-3 sm:px-4 lg:px-6">
+        <HomeSectionEmptyState
+          icon="trending"
+          title="No VIP events in this region"
+          description={homeEmptyDescription("VIP events with images", homeCity, homeCountry)}
+          homeCity={homeCity}
+          homeCountry={homeCountry}
+          actions={[
+            { label: "Browse all events", href: "/event" },
+            { label: "Add event", href: "/organizer-signup", variant: "secondary" },
+          ]}
+          className="min-h-[280px] lg:min-h-[320px]"
+        />
       </div>
     )
   }
 
   return (
-    <div className="relative w-full min-w-0" aria-label="VIP events">
+    <div className="group/slideshow relative w-full min-w-0" aria-label="VIP events">
       <div
         ref={scrollRef}
         className="no-scrollbar flex w-full scroll-smooth snap-x snap-mandatory gap-0 overflow-x-auto overflow-y-hidden pt-0 pb-3"
         style={{ scrollbarWidth: "none" }}
       >
-        {events.map((event) => (
+        {events.map(({ event, imageUrl }) => (
           <div
             key={event.id}
-            className="w-[min(100%,88vw)] shrink-0 snap-start sm:w-80 lg:w-1/5 lg:min-w-0"
+            className="w-full shrink-0 snap-start sm:w-80 lg:w-1/5 lg:min-w-0"
           >
-            <EventCard event={event} />
+            <EventCard event={event} imageUrl={imageUrl} />
           </div>
         ))}
       </div>
@@ -189,7 +241,7 @@ export default function HeroSlideshowClient({ initialEvents }: { initialEvents: 
         type="button"
         aria-label="Scroll left"
         onClick={() => advance("left")}
-        className="absolute left-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/95 p-2 shadow-lg ring-1 ring-black/5 hover:bg-white"
+        className="absolute left-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/95 p-2 opacity-0 shadow-lg ring-1 ring-black/5 transition-opacity duration-200 hover:bg-white group-hover/slideshow:opacity-100 focus-visible:opacity-100"
       >
         <ChevronLeft className="h-6 w-6 text-gray-700" strokeWidth={2} />
       </button>
@@ -197,7 +249,7 @@ export default function HeroSlideshowClient({ initialEvents }: { initialEvents: 
         type="button"
         aria-label="Scroll right"
         onClick={() => advance("right")}
-        className="absolute right-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/95 p-2 shadow-lg ring-1 ring-black/5 hover:bg-white"
+        className="absolute right-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/95 p-2 opacity-0 shadow-lg ring-1 ring-black/5 transition-opacity duration-200 hover:bg-white group-hover/slideshow:opacity-100 focus-visible:opacity-100"
       >
         <ChevronRight className="h-6 w-6 text-gray-700" strokeWidth={2} />
       </button>

@@ -20,12 +20,14 @@ interface Feedback {
     lastName: string
     email: string
     company: string
+    name?: string
   }
   user: {
     id: string
     firstName: string
     lastName: string
     email: string
+    name?: string
   }
   event: {
     id: string
@@ -60,11 +62,33 @@ export default function ExhibitorFeedbackPage() {
 
   const fetchFeedbacks = async () => {
     try {
-      const data = await apiFetch<Feedback[]>(
+      const data = await apiFetch<Feedback[] | { data?: Feedback[] }>(
         "/api/admin/exhibitors/exhibitor-feedback",
-        { auth: true }
+        { auth: true },
       )
-      setFeedbacks(Array.isArray(data) ? data : [])
+      const list = Array.isArray(data) ? data : data?.data ?? []
+      setFeedbacks(
+        list.map((item) => ({
+          ...item,
+          exhibitor: {
+            id: item.exhibitor?.id ?? "",
+            firstName: item.exhibitor?.firstName ?? item.exhibitor?.name?.split(" ")[0] ?? "",
+            lastName:
+              item.exhibitor?.lastName ??
+              item.exhibitor?.name?.split(" ").slice(1).join(" ") ??
+              "",
+            email: item.exhibitor?.email ?? "",
+            company: item.exhibitor?.company ?? "",
+          },
+          user: {
+            id: item.user?.id ?? "",
+            firstName: item.user?.firstName ?? item.user?.name?.split(" ")[0] ?? "Visitor",
+            lastName:
+              item.user?.lastName ?? item.user?.name?.split(" ").slice(1).join(" ") ?? "",
+            email: item.user?.email ?? "",
+          },
+        })),
+      )
     } catch (error) {
       console.error("Error fetching feedbacks:", error)
       setFeedbacks([])
@@ -286,7 +310,7 @@ export default function ExhibitorFeedbackPage() {
                         <div className="font-medium">
                           {feedback.exhibitor.firstName} {feedback.exhibitor.lastName}
                         </div>
-                        <div className="text-sm text-gray-500">{feedback.exhibitor.company}</div>
+                        <div className="text-sm text-gray-500">{feedback.exhibitor.company || "—"}</div>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -294,7 +318,7 @@ export default function ExhibitorFeedbackPage() {
                         <div className="font-medium">
                           {feedback.user.firstName} {feedback.user.lastName}
                         </div>
-                        <div className="text-sm text-gray-500">{feedback.user.email}</div>
+                        <div className="text-sm text-gray-500">{feedback.user.email || "—"}</div>
                       </div>
                     </TableCell>
                     <TableCell>

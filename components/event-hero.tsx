@@ -6,12 +6,18 @@ import { useKeenSlider } from "keen-slider/react"
 import "keen-slider/keen-slider.min.css"
 import Image from "next/image"
 import { useEffect, useState } from "react"
-import Link from "next/link"
-import { apiFetch } from "@/lib/api"
 import { formatPublicTicketPriceLine } from "@/lib/ticket-price-display"
 import { formatEventSidebarTimeRange } from "@/lib/event-sidebar-time-range"
+import { formatEventPublicDateRange, getEventPostponedNotice, isEventPostponed } from "@/lib/event-schedule-display"
+import { BRAND_IMAGE_BOTTOM_FADE } from "@/lib/brand-image-gradients"
+import { resolveEventBannerImage } from "@/lib/events/resolve-event-banner-image"
+
+const DEFAULT_EVENT_HERO_IMAGE = "/herosection-images/eventbanner.jpeg"
 
 interface Event {
+  bannerImage: unknown
+  thumbnailImage: unknown
+  logo: unknown
   id: string
   title: string
   subtitle?: string
@@ -19,6 +25,9 @@ interface Event {
   address?: string
   startDate?: string
   endDate?: string
+  previousStartDate?: string | null
+  previousEndDate?: string | null
+  isPostponed?: boolean
   postponedReason?: string
   images: string[]
   videos?: string[]
@@ -45,31 +54,97 @@ interface Event {
   maxAttendees?: number
 }
 
-interface Banner {
-  id: string
-  title: string
-  imageUrl: string
-  publicId: string
-  page: string
-  position: string
-  isActive: boolean
-  link?: string
-  width: number
-  height: number
-  createdAt: string
-  updatedAt: string
-}
-
 interface EventHeroProps {
   event: Event
 }
 
+// ── Countdown hook ────────────────────────────────────────────────────────────
+function useCountdown(targetDate?: string) {
+  const calcTimeLeft = () => {
+    if (!targetDate) return null
+    const diff = new Date(targetDate).getTime() - Date.now()
+    if (diff <= 0) return null
+    return {
+      days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+      hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
+      minutes: Math.floor((diff / (1000 * 60)) % 60),
+    }
+  }
+
+  const [timeLeft, setTimeLeft] = useState(calcTimeLeft)
+
+  useEffect(() => {
+    const id = setInterval(() => setTimeLeft(calcTimeLeft()), 1000)
+    return () => clearInterval(id)
+  }, [targetDate])
+
+  return timeLeft
+}
+/** Navbar navy glass — matches `navbar.tsx` #002C71 / #004A96 system */
+const COUNTDOWN_OUTER_GLASS: React.CSSProperties = {
+  background: "transparent",
+  border: "none",
+  boxShadow: "none",
+}
+
+const COUNTDOWN_UNIT_GLASS: React.CSSProperties = {
+  background: "rgba(255,255,255,0.75)",
+  backdropFilter: "blur(12px)",
+  WebkitBackdropFilter: "blur(12px)",
+  border: "1px solid rgba(226,232,240,0.8)",
+  boxShadow: "0 4px 12px rgba(15,23,42,0.08)",
+}
+
+function CountdownUnit({ value, label }: { value: number; label: string }) {
+  return (
+    <div className="flex flex-col items-center gap-1.5">
+      <div
+        className="flex h-[58px] min-w-[62px] items-center justify-center rounded-xl px-3"
+        style={COUNTDOWN_UNIT_GLASS}
+      >
+        <span className="text-[22px] font-bold tabular-nums text-[#002C71]">
+          {String(value).padStart(2, "0")}
+        </span>
+      </div>
+
+      <span className="text-[9px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+        {label}
+      </span>
+    </div>
+  )
+}
+
+// ── Countdown banner ──────────────────────────────────────────────────────────
+function EventCountdownBanner({ startDate }: { startDate?: string }) {
+  const timeLeft = useCountdown(startDate)
+
+  if (!startDate || !timeLeft) return null
+
+  return (
+    <div className="rounded-sm p-4" style={COUNTDOWN_OUTER_GLASS}>
+      <div className="flex items-center justify-start gap-2 pt-1">
+        <CountdownUnit value={timeLeft.days} label="Days" />
+
+        <span className="pb-4 text-xl font-light text-slate-300">
+          :
+        </span>
+
+        <CountdownUnit value={timeLeft.hours} label="Hours" />
+
+        <span className="pb-4 text-xl font-light text-slate-300">
+          :
+        </span>
+
+        <CountdownUnit value={timeLeft.minutes} label="Mins" />
+      </div>
+    </div>
+  )
+}
+
+// ── Main component ────────────────────────────────────────────────────────────
 export default function EventHero({ event }: EventHeroProps) {
   const [currentSlide, setCurrentSlide] = useState(0)
   const [images, setImages] = useState<string[]>(event.images || [])
-  const [heroBanners, setHeroBanners] = useState<Banner[]>([])
-  const [heroBannersLoading, setHeroBannersLoading] = useState(false)
-  const [currentBannerIndex, setCurrentBannerIndex] = useState(0)
 
   const [sliderRef, instanceRef] = useKeenSlider<HTMLDivElement>({
     loop: true,
@@ -79,331 +154,198 @@ export default function EventHero({ event }: EventHeroProps) {
     },
   })
 
-  const [bannerSliderRef, bannerInstanceRef] = useKeenSlider<HTMLDivElement>({
-    loop: true,
-    slides: { perView: 1 },
-    slideChanged(slider) {
-      setCurrentBannerIndex(slider.track.details.rel)
-    },
-  })
-
-  // Fetch hero banners from backend (no Next.js app/api)
-  useEffect(() => {
-    let cancelled = false
-    let intervalId: ReturnType<typeof setInterval> | undefined
-
-    async function fetchHeroBanners() {
-      try {
-        setHeroBannersLoading(true)
-        const data = await apiFetch<Banner[]>(`/api/content/banners?page=event-detail&position=hero`, { auth: false })
-        if (cancelled) return
-        const list = Array.isArray(data) ? data : []
-        const activeHeroBanners = list.filter((banner: Banner) => banner.isActive !== false)
-        setHeroBanners(activeHeroBanners)
-        if (activeHeroBanners.length > 1) {
-          intervalId = setInterval(() => {
-            bannerInstanceRef.current?.next()
-          }, 8000)
-        }
-      } catch (error) {
-        if (!cancelled) console.error("Error fetching hero banners:", error)
-      } finally {
-        if (!cancelled) setHeroBannersLoading(false)
-      }
-    }
-
-    fetchHeroBanners()
-    return () => {
-      cancelled = true
-      if (intervalId) clearInterval(intervalId)
-    }
-  }, [bannerInstanceRef])
-
   useEffect(() => {
     const slider = instanceRef.current
     if (!slider) return
     const interval = setInterval(() => {
       slider.next()
-    }, 10000) // Increased from 3000ms to 6000ms (6 seconds)
+    }, 10000)
     return () => clearInterval(interval)
   }, [instanceRef])
 
   useEffect(() => {
-    setImages(event.images || [])
-  }, [event.images])
+    const raw = Array.isArray(event.images) ? event.images : []
+    const cleaned = raw.filter(
+      (img): img is string =>
+        typeof img === "string" && img.trim() !== "" && img !== "null" && img !== "undefined",
+    )
+    const banner = resolveEventBannerImage(event as Parameters<typeof resolveEventBannerImage>[0])
+    if (banner && !cleaned.includes(banner)) {
+      setImages([banner, ...cleaned])
+    } else {
+      setImages(cleaned)
+    }
+  }, [event.images, event.bannerImage, event.thumbnailImage, event.logo])
 
-  // Get ticket price display
   const getTicketPriceDisplay = () => formatPublicTicketPriceLine(event.ticketTypes)
 
-  // Get followers count - REMOVED the fallback to 0
   const getFollowersCount = () => {
-    // Priority: 1. event.followers, 2. event.leads.length, 3. event.currentAttendees
-    if (event.followers && event.followers > 0) {
-      return event.followers
-    }
-    if (event.leads && event.leads.length > 0) {
-      return event.leads.length
-    }
-    if (event.currentAttendees && event.currentAttendees > 0) {
-      return event.currentAttendees
-    }
-    return null // Return null instead of 0
-  }
-
-  // Format date range
-  const formatDateRange = () => {
-    if (!event.startDate || !event.endDate) {
-      return "Date to be announced"
-    }
-
-    const startDate = new Date(event.startDate)
-    const endDate = new Date(event.endDate)
-    
-    const isSameDay = startDate.toDateString() === endDate.toDateString()
-    
-    if (isSameDay) {
-      return startDate.toLocaleDateString("en-IN", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-      })
-    } else {
-      return `${startDate.toLocaleDateString("en-IN", {
-        day: "2-digit",
-        month: "short",
-      })} - ${endDate.toLocaleDateString("en-IN", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-      })}`
-    }
-  }
-
-  // Format time range
-  const formatTimeRange = () => {
-    if (!event.startDate || !event.endDate) {
-      return "Time to be announced"
-    }
-
-    const startTime = new Date(event.startDate).toLocaleTimeString("en-IN", {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: true,
-      timeZone: "Asia/Kolkata", // Force Indian time zone
-    })
-
-    const endTime = new Date(event.endDate).toLocaleTimeString("en-IN", {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: true,
-      timeZone: "Asia/Kolkata", // Force Indian time zone
-    })
-
-    return `${startTime} – ${endTime}`
+    if (event.followers && event.followers > 0) return event.followers
+    if (event.leads && event.leads.length > 0) return event.leads.length
+    if (event.currentAttendees && event.currentAttendees > 0) return event.currentAttendees
+    return null
   }
 
   const followersCount = getFollowersCount()
-  const eventSubtitle = (event.subTitle || event.subtitle || "").trim() || event.title
+  const postponed = isEventPostponed(event)
 
-  // Handle banner click tracking
-  const handleBannerClick = async (bannerId: string) => {
-    try {
-      await apiFetch(`/api/analytics/banner-click`, {
-        method: "POST",
-        auth: false,
-        body: {
-          bannerId,
-          eventId: event.id,
-          timestamp: new Date().toISOString(),
-          path: typeof window !== "undefined" ? window.location.pathname : "",
-        },
-      })
-    } catch {
-      /* Backend may not implement this route yet */
-    }
-  }
+  const slideImages = images.filter(
+    (img) =>
+      typeof img === "string" && img.trim() !== "" && img !== "null" && img !== "undefined"
+  )
+  const videoSlides = event.videos ?? []
+  const hasMainSliderMedia = slideImages.length > 0 || videoSlides.length > 0
+
+  const rawHeroLabel =
+    (event.subTitle || event.subtitle || "").trim() || (event.title || "").trim()
+  const eventSubtitle = rawHeroLabel.slice(0, 10)
 
   return (
     <div>
-      {/* SIMPLIFIED Dynamic Hero Banner Section - Only image */}
+      {/* Top hero strip */}
       <div className="relative h-[200px] md:h-[300px] lg:h-[200px] overflow-hidden">
-        {heroBannersLoading ? (
-          <div className="hero-card-shimmer h-full w-full" aria-busy="true" aria-label="Loading banner" />
-        ) : heroBanners.length > 0 ? (
-          <>
-            {/* Banner Slider - Only images without title */}
-            <div ref={bannerSliderRef} className="keen-slider h-full w-full">
-              {heroBanners.map((banner, index) => (
-                <div key={banner.id} className="keen-slider__slide relative h-full w-full">
-                  <Link 
-                    href={banner.link || "#"}
-                    onClick={() => handleBannerClick(banner.id)}
-                    target={banner.link?.startsWith('http') ? '_blank' : '_self'}
-                    className="block w-full h-full"
-                  >
-                    <Image
-                      src={banner.imageUrl || "/city/c4.jpg"}
-                      alt={banner.title}
-                      fill
-                      className="h-full w-full object-cover"
-                      priority={index === 0}
-                      sizes="100vw"
-                    />
-                    {/* REMOVED title overlay */}
-                  </Link>
+        <div className="relative h-full w-full">
+          <Image
+            src={DEFAULT_EVENT_HERO_IMAGE}
+            alt={event.title}
+            fill
+            className="object-cover scale-105 blur-sm brightness-[0.82] saturate-[0.92]"
+            sizes="100vw"
+            priority
+          />
+          <div
+            className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_120%_80%_at_50%_40%,rgba(15,23,42,0.14)_0%,rgba(15,23,42,0.38)_45%,rgba(2,6,23,0.52)_100%)]"
+            aria-hidden
+          />
+          <div
+            className="pointer-events-none absolute inset-0 bg-gradient-to-b from-slate-950/35 via-slate-900/14 to-transparent"
+            aria-hidden
+          />
+          <div
+            className="pointer-events-none absolute inset-x-0 bottom-0 top-1/4"
+            style={{ backgroundImage: BRAND_IMAGE_BOTTOM_FADE }}
+            aria-hidden
+          />
+        </div>
+      </div>
+
+      {/* Main Card */}
+      <div className="mx-auto max-w-7xl px-3 sm:px-4 lg:px-6">
+        <div className="relative z-10 -mt-[72px] flex w-full flex-col overflow-hidden rounded-sm bg-white shadow-md sm:-mt-[96px] md:-mt-[120px] md:flex-row md:items-stretch">
+
+          {/* Slider Section — fixed height on mobile/tablet (flex-col stacks
+              this above the info panel, so it needs a real height of its
+              own); at md+ the layout switches to a row and `items-stretch`
+              on the parent makes this match the info panel's height instead,
+              so we drop back to h-auto there. */}
+          <div className="relative w-full h-[260px] sm:h-[320px] md:h-auto md:w-2/3 self-stretch">
+            <div
+              ref={sliderRef}
+              className="keen-slider absolute inset-0 h-full w-full"
+            >
+              {hasMainSliderMedia ? (
+                <>
+                  {slideImages.map((imgSrc, index) => (
+                    <div
+                      key={`image-${index}`}
+                      className="keen-slider__slide relative h-full w-full bg-neutral-100"
+                    >
+                      <Image
+                        src={imgSrc}
+                        alt={`${event.title} Image ${index + 1}`}
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 768px) 100vw, 66vw"
+                        priority={index === 0}
+                        onLoadingComplete={(imgEl) => {
+                          const ratio = imgEl.naturalWidth / imgEl.naturalHeight
+                          imgEl.style.objectFit = ratio > 2 ? "contain" : "cover"
+                        }}
+                      />
+                    </div>
+                  ))}
+
+                  {videoSlides.map((vid: string, index: number) => (
+                    <div
+                      key={`video-${index}`}
+                      className="keen-slider__slide relative h-full w-full"
+                    >
+                      <video className="h-full w-full object-cover" autoPlay loop muted playsInline>
+                        <source src={vid} type="video/mp4" />
+                      </video>
+                    </div>
+                  ))}
+                </>
+              ) : (
+                <div className="keen-slider__slide relative h-full w-full bg-neutral-100">
+                  <Image
+                    src={DEFAULT_EVENT_HERO_IMAGE}
+                    alt={event.title}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 768px) 100vw, 66vw"
+                  />
                 </div>
-              ))}
+              )}
             </div>
 
-            {/* Banner indicators if multiple banners */}
-            {heroBanners.length > 1 && (
-              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
-                {heroBanners.map((_, idx) => (
+            {/* Slide Indicators */}
+            {slideImages.length > 1 && (
+              <div className="absolute bottom-4 left-1/2 z-10 transform -translate-x-1/2 flex space-x-2">
+                {slideImages.map((_, idx) => (
                   <button
                     key={idx}
-                    className={`w-2 h-2 rounded-full transition-colors ${
-                      idx === currentBannerIndex ? "bg-white" : "bg-white/50"
-                    }`}
-                    onClick={() => bannerInstanceRef.current?.moveToIdx(idx)}
+                    className={`w-2 h-2 rounded-full transition-colors ${idx === currentSlide ? "bg-white" : "bg-white/50"
+                      }`}
+                    onClick={() => instanceRef.current?.moveToIdx(idx)}
                   />
                 ))}
               </div>
             )}
-            
-            {/* REMOVED Sponsored badge */}
-          </>
-        ) : (
-          // Fallback to default banner if no banners found
-          <div className="relative w-full h-full">
-            <Image
-            src={
-              event.images?.filter(
-                (img) =>
-                  typeof img === "string" &&
-                  img.trim() !== "" &&
-                  img !== "null" &&
-                  img !== "undefined"
-              )[0] || "/city/c4.jpg"
-            }
-            alt={event.title}
-            fill
-            className="h-full w-full object-cover"
-            sizes="100vw"
-            priority
-          />
-          
-           {/* Frosted layer over banner — stronger blur for readability */}
-           <div className="absolute inset-0 backdrop-blur-md" />
-          
-          {/* Gradient overlay */}
-           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
-          </div>
-          
-        )}
-      </div>
-
-      {/* Main Card */}
-      <div className="relative w-full max-w-7xl mx-auto bg-white overflow-hidden shadow-md flex flex-col md:flex-row items-stretch mt-[-150px] md:mt-[-120px] z-10 left-1/2 lg:left-160 -translate-x-1/2 rounded-sm">
-        {/* Slider Section */}
-        <div className="md:w-2/3 w-full min-h-[280px] md:min-h-[320px] relative">
-          <div ref={sliderRef} className="keen-slider h-full w-full">
-            {images.length > 0 ? (
-              <>
-                {images.map((img, index) => (
-                  <div key={`image-${index}`} className="keen-slider__slide relative h-full w-full">
-                    <Image
-                      src={img || "/city/c4.jpg"}
-                      alt={`${event.title} Image ${index + 1}`}
-                      fill
-                      className="object-cover"
-                      priority={index === 0}
-                    />
-                  </div>
-                ))}
-
-                {event.videos?.map((vid: string, index: number) => (
-                  <div key={`video-${index}`} className="keen-slider__slide relative h-full w-full">
-                    <video className="w-full h-full object-cover" autoPlay loop muted playsInline>
-                      <source src={vid} type="video/mp4" />
-                    </video>
-                  </div>
-                ))}
-              </>
-            ) : (
-              <div className="keen-slider__slide relative h-full w-full">
-                <Image 
-                  src="/herosection-images/test.jpeg" 
-                  alt="Default Image" 
-                  fill 
-                  className="object-cover" 
-                  priority
-                />
-              </div>
-            )}
           </div>
 
-          {/* Slide Indicators */}
-          {images.length > 1 && (
-            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
-              {images.map((_, idx) => (
-                <button
-                  key={idx}
-                  className={`w-2 h-2 rounded-full transition-colors ${
-                    idx === currentSlide ? "bg-white" : "bg-white/50"
-                  }`}
-                  onClick={() => instanceRef.current?.moveToIdx(idx)}
-                />
-              ))}
-            </div>
-          )}
-        </div>
+          {/* Info Section */}
+          <div className="md:w-1/3 w-full bg-white p-4 sm:p-6 lg:p-8 flex flex-col justify-center space-y-3">
+            <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold text-black leading-snug line-clamp-2">
+              {eventSubtitle}
+            </h2>
 
-        {/* Info Section */}
-        <div className="md:w-1/3 w-full bg-white p-4 sm:p-6 lg:p-8 flex flex-col justify-center space-y-3">
-          <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold text-black leading-snug line-clamp-2">
-            {eventSubtitle}
-          </h2>
-
-          <div className="space-y-3 text-xs sm:text-sm text-gray-800 py-2">
-            {/* Date */}
-            <div className="flex items-center gap-2 sm:gap-3">
-              <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-black flex-shrink-0" />
-              <p className="leading-tight">{formatDateRange()}</p>
-            </div>
-
-            {/* Time */}
-            <div className="flex items-center gap-2 sm:gap-3">
-              <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-black flex-shrink-0" />
-              <span className="leading-tight">{formatEventSidebarTimeRange(event)}</span>
-            </div>
-
-            {/* Ticket Price */}
-            <div className="flex items-center gap-2 sm:gap-3">
-              <Ticket className="w-4 h-4 sm:w-5 sm:h-5 text-black flex-shrink-0" />
-              <span className="leading-tight font-medium">
-                {getTicketPriceDisplay()}
-              </span>
-            </div>
-
-            {/* Followers - ONLY SHOW IF WE HAVE FOLLOWERS */}
-            {followersCount !== null && followersCount > 0 && (
+            <div className="space-y-3 text-xs sm:text-sm text-gray-800 py-2">
+              {/* Date */}
               <div className="flex items-center gap-2 sm:gap-3">
-                <Users className="w-4 h-4 sm:w-5 sm:h-5 text-black flex-shrink-0" />
-                <span className="leading-tight">
-                  {followersCount.toLocaleString()} {followersCount === 1 ? 'Follower' : 'Followers'}
+                <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-black flex-shrink-0" />
+                <p className="leading-tight">{formatEventPublicDateRange(event.startDate, event.endDate)}</p>
+              </div>
+
+              {/* Time */}
+              <div className="flex items-center gap-2 sm:gap-3">
+                <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-black flex-shrink-0" />
+                <span className="leading-tight">{formatEventSidebarTimeRange(event)}</span>
+              </div>
+
+              {/* Ticket Price */}
+              <div className="flex items-center gap-2 sm:gap-3">
+                <Ticket className="w-4 h-4 sm:w-5 sm:h-5 text-black flex-shrink-0" />
+                <span className="leading-tight font-medium">
+                  {getTicketPriceDisplay()}
                 </span>
               </div>
-            )}
+
+              {/* Followers */}
+              {followersCount !== null && followersCount > 0 && (
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <Users className="w-4 h-4 sm:w-5 sm:h-5 text-black flex-shrink-0" />
+                  <span className="leading-tight">
+                    {followersCount.toLocaleString()} {followersCount === 1 ? "Follower" : "Followers"}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* ── Countdown Timer ── */}
+            <EventCountdownBanner startDate={event.startDate} />
           </div>
 
-          {/* Status Badge if postponed */}
-          {event.postponedReason && (
-            <div className="mt-2">
-              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                Postponed: {event.postponedReason}
-              </span>
-            </div>
-          )}
         </div>
       </div>
     </div>

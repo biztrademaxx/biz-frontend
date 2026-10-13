@@ -1,0 +1,672 @@
+"use client"
+
+import { Card, CardContent } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { CalendarDays, Users, Heart, TrendingUp, MapPin, Store, ChevronRight } from "lucide-react"
+import { DynamicCalendar } from "./DynamicCalander"
+import Link from "next/link"
+import { eventPublicPath } from "@/lib/event-path"
+import { useDashboard } from "@/contexts/dashboard-context"
+import { useState, useEffect } from "react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { AppImage } from "@/components/app-image"
+import { EVENT_CARD_PLACEHOLDER_IMAGE, getEventCardImageUrl } from "@/lib/event-card-meta"
+import { cn } from "@/lib/utils"
+import { apiFetch, getCurrentUserId, isAuthenticated } from "@/lib/api"
+import { useToast } from "@/hooks/use-toast"
+
+interface DashboardOverviewProps {
+  userId: string
+  events: any[]
+  userName: string
+  interests?: string[]
+}
+
+interface SuggestedEvent {
+  id: string
+  slug?: string | null
+  title: string
+  description?: string
+  shortDescription?: string
+  startDate?: string
+  endDate?: string
+  city?: string
+  state?: string
+  venue?: string | { venueName?: string; venueCity?: string; venueState?: string; venueCountry?: string } | null
+  bannerImage?: string | null
+  thumbnailImage?: string | null
+  tags?: string[]
+  categories?: string[]
+  category?: string
+  eventCategory?: string
+  type?: string
+}
+
+const CATEGORY_BADGE_STYLES = [
+  "bg-blue-600",
+  "bg-emerald-600",
+  "bg-orange-500",
+  "bg-purple-600",
+]
+
+function formatEventDateBadge(dateString?: string) {
+  if (!dateString) return { month: "TBD", day: "—", year: "" }
+  const d = new Date(dateString)
+  if (Number.isNaN(d.getTime())) return { month: "TBD", day: "—", year: "" }
+  return {
+    month: d.toLocaleDateString("en-US", { month: "short" }).toUpperCase(),
+    day: String(d.getDate()),
+    year: String(d.getFullYear()),
+  }
+}
+
+function formatFullEventDate(start?: string): string {
+  if (!start) return "Date TBD"
+  const d = new Date(start)
+  if (Number.isNaN(d.getTime())) return "Date TBD"
+  return d.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })
+}
+
+function getDaysUntilEvent(startDate?: string): number | null {
+  if (!startDate) return null
+  const start = new Date(startDate)
+  if (Number.isNaN(start.getTime())) return null
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  start.setHours(0, 0, 0, 0)
+  const diff = Math.ceil((start.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+  return diff >= 0 ? diff : 0
+}
+
+function getUpcomingEventLocation(event: {
+  city?: string
+  country?: string
+  venue?: string | { venueCity?: string; venueCountry?: string } | null
+}): string {
+  const city =
+    event.city ||
+    (typeof event.venue === "object" && event.venue?.venueCity ? event.venue.venueCity : undefined)
+  const country =
+    (typeof event.country === "string" ? event.country : "") ||
+    (typeof event.venue === "object" && event.venue?.venueCountry ? event.venue.venueCountry : "")
+  const parts = [city, country].filter(Boolean)
+  return parts.length > 0 ? parts.join(", ") : "Location TBD"
+}
+
+function formatEventDateRange(start?: string, end?: string): string {
+  if (!start) return "Date TBD"
+  const startD = new Date(start)
+  const opts: Intl.DateTimeFormatOptions = { month: "short", day: "numeric", year: "numeric" }
+  if (!end) return startD.toLocaleDateString("en-US", opts)
+  const endD = new Date(end)
+  const sameYear = startD.getFullYear() === endD.getFullYear()
+  const startStr = startD.toLocaleDateString("en-US", { month: "short", day: "numeric" })
+  const endStr = endD.toLocaleDateString("en-US", sameYear ? { month: "short", day: "numeric", year: "numeric" } : opts)
+  return `${startStr}–${endStr}`
+}
+
+export function DashboardOverview({ userId, events, userName, interests = [] }: DashboardOverviewProps) {
+  const { setActiveSection } = useDashboard()
+  const { toast } = useToast()
+  const [suggestedEvents, setSuggestedEvents] = useState<SuggestedEvent[]>([])
+  const [loadingSuggested, setLoadingSuggested] = useState(false)
+  const [selectedEventFilter, setSelectedEventFilter] = useState<string>("all")
+  const [savedEventIds, setSavedEventIds] = useState<Set<string>>(new Set())
+  const [savingInProgress, setSavingInProgress] = useState<Set<string>>(new Set())
+
+  const upcomingEvents = events?.filter((e) => new Date(e.startDate) > new Date()).slice(0, 5) || []
+  const interestedCount = events?.length || 0
+  const upcomingCount = upcomingEvents.length
+
+  // Load saved events on mount
+  useEffect(() => {
+    if (userId && isAuthenticated()) {
+      fetchSavedEvents()
+    }
+  }, [userId])
+
+  const fetchSavedEvents = async () => {
+    try {
+      // Try the endpoint that matches your backend
+      // Based on your error, it seems you have /api/users/:userId/interested-events
+      const data = await apiFetch<{ events?: any[] }>(`/api/users/${userId}/interested-events`, {
+        auth: true,
+      })
+      const savedIds = new Set((data?.events || []).map((e) => e.id))
+      setSavedEventIds(savedIds)
+    } catch (error) {
+      console.error("Error fetching saved events:", error)
+    }
+  }
+
+  const toggleSaveEvent = async (eventId: string, e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+
+    if (!isAuthenticated()) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to save events",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (savingInProgress.has(eventId)) return
+
+    setSavingInProgress(prev => new Set(prev).add(eventId))
+
+    try {
+      const isSaved = savedEventIds.has(eventId)
+      const method = isSaved ? 'DELETE' : 'POST'
+
+      // Use the endpoint that matches your backend
+      // Based on your error, you have /api/users/:userId/interested-events
+      await apiFetch(`/api/events/${eventId}/save`, {
+        method,
+        auth: true,
+      })
+
+      // Update local state
+      const newSavedEvents = new Set(savedEventIds)
+      if (isSaved) {
+        newSavedEvents.delete(eventId)
+        toast({
+          title: "Event removed",
+          description: "Event has been removed from your saved list",
+        })
+      } else {
+        newSavedEvents.add(eventId)
+        toast({
+          title: "Event saved!",
+          description: "Event has been added to your saved list",
+        })
+      }
+      setSavedEventIds(newSavedEvents)
+    } catch (error: any) {
+      console.error("Error toggling save:", error)
+      toast({
+        title: "Error",
+        description: error.message || "Failed to save event. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setSavingInProgress(prev => {
+        const next = new Set(prev)
+        next.delete(eventId)
+        return next
+      })
+    }
+  }
+
+  const getVenueName = (event: SuggestedEvent): string => {
+    if (!event.venue) return "Venue TBD"
+    if (typeof event.venue === "string") return event.venue
+    if (event.venue?.venueName) return event.venue.venueName
+    return "Venue TBD"
+  }
+
+  const getLocation = (event: SuggestedEvent): string => {
+    if (event.city && event.state) return `${event.city}, ${event.state}`
+    if (event.city) return event.city
+    if (event.state) return event.state
+    if (event.venue && typeof event.venue === "object" && event.venue.venueCity) return event.venue.venueCity
+    return ""
+  }
+
+  const getCategoryLabel = (event: SuggestedEvent): string => {
+    const tag =
+      event.tags?.[0] ??
+      event.categories?.[0] ??
+      (event as any).category ??
+      (event as any).eventCategory ??
+      (event as any).type
+    if (tag) return String(tag).toUpperCase()
+    return "EVENT"
+  }
+
+  const matchesInterests = (event: SuggestedEvent, userInterests: string[]): boolean => {
+    if (!userInterests || userInterests.length === 0) return true
+    const normalised = userInterests.map((i) => i.toLowerCase())
+
+    const eventLabels = [
+      ...(event.tags ?? []),
+      ...(event.categories ?? []),
+      (event as any).category,
+      (event as any).eventCategory,
+      (event as any).type,
+      event.title,
+      event.description,
+      event.shortDescription,
+    ]
+      .filter((v) => v !== null && v !== undefined && typeof v === "string")
+      .map((v) => (v as string).toLowerCase())
+
+    return normalised.some((interest) =>
+      eventLabels.some((label) => label.includes(interest) || interest.includes(label))
+    )
+  }
+
+  useEffect(() => {
+    const fetchSuggestedEvents = async () => {
+      try {
+        setLoadingSuggested(true)
+
+        const response = await fetch(`/api/events/recent?limit=50`)
+        if (!response.ok) throw new Error("Failed to fetch recent events")
+
+        const data: SuggestedEvent[] = await response.json()
+        const allEvents = Array.isArray(data) ? data : []
+
+        if (interests && interests.length > 0) {
+          const matched = allEvents.filter((e) => matchesInterests(e, interests))
+          if (matched.length >= 4) {
+            setSuggestedEvents(matched.slice(0, 8))
+          } else {
+            const matchedIds = new Set(matched.map((e) => e.id))
+            const rest = allEvents.filter((e) => !matchedIds.has(e.id))
+            setSuggestedEvents([...matched, ...rest].slice(0, 8))
+          }
+        } else {
+          setSuggestedEvents(allEvents.slice(0, 8))
+        }
+      } catch (error) {
+        console.error("Error fetching suggested events:", error)
+        setSuggestedEvents([])
+      } finally {
+        setLoadingSuggested(false)
+      }
+    }
+
+    if (userId) {
+      fetchSuggestedEvents()
+    }
+  }, [userId, interests])
+
+  const stats = [
+    {
+      title: "Upcoming Events",
+      value: upcomingCount,
+      icon: CalendarDays,
+      color: "text-blue-600",
+      bgColor: "bg-blue-50",
+      section: "upcoming-events",
+    },
+    {
+      title: "Interested Events",
+      value: interestedCount,
+      icon: Heart,
+      color: "text-red-500",
+      bgColor: "bg-red-50",
+      section: "events",
+    },
+    {
+      title: "Network",
+      value: "Connect",
+      icon: Users,
+      color: "text-green-600",
+      bgColor: "bg-green-50",
+      section: "connections",
+    },
+    {
+      title: "Recommendations",
+      value: "Explore",
+      icon: TrendingUp,
+      color: "text-purple-600",
+      bgColor: "bg-purple-50",
+      section: "Suggested",
+    },
+  ]
+
+  const handleNavigation = (section: string, isExternal: boolean = false) => {
+    if (isExternal) {
+      window.location.href = section
+    } else {
+      setActiveSection(section)
+    }
+  }
+
+  const statProgressWidth = (stat: (typeof stats)[0]): string => {
+    if (typeof stat.value === "number") {
+      return `${Math.min(100, Math.max(12, stat.value * 18))}%`
+    }
+    return "72%"
+  }
+
+  const statBarColor = (index: number): string => {
+    const colors = ["bg-blue-500", "bg-pink-500", "bg-emerald-500", "bg-purple-500"]
+    return colors[index] ?? "bg-blue-500"
+  }
+
+  const uniqueEventTitles = Array.from(new Set(suggestedEvents.map((event) => event.title)))
+
+  const filteredEvents =
+    selectedEventFilter === "all"
+      ? suggestedEvents
+      : suggestedEvents.filter((event) => event.title === selectedEventFilter)
+
+  const suggestedPreview = filteredEvents.slice(0, 4)
+
+  const interestsLabel =
+    interests.length > 0
+      ? interests.slice(0, 3).join(", ")
+      : null
+
+  return (
+    <div className="min-w-0 space-y-4 sm:space-y-6">
+      <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm md:p-6">
+        <h2 className="text-lg font-bold text-slate-900 md:text-xl">
+          Welcome back, {userName}! 👋
+        </h2>
+        <p className="mt-1 text-sm text-slate-600 md:text-base">
+          Discover events, connect with exhibitors, and make the most of your networking journey.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {stats.map((stat, index) => (
+          <Card
+            key={index}
+            className="cursor-pointer border border-slate-100 shadow-sm transition hover:shadow-md"
+            onClick={() => handleNavigation(stat.section, false)}
+          >
+            <CardContent className="p-5">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-3xl font-bold text-slate-900">{stat.value}</p>
+                  <p className="mt-1 text-sm font-medium text-slate-600">{stat.title}</p>
+                </div>
+                <div className={`${stat.bgColor} rounded-xl p-2.5`}>
+                  <stat.icon className={`h-6 w-6 ${stat.color}`} />
+                </div>
+              </div>
+              <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-slate-100">
+                <div
+                  className={cn("h-full rounded-full transition-all", statBarColor(index))}
+                  style={{ width: statProgressWidth(stat) }}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <Card className="h-full border border-slate-100 shadow-sm">
+          <CardContent className="p-6">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-slate-900">Event Calendar</h3>
+
+
+              {/* <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleNavigation("schedule", false)}
+                className="text-[#004A96]"
+              >
+                View Full →
+              </Button> */}
+
+            </div>
+            <DynamicCalendar userId={userId} className="w-full scale-95 origin-top" />
+          </CardContent>
+        </Card>
+
+        <Card className="h-full border border-slate-100 shadow-sm ">
+          <CardContent className="p-6">
+            <div className="mb-5 flex items-center justify-between gap-3">
+              <div className="flex min-w-0 items-center gap-3">
+                <span className="h-7 w-1 shrink-0 rounded-full bg-[#004A96]" aria-hidden />
+                <h3 className="text-lg font-bold text-slate-900">Upcoming Events</h3>
+              </div>
+              <button
+                type="button"
+                className="inline-flex shrink-0 items-center gap-1 text-sm font-medium text-[#004A96] hover:underline"
+                onClick={() => handleNavigation("events", false)}
+              >
+                View All Events
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+
+            {upcomingEvents.length > 0 ? (
+              <div className="scrollbar-hover max-h-[550px] space-y-3 overflow-y-auto pr-1">
+                {upcomingEvents.map((event) => {
+                  const badge = formatEventDateBadge(event.startDate)
+                  const daysToGo = getDaysUntilEvent(event.startDate)
+                  const location = getUpcomingEventLocation(event)
+
+                  return (
+                    <div
+                      key={event.id}
+                      className="overflow-hidden rounded-xl border border-slate-200 bg-white transition-shadow hover:shadow-md"
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-stretch">
+                        <div className="shrink-0 pt-3 pr-3 pb-0 pl-2 sm:w-[155px] sm:pb-3 md:w-[165px]">
+                          <div className="relative h-[112px] w-full overflow-hidden rounded-lg sm:h-[104px]">
+                            <AppImage
+                              src={getEventCardImageUrl(event)}
+                              alt={event.title}
+                              fill
+                              sizes="(max-width: 640px) 100vw, 156px"
+                              fallbackSrc={EVENT_CARD_PLACEHOLDER_IMAGE}
+                              className="rounded-lg object-cover"
+                            />
+                            <div className="absolute bottom-2 left-2 rounded-md bg-white px-2 py-1 text-center shadow-md">
+                              <p className="text-[9px] font-bold uppercase text-[#004A96]">{badge.month}</p>
+                              <p className="text-lg font-bold leading-none text-slate-900">{badge.day}</p>
+                              <p className="text-[9px] text-slate-500">{badge.year}</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex min-w-0 flex-1 flex-col justify-center gap-1.5 px-3 pt-1 pb-3 sm:py-3 sm:pl-2 sm:pr-3">
+                          <span className="w-fit rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-[#004A96]">
+                            Upcoming
+                          </span>
+                          <h4 className="line-clamp-2 text-sm font-bold leading-snug text-slate-900">
+                            {event.title}
+                          </h4>
+                          <p className="flex items-center gap-1.5 text-xs text-slate-500">
+                            <CalendarDays className="h-3.5 w-3.5 shrink-0 text-[#004A96]" />
+                            {formatFullEventDate(event.startDate)}
+                          </p>
+                          <p className="flex items-center gap-1.5 text-xs text-slate-500">
+                            <MapPin className="h-3.5 w-3.5 shrink-0 text-red-500" />
+                            <span className="line-clamp-1">{location}</span>
+                          </p>
+                        </div>
+
+                        <div className="flex flex-row items-center justify-between gap-3 border-t border-slate-100 p-3 sm:w-[130px] sm:shrink-0 sm:flex-col sm:justify-center sm:border-l sm:border-t-0 md:w-[140px]">
+                          {daysToGo !== null ? (
+                            <div className="rounded-lg bg-emerald-50 px-3 py-2 text-center">
+                              <CalendarDays className="mx-auto h-4 w-4 text-emerald-600" />
+                              <p className="mt-0.5 text-xl font-bold leading-none text-emerald-700">{daysToGo}</p>
+                              <p className="mt-0.5 text-[10px] font-medium text-emerald-600">Days to go</p>
+                            </div>
+                          ) : null}
+                          <Button
+                            size="sm"
+                            className="h-8 shrink-0 bg-[#004A96] px-3 text-xs hover:bg-[#003d7a] sm:w-full"
+                            asChild
+                          >
+                            <Link href={eventPublicPath(event)} className="inline-flex items-center gap-1">
+                              View Event
+                              <ChevronRight className="h-4 w-4" />
+                            </Link>
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            ) : (
+              <div className="py-12 text-center">
+                <CalendarDays className="mx-auto mb-3 h-12 w-12 text-slate-300" />
+                <p className="text-slate-500">No upcoming events</p>
+                <Button variant="outline" className="mt-4" onClick={() => handleNavigation("/event", true)}>
+                  Browse Events
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      <section className="w-full">
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+            <h3 className="text-xl font-bold text-slate-900">Suggested For You</h3>
+            {interestsLabel ? (
+              <span className="text-sm text-slate-500">Based on: {interestsLabel}</span>
+            ) : null}
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            {uniqueEventTitles.length > 1 ? (
+              <Select value={selectedEventFilter} onValueChange={setSelectedEventFilter}>
+                <SelectTrigger className="h-9 w-[140px] border-slate-200 bg-white text-sm">
+                  <SelectValue placeholder="All Events" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Events</SelectItem>
+                  {uniqueEventTitles.map((title) => (
+                    <SelectItem key={title} value={title}>
+                      {title.length > 22 ? `${title.substring(0, 22)}...` : title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : null}
+            <Link href="/event" className="ml-auto sm:ml-0">
+
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-slate-200 text-[#004A96] hover:bg-slate-50"
+                onClick={() => handleNavigation("recommended-events", false)}
+              >
+                Browse All
+              </Button>
+
+   
+
+            </Link>
+          </div>
+        </div>
+
+        {loadingSuggested ? (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="h-[340px] animate-pulse rounded-2xl bg-slate-100" />
+            ))}
+          </div>
+        ) : suggestedPreview.length > 0 ? (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            {suggestedPreview.map((event, index) => {
+              const location = getLocation(event)
+              const categoryLabel = getCategoryLabel(event)
+              const badgeColor = CATEGORY_BADGE_STYLES[index % CATEGORY_BADGE_STYLES.length]
+              const isSaved = savedEventIds.has(event.id)
+              const isSaving = savingInProgress.has(event.id)
+
+              return (
+                <Card
+                  key={event.id}
+                  className="overflow-hidden rounded-2xl border border-slate-100 shadow-sm transition hover:shadow-md p-0"
+                >
+                  <div className="relative aspect-[4/3] w-full bg-slate-100">
+                    <AppImage
+                      src={getEventCardImageUrl(event)}
+                      alt={event.title}
+                      fill
+                      sizes="(max-width: 640px) 100vw, 25vw"
+                      fallbackSrc={EVENT_CARD_PLACEHOLDER_IMAGE}
+                      className="object-cover"
+                    />
+                    <span
+                      className={cn(
+                        "absolute left-3 top-3 rounded px-2 py-0.5 text-[10px] font-bold tracking-wide text-white",
+                        badgeColor,
+                      )}
+                    >
+                      {categoryLabel}
+                    </span>
+                    <button
+                      type="button"
+                      className={cn(
+                        "absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full shadow-sm transition-all",
+                        isSaved ? "bg-red-500 text-white hover:bg-red-600" : "bg-white/95 hover:bg-white"
+                      )}
+                      aria-label={isSaved ? "Remove from saved" : "Save event"}
+                      onClick={(e) => toggleSaveEvent(event.id, e)}
+                      disabled={isSaving}
+                    >
+                      {isSaving ? (
+                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-transparent" />
+                      ) : isSaved ? (
+                        <Heart className="h-4 w-4 fill-current" />
+                      ) : (
+                        <Heart className="h-4 w-4 text-red-500" />
+                      )}
+                    </button>
+                  </div>
+                  <CardContent className="p-4">
+                    <p className="line-clamp-2 min-h-[2.5rem] text-sm font-bold leading-snug text-slate-900">
+                      {event.title}
+                    </p>
+                    <ul className="mt-3 space-y-1.5 text-xs text-slate-600">
+                      <li className="flex items-center gap-2">
+                        <CalendarDays className="h-3.5 w-3.5 shrink-0 text-blue-600" />
+                        {formatEventDateRange(event.startDate, event.endDate)}
+                      </li>
+                      {location ? (
+                        <li className="flex items-center gap-2">
+                          <MapPin className="h-3.5 w-3.5 shrink-0 text-red-500" />
+                          <span className="line-clamp-1">{location}</span>
+                        </li>
+                      ) : null}
+                      <li className="flex items-center gap-2">
+                        <Store className="h-3.5 w-3.5 shrink-0 text-emerald-600" />
+                        {getVenueName(event) !== "Venue TBD" ? getVenueName(event) : "Explore exhibitors"}
+                      </li>
+                    </ul>
+                    <div className="mt-4 flex items-center justify-between gap-2 border-t border-slate-100 pt-3">
+                      <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-700">
+                        Stalls Open
+                      </span>
+                      <div className="flex gap-2">
+
+                        {/* <Button variant="outline" size="sm" className="h-8 px-3 text-xs" asChild>
+                          <Link href={eventPublicPath(event)}>Register</Link>
+                        </Button> */}
+
+                        <Button size="sm" className="h-8 bg-[#004A96] px-3 text-xs hover:bg-[#003d7a]" asChild>
+                          <Link href={eventPublicPath(event)}>View</Link>
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )
+            })}
+          </div>
+        ) : (
+          <Card className="border border-slate-100 shadow-sm">
+            <CardContent className="py-12 text-center">
+              <TrendingUp className="mx-auto mb-3 h-12 w-12 text-slate-300" />
+              <p className="text-slate-500">No suggestions available</p>
+              <Link href="/events" className="text-[#004A96] hover:underline">
+
+              <Button variant="outline" className="mt-4" >
+                Browse Events
+              </Button>
+
+              </Link>
+            </CardContent>
+          </Card>
+        )}
+      </section>
+    </div>
+  )
+}

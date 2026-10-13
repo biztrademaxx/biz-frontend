@@ -7,6 +7,7 @@ export interface UserData {
   lastName: string
   /** From backend getDisplayName(role, …) */
   displayName?: string
+  publicSlug?: string | null
   organizationName?: string | null
   phone?: string
   avatar?: string
@@ -19,6 +20,9 @@ export interface UserData {
   company?: string
   jobTitle?: string
   interests?: string[]
+  profileCity?: string | null
+  profileState?: string | null
+  profileCountry?: string | null
   location?: {
     address: string
     city: string

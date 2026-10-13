@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
@@ -19,6 +19,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { apiFetch } from "@/lib/api"
+import { IMAGE_UPLOAD_HINT } from "@/lib/prepare-image-upload"
 import {
   Download,
   Edit,
@@ -89,10 +90,11 @@ interface Event {
   youtubeVideoUrl?: string | null
   brochure: string
   layout: string
+   isPublic?: boolean 
   documents: string[]
   promotionBudget: number
   socialShares: number
-  
+
   // ✅ VERIFICATION FIELDS - MAKE SURE THESE ARE INCLUDED
   isVerified: boolean
   verifiedAt: string | null
@@ -190,13 +192,13 @@ function VerifyEventDialog({
             <X className="w-5 h-5" />
           </button>
         </div>
-        
+
         {!event.isVerified ? (
           <>
             <p className="text-sm text-gray-600 mb-4">
               Verify "{event.title}" and optionally upload a custom badge image.
             </p>
-            
+
             <div className="space-y-4 mb-6">
               <div>
                 <Label htmlFor="badge-upload">Custom Badge (Optional)</Label>
@@ -258,7 +260,7 @@ function VerifyEventDialog({
             }}
             disabled={loading}
           >
-            {loading ? "Processing..." : 
+            {loading ? "Processing..." :
               event.isVerified ? "Remove Verification" : "Verify Event"}
           </Button>
         </div>
@@ -330,9 +332,8 @@ function FileUpload({
     <div className="space-y-2">
       <Label>{label}</Label>
       <div
-        className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
-          dragOver ? "border-blue-500 bg-blue-50" : "border-gray-300 hover:border-gray-400"
-        }`}
+        className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${dragOver ? "border-blue-500 bg-blue-50" : "border-gray-300 hover:border-gray-400"
+          }`}
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -343,7 +344,11 @@ function FileUpload({
           Drag & drop files here or click to upload
         </p>
         <p className="text-xs text-gray-500 mt-1">
-          {accept.includes("image") ? "Images" : accept.includes("video") ? "Videos" : "Documents"} accepted
+          {accept.includes("image")
+            ? IMAGE_UPLOAD_HINT
+            : accept.includes("video")
+              ? "Video files"
+              : "Documents — max 15 MB"}
         </p>
         <input
           id={`file-upload-${label}`}
@@ -354,7 +359,7 @@ function FileUpload({
           className="hidden"
         />
       </div>
-      
+
       {/* Current files preview */}
       {currentFiles && currentFiles.length > 0 && (
         <div className="mt-3">
@@ -414,12 +419,12 @@ function ImagePreview({ src, onRemove }: { src: string; onRemove: () => void }) 
 }
 
 // Edit Event Component (exported for use in events/page.tsx)
-export function EditEventForm({ 
-  event, 
-  onSave, 
+export function EditEventForm({
+  event,
+  onSave,
   onCancel,
-  categories 
-}: { 
+  categories
+}: {
   event: Event
   onSave: (updatedEvent: Event) => void
   onCancel: () => void
@@ -927,9 +932,9 @@ export function EditEventForm({
                 <Input
                   id="tags"
                   value={(formData.tags || []).join(', ')}
-                  onChange={(e) => setFormData({ 
-                    ...formData, 
-                    tags: e.target.value.split(',').map(tag => tag.trim()).filter(Boolean) 
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    tags: e.target.value.split(',').map(tag => tag.trim()).filter(Boolean)
                   })}
                   placeholder="Enter tags separated by commas"
                 />
@@ -978,7 +983,7 @@ export function EditEventForm({
 
             <div className="space-y-6">
               <h3 className="text-lg font-semibold">Media & Documents</h3>
-              
+
               <div className="space-y-2">
                 <Label>Banner Image</Label>
                 <div className="flex items-center gap-4">
@@ -1031,7 +1036,7 @@ export function EditEventForm({
                 onFileUpload={handleImageUpload}
                 onFileRemove={(index) => removeImage(index)}
               />
-              
+
               {newImages.length > 0 && (
                 <div className="space-y-2">
                   <Label className="text-sm">New Images to Upload:</Label>
@@ -1189,17 +1194,17 @@ export function EditEventForm({
             </div>
 
             <div className="flex gap-4 pt-6 border-t">
-              <Button 
-                type="submit" 
-                className="flex-1" 
+              <Button
+                type="submit"
+                className="flex-1"
                 disabled={uploading}
               >
                 {uploading ? "Uploading..." : "Save Changes"}
               </Button>
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={onCancel} 
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onCancel}
                 className="flex-1"
                 disabled={uploading}
               >
@@ -1343,12 +1348,12 @@ function EventList({
               else if (tab.id === "featured") onTabChange("featured")
             }}
             className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${(tab.id === "live" && selectedStatus === "approved") ||
-                (tab.id === "upcoming" && selectedStatus === "pendingreview") ||
-                (tab.id === "ended" && selectedStatus === "flagged") ||
-                (tab.id === "draft" && selectedStatus === "draft") ||
-                (tab.id === "featured" && activeTab === "featured")
-                ? "bg-blue-600 text-white shadow-md"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              (tab.id === "upcoming" && selectedStatus === "pendingreview") ||
+              (tab.id === "ended" && selectedStatus === "flagged") ||
+              (tab.id === "draft" && selectedStatus === "draft") ||
+              (tab.id === "featured" && activeTab === "featured")
+              ? "bg-blue-600 text-white shadow-md"
+              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
               }`}
           >
             {tab.label} <span className="ml-1 text-xs opacity-80">({tab.count})</span>
@@ -1727,7 +1732,7 @@ export default function EventManagement() {
         body: { featured: !current },
         auth: true,
       })
-      
+
       const updated = result.data ?? result.event
       setEvents((prev) => prev.map((e) => {
         if (e.id === eventId) {
@@ -1752,7 +1757,7 @@ export default function EventManagement() {
         body: { vip: !current },
         auth: true,
       })
-      
+
       const updated = result.data ?? result.event
       setEvents((prev) => prev.map((e) => {
         if (e.id === eventId) {
@@ -1783,11 +1788,11 @@ export default function EventManagement() {
         prev.map((e) =>
           e.id === eventId
             ? {
-                ...e,
-                isPublic: !current,
-                isVerified: updated?.isVerified ?? e.isVerified,
-                verifiedBadgeImage: updated?.verifiedBadgeImage ?? e.verifiedBadgeImage,
-              }
+              ...e,
+              isPublic: !current,
+              isVerified: updated?.isVerified ?? e.isVerified,
+              verifiedBadgeImage: updated?.verifiedBadgeImage ?? e.verifiedBadgeImage,
+            }
             : e,
         ),
       )
@@ -1796,53 +1801,53 @@ export default function EventManagement() {
     }
   }
 
-const handleVerifyToggle = async (event: Event, verify: boolean, customBadge?: File) => {
-  try {
-    setVerifying(true)
-    const fd = new FormData()
-    fd.append("isVerified", verify ? "true" : "false")
-    if (verify && customBadge) {
-      fd.append("badgeFile", customBadge)
-    }
-    const result = await apiFetch<{ success?: boolean; data?: any }>(`/api/admin/events/${event.id}/verify`, {
-      method: "POST",
-      body: fd,
-      auth: true,
-    })
-    const updated = result.data
-    setEvents(prev => prev.map((e) => {
-      if (e.id === event.id) {
-        return {
-          ...e,
-          isVerified: verify,
-          verifiedAt: updated?.verifiedAt
-            ? (typeof updated.verifiedAt === "string" ? updated.verifiedAt : new Date(updated.verifiedAt).toISOString())
-            : verify
-              ? new Date().toISOString()
-              : null,
-          verifiedBy: verify ? (updated?.verifiedBy ?? undefined) : null,
-          verifiedBadgeImage: verify ? (updated?.verifiedBadgeImage ?? null) : null,
-        }
+  const handleVerifyToggle = async (event: Event, verify: boolean, customBadge?: File) => {
+    try {
+      setVerifying(true)
+      const fd = new FormData()
+      fd.append("isVerified", verify ? "true" : "false")
+      if (verify && customBadge) {
+        fd.append("badgeFile", customBadge)
       }
-      return e
-    }))
-    setIsVerifyDialogOpen(false)
-    toast({
-      title: verify ? "✅ Event Verified" : "🗑️ Verification Removed",
-      description: verify ? "Event has been marked as verified" : "Event verification has been removed",
-    })
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : "Failed to update verification status"
-    toast({
-      title: "❌ Error",
-      description: errorMessage,
-      variant: "destructive",
-      duration: 5000,
-    })
-  } finally {
-    setVerifying(false)
+      const result = await apiFetch<{ success?: boolean; data?: any }>(`/api/admin/events/${event.id}/verify`, {
+        method: "POST",
+        body: fd,
+        auth: true,
+      })
+      const updated = result.data
+      setEvents(prev => prev.map((e) => {
+        if (e.id === event.id) {
+          return {
+            ...e,
+            isVerified: verify,
+            verifiedAt: updated?.verifiedAt
+              ? (typeof updated.verifiedAt === "string" ? updated.verifiedAt : new Date(updated.verifiedAt).toISOString())
+              : verify
+                ? new Date().toISOString()
+                : null,
+            verifiedBy: verify ? (updated?.verifiedBy ?? undefined) : null,
+            verifiedBadgeImage: verify ? (updated?.verifiedBadgeImage ?? null) : null,
+          }
+        }
+        return e
+      }))
+      setIsVerifyDialogOpen(false)
+      toast({
+        title: verify ? "✅ Event Verified" : "🗑️ Verification Removed",
+        description: verify ? "Event has been marked as verified" : "Event verification has been removed",
+      })
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to update verification status"
+      toast({
+        title: "❌ Error",
+        description: errorMessage,
+        variant: "destructive",
+        duration: 5000,
+      })
+    } finally {
+      setVerifying(false)
+    }
   }
-}
 
   const handleDeleteEvent = async (eventId: string) => {
     if (!confirm("Are you sure you want to delete this event?")) return
@@ -1872,7 +1877,7 @@ const handleVerifyToggle = async (event: Event, verify: boolean, customBadge?: F
     setEvents((prev) => prev.map((e) => (e.id === updatedEvent.id ? updatedEvent : e)))
     setIsEditing(false)
     setSelectedEvent(null)
-    
+
     toast({
       title: "Event Updated",
       description: "Event details have been saved successfully",

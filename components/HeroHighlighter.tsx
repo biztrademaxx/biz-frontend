@@ -1,13 +1,13 @@
 "use client"
 
+  import { AppImage } from "@/components/app-image"
   import { useEffect, useState } from "react"
   import Link from "next/link"
   import { motion } from "framer-motion"
   import { ArrowRight, Calendar, ChevronRight, MapPin } from "lucide-react"
   import { apiFetch } from "@/lib/api"
 import { eventPublicPath } from "@/lib/event-path"
-
-  const FALLBACK_IMAGE = "/herosection-images/food.jpg"
+import { sanitizeImageUrl } from "@/lib/placeholder"
   const FEATURED_EVENTS_LIMIT = 12
   const FEATURED_ROTATE_MS = 12000
   const VIP_VISIBLE_COUNT = 4
@@ -126,8 +126,8 @@ import { eventPublicPath } from "@/lib/event-path"
     return start.toDateString() === end.toDateString() ? fmt(start) : `${fmt(start)} – ${fmt(end)}`
   }
 
-  function featuredHeroImage(ev: FeaturedListEvent): string {
-    return ev.bannerImage || FALLBACK_IMAGE
+  function featuredHeroImage(ev: FeaturedListEvent): string | undefined {
+    return sanitizeImageUrl(ev.bannerImage)
   }
 
   function formatFeaturedVenueLine(ev: FeaturedListEvent): string {
@@ -165,6 +165,7 @@ import { eventPublicPath } from "@/lib/event-path"
     startDate: string
     endDate: string
     shortDescription?: string | null
+    vipImage?: string | null
     bannerImage?: string | null
     images?: string[] | null
     category?: string[]
@@ -265,8 +266,8 @@ import { eventPublicPath } from "@/lib/event-path"
   }
 
   /** Image only (never a watch URL) — used when no valid YouTube embed. */
-  function vipHeroImageUrl(e: VipEvent): string {
-    return e.bannerImage || e.images?.[0] || FALLBACK_IMAGE
+  function vipHeroImageUrl(e: VipEvent): string | undefined {
+    return sanitizeImageUrl(e.vipImage) ?? sanitizeImageUrl(e.bannerImage) ?? sanitizeImageUrl(e.images?.[0])
   }
 
   /**
@@ -702,11 +703,18 @@ import { eventPublicPath } from "@/lib/event-path"
                                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                                 allowFullScreen
                               />
-                            ) : (
-                              <img
-                                src={vipHeroImageUrl(panel)}
+                            ) : vipHeroImageUrl(panel) ? (
+                              <AppImage
+                                src={vipHeroImageUrl(panel)!}
                                 alt=""
-                                className="absolute inset-0 block h-full w-full object-cover"
+                                fill
+                                sizes="100vw"
+                                className="object-cover"
+                              />
+                            ) : (
+                              <div
+                                className="absolute inset-0 bg-gradient-to-br from-slate-200 to-slate-300"
+                                aria-hidden
                               />
                             )}
                           </div>
@@ -755,11 +763,20 @@ import { eventPublicPath } from "@/lib/event-path"
                     >
                       {/* Full-bleed image; copy + countdown sit on top */}
                       <div className="relative h-full min-h-0 w-full min-w-0">
-                        <img
-                          src={featuredHeroImage(featuredPanel)}
-                          alt=""
-                          className="absolute inset-0 h-full w-full object-cover"
-                        />
+                        {featuredHeroImage(featuredPanel) ? (
+                          <AppImage
+                            src={featuredHeroImage(featuredPanel)!}
+                            alt=""
+                            fill
+                            sizes="100vw"
+                            className="object-cover"
+                          />
+                        ) : (
+                          <div
+                            className="absolute inset-0 bg-gradient-to-br from-slate-200 to-slate-300"
+                            aria-hidden
+                          />
+                        )}
                         <div
                           className="absolute inset-0"
                           style={{ background: activeFeaturedTheme.overlayCss }}

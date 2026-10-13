@@ -12,6 +12,7 @@ import {
   MoreVertical,
   Image
 } from "lucide-react"
+import { AppImage } from "@/components/app-image"
 import CloudinaryUpload from "@/components/cloudinary-upload"
 import { apiFetch } from "@/lib/api"
 import adminApi from "@/lib/admin-api"
@@ -197,10 +198,12 @@ export default function EventCategories() {
                     className="w-12 h-12 rounded-lg flex items-center justify-center overflow-hidden"
                     style={{ backgroundColor: category.color + '20' }}
                   >
-                    <img 
-                      src={category.icon} 
+                    <AppImage
+                      src={category.icon}
                       alt={category.name}
-                      className="w-8 h-8 object-contain"
+                      width={32}
+                      height={32}
+                      className="h-8 w-8 object-contain"
                     />
                   </div>
                 ) : (

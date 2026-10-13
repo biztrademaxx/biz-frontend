@@ -1,17 +1,69 @@
 import { adminApi } from "../../shared/services/admin-api"
 
+export interface GetEventsParams {
+  page?: number
+  limit?: number
+  search?: string
+  tab?: string
+  category?: string
+  country?: string
+  status?: string
+}
+
+export interface AdminCountry {
+  id: string
+  name: string
+  code: string
+  isActive?: boolean
+}
+
+export interface EventPagination {
+  page: number
+  limit: number
+  total: number
+  totalPages: number
+  hasNextPage: boolean
+  hasPreviousPage: boolean
+}
+
 export interface GetEventsResponse {
   success?: boolean
   events?: unknown[]
   data?: { events?: unknown[] }
+  pagination?: EventPagination
+}
+
+export interface EventStats {
+  total: number
+  approved: number
+  rejected: number
+  pending: number
+  featured: number
+  vip: number
+  live: number
+  upcoming: number
+  ended: number
 }
 
 export interface GetCategoriesResponse {
   data?: unknown[]
 }
 
-export async function getEvents(): Promise<GetEventsResponse> {
-  return adminApi<GetEventsResponse>("/events", { auth: true })
+export async function getEvents(params: GetEventsParams = {}): Promise<GetEventsResponse> {
+  const qs = new URLSearchParams()
+  if (params.page) qs.set("page", String(params.page))
+  if (params.limit) qs.set("limit", String(params.limit))
+  if (params.search?.trim()) qs.set("search", params.search.trim())
+  if (params.tab && params.tab !== "all") qs.set("tab", params.tab)
+  if (params.category && params.category !== "all") qs.set("category", params.category)
+  if (params.country && params.country !== "all") qs.set("country", params.country)
+  if (params.status && params.status !== "all") qs.set("status", params.status)
+  const query = qs.toString()
+  return adminApi<GetEventsResponse>(`/events${query ? `?${query}` : ""}`, { auth: true })
+}
+
+export async function getEventStats(): Promise<{ stats?: EventStats }> {
+  return adminApi<{ success?: boolean; stats?: EventStats }>("/events/stats", { auth: true })
 }
 
 export async function getEventById(id: string) {
@@ -26,7 +78,7 @@ export async function updateEvent(id: string, body: Record<string, unknown>) {
   })
 }
 
-/** Verify / un-verify; optional `badgeFile` uploads to Cloudinary and stores URL in `verifiedBadgeImage` (no dummy default). */
+/** Verify / un-verify; optional `badgeFile` uploads to Cloudinary and stores URL in `verifiedBadgeImage`. Listing uses `/images/VerifiedBadge.png` when verified with no file. */
 export async function verifyEvent(id: string, verify: boolean, badgeFile?: File) {
   const fd = new FormData()
   fd.append("isVerified", verify ? "true" : "false")
@@ -44,8 +96,40 @@ export async function deleteEvent(id: string) {
   return adminApi(`/events/${id}`, { method: "DELETE", auth: true })
 }
 
+export async function approveEvent(eventId: string) {
+  return adminApi<{ success?: boolean; data?: unknown; error?: string }>("/events/approve", {
+    method: "POST",
+    body: { eventId },
+    auth: true,
+  })
+}
+
+export async function bulkApproveEvents(eventIds: string[]) {
+  return adminApi<{ success?: boolean; approved?: number; results?: unknown[]; error?: string }>(
+    "/events/bulk-approve",
+    {
+      method: "POST",
+      body: { eventIds },
+      auth: true,
+    }
+  )
+}
+
+export async function rejectEvent(eventId: string, reason?: string) {
+  return adminApi<{ success?: boolean; data?: unknown; error?: string }>("/events/reject", {
+    method: "POST",
+    body: { eventId, reason },
+    auth: true,
+  })
+}
+
 export async function getEventCategories(): Promise<unknown[] | GetCategoriesResponse> {
   return adminApi<unknown[] | GetCategoriesResponse>("/event-categories", { auth: true })
+}
+
+export async function getCountries(): Promise<AdminCountry[]> {
+  const data = await adminApi<AdminCountry[]>("/countries", { auth: true })
+  return Array.isArray(data) ? data : []
 }
 
 export type EventMailCandidate = {
@@ -54,6 +138,20 @@ export type EventMailCandidate = {
   organizerEmail: string
   organizerName: string
   createdAt: string
+  emailVerified: boolean
+}
+
+/** Unique organizer counts by email verification (for tab badges). */
+export function countMailOrganizersByVerification(candidates: EventMailCandidate[]) {
+  const unverified = new Set<string>()
+  const verified = new Set<string>()
+  for (const row of candidates) {
+    const email = (row.organizerEmail || "").trim().toLowerCase()
+    if (!email) continue
+    if (row.emailVerified) verified.add(email)
+    else unverified.add(email)
+  }
+  return { unverified: unverified.size, verified: verified.size }
 }
 
 export async function getEventMailCandidates() {

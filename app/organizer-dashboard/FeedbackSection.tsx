@@ -131,7 +131,7 @@ export function FeedbackSection({ organizerId }: FeedbackSectionProps) {
         <Tabs defaultValue="reviews" className="w-full">
           <TabsContent value="reviews" className="space-y-4">
             {reviews.length === 0 ? (
-              <Card className="bg-[#F5F4F0] border-none shadow-none">
+              <Card className="border-none bg-[#f5f3f9] shadow-none">
                 <CardContent className="text-center">
                   <MessageSquare className="w-12 h-12 text-gray-300 mx-auto mb-4" />
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">

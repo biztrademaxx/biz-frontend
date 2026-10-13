@@ -26,7 +26,7 @@ export default function AboutPage() {
   return (
     <main className="mx-auto max-w-6xl px-4 py-12 md:py-16 space-y-12">
 
-      {/* HERO */}
+      {/* HERO SECTION */}
       <div className="text-center max-w-3xl mx-auto">
         <h1 className="text-3xl md:text-4xl font-bold text-gray-900">
           About BizTradeFairs.com

@@ -8,6 +8,7 @@ import type { BrowseByCityServerPayload } from "./types"
 
 const CITIES_PATH = "/api/location/cities"
 const EVENTS_PATH = "/api/events?limit=500"
+const BROWSE_CITY_REVALIDATE_SEC = 120
 
 /**
  * Loads cities, event rows for city-name aggregation, and geo; returns safe defaults on failure.
@@ -21,8 +22,8 @@ export async function fetchBrowseByCityServerPayload(): Promise<BrowseByCityServ
   try {
     const base = getBackendUrlForServerFetch()
     const [citiesRes, eventsRes, geo] = await Promise.all([
-      fetch(`${base}${CITIES_PATH}`, { cache: "no-store" }).catch(() => null),
-      fetch(`${base}${EVENTS_PATH}`, { cache: "no-store" }).catch(() => null),
+      fetch(`${base}${CITIES_PATH}`, { next: { revalidate: BROWSE_CITY_REVALIDATE_SEC } }).catch(() => null),
+      fetch(`${base}${EVENTS_PATH}`, { next: { revalidate: BROWSE_CITY_REVALIDATE_SEC } }).catch(() => null),
       fetchGeoHintServer(),
     ])
 

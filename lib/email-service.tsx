@@ -23,7 +23,7 @@ export async function sendBadgeEmail(email: string, badgeDataUrl: string, attend
       to: email,
       subject: `Your Event Badge - ${eventName}`,
       html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="font-family: Inter, Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2>Hello ${attendeeName},</h2>
           <p>Your event badge for <strong>${eventName}</strong> is ready!</p>
           <p>Please find your badge attached to this email. You can print it or save it to your mobile device.</p>

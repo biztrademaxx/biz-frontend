@@ -2,6 +2,74 @@ import { devLog } from "@/lib/dev-log"
 
 import { type NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
+import { formatProfileLocationLine } from "@/lib/location-data"
+
+const profileSelect = {
+  id: true,
+  firstName: true,
+  lastName: true,
+  email: true,
+  phone: true,
+  avatar: true,
+  bio: true,
+  company: true,
+  jobTitle: true,
+  location: true,
+  profileCity: true,
+  profileState: true,
+  profileCountry: true,
+  website: true,
+  linkedin: true,
+  twitter: true,
+  specialties: true,
+  achievements: true,
+  certifications: true,
+  speakingExperience: true,
+  isVerified: true,
+  totalEvents: true,
+  activeEvents: true,
+  totalAttendees: true,
+  totalRevenue: true,
+  averageRating: true,
+  totalReviews: true,
+  createdAt: true,
+  updatedAt: true,
+} as const
+
+function toSpeakerProfile(speaker: {
+  firstName: string
+  lastName: string
+  email: string | null
+  phone: string | null
+  jobTitle: string | null
+  company: string | null
+  linkedin: string | null
+  website: string | null
+  location: string | null
+  profileCity: string | null
+  profileState: string | null
+  profileCountry: string | null
+  bio: string | null
+  speakingExperience: string | null
+  avatar: string | null
+}) {
+  return {
+    fullName: `${speaker.firstName} ${speaker.lastName}`.trim(),
+    designation: speaker.jobTitle || "",
+    company: speaker.company || "",
+    email: speaker.email,
+    phone: speaker.phone || "",
+    linkedin: speaker.linkedin || "",
+    website: speaker.website || "",
+    location: formatProfileLocationLine(speaker),
+    country: speaker.profileCountry || "",
+    state: speaker.profileState || "",
+    city: speaker.profileCity || "",
+    bio: speaker.bio || "",
+    speakingExperience: speaker.speakingExperience || "",
+    avatar: speaker.avatar || undefined,
+  }
+}
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -14,57 +82,16 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         id,
         role: "SPEAKER",
       },
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        email: true,
-        phone: true,
-        avatar: true,
-        bio: true,
-        company: true,
-        jobTitle: true,
-        location: true,
-        website: true,
-        linkedin: true,
-        twitter: true,
-        specialties: true,
-        achievements: true,
-        certifications: true,
-        speakingExperience: true,
-        isVerified: true,
-        totalEvents: true,
-        activeEvents: true,
-        totalAttendees: true,
-        totalRevenue: true,
-        averageRating: true,
-        totalReviews: true,
-        createdAt: true,
-        updatedAt: true,
-      },
+      select: profileSelect,
     })
 
     if (!speaker) {
       return NextResponse.json({ success: false, error: "Speaker not found" }, { status: 404 })
     }
 
-    const profile = {
-      fullName: `${speaker.firstName} ${speaker.lastName}`,
-      designation: speaker.jobTitle || "",
-      company: speaker.company || "",
-      email: speaker.email,
-      phone: speaker.phone || "",
-      linkedin: speaker.linkedin || "",
-      website: speaker.website || "",
-      location: speaker.location || "",
-      bio: speaker.bio || "",
-      speakingExperience: speaker.speakingExperience || "",
-      avatar: speaker.avatar || undefined,
-    }
-
     return NextResponse.json({
       success: true,
-      profile,
+      profile: toSpeakerProfile(speaker),
     })
   } catch (error) {
     console.error("Error fetching speaker:", error)
@@ -78,8 +105,6 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     const body = await request.json()
 
     devLog("[v0] Received update request for speaker:", id)
-    devLog("[v0] Update data:", body)
-    devLog("[v0] Avatar in request:", body.avatar)
 
     await prisma.$connect()
 
@@ -94,63 +119,52 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     const [firstName, ...lastNameParts] = (body.fullName || "").split(" ")
     const lastName = lastNameParts.join(" ")
 
-    const updateData: any = {
+    const profileCity =
+      body.city !== undefined
+        ? String(body.city ?? "").trim() || null
+        : body.profileCity !== undefined
+          ? String(body.profileCity ?? "").trim() || null
+          : existingSpeaker.profileCity
+    const profileState =
+      body.state !== undefined
+        ? String(body.state ?? "").trim() || null
+        : body.profileState !== undefined
+          ? String(body.profileState ?? "").trim() || null
+          : existingSpeaker.profileState
+    const profileCountry =
+      body.country !== undefined
+        ? String(body.country ?? "").trim() || null
+        : body.profileCountry !== undefined
+          ? String(body.profileCountry ?? "").trim() || null
+          : existingSpeaker.profileCountry
+
+    const locationLine = [profileCity, profileState, profileCountry].filter(Boolean).join(", ")
+
+    const updateData = {
       firstName: firstName || existingSpeaker.firstName,
       lastName: lastName || existingSpeaker.lastName,
-      email: body.email || existingSpeaker.email,
-      phone: body.phone || existingSpeaker.phone,
-      bio: body.bio || existingSpeaker.bio,
-      company: body.company || existingSpeaker.company,
-      jobTitle: body.designation || existingSpeaker.jobTitle,
-      location: body.location || existingSpeaker.location,
-      website: body.website || existingSpeaker.website,
-      linkedin: body.linkedin || existingSpeaker.linkedin,
-      speakingExperience: body.speakingExperience || existingSpeaker.speakingExperience,
+      email: body.email ?? existingSpeaker.email,
+      phone: body.phone ?? existingSpeaker.phone,
+      bio: body.bio ?? existingSpeaker.bio,
+      company: body.company ?? existingSpeaker.company,
+      jobTitle: body.designation ?? existingSpeaker.jobTitle,
+      profileCity,
+      profileState,
+      profileCountry,
+      location: locationLine || body.location || existingSpeaker.location,
+      website: body.website ?? existingSpeaker.website,
+      linkedin: body.linkedin ?? existingSpeaker.linkedin,
+      speakingExperience: body.speakingExperience ?? existingSpeaker.speakingExperience,
       avatar: body.avatar !== undefined ? body.avatar : existingSpeaker.avatar,
     }
-
-    devLog("[v0] Update data prepared:", updateData)
-    devLog("[v0] Avatar to be saved:", updateData.avatar)
 
     const updatedSpeaker = await prisma.user.update({
       where: { id },
       data: updateData,
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        email: true,
-        phone: true,
-        avatar: true,
-        bio: true,
-        company: true,
-        jobTitle: true,
-        location: true,
-        website: true,
-        linkedin: true,
-        speakingExperience: true,
-      },
+      select: profileSelect,
     })
 
-    devLog("[v0] Speaker updated successfully")
-    devLog("[v0] Avatar after update:", updatedSpeaker.avatar)
-
-    const profile = {
-      fullName: `${updatedSpeaker.firstName} ${updatedSpeaker.lastName}`,
-      designation: updatedSpeaker.jobTitle || "",
-      company: updatedSpeaker.company || "",
-      email: updatedSpeaker.email,
-      phone: updatedSpeaker.phone || "",
-      linkedin: updatedSpeaker.linkedin || "",
-      website: updatedSpeaker.website || "",
-      location: updatedSpeaker.location || "",
-      bio: updatedSpeaker.bio || "",
-      speakingExperience: updatedSpeaker.speakingExperience || "",
-      avatar: updatedSpeaker.avatar || "",
-    }
-
-    devLog("[v0] Profile response:", profile)
-    devLog("[v0] Avatar in response:", profile.avatar)
+    const profile = toSpeakerProfile(updatedSpeaker)
 
     return NextResponse.json({
       success: true,

@@ -1,4 +1,5 @@
 "use client"
+import { AppImage } from "@/components/app-image"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -14,6 +15,8 @@ import ExhibitorsTab from "./exhibitors-tab"
 import EventHero from "./EventHero"
 import { apiFetch } from "@/lib/api"
 import { getPublicProfilePath } from "@/lib/profile-path"
+import { formatOrganizerCityCountryLine } from "@/lib/organizer-location-display"
+import { getVenuePublicPath } from "@/lib/venue-dashboard-path"
 import {
   brochureFriendlyFilename,
   downloadUrlAsFile,
@@ -21,6 +24,19 @@ import {
   getBrochurePreviewUrl,
   resolveBrochureUrl,
 } from "@/lib/utils"
+import { exhibitionSpaceTypeLabel, formatEventMoney } from "@/lib/format-event-money"
+import { cn } from "@/lib/utils"
+
+const EVENT_INFO_TABS = [
+  { value: "about", label: "About", shortLabel: "About" },
+  { value: "exhibitors", label: "Exhibitors", shortLabel: "Exhibitors" },
+  { value: "space-cost", label: "Space Cost", shortLabel: "Space" },
+  { value: "layout", label: "Layout Plan", shortLabel: "Layout" },
+  { value: "brochure", label: "Brochure", shortLabel: "Brochure" },
+  { value: "venue", label: "Venue", shortLabel: "Venue" },
+  { value: "speakers", label: "Speakers", shortLabel: "Speakers" },
+  { value: "organizer", label: "Organizer", shortLabel: "Organizer" },
+] as const
 
 interface EventPageProps {
   params: { id: string }
@@ -74,11 +90,12 @@ function EventBrochurePreview({ url }: { url: string }) {
   if (kind === "image") {
     return (
       <div className="relative flex min-h-[280px] items-center justify-center bg-slate-50 p-3">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+        <AppImage
           src={url}
           alt="Event brochure"
-          className="max-h-[min(70vh,560px)] w-auto max-w-full object-contain"
+          width={800}
+          height={560}
+          className="max-h-[min(70vh,560px)] h-auto w-auto max-w-full object-contain"
           loading="lazy"
         />
       </div>
@@ -140,14 +157,11 @@ export default function EventPage({ params }: EventPageProps) {
   const [addingSpace, setAddingSpace] = useState(false)
   const [newSpaceForm, setNewSpaceForm] = useState({
     name: "",
-    spaceType: "RAW_SPACE",
+    spaceType: "SHELL_SPACE" as "SHELL_SPACE" | "RAW_SPACE",
     description: "",
-    dimensions: "",
-    area: 100,
-    basePrice: 0,
-    minArea: 50,
-    unit: "sqm",
     pricePerSqm: 0,
+    minArea: 9,
+    unit: "sqm",
   })
 
   const userId = getCurrentUserId()
@@ -187,7 +201,7 @@ export default function EventPage({ params }: EventPageProps) {
           category: data.category || "General",
           tags: data.tags || [],
           venue: data.venue || {},
-          currency: "₹",
+          currency: data.currency ?? "₹",
         })
 
         setAverageRating(data.averageRating || 0)
@@ -327,18 +341,8 @@ export default function EventPage({ params }: EventPageProps) {
     setUpdatingBrochure(true)
 
     try {
-      const formData = new FormData()
-      formData.append('file', file)
-
-      // Backend upload → Cloudinary "documents" folder (same as other working PDF uploads)
-      const uploadData = await apiFetch<{ url?: string; publicId?: string }>('/api/upload/brochure', {
-        method: 'POST',
-        body: formData,
-        auth: true,
-      })
-
-      const brochureUrl = uploadData?.url
-      if (!brochureUrl) throw new Error('No URL returned from upload')
+      const { uploadFileViaProxy } = await import("@/components/organizer-create-event/upload-backend")
+      const brochureUrl = await uploadFileViaProxy(file, "brochure")
 
       await apiFetch(`/api/events/${event.id}`, {
         method: 'PATCH',
@@ -433,21 +437,8 @@ export default function EventPage({ params }: EventPageProps) {
     }
 
     try {
-      const formData = new FormData()
-      formData.append("file", file)
-
-      // Backend uploads (same JWT as brochure) — not Next.js :3000 /api/upload/cloudinary (NextAuth)
-      const uploadData = await apiFetch<{ url?: string }>(
-        isPdf ? "/api/upload/brochure" : "/api/upload/cloudinary",
-        {
-          method: "POST",
-          body: formData,
-          auth: true,
-        },
-      )
-
-      const layoutUrl = uploadData?.url
-      if (!layoutUrl) throw new Error("No URL returned from upload")
+      const { uploadFileViaProxy } = await import("@/components/organizer-create-event/upload-backend")
+      const layoutUrl = await uploadFileViaProxy(file, isPdf ? "brochure" : "image")
 
       await apiFetch(`/api/events/${event.id}`, {
         method: "PATCH",
@@ -506,7 +497,10 @@ export default function EventPage({ params }: EventPageProps) {
     try {
       const updatedSpace = await apiFetch<any>(`/api/events/${event.id}/exhibition-spaces/${spaceId}`, {
         method: "PUT",
-        body: editingSpaceData,
+        body: {
+          ...editingSpaceData,
+          currency: event?.currency,
+        },
       })
       setEvent((prev: any) => ({
         ...prev,
@@ -539,13 +533,13 @@ export default function EventPage({ params }: EventPageProps) {
         body: {
           name: newSpaceForm.name.trim(),
           spaceType: newSpaceForm.spaceType,
-          description: newSpaceForm.description || newSpaceForm.name,
-          dimensions: newSpaceForm.dimensions || undefined,
-          area: Number(newSpaceForm.area) || 100,
-          basePrice: Number(newSpaceForm.basePrice) || 0,
+          description: newSpaceForm.description || newSpaceForm.name.trim(),
+          area: Number(newSpaceForm.minArea) || 9,
+          basePrice: Number(newSpaceForm.pricePerSqm || 0) * Number(newSpaceForm.minArea || 0),
           minArea: Number(newSpaceForm.minArea) || undefined,
           unit: newSpaceForm.unit || "sqm",
           pricePerSqm: Number(newSpaceForm.pricePerSqm) || 0,
+          currency: event?.currency,
         },
       })
       setEvent((prev: any) => ({
@@ -555,14 +549,11 @@ export default function EventPage({ params }: EventPageProps) {
       setAddingSpace(false)
       setNewSpaceForm({
         name: "",
-        spaceType: "RAW_SPACE",
+        spaceType: "SHELL_SPACE",
         description: "",
-        dimensions: "",
-        area: 100,
-        basePrice: 0,
-        minArea: 50,
-        unit: "sqm",
         pricePerSqm: 0,
+        minArea: 9,
+        unit: "sqm",
       })
       toast({ title: "Success", description: "Exhibition space created. You can now assign it when adding exhibitors." })
     } catch (error) {
@@ -578,25 +569,23 @@ export default function EventPage({ params }: EventPageProps) {
     if (!confirm("Are you sure you want to remove this speaker?")) return
 
     try {
-      const response = await fetch(`/api/events/${event.id}/speakers/${speakerId}`, {
+      await apiFetch(`/api/events/${event.id}/speakers/${speakerId}`, {
         method: "DELETE",
+        auth: true,
       })
-
-      if (response.ok) {
-        setEvent((prev: any) => ({
-          ...prev,
-          speakerSessions: prev.speakerSessions.filter((session: any) => session.id !== speakerId),
-        }))
-        toast({
-          title: "Success",
-          description: "Speaker removed successfully",
-        })
-      }
+      setEvent((prev: any) => ({
+        ...prev,
+        speakerSessions: prev.speakerSessions.filter((session: any) => session.id !== speakerId),
+      }))
+      toast({
+        title: "Success",
+        description: "Speaker removed successfully",
+      })
     } catch (error) {
       console.error("Error deleting speaker:", error)
       toast({
         title: "Error",
-        description: "Failed to remove speaker",
+        description: error instanceof Error ? error.message : "Failed to remove speaker",
         variant: "destructive",
       })
     }
@@ -626,6 +615,15 @@ export default function EventPage({ params }: EventPageProps) {
     }
   }
 
+  const shellRawSpaces = useMemo(() => {
+    const list = event?.exhibitionSpaces
+    if (!Array.isArray(list)) return []
+    return list.filter((s: any) => s.spaceType === "SHELL_SPACE" || s.spaceType === "RAW_SPACE")
+  }, [event?.exhibitionSpaces])
+
+  const hasShellSpace = shellRawSpaces.some((s: any) => s.spaceType === "SHELL_SPACE")
+  const hasRawSpace = shellRawSpaces.some((s: any) => s.spaceType === "RAW_SPACE")
+  const canAddShellOrRaw = !hasShellSpace || !hasRawSpace
 
   if (loading) {
     return (
@@ -667,72 +665,44 @@ export default function EventPage({ params }: EventPageProps) {
   }
 
   return (
-    <div className="max-w-7xl bg-[#F5F4F0] py-0 mx-10">
-      <div className="max-w-7xl mx-auto">
+    <div className="w-full min-w-0 max-w-full bg-[#F5F4F0]">
+      <div className="w-full min-w-0 max-w-full mx-auto">
         {/* Hero Section */}
-        <div className="mb-10">
-          <EventHero event={event} />
+        <div className="mb-6 sm:mb-10">
+          <EventHero
+            event={event}
+            onScheduleUpdate={(patch) =>
+              setEvent((prev: Record<string, unknown> | null) => (prev ? { ...prev, ...patch } : prev))
+            }
+          />
         </div>
-        <div className="flex flex-col lg:flex-row gap-6">
-          <div className="flex-1">
-            <Tabs value={eventTab} onValueChange={setEventTab} className="w-full">
-              <div className="bg-white rounded-lg mb-6 shadow-sm border border-gray-200">
-                <TabsList className="grid w-full grid-cols-9 h-auto p-0 bg-transparent">
-                  <TabsTrigger
-                    value="about"
-                    className="data-[state=active]:bg-red-600 data-[state=active]:text-white rounded-none py-3 px-4 text-sm font-medium"
-                  >
-                    About
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="exhibitors"
-                    className="data-[state=active]:bg-red-600 data-[state=active]:text-white rounded-none py-3 px-4 text-sm font-medium"
-                  >
-                    Exhibitors
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="space-cost"
-                    className="data-[state=active]:bg-red-600 data-[state=active]:text-white rounded-none py-3 px-4 text-sm font-medium"
-                  >
-                    Space Cost
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="layout"
-                    className="data-[state=active]:bg-red-600 data-[state=active]:text-white rounded-none py-3 px-4 text-sm font-medium"
-                  >
-                    Layout Plan
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="brochure"
-                    className="data-[state=active]:bg-red-600 data-[state=active]:text-white rounded-none py-3 px-4 text-sm font-medium"
-                  >
-                    Brochure
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="venue"
-                    className="data-[state=active]:bg-red-600 data-[state=active]:text-white rounded-none py-3 px-4 text-sm font-medium"
-                  >
-                    Venue
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="speakers"
-                    className="data-[state=active]:bg-red-600 data-[state=active]:text-white rounded-none py-3 px-4 text-sm font-medium"
-                  >
-                    Speakers
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="organizer"
-                    className="data-[state=active]:bg-red-600 data-[state=active]:text-white rounded-none py-3 px-4 text-sm font-medium"
-                  >
-                    Organizer
-                  </TabsTrigger>
-                </TabsList>
+        <div className="flex flex-col gap-6 min-w-0">
+          <div className="flex-1 min-w-0 w-full">
+            <Tabs value={eventTab} onValueChange={setEventTab} className="w-full min-w-0">
+              <div className="bg-white rounded-lg mb-4 sm:mb-6 shadow-sm border border-gray-200 min-w-0 overflow-hidden">
+                <div className="overflow-x-auto overscroll-x-contain pb-0 [-webkit-overflow-scrolling:touch]">
+                  <TabsList className="inline-flex h-auto w-max min-w-full flex-nowrap gap-0 rounded-none bg-transparent p-0 lg:grid lg:w-full lg:grid-cols-8">
+                    {EVENT_INFO_TABS.map((tab) => (
+                      <TabsTrigger
+                        key={tab.value}
+                        value={tab.value}
+                        className={cn(
+                          "shrink-0 min-w-[4.75rem] rounded-none px-3 py-3 text-xs font-medium sm:min-w-0 sm:px-4 sm:text-sm lg:flex-1",
+                          "data-[state=active]:bg-red-600 data-[state=active]:text-white",
+                        )}
+                      >
+                        <span className="lg:hidden">{tab.shortLabel}</span>
+                        <span className="hidden lg:inline">{tab.label}</span>
+                      </TabsTrigger>
+                    ))}
+                  </TabsList>
+                </div>
               </div>
 
-              <TabsContent value="about" className="space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center justify-between gap-2">
+              <TabsContent value="about" className="space-y-4 sm:space-y-6">
+                <Card className="gap-0 py-0 min-w-0 overflow-hidden">
+                  <CardHeader className="px-4 sm:px-6">
+                    <CardTitle className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                       <span>About the Event</span>
                       <div className="flex gap-2">
                         <Button
@@ -768,7 +738,7 @@ export default function EventPage({ params }: EventPageProps) {
                       </div>
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="px-4 sm:px-6">
                     {editingSection === "about" ? (
                       <Textarea
                         className="w-full p-2 border rounded"
@@ -777,14 +747,14 @@ export default function EventPage({ params }: EventPageProps) {
                         rows={5}
                       />
                     ) : (
-                      <p className="text-gray-700 mb-4 leading-relaxed">{aboutText}</p>
+                      <p className="text-gray-700 mb-4 leading-relaxed break-words text-sm sm:text-base">{aboutText}</p>
                     )}
                   </CardContent>
                 </Card>
 
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center justify-between">
+                <Card className="gap-0 py-0 min-w-0 overflow-hidden">
+                  <CardHeader className="px-4 sm:px-6">
+                    <CardTitle className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                       <span className="text-blue-700">Listed In</span>
                       <div className="flex gap-2">
                         <Button variant="ghost" size="sm" onClick={() => setEditingTags(!editingTags)}>
@@ -821,7 +791,7 @@ export default function EventPage({ params }: EventPageProps) {
                       </div>
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="px-4 sm:px-6">
                     {editingTags ? (
                       <Textarea
                         className="w-full p-2 border rounded"
@@ -865,193 +835,256 @@ export default function EventPage({ params }: EventPageProps) {
               </TabsContent>
 
               <TabsContent value="space-cost">
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0">
-                    <CardTitle>Exhibition Space Pricing</CardTitle>
+                <Card className="gap-0 py-0 min-w-0 overflow-hidden">
+                  <CardHeader className="flex flex-col gap-4 px-4 sm:px-6 sm:flex-row sm:items-start sm:justify-between space-y-0">
+                    <div className="min-w-0">
+                      <CardTitle className="text-base sm:text-lg">Exhibitor Space Costs</CardTitle>
+                      <p className="text-xs sm:text-sm text-gray-600 mt-1 break-words">
+                        Shell space and raw space only. Pricing uses the event currency from{" "}
+                        <strong>Pricing</strong> ({event.currency}). Minimum booth total = price per sq.m × minimum
+                        area.
+                      </p>
+                    </div>
                     <Button
                       variant={addingSpace ? "outline" : "default"}
                       size="sm"
-                      onClick={() => setAddingSpace((prev) => !prev)}
+                      className="w-full sm:w-auto shrink-0"
+                      disabled={!canAddShellOrRaw && !addingSpace}
+                      onClick={() => {
+                        setAddingSpace((prev) => {
+                          const next = !prev
+                          if (next) {
+                            setNewSpaceForm((p) => ({
+                              ...p,
+                              spaceType: !hasShellSpace ? "SHELL_SPACE" : "RAW_SPACE",
+                              minArea: !hasShellSpace ? 9 : 20,
+                              name: "",
+                              description: "",
+                              pricePerSqm: 0,
+                            }))
+                          }
+                          return next
+                        })
+                      }}
                     >
                       <Plus className="w-4 h-4 mr-2" />
-                      {addingSpace ? "Cancel" : "Add exhibition space"}
+                      {addingSpace ? "Cancel" : !hasShellSpace ? "Add shell space" : !hasRawSpace ? "Add raw space" : "Add space"}
                     </Button>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    {addingSpace && (
-                      <div className="p-4 rounded-lg border border-dashed border-gray-300 dark:border-gray-600 space-y-4 bg-gray-50 dark:bg-gray-900/50">
-                        <h4 className="font-medium">New exhibition space</h4>
+                  <CardContent className="space-y-4 px-4 sm:px-6">
+                    {addingSpace && canAddShellOrRaw && (
+                      <div className="p-4 rounded-lg border border-dashed border-gray-300 space-y-4 bg-gray-50">
+                        <h4 className="font-medium">New {newSpaceForm.spaceType === "SHELL_SPACE" ? "shell" : "raw"} space</h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <label className="text-sm font-medium">Name *</label>
+                          <div className="md:col-span-2">
+                            <label className="text-sm font-medium">Hall name *</label>
                             <Input
-                              placeholder="e.g. Hall A – Standard Booth"
+                              placeholder="e.g. Tripura Vasini, Hall A"
                               value={newSpaceForm.name}
                               onChange={(e) => setNewSpaceForm((p) => ({ ...p, name: e.target.value }))}
                               className="mt-1"
                             />
                           </div>
                           <div>
-                            <label className="text-sm font-medium">Type</label>
+                            <label className="text-sm font-medium">Space type</label>
                             <select
                               className="mt-1 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm"
                               value={newSpaceForm.spaceType}
-                              onChange={(e) => setNewSpaceForm((p) => ({ ...p, spaceType: e.target.value }))}
+                              onChange={(e) =>
+                                setNewSpaceForm((p) => ({
+                                  ...p,
+                                  spaceType: e.target.value as "SHELL_SPACE" | "RAW_SPACE",
+                                  minArea: e.target.value === "SHELL_SPACE" ? 9 : 20,
+                                }))
+                              }
                             >
-                              <option value="RAW_SPACE">Raw space</option>
-                              <option value="SHELL_SPACE">Shell space</option>
-                              <option value="TWO_SIDE_OPEN">Two side open</option>
-                              <option value="THREE_SIDE_OPEN">Three side open</option>
-                              <option value="FOUR_SIDE_OPEN">Four side open</option>
-                              <option value="MEZZANINE">Mezzanine</option>
-                              <option value="CUSTOM">Custom</option>
+                              {!hasShellSpace ? <option value="SHELL_SPACE">Shell space (standard booth)</option> : null}
+                              {!hasRawSpace ? <option value="RAW_SPACE">Raw space</option> : null}
                             </select>
                           </div>
                           <div>
-                            <label className="text-sm font-medium">Dimensions (optional)</label>
+                            <label className="text-sm font-medium">Price per sq.m ({event.currency})</label>
                             <Input
-                              placeholder="e.g. 3m x 3m"
-                              value={newSpaceForm.dimensions}
-                              onChange={(e) => setNewSpaceForm((p) => ({ ...p, dimensions: e.target.value }))}
+                              type="number"
+                              min={0}
+                              step={1}
+                              value={newSpaceForm.pricePerSqm || ""}
+                              onChange={(e) =>
+                                setNewSpaceForm((p) => ({ ...p, pricePerSqm: Number(e.target.value) || 0 }))
+                              }
                               className="mt-1"
                             />
                           </div>
                           <div>
-                            <label className="text-sm font-medium">Area ({newSpaceForm.unit})</label>
+                            <label className="text-sm font-medium">Minimum area (sq.m)</label>
                             <Input
                               type="number"
                               min={1}
-                              value={newSpaceForm.area}
-                              onChange={(e) => setNewSpaceForm((p) => ({ ...p, area: Number(e.target.value) || 0 }))}
+                              value={newSpaceForm.minArea || ""}
+                              onChange={(e) =>
+                                setNewSpaceForm((p) => ({ ...p, minArea: Number(e.target.value) || 0 }))
+                              }
                               className="mt-1"
                             />
                           </div>
-                          <div>
-                            <label className="text-sm font-medium">Base price *</label>
-                            <Input
-                              type="number"
-                              min={0}
-                              step={0.01}
-                              value={newSpaceForm.basePrice}
-                              onChange={(e) => setNewSpaceForm((p) => ({ ...p, basePrice: Number(e.target.value) || 0 }))}
+                          <div className="md:col-span-2">
+                            <label className="text-sm font-medium">Description</label>
+                            <Textarea
+                              placeholder="Short description for exhibitors"
+                              value={newSpaceForm.description}
+                              onChange={(e) => setNewSpaceForm((p) => ({ ...p, description: e.target.value }))}
                               className="mt-1"
+                              rows={2}
                             />
                           </div>
-                          <div>
-                            <label className="text-sm font-medium">Price per {newSpaceForm.unit} (optional)</label>
-                            <Input
-                              type="number"
-                              min={0}
-                              step={0.01}
-                              value={newSpaceForm.pricePerSqm}
-                              onChange={(e) => setNewSpaceForm((p) => ({ ...p, pricePerSqm: Number(e.target.value) || 0 }))}
-                              className="mt-1"
-                            />
+                          <div className="md:col-span-2 text-sm text-gray-700">
+                            <span className="font-medium">Total from: </span>
+                            {formatEventMoney(
+                              (Number(newSpaceForm.pricePerSqm) || 0) * (Number(newSpaceForm.minArea) || 0),
+                              event.currency,
+                            )}
                           </div>
                         </div>
-                        <div>
-                          <label className="text-sm font-medium">Description (optional)</label>
-                          <Input
-                            placeholder="Short description"
-                            value={newSpaceForm.description}
-                            onChange={(e) => setNewSpaceForm((p) => ({ ...p, description: e.target.value }))}
-                            className="mt-1"
-                          />
-                        </div>
-                        <Button onClick={handleAddExhibitionSpace}>Create exhibition space</Button>
+                        <Button onClick={handleAddExhibitionSpace}>Create space</Button>
                       </div>
                     )}
 
-                    {event.exhibitionSpaces?.length > 0 ? (
-                      event.exhibitionSpaces.map((space: any) => (
-                        <div key={space.id} className="p-4 bg-gradient-to-r from-gray-50 to-blue-50 rounded-lg border">
-                          {editingSpaceId === space.id ? (
-                            <div className="space-y-3">
+                    {shellRawSpaces.length > 0 ? (
+                      shellRawSpaces.map((space: any) => {
+                        const pps = Number(space.pricePerSqm ?? 0)
+                        const minA = Number(space.minArea ?? 0)
+                        const total =
+                          pps > 0 && minA > 0 ? pps * minA : Number(space.basePrice ?? 0)
+                        const cur = space.currency || event.currency
+                        return (
+                          <div key={space.id} className="p-4 bg-gradient-to-r from-gray-50 to-blue-50 rounded-lg border">
+                            <div className="flex items-start justify-between gap-2 mb-2">
                               <div>
-                                <label className="text-sm font-medium">Base Price</label>
-                                <Input
-                                  type="number"
-                                  value={editingSpaceData.basePrice ?? space.basePrice}
-                                  onChange={(e) =>
-                                    setEditingSpaceData({
-                                      ...editingSpaceData,
-                                      basePrice: Number.parseFloat(e.target.value),
-                                    })
-                                  }
-                                />
-                              </div>
-                              <div>
-                                <label className="text-sm font-medium">Price per {space.unit}</label>
-                                <Input
-                                  type="number"
-                                  value={editingSpaceData.pricePerSqm ?? space.pricePerSqm}
-                                  onChange={(e) =>
-                                    setEditingSpaceData({
-                                      ...editingSpaceData,
-                                      pricePerSqm: Number.parseFloat(e.target.value),
-                                    })
-                                  }
-                                />
-                              </div>
-                              <div className="flex gap-2">
-                                <Button size="sm" onClick={() => handleUpdateSpaceCost(space.id)}>
-                                  <Save className="w-4 h-4 mr-2" />
-                                  Save
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => {
-                                    setEditingSpaceId(null)
-                                    setEditingSpaceData({})
-                                  }}
-                                >
-                                  <X className="w-4 h-4 mr-2" />
-                                  Cancel
-                                </Button>
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="flex justify-between items-center">
-                              <div>
-                                <span className="font-medium">{space.name}</span>
-                                <p className="text-sm text-gray-600">{space.description}</p>
-                                <p className="text-xs text-gray-500">
-                                  Minimum area: {space.minArea} {space.unit}
+                                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                                  {exhibitionSpaceTypeLabel(space.spaceType)}
                                 </p>
+                                <h4 className="font-semibold text-lg">{space.name}</h4>
                               </div>
-                              <div className="flex items-center gap-4">
-                                <div className="text-right">
-                                  <span className="font-bold text-lg text-blue-600">
-                                    {event.currency} {space.basePrice.toLocaleString()}
-                                  </span>
-                                  {space.pricePerSqm > 0 && (
-                                    <p className="text-sm text-gray-600">
-                                      + {event.currency} {space.pricePerSqm}/{space.unit}
-                                    </p>
-                                  )}
-                                </div>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => {
-                                    setEditingSpaceId(space.id)
-                                    setEditingSpaceData({
-                                      basePrice: space.basePrice,
-                                      pricePerSqm: space.pricePerSqm,
-                                    })
-                                  }}
-                                >
-                                  <Edit2 className="w-4 h-4" />
-                                </Button>
-                              </div>
+                              {space.spaceType === "SHELL_SPACE" ? (
+                                <span className="text-xs bg-gray-200 text-gray-800 px-2 py-0.5 rounded">Standard</span>
+                              ) : null}
                             </div>
-                          )}
-                        </div>
-                      ))
+                            {editingSpaceId === space.id ? (
+                              <div className="space-y-3">
+                                <div>
+                                  <label className="text-sm font-medium">Hall name</label>
+                                  <Input
+                                    value={editingSpaceData.name ?? space.name}
+                                    onChange={(e) =>
+                                      setEditingSpaceData({ ...editingSpaceData, name: e.target.value })
+                                    }
+                                  />
+                                </div>
+                                <div>
+                                  <label className="text-sm font-medium">Description</label>
+                                  <Textarea
+                                    value={editingSpaceData.description ?? space.description ?? ""}
+                                    onChange={(e) =>
+                                      setEditingSpaceData({ ...editingSpaceData, description: e.target.value })
+                                    }
+                                    rows={2}
+                                  />
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                  <div>
+                                    <label className="text-sm font-medium">Price per sq.m ({cur})</label>
+                                    <Input
+                                      type="number"
+                                      value={editingSpaceData.pricePerSqm ?? space.pricePerSqm ?? ""}
+                                      onChange={(e) =>
+                                        setEditingSpaceData({
+                                          ...editingSpaceData,
+                                          pricePerSqm: Number.parseFloat(e.target.value),
+                                        })
+                                      }
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="text-sm font-medium">Minimum area (sq.m)</label>
+                                    <Input
+                                      type="number"
+                                      value={editingSpaceData.minArea ?? space.minArea ?? ""}
+                                      onChange={(e) =>
+                                        setEditingSpaceData({
+                                          ...editingSpaceData,
+                                          minArea: Number.parseFloat(e.target.value),
+                                        })
+                                      }
+                                    />
+                                  </div>
+                                </div>
+                                <p className="text-sm text-gray-700">
+                                  Total from:{" "}
+                                  <span className="font-semibold">
+                                    {formatEventMoney(
+                                      (Number(editingSpaceData.pricePerSqm ?? space.pricePerSqm) || 0) *
+                                        (Number(editingSpaceData.minArea ?? space.minArea) || 0),
+                                      cur,
+                                    )}
+                                  </span>
+                                </p>
+                                <div className="flex gap-2">
+                                  <Button size="sm" onClick={() => handleUpdateSpaceCost(space.id)}>
+                                    <Save className="w-4 h-4 mr-2" />
+                                    Save
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      setEditingSpaceId(null)
+                                      setEditingSpaceData({})
+                                    }}
+                                  >
+                                    <X className="w-4 h-4 mr-2" />
+                                    Cancel
+                                  </Button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-3">
+                                <div>
+                                  <p className="text-sm text-gray-600">{space.description}</p>
+                                  <p className="text-sm text-gray-700 mt-2">
+                                    {formatEventMoney(pps, cur)} / sq.m · Min {minA || "—"} sq.m
+                                  </p>
+                                </div>
+                                <div className="flex items-center gap-4 shrink-0">
+                                  <div className="text-right">
+                                    <p className="text-xs text-gray-500">Total from</p>
+                                    <p className="font-bold text-lg text-blue-600">{formatEventMoney(total, cur)}</p>
+                                  </div>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => {
+                                      setEditingSpaceId(space.id)
+                                      setEditingSpaceData({
+                                        name: space.name,
+                                        description: space.description,
+                                        basePrice: space.basePrice,
+                                        pricePerSqm: space.pricePerSqm,
+                                        minArea: space.minArea,
+                                      })
+                                    }}
+                                  >
+                                    <Edit2 className="w-4 h-4" />
+                                  </Button>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )
+                      })
                     ) : (
                       <p className="text-gray-600">
-                        No exhibition spaces yet. Click <strong>Add exhibition space</strong> above to create one; then you can assign spaces when adding exhibitors to this event.
+                        No shell or raw exhibition space yet. Use <strong>Add shell space</strong> or{" "}
+                        <strong>Add raw space</strong> to match your event pricing. Other space types are hidden here.
                       </p>
                     )}
                   </CardContent>
@@ -1090,14 +1123,15 @@ export default function EventPage({ params }: EventPageProps) {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="bg-gray-100 h-96 rounded-lg flex items-center justify-center overflow-hidden">
+                    <div className="relative bg-gray-100 h-96 rounded-lg flex items-center justify-center overflow-hidden">
                       {layoutPlanUrl ? (
                         isLayoutImage ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
+                          <AppImage
                             src={layoutPlanUrl}
                             alt="Event Layout Plan"
-                            className="h-full w-full object-contain rounded-lg"
+                            fill
+                            sizes="(max-width: 768px) 100vw, 50vw"
+                            className="object-contain rounded-lg"
                             loading="lazy"
                           />
                         ) : isLayoutPdf ? (
@@ -1226,69 +1260,193 @@ export default function EventPage({ params }: EventPageProps) {
 
 
               <TabsContent value="venue">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Venue Information</CardTitle>
-                  </CardHeader>
-                  <CardContent
-                    className="p-6 bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 cursor-pointer"
-                    onClick={() => router.push(`/venue/${event.venue?.id}`)}
-                  >
-                    <div className="space-y-4">
-                      {/* Venue Header */}
-                      <div>
-                        <h4 className="text-xl font-bold text-gray-800 hover:text-blue-600 transition-colors">
-                          {event.venue?.company}
-                        </h4>
-                        {/* Bio / Description */}
-                        {event.venue?.bio && (
-                          <p className="text-gray-600 text-sm">{event.venue.bio}</p>
-                        )}
-                        <p className="text-gray-500">{event.venue?.location}</p>
-                        {event.venue?.website && (
-                          <a
-                            href={event.venue.website}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-500 hover:underline"
-                            onClick={(e) => e.stopPropagation()} // Prevent navigation when clicking link
-                          >
-                            {event.venue.website}
-                          </a>
-                        )}
-                      </div>
+  <div className="py-6">
+    <div className="mb-6">
+      <h2 className="text-xl font-semibold text-gray-800 mb-1">
+        Venue
+      </h2>
+      <p className="text-sm text-gray-500">
+        Current Event Venue
+      </p>
+    </div>
 
-                      {/* Amenities */}
-                      {event.venue?.amenities?.length > 0 && (
-                        <div>
-                          <h5 className="font-semibold text-gray-700 mb-2">Amenities</h5>
-                          <div className="flex flex-wrap gap-2">
-                            {event.venue.amenities.map((amenity: any, idx: any) => (
-                              <span
-                                key={idx}
-                                className="bg-blue-100 text-blue-800 text-sm px-2 py-1 rounded-full"
-                              >
-                                {amenity}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
+    {event.venue ? (
+      <div
+        className="bg-white rounded-xl overflow-hidden shadow-sm border hover:shadow-lg transition-shadow cursor-pointer max-w-sm"
+        onClick={() => {
+          const id = event.venue?.id
+          if (!id) return
+
+          router.push(
+            getVenuePublicPath(
+              id,
+              event.venue?.venueName ?? event.venue?.company ?? null
+            )
+          )
+        }}
+      >
+        {/* Banner */}
+        <div className="relative h-48 w-full bg-gray-200 overflow-hidden">
+          {event.venue?.venueImages?.[0] ? (
+            <img
+              src={event.venue.venueImages[0]}
+              alt={event.venue?.venueName || "Venue"}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-[#004A96] via-[#003d7a] to-[#002f5e] flex items-center justify-center">
+              <span className="text-5xl font-bold text-white opacity-30">
+                {event.venue?.venueName?.charAt(0) || "V"}
+              </span>
+            </div>
+          )}
+
+          {/* Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+
+          {/* Title */}
+          <div className="absolute bottom-3 left-4 right-4">
+            <h4 className="text-white font-bold text-xl leading-tight">
+              {event.venue?.venueName ||
+                event.venue?.company ||
+                "Venue"}
+            </h4>
+
+            {event.venue?.location && (
+              <p className="text-white/80 text-xs mt-0.5">
+                {event.venue.location}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Body */}
+        <div className="px-4 pt-4 pb-4">
+
+          {/* Description */}
+          {event.venue?.venueDescription && (
+            <div className="mb-3">
+              {event.venue.venueDescription.length > 120 ? (
+                <p className="text-sm text-gray-600 leading-relaxed">
+                  {event.venue.venueDescription
+                    .slice(0, 120)
+                    .trimEnd()}
+                  ...{" "}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+
+                      const id = event.venue?.id
+                      if (!id) return
+
+                      router.push(
+                        getVenuePublicPath(
+                          id,
+                          event.venue?.venueName ??
+                            event.venue?.company ??
+                            null
+                        )
+                      )
+                    }}
+                    className="text-blue-600 font-medium hover:underline"
+                  >
+                    more
+                  </button>
+                </p>
+              ) : (
+                <p className="text-sm text-gray-600 leading-relaxed">
+                  {event.venue.venueDescription}
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Website */}
+          {event.venue?.venueWebsite && (
+            <a
+              href={event.venue.venueWebsite}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-500 text-sm hover:underline block mb-3"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {event.venue.venueWebsite}
+            </a>
+          )}
+
+          {/* Amenities */}
+          {event.venue?.amenities?.length > 0 && (
+            <div className="mb-3">
+              <p className="text-sm font-bold text-gray-800 mb-2">
+                Amenities
+              </p>
+
+              <div className="flex flex-wrap gap-2">
+                {event.venue.amenities.map(
+                  (amenity: string, idx: number) => (
+                    <span
+                      key={idx}
+                      className="bg-blue-50 text-blue-700 text-xs font-medium px-3 py-1 rounded-full border border-blue-100"
+                    >
+                      {amenity}
+                    </span>
+                  )
+                )}
+              </div>
+            </div>
+          )}
+
+          <hr className="border-gray-200 mb-3 mt-2" />
+
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+
+                const id = event.venue?.id
+                if (!id) return
+
+                router.push(
+                  getVenuePublicPath(
+                    id,
+                    event.venue?.venueName ??
+                      event.venue?.company ??
+                      null
+                  )
+                )
+              }}
+              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-5 py-2 rounded-full transition"
+            >
+              View Venue
+            </button>
+          </div>
+        </div>
+      </div>
+    ) : (
+      <div className="py-12 text-center text-gray-500">
+        <p>No venue assigned to this event yet.</p>
+      </div>
+    )}
+  </div>
+</TabsContent>
+              
               <TabsContent value="speakers">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Speakers</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {event.speakerSessions?.length > 0 ? (
-                      event.speakerSessions.map((session: any) => (
+                <div className="py-6">
+                  <div className="mb-6">
+                    <h2 className="text-xl font-semibold text-gray-800 mb-1">Speakers</h2>
+                    <p className="text-sm text-gray-500">
+                      {event.speakerSessions?.length || 0} Speakers of Current Edition
+                    </p>
+                  </div>
+
+                  {event.speakerSessions?.length > 0 ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                      {event.speakerSessions.map((session: any) => (
                         <div
                           key={session.id}
-                          className="flex justify-between items-start p-4 bg-white rounded-lg border shadow-sm cursor-pointer hover:bg-gray-50 transition-colors"
+                          className="bg-white rounded-xl overflow-hidden shadow-sm border hover:shadow-lg transition-shadow cursor-pointer flex flex-col"
                           onClick={() =>
                             router.push(
                               getPublicProfilePath("speaker", {
@@ -1300,36 +1458,104 @@ export default function EventPage({ params }: EventPageProps) {
                             )
                           }
                         >
-                          <div className="flex gap-4">
-                            <Avatar className="w-12 h-12">
-                              <AvatarImage src={session.speaker?.avatar || "/city/c4.jpg"} />
-                              <AvatarFallback>{session.speaker?.firstName?.charAt(0) || "S"}</AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <h4 className="font-semibold hover:text-blue-600 transition-colors">
-                                {session.speaker?.firstName || "Speaker"}
-                              </h4>
-                              <p className="text-sm text-gray-600">{session.title}</p>
-                              <p className="text-xs text-gray-500">{session.description}</p>
+                          <div className="p-4 flex flex-col flex-1">
+                            {/* Top row: avatar + name + session title */}
+                            <div className="flex items-center gap-3 mb-3">
+                              {/* Circular avatar */}
+                              <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-gray-200 flex-shrink-0">
+                                {session.speaker?.avatar ? (
+                                  <img
+                                    src={session.speaker.avatar}
+                                    alt={`${session.speaker?.firstName} ${session.speaker?.lastName}`}
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : (
+                                  <div className="w-full h-full bg-gradient-to-br from-[#004A96] to-[#2d6a9f] flex items-center justify-center">
+                                    <span className="text-xl font-bold text-white">
+                                      {session.speaker?.firstName?.charAt(0) || "S"}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                              
+                              {/* Name + session title */}
+                              <div className="flex-1 min-w-0">
+                                <h4 className="font-bold text-gray-900 text-base leading-tight">
+                                  {[session.speaker?.firstName, session.speaker?.lastName]
+                                    .filter(Boolean)
+                                    .join(" ") || "Speaker"}
+                                </h4>
+                                <p className="text-sm font-semibold text-gray-700 mt-0.5 leading-tight">
+                                  {session.title || ""}
+                                </p>
+                                {(session.speaker?.company || session.speaker?.organizationName) && (
+                                  <p className="text-xs text-gray-500 mt-0.5 truncate">
+                                    {session.speaker?.company || session.speaker?.organizationName}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                              
+                            {/* Description with truncation + More link */}
+                            {session.description && (
+                              <div className="flex-1 mb-3">
+                                {session.description.length > 100 ? (
+                                  <p className="text-sm text-gray-600 leading-relaxed">
+                                    {session.description.slice(0, 100).trimEnd()}...{" "}
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        router.push(
+                                          getPublicProfilePath("speaker", {
+                                            id: session.speaker?.id,
+                                            publicSlug: session.speaker?.publicSlug,
+                                            firstName: session.speaker?.firstName,
+                                            lastName: session.speaker?.lastName,
+                                          }),
+                                        )
+                                      }}
+                                      className="text-blue-600 font-medium hover:underline"
+                                    >
+                                      more
+                                    </button>
+                                  </p>
+                                ) : (
+                                  <p className="text-sm text-gray-600 leading-relaxed">
+                                    {session.description}
+                                  </p>
+                                )}
+                              </div>
+                            )}
+
+                            {/* Spacer to push divider + button to bottom */}
+                            <div className="flex-1" />
+                          
+                            {/* Divider + Delete button */}
+                            <hr className="border-gray-200 mb-3" />
+                            <div className="flex justify-end">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleDeleteSpeaker(session.id)
+                                }}
+                                className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold px-5 py-2 rounded-full transition"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                                Delete
+                              </button>
                             </div>
                           </div>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation(); // Prevent navigation when clicking delete
-                              handleDeleteSpeaker(session.id);
-                            }}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
                         </div>
-                      ))
-                    ) : (
-                      <p className="text-gray-600">No speakers scheduled yet.</p>
-                    )}
-                  </CardContent>
-                </Card>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="py-12 text-center text-gray-500">
+                      <p>No speakers scheduled yet.</p>
+                    </div>
+                  )}
+                </div>
               </TabsContent>
 
 
@@ -1338,9 +1564,9 @@ export default function EventPage({ params }: EventPageProps) {
                   <CardHeader>
                     <CardTitle>Event Organizer</CardTitle>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="px-4 sm:px-6">
                     <div
-                      className="flex items-start gap-4 cursor-pointer hover:bg-gray-50 p-4 rounded-lg transition-colors"
+                      className="flex flex-col sm:flex-row items-start gap-3 sm:gap-4 cursor-pointer hover:bg-gray-50 p-3 sm:p-4 rounded-lg transition-colors min-w-0"
                       onClick={() =>
                         router.push(
                           getPublicProfilePath("organizer", {
@@ -1351,22 +1577,27 @@ export default function EventPage({ params }: EventPageProps) {
                         )
                       }
                     >
-                      <Avatar className="w-16 h-16">
-                        <AvatarImage src={event.organizer?.avatar || "/city/c4.jpg"} />
+                      <Avatar className="w-14 h-14 sm:w-16 sm:h-16 shrink-0 mx-auto sm:mx-0">
+                        <AvatarImage src={event.organizer?.avatar } />
                         <AvatarFallback className="text-lg">
                           {event.organizer?.company}
                           {/* {event.organizer?.firstName?.charAt(0) || "O"} */}
                         </AvatarFallback>
                       </Avatar>
-                      <div className="flex-1">
-                        <h4 className="font-semibold text-lg hover:text-blue-600 transition-colors">
+                      <div className="min-w-0 flex-1 w-full text-center sm:text-left">
+                        <h4 className="font-semibold text-base sm:text-lg hover:text-blue-600 transition-colors break-words">
                           {event.organizer?.company || event.organizer?.firstName}
                         </h4>
-                        <p className="text-gray-600 mb-3">Professional event organizer and manager</p>
-                        <div className="flex flex-wrap items-center gap-4">
-                          <div className="flex items-center gap-2 text-sm">
-                            <Mail className="w-4 h-4 text-green-600" />
-                            <span>{event.organizer?.email || "Contact via platform"}</span>
+                        {(() => {
+                          const line = formatOrganizerCityCountryLine(event.organizer)
+                          return line ? (
+                            <p className="text-gray-600 mb-3 text-sm break-words">{line}</p>
+                          ) : null
+                        })()}
+                        <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2 sm:gap-4 min-w-0">
+                          <div className="flex items-start sm:items-center gap-2 text-sm min-w-0 justify-center sm:justify-start">
+                            <Mail className="w-4 h-4 text-green-600 shrink-0 mt-0.5 sm:mt-0" />
+                            <span className="break-all leading-snug">{event.organizer?.email || "Contact via platform"}</span>
                           </div>
                         </div>
                       </div>

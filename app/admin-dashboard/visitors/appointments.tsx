@@ -28,7 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Calendar, Users, CheckCircle, XCircle, Eye, Search, Filter } from 'lucide-react'
+import { Calendar, Users, CheckCircle, Eye, Search, Filter } from 'lucide-react'
 
 interface Appointment {
   id: string
@@ -160,7 +160,7 @@ export default function VisitorAppointmentsPage() {
       </div>
 
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Total Appointments</CardTitle>
@@ -220,7 +220,7 @@ export default function VisitorAppointmentsPage() {
               />
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full sm:w-[200px]">
+              <SelectTrigger className="w-full sm:w-[180px]">
                 <Filter className="h-4 w-4 mr-2" />
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
@@ -234,7 +234,7 @@ export default function VisitorAppointmentsPage() {
             </Select>
           </div>
 
-          <div className="rounded-md border">
+          <div className="rounded-md border overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -261,26 +261,26 @@ export default function VisitorAppointmentsPage() {
                       <TableCell>
                         <div>
                           <div className="font-medium">{appointment.visitor.name}</div>
-                          <div className="text-sm text-gray-500">{appointment.visitor.email}</div>
+                          <div className="text-sm text-gray-500 truncate max-w-[150px]">{appointment.visitor.email}</div>
                         </div>
                       </TableCell>
                       <TableCell>
                         <div>
                           <div className="font-medium">{appointment.exhibitor.name}</div>
-                          <div className="text-sm text-gray-500">{appointment.exhibitor.company}</div>
+                          <div className="text-sm text-gray-500 truncate max-w-[150px]">{appointment.exhibitor.company}</div>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="text-sm">{appointment.event.title}</div>
+                        <div className="text-sm truncate max-w-[120px]">{appointment.event.title}</div>
                       </TableCell>
                       <TableCell>
                         <div className="text-sm">{appointment.type.replace(/_/g, " ")}</div>
                       </TableCell>
                       <TableCell>
-                        <div className="text-sm">
+                        <div className="text-sm whitespace-nowrap">
                           {new Date(appointment.requestedDate).toLocaleDateString()}
                         </div>
-                        <div className="text-xs text-gray-500">{appointment.requestedTime}</div>
+                        <div className="text-xs text-gray-500 whitespace-nowrap">{appointment.requestedTime}</div>
                       </TableCell>
                       <TableCell>{getStatusBadge(appointment.status)}</TableCell>
                       <TableCell>{getPriorityBadge(appointment.priority)}</TableCell>
@@ -305,134 +305,140 @@ export default function VisitorAppointmentsPage() {
         </CardContent>
       </Card>
 
-      {/* Details Dialog */}
+      {/* Details Dialog - Hidden scrollbar but functional */}
       <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Appointment Details</DialogTitle>
+        <DialogContent className="max-w-2xl w-[90vw] p-0 overflow-hidden rounded-xl">
+          <DialogHeader className="px-5 pt-5 pb-3 border-b">
+            <DialogTitle className="text-xl">Appointment Details</DialogTitle>
             <DialogDescription>Complete information about the appointment</DialogDescription>
           </DialogHeader>
-          {selectedAppointment && (
-            <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <h3 className="font-semibold mb-2">Visitor Information</h3>
-                  <div className="space-y-1 text-sm">
-                    <p>
-                      <span className="font-medium">Name:</span> {selectedAppointment.visitor.name}
-                    </p>
-                    <p>
-                      <span className="font-medium">Email:</span> {selectedAppointment.visitor.email}
-                    </p>
+
+          {/* Hidden scrollbar container */}
+          <div className="px-5 py-4 max-h-[75vh] overflow-y-auto scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+            <style>{`
+              .scrollbar-hide::-webkit-scrollbar {
+                display: none;
+              }
+            `}</style>
+
+            {selectedAppointment && (
+              <div className="space-y-5">
+                {/* Visitor Information */}
+                <div className="bg-gray-50 rounded-xl p-4">
+                  <h3 className="font-semibold text-sm mb-3 text-gray-700 uppercase tracking-wide">Visitor Information</h3>
+                  <div className="space-y-2">
+                    <div className="flex flex-wrap">
+                      <div className="w-24 text-xs text-gray-500">Name</div>
+                      <div className="flex-1 font-medium text-gray-900 break-words">{selectedAppointment.visitor.name}</div>
+                    </div>
+                    <div className="flex flex-wrap">
+                      <div className="w-24 text-xs text-gray-500">Email</div>
+                      <div className="flex-1 text-gray-900 break-all">{selectedAppointment.visitor.email}</div>
+                    </div>
                     {selectedAppointment.visitor.phone && (
-                      <p>
-                        <span className="font-medium">Phone:</span> {selectedAppointment.visitor.phone}
-                      </p>
+                      <div className="flex flex-wrap">
+                        <div className="w-24 text-xs text-gray-500">Phone</div>
+                        <div className="flex-1 text-gray-900">{selectedAppointment.visitor.phone}</div>
+                      </div>
                     )}
                     {selectedAppointment.visitor.company && (
-                      <p>
-                        <span className="font-medium">Company:</span> {selectedAppointment.visitor.company}
-                      </p>
+                      <div className="flex flex-wrap">
+                        <div className="w-24 text-xs text-gray-500">Company</div>
+                        <div className="flex-1 text-gray-900 break-words">{selectedAppointment.visitor.company}</div>
+                      </div>
                     )}
                   </div>
                 </div>
 
-                <div>
-                  <h3 className="font-semibold mb-2">Exhibitor Information</h3>
-                  <div className="space-y-1 text-sm">
-                    <p>
-                      <span className="font-medium">Name:</span> {selectedAppointment.exhibitor.name}
-                    </p>
-                    <p>
-                      <span className="font-medium">Company:</span> {selectedAppointment.exhibitor.company}
-                    </p>
-                    <p>
-                      <span className="font-medium">Email:</span> {selectedAppointment.exhibitor.email}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <h3 className="font-semibold mb-2">Appointment Details</h3>
-                <div className="space-y-2 text-sm">
-                  <p>
-                    <span className="font-medium">Title:</span> {selectedAppointment.title}
-                  </p>
-                  {selectedAppointment.description && (
-                    <p>
-                      <span className="font-medium">Description:</span> {selectedAppointment.description}
-                    </p>
-                  )}
-                  <p>
-                    <span className="font-medium">Type:</span>{" "}
-                    {selectedAppointment.type.replace(/_/g, " ")}
-                  </p>
-                  <p>
-                    <span className="font-medium">Event:</span> {selectedAppointment.event.title}
-                  </p>
-                  <p>
-                    <span className="font-medium">Requested Date:</span>{" "}
-                    {new Date(selectedAppointment.requestedDate).toLocaleDateString()} at{" "}
-                    {selectedAppointment.requestedTime}
-                  </p>
-                  <p>
-                    <span className="font-medium">Duration:</span> {selectedAppointment.duration} minutes
-                  </p>
-                  <p>
-                    <span className="font-medium">Meeting Type:</span>{" "}
-                    {selectedAppointment.meetingType.replace(/_/g, " ")}
-                  </p>
-                  {selectedAppointment.location && (
-                    <p>
-                      <span className="font-medium">Location:</span> {selectedAppointment.location}
-                    </p>
-                  )}
-                  {selectedAppointment.meetingLink && (
-                    <p>
-                      <span className="font-medium">Meeting Link:</span>{" "}
-                      <a
-                        href={selectedAppointment.meetingLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 hover:underline"
-                      >
-                        {selectedAppointment.meetingLink}
-                      </a>
-                    </p>
-                  )}
-                  {selectedAppointment.purpose && (
-                    <p>
-                      <span className="font-medium">Purpose:</span> {selectedAppointment.purpose}
-                    </p>
-                  )}
-                  <div className="flex gap-2 pt-2">
-                    <div>
-                      <span className="font-medium">Status:</span>{" "}
-                      {getStatusBadge(selectedAppointment.status)}
+                {/* Exhibitor Information */}
+                <div className="bg-gray-50 rounded-xl p-4">
+                  <h3 className="font-semibold text-sm mb-3 text-gray-700 uppercase tracking-wide">Exhibitor Information</h3>
+                  <div className="space-y-2">
+                    <div className="flex flex-wrap">
+                      <div className="w-24 text-xs text-gray-500">Name</div>
+                      <div className="flex-1 font-medium text-gray-900 break-words">{selectedAppointment.exhibitor.name}</div>
                     </div>
-                    <div>
-                      <span className="font-medium">Priority:</span>{" "}
-                      {getPriorityBadge(selectedAppointment.priority)}
+                    <div className="flex flex-wrap">
+                      <div className="w-24 text-xs text-gray-500">Company</div>
+                      <div className="flex-1 text-gray-900 break-words">{selectedAppointment.exhibitor.company}</div>
+                    </div>
+                    <div className="flex flex-wrap">
+                      <div className="w-24 text-xs text-gray-500">Email</div>
+                      <div className="flex-1 text-gray-900 break-all">{selectedAppointment.exhibitor.email}</div>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              {selectedAppointment.confirmedDate && (
-                <div>
-                  <h3 className="font-semibold mb-2">Confirmed Details</h3>
-                  <div className="space-y-1 text-sm">
-                    <p>
-                      <span className="font-medium">Confirmed Date:</span>{" "}
-                      {new Date(selectedAppointment.confirmedDate).toLocaleDateString()} at{" "}
-                      {selectedAppointment.confirmedTime}
-                    </p>
+                {/* Appointment Details */}
+                <div className="bg-gray-50 rounded-xl p-4">
+                  <h3 className="font-semibold text-sm mb-3 text-gray-700 uppercase tracking-wide">Appointment Details</h3>
+                  <div className="space-y-2">
+                    <div className="flex flex-wrap">
+                      <div className="w-28 text-xs text-gray-500">Title</div>
+                      <div className="flex-1 font-medium text-gray-900 break-words">{selectedAppointment.title}</div>
+                    </div>
+                    <div className="flex flex-wrap">
+                      <div className="w-28 text-xs text-gray-500">Type</div>
+                      <div className="flex-1 text-gray-900">{selectedAppointment.type.replace(/_/g, " ")}</div>
+                    </div>
+                    <div className="flex flex-wrap">
+                      <div className="w-28 text-xs text-gray-500">Event</div>
+                      <div className="flex-1 text-gray-900 break-words">{selectedAppointment.event.title}</div>
+                    </div>
+                    <div className="flex flex-wrap">
+                      <div className="w-28 text-xs text-gray-500">Duration</div>
+                      <div className="flex-1 text-gray-900">{selectedAppointment.duration} minutes</div>
+                    </div>
+                    <div className="flex flex-wrap">
+                      <div className="w-28 text-xs text-gray-500">Meeting Type</div>
+                      <div className="flex-1 text-gray-900">{selectedAppointment.meetingType.replace(/_/g, " ")}</div>
+                    </div>
+                    <div className="flex flex-wrap">
+                      <div className="w-28 text-xs text-gray-500">Requested Date</div>
+                      <div className="flex-1 text-gray-900">
+                        {new Date(selectedAppointment.requestedDate).toLocaleDateString()} at {selectedAppointment.requestedTime}
+                      </div>
+                    </div>
+                    {selectedAppointment.location && (
+                      <div className="flex flex-wrap">
+                        <div className="w-28 text-xs text-gray-500">Location</div>
+                        <div className="flex-1 text-gray-900 break-words">{selectedAppointment.location}</div>
+                      </div>
+                    )}
+                    {selectedAppointment.description && (
+                      <div className="flex flex-wrap">
+                        <div className="w-28 text-xs text-gray-500">Description</div>
+                        <div className="flex-1 text-gray-900 break-words">{selectedAppointment.description}</div>
+                      </div>
+                    )}
+                    <div className="flex flex-wrap items-center">
+                      <div className="w-28 text-xs text-gray-500">Status</div>
+                      <div className="flex-1">{getStatusBadge(selectedAppointment.status)}</div>
+                    </div>
+                    <div className="flex flex-wrap items-center">
+                      <div className="w-28 text-xs text-gray-500">Priority</div>
+                      <div className="flex-1">{getPriorityBadge(selectedAppointment.priority)}</div>
+                    </div>
                   </div>
                 </div>
-              )}
-            </div>
-          )}
+
+                {/* Confirmed Details (if applicable) */}
+                {selectedAppointment.confirmedDate && (
+                  <div className="bg-green-50 rounded-xl p-4 border border-green-200">
+                    <h3 className="font-semibold text-sm mb-3 text-green-700 uppercase tracking-wide">Confirmed Details</h3>
+                    <div className="space-y-2">
+                      <div className="flex flex-wrap">
+                        <div className="w-28 text-xs text-green-600">Confirmed Date</div>
+                        <div className="flex-1 text-gray-900">
+                          {new Date(selectedAppointment.confirmedDate).toLocaleDateString()} at {selectedAppointment.confirmedTime}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </div>

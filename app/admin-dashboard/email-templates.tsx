@@ -16,9 +16,20 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Mail, Plus, Edit, Trash2, Copy, FileText } from "lucide-react"
+import { Mail, Plus, Edit, Trash2, Copy, FileText, Loader2 } from "lucide-react"
 import { apiFetch } from "@/lib/api"
+import { toast } from "sonner"
 
 interface EmailTemplate {
   id: string
@@ -36,8 +47,21 @@ export default function EmailTemplates() {
   const [templates, setTemplates] = useState<EmailTemplate[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [selectedTemplate, setSelectedTemplate] = useState<EmailTemplate | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [filterCategory, setFilterCategory] = useState("all")
+
   const [newTemplate, setNewTemplate] = useState({
+    name: "",
+    subject: "",
+    content: "",
+    htmlContent: "",
+    category: "promotional",
+  })
+
+  const [editTemplate, setEditTemplate] = useState({
     name: "",
     subject: "",
     content: "",
@@ -56,11 +80,31 @@ export default function EmailTemplates() {
         `/api/admin/marketing/email-templates?category=${filterCategory}`,
         { auth: true },
       )
-      if (result.success) {
-        setTemplates(result.data ?? [])
+
+      console.log("Fetch templates response:", result)
+
+      let templatesData: EmailTemplate[] = []
+
+      if (result) {
+        if (result.success === true && Array.isArray(result.data)) {
+          templatesData = result.data
+        } else if (Array.isArray(result)) {
+          templatesData = result
+        } else if (result.data && Array.isArray(result.data)) {
+          templatesData = result.data
+        } else if (result && typeof result === 'object') {
+          const possibleArrays = Object.values(result).filter(v => Array.isArray(v))
+          if (possibleArrays.length > 0) {
+            templatesData = possibleArrays[0]
+          }
+        }
       }
+
+      setTemplates(templatesData)
     } catch (error) {
       console.error("[v0] Error fetching templates:", error)
+      toast.error("Failed to load templates")
+      setTemplates([])
     } finally {
       setIsLoading(false)
     }
@@ -68,17 +112,23 @@ export default function EmailTemplates() {
 
   const handleCreateTemplate = async () => {
     try {
-      const result = await apiFetch<{ success?: boolean }>(
+      setIsSubmitting(true)
+      const result = await apiFetch<{ success?: boolean; data?: EmailTemplate }>(
         "/api/admin/marketing/email-templates",
         {
-        method: "POST",
-        body: newTemplate,
-        auth: true,
-      },
+          method: "POST",
+          body: newTemplate,
+          auth: true,
+        },
       )
-      if (result.success) {
+
+      console.log("Create template response:", result)
+
+      // Check if we got a successful response
+      if (result && (result.success === true || result.data)) {
+        toast.success("Template created successfully")
         setIsCreateDialogOpen(false)
-        fetchTemplates()
+        await fetchTemplates()
         setNewTemplate({
           name: "",
           subject: "",
@@ -86,22 +136,150 @@ export default function EmailTemplates() {
           htmlContent: "",
           category: "promotional",
         })
+      } else {
+        toast.error("Failed to create template")
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("[v0] Error creating template:", error)
+      toast.error(error?.message || "Failed to create template")
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
-  const handleDeleteTemplate = async (id: string) => {
-    try {
-      await apiFetch(`/api/admin/marketing/email-templates/${id}`, {
-        method: "DELETE",
-        auth: true,
-      })
-      fetchTemplates()
-    } catch (error) {
-      console.error("[v0] Error deleting template:", error)
+  const handleEditTemplate = async () => {
+    if (!selectedTemplate) {
+      toast.error("No template selected")
+      return
     }
+
+    if (!selectedTemplate.id || selectedTemplate.id === selectedTemplate.name) {
+      toast.error("Invalid template ID. Please refresh and try again.")
+      return
+    }
+
+    try {
+      setIsSubmitting(true)
+
+      console.log(`Updating template with ID: ${selectedTemplate.id}`)
+      console.log("Update data:", editTemplate)
+
+      const result = await apiFetch<{ success?: boolean; data?: EmailTemplate }>(
+        `/api/admin/marketing/email-templates/${selectedTemplate.id}`,
+        {
+          method: "PUT",
+          body: editTemplate,
+          auth: true,
+        },
+      )
+
+      console.log("Update template response:", result)
+
+      // Check if we got a successful response
+      if (result && (result.success === true || result.data)) {
+        toast.success("Template updated successfully")
+        setIsEditDialogOpen(false)
+        setSelectedTemplate(null)
+        // Refresh the list
+        await fetchTemplates()
+        // Reset form
+        setEditTemplate({
+          name: "",
+          subject: "",
+          content: "",
+          htmlContent: "",
+          category: "promotional",
+        })
+      } else {
+        toast.error("Failed to update template")
+      }
+    } catch (error: any) {
+      console.error("[v0] Error updating template:", error)
+
+      if (error?.status === 404) {
+        toast.error("Template not found. It may have been deleted.")
+      } else if (error?.status === 400) {
+        toast.error("Invalid data. Please check your input.")
+      } else {
+        toast.error(error?.message || "Failed to update template")
+      }
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleDeleteTemplate = async () => {
+    if (!selectedTemplate) {
+      toast.error("No template selected")
+      return
+    }
+
+    if (!selectedTemplate.id || selectedTemplate.id === selectedTemplate.name) {
+      toast.error("Invalid template ID. Please refresh and try again.")
+      return
+    }
+
+    try {
+      setIsSubmitting(true)
+
+      console.log(`Deleting template with ID: ${selectedTemplate.id}`)
+
+      const result = await apiFetch<{ success?: boolean }>(
+        `/api/admin/marketing/email-templates/${selectedTemplate.id}`,
+        {
+          method: "DELETE",
+          auth: true,
+        },
+      )
+
+      console.log("Delete template response:", result)
+
+      // For DELETE, success could be indicated by a truthy response or { success: true }
+      if (result && (result.success === true || typeof result === 'object')) {
+        toast.success("Template deleted successfully")
+        setIsDeleteDialogOpen(false)
+        setSelectedTemplate(null)
+        await fetchTemplates()
+      } else {
+        toast.error("Failed to delete template")
+      }
+    } catch (error: any) {
+      console.error("[v0] Error deleting template:", error)
+      if (error?.status === 404) {
+        toast.error("Template not found. It may have been already deleted.")
+      } else {
+        toast.error(error?.message || "Failed to delete template")
+      }
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const openEditDialog = (template: EmailTemplate) => {
+    if (!template.id || template.id === template.name) {
+      toast.error("Invalid template data. Please refresh the page.")
+      return
+    }
+
+    setSelectedTemplate(template)
+    setEditTemplate({
+      name: template.name,
+      subject: template.subject,
+      content: template.content,
+      htmlContent: template.htmlContent || "",
+      category: template.category || "promotional",
+    })
+    setIsEditDialogOpen(true)
+  }
+
+  const openDeleteDialog = (template: EmailTemplate) => {
+    if (!template.id || template.id === template.name) {
+      toast.error("Invalid template data. Please refresh the page.")
+      return
+    }
+
+    setSelectedTemplate(template)
+    setIsDeleteDialogOpen(true)
   }
 
   const getCategoryColor = (category?: string) => {
@@ -119,6 +297,13 @@ export default function EmailTemplates() {
     }
   }
 
+  useEffect(() => {
+    if (templates.length > 0) {
+      console.log("Templates data structure:", templates[0])
+      console.log("Template IDs:", templates.map(t => ({ id: t.id, name: t.name })))
+    }
+  }, [templates])
+
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
@@ -134,12 +319,13 @@ export default function EmailTemplates() {
               Create Template
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
+          <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col p-0">
+            <DialogHeader className="px-6 pt-6 pb-4 border-b">
               <DialogTitle>Create Email Template</DialogTitle>
               <DialogDescription>Create a reusable template for your email campaigns</DialogDescription>
             </DialogHeader>
-            <div className="space-y-4">
+
+            <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
               <div>
                 <Label>Template Name</Label>
                 <Input
@@ -180,6 +366,7 @@ export default function EmailTemplates() {
                   onChange={(e) => setNewTemplate({ ...newTemplate, content: e.target.value })}
                   placeholder="Enter email content..."
                   rows={6}
+                  className="min-h-[150px]"
                 />
               </div>
               <div>
@@ -189,18 +376,154 @@ export default function EmailTemplates() {
                   onChange={(e) => setNewTemplate({ ...newTemplate, htmlContent: e.target.value })}
                   placeholder="<html>...</html>"
                   rows={4}
+                  className="min-h-[100px]"
                 />
               </div>
             </div>
-            <DialogFooter>
+
+            <DialogFooter className="px-6 py-4 border-t bg-gray-50">
               <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
                 Cancel
               </Button>
-              <Button onClick={handleCreateTemplate}>Create Template</Button>
+              <Button onClick={handleCreateTemplate} disabled={isSubmitting}>
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Creating...
+                  </>
+                ) : (
+                  "Create Template"
+                )}
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
+
+      {/* Edit Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={(open) => {
+        setIsEditDialogOpen(open)
+        if (!open) {
+          // Reset form when dialog closes without saving
+          setEditTemplate({
+            name: "",
+            subject: "",
+            content: "",
+            htmlContent: "",
+            category: "promotional",
+          })
+          setSelectedTemplate(null)
+        }
+      }}>
+        <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col p-0">
+          <DialogHeader className="px-6 pt-6 pb-4 border-b">
+            <DialogTitle>Edit Email Template</DialogTitle>
+            <DialogDescription>Update your email template</DialogDescription>
+          </DialogHeader>
+
+          <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+            <div>
+              <Label>Template Name</Label>
+              <Input
+                value={editTemplate.name}
+                onChange={(e) => setEditTemplate({ ...editTemplate, name: e.target.value })}
+                placeholder="e.g., Welcome Email"
+              />
+            </div>
+            <div>
+              <Label>Category</Label>
+              <Select
+                value={editTemplate.category}
+                onValueChange={(value) => setEditTemplate({ ...editTemplate, category: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="promotional">Promotional</SelectItem>
+                  <SelectItem value="transactional">Transactional</SelectItem>
+                  <SelectItem value="newsletter">Newsletter</SelectItem>
+                  <SelectItem value="announcement">Announcement</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Email Subject</Label>
+              <Input
+                value={editTemplate.subject}
+                onChange={(e) => setEditTemplate({ ...editTemplate, subject: e.target.value })}
+                placeholder="e.g., Welcome to our platform!"
+              />
+            </div>
+            <div>
+              <Label>Email Content (Plain Text)</Label>
+              <Textarea
+                value={editTemplate.content}
+                onChange={(e) => setEditTemplate({ ...editTemplate, content: e.target.value })}
+                placeholder="Enter email content..."
+                rows={6}
+                className="min-h-[150px]"
+              />
+            </div>
+            <div>
+              <Label>HTML Content (Optional)</Label>
+              <Textarea
+                value={editTemplate.htmlContent}
+                onChange={(e) => setEditTemplate({ ...editTemplate, htmlContent: e.target.value })}
+                placeholder="<html>...</html>"
+                rows={4}
+                className="min-h-[100px]"
+              />
+            </div>
+          </div>
+
+          <DialogFooter className="px-6 py-4 border-t bg-gray-50">
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleEditTemplate} disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Updating...
+                </>
+              ) : (
+                "Update Template"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the template
+              "{selectedTemplate?.name}" and remove it from all campaigns.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteTemplate}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete Template"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -275,8 +598,9 @@ export default function EmailTemplates() {
       {/* Templates Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {isLoading ? (
-          <Card>
+          <Card className="col-span-full">
             <CardContent className="p-12 text-center">
+              <Loader2 className="w-8 h-8 text-blue-600 animate-spin mx-auto mb-4" />
               <p className="text-gray-600">Loading templates...</p>
             </CardContent>
           </Card>
@@ -289,11 +613,13 @@ export default function EmailTemplates() {
           </Card>
         ) : (
           templates.map((template) => (
-            <Card key={template.id} className="hover:shadow-lg transition-shadow">
+            <Card key={template.id || template.name} className="hover:shadow-lg transition-shadow">
               <CardContent className="p-6">
                 <div className="flex items-start justify-between mb-3">
                   <Mail className="w-6 h-6 text-blue-600" />
-                  <Badge className={getCategoryColor(template.category)}>{template.category || "uncategorized"}</Badge>
+                  <Badge className={getCategoryColor(template.category)}>
+                    {template.category || "uncategorized"}
+                  </Badge>
                 </div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">{template.name}</h3>
                 <p className="text-sm text-gray-600 mb-2">
@@ -305,14 +631,19 @@ export default function EmailTemplates() {
                     <Copy className="w-4 h-4" />
                     Use
                   </Button>
-                  <Button variant="outline" size="sm" className="gap-1 bg-transparent">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1 bg-transparent"
+                    onClick={() => openEditDialog(template)}
+                  >
                     <Edit className="w-4 h-4" />
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
-                    className="gap-1 text-red-600 hover:text-red-700 bg-transparent"
-                    onClick={() => handleDeleteTemplate(template.id)}
+                    className="gap-1 text-red-600 hover:text-red-700 hover:bg-red-50 bg-transparent"
+                    onClick={() => openDeleteDialog(template)}
                   >
                     <Trash2 className="w-4 h-4" />
                   </Button>

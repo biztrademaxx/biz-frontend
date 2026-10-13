@@ -1,5 +1,6 @@
 "use client"
 
+import { AppImage } from "@/components/app-image"
 import { useState, useEffect } from "react"
 import { apiFetch } from "@/lib/api"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -11,6 +12,8 @@ import { Star, Filter, Calendar, User, MessageSquare, Reply, Send, ChevronDown, 
 import { useToast } from "@/hooks/use-toast"
 import { Skeleton } from "@/components/ui/skeleton"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { venuePrimaryBtn } from "./venue-dashboard-theme"
+import { cn } from "@/lib/utils"
 
 interface Review {
   id: string
@@ -288,14 +291,12 @@ export default function VenueFeedbackManagement({ venueId }: { venueId: string }
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">
-            {venue ? `Feedback for ${venue.businessName}` : "Venue Feedback"}
-          </h2>
-          <p className="text-muted-foreground">Respond to venue feedback and manage replies</p>
-        </div>
+    <div className="min-w-0 space-y-6">
+      <div>
+        <h2 className="text-xl font-bold tracking-tight sm:text-2xl md:text-3xl break-words">
+          {venue ? `Feedback for ${venue.businessName}` : "Venue Feedback"}
+        </h2>
+        <p className="text-muted-foreground text-sm sm:text-base">Respond to venue feedback and manage replies</p>
       </div>
 
       {/* Filters */}
@@ -359,9 +360,9 @@ export default function VenueFeedbackManagement({ venueId }: { venueId: string }
       {/* Reviews List */}
       <Card>
         <CardHeader>
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
             <CardTitle>Reviews ({filteredReviews.length})</CardTitle>
-            <Button variant="outline" onClick={fetchReviews}>
+            <Button variant="outline" onClick={fetchReviews} className="w-full sm:w-auto">
               Refresh
             </Button>
           </div>
@@ -393,14 +394,16 @@ export default function VenueFeedbackManagement({ venueId }: { venueId: string }
           ) : (
             <div className="space-y-4">
               {filteredReviews.map((review) => (
-                <div key={review.id} className="p-4 border rounded-lg">
-                  <div className="flex justify-between items-start">
-                    <div className="flex items-start space-x-4 flex-1">
+                <div key={review.id} className="p-4 border rounded-lg min-w-0 overflow-hidden">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-start">
+                    <div className="flex items-start space-x-4 flex-1 min-w-0">
                       <div className="flex-shrink-0">
                         {review.user.avatar ? (
-                          <img
-                            src={review.user.avatar || "/city/c4.jpg"}
+                          <AppImage
+                            src={review.user.avatar}
                             alt={`${review.user.firstName} ${review.user.lastName}`}
+                            width={48}
+                            height={48}
                             className="w-12 h-12 rounded-full object-cover"
                           />
                         ) : (
@@ -409,10 +412,10 @@ export default function VenueFeedbackManagement({ venueId }: { venueId: string }
                           </div>
                         )}
                       </div>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-2">
-                            <h4 className="font-semibold">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                          <div className="flex flex-wrap items-center gap-2 min-w-0">
+                            <h4 className="font-semibold break-words">
                               {review.user.firstName} {review.user.lastName}
                             </h4>
                             <Badge variant={review.isApproved ? "default" : "secondary"} className="text-xs">
@@ -443,8 +446,8 @@ export default function VenueFeedbackManagement({ venueId }: { venueId: string }
                           </DropdownMenu>
                         </div>
                         <div className="mt-1">{renderStars(review.rating)}</div>
-                        {review.title && <p className="font-medium mt-2">{review.title}</p>}
-                        <p className="text-muted-foreground mt-1">{review.comment}</p>
+                        {review.title && <p className="font-medium mt-2 break-words">{review.title}</p>}
+                        <p className="text-muted-foreground mt-1 break-words">{review.comment}</p>
                         <div className="flex items-center mt-2 text-sm text-muted-foreground">
                           <Calendar className="w-4 h-4 mr-1" />
                           <span>{formatDate(review.createdAt)}</span>
@@ -474,9 +477,11 @@ export default function VenueFeedbackManagement({ venueId }: { venueId: string }
                                     <div className="flex items-start space-x-3">
                                       <div className="flex-shrink-0">
                                         {reply.user.avatar ? (
-                                          <img
-                                            src={reply.user.avatar || "/city/c4.jpg"}
+                                          <AppImage
+                                            src={reply.user.avatar}
                                             alt={`${reply.user.firstName} ${reply.user.lastName}`}
+                                            width={32}
+                                            height={32}
                                             className="w-8 h-8 rounded-full object-cover"
                                           />
                                         ) : (
@@ -535,13 +540,14 @@ export default function VenueFeedbackManagement({ venueId }: { venueId: string }
                               onChange={(e) => setReplyContent(e.target.value)}
                               className="mb-2"
                             />
-                            <div className="flex space-x-2">
-                              <Button onClick={() => handleSendReply(review.id)}>
+                            <div className="flex flex-col gap-2 sm:flex-row sm:space-x-2">
+                              <Button onClick={() => handleSendReply(review.id)} className={cn(venuePrimaryBtn, "w-full sm:w-auto")}>
                                 <Send className="w-4 h-4 mr-2" />
                                 Send Reply
                               </Button>
                               <Button
                                 variant="outline"
+                                className="w-full sm:w-auto"
                                 onClick={() => {
                                   setReplyingTo(null)
                                   setReplyContent("")
@@ -555,7 +561,7 @@ export default function VenueFeedbackManagement({ venueId }: { venueId: string }
                           <Button
                             variant="outline"
                             size="sm"
-                            className="mt-4 bg-transparent"
+                            className="mt-4 w-full bg-transparent sm:w-auto"
                             onClick={() => setReplyingTo(review.id)}
                           >
                             <Reply className="w-4 h-4 mr-2" />

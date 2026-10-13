@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -9,10 +11,19 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
 import { ArrowLeft, Save, User, Building2, Mail, Phone, Globe, Linkedin, Twitter } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 import { apiFetch } from "@/lib/api"
 import { getCityOptions, getCountryOptions, getStateOptions } from "@/lib/location-data"
+import { addExhibitorFormSchema, type AddExhibitorFormValues } from "./schemas/exhibitor-schema"
 
 interface AddExhibitorFormProps {
   onSuccess?: () => void
@@ -24,41 +35,32 @@ export default function AddExhibitorForm({ onSuccess, onCancel }: AddExhibitorFo
   const router = useRouter()
   const { toast } = useToast()
   const [loading, setLoading] = useState(false)
-  const [formData, setFormData] = useState({
-    // Personal Information
-    firstName: "",
-    lastName: "",
-    email: "",
-    phone: "",
-    
-    // Company Information
-    company: "",
-    jobTitle: "",
-    companyIndustry: "",
-    website: "",
-    
-    // Social Media
-    linkedin: "",
-    twitter: "",
-    
-    // Location
-    location: "",
-    country: "",
-    state: "",
-    city: "",
-    
-    // Business Information
-    businessEmail: "",
-    businessPhone: "",
-    businessAddress: "",
-    taxId: "",
-    
-    // Profile
-    bio: "",
-    
-    // Settings
-    isActive: true,
+  const form = useForm<AddExhibitorFormValues>({
+    resolver: zodResolver(addExhibitorFormSchema),
+    defaultValues: {
+      firstName: "",
+      lastName: "",
+      email: "",
+      phone: "",
+      company: "",
+      jobTitle: "",
+      companyIndustry: "",
+      website: "",
+      linkedin: "",
+      twitter: "",
+      location: "",
+      country: "",
+      state: "",
+      city: "",
+      businessEmail: "",
+      businessPhone: "",
+      businessAddress: "",
+      taxId: "",
+      bio: "",
+      isActive: true,
+    },
   })
+  const formData = form.watch()
 
   const industries = [
     "Technology",
@@ -98,92 +100,32 @@ export default function AddExhibitorForm({ onSuccess, onCancel }: AddExhibitorFo
     [resolvedCountryCode, resolvedStateCode],
   )
 
-  const handleChange = (field: string, value: any) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }))
+  const handleChange = (field: keyof AddExhibitorFormValues, value: unknown) => {
+    form.setValue(field, value as never, { shouldValidate: true })
   }
 
-  const validateForm = () => {
-    if (!formData.firstName.trim()) {
-      toast({ 
-        title: "Validation Error", 
-        description: "First name is required", 
-        variant: "destructive" 
-      })
-      return false
-    }
-    if (!formData.lastName.trim()) {
-      toast({ 
-        title: "Validation Error", 
-        description: "Last name is required", 
-        variant: "destructive" 
-      })
-      return false
-    }
-    if (!formData.email.trim()) {
-      toast({ 
-        title: "Validation Error", 
-        description: "Email is required", 
-        variant: "destructive" 
-      })
-      return false
-    }
-    if (!formData.email.includes('@')) {
-      toast({ 
-        title: "Validation Error", 
-        description: "Invalid email format", 
-        variant: "destructive" 
-      })
-      return false
-    }
-    if (!formData.company.trim()) {
-      toast({ 
-        title: "Validation Error", 
-        description: "Company name is required", 
-        variant: "destructive" 
-      })
-      return false
-    }
-    if (!formData.companyIndustry) {
-      toast({ 
-        title: "Validation Error", 
-        description: "Industry is required", 
-        variant: "destructive" 
-      })
-      return false
-    }
-    return true
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    if (!validateForm()) return
-    
+  const onSubmit = async (values: AddExhibitorFormValues) => {
     setLoading(true)
 
     try {
-      // Prepare the data for the backend
       const exhibitorData = {
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        email: formData.email,
-        phone: formData.phone || null,
-        company: formData.company,
-        jobTitle: formData.jobTitle || null,
-        companyIndustry: formData.companyIndustry,
-        website: formData.website || null,
-        linkedin: formData.linkedin || null,
-        twitter: formData.twitter || null,
-        location: [formData.city, formData.state, formData.country].filter(Boolean).join(", ") || formData.location || null,
-        businessEmail: formData.businessEmail || null,
-        businessPhone: formData.businessPhone || null,
-        businessAddress: formData.businessAddress || null,
-        taxId: formData.taxId || null,
-        bio: formData.bio || null,
-        isActive: formData.isActive,
+        firstName: values.firstName,
+        lastName: values.lastName,
+        email: values.email,
+        phone: values.phone || null,
+        company: values.company,
+        jobTitle: values.jobTitle || null,
+        companyIndustry: values.companyIndustry,
+        website: values.website || null,
+        linkedin: values.linkedin || null,
+        twitter: values.twitter || null,
+        location: [values.city, values.state, values.country].filter(Boolean).join(", ") || values.location || null,
+        businessEmail: values.businessEmail || null,
+        businessPhone: values.businessPhone || null,
+        businessAddress: values.businessAddress || null,
+        taxId: values.taxId || null,
+        bio: values.bio || null,
+        isActive: values.isActive,
       }
 
       // Use your existing apiFetch function
@@ -250,7 +192,8 @@ export default function AddExhibitorForm({ onSuccess, onCancel }: AddExhibitorFo
         </div>
       </div>
 
-      <form onSubmit={handleSubmit}>
+      <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)}>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Form */}
           <div className="lg:col-span-2 space-y-6">
@@ -267,47 +210,57 @@ export default function AddExhibitorForm({ onSuccess, onCancel }: AddExhibitorFo
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="firstName">First Name *</Label>
-                    <Input
-                      id="firstName"
-                      value={formData.firstName}
-                      onChange={(e) => handleChange("firstName", e.target.value)}
-                      placeholder="Enter first name"
-                      required
-                      disabled={loading}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="lastName">Last Name *</Label>
-                    <Input
-                      id="lastName"
-                      value={formData.lastName}
-                      onChange={(e) => handleChange("lastName", e.target.value)}
-                      placeholder="Enter last name"
-                      required
-                      disabled={loading}
-                    />
-                  </div>
+                  <FormField
+                    control={form.control}
+                    name="firstName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>First Name *</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter first name" disabled={loading} {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="lastName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Last Name *</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter last name" disabled={loading} {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email Address *</Label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                      <Input
-                        id="email"
-                        type="email"
-                        value={formData.email}
-                        onChange={(e) => handleChange("email", e.target.value)}
-                        placeholder="Enter email address"
-                        className="pl-10"
-                        required
-                        disabled={loading}
-                      />
-                    </div>
-                  </div>
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email Address *</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                            <Input
+                              type="email"
+                              placeholder="Enter email address"
+                              className="pl-10"
+                              disabled={loading}
+                              {...field}
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                   <div className="space-y-2">
                     <Label htmlFor="phone">Phone Number</Label>
                     <div className="relative">
@@ -349,38 +302,45 @@ export default function AddExhibitorForm({ onSuccess, onCancel }: AddExhibitorFo
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="company">Company Name *</Label>
-                  <Input
-                    id="company"
-                    value={formData.company}
-                    onChange={(e) => handleChange("company", e.target.value)}
-                    placeholder="Enter company name"
-                    required
-                    disabled={loading}
-                  />
-                </div>
+                <FormField
+                  control={form.control}
+                  name="company"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Company Name *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter company name" disabled={loading} {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="companyIndustry">Industry *</Label>
-                    <Select
-                      value={formData.companyIndustry}
-                      onValueChange={(value) => handleChange("companyIndustry", value)}
-                      disabled={loading}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select industry" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {industries.map((industry) => (
-                          <SelectItem key={industry} value={industry}>
-                            {industry}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  <FormField
+                    control={form.control}
+                    name="companyIndustry"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Industry *</FormLabel>
+                        <Select value={field.value} onValueChange={field.onChange} disabled={loading}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select industry" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {industries.map((industry) => (
+                              <SelectItem key={industry} value={industry}>
+                                {industry}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                   <div className="space-y-2">
                     <Label htmlFor="website">Website</Label>
                     <div className="relative">
@@ -696,6 +656,7 @@ export default function AddExhibitorForm({ onSuccess, onCancel }: AddExhibitorFo
           </div>
         </div>
       </form>
+      </Form>
     </div>
   )
 }

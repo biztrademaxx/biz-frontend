@@ -1,12 +1,17 @@
+// app/admin-dashboard/events/components/EventRow.tsx
 "use client"
 
-import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Edit, Star, Eye, Trash2 } from "lucide-react"
+import { Edit, Star, Eye, Trash2, CheckCircle2 } from "lucide-react"
 import { getCategoryDisplay } from "../types/event.types"
 import type { Event } from "../types/event.types"
 import { EventActions } from "./EventActions"
+import { AppImage } from "@/components/app-image"
+import { getEventDisplayImageUrl } from "@/lib/default-event-image"
+import { eventPublicPath } from "@/lib/event-path"
+import { getPlanDisplayName, getPlanColor } from "@/lib/subscription-features"
 
 interface EventRowProps {
   event: Event
@@ -19,12 +24,14 @@ interface EventRowProps {
   onVipToggle: (eventId: string, current: boolean) => void
   onPublicToggle: (eventId: string, current: boolean) => void
   onDelete: (eventId: string) => void
+  onApprove?: (eventId: string) => void
   onPromote: (event: Event) => void
   onVerify: (event: Event) => void
   getStatusColor: (status: Event["status"]) => "default" | "secondary" | "destructive" | "outline"
 }
 
-function getEventStatusByDate(event: Event): "Live" | "Upcoming" | "Ended" | "Draft" {
+function getEventStatusByDate(event: Event): "Live" | "Upcoming" | "Ended" | "Draft" | "Pending" {
+  if (event.status === "Pending Review") return "Pending"
   if (event.status === "Draft") return "Draft"
   const today = new Date(); today.setHours(0, 0, 0, 0)
   const startDate = new Date(event.date); startDate.setHours(0, 0, 0, 0)
@@ -49,11 +56,8 @@ function formatDateRange(startDate: string, endDate: string): string {
 }
 
 function getOrganizerInitials(companyName: string): string {
-  // Get initials from company name (first letters of each word, max 2 letters)
-  const words = companyName.split(" ").filter(w => w.length > 0)
-  if (words.length === 1) {
-    return words[0].substring(0, 2).toUpperCase()
-  }
+  const words = companyName.split(" ").filter((w) => w.length > 0)
+  if (words.length === 1) return words[0].substring(0, 2).toUpperCase()
   return words.slice(0, 2).map((w) => w[0]?.toUpperCase() ?? "").join("")
 }
 
@@ -79,107 +83,125 @@ function getOrganizerColor(name: string) {
 function OrganizerAvatar({ name }: { name: string }) {
   const { bg, text } = getOrganizerColor(name)
   return (
-    <div style={{
-      width: "28px", height: "28px", borderRadius: "50%",
-      background: bg, color: text,
-      display: "flex", alignItems: "center", justifyContent: "center",
-      fontSize: "11px", fontWeight: 700, flexShrink: 0, letterSpacing: "0.02em",
-    }}>
+    <div
+      style={{
+        width: "28px", height: "28px", borderRadius: "50%",
+        background: bg, color: text,
+        display: "flex", alignItems: "center", justifyContent: "center",
+        fontSize: "11px", fontWeight: 700, flexShrink: 0, letterSpacing: "0.02em",
+      }}
+    >
       {getOrganizerInitials(name) || "?"}
     </div>
   )
 }
 
-// Category pill colors
-const CATEGORY_STYLES: Record<string, { bg: string; text: string }> = {
-  "Summit": { bg: "#dcfce7", text: "#166534" },
-  "Expo": { bg: "#ede9fe", text: "#5b21b6" },
-  "Conference": { bg: "#dbeafe", text: "#1d4ed8" },
-  "Workshop": { bg: "#fce7f3", text: "#9d174d" },
-  "Trade Show": { bg: "#ffedd5", text: "#c2410c" },
-  "Virtual": { bg: "#e0e7ff", text: "#3730a3" },
-  "Auto & Automotive": { bg: "#fce7f3", text: "#be185d" },
-  "Agriculture & Forestry": { bg: "#dcfce7", text: "#166534" },
-  "Security & Defense": { bg: "#fee2e2", text: "#991b1b" },
-  "Technology": { bg: "#dbeafe", text: "#1e40af" },
-  "Healthcare": { bg: "#d1fae5", text: "#065f46" },
-  "Finance": { bg: "#fef3c7", text: "#92400e" },
-}
-
-function CategoryPill({ name }: { name: string }) {
-  const style = CATEGORY_STYLES[name] || { bg: "#f3f4f6", text: "#374151" }
+// Plan Badge Component
+function PlanBadge({ planSlug, isLoading }: { planSlug?: string; isLoading?: boolean }) {
+  if (isLoading) {
+    return (
+      <span className="ml-1 inline-block whitespace-nowrap rounded-xl bg-muted px-2 py-px text-[9px] font-medium text-muted-foreground">
+        ...
+      </span>
+    )
+  }
+  
+  if (!planSlug || planSlug === 'organizer-free' || planSlug === 'organizer-silver') return null
+  
+  const name = getPlanDisplayName(planSlug)
+  const colors = getPlanColor(planSlug)
+  
+  // Only show for Gold and Platinum
+  if (!['organizer-gold', 'organizer-platinum'].includes(planSlug)) return null
+  
   return (
-    <span style={{
-      display: "inline-flex", alignItems: "center",
-      padding: "4px 12px", borderRadius: "20px",
-      fontSize: "12px", fontWeight: 600, whiteSpace: "nowrap",
-      background: style.bg, color: style.text,
-    }}>
+    <span
+      style={{
+        display: 'inline-block',
+        padding: '1px 8px',
+        borderRadius: '12px',
+        fontSize: '9px',
+        fontWeight: 700,
+        background: colors.bg,
+        color: colors.text,
+        textTransform: 'uppercase',
+        letterSpacing: '0.05em',
+        marginLeft: '4px',
+        whiteSpace: 'nowrap',
+      }}
+    >
       {name}
     </span>
   )
 }
 
-function StatusPill({ status }: { status: "Live" | "Upcoming" | "Ended" | "Draft" }) {
+const CATEGORY_CLASS: Record<string, string> = {
+  "Summit": "bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300",
+  "Expo": "bg-violet-100 text-violet-800 dark:bg-violet-500/20 dark:text-violet-300",
+  "Conference": "bg-blue-100 text-blue-800 dark:bg-blue-500/20 dark:text-blue-300",
+  "Workshop": "bg-pink-100 text-pink-800 dark:bg-pink-500/20 dark:text-pink-300",
+  "Trade Show": "bg-orange-100 text-orange-800 dark:bg-orange-500/20 dark:text-orange-300",
+  "Virtual": "bg-indigo-100 text-indigo-800 dark:bg-indigo-500/20 dark:text-indigo-300",
+  "Auto & Automotive": "bg-pink-100 text-pink-800 dark:bg-pink-500/20 dark:text-pink-300",
+  "Agriculture & Forestry": "bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300",
+  "Security & Defense": "bg-red-100 text-red-800 dark:bg-red-500/20 dark:text-red-300",
+  "Technology": "bg-blue-100 text-blue-800 dark:bg-blue-500/20 dark:text-blue-300",
+  "Healthcare": "bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300",
+  "Finance": "bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300",
+  "Minerals & Metals": "bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300",
+  "Packing & Packaging": "bg-indigo-100 text-indigo-800 dark:bg-indigo-500/20 dark:text-indigo-300",
+  "Food & Beverages": "bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300",
+  "Chemicals": "bg-red-100 text-red-800 dark:bg-red-500/20 dark:text-red-300",
+  "Industrial Engineering": "bg-muted text-foreground",
+  "Building & Construction": "bg-blue-100 text-blue-800 dark:bg-blue-500/20 dark:text-blue-300",
+}
+
+function CategoryPill({ name }: { name: string }) {
+  const colorClass = CATEGORY_CLASS[name] || "bg-muted text-foreground"
+  return (
+    <span
+      className={`inline-block max-w-full overflow-hidden text-ellipsis whitespace-nowrap rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${colorClass}`}
+    >
+      {name}
+    </span>
+  )
+}
+
+function StatusPill({ status }: { status: "Live" | "Upcoming" | "Ended" | "Draft" | "Pending" }) {
   const STYLES = {
-    Live: { bg: "#dcfce7", dot: "#16a34a", text: "#15803d" },
-    Upcoming: { bg: "#dbeafe", dot: "#3b82f6", text: "#1d4ed8" },
-    Ended: { bg: "#f3f4f6", dot: "#9ca3af", text: "#6b7280" },
-    Draft: { bg: "#fef9c3", dot: "#ca8a04", text: "#a16207" },
+    Live: { className: "bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300", dot: "#16a34a" },
+    Upcoming: { className: "bg-blue-100 text-blue-800 dark:bg-blue-500/20 dark:text-blue-300", dot: "#3b82f6" },
+    Ended: { className: "bg-muted text-muted-foreground", dot: "#9ca3af" },
+    Draft: { className: "bg-yellow-100 text-yellow-800 dark:bg-yellow-500/20 dark:text-yellow-300", dot: "#ca8a04" },
+    Pending: { className: "bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300", dot: "#eab308" },
   }
   const s = STYLES[status]
   return (
-    <span style={{
-      display: "inline-flex", alignItems: "center", gap: "5px",
-      padding: "4px 12px", borderRadius: "20px",
-      fontSize: "12px", fontWeight: 600,
-      background: s.bg, color: s.text,
-    }}>
-      <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: s.dot, flexShrink: 0 }} />
+    <span
+      className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${s.className}`}
+    >
+      <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: s.dot }} />
       {status}
     </span>
   )
 }
 
-// FIXED: Strongly prioritize company over personal name
 function getOrganizerCompanyName(organizer: any): string {
   if (!organizer) return "Unknown"
-
-  // If organizer is string
-  if (typeof organizer === "string") {
-    return organizer
-  }
-
-  // PRIORITY 1 → company
-  if (organizer.company && organizer.company.trim() !== "") {
-    return organizer.company
-  }
-
-  // PRIORITY 2 → companyName
-  if (organizer.companyName && organizer.companyName.trim() !== "") {
-    return organizer.companyName
-  }
-
-  // PRIORITY 3 → name
-  if (organizer.name && organizer.name.trim() !== "") {
-    return organizer.name
-  }
-
-  // PRIORITY 4 → organizerName
-  if (organizer.organizerName && organizer.organizerName.trim() !== "") {
-    return organizer.organizerName
-  }
-
+  if (typeof organizer === "string") return organizer
+  if (organizer.company?.trim()) return organizer.company
+  if (organizer.companyName?.trim()) return organizer.companyName
+  if (organizer.name?.trim()) return organizer.name
+  if (organizer.organizerName?.trim()) return organizer.organizerName
   return "Unknown"
 }
 
-// Capacity bar color
-function barColor(attendees: number, capacity: number): string {
-  if (!capacity) return "#22c55e"
-  const pct = attendees / capacity
-  if (pct > 0.8) return "#ef4444"
-  if (pct > 0.5) return "#f59e0b"
-  return "#22c55e"
+// Shared truncation style — works with table-layout: fixed
+const truncStyle: React.CSSProperties = {
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
+  maxWidth: 0,
 }
 
 export function EventRow({
@@ -193,45 +215,31 @@ export function EventRow({
   onVipToggle,
   onPublicToggle,
   onDelete,
+  onApprove,
   onPromote,
   onVerify,
 }: EventRowProps) {
-  const [isHovered, setIsHovered] = useState(false)
-
-  // Debug logs
-  console.log("====================================")
-  console.log("📌 EVENT TITLE:", event.title)
-  console.log("👤 RAW ORGANIZER DATA:", JSON.stringify(event.organizer, null, 2))
-
-  // Get company name using the improved function
-  const organizerName =
-    typeof event.organizer === "object" && event.organizer !== null
-      ? event.organizer.company ||
-      "Unknown"
-      : event.organizer || "Unknown"
-
-  console.log("🏢 FINAL ORGANIZER DISPLAY NAME:", organizerName)
-  console.log("====================================")
-
-  // Use currentAttendees if attendees is not available
+  const router = useRouter()
+  const organizerName = getOrganizerCompanyName(event.organizer)
   const attendees = event.attendees || event.currentAttendees || 0
-  const maxCapacity = event.maxCapacity || event.maxAttendees || 0
-  const fillPct = maxCapacity
-    ? Math.min(100, (attendees / maxCapacity) * 100)
-    : Math.min(100, attendees / 100)
-
   const categoryDisplay = getCategoryDisplay(event.category)
   const liveStatus = getEventStatusByDate(event)
 
-  // Use startDate/endDate if date is not available
+  // Get plan slug from event
+  const planSlug = (event as any).organizerPlanSlug || 'organizer-free'
+  const isLoadingPlan = (event as any)._loadingPlan === true
+
+  console.log(`🎯 EventRow: ${event.title} - Plan: ${planSlug}, Loading: ${isLoadingPlan}`)
+
   const dateRange = formatDateRange(
     event.startDate || event.date,
-    event.endDate || event.date
+    event.endDate || event.date,
   )
 
-  const locationParts = (event.location || `${event.city || ""}, ${event.country || ""}`).split(",").map(p => p.trim())
+  const locationParts = (event.location || `${event.city || ""}, ${event.country || ""}`).split(",").map((p) => p.trim())
   const city = locationParts[0] || event.city || ""
   const country = locationParts[locationParts.length - 1] || event.country || ""
+
   const regionTag = ((): string => {
     const loc = (event.location || `${event.city || ""} ${event.country || ""}`).toLowerCase()
     if (loc.includes("india") || loc.includes("singapore") || loc.includes("japan") || loc.includes("china") || loc.includes("australia")) return "APAC"
@@ -242,167 +250,203 @@ export function EventRow({
   })()
 
   const eventDisplayTitle = event.subTitle || event.shortDescription || event.title
-  const venueName = event.venue || ""
+  const locationDisplay = city
+    ? `${city}${country && country !== city ? `, ${country}` : ""}`
+    : "—"
+
+  const isFeatured = event.featured || event.isFeatured || false
+
+  const openEventPage = () => {
+    if (onView) {
+      onView(event)
+      return
+    }
+    router.push(eventPublicPath({ id: event.id, slug: event.slug }))
+  }
 
   return (
-    <tr
-      style={{
-        borderBottom: "1px solid #F5F5F5",
-        background: isHovered ? "#FAFAFA" : "#fff",
-        transition: "background 0.1s",
-      }}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      {/* Checkbox */}
-      {onSelect && (
-        <td style={{ padding: "0 0 0 22px", width: "48px", verticalAlign: "middle" }}>
+    <tr className="event-table-row border-b border-border bg-card transition-colors hover:bg-muted/50">
+      {/* ── Checkbox ── */}
+      <td className="w-11 py-0 pl-4 align-middle">
+        {onSelect && (
           <Checkbox
             checked={selected}
             onCheckedChange={(checked) => onSelect(event.id, checked === true)}
           />
-        </td>
-      )}
+        )}
+      </td>
 
-      {/* Event column */}
-      <td style={{ padding: "14px 16px", verticalAlign: "middle" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          {/* Thumbnail */}
-          <div style={{
-            width: "46px", height: "46px", borderRadius: "10px",
-            background: "#F4F4F5", overflow: "hidden", flexShrink: 0,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            border: "1px solid #ECECEC",
-          }}>
-            {event.thumbnailImage || event.bannerImage || (event.images && event.images[0]) ? (
-              <img
-                src={event.thumbnailImage || event.bannerImage || (event.images && event.images[0])}
-                alt={eventDisplayTitle}
-                style={{ width: "100%", height: "100%", objectFit: "cover" }}
-              />
-            ) : (
-              <span style={{ fontSize: "18px" }}>🎪</span>
-            )}
+      {/* ── Event: thumbnail + title + location ── */}
+      <td
+        className="cursor-pointer px-2 py-2.5 pl-2.5 align-middle"
+        style={truncStyle}
+        onClick={openEventPage}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault()
+            openEventPage()
+          }
+        }}
+        role="link"
+        tabIndex={0}
+        title={`View ${eventDisplayTitle}`}
+      >
+        <div className="flex items-center gap-2">
+          <div className="relative h-[38px] w-[38px] shrink-0 overflow-hidden rounded-[7px] border border-border bg-muted">
+            <AppImage
+              src={getEventDisplayImageUrl({
+                thumbnailImage: event.thumbnailImage,
+                bannerImage: event.bannerImage,
+                vipImage: event.vipImage,
+                images: event.images,
+              })}
+              alt={eventDisplayTitle}
+              fill
+              sizes="38px"
+              className="object-cover"
+            />
           </div>
-          <div>
-            <div style={{ fontSize: "14px", fontWeight: 600, color: "#18181B", lineHeight: 1.3 }}>
+          <div className="min-w-0">
+            <div
+              title={eventDisplayTitle}
+              className="overflow-hidden text-ellipsis whitespace-nowrap text-[13px] font-semibold leading-tight text-foreground hover:text-[#004A96] hover:underline dark:hover:text-[#17F0F6]"
+            >
               {eventDisplayTitle}
             </div>
-            <div style={{ fontSize: "12px", color: "#A1A1AA", marginTop: "3px" }}>
-              {regionTag && <span style={{ marginRight: "6px", fontWeight: 600 }}>{regionTag}</span>}
-              {venueName && <span>{venueName}{city ? ` · ` : ""}</span>}
+            <div
+              title={locationDisplay}
+              className="mt-0.5 overflow-hidden text-ellipsis whitespace-nowrap text-[11px] text-muted-foreground"
+            >
+              {regionTag && <span className="mr-1 font-semibold">{regionTag}</span>}
               {city}{country && country !== city ? `, ${country}` : ""}
             </div>
           </div>
         </div>
       </td>
 
-      {/* Category */}
-      <td style={{ padding: "14px 16px", verticalAlign: "middle" }}>
+      {/* ── Category ── */}
+      <td className="overflow-hidden px-2 py-2.5 align-middle">
         <CategoryPill name={categoryDisplay} />
       </td>
 
-      {/* Date */}
-      <td style={{ padding: "14px 16px", verticalAlign: "middle", whiteSpace: "nowrap" }}>
-        <span style={{ fontSize: "13px", color: "#52525B", fontWeight: 500 }}>{dateRange}</span>
-      </td>
-
-      {/* Location */}
-      <td style={{ padding: "14px 16px", verticalAlign: "middle" }}>
-        <span style={{ fontSize: "13px", color: "#52525B" }}>
-          {city}{country && country !== city ? `, ${country}` : city || "—"}
+      {/* ── Date ── */}
+      <td className="px-2 py-2.5 align-middle" style={truncStyle}>
+        <span title={dateRange} className="text-xs font-medium text-muted-foreground">
+          {dateRange}
         </span>
       </td>
 
-      {/* Attendance */}
-      <td style={{ padding: "14px 16px", verticalAlign: "middle" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <span style={{
-            fontSize: "13px", fontWeight: 700, color: "#18181B", minWidth: "44px",
-            fontFamily: "'DM Mono', monospace",
-          }}>
-            {attendees.toLocaleString()}
-          </span>
-          <div style={{ width: "64px", height: "4px", background: "#E4E4E7", borderRadius: "999px", overflow: "hidden" }}>
-            <div style={{
-              height: "100%", borderRadius: "999px",
-              width: `${fillPct}%`,
-              background: barColor(attendees, maxCapacity),
-              transition: "width 0.3s",
-            }} />
-          </div>
-        </div>
+      {/* ── Location (hidden ≤768px) ── */}
+      <td className="col-hide-md px-2 py-2.5 align-middle" style={truncStyle}>
+        <span title={locationDisplay} className="text-xs text-muted-foreground">
+          {locationDisplay}
+        </span>
       </td>
 
-      {/* Status */}
-      <td style={{ padding: "14px 16px", verticalAlign: "middle" }}>
+      {/* ── Attendance (hidden ≤640px) ── no truncStyle: numbers must never clip */}
+      <td className="col-hide-sm px-2 py-2.5 align-middle">
+        <span className="text-[13px] font-bold text-foreground">
+          {attendees.toLocaleString()}
+        </span>
+      </td>
+
+      {/* ── Status ── no truncStyle: pill must not disappear */}
+      <td className="px-2 py-2.5 align-middle">
         <StatusPill status={liveStatus} />
       </td>
 
-      {/* Organizer - Shows COMPANY NAME */}
-      <td style={{ padding: "14px 16px", verticalAlign: "middle" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px", whiteSpace: "nowrap" }}>
+      {/* ── Organizer (hidden ≤1024px) with Plan Badge ── */}
+      <td className="col-hide-lg px-2 py-2.5 align-middle" style={truncStyle}>
+        <div className="flex items-center gap-1.5">
           <OrganizerAvatar name={organizerName} />
-          <span style={{ fontSize: "13px", color: "#52525B", fontWeight: 500 }}>
-            {organizerName}
+          <span className="flex min-w-0 items-center gap-0.5 overflow-hidden">
+            <span
+              title={organizerName}
+              className="overflow-hidden text-ellipsis whitespace-nowrap text-xs font-medium text-muted-foreground"
+            >
+              {organizerName}
+            </span>
+            <PlanBadge planSlug={planSlug} isLoading={isLoadingPlan} />
           </span>
         </div>
       </td>
 
-      {/* Featured star */}
-      <td style={{ padding: "14px 16px", textAlign: "center", verticalAlign: "middle" }}>
+      {/* ── Featured star ── */}
+      <td className="px-1.5 py-2.5 text-center align-middle">
         <button
-          onClick={() => onFeatureToggle(event.id, event.featured || event.isFeatured || false)}
-          style={{ background: "none", border: "none", cursor: "pointer", padding: "4px", lineHeight: 1 }}
-          title={event.featured || event.isFeatured ? "Remove from featured" : "Mark as featured"}
+          onClick={() => onFeatureToggle(event.id, isFeatured)}
+          className="cursor-pointer border-0 bg-transparent p-1 leading-none"
+          title={isFeatured ? "Remove from featured" : "Mark as featured"}
         >
-          <Star style={{
-            width: "16px", height: "16px",
-            fill: (event.featured || event.isFeatured) ? "#F59E0B" : "none",
-            color: (event.featured || event.isFeatured) ? "#F59E0B" : "#D4D4D8",
-            transition: "all 0.15s",
-          }} />
+          <Star
+            className={`h-[15px] w-[15px] transition-all ${
+              isFeatured ? "fill-amber-500 text-amber-500" : "text-muted-foreground/50"
+            }`}
+          />
         </button>
       </td>
 
-      {/* Actions */}
-      <td style={{ padding: "14px 16px", verticalAlign: "middle" }}>
-        <div style={{
-          display: "flex", alignItems: "center", gap: "2px",
-          opacity: isHovered ? 1 : 0,
-          pointerEvents: isHovered ? "auto" : "none",
-          transition: "opacity 0.15s",
-        }}>
+      {/* ── Actions ── always visible; hover reveals them more prominently via CSS ── */}
+      <td className="whitespace-nowrap py-2.5 pl-0.5 pr-2.5 align-middle">
+        <div className="row-actions flex items-center gap-0.5 opacity-45 transition-opacity">
+          {/* View */}
           <Button
-            variant="ghost" size="icon"
+            variant="ghost"
+            size="icon"
+            onClick={openEventPage}
+            className="h-7 w-7 text-muted-foreground hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-[#17F0F6]/10 dark:hover:text-[#17F0F6]"
+            title="View public event page"
+          >
+            <Eye className="h-3.5 w-3.5" />
+          </Button>
+
+          {/* Edit */}
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={() => onEdit(event)}
-            className="h-7 w-7 text-gray-400 hover:text-blue-600"
+            className="h-7 w-7 text-muted-foreground hover:bg-green-50 hover:text-green-600 dark:hover:bg-emerald-500/10 dark:hover:text-emerald-300"
+            title="Edit event"
           >
             <Edit className="h-3.5 w-3.5" />
           </Button>
-          {onView && (
+
+          {/* Approve pending */}
+          {event.status === "Pending Review" && onApprove && (
             <Button
-              variant="ghost" size="icon"
-              onClick={() => onView(event)}
-              className="h-7 w-7 text-gray-400 hover:text-green-600"
+              variant="ghost"
+              size="icon"
+              onClick={() => onApprove(event.id)}
+              className="h-7 w-7 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-600 dark:text-emerald-300 dark:hover:bg-emerald-500/10"
+              title="Approve & publish event"
             >
-              <Eye className="h-3.5 w-3.5" />
+              <CheckCircle2 className="h-3.5 w-3.5" />
             </Button>
           )}
+
+          {/* Delete */}
           <Button
-            variant="ghost" size="icon"
+            variant="ghost"
+            size="icon"
             onClick={() => onDelete(event.id)}
-            className="h-7 w-7 text-gray-400 hover:text-red-600"
+            className="h-7 w-7 text-muted-foreground hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/10 dark:hover:text-red-300"
+            title="Delete event"
           >
             <Trash2 className="h-3.5 w-3.5" />
           </Button>
+
+          {/* More actions dropdown */}
           <EventActions
-            event={event}
+            event={{
+              ...event,
+              _loadingPlan: isLoadingPlan
+            }}
             onStatusChange={onStatusChange}
             onFeatureToggle={onFeatureToggle}
             onVipToggle={onVipToggle}
             onPublicToggle={onPublicToggle}
             onDelete={onDelete}
+            onApprove={onApprove}
             onPromote={onPromote}
             onVerify={onVerify}
           />

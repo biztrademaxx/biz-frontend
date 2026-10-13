@@ -1,7 +1,9 @@
+// FeaturedOrganizersStripClient.tsx
 "use client"
 
 import { useCallback } from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import type { OrganizerListEntry } from "@/lib/organizers/types"
 import { OrganizersMarquee } from "./OrganizersMarquee"
 
@@ -20,5 +22,32 @@ export default function FeaturedOrganizersStripClient({
     [router],
   )
 
-  return <OrganizersMarquee organizers={organizers} onOrganizerActivate={onOrganizerActivate} />
+  if (organizers.length === 0) {
+    return (
+      <div className="py-12 text-center">
+        <p className="text-gray-500">No featured organizers available at this time.</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="w-full">
+      {/* Marquee with hideHeading=true */}
+      <OrganizersMarquee
+        organizers={organizers}
+        onOrganizerActivate={onOrganizerActivate}
+        hideHeading={true}
+      />
+
+      {/* View All Button */}
+      <div className="mt-8 flex justify-center">
+        <Link
+          href="/organizers"
+          className="inline-flex items-center justify-center rounded-sm bg-[#004A96] px-8 py-3 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:shadow-[0_8px_20px_rgba(0,44,113,0.25)] focus:outline-none"
+        >
+          View All Organizers
+        </Link>
+      </div>
+    </div>
+  )
 }

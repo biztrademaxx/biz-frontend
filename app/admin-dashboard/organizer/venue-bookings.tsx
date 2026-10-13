@@ -12,7 +12,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   Building2,
   Calendar,
-  DollarSign,
   Eye,
   MapPin,
   Search,
@@ -50,6 +49,7 @@ export default function OrganizerVenueBookingsPage() {
   const [filteredBookings, setFilteredBookings] = useState<VenueBooking[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedBooking, setSelectedBooking] = useState<VenueBooking | null>(null)
+  const [selectedBookingIndex, setSelectedBookingIndex] = useState<number>(0)
   const [detailsOpen, setDetailsOpen] = useState(false)
 
   // Filters
@@ -73,8 +73,13 @@ export default function OrganizerVenueBookingsPage() {
       )
       const list = Array.isArray(json?.data) ? json.data : []
 
-      setBookings(list)
-      setFilteredBookings(list)
+      // Sort by createdAt date (newest first)
+      const sortedList = [...list].sort((a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      )
+
+      setBookings(sortedList)
+      setFilteredBookings(sortedList)
     } catch (error) {
       console.error("Error fetching bookings:", error)
     } finally {
@@ -82,18 +87,25 @@ export default function OrganizerVenueBookingsPage() {
     }
   }
 
+  // Generate sequential booking ID based on index
+  const getSequentialBookingId = (index: number): string => {
+    // BK + 4 digit number (e.g., BK0001, BK0002, BK0010, BK0100)
+    return `BK${String(index + 1).padStart(4, '0')}`
+  }
 
   const applyFilters = () => {
     let filtered = [...bookings]
 
     if (searchQuery) {
       const q = searchQuery.toLowerCase()
-      filtered = filtered.filter(
-        (booking) =>
+      filtered = filtered.filter((booking, idx) => {
+        const sequentialId = getSequentialBookingId(idx)
+        return (
           (booking.venue?.venueName ?? "").toLowerCase().includes(q) ||
           (booking.venue?.venueCity ?? "").toLowerCase().includes(q) ||
-          booking.id.toLowerCase().includes(q),
-      )
+          sequentialId.toLowerCase().includes(q)
+        )
+      })
     }
 
     if (statusFilter !== "all") {
@@ -129,17 +141,17 @@ export default function OrganizerVenueBookingsPage() {
     const pending = bookings.filter((b) => b.status === "PENDING").length
     const confirmed = bookings.filter((b) => b.status === "CONFIRMED").length
     const completed = bookings.filter((b) => b.status === "COMPLETED").length
-    const totalRevenue = bookings
-      .filter((b) => b.status === "CONFIRMED" || b.status === "COMPLETED")
-      .reduce((sum, b) => sum + b.totalAmount, 0)
+    const cancelled = bookings.filter((b) => b.status === "CANCELLED").length
+    const refunded = bookings.filter((b) => b.status === "REFUNDED").length
 
-    return { total, pending, confirmed, completed, totalRevenue }
+    return { total, pending, confirmed, completed, cancelled, refunded }
   }
 
   const stats = calculateStats()
 
-  const handleViewDetails = (booking: VenueBooking) => {
+  const handleViewDetails = (booking: VenueBooking, index: number) => {
     setSelectedBooking(booking)
+    setSelectedBookingIndex(index)
     setDetailsOpen(true)
   }
 
@@ -171,13 +183,14 @@ export default function OrganizerVenueBookingsPage() {
 
   return (
     <div className="space-y-6">
+      {/* Header - 1 */}
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Venue Bookings</h1>
         <p className="text-gray-600 mt-1">Manage organizer venue booking requests and reservations</p>
       </div>
 
-      {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+      {/* Statistics Cards - 2 (6 cards now) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Bookings</CardTitle>
@@ -224,17 +237,28 @@ export default function OrganizerVenueBookingsPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-            <TrendingUp className="h-4 w-4 text-green-600" />
+            <CardTitle className="text-sm font-medium">Cancelled</CardTitle>
+            <XCircle className="h-4 w-4 text-red-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${stats.totalRevenue.toLocaleString()}</div>
-            <p className="text-xs text-gray-600 mt-1">From bookings</p>
+            <div className="text-2xl font-bold">{stats.cancelled}</div>
+            <p className="text-xs text-gray-600 mt-1">Cancelled bookings</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Refunded</CardTitle>
+            <TrendingUp className="h-4 w-4 text-orange-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.refunded}</div>
+            <p className="text-xs text-gray-600 mt-1">Refunded bookings</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Filters */}
+      {/* Filters - 3 */}
       <Card>
         <CardHeader>
           <CardTitle>Filter Bookings</CardTitle>
@@ -270,7 +294,7 @@ export default function OrganizerVenueBookingsPage() {
         </CardContent>
       </Card>
 
-      {/* Bookings Table */}
+      {/* Bookings Table - 4 */}
       <Card>
         <CardHeader>
           <CardTitle>All Venue Bookings</CardTitle>
@@ -283,6 +307,7 @@ export default function OrganizerVenueBookingsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>#</TableHead>
                   <TableHead>Booking ID</TableHead>
                   <TableHead>Venue</TableHead>
                   <TableHead>Location</TableHead>
@@ -296,58 +321,76 @@ export default function OrganizerVenueBookingsPage() {
               <TableBody>
                 {filteredBookings.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center py-8">
+                    <TableCell colSpan={9} className="text-center py-8">
                       <Building2 className="w-12 h-12 text-gray-400 mx-auto mb-2" />
                       <p className="text-gray-600">No bookings found</p>
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredBookings.map((booking) => (
-                    <TableRow key={booking.id}>
-                      <TableCell className="font-mono text-xs">{booking.id.slice(0, 8)}...</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Building2 className="w-4 h-4 text-gray-400" />
+                  filteredBookings.map((booking, idx) => {
+                    const originalIndex = bookings.findIndex(b => b.id === booking.id)
+                    const sequentialId = getSequentialBookingId(originalIndex)
+
+                    return (
+                      <TableRow key={booking.id}>
+                        <TableCell className="font-medium text-gray-500">
+                          {originalIndex + 1}
+                        </TableCell>
+                        <TableCell>
                           <div>
-                            <p className="font-medium">{booking.venue?.venueName}</p>
-                            <p className="text-xs text-gray-500">
-                              {booking.venue?.firstName} {booking.venue?.lastName}
-                            </p>
+                            <code className="text-sm font-mono font-semibold text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                              {sequentialId}
+                            </code>
                           </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1 text-sm">
-                          <MapPin className="w-3 h-3 text-gray-400" />
-                          {booking.venue?.venueCity}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-sm">
-                          <p className="font-medium">{formatDate(booking.startDate)}</p>
-                          <p className="text-xs text-gray-500">to {formatDate(booking.endDate)}</p>
-                        </div>
-                      </TableCell>
-                      <TableCell>{getStatusBadge(booking.status)}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline">
-                          {booking.meetingSpacesInterested?.length ?? 0} spaces
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1 text-sm text-gray-600">
-                          <Calendar className="w-3 h-3" />
-                          {formatDate(booking.createdAt)}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Button variant="ghost" size="sm" onClick={() => handleViewDetails(booking)}>
-                          <Eye className="w-4 h-4 mr-1" />
-                          View
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Building2 className="w-4 h-4 text-gray-400" />
+                            <div>
+                              <p className="font-medium">{booking.venue?.venueName || "—"}</p>
+                              <p className="text-xs text-gray-500">
+                                {booking.venue?.firstName} {booking.venue?.lastName}
+                              </p>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1 text-sm">
+                            <MapPin className="w-3 h-3 text-gray-400" />
+                            {booking.venue?.venueCity || "—"}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm">
+                            <p className="font-medium">{formatDate(booking.startDate)}</p>
+                            <p className="text-xs text-gray-500">to {formatDate(booking.endDate)}</p>
+                          </div>
+                        </TableCell>
+                        <TableCell>{getStatusBadge(booking.status)}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline">
+                            {booking.meetingSpacesInterested?.length ?? 0} spaces
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1 text-sm text-gray-600">
+                            <Calendar className="w-3 h-3" />
+                            {formatDate(booking.createdAt)}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleViewDetails(booking, originalIndex)}
+                          >
+                            <Eye className="w-4 h-4 mr-1" />
+                            View
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    )
+                  })
                 )}
               </TableBody>
             </Table>
@@ -355,7 +398,7 @@ export default function OrganizerVenueBookingsPage() {
         </CardContent>
       </Card>
 
-      {/* Booking Details Dialog */}
+      {/* Booking Details Dialog - 5 */}
       <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -365,11 +408,13 @@ export default function OrganizerVenueBookingsPage() {
 
           {selectedBooking && (
             <div className="space-y-6">
-              {/* Status Badge */}
+              {/* Booking ID Section */}
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600">Booking ID</p>
-                  <p className="font-mono text-sm">{selectedBooking.id}</p>
+                  <code className="text-xl font-mono font-bold text-blue-600 bg-blue-50 px-3 py-1.5 rounded inline-block">
+                    {getSequentialBookingId(selectedBookingIndex)}
+                  </code>
                 </div>
                 {getStatusBadge(selectedBooking.status)}
               </div>
@@ -391,7 +436,7 @@ export default function OrganizerVenueBookingsPage() {
                       {selectedBooking.venue?.firstName ?? ""} {selectedBooking.venue?.lastName ?? ""}
                     </p>
                   </div>
-                  <div>
+                  <div className="col-span-2">
                     <p className="text-gray-600">Address</p>
                     <p className="font-medium">{selectedBooking.venue?.venueAddress ?? "—"}</p>
                   </div>
@@ -419,7 +464,7 @@ export default function OrganizerVenueBookingsPage() {
                   </div>
                   <div>
                     <p className="text-gray-600">Total Amount</p>
-                    <p className="font-medium text-lg">
+                    <p className="font-medium text-lg text-green-600">
                       {formatCurrency(selectedBooking.totalAmount, selectedBooking.currency)}
                     </p>
                   </div>
@@ -431,16 +476,18 @@ export default function OrganizerVenueBookingsPage() {
               </div>
 
               {/* Meeting Spaces */}
-              <div className="border rounded-lg p-4 space-y-3">
-                <h3 className="font-semibold">Meeting Spaces Reserved</h3>
-                <div className="flex flex-wrap gap-2">
-                  {selectedBooking.meetingSpacesInterested?.map((space, index) => (
-                    <Badge key={index} variant="secondary">
-                      {space}
-                    </Badge>
-                  ))}
+              {selectedBooking.meetingSpacesInterested && selectedBooking.meetingSpacesInterested.length > 0 && (
+                <div className="border rounded-lg p-4 space-y-3">
+                  <h3 className="font-semibold">Meeting Spaces Reserved</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedBooking.meetingSpacesInterested.map((space, index) => (
+                      <Badge key={index} variant="secondary">
+                        {space}
+                      </Badge>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Purpose and Requests */}
               {(selectedBooking.purpose || selectedBooking.specialRequests) && (
@@ -455,7 +502,7 @@ export default function OrganizerVenueBookingsPage() {
                   {selectedBooking.specialRequests && (
                     <div>
                       <p className="text-sm text-gray-600">Special Requests</p>
-                      <p className="text-sm mt-1">{selectedBooking.specialRequests}</p>
+                      <p className="text-sm mt-1 whitespace-pre-wrap">{selectedBooking.specialRequests}</p>
                     </div>
                   )}
                 </div>

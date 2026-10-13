@@ -3,6 +3,7 @@
 
 import { devLog } from "@/lib/dev-log"
 
+import { AppImage } from "@/components/app-image"
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -12,9 +13,15 @@ import { Heart, Calendar as CalendarIcon, MapPin } from "lucide-react"
 import { Event } from "./events-section" // reusing Event type
 import { TicketType } from "@prisma/client"
 import { apiFetch, getCurrentUserId } from "@/lib/api"
+import {
+  DEFAULT_EVENT_IMAGE,
+  eventCardImageClassName,
+  eventUsesWatermarkImage,
+  getEventDisplayImageUrl,
+} from "@/lib/default-event-image"
+import { cn } from "@/lib/utils"
 
 /* ---------- Helpers ---------- */
-const DEFAULT_IMAGE = "/image/download2.jpg"
 const DEFAULT_ADDRESS = "Address not specified"
 
 const formatDate = (dateString: string) =>
@@ -75,13 +82,20 @@ const formatTicketPrice = (ticketTypes: TicketType[]) => {
 }
 
 // Helper function to get address with fallback
-const getEventAddress = (event: Event) => {
-  if (event.address && event.address.trim() !== "") return event.address
-  if (event.location && event.location.trim() !== "") return event.location
-  if (event.city && event.state) return `${event.city}, ${event.state}`
-  if (event.city) return event.city
-  if (event.state) return event.state
-  return DEFAULT_ADDRESS
+const getEventLocation = (event: Event) => {
+  const country =
+    event.venue?.venueCountry ||
+    ""
+
+  if (event.city && country) {
+    return `${event.city}, ${country}`
+  }
+
+  if (event.city) {
+    return event.city
+  }
+
+  return "Location TBD"
 }
 
 /* ---------- Component ---------- */
@@ -181,9 +195,11 @@ export function PastEvents({ userId }: PastEventsProps) {
 
   return (
     <div className="space-y-6">
-      <div className="relative border-l-2 border-gray-200 ml-6">
-        {pastEvents.map((event) => (
-          <div key={event.id} className="mb-10 ml-6 relative">
+      <div className="relative ml-3 min-w-0 border-l-2 border-gray-200 sm:ml-6">
+        {pastEvents.map((event) => {
+          const showWatermark = eventUsesWatermarkImage(event)
+          return (
+          <div key={event.id} className="relative mb-10 ml-4 sm:ml-6">
             {/* Timeline Dot */}
             <span
               className={`absolute -left-[35px] flex items-center justify-center w-5 h-5 rounded-full ring-4 ring-white ${timelineDotClass(
@@ -197,107 +213,70 @@ export function PastEvents({ userId }: PastEventsProps) {
             </p>
 
             {/* Event Card */}
-           <div className="flex w-full border border-gray-200 bg-white rounded-lg hover:shadow-md transition-shadow overflow-hidden">
-             {/* Left Image Section - Keep exact same styling */}
-             <div className="w-40 h-32 flex-shrink-0">
-               <img
-                 src={event.thumbnailImage || event.bannerImage || "https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=400&h=300&fit=crop"}
+           <div className="flex w-full min-w-0 flex-col overflow-hidden rounded-lg border border-gray-200 bg-white transition-shadow hover:shadow-md sm:flex-row">
+             <div
+               className={cn(
+                 "relative mx-auto mt-3 h-32 w-[calc(100%-1.5rem)] shrink-0 overflow-hidden rounded-2xl sm:mx-3 sm:w-40",
+                 showWatermark && "bg-slate-50",
+               )}
+             >
+               <AppImage
+                 src={getEventDisplayImageUrl(event)}
                  alt={event.title}
-                 className="w-full h-full object-cover rounded-2xl mt-3 mx-3"
-                 onError={(e) => {
-                   const target = e.currentTarget as HTMLImageElement
-                   target.src = "https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=400&h=300&fit=crop"
-                 }}
+                 fill
+                 sizes="(max-width: 640px) 100vw, 160px"
+                 fallbackSrc={DEFAULT_EVENT_IMAGE}
+                 className={eventCardImageClassName(event)}
                />
              </div>
            
-             {/* Main Content Section */}
-             <div className="flex-1 p-6">
-               <div className="flex justify-between items-start">
-                 {/* Left Content */}
-                 <div className="flex-1 min-w-0">
-                   {/* Category Badge */}
-                   <div className="mb-2">
-                     <span className="text-xs text-purple-600 bg-purple-50 px-2 py-1 rounded">
-                       {event.category || "Event"}
+             <div className="min-w-0 flex-1 p-4 sm:p-6">
+               <span className="mb-2 inline-block rounded bg-purple-50 px-2 py-1 text-xs text-purple-600">
+                 {event.category || "Event"}
+               </span>
+               <h2 className="mb-2 line-clamp-2 break-words text-lg font-bold text-gray-900 sm:text-xl">
+                 {event.title}
+               </h2>
+               <p className="mb-4 line-clamp-2 break-words text-sm text-gray-600">
+                 {event.shortDescription || event.description || "No description available"}
+               </p>
+
+               <div className="grid grid-cols-1 gap-3 border-t border-gray-100 pt-4 sm:grid-cols-2 lg:grid-cols-4">
+                 <div className="flex min-w-0 items-start gap-2 text-sm text-gray-500">
+                   <MapPin className="mt-0.5 h-4 w-4 shrink-0" />
+                   <span className="break-words">{getEventLocation(event)}</span>
+                 </div>
+                 <div className="flex items-center gap-2 text-sm text-gray-500">
+                   <CalendarIcon className="h-4 w-4 shrink-0" />
+                   <span className="break-words">
+                     {formatDate(event.startDate)} - {formatDate(event.endDate || event.startDate)}
+                   </span>
+                 </div>
+                 <div className="space-y-1 text-sm">
+                   <div className="flex justify-between gap-2">
+                     <span className="text-gray-500">Expected Visitors</span>
+                     <span className="font-semibold text-gray-900">
+                       {event.expectedExhibitors || event.maxAttendees || "200"}
                      </span>
                    </div>
-           
-                   {/* Title and Content Row */}
-                   <div className="flex">
-                     {/* Text Content */}
-                     <div className="flex-1 min-w-0">
-                       <h2 className="text-xl font-bold text-gray-900 mb-3 truncate pr-4">
-                         {event.title}
-                       </h2>
-                       <p className="text-sm text-gray-600 mb-4 line-clamp-2">
-                         {event.shortDescription || event.description || "No description available"}
-                       </p>
-                     </div>
-           
-                     {/* Location and Date - Fixed width */}
-                     <div className="flex flex-col gap-4 text-sm text-gray-500 ml-4 min-w-[200px]">
-                       <div className="flex items-center">
-                         <MapPin className="w-4 h-4 mr-2 flex-shrink-0" />
-                          <span
-  className="
-    leading-relaxed 
-    break-all 
-    whitespace-pre-line 
-    line-clamp-2
-  "
->
-  {event.address
-    ? event.address.replace(/(.{14})/g, "$1\n")
-    : "Location TBD"}
-</span>
-                       </div>
-                       <div className="flex items-center">
-                         <CalendarIcon className="w-4 h-4 mr-2 flex-shrink-0" />
-                         <span className="whitespace-nowrap">
-                           {formatDate(event.startDate)} - {formatDate(event.endDate || event.startDate)}
-                         </span>
-                       </div>
-                     </div>
-                     
-                     {/* Ticket Icon */}
-                     <div className="w-15 h-15 flex items-center justify-center bg-purple-50 rounded-lg ml-8 flex-shrink-0">
-                       🎟️
-                     </div>
+                   <div className="flex justify-between gap-2">
+                     <span className="text-gray-500">Exptd Exhibitors</span>
+                     <span className="font-semibold text-gray-900">
+                       {event.expectedExhibitors || "200"}
+                     </span>
                    </div>
                  </div>
-           
-                 {/* Right Stats Section - Fixed alignment */}
-                 <div className="ml-6 flex items-start">
-                   {/* Expected Visitors and Exhibitors */}
-                   <div className="space-y-2 mt-6 mr-20 min-w-[180px]">
-                     <div className="flex justify-between gap-10">
-                       <span className="text-gray-500 whitespace-nowrap">Expected Visitors</span>
-                       <span className="font-semibold text-gray-900 whitespace-nowrap">
-                         {event.expectedExhibitors || event.maxAttendees || "200"}
-                       </span>
-                     </div>
-                     <div className="flex justify-between gap-12">
-                       <span className="text-gray-500 whitespace-nowrap">Exptd Exhibitors</span>
-                       <span className="font-semibold text-gray-900 whitespace-nowrap">
-                         {event.expectedExhibitors || "200"}
-                       </span>
-                     </div>
-                   </div>
-           
-                   {/* Entry Fee */}
-                   <div className="grid text-center mt-5 min-w-[80px]">
-                     <span className="text-xl font-bold text-pink-500 whitespace-nowrap">
-                       {formatTicketPrice(event.ticketTypes as unknown as TicketType[])}
-                     </span>
-                     <span className="text-gray-500 text-sm">Entry Fee</span>
-                   </div>
+                 <div className="text-left sm:text-right">
+                   <span className="text-xl font-bold text-pink-500">
+                     {formatTicketPrice(event.ticketTypes as unknown as TicketType[])}
+                   </span>
+                   <span className="block text-sm text-gray-500">Entry Fee</span>
                  </div>
                </div>
              </div>
            </div>
           </div>
-        ))}
+        )})}
       </div>
     </div>
   )

@@ -1,10 +1,13 @@
 "use client"
 
+import { AppImage } from "@/components/app-image"
 import Link from "next/link"
 import { Share2 } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 import type { FeaturedEventPayload } from "@/lib/events/types"
+import { resolveEventBannerImage } from "@/lib/events/resolve-event-banner-image"
 import { eventPublicPath } from "@/lib/event-path"
+import HomeSectionEmptyState, { homeEmptyDescription } from "@/components/home/HomeSectionEmptyState"
 import {
   eventsForFeaturedSlots,
   featuredEventCategoryLabels,
@@ -34,43 +37,62 @@ async function shareFeaturedEvent(title: string, path: string) {
 }
 
 function FeaturedEventCard({ event }: { event: FeaturedEventPayload }) {
+  const thumb = resolveEventBannerImage(event)
+  if (!thumb) return null
+
   const start = new Date(event.startDate)
   const end = new Date(event.endDate)
   const formattedDate = formatFeaturedDateRange(start, end)
   const href = eventPublicPath({ id: event.id, slug: event.slug })
   const labels = featuredEventCategoryLabels(event).slice(0, 3)
-  const thumb = event.bannerImage || "/herosection-images/food.jpg"
 
   return (
-    <div className="rounded-sm border border-gray-200 bg-white p-2 shadow-sm transition-shadow hover:shadow-md">
-      <Link href={href} className="block cursor-pointer">
-        <div className="text-sm font-medium leading-snug text-gray-800">{formattedDate}</div>
-        <div className="mt-1 flex w-full justify-between gap-2">
+    // Updated: Added border and improved shadow
+    <div className="flex h-full flex-col overflow-hidden rounded-sm bg-white border border-gray-200 p-3 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_40px_rgba(0,0,0,0.15)] hover:border-[#002C71]/30">
+      {/* Clickable top section */}
+      <Link href={href} className="flex cursor-pointer flex-col">
+        {/* Date */}
+        <div className="flex items-start justify-between gap-2">
           <div className="flex min-w-0 flex-1 flex-col">
-            <div className="min-h-[3rem]">
-              <span className="line-clamp-2 font-bold text-gray-900">{event.title}</span>
+            <div className="text-sm font-medium leading-snug text-gray-800">
+              {formattedDate}
             </div>
-            <div className="mt-0.5 line-clamp-2 text-sm text-gray-800">
+
+            <span className="type-event-card-title mt-1 line-clamp-2 text-gray-900">
+              {event.title}
+            </span>
+
+            <div className="line-clamp-2 text-sm text-gray-800">
               {featuredEventLocationLine(event)}
             </div>
           </div>
-          <img
-            src={thumb}
-            alt={event.title}
-            width={128}
-            height={128}
-            className="mt-0.5 h-28 w-28 flex-shrink-0 rounded-sm border border-gray-200 object-cover sm:h-32 sm:w-32"
-          />
+
+          <div className="relative w-28 h-[112px] flex-shrink-0 overflow-hidden rounded-sm border border-gray-200 bg-gray-50 sm:w-32 sm:h-[128px]">
+            <AppImage
+              src={thumb}
+              alt={event.title}
+              fill
+              sizes="128px"
+              className="object-cover"
+              onLoad={(e) => {
+                const img = e.currentTarget
+                const ratio = img.naturalWidth / img.naturalHeight
+                img.style.objectFit = ratio > 2 ? "contain" : "cover"
+              }}
+            />
+          </div>
         </div>
       </Link>
-      <div className="mt-3 flex items-center justify-between gap-2">
+
+      {/* Bottom row: tags + share */}
+      <div className="mt-2.5 flex items-center justify-between gap-2">
         <div className="flex min-w-0 flex-wrap items-center gap-1.5">
           {labels.length > 0 ? (
             labels.map((label) => (
               <Link
                 key={`${event.id}-${label}`}
                 href={`/event?category=${encodeURIComponent(label)}`}
-                className="inline-block max-w-[140px] truncate rounded-md bg-gray-100 px-1.5 py-0.5 text-xs leading-none text-gray-600 no-underline hover:text-gray-900"
+                className="inline-block max-w-[140px] truncate rounded-md bg-gray-100 px-1.5 py-0.5 text-xs leading-none text-gray-600 no-underline transition-colors hover:bg-gray-200 hover:text-gray-900"
               >
                 {label}
               </Link>
@@ -96,7 +118,10 @@ function FeaturedEventCard({ event }: { event: FeaturedEventPayload }) {
 
 function PlaceholderCard({ index }: { index: number }) {
   return (
-    <div aria-hidden className="rounded-md border border-gray-200 bg-white p-2 shadow-sm">
+    <div
+      aria-hidden
+      className="rounded-sm border border-gray-200/90 bg-white p-3 shadow-sm"
+    >
       <div className="home-shimmer h-3 w-36 rounded" />
       <div className="mt-2 flex justify-between gap-2">
         <div className="flex min-w-0 flex-1 flex-col gap-2">
@@ -119,10 +144,17 @@ function PlaceholderCard({ index }: { index: number }) {
 
 export interface FeaturedEventsGridClientProps {
   events: FeaturedEventPayload[]
+  homeCity?: string | null
+  homeCountry?: string | null
 }
 
-export default function FeaturedEventsGridClient({ events }: FeaturedEventsGridClientProps) {
-  const n = events.length
+export default function FeaturedEventsGridClient({
+  events,
+  homeCity,
+  homeCountry,
+}: FeaturedEventsGridClientProps) {
+  const withImages = events.filter((e) => Boolean(resolveEventBannerImage(e)))
+  const n = withImages.length
   const [offset, setOffset] = useState(0)
 
   useEffect(() => {
@@ -138,26 +170,24 @@ export default function FeaturedEventsGridClient({ events }: FeaturedEventsGridC
   }, [n])
 
   const slotEvents = useMemo(
-    () => eventsForFeaturedSlots(events, offset, SLOT_COUNT),
-    [events, offset],
+    () => eventsForFeaturedSlots(withImages, offset, SLOT_COUNT),
+    [withImages, offset],
   )
 
-  if (events.length === 0) {
+  if (withImages.length === 0) {
     return (
       <div className="col-12">
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-3 md:grid-rows-3 md:gap-4">
-          {Array.from({ length: 9 }).map((_, i) => (
-            <PlaceholderCard key={i} index={i} />
-          ))}
-        </div>
-        <div className="mt-4 flex justify-center">
-          <Link
-            href="/organizer-signup"
-            className="inline-flex w-[120px] items-center justify-center rounded-md border border-[#002C71] px-3 py-2 text-sm font-medium text-[#002C71] transition-colors hover:bg-[#002C71]/5"
-          >
-            Add Event
-          </Link>
-        </div>
+        <HomeSectionEmptyState
+          icon="events"
+          title="No featured events here yet"
+          description={homeEmptyDescription("featured events with images", homeCity, homeCountry)}
+          homeCity={homeCity}
+          homeCountry={homeCountry}
+          actions={[
+            { label: "Browse all events", href: "/event" },
+            { label: "Add event", href: "/organizer-signup", variant: "secondary" },
+          ]}
+        />
       </div>
     )
   }
@@ -179,7 +209,7 @@ export default function FeaturedEventsGridClient({ events }: FeaturedEventsGridC
       <div className="mt-4 flex justify-center gap-4">
         <Link
           href="/organizer-signup"
-          className="inline-flex w-[120px] items-center justify-center rounded-md border border-[#002C71] px-3 py-2 text-sm font-medium text-[#002C71] transition-colors hover:bg-[#002C71]/5"
+          className="inline-flex items-center justify-center rounded-sm bg-[#004A96] px-8 py-3 text-sm font-semibold text-white shadow-sm transition-colors duration-200 hover:bg-[#003a75] hover:shadow-[0_8px_20px_rgba(0,44,113,0.25)] focus:outline-none"
         >
           Add Event
         </Link>

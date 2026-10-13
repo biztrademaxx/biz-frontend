@@ -11,7 +11,10 @@ interface FavoriteEvent {
   id: string
   title: string
   date: string
-  location: string
+  city?: string
+  venue?: {
+    venueCountry?: string
+  }
   description: string
   categories: string[]
   interested: number
@@ -34,7 +37,7 @@ export function Favourites() {
           id: "1",
           title: "Fitness Fest 2025",
           date: "Thu 04 – Sat 06 June 2025",
-          location: "Bangalore, India",
+          // location: "Bangalore, India",
           description:
             "Aston University is a unique four-day celebration with liberty-loving friends from around the world. Packed with thought-provoking presentations to refresh intellectual foundations of a free society.",
           categories: ["Conference", "Education"],
@@ -95,8 +98,15 @@ export function Favourites() {
                 <h3 className="font-semibold text-lg">{event.title}</h3>
                 <p className="text-sm text-muted-foreground">{event.date}</p>
                 <div className="flex items-center text-sm text-muted-foreground">
-                  <MapPin className="h-4 w-4 mr-1" />
-                  {event.location}
+                  <MapPin className="h-4 w-4 mr-1 flex-shrink-0" />
+                  <span>
+                    {[
+                      event.city,
+                      event.venue?.venueCountry,
+                    ]
+                      .filter(Boolean)
+                      .join(", ") || "Location TBD"}
+                  </span>
                 </div>
               </div>
               <button onClick={() => toggleFavorite(event.id)}>

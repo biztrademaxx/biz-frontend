@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from "react"
 import { useAuth } from "@/hooks/use-auth"
-import { apiFetch, clearTokens } from "@/lib/api"
-import { useRouter } from "next/navigation"
+import { apiFetch, clearTokens, markLogoutSuccessBanner } from "@/lib/api"
+import { usePathname, useRouter } from "next/navigation"
+import { getVisitorDashboardPath } from "@/lib/profile-path"
 import { Button } from "@/components/ui/button"
 import {
   Loader2,
@@ -14,11 +15,17 @@ import {
   Network,
   Settings,
   LogOut,
-  SidebarIcon,
   Store,
-  HelpCircle,
   List,
   Menu,
+  Crown,
+  TrendingUp,
+  Headphones,
+  User,
+  X,
+  MessageSquare,
+  Heart,
+  type LucideIcon,
 } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useToast } from "@/hooks/use-toast"
@@ -37,11 +44,82 @@ import { MyAppointments } from "./my-appointments"
 import { ExhibitorSchedule } from "./ExhibitorSchedule"
 import { Favourites } from "./Favourites"
 import { Recommendations } from "./Recommendations"
-import RecommendedEvents from "./recommended-events"
+// import RecommendedEvents from "./recommended-events"
 import Schedule from "./Schedule"
 import { HelpSupport } from "@/components/HelpSupport"
 import { useDashboard } from "@/contexts/dashboard-context"
 import { DashboardManagedBanner } from "@/components/dashboard-managed-banner"
+import { cn } from "@/lib/utils"
+import { DashboardOverview } from "./dashboard-overview"
+import { DashboardPricingPlansView } from "@/components/dashboard-packages"
+import { AppImage } from "@/components/app-image"
+import {
+  orgNavActive,
+  orgNavGroupLabel,
+  orgNavInactive,
+  orgPrimaryBtn,
+  orgSidebarSurface,
+} from "@/app/organizer-dashboard/organizer-dashboard-theme"
+
+type SidebarNavItem = { id: string; title: string; icon: LucideIcon }
+
+const VISITOR_SIDEBAR_GROUPS: { id: string; label: string; items: SidebarNavItem[] }[] = [
+  {
+    id: "dashboard",
+    label: "Main",
+    items: [
+      { id: "dashboard", title: "Dashboard Overview", icon: LayoutDashboard },
+      { id: "profile", title: "Profile", icon: User },
+    ],
+  },
+  {
+    id: "event",
+    label: "My Events",
+    items: [
+      { id: "events", title: "Interested Events", icon: Calendar },
+      { id: "past-events", title: "Past Events", icon: Calendar },
+      { id: "wishlist", title: "Saved Events", icon: Heart },
+    ],
+  },
+  {
+    id: "networking",
+    label: "Networking",
+    items: [
+      { id: "connections", title: "My Connections", icon: Network },
+      { id: "messages", title: "Messages", icon: MessageSquare },
+    ],
+  },
+  {
+    id: "exhibitor",
+    label: "My Exhibitors",
+    items: [
+      { id: "my-appointments", title: "Exhibitor Appointments", icon: Store },
+      { id: "Suggested", title: "Suggested", icon: TrendingUp },
+    ],
+  },
+  {
+    id: "tools",
+    label: "Event Planning",
+    items: [
+      { id: "travel", title: "Travel & Stay", icon: List },
+      { id: "schedule", title: "Schedule", icon: Calendar },
+    ],
+  },
+]
+
+const VISITOR_INDIVIDUAL_ITEMS: SidebarNavItem[] = [
+  // { id: "recommended-events", title: "Recommendations", icon: TrendingUp },
+  //{ id: "upgrade-plan", title: "Upgrade Plan", icon: Crown },//
+  { id: "Help & Support", title: "Help & Support", icon: Headphones },
+  { id: "settings", title: "Settings", icon: Settings },
+]
+
+function visitorGreeting(): string {
+  const h = new Date().getHours()
+  if (h < 12) return "Good morning"
+  if (h < 17) return "Good afternoon"
+  return "Good evening"
+}
 
 interface UserDashboardProps {
   userId: string
@@ -50,29 +128,60 @@ interface UserDashboardProps {
 export function UserDashboard({ userId }: UserDashboardProps) {
   const { userId: authUserId, loading: authLoading } = useAuth({ requireAuth: true })
   const router = useRouter()
+  const pathname = usePathname()
   const { toast } = useToast()
   const { activeSection, setActiveSection } = useDashboard()
 
-  const [openMenus, setOpenMenus] = useState<string[]>(["dashboard"])
+  const [openMenus, setOpenMenus] = useState<string[]>([
+    "dashboard",
+    "event",
+    "networking",
+    "exhibitor",
+    "tools",
+  ])
   const [userData, setUserData] = useState<UserData | null>(null)
   const [userInterests, setUserInterests] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
   const [interestedEvents, setInterestedEvents] = useState<any[]>([])
 
   useEffect(() => {
     if (authLoading || !userId) return
-
     fetchUserData()
-    fetchInterestedEvents()
   }, [authLoading, userId])
+
+  const resolvedUserId = userData?.id ?? userId
+
+  useEffect(() => {
+    if (!userData?.id) return
+    fetchInterestedEvents(userData.id)
+  }, [userData?.id])
+
+  useEffect(() => {
+    if (!userData?.id) return
+    const canonical = getVisitorDashboardPath(userData.id, {
+      publicSlug: userData.publicSlug,
+      firstName: userData.firstName,
+      lastName: userData.lastName,
+    })
+    const currentPath = decodeURIComponent(pathname ?? "")
+    if (currentPath && currentPath !== canonical) {
+      router.replace(canonical)
+    }
+  }, [userData?.id, userData?.publicSlug, userData?.firstName, userData?.lastName, pathname, router])
 
   // Close mobile sidebar when switching sections
   useEffect(() => {
     if (isMobileSidebarOpen) {
       setIsMobileSidebarOpen(false)
+    }
+  }, [activeSection])
+
+  useEffect(() => {
+    const groupId = getVisitorGroupForSection(activeSection)
+    if (groupId) {
+      setOpenMenus((prev) => (prev.includes(groupId) ? prev : [...prev, groupId]))
     }
   }, [activeSection])
 
@@ -82,40 +191,30 @@ export function UserDashboard({ userId }: UserDashboardProps) {
       setError(null)
       const data = await apiFetch<{ user?: UserData; data?: UserData }>(`/api/users/${userId}`, { auth: true })
       const user = data?.user ?? data?.data
-      if (!user) {
-        throw new Error("User data not found")
-      }
+      if (!user) throw new Error("User data not found")
       setUserData(user as UserData)
       setUserInterests((user as UserData).interests || [])
     } catch (err) {
       console.error("Error fetching user data:", err)
       setError(err instanceof Error ? err.message : "Error loading user data")
-      
-      toast({
-        title: "Error",
-        description: "Failed to load user data",
-        variant: "destructive",
-      })
+      toast({ title: "Error", description: "Failed to load user data", variant: "destructive" })
     } finally {
       setLoading(false)
     }
   }
 
-  const fetchInterestedEvents = async () => {
+  const fetchInterestedEvents = async (id: string) => {
     try {
-      const data = await apiFetch<{ events?: any[]; data?: any[] }>(`/api/users/${userId}/interested-events`, { auth: true })
+      const data = await apiFetch<{ events?: any[]; data?: any[] }>(`/api/users/${id}/interested-events`, { auth: true })
       const list = data.events ?? data.data ?? []
-      // Ensure unique events to prevent duplicate key errors
       const uniqueEvents = Array.isArray(list)
         ? list.filter((event: any, index: number, self: any[]) =>
-            index === self.findIndex((e: any) => e.id === event.id)
-          )
+          index === self.findIndex((e: any) => e.id === event.id)
+        )
         : []
-        
       setInterestedEvents(uniqueEvents)
     } catch (err) {
       console.error("Error fetching interested events:", err)
-      // Don't show toast for this as it's secondary data
     }
   }
 
@@ -124,34 +223,20 @@ export function UserDashboard({ userId }: UserDashboardProps) {
       if (!prev) return updatedUser as UserData
       return { ...prev, ...updatedUser }
     })
-
     if (updatedUser.interests) {
       setUserInterests(updatedUser.interests)
     }
-
-    toast({
-      title: "Profile Updated",
-      description: "Your profile has been successfully updated.",
-    })
+    toast({ title: "Profile Updated", description: "Your profile has been successfully updated." })
   }
 
   const toggleMenu = (menu: string) => {
-    setOpenMenus((prev) => 
-      prev.includes(menu) 
-        ? prev.filter((m) => m !== menu) 
-        : [...prev, menu]
+    setOpenMenus((prev) =>
+      prev.includes(menu) ? prev.filter((m) => m !== menu) : [...prev, menu]
     )
   }
 
-  const toggleSidebar = () => {
-    if (window.innerWidth < 768) {
-      setIsMobileSidebarOpen(!isMobileSidebarOpen)
-    } else {
-      setIsSidebarCollapsed(!isSidebarCollapsed)
-    }
-  }
-
   const handleSignOut = () => {
+    markLogoutSuccessBanner()
     clearTokens()
     router.push("/login")
   }
@@ -166,18 +251,16 @@ export function UserDashboard({ userId }: UserDashboardProps) {
         </div>
       )
     }
-    
+
     if (error) {
       return (
         <div className="text-center py-8">
           <p className="text-red-600 mb-4">{error}</p>
-          <Button onClick={fetchUserData} variant="outline">
-            Retry
-          </Button>
+          <Button onClick={fetchUserData} variant="outline">Retry</Button>
         </div>
       )
     }
-    
+
     if (!userData) {
       return (
         <div className="text-center py-8">
@@ -187,292 +270,272 @@ export function UserDashboard({ userId }: UserDashboardProps) {
     }
 
     switch (activeSection) {
+      case "dashboard":
+        return (
+          <DashboardOverview
+            userId={resolvedUserId}
+            events={interestedEvents}
+            userName={displayName || userData?.firstName || "User"}
+            interests={userInterests}
+          />
+        )
       case "profile":
         return <ProfileSection userData={userData} onUpdate={handleProfileUpdate} organizerId={""} />
       case "events":
-        return <EventsSection userId={userId} />
+        return <EventsSection userId={resolvedUserId} />
       case "past-events":
-        return <PastEvents userId={userId} />
+        return <PastEvents userId={resolvedUserId} />
       case "wishlist":
-        return <SavedEvents userId={userId} />
+        return <SavedEvents userId={resolvedUserId} />
       case "upcoming-events":
-        return <UpcomingEvents events={interestedEvents} userId={userId} />
+        return <UpcomingEvents events={interestedEvents} userId={resolvedUserId} />
       case "my-appointments":
-        return <MyAppointments userId={userId} />
+        return <MyAppointments userId={resolvedUserId} />
       case "exhibitor-schedule":
-        return <ExhibitorSchedule userId={userId} />
+        return <ExhibitorSchedule userId={resolvedUserId} />
       case "schedule":
-        return <Schedule userId={userId} />
+        return <Schedule userId={resolvedUserId} />
       case "favourites":
         return <Favourites />
-      case "recommended-events":
-        return <RecommendedEvents userId={userId} interests={userInterests} />
+      // case "recommended-events":
+      //   return <RecommendedEvents userId={resolvedUserId} interests={userInterests} />
       case "Suggested":
         return <Recommendations />
       case "connections":
-        return <ConnectionsSection userId={userId} />
+        return <ConnectionsSection userId={resolvedUserId} surface="exhibitor" />
       case "messages":
-        return <MessagesSection organizerId={userId} />
+        return <MessagesSection organizerId={resolvedUserId} surface="visitor" />
       case "settings":
-        return <VisitorSettings  />
+        return <VisitorSettings />
       case "travel":
         return <TravelAccommodation />
       case "Help & Support":
         return <HelpSupport />
+      case "upgrade-plan":
+        return <DashboardPricingPlansView role="VISITOR" />
       default:
-        return <ProfileSection userData={userData} onUpdate={handleProfileUpdate} organizerId={""} />
+        return (
+          <DashboardOverview
+            userId={resolvedUserId}
+            events={interestedEvents}
+            userName={displayName || userData?.firstName || "User"}
+            interests={userInterests}
+          />
+        )
     }
   }
 
   const renderSidebar = () => {
+    const sidebarName =
+      userData?.displayName?.trim() ||
+      [userData?.firstName, userData?.lastName].filter(Boolean).join(" ").trim() ||
+      "Visitor"
+    const sidebarInitial = (userData?.firstName?.[0] || userData?.lastName?.[0] || "V").toUpperCase()
+
     const sidebarContent = (
-      <div className={`${isSidebarCollapsed ? "w-16" : "w-64"} bg-white border-r flex flex-col justify-between transition-all duration-300 h-full`}>
-        <div>
-          <nav className="p-4 text-sm space-y-2">
-            {/* Dashboard */}
-            <div>
-              <button 
-                className="flex items-center justify-between w-full py-2 font-medium hover:text-blue-600 transition-colors" 
-                onClick={() => toggleMenu("dashboard")}
-              >
-                <span className="flex items-center gap-2">
-                  <LayoutDashboard size={16} />
-                  {!isSidebarCollapsed && "Dashboard"}
-                </span>
-                {!isSidebarCollapsed &&
-                  (openMenus.includes("dashboard") ? <ChevronDown size={16} /> : <ChevronRight size={16} />)}
-              </button>
-              {openMenus.includes("dashboard") && !isSidebarCollapsed && (
-                <ul className="ml-2 mt-2 space-y-2 border-l border-transparent">
-                  <li
-                    onClick={() => setActiveSection("profile")}
-                    className={`cursor-pointer pl-3 py-1 border-l-4 transition-colors ${
-                      activeSection === "profile"
-                        ? "border-blue-500 text-blue-600 font-medium"
-                        : "border-transparent hover:text-blue-600"
-                    }`}
-                  >
-                    Profile
-                  </li>
-                </ul>
-              )}
-            </div>
+      <div className={cn("flex h-full w-[min(100vw,260px)] max-w-[85vw] flex-col overflow-hidden md:w-[260px]", orgSidebarSurface)}>
+        <div className="flex items-center justify-between border-b border-slate-200 p-4 md:hidden">
+          <h2 className="text-lg font-semibold text-slate-900">Menu</h2>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsMobileSidebarOpen(false)}
+            className="text-slate-600"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
 
-            {/* Event */}
-            <div>
-              <button 
-                className="flex items-center justify-between w-full py-2 font-medium hover:text-blue-600 transition-colors" 
-                onClick={() => toggleMenu("event")}
-              >
-                <span className="flex items-center gap-2">
-                  <Calendar size={16} />
-                  {!isSidebarCollapsed && "My Events"}
-                </span>
-                {!isSidebarCollapsed &&
-                  (openMenus.includes("event") ? <ChevronDown size={16} /> : <ChevronRight size={16} />)}
-              </button>
-              {openMenus.includes("event") && !isSidebarCollapsed && (
-                <ul className="ml-2 mt-2 space-y-2 border-l">
-                  <li onClick={() => setActiveSection("events")} className={menuItemClass(activeSection, "events")}>
-                    Interested Events
-                  </li>
-                  <li onClick={() => setActiveSection("past-events")} className={menuItemClass(activeSection, "past-events")}>
-                    Past Events
-                  </li>
-                  <li onClick={() => setActiveSection("wishlist")} className={menuItemClass(activeSection, "wishlist")}>
-                    Saved Events
-                  </li>
-                </ul>
-              )}
+        {!loading && userData && (
+          <div className="border-b border-slate-100 px-4 py-4">
+            <div className="flex items-center gap-3">
+              <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full bg-blue-50 ring-2 ring-blue-100">
+                {userData.avatar ? (
+                  <AppImage
+                    src={userData.avatar}
+                    alt={sidebarName}
+                    fill
+                    className="object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-sm font-bold text-[#004A96]">
+                    {sidebarInitial}
+                  </div>
+                )}
+              </div>
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-slate-900">{sidebarName}</p>
+                <p className="text-xs text-slate-500">Visitor Dashboard</p>
+              </div>
             </div>
+          </div>
+        )}
 
-            {/* Networking */}
-            <div>
-              <button 
-                className="flex items-center justify-between w-full py-2 font-medium hover:text-blue-600 transition-colors" 
-                onClick={() => toggleMenu("networking")}
-              >
-                <span className="flex items-center gap-2">
-                  <Network size={16} />
-                  {!isSidebarCollapsed && "Networking"}
-                </span>
-                {!isSidebarCollapsed &&
-                  (openMenus.includes("networking") ? <ChevronDown size={16} /> : <ChevronRight size={16} />)}
-              </button>
-              {openMenus.includes("networking") && !isSidebarCollapsed && (
-                <ul className="ml-2 mt-2 space-y-2 border-l">
-                  <li onClick={() => setActiveSection("connections")} className={menuItemClass(activeSection, "connections")}>
-                    My Connections
-                  </li>
-                  <li onClick={() => setActiveSection("messages")} className={menuItemClass(activeSection, "messages")}>
-                    Messages
-                  </li>
-                </ul>
-              )}
-            </div>
+        <div className="scrollbar-hover min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-3 py-4">
+          <nav className="text-sm">
+            {VISITOR_SIDEBAR_GROUPS.map((group) => (
+              <div key={group.id} className="mb-5">
+                <button
+                  type="button"
+                  className={cn(
+                    "mb-1 flex w-full cursor-pointer items-center justify-between rounded-md px-2 py-1.5",
+                    orgNavGroupLabel,
+                  )}
+                  onClick={() => toggleMenu(group.id)}
+                >
+                  <span>{group.label}</span>
+                  {openMenus.includes(group.id) ? (
+                    <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
+                  ) : (
+                    <ChevronRight className="h-3.5 w-3.5 text-slate-400" />
+                  )}
+                </button>
+                {openMenus.includes(group.id) && (
+                  <div className="space-y-0.5">
+                    {group.items.map((item) => (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => setActiveSection(item.id)}
+                        className={cn(
+                          "flex w-full items-center gap-3 py-2.5 pr-3 text-sm transition-colors",
+                          activeSection === item.id ? orgNavActive : orgNavInactive,
+                        )}
+                      >
+                        <item.icon className="h-4 w-4 shrink-0" />
+                        <span className="truncate">{item.title}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
 
-            {/* Exhibitor */}
-            <div>
-              <button 
-                className="flex items-center justify-between w-full py-2 font-medium hover:text-blue-600 transition-colors" 
-                onClick={() => toggleMenu("exhibitor")}
-              >
-                <span className="flex items-center gap-2">
-                  <Store size={16} />
-                  {!isSidebarCollapsed && "My Exhibitors"}
-                </span>
-                {!isSidebarCollapsed &&
-                  (openMenus.includes("exhibitor") ? <ChevronDown size={16} /> : <ChevronRight size={16} />)}
-              </button>
-              {openMenus.includes("exhibitor") && !isSidebarCollapsed && (
-                <ul className="ml-2 mt-2 space-y-2 border-l">
-                  <li onClick={() => setActiveSection("my-appointments")} className={menuItemClass(activeSection, "my-appointments")}>
-                    Exhibitor Appointments
-                  </li>
-                  <li onClick={() => setActiveSection("Suggested")} className={menuItemClass(activeSection, "Suggested")}>
-                    Suggested
-                  </li>
-                </ul>
-              )}
-            </div>
-
-            {/* Event Planning Tools */}
-            <div>
-              <button 
-                className="flex items-center justify-between w-full py-2 font-medium hover:text-blue-600 transition-colors" 
-                onClick={() => toggleMenu("tools")}
-              >
-                <span className="flex items-center gap-2">
-                  <List size={16} />
-                  {!isSidebarCollapsed && "Event Planning Tools"}
-                </span>
-                {!isSidebarCollapsed &&
-                  (openMenus.includes("tools") ? <ChevronDown size={16} /> : <ChevronRight size={16} />)}
-              </button>
-              {openMenus.includes("tools") && !isSidebarCollapsed && (
-                <ul className="ml-2 mt-2 space-y-2 border-l">
-                  <li onClick={() => setActiveSection("travel")} className={menuItemClass(activeSection, "travel")}>
-                    Travel & Stay
-                  </li>
-                  <li onClick={() => setActiveSection("schedule")} className={menuItemClass(activeSection, "schedule")}>
-                    Schedule
-                  </li>
-                </ul>
-              )}
-            </div>
-
-            {/* Help & Support */}
-            <div>
-              <button
-                onClick={() => setActiveSection("Help & Support")}
-                className={`flex items-center gap-2 w-full py-2 font-medium transition-colors ${
-                  activeSection === "Help & Support" ? "text-blue-600 font-medium" : "hover:text-blue-600"
-                }`}
-              >
-                <HelpCircle size={16} />
-                {!isSidebarCollapsed && "Help & Support"}
-              </button>
-            </div>
-
-            {/* Settings */}
-            <div>
-              <button
-                onClick={() => setActiveSection("settings")}
-                className={`flex items-center gap-2 w-full py-2 font-medium transition-colors ${
-                  activeSection === "settings" ? "text-blue-600 font-medium" : "hover:text-blue-600"
-                }`}
-              >
-                <Settings size={16} />
-                {!isSidebarCollapsed && "Settings"}
-              </button>
+            <div className="mt-2 space-y-0.5 border-t border-slate-200 pt-4">
+              {VISITOR_INDIVIDUAL_ITEMS.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => setActiveSection(item.id)}
+                  className={cn(
+                    "flex w-full items-center gap-3 py-2.5 pr-3 text-sm transition-colors",
+                    activeSection === item.id ? orgNavActive : orgNavInactive,
+                  )}
+                >
+                  <item.icon className="h-4 w-4 shrink-0" />
+                  <span className="truncate">{item.title}</span>
+                </button>
+              ))}
             </div>
           </nav>
         </div>
 
-        {/* Collapse & Logout */}
-        <div className="p-4 space-y-2 border-t">
-          <Button 
-            onClick={toggleSidebar} 
-            className="w-full flex items-center gap-2 mb-2" 
-            variant="outline"
-            size="sm"
+        <div className="shrink-0 border-t border-slate-200 p-4">
+          <Button
+            type="button"
+            onClick={handleSignOut}
+            className={cn("h-10 w-full rounded-lg bg-red-600 text-white hover:bg-red-700")}
           >
-            <SidebarIcon size={16} />
-            {!isSidebarCollapsed && (isSidebarCollapsed ? "Expand" : "Collapse")}
-          </Button>
-          <Button 
-            onClick={handleSignOut} 
-            className="w-full flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white"
-            size="sm"
-          >
-            <LogOut size={16} />
-            {!isSidebarCollapsed && "Logout"}
+            <LogOut className="mr-2 h-4 w-4" />
+            <span>Logout</span>
           </Button>
         </div>
       </div>
     )
 
     return (
-      <>
-        {/* Mobile Sidebar Overlay */}
+      <div className="contents">
+        {/* Mobile overlay */}
         {isMobileSidebarOpen && (
-          <div 
-            className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+          <div
+            className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm md:hidden"
             onClick={() => setIsMobileSidebarOpen(false)}
+            aria-hidden
           />
         )}
 
         {/* Sidebar */}
-        <div className={`
-          fixed md:static inset-y-0 left-0 z-50
-          transform transition-transform duration-300 ease-in-out
-          ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
-        `}>
+        <div
+          className={cn(
+            "fixed inset-y-0 left-0 z-50 h-full shrink-0 transform transition-transform duration-300 ease-in-out md:static md:translate-x-0",
+            isMobileSidebarOpen ? "translate-x-0" : "-translate-x-full",
+          )}
+        >
           {sidebarContent}
         </div>
-      </>
+      </div>
     )
   }
 
   if (authLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      <div className="flex min-h-screen items-center justify-center bg-white">
+        <Loader2 className="h-8 w-8 animate-spin text-[#004A96]" />
       </div>
     )
   }
 
+  const displayName =
+    userData?.displayName?.trim() ||
+    [userData?.firstName, userData?.lastName].filter(Boolean).join(" ").trim()
+
+  const currentSectionTitle = getVisitorSectionTitle(activeSection ?? "dashboard")
+
   return (
-    <div className="flex min-h-screen w-full bg-[#F5F4F0]">
-      {/* Sidebar */}
+    <div className="flex min-h-0 flex-1 w-full overflow-hidden bg-[#f8fafc]">
       {renderSidebar()}
 
-      {/* Main content area — matches organizer-dashboard OrganizerDashboardPage */}
-      <div className="flex min-h-screen flex-1 flex-col min-w-0">
-        {/* Mobile top bar */}
-        <div className="flex items-center justify-between border-b border-gray-200 bg-white p-4 shadow-sm md:hidden">
-          <Button variant="ghost" size="sm" onClick={() => setIsMobileSidebarOpen(true)}>
+      <div className="relative flex min-h-0 min-w-0 flex-1 flex-col">
+        {/* Mobile topbar */}
+        <div className="flex items-center justify-between gap-2 border-b border-slate-200 bg-white px-3 py-3 md:hidden">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="shrink-0 text-[#004A96]"
+            onClick={() => setIsMobileSidebarOpen(true)}
+          >
             <Menu className="h-5 w-5" />
           </Button>
-          <div className="w-9" />
+          <div className="min-w-0 flex-1 px-1 text-center">
+            {displayName ? (
+              <p className="truncate text-xs text-slate-500">{displayName}</p>
+            ) : null}
+            <p className="truncate text-sm font-semibold text-[#004A96]">{currentSectionTitle}</p>
+          </div>
+          <div className="w-9 shrink-0" />
         </div>
 
-        <main className="flex-1 overflow-auto p-6">
-          <DashboardManagedBanner page="visitor-dashboard" />
-         
-            <div className="bg-[#F5F4F0] min-h-screen w-full">
-              {renderContent()}
-            </div>
-          
+        <main className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden p-0">
+          {!loading && !error && userData && activeSection === "dashboard" && (
+            <DashboardManagedBanner page="visitor-dashboard" className="w-full min-w-0" />
+          )}
+
+          <div className="w-full min-w-0 max-w-full px-3 py-4 sm:px-4 sm:py-5 md:px-6 md:py-6">
+            <div className="min-w-0 overflow-x-hidden">{renderContent()}</div>
+          </div>
         </main>
       </div>
     </div>
   )
 }
 
-// Helper for menu items
-function menuItemClass(activeSection: string, id: string) {
-  return `cursor-pointer pl-3 py-1 border-l-4 transition-colors ${
-    activeSection === id ? "border-blue-500 text-blue-600 font-medium" : "border-transparent hover:text-blue-600"
-  }`
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+function getVisitorGroupForSection(section: string): string | null {
+  for (const group of VISITOR_SIDEBAR_GROUPS) {
+    if (group.items.some((item) => item.id === section)) {
+      return group.id
+    }
+  }
+  return null
+}
+
+function getVisitorSectionTitle(section: string): string {
+  for (const group of VISITOR_SIDEBAR_GROUPS) {
+    const item = group.items.find((i) => i.id === section)
+    if (item) return item.title
+  }
+  const individual = VISITOR_INDIVIDUAL_ITEMS.find((i) => i.id === section)
+  if (individual) return individual.title
+  return "Dashboard"
 }

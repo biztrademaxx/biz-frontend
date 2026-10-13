@@ -3,25 +3,10 @@
 import { useEffect, useState } from "react"
 import { adminApi } from "@/lib/admin-api"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { BarChart3, Globe2 } from "lucide-react"
+import { BarChart3, Globe2, Pencil } from "lucide-react"
+import { formatCreatedUpdated, type SubAdminActivityData } from "@/lib/sub-admin-activity-types"
 
-type ActivityTotals = {
-  events: number
-  organizers: number
-  exhibitors: number
-  speakers: number
-  bulkImports: number
-  total: number
-}
-
-type ActivityPoint = ActivityTotals & { period: string }
-
-type ResponseData = {
-  generatedAt: string
-  totals: ActivityTotals
-  daily: ActivityPoint[]
-  weekly: ActivityPoint[]
-  monthly: ActivityPoint[]
+type ResponseData = SubAdminActivityData & {
   eventCountries?: { country: string; events: number }[]
 }
 
@@ -51,6 +36,14 @@ export default function SubAdminAnalyticsPanel() {
   const latestWeekly = data.weekly.slice(-6)
   const latestMonthly = data.monthly.slice(-6)
   const topCountries = (data.eventCountries ?? []).slice(0, 6)
+  const updated = data.totalsUpdated ?? {
+    eventsUpdated: 0,
+    organizersUpdated: 0,
+    exhibitorsUpdated: 0,
+    speakersUpdated: 0,
+    bulkImportsUpdated: 0,
+    totalUpdated: 0,
+  }
   const typeBreakdown = [
     { label: "Events", value: data.totals.events, color: "#2563eb" },
     { label: "Organizers", value: data.totals.organizers, color: "#14b8a6" },
@@ -70,9 +63,26 @@ export default function SubAdminAnalyticsPanel() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <TopCard title="Total Uploads" value={data.totals.total} trend={latestDaily.map((x) => x.total)} tone="blue" />
-        <TopCard title="Events Uploaded" value={data.totals.events} trend={latestWeekly.map((x) => x.total)} tone="emerald" />
-        <TopCard title="Bulk Imports" value={data.totals.bulkImports} trend={latestMonthly.map((x) => x.total)} tone="orange" />
+        <TopCard title="Total Created" value={data.totals.total} trend={latestDaily.map((x) => x.total)} tone="blue" />
+        <TopCard title="Total Updated" value={updated.totalUpdated} trend={latestDaily.map((x) => x.totalUpdated ?? 0)} tone="orange" />
+        <TopCard
+          title="Events (created / updated)"
+          value={formatCreatedUpdated(data.totals.events, updated.eventsUpdated)}
+          trend={latestWeekly.map((x) => x.total)}
+          tone="emerald"
+          stringValue
+        />
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-sm">
+        <StatChip label="Organizers" value={formatCreatedUpdated(data.totals.organizers, updated.organizersUpdated)} />
+        <StatChip label="Exhibitors" value={formatCreatedUpdated(data.totals.exhibitors, updated.exhibitorsUpdated)} />
+        <StatChip label="Speakers" value={formatCreatedUpdated(data.totals.speakers, updated.speakersUpdated)} />
+        <StatChip
+          label="Bulk imports"
+          value={formatCreatedUpdated(data.totals.bulkImports, updated.bulkImportsUpdated)}
+        />
+        <StatChip label="All updated" value={String(updated.totalUpdated)} highlight />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -88,16 +98,35 @@ export default function SubAdminAnalyticsPanel() {
   )
 }
 
+function StatChip({
+  label,
+  value,
+  highlight,
+}: {
+  label: string
+  value: string
+  highlight?: boolean
+}) {
+  return (
+    <div className={`rounded-lg border px-3 py-2 ${highlight ? "border-violet-200 bg-violet-50" : "border-slate-200 bg-white"}`}>
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className={`font-semibold ${highlight ? "text-violet-800" : "text-slate-900"}`}>{value}</p>
+    </div>
+  )
+}
+
 function TopCard({
   title,
   value,
   trend,
   tone,
+  stringValue,
 }: {
   title: string
-  value: number
+  value: number | string
   trend: number[]
   tone: "blue" | "emerald" | "orange"
+  stringValue?: boolean
 }) {
   const toneMap = {
     blue: { text: "text-blue-600", stroke: "#3b82f6", fill: "#dbeafe" },
@@ -111,7 +140,7 @@ function TopCard({
         <CardTitle className="text-sm text-slate-600">{title}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-2">
-        <div className={`text-3xl font-bold ${toneMap.text}`}>{value}</div>
+        <div className={`font-bold ${toneMap.text} ${stringValue ? "text-2xl" : "text-3xl"}`}>{value}</div>
         <MiniTrend trend={trend} stroke={toneMap.stroke} fill={toneMap.fill} />
       </CardContent>
     </Card>

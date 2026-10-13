@@ -66,6 +66,7 @@ export default function ExhibitorPromotionsPage() {
 
   // Dialog states
   const [selectedPromotion, setSelectedPromotion] = useState<Promotion | null>(null)
+  const [selectedPromotionIndex, setSelectedPromotionIndex] = useState<number>(0)
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false)
   const [actionDialogOpen, setActionDialogOpen] = useState(false)
   const [actionType, setActionType] = useState<"APPROVED" | "REJECTED">("APPROVED")
@@ -83,7 +84,15 @@ export default function ExhibitorPromotionsPage() {
     try {
       setLoading(true)
       const data = await adminApi<Promotion[]>("/exhibitors/promotions")
-      setPromotions(Array.isArray(data) ? data : [])
+      const list = Array.isArray(data) ? data : []
+
+      // Sort by createdAt date (newest first)
+      const sortedList = [...list].sort((a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      )
+
+      setPromotions(sortedList)
+      setFilteredPromotions(sortedList)
     } catch (error) {
       console.error("Failed to fetch promotions:", error)
     } finally {
@@ -91,19 +100,36 @@ export default function ExhibitorPromotionsPage() {
     }
   }
 
+  // Generate sequential promotion ID (e.g., PROMO001, PROMO002, PROMO010, PROMO100)
+  const getSequentialPromotionId = (index: number): string => {
+    return `PROMO${String(index + 1).padStart(4, '0')}`
+  }
+
+  // Alternative: Generate alphanumeric ID (e.g., PR-A001, PR-B001, etc.)
+  const getAlphanumericId = (index: number): string => {
+    const letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
+    const letterIndex = Math.floor(index / 1000)
+    const number = (index % 1000) + 1
+    const letter = letters[letterIndex % letters.length]
+    return `PR-${letter}${String(number).padStart(3, '0')}`
+  }
+
   const filterPromotions = () => {
     let filtered = [...promotions]
 
     if (searchQuery) {
-      filtered = filtered.filter(
-        (p) =>
-          p.exhibitor.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          p.exhibitor.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          p.exhibitor.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          p.exhibitor.company?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          p.event?.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          p.id.toLowerCase().includes(searchQuery.toLowerCase()),
-      )
+      const q = searchQuery.toLowerCase()
+      filtered = filtered.filter((p, idx) => {
+        const sequentialId = getSequentialPromotionId(idx)
+        return (
+          p.exhibitor.firstName.toLowerCase().includes(q) ||
+          p.exhibitor.lastName.toLowerCase().includes(q) ||
+          p.exhibitor.email.toLowerCase().includes(q) ||
+          p.exhibitor.company?.toLowerCase().includes(q) ||
+          p.event?.title.toLowerCase().includes(q) ||
+          sequentialId.toLowerCase().includes(q)
+        )
+      })
     }
 
     if (statusFilter !== "all") {
@@ -122,6 +148,12 @@ export default function ExhibitorPromotionsPage() {
     setActionType(action)
     setActionDialogOpen(true)
     setRejectionReason("")
+  }
+
+  const handleViewDetails = (promotion: Promotion, index: number) => {
+    setSelectedPromotion(promotion)
+    setSelectedPromotionIndex(index)
+    setDetailsDialogOpen(true)
   }
 
   const handleConfirmAction = async () => {
@@ -192,7 +224,7 @@ export default function ExhibitorPromotionsPage() {
         <p className="text-muted-foreground">Manage and approve exhibitor promotion requests</p>
       </div>
 
-      {/* Statistics Cards */}
+      {/* Statistics Cards - 5 cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -236,7 +268,7 @@ export default function ExhibitorPromotionsPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+            <CardTitle className="text-sm font-medium">Promotion Spend</CardTitle>
             <DollarSign className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
@@ -257,7 +289,7 @@ export default function ExhibitorPromotionsPage() {
               <div className="relative">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search by exhibitor name, email, event, or ID..."
+                  placeholder="Search by exhibitor name, email, event, or promotion ID..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-8"
@@ -307,7 +339,8 @@ export default function ExhibitorPromotionsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>ID</TableHead>
+                  <TableHead>#</TableHead>
+                  <TableHead>Promotion ID</TableHead>
                   <TableHead>Exhibitor</TableHead>
                   <TableHead>Event</TableHead>
                   <TableHead>Package</TableHead>
@@ -321,93 +354,102 @@ export default function ExhibitorPromotionsPage() {
               <TableBody>
                 {filteredPromotions.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
                       No promotions found
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredPromotions.map((promotion) => (
-                    <TableRow key={promotion.id}>
-                      <TableCell className="font-mono text-xs">{promotion.id.slice(0, 8)}...</TableCell>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium">
-                            {promotion.exhibitor?.firstName} {promotion.exhibitor?.lastName}
+                  filteredPromotions.map((promotion, idx) => {
+                    const originalIndex = promotions.findIndex(p => p.id === promotion.id)
+                    const sequentialId = getSequentialPromotionId(originalIndex)
+
+                    return (
+                      <TableRow key={promotion.id}>
+                        <TableCell className="font-medium text-muted-foreground">
+                          {originalIndex + 1}
+                        </TableCell>
+                        <TableCell>
+                          <code className="text-sm font-mono font-semibold text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                            {sequentialId}
+                          </code>
+                        </TableCell>
+                        <TableCell>
+                          <div>
+                            <div className="font-medium">
+                              {/* {promotion.exhibitor?.firstName} {promotion.exhibitor?.lastName} */}
+                            </div>
+                            {promotion.exhibitor?.company && (
+                              <div className="text-sm font-medium text-muted-foreground">{promotion.exhibitor?.company}</div>
+                            )}
+                            <div className="text-xs text-muted-foreground">{promotion.exhibitor?.email}</div>
                           </div>
-                          {promotion.exhibitor?.company && (
-                            <div className="text-sm text-muted-foreground">{promotion.exhibitor?.company}</div>
+                        </TableCell>
+                        <TableCell>
+                          {promotion.event ? (
+                            <div className="text-sm">{promotion.event.title}</div>
+                          ) : (
+                            <span className="text-muted-foreground">No event</span>
                           )}
-                          <div className="text-xs text-muted-foreground">{promotion.exhibitor?.email}</div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {promotion.event ? (
-                          <div className="text-sm">{promotion.event.title}</div>
-                        ) : (
-                          <span className="text-muted-foreground">No event</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{promotion.packageType}</Badge>
-                      </TableCell>
-                      <TableCell className="font-semibold">${promotion.amount.toLocaleString()}</TableCell>
-                      <TableCell>{promotion.duration} days</TableCell>
-                      <TableCell>{getStatusBadge(promotion.status)}</TableCell>
-                      <TableCell>
-                        <div className="space-y-1 text-xs">
-                          <div className="flex items-center gap-1">
-                            <Eye className="h-3 w-3" />
-                            <span>{promotion.impressions.toLocaleString()}</span>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{promotion.packageType}</Badge>
+                        </TableCell>
+                        <TableCell className="font-semibold">${promotion.amount.toLocaleString()}</TableCell>
+                        <TableCell>{promotion.duration} days</TableCell>
+                        <TableCell>{getStatusBadge(promotion.status)}</TableCell>
+                        <TableCell>
+                          <div className="space-y-1 text-xs">
+                            <div className="flex items-center gap-1">
+                              <Eye className="h-3 w-3" />
+                              <span>{promotion.impressions.toLocaleString()}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <MousePointerClick className="h-3 w-3" />
+                              <span>
+                                {promotion.clicks} ({calculateCTR(promotion.clicks, promotion.impressions)}%)
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Target className="h-3 w-3" />
+                              <span>
+                                {promotion.conversions} (
+                                {calculateConversionRate(promotion.conversions, promotion.clicks)}%)
+                              </span>
+                            </div>
                           </div>
-                          <div className="flex items-center gap-1">
-                            <MousePointerClick className="h-3 w-3" />
-                            <span>
-                              {promotion.clicks} ({calculateCTR(promotion.clicks, promotion.impressions)}%)
-                            </span>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleViewDetails(promotion, originalIndex)}
+                            >
+                              View
+                            </Button>
+                            {promotion.status === "PENDING" && (
+                              <>
+                                <Button
+                                  size="sm"
+                                  variant="default"
+                                  onClick={() => handleActionClick(promotion, "APPROVED")}
+                                >
+                                  Approve
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={() => handleActionClick(promotion, "REJECTED")}
+                                >
+                                  Reject
+                                </Button>
+                              </>
+                            )}
                           </div>
-                          <div className="flex items-center gap-1">
-                            <Target className="h-3 w-3" />
-                            <span>
-                              {promotion.conversions} (
-                              {calculateConversionRate(promotion.conversions, promotion.clicks)}%)
-                            </span>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              setSelectedPromotion(promotion)
-                              setDetailsDialogOpen(true)
-                            }}
-                          >
-                            View
-                          </Button>
-                          {promotion.status === "PENDING" && (
-                            <>
-                              <Button
-                                size="sm"
-                                variant="default"
-                                onClick={() => handleActionClick(promotion, "APPROVED")}
-                              >
-                                Approve
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="destructive"
-                                onClick={() => handleActionClick(promotion, "REJECTED")}
-                              >
-                                Reject
-                              </Button>
-                            </>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
+                        </TableCell>
+                      </TableRow>
+                    )
+                  })
                 )}
               </TableBody>
             </Table>
@@ -427,7 +469,9 @@ export default function ExhibitorPromotionsPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label className="text-muted-foreground">Promotion ID</Label>
-                  <p className="font-mono text-sm">{selectedPromotion.id}</p>
+                  <code className="text-base font-mono font-bold text-blue-600 bg-blue-50 px-3 py-1.5 rounded inline-block">
+                    {getSequentialPromotionId(selectedPromotionIndex)}
+                  </code>
                 </div>
                 <div>
                   <Label className="text-muted-foreground">Status</Label>

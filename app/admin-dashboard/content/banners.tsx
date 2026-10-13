@@ -2,6 +2,7 @@
 
 import type React from "react"
 
+import { AppImage } from "@/components/app-image"
 import { useState, useEffect } from "react"
 import { apiFetch } from "@/lib/api"
 import { Button } from "@/components/ui/button"
@@ -23,6 +24,10 @@ import { Badge } from "@/components/ui/badge"
 import { Upload, Trash2, Eye, Search, ImageIcon, Plus, Pencil } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Skeleton } from "@/components/ui/skeleton"
+import {
+  getBannerPositionLabel,
+  getBannerPositionOptionsForPage,
+} from "@/lib/banners/banner-positions"
 
 interface Banner {
   id: string
@@ -59,13 +64,6 @@ const PAGE_OPTIONS = [
   { value: "venue-detail", label: "Venue Detail Page" },
   { value: "about", label: "About Page" },
   { value: "contact", label: "Contact Page" },
-]
-
-const POSITION_OPTIONS = [
-  { value: "hero", label: "Hero Banner (Top)" },
-  { value: "middle", label: "Middle Section" },
-  { value: "bottom", label: "Bottom Section" },
-  { value: "sidebar", label: "Sidebar" },
 ]
 
 export default function BannersPage() {
@@ -520,7 +518,15 @@ export default function BannersPage() {
               <select
                 id="page"
                 value={uploadForm.page}
-                onChange={(e) => setUploadForm({ ...uploadForm, page: e.target.value })}
+                onChange={(e) => {
+                  const page = e.target.value
+                  const allowed = getBannerPositionOptionsForPage(page).map((p) => p.value)
+                  setUploadForm((prev) => ({
+                    ...prev,
+                    page,
+                    position: allowed.includes(prev.position) ? prev.position : "hero",
+                  }))
+                }}
                 className="border-input bg-background w-full rounded-md border px-3 py-2 text-sm shadow-xs outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
               >
                 <option value="" disabled>
@@ -542,12 +548,18 @@ export default function BannersPage() {
                 onChange={(e) => setUploadForm({ ...uploadForm, position: e.target.value })}
                 className="border-input bg-background w-full rounded-md border px-3 py-2 text-sm shadow-xs outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
               >
-                {POSITION_OPTIONS.map((pos) => (
+                {getBannerPositionOptionsForPage(uploadForm.page || "homepage").map((pos) => (
                   <option key={pos.value} value={pos.value}>
                     {pos.label}
                   </option>
                 ))}
               </select>
+              {uploadForm.page === "homepage" ? (
+                <p className="mt-1 text-sm text-gray-500">
+                  Use After City / After Country / After Featured Organizers to place banners between
+                  homepage sections.
+                </p>
+              ) : null}
             </div>
 
             <div>
@@ -573,10 +585,13 @@ export default function BannersPage() {
             {uploadForm.file && (
               <div className="border rounded-lg p-4 bg-gray-50">
                 <p className="text-sm font-medium mb-2">Preview:</p>
-                <img
-                  src={URL.createObjectURL(uploadForm.file) || "/city/c4.jpg"}
+                <AppImage
+                  src={URL.createObjectURL(uploadForm.file)}
                   alt="Preview"
-                  className="w-full h-48 object-cover rounded"
+                  width={800}
+                  height={192}
+                  className="h-48 w-full rounded object-cover"
+                  unoptimized
                 />
               </div>
             )}
@@ -667,7 +682,7 @@ export default function BannersPage() {
                 onChange={(e) => setEditForm({ ...editForm, position: e.target.value })}
                 className="border-input bg-background w-full rounded-md border px-3 py-2 text-sm shadow-xs outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
               >
-                {POSITION_OPTIONS.map((pos) => (
+                {getBannerPositionOptionsForPage(editForm.page || "homepage").map((pos) => (
                   <option key={pos.value} value={pos.value}>
                     {pos.label}
                   </option>
@@ -716,21 +731,26 @@ export default function BannersPage() {
                 {editFilePreviewUrl ? (
                   <>
                     <p className="text-xs font-medium text-gray-700">New image preview</p>
-                    <img
+                    <AppImage
                       src={editFilePreviewUrl}
                       alt="New banner preview"
-                      className="w-full max-h-48 object-contain rounded-md border border-gray-200 bg-white"
+                      width={800}
+                      height={192}
+                      className="max-h-48 w-full rounded-md border border-gray-200 bg-white object-contain"
+                      unoptimized
                     />
                     <p className="text-xs text-gray-500">This replaces the image below after you save.</p>
                   </>
                 ) : (
                   <>
                     <p className="text-xs font-medium text-gray-700">Current image</p>
-                    <img
+                    <AppImage
                       key={`${editingBanner.id}-${editingBanner.updatedAt}-${editingBanner.imageUrl}`}
-                      src={editingBanner.imageUrl || "/city/c4.jpg"}
+                      src={editingBanner.imageUrl}
                       alt=""
-                      className="w-full max-h-48 object-contain rounded-md border border-gray-200 bg-white"
+                      width={800}
+                      height={192}
+                      className="max-h-48 w-full rounded-md border border-gray-200 bg-white object-contain"
                     />
                   </>
                 )}
@@ -764,15 +784,17 @@ export default function BannersPage() {
             <DialogTitle>{selectedBanner?.title}</DialogTitle>
             <DialogDescription>
               {PAGE_OPTIONS.find((p) => p.value === selectedBanner?.page)?.label} -{" "}
-              {POSITION_OPTIONS.find((p) => p.value === selectedBanner?.position)?.label}
+              {getBannerPositionLabel(selectedBanner?.position ?? "")}
             </DialogDescription>
           </DialogHeader>
 
           {selectedBanner && (
             <div className="space-y-4">
-              <img
-                src={selectedBanner.imageUrl || "/city/c4.jpg"}
+              <AppImage
+                src={selectedBanner.imageUrl}
                 alt={selectedBanner.title}
+                width={1200}
+                height={400}
                 className="w-full rounded-lg"
               />
 
@@ -854,10 +876,12 @@ function BannerGrid({
       {banners.map((banner) => (
         <Card key={banner.id} className="overflow-hidden">
           <div className="relative h-48 bg-gray-100">
-            <img
-              src={banner.imageUrl || "/city/c4.jpg"}
+            <AppImage
+              src={banner.imageUrl}
               alt={banner.title}
-              className="w-full h-full object-cover"
+              fill
+              sizes="(max-width: 768px) 100vw, 33vw"
+              className="object-cover"
             />
             <Badge className="absolute top-2 right-2" variant={banner.isActive ? "default" : "secondary"}>
               {banner.isActive ? "Active" : "Inactive"}

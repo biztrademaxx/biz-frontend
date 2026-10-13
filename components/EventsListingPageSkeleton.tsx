@@ -61,7 +61,6 @@ export default function EventsListingPageSkeleton() {
   return (
     <div
       className="min-h-screen bg-gray-50"
-      style={{ fontFamily: "'Inter', 'Segoe UI', system-ui, sans-serif" }}
       aria-busy="true"
       aria-label="Loading events"
     >

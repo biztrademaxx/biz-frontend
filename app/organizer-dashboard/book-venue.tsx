@@ -261,14 +261,14 @@ export default function BookVenue({ organizerId }: BookVenueProps) {
                 <Card
                   key={venue.id}
                   className={`cursor-pointer transition-colors ${
-                    selectedVenue?.id === venue.id ? "ring-2 ring-blue-500 bg-blue-50" : "hover:bg-gray-50"
+                    selectedVenue?.id === venue.id ? "ring-2 ring-[#004A96] bg-[#004A96]/10" : "hover:bg-gray-50"
                   }`}
                   onClick={() => setSelectedVenue(venue)}
                 >
                   <CardContent className="p-4">
                     <div className="flex items-start gap-4">
                       <Avatar className="w-16 h-16">
-                        <AvatarImage src={venue.avatar || "/city/c4.jpg"} />
+                        <AvatarImage src={venue.avatar } />
                         <AvatarFallback>
                           {venue.firstName[0]}
                           {venue.lastName[0]}
@@ -329,7 +329,7 @@ export default function BookVenue({ organizerId }: BookVenueProps) {
                           <div className="text-sm text-gray-500">
                             {venue.meetingSpaces.length} meeting spaces available
                           </div>
-                          <div className="text-lg font-semibold text-blue-600">${venue.basePrice || 0}/day</div>
+                          <div className="text-lg font-semibold text-[#004A96]">${venue.basePrice || 0}/day</div>
                         </div>
                       </div>
                     </div>
@@ -340,7 +340,7 @@ export default function BookVenue({ organizerId }: BookVenueProps) {
 
             {/* Booking Form */}
             {selectedVenue && (
-              <Card className="border-blue-200 bg-blue-50">
+              <Card className="border-[#bfdbfe] bg-[#004A96]/10">
                 <CardHeader>
                   <CardTitle className="text-lg">
                     Book {selectedVenue.venueName || `${selectedVenue.firstName} ${selectedVenue.lastName}'s Venue`}
@@ -405,7 +405,7 @@ export default function BookVenue({ organizerId }: BookVenueProps) {
                             key={space.id}
                             className={`p-3 border rounded-lg cursor-pointer transition-colors ${
                               selectedSpaces.includes(space.id)
-                                ? "border-blue-500 bg-blue-50"
+                                ? "border-[#004A96] bg-[#004A96]/10"
                                 : "border-gray-200 hover:border-gray-300"
                             } ${!space.isAvailable ? "opacity-50 cursor-not-allowed" : ""}`}
                             onClick={() => space.isAvailable && handleSpaceSelect(space.id)}

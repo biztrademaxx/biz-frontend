@@ -68,8 +68,13 @@ export function PageBannerClient({
 
   const currentBanner = banners[currentIndex]
 
+  const minHeightClass = fixedHeight && height <= 120 ? "min-h-0" : "min-h-[88px]"
+
   return (
-    <div className={`relative w-full min-h-[88px] overflow-hidden ${className}`} style={bannerHeightStyle}>
+    <div
+      className={`relative w-full overflow-hidden ${minHeightClass} ${className}`}
+      style={bannerHeightStyle}
+    >
       <div
         className={`relative h-full w-full min-h-0 ${currentBanner.link ? "cursor-pointer" : ""}`}
         onClick={() => currentBanner.link && handleBannerClick(currentBanner)}
@@ -79,7 +84,7 @@ export function PageBannerClient({
           alt={currentBanner.title}
           fill
           className="object-cover"
-          sizes="100vw"
+          sizes="(max-width: 896px) 100vw, 896px"
           priority
         />
       </div>

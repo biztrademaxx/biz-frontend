@@ -5,6 +5,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Star, MessageCircle, Send, CheckCircle2, X } from "lucide-react"
 import { format } from "date-fns"
+import { AppImage } from "@/components/app-image"
 import { apiFetch } from "@/lib/api"
 
 interface ReviewReply {
@@ -75,8 +76,8 @@ export default function Reviews({ eventId, isOrganizer = false }: ReviewsProps) 
   if (loading) {
     return (
       <Card className="mt-4">
-        <CardContent className="p-6">
-          <div className="text-center">Loading reviews...</div>
+        <CardContent className="px-4 py-3">
+          <p className="text-center text-sm text-gray-500">Loading reviews…</p>
         </CardContent>
       </Card>
     )
@@ -85,15 +86,15 @@ export default function Reviews({ eventId, isOrganizer = false }: ReviewsProps) 
   if (error) {
     return (
       <Card className="mt-4">
-        <CardContent className="p-6">
-          <div className="text-center text-red-500">{error}</div>
+        <CardContent className="px-4 py-3">
+          <p className="text-center text-sm text-red-500">{error}</p>
         </CardContent>
       </Card>
     )
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       {/* Add Review Form - only show for non-organizers */}
       {!isOrganizer && (
         <AddReviewCard eventId={eventId} onReviewAdded={handleReviewAdded} />
@@ -102,15 +103,15 @@ export default function Reviews({ eventId, isOrganizer = false }: ReviewsProps) 
       {/* Reviews List */}
       {reviews.length === 0 ? (
         <Card>
-          <CardContent className="p-6">
-            <div className="text-center text-gray-500">
+          <CardContent className="px-4 py-3">
+            <p className="text-center text-sm text-gray-500">
               No reviews yet. Be the first to review this event!
-            </div>
+            </p>
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-4">
-          <h3 className="text-xl font-semibold">Reviews ({reviews.length})</h3>
+        <div className="space-y-2">
+          <h3 className="text-base font-semibold text-gray-900">Reviews ({reviews.length})</h3>
           {reviews.map((review) => (
             <ReviewCard 
               key={review.id} 
@@ -149,14 +150,16 @@ function ReviewCard({
 
   return (
     <Card>
-      <CardContent className="p-6">
-        <div className="flex items-start justify-between mb-3">
+      <CardContent className="p-4">
+        <div className="mb-2 flex items-start justify-between">
           <div className="flex items-center gap-3">
             {review.user?.avatar ? (
-              <img
+              <AppImage
                 src={review.user?.avatar}
                 alt={`${review.user.firstName} ${review.user.lastName}`}
-                className="w-10 h-10 rounded-full"
+                width={40}
+                height={40}
+                className="w-10 h-10 rounded-full object-cover"
               />
             ) : (
               <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
@@ -191,14 +194,13 @@ function ReviewCard({
           </div>
         </div>
 
-        {review.title && (
-          <h5 className="font-semibold text-lg mb-2">{review.title}</h5>
-        )}
-        
-        <p className="text-gray-700 mb-4">{review.comment}</p>
+        {review.title ? (
+          <h5 className="mb-1 text-base font-semibold">{review.title}</h5>
+        ) : null}
 
-        {/* Reply Actions - Show for everyone, but only organizers can add replies */}
-        <div className="flex items-center gap-3 pt-3 border-t">
+        <p className="mb-3 text-sm text-gray-700">{review.comment}</p>
+
+        <div className="flex flex-wrap items-center gap-2 border-t pt-2">
           {/* Always show replies button if there are replies */}
           {hasReplies && (
             <Button
@@ -224,11 +226,6 @@ function ReviewCard({
               {showReplyForm ? 'Cancel' : 'Reply'}
             </Button>
           )}
-
-          {/* Debug info - remove in production */}
-          <span className="text-xs text-gray-400 ml-auto">
-            Replies: {review.replies?.length || 0} | Organizer: {isOrganizer ? 'Yes' : 'No'}
-          </span>
         </div>
 
         {/* Reply Form */}
@@ -262,10 +259,12 @@ function ReplyCard({ reply }: { reply: ReviewReply }) {
     <div className="bg-white p-3 rounded border-l-4 border-blue-200">
       <div className="flex items-start gap-3">
         {reply.user.avatar ? (
-          <img
+          <AppImage
             src={reply.user?.avatar}
             alt={`${reply.user.firstName} ${reply.user.lastName}`}
-            className="w-8 h-8 rounded-full"
+            width={32}
+            height={32}
+            className="w-8 h-8 rounded-full object-cover"
           />
         ) : (
           <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center">
@@ -437,11 +436,11 @@ function AddReviewCard({ eventId, onReviewAdded }: AddReviewCardProps) {
       ) : null}
 
       <Card className="mt-4">
-        <CardHeader>
-          <CardTitle>Add Your Review</CardTitle>
+        <CardHeader className="px-4 py-3">
+          <CardTitle className="text-base">Add Your Review</CardTitle>
         </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <CardContent className="px-4 pb-4 pt-0">
+          <form onSubmit={handleSubmit} className="flex flex-col gap-3">
           <div className="flex items-center gap-1">
             {[1, 2, 3, 4, 5].map((star) => (
               <button

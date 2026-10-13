@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useState, useEffect } from "react"
-import { usePathname, useRouter, useSearchParams } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import {
   LayoutDashboard,   // Dashboard
@@ -40,14 +40,26 @@ import AddSpeaker from "./AddSpeaker"
 import SpeakerSessionsTable from "./SpeakerSessionsTable"
 import { CreateConferenceAgenda } from "./CreateConferenceAgenda"
 import { ConferenceList } from "./ConferenceAgenda"
-import { getCurrentUserId } from "@/lib/api"
+import { getCurrentUserId, apiFetch } from "@/lib/api"
+import { isEventIdUuid } from "@/lib/event-ref"
 import AnalyticsDashboard from "./analytics"
-// import Analytics from "./analytics"
-// ...create/import other components as needed
+import { cn } from "@/lib/utils"
+import {
+  eventNavActive,
+  eventNavGroupLabel,
+  eventNavInactive,
+  eventPageBg,
+  eventSidebarSurface,
+} from "./event-dashboard-theme"
 
 interface EventLayoutProps {
   children?: React.ReactNode
-  eventId: string
+  /** Segment from the URL (slug or UUID). Used to resolve the event when the server cannot (no auth on RSC). */
+  dashboardRef: string
+  /** When the server could fetch the event (e.g. public listing), the real event UUID. */
+  eventId?: string | null
+  /** From server when available; client may refresh if missing. */
+  initialEventTitle?: string | null
 }
 
 interface SidebarGroup {
@@ -62,7 +74,11 @@ interface SidebarItem {
   id: string
 }
 
-export default function EventSidebar({ eventId }: EventLayoutProps) {
+export default function EventSidebar({
+  dashboardRef,
+  eventId: serverEventId = null,
+  initialEventTitle = null,
+}: EventLayoutProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const tabParam = searchParams.get("tab")
@@ -71,9 +87,78 @@ export default function EventSidebar({ eventId }: EventLayoutProps) {
   const [activeSection, setActiveSection] = useState("dashboard")
   const [params, setParams] = useState<{ id: string } | null>(null)
   const userId = getCurrentUserId()
+  const [displayEventTitle, setDisplayEventTitle] = useState(() => initialEventTitle?.trim() || "")
+  const [resolvedEventId, setResolvedEventId] = useState<string | null>(() => serverEventId ?? null)
+  const [resolveError, setResolveError] = useState<string | null>(null)
+  const [resolving, setResolving] = useState(() => !serverEventId)
 
   const [refreshKey, setRefreshKey] = useState(0)
   const [activeTab, setActiveTab] = useState("list")
+
+  useEffect(() => {
+    setDisplayEventTitle(initialEventTitle?.trim() || "")
+  }, [initialEventTitle, serverEventId])
+
+  useEffect(() => {
+    setResolvedEventId(serverEventId ?? null)
+    setResolveError(null)
+    setResolving(!(serverEventId ?? null))
+  }, [dashboardRef, serverEventId])
+
+  useEffect(() => {
+    if (resolvedEventId) return
+    let cancelled = false
+    ;(async () => {
+      try {
+        setResolving(true)
+        const data = await apiFetch<{ id: string; title?: string; slug?: string | null }>(
+          `/api/events/${encodeURIComponent(dashboardRef.trim())}`,
+          { auth: true },
+        )
+        if (cancelled) return
+        setResolvedEventId(data.id)
+        const t = typeof data.title === "string" ? data.title.trim() : ""
+        if (t) setDisplayEventTitle(t)
+        const refTrim = dashboardRef.trim()
+        if (isEventIdUuid(refTrim) && data.slug?.trim()) {
+          router.replace(`/event-dashboard/${encodeURIComponent(data.slug.trim())}`)
+        }
+      } catch (e: unknown) {
+        if (!cancelled) {
+          const status = typeof e === "object" && e !== null && "status" in e ? (e as { status?: number }).status : undefined
+          setResolveError(status === 404 ? "Event not found" : "Could not load this event")
+        }
+      } finally {
+        if (!cancelled) setResolving(false)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [resolvedEventId, dashboardRef, router])
+
+  useEffect(() => {
+    if (displayEventTitle) return
+    if (!resolvedEventId) return
+    let cancelled = false
+    ;(async () => {
+      try {
+        const data = await apiFetch<{ title?: string }>(`/api/events/${resolvedEventId}`, { auth: true })
+        const t = typeof data?.title === "string" ? data.title.trim() : ""
+        if (!cancelled && t) setDisplayEventTitle(t)
+      } catch {
+        // keep empty; organizer may lack token on edge cases
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [resolvedEventId, displayEventTitle])
+
+  useEffect(() => {
+    if (!displayEventTitle) return
+    document.title = `${displayEventTitle} · Event dashboard`
+  }, [displayEventTitle])
 
   const handleSuccess = () => {
     setActiveTab("list")
@@ -87,13 +172,12 @@ export default function EventSidebar({ eventId }: EventLayoutProps) {
   }, [tabParam])
 
   useEffect(() => {
-    // Simulate async params resolution
-    const resolveParams = async () => {
-      const resolvedParams = await Promise.resolve({ id: eventId })
-      setParams(resolvedParams)
+    if (!resolvedEventId) {
+      setParams(null)
+      return
     }
-    resolveParams()
-  }, [eventId])
+    setParams({ id: resolvedEventId })
+  }, [resolvedEventId])
 
   const toggleGroup = (groupId: string) => {
     setExpandedGroups((prev) =>
@@ -158,9 +242,25 @@ export default function EventSidebar({ eventId }: EventLayoutProps) {
 
 
   const renderContent = () => {
-    if (!params) {
-      return <div>Loading...</div>
+    if (resolveError) {
+      return (
+        <div className="p-8 text-center max-w-md mx-auto">
+          <p className="text-destructive font-medium">{resolveError}</p>
+          <p className="text-sm text-muted-foreground mt-2">
+            If you are the organizer, sign in and open this dashboard from My Events.
+          </p>
+        </div>
+      )
     }
+    if (resolving || !resolvedEventId || !params) {
+      return (
+        <div className="flex items-center justify-center h-64 text-muted-foreground">
+          Loading event…
+        </div>
+      )
+    }
+
+    const eventId = resolvedEventId
 
     switch (activeSection) {
       case "dashboard":
@@ -207,106 +307,113 @@ export default function EventSidebar({ eventId }: EventLayoutProps) {
   }
 
   return (
-    <div>
+    <div className={cn("relative flex min-h-0 flex-1 w-full overflow-hidden", eventPageBg)}>
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm md:hidden"
+          onClick={() => setSidebarOpen(false)}
+          aria-hidden
+        />
+      )}
 
-      <div className="flex min-h-screen w-full bg-[#F5F4F0]">
-        {/* Mobile Overlay */}
-        {sidebarOpen && (
-          <div
-            className="fixed inset-0 bg-black/50 z-40 md:hidden"
-            onClick={() => setSidebarOpen(false)}
-          />
+      <aside
+        className={cn(
+          "fixed inset-y-0 left-0 z-50 flex h-full w-[min(100vw,260px)] max-w-[85vw] shrink-0 flex-col transition-transform duration-300 ease-in-out md:static md:max-w-none md:w-[260px] md:translate-x-0",
+          eventSidebarSurface,
+          sidebarOpen ? "translate-x-0" : "-translate-x-full",
         )}
+      >
+        <div className="flex items-center justify-between border-b border-slate-200 p-4 md:hidden">
+          <h2 className="text-lg font-semibold text-slate-900">Menu</h2>
+          <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(false)} className="text-slate-600">
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
 
-        {/* Sidebar */}
-        <aside
-          className={`
-          fixed md:static
-          w-64 min-h-screen bg-card border-r border-border z-50
-          transform transition-transform duration-300 ease-in-out
-          ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
-          md:translate-x-0
-          flex flex-col
-        `}
-        >
-          {/* Mobile Header inside sidebar */}
-          <div className="flex items-center justify-between p-4 border-b border-border md:hidden">
-            <h2 className="text-lg font-semibold">Event Menu</h2>
-            <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(false)}>
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-
-          {/* Sidebar Groups */}
-          <div className="flex-1 overflow-y-auto p-4">
-            {sidebarGroups.map((group) => (
-              <div key={group.id} className="mb-4">
-                {/* Group header */}
-                <div
-                  className="flex items-center justify-between cursor-pointer px-2 py-2 rounded hover:bg-muted"
-                  onClick={() => toggleGroup(group.id)}
-                >
-                  <span className="font-medium">{group.label}</span>
-                  {expandedGroups.includes(group.id) ? (
-                    <ChevronDown className="w-4 h-4" />
-                  ) : (
-                    <ChevronRight className="w-4 h-4" />
-                  )}
-                </div>
-
-                {/* Items */}
-                {expandedGroups.includes(group.id) && (
-                  <div className="mt-2 space-y-1">
-                    {group.items.map((item) => (
-                      <button
-                        key={item.id}
-                        onClick={() => {
-                          setActiveSection(item.id)
-                          setSidebarOpen(false)
-                        }}
-                        className={`
-    w-full flex items-center gap-3 px-3 py-2 text-sm rounded-md transition-colors
-    border-l-4
-    ${activeSection === item.id
-                            ? "bg-primary/10 text-primary border-primary"
-                            : "border-transparent hover:bg-muted"
-                          }
-  `}
-                      >
-                        <item.icon className="w-4 h-4 flex-shrink-0" />
-                        <span>{item.title}</span>
-                      </button>
-
-                    ))}
-                  </div>
+        <div className="scrollbar-hover flex-1 overflow-y-auto px-3 py-4">
+          {sidebarGroups.map((group) => (
+            <div key={group.id} className="mb-5">
+              <div
+                className={cn("mb-1 flex cursor-pointer items-center justify-between px-2 py-1.5", eventNavGroupLabel)}
+                onClick={() => toggleGroup(group.id)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault()
+                    toggleGroup(group.id)
+                  }
+                }}
+                role="button"
+                tabIndex={0}
+              >
+                <span>{group.label}</span>
+                {expandedGroups.includes(group.id) ? (
+                  <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
+                ) : (
+                  <ChevronRight className="h-3.5 w-3.5 text-slate-400" />
                 )}
               </div>
-            ))}
-          </div>
-
-          {/* Footer */}
-          <div className="border-t border-border p-4 flex-shrink-0">
-            <Button onClick={() => router.back()} variant="outline" className="w-full">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back
-            </Button>
-          </div>
-        </aside>
-
-        {/* Content */}
-        <div className="flex-1 flex flex-col min-h-screen">
-          {/* Mobile Top Bar */}
-          <div className="md:hidden flex items-center justify-between p-4 bg-card border-b">
-            <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(true)}>
-              <Menu className="h-4 w-4" />
-            </Button>
-            <h1 className="text-lg font-semibold truncate">{getCurrentSectionTitle()}</h1>
-            <div className="w-8" />
-          </div>
-
-          {/* Main Content */}
-          <main className="flex-1 p-4 sm:p-6 overflow-auto">{renderContent()}</main>
+              {expandedGroups.includes(group.id) && (
+                <div className="space-y-0.5">
+                  {group.items.map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => {
+                        setActiveSection(item.id)
+                        setSidebarOpen(false)
+                      }}
+                      className={cn(
+                        "flex w-full items-center gap-3 py-2.5 pr-3 text-left text-sm transition-colors",
+                        activeSection === item.id ? eventNavActive : eventNavInactive,
+                      )}
+                    >
+                      <item.icon className="h-4 w-4 shrink-0" />
+                      <span className="truncate">{item.title}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
         </div>
+
+        <div className="shrink-0 border-t border-slate-200 p-4">
+          <Button
+            type="button"
+            onClick={() => router.back()}
+            variant="outline"
+            className="h-10 w-full rounded-lg border-slate-200 text-slate-700 hover:border-[#004A96]/30 hover:bg-blue-50 hover:text-[#004A96] bg-red-500 border-red-200 text-white hover:bg-red-100 hover:border-red-300 hover:text-red-800"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back
+          </Button>
+        </div>
+      </aside>
+
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+        <div className="flex items-center justify-between gap-2 border-b border-slate-200 bg-white px-3 py-3 md:hidden">
+          <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(true)} className="shrink-0 text-[#004A96]">
+            <Menu className="h-5 w-5" />
+          </Button>
+          <div className="min-w-0 flex-1 px-1 text-center">
+            {displayEventTitle ? (
+              <p className="truncate text-xs text-slate-500">{displayEventTitle}</p>
+            ) : null}
+            <p className="truncate text-sm font-semibold text-[#004A96]">{getCurrentSectionTitle()}</p>
+          </div>
+          <div className="w-9 shrink-0" />
+        </div>
+
+        <div className="hidden border-b border-slate-200 bg-white px-6 py-5 md:block">
+          <h1 className="truncate text-2xl font-bold tracking-tight text-slate-900">
+            {displayEventTitle || "Event dashboard"}
+          </h1>
+          <p className="mt-1 text-sm text-slate-600">{getCurrentSectionTitle()}</p>
+        </div>
+
+        <main className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden p-0">
+          <div className="min-h-0 w-full min-w-0 max-w-full px-3 py-4 sm:px-4 sm:py-5 md:px-6 md:py-6">{renderContent()}</div>
+        </main>
       </div>
     </div>
   )

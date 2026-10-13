@@ -6,11 +6,20 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import MessagesCenter from "@/app/organizer-dashboard/messages-center"
 import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useToast } from "@/hooks/use-toast"
+import { safeResponseJson } from "@/lib/api"
 import { Send, Bell, CheckCircle, Clock, MessageSquare, Calendar, Megaphone, Loader2 } from "lucide-react"
+import { cn } from "@/lib/utils"
+import {
+  venueAccentText,
+  venueCardShell,
+  venuePrimaryBtn,
+  venueTabsList,
+  venueTabsScrollWrapper,
+  venueTabsTrigger,
+} from "./venue-dashboard-theme"
 
 interface Conversation {
   id: string
@@ -87,19 +96,15 @@ export default function CommunicationCenter({ params }: CommunicationCenterProps
     try {
       setLoadingConversations(true)
       const response = await fetch("/api/conversations")
-      const data = await response.json()
-
-      if (data.success) {
+      const data = await safeResponseJson<{ success?: boolean; conversations?: Conversation[] }>(response)
+      if (data?.success && Array.isArray(data.conversations)) {
         setConversations(data.conversations)
       } else {
-        toast({
-          title: "Error",
-          description: "Failed to load conversations",
-          variant: "destructive",
-        })
+        setConversations([])
       }
     } catch (error) {
       console.error("Error fetching conversations:", error)
+      setConversations([])
       toast({
         title: "Error",
         description: "Failed to load conversations",
@@ -115,19 +120,15 @@ export default function CommunicationCenter({ params }: CommunicationCenterProps
     try {
       setLoadingMessages(true)
       const response = await fetch(`/api/conversations/${conversationId}/messages`)
-      const data = await response.json()
-
-      if (data.success) {
+      const data = await safeResponseJson<{ success?: boolean; messages?: Message[] }>(response)
+      if (data?.success && Array.isArray(data.messages)) {
         setMessages(data.messages)
       } else {
-        toast({
-          title: "Error",
-          description: "Failed to load messages",
-          variant: "destructive",
-        })
+        setMessages([])
       }
     } catch (error) {
       console.error("Error fetching messages:", error)
+      setMessages([])
       toast({
         title: "Error",
         description: "Failed to load messages",
@@ -143,19 +144,31 @@ export default function CommunicationCenter({ params }: CommunicationCenterProps
     try {
       setLoadingNotifications(true)
       const response = await fetch("/api/notifications")
-      const data = await response.json()
-
-      if (data.success) {
-        setNotifications(data.notifications)
+      const data = await safeResponseJson<{
+        notifications?: Array<Record<string, unknown>>
+      }>(response)
+      if (data?.notifications && Array.isArray(data.notifications)) {
+        const mapped: Notification[] = data.notifications.map((notif: Record<string, unknown>) => ({
+          id: String(notif.id ?? ""),
+          type: typeof notif.type === "string" ? notif.type : "push",
+          title: typeof notif.title === "string" ? notif.title : "",
+          message: typeof notif.message === "string" ? notif.message : "",
+          timestamp:
+            typeof notif.createdAt === "string"
+              ? notif.createdAt
+              : typeof notif.timestamp === "string"
+                ? notif.timestamp
+                : new Date().toISOString(),
+          read: Boolean(notif.isRead ?? notif.read ?? false),
+          priority: typeof notif.priority === "string" ? notif.priority : "medium",
+        }))
+        setNotifications(mapped)
       } else {
-        toast({
-          title: "Error",
-          description: "Failed to load notifications",
-          variant: "destructive",
-        })
+        setNotifications([])
       }
     } catch (error) {
       console.error("Error fetching notifications:", error)
+      setNotifications([])
       toast({
         title: "Error",
         description: "Failed to load notifications",
@@ -171,19 +184,15 @@ export default function CommunicationCenter({ params }: CommunicationCenterProps
     try {
       setLoadingOrganizers(true)
       const response = await fetch("/api/organizers/list")
-      const data = await response.json()
-
-      if (data.success) {
+      const data = await safeResponseJson<{ success?: boolean; organizers?: Organizer[] }>(response)
+      if (data?.success && Array.isArray(data.organizers)) {
         setOrganizers(data.organizers)
       } else {
-        toast({
-          title: "Error",
-          description: "Failed to load organizers",
-          variant: "destructive",
-        })
+        setOrganizers([])
       }
     } catch (error) {
       console.error("Error fetching organizers:", error)
+      setOrganizers([])
       toast({
         title: "Error",
         description: "Failed to load organizers",
@@ -210,10 +219,10 @@ export default function CommunicationCenter({ params }: CommunicationCenterProps
         }),
       })
 
-      const data = await response.json()
+      const data = await safeResponseJson<{ success?: boolean; message?: Message }>(response)
 
-      if (data.success) {
-        setMessages((prev) => [...prev, data.message])
+      if (response.ok && data?.success && data.message) {
+        setMessages((prev) => [...prev, data.message!])
         setNewMessage("")
         toast({
           title: "Success",
@@ -257,19 +266,19 @@ export default function CommunicationCenter({ params }: CommunicationCenterProps
         }),
       })
 
-      const data = await response.json()
+      const data = await safeResponseJson<{ success?: boolean; message?: string; error?: string }>(response)
 
-      if (data.success) {
+      if (response.ok && data?.success) {
         setBroadcastMessage("")
         setSelectedOrganizers([])
         toast({
           title: "Success",
-          description: data.message,
+          description: data.message || "Broadcast sent",
         })
       } else {
         toast({
           title: "Error",
-          description: data.error || "Failed to send broadcast",
+          description: data?.error || "Failed to send broadcast",
           variant: "destructive",
         })
       }
@@ -318,13 +327,13 @@ export default function CommunicationCenter({ params }: CommunicationCenterProps
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case "booking":
-        return <Calendar className="h-4 w-4 text-blue-500" />
+        return <Calendar className="h-4 w-4 text-blue-600" />
       case "payment":
         return <CheckCircle className="h-4 w-4 text-green-500" />
       case "reminder":
         return <Clock className="h-4 w-4 text-orange-500" />
       case "inquiry":
-        return <MessageSquare className="h-4 w-4 text-purple-500" />
+        return <MessageSquare className="h-4 w-4 text-blue-500" />
       default:
         return <Bell className="h-4 w-4 text-gray-500" />
     }
@@ -339,9 +348,9 @@ export default function CommunicationCenter({ params }: CommunicationCenterProps
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-900">Communication Center</h1>
+    <div className="min-w-0 space-y-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h1 className="text-xl font-bold text-gray-900 sm:text-2xl md:text-3xl">Communication Center</h1>
         <div className="flex items-center gap-2">
           <Badge variant="outline" className="text-red-600">
             {notifications.filter((n) => !n.read).length} Unread
@@ -349,236 +358,15 @@ export default function CommunicationCenter({ params }: CommunicationCenterProps
         </div>
       </div>
 
-      <Tabs defaultValue="messages" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="messages">Messages</TabsTrigger>
-          <TabsTrigger value="notifications">Notifications</TabsTrigger>
-          <TabsTrigger value="broadcast">Broadcast</TabsTrigger>
-        </TabsList>
+      <div className="space-y-6">
+        {/* Messages Section */}
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Messages</h2>
+          <MessagesCenter organizerId={id} surface="venue" />
+        </div>
 
-        <TabsContent value="messages" className="space-y-6">
-          <div className="">
-            <MessagesCenter organizerId={id} />
-          </div>
-        </TabsContent>
-
-        <TabsContent value="notifications" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Bell className="h-5 w-5" />
-                <span>Notification Logs</span>
-                {notifications.filter((n) => !n.read).length > 0 && (
-                  <Badge variant="destructive">{notifications.filter((n) => !n.read).length}</Badge>
-                )}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {loadingNotifications ? (
-                <div className="flex items-center justify-center p-8">
-                  <Loader2 className="h-6 w-6 animate-spin" />
-                </div>
-              ) : (
-                notifications.map((notification) => (
-                  <div
-                    key={notification.id}
-                    className={`p-4 rounded-lg border ${
-                      !notification.read ? "bg-blue-50 border-blue-200" : "bg-gray-50 border-gray-200"
-                    }`}
-                  >
-                    <div className="flex items-start space-x-3">
-                      {getNotificationIcon(notification.type)}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <h4 className="font-medium text-sm text-gray-900">{notification.title}</h4>
-                          <Badge className={getPriorityColor(notification.priority)} variant="outline">
-                            {notification.priority}
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-gray-600 mt-1">{notification.message}</p>
-                        <p className="text-xs text-gray-400 mt-2">{notification.timestamp}</p>
-                      </div>
-                      {!notification.read && (
-                        <div className="w-2 h-2 bg-blue-600 rounded-full flex-shrink-0 mt-1"></div>
-                      )}
-                    </div>
-                  </div>
-                ))
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="broadcast" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Megaphone className="h-5 w-5" />
-                <span>Broadcast to Organizers</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-sm font-medium mb-2 block">Select Recipients</label>
-                    <div className="space-y-2 max-h-48 overflow-y-auto border rounded-lg p-3">
-                      {loadingOrganizers ? (
-                        <div className="flex items-center justify-center p-4">
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        </div>
-                      ) : (
-                        <>
-                          <div className="flex items-center space-x-2 pb-2 border-b">
-                            <Checkbox
-                              id="select-all"
-                              checked={selectedOrganizers.length === organizers.length}
-                              onCheckedChange={(checked) => {
-                                if (checked) {
-                                  setSelectedOrganizers(organizers.map((o) => o.id))
-                                } else {
-                                  setSelectedOrganizers([])
-                                }
-                              }}
-                            />
-                            <label htmlFor="select-all" className="text-sm font-medium">
-                              Select All Organizers
-                            </label>
-                          </div>
-                          {organizers.map((organizer) => (
-                            <div key={organizer.id} className="flex items-center space-x-2">
-                              <Checkbox
-                                id={organizer.id}
-                                checked={selectedOrganizers.includes(organizer.id)}
-                                onCheckedChange={(checked) =>
-                                  handleOrganizerSelection(organizer.id, checked as boolean)
-                                }
-                              />
-                              <label htmlFor={organizer.id} className="text-sm flex-1">
-                                <div className="font-medium">{organizer.name}</div>
-                                <div className="text-gray-600">{organizer.company}</div>
-                                <div className="text-blue-600 text-xs">{organizer.event}</div>
-                              </label>
-                            </div>
-                          ))}
-                        </>
-                      )}
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="text-sm font-medium mb-2 block">Broadcast Method</label>
-                    <Select value={broadcastType} onValueChange={setBroadcastType}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="email">Email</SelectItem>
-                        <SelectItem value="sms">SMS</SelectItem>
-                        <SelectItem value="whatsapp">WhatsApp</SelectItem>
-                        <SelectItem value="all">All Methods</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-sm font-medium mb-2 block">Message</label>
-                    <Textarea
-                      value={broadcastMessage}
-                      onChange={(e) => setBroadcastMessage(e.target.value)}
-                      placeholder="Type your broadcast message here..."
-                      rows={8}
-                      className="resize-none"
-                      disabled={sendingBroadcast}
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="text-sm text-gray-600">{selectedOrganizers.length} recipient(s) selected</div>
-                    <Button
-                      onClick={sendBroadcast}
-                      disabled={!broadcastMessage.trim() || selectedOrganizers.length === 0 || sendingBroadcast}
-                      className="flex items-center space-x-2"
-                    >
-                      {sendingBroadcast ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                      <span>{sendingBroadcast ? "Sending..." : "Send Broadcast"}</span>
-                    </Button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Quick Message Templates */}
-              <div className="border-t pt-4">
-                <h4 className="font-medium mb-3">Quick Templates</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <Button
-                    variant="outline"
-                    className="text-left h-auto p-3 bg-transparent"
-                    onClick={() =>
-                      setBroadcastMessage(
-                        "Reminder: Please confirm your event setup requirements by [date]. Contact us if you need any assistance.",
-                      )
-                    }
-                    disabled={sendingBroadcast}
-                  >
-                    <div>
-                      <div className="font-medium text-sm">Setup Reminder</div>
-                      <div className="text-xs text-gray-600">Remind about setup requirements</div>
-                    </div>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="text-left h-auto p-3 bg-transparent"
-                    onClick={() =>
-                      setBroadcastMessage(
-                        "Important: Due to maintenance work, parking will be limited on [date]. Please inform your attendees about alternative parking options.",
-                      )
-                    }
-                    disabled={sendingBroadcast}
-                  >
-                    <div>
-                      <div className="font-medium text-sm">Facility Update</div>
-                      <div className="text-xs text-gray-600">Notify about facility changes</div>
-                    </div>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="text-left h-auto p-3 bg-transparent"
-                    onClick={() =>
-                      setBroadcastMessage(
-                        "Payment reminder: Your event payment is due on [date]. Please complete the payment to confirm your booking.",
-                      )
-                    }
-                    disabled={sendingBroadcast}
-                  >
-                    <div>
-                      <div className="font-medium text-sm">Payment Reminder</div>
-                      <div className="text-xs text-gray-600">Send payment reminders</div>
-                    </div>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="text-left h-auto p-3 bg-transparent"
-                    onClick={() =>
-                      setBroadcastMessage(
-                        "Thank you for choosing our venue for your event. We look forward to making your event a great success!",
-                      )
-                    }
-                    disabled={sendingBroadcast}
-                  >
-                    <div>
-                      <div className="font-medium text-sm">Welcome Message</div>
-                      <div className="text-xs text-gray-600">Welcome new organizers</div>
-                    </div>
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+       
+      </div>
     </div>
   )
 }

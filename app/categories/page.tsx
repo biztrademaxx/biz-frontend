@@ -8,6 +8,8 @@ export const metadata = {
   description: "Explore events by industry and topic.",
 }
 
+export const revalidate = 120
+
 async function CategoriesGrid() {
   const categories = await fetchBrowseCategoriesForHomeServer()
   return <CategoryGridClient categories={categories} variant="full" />

@@ -3,6 +3,7 @@ import { devLog } from "@/lib/dev-log"
 
 import { NextRequest, NextResponse } from "next/server"
 import { uploadToCloudinary } from "@/lib/cloudinary"
+import { maybeCompressImageServer } from "@/lib/compress-image-server"
 
 export async function POST(request: NextRequest) {
   try {
@@ -53,22 +54,16 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Validate file size (max 5MB)
-    const maxSize = 10 * 1024 * 1024 // 10MB
-
-    if (file.size > maxSize) {
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: "File too large",
-          details: `File size ${(file.size / 1024 / 1024).toFixed(2)}MB exceeds maximum size of 5MB`
-        },
-        { status: 400 }
-      )
+    let uploadFile = file
+    try {
+      uploadFile = await maybeCompressImageServer(file)
+    } catch (compressErr) {
+      const details = compressErr instanceof Error ? compressErr.message : "Image is too large"
+      return NextResponse.json({ success: false, error: "File too large", details }, { status: 413 })
     }
 
     // Validate file size (min 1KB)
-    if (file.size < 1024) {
+    if (uploadFile.size < 1024) {
       return NextResponse.json(
         { 
           success: false, 
@@ -80,7 +75,7 @@ export async function POST(request: NextRequest) {
     }
 
     devLog('Starting Cloudinary upload...')
-    const uploadResult = await uploadToCloudinary(file, folder)
+    const uploadResult = await uploadToCloudinary(uploadFile, folder)
     devLog('Cloudinary upload successful:', uploadResult.public_id)
 
     return NextResponse.json({

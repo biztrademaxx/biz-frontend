@@ -1,16 +1,22 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { signIn } from "next-auth/react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter,useSearchParams } from "next/navigation"
+import { AppImage } from "@/components/app-image"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Eye, EyeOff, Mail, Lock, User, Building, Phone, Check, X, Loader2 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import {
+  mapSignupTabToPrismaRole,
+  postOAuthSignupIntentRole,
+} from "@/lib/oauth-signup-intent"
+import { isPlaceholderOrInvalidPhone } from "@/lib/phone-validation"
 
 const API_BASE = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000").replace(/\/$/, "")
 
@@ -30,6 +36,7 @@ type SignupFormCardProps = {
 
 export default function SignupFormCard({ variant, onRegistrationSuccess }: SignupFormCardProps) {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { toast } = useToast()
   
   // 🔥 3-STEP FLOW: form → otp → password
@@ -38,6 +45,13 @@ export default function SignupFormCard({ variant, onRegistrationSuccess }: Signu
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [userType, setUserType] = useState("visitor")
+  useEffect(() => {
+  const role = searchParams.get("role")
+
+  if (role) {
+    setUserType(role)
+  }
+}, [searchParams])
   const [selectedPlan, setSelectedPlan] = useState("basic")
   const [isLoading, setIsLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -93,7 +107,8 @@ export default function SignupFormCard({ variant, onRegistrationSuccess }: Signu
     const newErrors: Record<string, string> = {}
 
     if (!formData.fullName.trim()) {
-      newErrors.fullName = "Full name is required"
+      newErrors.fullName =
+        userType === "venue" ? "Venue name is required" : "Full name is required"
     }
 
     if (!formData.email.trim()) {
@@ -104,6 +119,8 @@ export default function SignupFormCard({ variant, onRegistrationSuccess }: Signu
 
     if (!formData.phone.trim()) {
       newErrors.phone = "Phone number is required"
+    } else if (isPlaceholderOrInvalidPhone(formData.phone)) {
+      newErrors.phone = "Enter a valid phone number (autofill or test numbers are not accepted)"
     }
 
     if (isCompanyRequired() && !formData.companyName.trim()) {
@@ -267,6 +284,7 @@ export default function SignupFormCard({ variant, onRegistrationSuccess }: Signu
         website: formData.website,
         userType,
         selectedPlan: userType === "organiser" ? selectedPlan : null,
+        ...(userType === "venue" ? { venueName: formData.fullName.trim() } : {}),
       }
 
       const res = await fetch(
@@ -325,12 +343,16 @@ export default function SignupFormCard({ variant, onRegistrationSuccess }: Signu
   const handleGoogleSignup = async () => {
     setIsLoading(true)
     try {
+      await postOAuthSignupIntentRole(mapSignupTabToPrismaRole(userType))
       await signIn("google", { callbackUrl: "/" })
     } catch (err) {
       console.error("Error during Google signup:", err)
       toast({
         title: "Error",
-        description: "Failed to sign up with Google.",
+        description:
+          err instanceof Error
+            ? err.message
+            : "Failed to sign up with Google.",
         variant: "destructive",
       })
     } finally {
@@ -341,12 +363,16 @@ export default function SignupFormCard({ variant, onRegistrationSuccess }: Signu
   const handleLinkedInSignup = async () => {
     setIsLoading(true)
     try {
+      await postOAuthSignupIntentRole(mapSignupTabToPrismaRole(userType))
       await signIn("linkedin", { callbackUrl: "/" })
     } catch (err) {
       console.error("Error during LinkedIn signup:", err)
       toast({
         title: "Error",
-        description: "Failed to sign up with LinkedIn.",
+        description:
+          err instanceof Error
+            ? err.message
+            : "Failed to sign up with LinkedIn.",
         variant: "destructive",
       })
     } finally {
@@ -370,7 +396,7 @@ export default function SignupFormCard({ variant, onRegistrationSuccess }: Signu
   }
 
   const isCompanyRequired = () => {
-    return ["exhibitor", "organiser", "venue"].includes(userType)
+    return ["exhibitor", "organiser"].includes(userType)
   }
 
   const pricingPlans = [
@@ -443,10 +469,15 @@ export default function SignupFormCard({ variant, onRegistrationSuccess }: Signu
     { feature: "Support", basic: "Email", premium: "Email + Chat", enterprise: "24/7 Priority" },
   ]
 
+  const dialogCardClass =
+    variant === "dialog"
+      ? "border-white/60 bg-white/45 shadow-[0_8px_32px_rgba(15,23,42,0.12)] backdrop-blur-xl"
+      : "shadow-lg"
+
   const content = (
     <div className="w-full">
       <div>
-        <Card className="w-full max-w-md mx-auto shadow-lg">
+        <Card className={`w-full max-w-md mx-auto ${dialogCardClass}`}>
           <CardHeader className="text-center pb-4">
             <h1 className="text-2xl font-semibold text-gray-900">
               {step === "form" ? "Welcome" : step === "otp" ? "Verify OTP" : "Create Password"}
@@ -540,11 +571,15 @@ export default function SignupFormCard({ variant, onRegistrationSuccess }: Signu
                 <form onSubmit={handleSubmitForm} className="space-y-4">
                   <div className="flex grid-cols-2 gap-1">
                     <div className="relative">
-                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      {userType === "venue" ? (
+                        <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      ) : (
+                        <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      )}
                       <Input
                         type="text"
                         name="fullName"
-                        placeholder="Full Name"
+                        placeholder={userType === "venue" ? "Venue Name" : "Full Name"}
                         value={formData.fullName}
                         onChange={handleInputChange}
                         className={`pl-10 ${errors.fullName ? "border-red-500" : ""}`}
@@ -575,6 +610,8 @@ export default function SignupFormCard({ variant, onRegistrationSuccess }: Signu
                         type="tel"
                         name="phone"
                         placeholder="Phone Number"
+                        autoComplete="off"
+                        inputMode="tel"
                         value={formData.phone}
                         onChange={handleInputChange}
                         className={`pl-10 ${errors.phone ? "border-red-500" : ""}`}
@@ -583,19 +620,21 @@ export default function SignupFormCard({ variant, onRegistrationSuccess }: Signu
                       {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
                     </div>
 
-                    <div className="relative">
-                      <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                      <Input
-                        type="text"
-                        name="companyName"
-                        placeholder={getPlaceholderText()}
-                        value={formData.companyName}
-                        onChange={handleInputChange}
-                        className={`pl-10 ${errors.companyName ? "border-red-500" : ""}`}
-                        required={isCompanyRequired()}
-                      />
-                      {errors.companyName && <p className="text-red-500 text-xs mt-1">{errors.companyName}</p>}
-                    </div>
+                    {userType !== "venue" && (
+                      <div className="relative">
+                        <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <Input
+                          type="text"
+                          name="companyName"
+                          placeholder={getPlaceholderText()}
+                          value={formData.companyName}
+                          onChange={handleInputChange}
+                          className={`pl-10 ${errors.companyName ? "border-red-500" : ""}`}
+                          required={isCompanyRequired()}
+                        />
+                        {errors.companyName && <p className="text-red-500 text-xs mt-1">{errors.companyName}</p>}
+                      </div>
+                    )}
                   </div>
 
                   {userType !== "visitor" && (
@@ -748,7 +787,7 @@ export default function SignupFormCard({ variant, onRegistrationSuccess }: Signu
                   <input type="checkbox" required className="mt-1" />
                   <span className="text-gray-600">
                     I agree to the{" "}
-                    <Link href="/terms" className="text-blue-600 hover:text-blue-800">
+                    <Link href="/terms-of-service" className="text-blue-600 hover:text-blue-800">
                       Terms of Service
                     </Link>{" "}
                     and{" "}
@@ -799,10 +838,12 @@ export default function SignupFormCard({ variant, onRegistrationSuccess }: Signu
                     key={organizer.id}
                     className="bg-white border border-gray-200 rounded-lg p-3 hover:shadow-md hover:border-gray-300 transition duration-200"
                   >
-                    <div className="flex items-center justify-center h-10 mb-4">
-                      <img
-                        src={organizer.logo || "/city/c4.jpg"}
+                    <div className="relative flex h-10 w-full items-center justify-center mb-4">
+                      <AppImage
+                        src={organizer.logo}
                         alt={organizer.name}
+                        width={120}
+                        height={40}
                         className="max-h-full max-w-full object-contain"
                       />
                     </div>

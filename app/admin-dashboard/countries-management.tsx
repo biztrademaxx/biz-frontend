@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { AppImage } from "@/components/app-image"
+import { useState, useEffect, useMemo } from "react"
 import { 
   Plus, 
   Edit3, 
@@ -17,7 +18,7 @@ import {
 } from "lucide-react"
 import CloudinaryUpload from "@/components/cloudinary-upload"
 import { apiFetch } from "@/lib/api"
-import { getCountryOptions } from "@/lib/location-data"
+import { getCountryCatalog, getCountryOptions } from "@/lib/location-data"
 
 interface Country {
   id: string
@@ -81,6 +82,7 @@ export default function CountriesManagement({ activeTab = "countries" }: Countri
   const [countries, setCountries] = useState<Country[]>([])
   const [cities, setCities] = useState<City[]>([])
   const [loading, setLoading] = useState(true)
+  const [fetchError, setFetchError] = useState("")
   const [searchTerm, setSearchTerm] = useState("")
   const [currentActiveTab, setCurrentActiveTab] = useState<"countries" | "states" | "cities">(activeTab)
   const [selectedStateCountry, setSelectedStateCountry] = useState("")
@@ -132,22 +134,36 @@ export default function CountriesManagement({ activeTab = "countries" }: Countri
   const fetchData = async () => {
     try {
       setLoading(true)
+      setFetchError("")
       if (currentActiveTab === "countries") {
         const data = await apiFetch<Country[]>("/api/admin/countries?includeCounts=true", { auth: true })
         setCountries(Array.isArray(data) ? data : [])
       } else if (currentActiveTab === "states") {
-        const [countryData, statesData] = await Promise.all([
+        const [countriesResult, statesResult] = await Promise.allSettled([
           apiFetch<Country[]>("/api/admin/countries?includeCounts=true", { auth: true }),
           apiFetch<StateRow[]>("/api/admin/states?includeCounts=true", { auth: true }),
         ])
-        setCountries(Array.isArray(countryData) ? countryData : [])
-        setStates(Array.isArray(statesData) ? statesData : [])
+        if (countriesResult.status === "fulfilled") {
+          setCountries(Array.isArray(countriesResult.value) ? countriesResult.value : [])
+        }
+        if (statesResult.status === "fulfilled") {
+          setStates(Array.isArray(statesResult.value) ? statesResult.value : [])
+        }
+        const failed = [countriesResult, statesResult].find((r) => r.status === "rejected") as
+          | PromiseRejectedResult
+          | undefined
+        if (failed) {
+          throw failed.reason
+        }
       } else {
         const data = await apiFetch<City[]>("/api/admin/cities?includeCounts=true", { auth: true })
         setCities(Array.isArray(data) ? data : [])
       }
     } catch (error) {
       console.error("Failed to fetch data:", error)
+      const message =
+        error instanceof Error ? error.message : "Failed to load location data. Is the backend running?"
+      setFetchError(message)
     } finally {
       setLoading(false)
     }
@@ -359,10 +375,57 @@ export default function CountriesManagement({ activeTab = "countries" }: Countri
       ? countries.map((c) => ({ code: c.code, name: c.name }))
       : getCountryOptions()
 
+  const countryCatalog = useMemo(() => getCountryCatalog(), [])
+  const countryDropdownOptions = useMemo(() => {
+    const existingCodes = new Set(countries.map((c) => c.code.trim().toUpperCase()))
+    const existingNames = new Set(countries.map((c) => c.name.trim().toLowerCase()))
+    const options = countryCatalog.filter((c) => {
+      if (editingCountry) {
+        if (c.code.toUpperCase() === editingCountry.code.trim().toUpperCase()) return true
+        if (c.name.toLowerCase() === editingCountry.name.trim().toLowerCase()) return true
+      }
+      return !existingCodes.has(c.code.toUpperCase()) && !existingNames.has(c.name.toLowerCase())
+    })
+    if (
+      editingCountry &&
+      !options.some(
+        (c) =>
+          c.code.toUpperCase() === editingCountry.code.trim().toUpperCase() ||
+          c.name.toLowerCase() === editingCountry.name.trim().toLowerCase(),
+      )
+    ) {
+      options.unshift({
+        code: editingCountry.code,
+        name: editingCountry.name,
+        currency: editingCountry.currency || "USD",
+        timezone: editingCountry.timezone || "UTC",
+      })
+    }
+    return options
+  }, [countryCatalog, countries, editingCountry])
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    )
+  }
+
+  if (fetchError) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 gap-4 text-center px-4">
+        <p className="text-red-600 max-w-xl">{fetchError}</p>
+        <p className="text-sm text-gray-500">
+          Start the API with <code className="text-xs bg-gray-100 px-1 py-0.5 rounded">cd biz-backend &amp;&amp; npm run dev</code>
+        </p>
+        <button
+          type="button"
+          onClick={() => void fetchData()}
+          className="text-sm underline text-gray-700 hover:text-gray-900"
+        >
+          Try again
+        </button>
       </div>
     )
   }
@@ -643,10 +706,12 @@ export default function CountriesManagement({ activeTab = "countries" }: Countri
                 <div className="flex items-center gap-3">
                   {country.flag ? (
                     <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-gray-100 overflow-hidden">
-                      <img 
-                        src={country.flag} 
+                      <AppImage
+                        src={country.flag}
                         alt={`${country.name} flag`}
-                        className="w-12 h-12 object-cover"
+                        width={48}
+                        height={48}
+                        className="h-12 w-12 object-cover"
                       />
                     </div>
                   ) : (
@@ -704,13 +769,18 @@ export default function CountriesManagement({ activeTab = "countries" }: Countri
                 <div className="flex gap-2">
                   <button
                     onClick={() => {
+                      const catalogMatch = countryCatalog.find(
+                        (c) =>
+                          c.name.toLowerCase() === country.name.trim().toLowerCase() ||
+                          c.code.toUpperCase() === country.code.trim().toUpperCase(),
+                      )
                       setEditingCountry(country)
                       setCountryFormData({
-                        name: country.name,
-                        code: country.code,
+                        name: catalogMatch?.name || country.name,
+                        code: catalogMatch?.code || country.code,
                         flag: country.flag || "",
-                        currency: country.currency || "USD",
-                        timezone: country.timezone || "UTC",
+                        currency: country.currency || catalogMatch?.currency || "USD",
+                        timezone: country.timezone || catalogMatch?.timezone || "UTC",
                         isActive: country.isActive,
                         isPermitted: country.isPermitted
                       })
@@ -747,10 +817,12 @@ export default function CountriesManagement({ activeTab = "countries" }: Countri
                 <div className="flex items-center gap-3">
                   {city.image ? (
                     <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-gray-100 overflow-hidden">
-                      <img 
-                        src={city.image} 
+                      <AppImage
+                        src={city.image}
                         alt={`${city.name} image`}
-                        className="w-12 h-12 object-cover"
+                        width={48}
+                        height={48}
+                        className="h-12 w-12 object-cover"
                       />
                     </div>
                   ) : (
@@ -868,14 +940,35 @@ export default function CountriesManagement({ activeTab = "countries" }: Countri
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Country Name *
                   </label>
-                  <input
-                    type="text"
+                  <select
                     required
-                    value={countryFormData.name}
-                    onChange={(e) => setCountryFormData({ ...countryFormData, name: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Enter country name"
-                  />
+                    value={countryFormData.code}
+                    onChange={(e) => {
+                      const selected = countryDropdownOptions.find((c) => c.code === e.target.value)
+                      if (!selected) {
+                        setCountryFormData({ ...countryFormData, code: e.target.value })
+                        return
+                      }
+                      setCountryFormData({
+                        ...countryFormData,
+                        name: selected.name,
+                        code: selected.code,
+                        currency: selected.currency || countryFormData.currency,
+                        timezone: selected.timezone || countryFormData.timezone,
+                      })
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                  >
+                    <option value="">Select a country</option>
+                    {countryDropdownOptions.map((country) => (
+                      <option key={country.code} value={country.code}>
+                        {country.name} ({country.code})
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Choose from all countries. Currency and timezone fill in automatically.
+                  </p>
                 </div>
 
                 <div>
@@ -885,11 +978,10 @@ export default function CountriesManagement({ activeTab = "countries" }: Countri
                   <input
                     type="text"
                     required
-                    maxLength={3}
+                    readOnly
                     value={countryFormData.code}
-                    onChange={(e) => setCountryFormData({ ...countryFormData, code: e.target.value.toUpperCase() })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 uppercase"
-                    placeholder="e.g., USA, IND, UK"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700 uppercase"
+                    placeholder="Filled from the selected country"
                   />
                 </div>
 

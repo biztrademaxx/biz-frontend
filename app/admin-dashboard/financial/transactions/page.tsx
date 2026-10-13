@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Search, Eye, Download, TrendingUp, TrendingDown, Activity } from "lucide-react"
 import { format } from "date-fns"
 import { apiFetch } from "@/lib/api"
+import { formatMoney, formatMoneyTotals, sumByCurrency } from "@/lib/format-currency"
 
 interface Transaction {
   id: string
@@ -51,7 +52,9 @@ export default function FinancialTransactionsPage() {
 
   const fetchTransactions = async () => {
     try {
-      const data = await apiFetch<{ success?: boolean; data?: Transaction[] }>("/api/admin/financial/transactions", {
+      const data = await apiFetch<{ success?: boolean; data?: Transaction[] }>(
+        "/api/admin/financial/transactions?limit=500",
+        {
         auth: true,
       })
       const list = data.data ?? []
@@ -104,15 +107,19 @@ export default function FinancialTransactionsPage() {
 
   const calculateStats = () => {
     const total = transactions.length
-    const totalAmount = transactions.reduce((sum, t) => sum + t.amount, 0)
+    const totalAmount = sumByCurrency(transactions)
     const completed = transactions.filter((t) => t.status === "COMPLETED").length
-    const completedAmount = transactions.filter((t) => t.status === "COMPLETED").reduce((sum, t) => sum + t.amount, 0)
+    const completedAmount = sumByCurrency(transactions.filter((t) => t.status === "COMPLETED"))
     const pending = transactions.filter((t) => t.status === "PENDING").length
     const failed = transactions.filter((t) => t.status === "FAILED").length
     const refunded = transactions.filter((t) => t.status === "REFUNDED" || t.status === "PARTIALLY_REFUNDED").length
     const refundedAmount = transactions
       .filter((t) => t.status === "REFUNDED" || t.status === "PARTIALLY_REFUNDED")
-      .reduce((sum, t) => sum + (t.refundAmount || 0), 0)
+      .reduce<Record<string, number>>((acc, t) => {
+        const currency = (t.currency ?? "INR").toUpperCase()
+        acc[currency] = (acc[currency] ?? 0) + (t.refundAmount || 0)
+        return acc
+      }, {})
 
     return {
       total,
@@ -190,7 +197,7 @@ export default function FinancialTransactionsPage() {
           <CardContent>
             <div className="text-2xl font-bold">{stats.total}</div>
             <p className="text-xs text-muted-foreground">
-              ${stats.totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })} total volume
+              {formatMoneyTotals(stats.totalAmount)} total volume
             </p>
           </CardContent>
         </Card>
@@ -203,7 +210,7 @@ export default function FinancialTransactionsPage() {
           <CardContent>
             <div className="text-2xl font-bold text-green-600">{stats.completed}</div>
             <p className="text-xs text-muted-foreground">
-              ${stats.completedAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })} revenue
+              {formatMoneyTotals(stats.completedAmount)} revenue
             </p>
           </CardContent>
         </Card>
@@ -231,7 +238,7 @@ export default function FinancialTransactionsPage() {
           <CardContent>
             <div className="text-2xl font-bold text-purple-600">{stats.refunded}</div>
             <p className="text-xs text-muted-foreground">
-              ${stats.refundedAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })} refunded
+              {formatMoneyTotals(stats.refundedAmount)} refunded
             </p>
           </CardContent>
         </Card>
@@ -317,9 +324,7 @@ export default function FinancialTransactionsPage() {
                           <div className="text-sm text-gray-500">{transaction.userEmail}</div>
                         </div>
                       </TableCell>
-                      <TableCell className="font-semibold">
-                        {transaction.currency} {transaction.amount.toFixed(2)}
-                      </TableCell>
+                      <TableCell className="font-semibold">{formatMoney(transaction.amount, transaction.currency)}</TableCell>
                       <TableCell>
                         <Badge className={getStatusColor(transaction.status)}>{transaction.status}</Badge>
                       </TableCell>
@@ -363,7 +368,7 @@ export default function FinancialTransactionsPage() {
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Amount</h3>
                   <p className="text-sm font-semibold mt-1">
-                    {selectedTransaction.currency} {selectedTransaction.amount.toFixed(2)}
+                    {formatMoney(selectedTransaction.amount, selectedTransaction.currency)}
                   </p>
                 </div>
                 <div>
@@ -422,7 +427,7 @@ export default function FinancialTransactionsPage() {
                     <div className="flex justify-between">
                       <span className="text-sm text-gray-600">Refund Amount:</span>
                       <span className="text-sm font-medium text-purple-600">
-                        {selectedTransaction.currency} {selectedTransaction.refundAmount?.toFixed(2)}
+                        {formatMoney(selectedTransaction.refundAmount ?? 0, selectedTransaction.currency)}
                       </span>
                     </div>
                     {selectedTransaction.refundReason && (

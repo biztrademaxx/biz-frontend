@@ -6,7 +6,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import MessagesCenter from "@/app/organizer-dashboard/messages-center"
 import EventPromotion from "@/app/organizer-dashboard/event-promotion"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   Building2,
   Calendar,
@@ -14,24 +13,24 @@ import {
   TrendingUp,
   Package,
   Settings,
-  BarChart3,
   Star,
-  MapPin,
-  Phone,
-  Mail,
-  Globe,
-  Twitter,
-  Briefcase,
+  BarChart3,
   HelpCircle,
   ChevronDown,
   ChevronRight,
   Menu,
-  X
+  X,
+  LogOut,
+  Crown,
+  MessageSquare,
+  LayoutDashboard,
+  type LucideIcon,
 } from "lucide-react"
-import { useRouter } from "next/navigation"
+import { useRouter, usePathname } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
 import { useDashboard } from "@/contexts/dashboard-context"
-import { apiFetch } from "@/lib/api"
+import { apiFetch, getCurrentUserId } from "@/lib/api"
+import { getExhibitorDashboardPath } from "@/lib/profile-path"
 
 import CompanyInfo from "./company-info"
 import EventParticipation from "./event-participation"
@@ -44,19 +43,83 @@ import { ExhibitorSettings } from "./settings"
 import { ConnectionsSection } from "@/app/dashboard/connections-section"
 import { HelpSupport } from "@/components/HelpSupport"
 import { FollowManagement } from "./follow-management"
-import { ActiveEventsCard } from "./TotalExhibitorEvent"
-import { FollowersCountCard } from "./FollowersCountCard"
-import { AppointmentsCountCard } from "./AppointmentsCountCard"
 import ActivePromotions from "./active-promotion"
 import { ExhibitorHelpSupport } from "./help-support"
 import ViewFeedback from "./view-feedback"
 import { DashboardManagedBanner } from "@/components/dashboard-managed-banner"
+import { DashboardPricingPlansView, DashboardPlanBadge } from "@/components/dashboard-packages"
+import { useDashboardPlan } from "@/hooks/use-dashboard-plan"
+import { AppImage } from "@/components/app-image"
+import { cn } from "@/lib/utils"
+import {
+  exCardShell,
+  exNavActive,
+  exNavGroupLabel,
+  exNavInactive,
+  exPrimaryBtn,
+  exSidebarSurface,
+  exUpgradeCard,
+} from "./dashboard-theme"
+import { ExhibitorDashboardOverview } from "./dashboard-overview"
+
+type ExhibitorNavItem = { id: string; title: string; icon: LucideIcon }
+
+const EXHIBITOR_SIDEBAR_GROUPS: { id: string; label: string; items: ExhibitorNavItem[] }[] = [
+  {
+    id: "main",
+    label: "Overview",
+    items: [
+      { id: "overview", title: "Overview", icon: LayoutDashboard },
+      { id: "company", title: "Company Profile", icon: Building2 },
+    ],
+  },
+  {
+    id: "feedback",
+    label: "Feedback",
+    items: [{ id: "view-feedback", title: "View Feedback", icon: Star }],
+  },
+  {
+    id: "leadManagement",
+    label: "Event & Products",
+    items: [
+      { id: "events", title: "My Events", icon: Calendar },
+      { id: "products", title: "Products", icon: Package },
+    ],
+  },
+  {
+    id: "marketingCampaigns",    
+    label: "Marketing",
+    items: [
+      { id: "promotions", title: "Promotions", icon: TrendingUp },
+      { id: "active-promotions", title: "Active Promotions", icon: Star },
+    ],
+  },
+  {
+    id: "network",
+    label: "Network",
+    items: [
+      { id: "follow", title: "Follow", icon: Users },
+      { id: "messages", title: "Messages", icon: MessageSquare },
+      { id: "connection", title: "Connection", icon: Users },
+      { id: "appointments", title: "Appointments", icon: Calendar },
+    ],
+  },
+]
+
+const EXHIBITOR_INDIVIDUAL_ITEMS: ExhibitorNavItem[] = [
+  //{ id: "analytics", title: "Analytics", icon: BarChart3 },
+  { id: "pricing-plans", title: "Pricing plans", icon: Crown },
+  { id: "help", title: "Help & Support", icon: HelpCircle },
+  { id: "settings", title: "Settings", icon: Settings },
+]
 
 interface ExhibitorData {
   id: string
   firstName: string
   lastName: string
   displayName?: string
+  publicSlug?: string | null
+  organizationName?: string | null
   email: string
   phone?: string
   avatar?: string
@@ -64,7 +127,11 @@ interface ExhibitorData {
   website?: string
   twitter?: string
   location?: string
+  profileCity?: string
+  profileState?: string
+  profileCountry?: string
   jobTitle?: string
+  company?: string | null
   totalEvents: number
   activeEvents: number
   totalProducts: number
@@ -75,10 +142,11 @@ interface ExhibitorData {
 }
 
 interface UserDashboardProps {
-  userId: string
+  /** UUID, slug from `/exhibitor-dashboard/[id]`, or empty (we fall back to JWT `sub`). */
+  routeSegment: string | undefined
 }
 
-export function ExhibitorLayout({ userId }: UserDashboardProps) {
+export function ExhibitorLayout({ routeSegment }: UserDashboardProps) {
   const [exhibitor, setExhibitor] = useState<ExhibitorData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -90,16 +158,19 @@ export function ExhibitorLayout({ userId }: UserDashboardProps) {
 
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
-  const { userId: authUserId, role, loading: authLoading, logout } = useAuth({
+  const { role, loading: authLoading, logout } = useAuth({
     requireAuth: true,
     allowedRoles: ["EXHIBITOR"],
   })
   const router = useRouter()
+  const pathname = usePathname()
   const { toast } = useToast()
+  const { plan: currentPlan, loading: planLoading } = useDashboardPlan("EXHIBITOR")
 
   useEffect(() => {
     if (authLoading) return
-    if (authUserId && userId !== authUserId) {
+    const roleUpper = (role || "").toString().toUpperCase()
+    if (roleUpper !== "EXHIBITOR") {
       toast({
         title: "Access Denied",
         description: "You don't have permission to view this dashboard.",
@@ -109,22 +180,61 @@ export function ExhibitorLayout({ userId }: UserDashboardProps) {
       return
     }
     fetchExhibitorData()
-  }, [userId, authUserId, authLoading, router, toast])
+  }, [routeSegment, authLoading, role, router, toast])
+
+  useEffect(() => {
+    if (!exhibitor?.id || authLoading) return
+    const sessionUser = getCurrentUserId()
+    if (sessionUser && sessionUser !== exhibitor.id) {
+      toast({
+        title: "Access denied",
+        description: "You can only open your own exhibitor dashboard.",
+        variant: "destructive",
+      })
+      router.replace("/login")
+    }
+  }, [exhibitor?.id, authLoading, router, toast])
+
+  useEffect(() => {
+    if (!exhibitor?.id) return
+    const canonical = getExhibitorDashboardPath(exhibitor.id, {
+      publicSlug: exhibitor.publicSlug,
+      organizationName: exhibitor.organizationName,
+      company: exhibitor.company,
+      firstName: exhibitor.firstName,
+      lastName: exhibitor.lastName,
+    })
+    if (pathname && canonical !== pathname) {
+      router.replace(canonical)
+    }
+  }, [
+    exhibitor?.id,
+    exhibitor?.publicSlug,
+    exhibitor?.organizationName,
+    exhibitor?.company,
+    exhibitor?.firstName,
+    exhibitor?.lastName,
+    pathname,
+    router,
+  ])
 
   useEffect(() => {
     // Set company info as default active section when component mounts
     if (!activeSection) {
-      setActiveSection("company")
+      setActiveSection("overview")
     }
   }, [activeSection, setActiveSection])
 
   // Fetch product count from backend only
   const fetchProductCount = async (exhibitorId: string): Promise<number> => {
     try {
-      const data = await apiFetch<{ products?: unknown[] }>(`/api/exhibitors/${exhibitorId}/products`, {
-        method: "GET",
-        auth: true,
-      })
+      const data = await apiFetch<{ products?: unknown[] }>(
+        `/api/exhibitors/${encodeURIComponent(exhibitorId)}/products`,
+        {
+          method: "GET",
+          auth: true,
+        },
+      )
       return data.products?.length ?? 0
     } catch (error) {
       console.error("Error fetching product count:", error)
@@ -138,6 +248,8 @@ export function ExhibitorLayout({ userId }: UserDashboardProps) {
     firstName: e?.firstName ?? "",
     lastName: e?.lastName ?? "",
     displayName: e?.displayName?.trim?.() || undefined,
+    publicSlug: e?.publicSlug ?? null,
+    organizationName: e?.organizationName ?? e?.companyName ?? null,
     email: e?.email ?? "",
     phone: e?.phone,
     avatar: e?.avatar,
@@ -147,6 +259,14 @@ export function ExhibitorLayout({ userId }: UserDashboardProps) {
     jobTitle: e?.jobTitle,
     company: e?.company ?? e?.companyName,
     linkedin: e?.linkedin,
+    foundedYear: e?.foundedYear ?? e?.founded ?? "",
+    companySize: e?.companySize ?? e?.teamSize ?? "",
+    industry: e?.industry ?? e?.companyIndustry ?? "",
+    headquarters: e?.headquarters ?? "",
+    specialties: Array.isArray(e?.specialties) ? e.specialties : [],
+    profileCity: e?.profileCity,
+    profileState: e?.profileState,
+    profileCountry: e?.profileCountry,
     location: e?.location,
     totalProducts: productCount,
     totalEvents: e?.totalEvents ?? 0,
@@ -157,30 +277,48 @@ export function ExhibitorLayout({ userId }: UserDashboardProps) {
     upcomingAppointments: (e as any)?.upcomingAppointments ?? 0,
   })
 
+  /** API id for the logged-in exhibitor: always prefer JWT `sub` so slug URLs (canonical redirect) never break fetch. */
+  const resolveExhibitorSegment = (): string | null => {
+    const sessionId = getCurrentUserId()?.trim()
+    if (sessionId && sessionId !== "undefined") return sessionId
+    const t = routeSegment?.trim()
+    if (t && t !== "undefined") return t
+    return null
+  }
+
   const fetchExhibitorData = async () => {
     try {
       setLoading(true)
       setError(null)
 
-      const [exhibitorRes, productCount] = await Promise.all([
-        apiFetch<{ success: boolean; exhibitor: any }>(`/api/exhibitors/${userId}`, {
+      const segment = resolveExhibitorSegment()
+      if (!segment) {
+        setError("Missing exhibitor ID")
+        return
+      }
+
+      const exhibitorRes = await apiFetch<{ success: boolean; exhibitor: any }>(
+        `/api/exhibitors/${encodeURIComponent(segment)}`,
+        {
           method: "GET",
           auth: true,
-        }),
-        fetchProductCount(userId),
-      ])
+        },
+      )
 
       if (!exhibitorRes.success || !exhibitorRes.exhibitor) {
         setError("Exhibitor not found")
         return
       }
 
+      const resolvedId = exhibitorRes.exhibitor.id as string
+      const productCount = await fetchProductCount(resolvedId)
+
       setExhibitor(mapBackendExhibitor(exhibitorRes.exhibitor, productCount))
       setAppointmentCount(Number((exhibitorRes.exhibitor as any)?.upcomingAppointments) || 0)
     } catch (err) {
       console.error("Error fetching exhibitor data:", err)
       setError(err instanceof Error ? err.message : "An error occurred")
-      if (err instanceof Error && (err.message === "Access denied" || err.message === "User not found" || err.message.includes("Exhibitor not found"))) {
+      if (err instanceof Error && (err.message === "Access denied" || err.message === "User not found" || err.message.includes("Exhibitor not found") || err.message.includes("Invalid exhibitor ID"))) {
         toast({
           title: "Error",
           description: err.message,
@@ -198,14 +336,21 @@ export function ExhibitorLayout({ userId }: UserDashboardProps) {
   }
 
   const handleUpdate = async (updates: Partial<any>) => {
+    const apiSegment = exhibitor?.id ?? resolveExhibitorSegment()
+    if (!apiSegment) {
+      throw new Error("No exhibitor id")
+    }
     try {
-      const data = await apiFetch<{ success: boolean; exhibitor: any }>(`/api/exhibitors/${userId}`, {
-        method: "PUT",
-        body: updates,
-        auth: true,
-      })
+      const data = await apiFetch<{ success: boolean; exhibitor: any }>(
+        `/api/exhibitors/${encodeURIComponent(apiSegment)}`,
+        {
+          method: "PUT",
+          body: updates,
+          auth: true,
+        },
+      )
       if (data.success && data.exhibitor) {
-        const productCount = await fetchProductCount(userId)
+        const productCount = await fetchProductCount(data.exhibitor.id as string)
         setExhibitor((prev: any) => ({ ...prev, ...mapBackendExhibitor(data.exhibitor, productCount) }))
       }
     } catch (error) {
@@ -214,40 +359,53 @@ export function ExhibitorLayout({ userId }: UserDashboardProps) {
     }
   }
 
-  // Helper function for menu item styling
-  const menuItemClass = (sectionId: string) => {
-    return `cursor-pointer pl-3 py-2 text-sm rounded-md transition-colors w-full text-left ${
-      activeSection === sectionId 
-        ? "bg-blue-50 text-blue-700 border-l-4 border-blue-700 font-medium" 
-        : "text-gray-600 hover:bg-gray-100 hover:text-gray-900 border-l-4 border-transparent"
-    }`
+  const exhibitorDisplayName =
+    exhibitor?.displayName?.trim() ||
+    [exhibitor?.firstName, exhibitor?.lastName].filter(Boolean).join(" ").trim() ||
+    "Exhibitor"
+
+  const getCurrentSectionTitle = () => {
+    const fromGroups = EXHIBITOR_SIDEBAR_GROUPS.flatMap((g) => g.items).find((i) => i.id === activeSection)
+    if (fromGroups) return fromGroups.title
+    const fromIndividual = EXHIBITOR_INDIVIDUAL_ITEMS.find((i) => i.id === activeSection)
+    if (fromIndividual) return fromIndividual.title
+    return "Exhibitor Dashboard"
   }
 
   const renderMainContent = () => {
     if (authLoading) {
       return (
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
+        <div className="flex min-h-[50vh] items-center justify-center">
+          <div
+            className="h-12 w-12 animate-spin rounded-full border-2 border-[#004A96]/20 border-t-[#004A96]"
+            aria-hidden
+          />
         </div>
       )
     }
     if (loading) {
       return (
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+        <div className="flex min-h-[50vh] items-center justify-center">
+          <div
+            className="h-14 w-14 animate-spin rounded-full border-2 border-blue-100 border-t-[#004A96]"
+            aria-hidden
+          />
         </div>
       )
     }
     if (error) {
       return (
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <Card className="w-full max-w-md">
+        <div className="flex min-h-[50vh] items-center justify-center">
+          <Card className={cn("w-full max-w-md", exCardShell)}>
             <CardHeader>
               <CardTitle className="text-red-600">Error</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-gray-600 mb-4">{error}</p>
-              <Button onClick={fetchExhibitorData} className="w-full">
+              <Button
+                onClick={fetchExhibitorData}
+                className={cn("w-full", exPrimaryBtn)}
+              >
                 Try Again
               </Button>
             </CardContent>
@@ -257,10 +415,10 @@ export function ExhibitorLayout({ userId }: UserDashboardProps) {
     }
     if (!exhibitor) {
       return (
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <Card className="w-full max-w-md">
+        <div className="flex min-h-[50vh] items-center justify-center">
+          <Card className={cn("w-full max-w-md", exCardShell)}>
             <CardHeader>
-              <CardTitle>No Data</CardTitle>
+              <CardTitle className="text-slate-800">No Data</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-gray-600">No exhibitor data found.</p>
@@ -277,151 +435,10 @@ export function ExhibitorLayout({ userId }: UserDashboardProps) {
     switch (activeSection) {
       case "overview":
         return (
-          <div className="space-y-6">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Exhibitor Dashboard</h1>
-              <p className="text-gray-600">
-                Welcome back, {exhibitor.displayName ?? exhibitor.firstName}!
-              </p>
-            </div>
-
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Active Events</CardTitle>
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                {/* <CardContent>
-                  <ActiveEventsCard exhibitorId={exhibitor.id} />
-                  <p className="text-xs text-muted-foreground">Active Events</p>
-                </CardContent> */}
-                 <CardContent>
-                  <div className="text-2xl font-bold">{exhibitor.activeEvents}</div>
-                 
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Products</CardTitle>
-                  <Package className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{exhibitor.totalProducts}</div>
-                  <p className="text-xs text-muted-foreground">{exhibitor.profileViews || 0} total views</p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Leads</CardTitle>
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <FollowersCountCard exhibitorId={exhibitor.id} />
-                  <p className="text-xs text-muted-foreground">Total Leads</p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Appointments</CardTitle>
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <AppointmentsCountCard exhibitorId={exhibitor.id} />
-                  <p className="text-xs text-muted-foreground">Total Appointments</p>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Profile Summary */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Profile Summary</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-start space-x-4">
-                  <Avatar className="h-16 w-16">
-                    <AvatarImage src={exhibitor.avatar || "/city/c4.jpg"} />
-                    <AvatarFallback className="text-lg">
-                      {(() => {
-                        const label = (exhibitor.displayName || `${exhibitor.firstName} ${exhibitor.lastName}`).trim()
-                        const parts = label.split(/\s+/).filter(Boolean)
-                        if (parts.length >= 2) {
-                          return `${parts[0][0] ?? ""}${parts[parts.length - 1][0] ?? ""}`.toUpperCase()
-                        }
-                        if (label.length >= 2) return label.slice(0, 2).toUpperCase()
-                        return `${exhibitor.firstName[0] ?? ""}${exhibitor.lastName[0] ?? ""}`.toUpperCase() || "?"
-                      })()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <h3 className="text-xl font-semibold">
-                      {exhibitor.displayName?.trim() ||
-                        `${exhibitor.firstName} ${exhibitor.lastName}`.replace(/\s+/g, " ").trim()}
-                    </h3>
-                    {exhibitor.jobTitle && (
-                      <p className="text-gray-600 flex items-center mt-1">
-                        <Briefcase className="h-4 w-4 mr-2" />
-                        {exhibitor.jobTitle}
-                      </p>
-                    )}
-                    {exhibitor.location && (
-                      <p className="text-gray-600 flex items-center mt-1">
-                        <MapPin className="h-4 w-4 mr-2" />
-                        {exhibitor.location}
-                      </p>
-                    )}
-                    <div className="flex items-center space-x-4 mt-2">
-                      {exhibitor.email && (
-                        <a
-                          href={`mailto:${exhibitor.email}`}
-                          className="text-blue-600 hover:underline flex items-center"
-                        >
-                          <Mail className="h-4 w-4 mr-1" />
-                          Email
-                        </a>
-                      )}
-                      {exhibitor.phone && (
-                        <a
-                          href={`tel:${exhibitor.phone}`}
-                          className="text-blue-600 hover:underline flex items-center"
-                        >
-                          <Phone className="h-4 w-4 mr-1" />
-                          Call
-                        </a>
-                      )}
-                      {exhibitor.website && (
-                        <a
-                          href={exhibitor.website}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-600 hover:underline flex items-center"
-                        >
-                          <Globe className="h-4 w-4 mr-1" />
-                          Website
-                        </a>
-                      )}
-                      {exhibitor.twitter && (
-                        <a
-                          href={`https://twitter.com/${exhibitor.twitter}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-600 hover:underline flex items-center"
-                        >
-                          <Twitter className="h-4 w-4 mr-1" />
-                          Twitter
-                        </a>
-                      )}
-                    </div>
-                    {exhibitor.bio && <p className="text-gray-700 mt-3">{exhibitor.bio}</p>}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+          <ExhibitorDashboardOverview
+            exhibitor={exhibitor}
+            onNavigate={(section) => setActiveSection(section)}
+          />
         )
       case "company":
         return <CompanyInfo exhibitorId={exhibitor.id} onUpdate={handleUpdate} exhibitorData={exhibitor} />
@@ -430,17 +447,14 @@ export function ExhibitorLayout({ userId }: UserDashboardProps) {
       case "products":
         return <ProductListing exhibitorId={exhibitor.id} />
       case "messages":
-        return <MessagesCenter organizerId={exhibitor.id} />
+        return <MessagesCenter organizerId={exhibitor.id} surface="exhibitor" />
       case "connection":
-        return <ConnectionsSection userId={exhibitor.id} />
+        return <ConnectionsSection userId={exhibitor.id} surface="exhibitor" />
       case "follow":
         return <FollowManagement userId={exhibitor.id} />
       case "appointments":
         return (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              {/* Add any appointment stats cards here if needed */}
-            </div>
+          <div className="min-w-0 space-y-6">
             <AppointmentScheduling
               exhibitorId={exhibitor.id}
               onCountChange={setAppointmentCount}
@@ -459,271 +473,183 @@ case "view-feedback":
         return <PromotionsMarketing exhibitorId={exhibitor.id} />
       case "active-promotions":
         return <ActivePromotions exhibitorId={exhibitor.id} />
+      case "pricing-plans":
+        return <DashboardPricingPlansView role="EXHIBITOR" />
       case "help":
         return <ExhibitorHelpSupport />
       case "settings":
         return <ExhibitorSettings />
       default:
-        return <CompanyInfo exhibitorId={exhibitor.id} onUpdate={handleUpdate} exhibitorData={exhibitor} />
-    }
+  return (
+    <ExhibitorDashboardOverview
+      exhibitor={exhibitor}
+      onNavigate={(section) => setActiveSection(section)}
+    />
+  )
+      }
   }
 
+  const sidebarInitial = (
+    exhibitor?.firstName?.[0] ||
+    exhibitor?.lastName?.[0] ||
+    exhibitorDisplayName[0] ||
+    "E"
+  ).toUpperCase()
+
   return (
-    <div className="flex min-h-screen w-full bg-[#F5F4F0]">
-      {/* Mobile Overlay */}
+    <div className="flex min-h-0 flex-1 w-full overflow-hidden bg-[#f8fafc]">
       {sidebarOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden" onClick={() => setSidebarOpen(false)} />
+        <div
+          className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm md:hidden"
+          onClick={() => setSidebarOpen(false)}
+          aria-hidden
+        />
       )}
 
-      {/* Sidebar - always visible on md+, toggled on mobile */}
-      <aside className={`
-        fixed left-0 top-0 md:relative
-        w-64 min-w-[16rem] min-h-screen bg-white border-r border-gray-200 z-50
-        transform transition-transform duration-300 ease-in-out
-        flex flex-col flex-shrink-0 shadow-sm
-        ${sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
-      `}>
-        {/* Mobile Header */}
-        <div className="md:hidden flex items-center justify-between p-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">Exhibitor Menu</h2>
-          <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(false)}>
-            <X className="h-4 w-4" />
-          </Button>
-        </div>
-
-        <div className="flex-1 p-4 overflow-y-auto">
-          {/* Main Dropdown */}
-          <div className="mb-4">
-            <button
-              className="flex items-center justify-between w-full py-2 font-medium text-sm text-gray-700 hover:text-gray-900"
-              onClick={() => toggleMenu("main")}
-            >
-              <span className="flex items-center gap-2">
-                <BarChart3 size={16} />
-                Main
-              </span>
-              {openMenus.includes("main") ? (
-                <ChevronDown size={16} />
-              ) : (
-                <ChevronRight size={16} />
-              )}
-            </button>
-            {openMenus.includes("main") && (
-              <div className="ml-2 mt-2 space-y-1">
-                <button
-                  onClick={() => setActiveSection("overview")}
-                  className={menuItemClass("overview")}
-                >
-                  Overview
-                </button>
-                <button
-                  onClick={() => setActiveSection("company")}
-                  className={menuItemClass("company")}
-                >
-                  Company
-                </button>
-              </div>
-            )}
-          </div>
-
-{/* Feedback Dropdown */}
-<div className="mb-4">
-  <button
-    className="flex items-center justify-between w-full py-2 font-medium text-sm text-gray-700 hover:text-gray-900"
-    onClick={() => toggleMenu("feedback")}
-  >
-    <span className="flex items-center gap-2">
-      <Star size={16} />
-      Feedback
-    </span>
-    {openMenus.includes("feedback") ? (
-      <ChevronDown size={16} />
-    ) : (
-      <ChevronRight size={16} />
-    )}
-  </button>
-  {openMenus.includes("feedback") && (
-    <div className="ml-2 mt-2 space-y-1">
-      <button
-        onClick={() => setActiveSection("view-feedback")}
-        className={menuItemClass("view-feedback")}
+      <div
+        className={cn(
+          "fixed inset-y-0 left-0 z-50 h-full w-[min(100vw,260px)] max-w-[85vw] shrink-0 transform transition-transform duration-300 ease-in-out md:static md:max-w-none md:w-[260px] md:translate-x-0",
+          sidebarOpen ? "translate-x-0" : "-translate-x-full",
+        )}
       >
-        View Feedback
-      </button>
-    </div>
-  )}
-</div>
-
-
-          {/* Lead Management Dropdown */}
-          <div className="mb-4">
-            <button
-              className="flex items-center justify-between w-full py-2 font-medium text-sm text-gray-700 hover:text-gray-900"
-              onClick={() => toggleMenu("leadManagement")}
-            >
-              <span className="flex items-center gap-2">
-                <Users size={16} />
-                Event & Products
-              </span>
-              {openMenus.includes("leadManagement") ? (
-                <ChevronDown size={16} />
-              ) : (
-                <ChevronRight size={16} />
-              )}
-            </button>
-            {openMenus.includes("leadManagement") && (
-              <div className="ml-2 mt-2 space-y-1">
-                <button
-                  onClick={() => setActiveSection("events")}
-                  className={menuItemClass("events")}
-                >
-                  Events
-                </button>
-                <button
-                  onClick={() => setActiveSection("products")}
-                  className={menuItemClass("products")}
-                >
-                  Products
-                </button>
-              </div>
-            )}
+        <aside className={cn("flex h-full w-[260px] flex-col overflow-hidden", exSidebarSurface)}>
+          <div className="flex items-center justify-between border-b border-slate-200 p-4 md:hidden">
+            <h2 className="text-lg font-semibold text-slate-900">Menu</h2>
+            <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(false)} className="text-slate-600">
+              <X className="h-4 w-4" />
+            </Button>
           </div>
 
-          {/* Marketing Campaigns Dropdown */}
-          <div className="mb-4">
-            <button
-              className="flex items-center justify-between w-full py-2 font-medium text-sm text-gray-700 hover:text-gray-900"
-              onClick={() => toggleMenu("marketingCampaigns")}
-            >
-              <span className="flex items-center gap-2">
-                <Star size={16} />
-                Marketing Campaigns
-              </span>
-              {openMenus.includes("marketingCampaigns") ? (
-                <ChevronDown size={16} />
-              ) : (
-                <ChevronRight size={16} />
-              )}
-            </button>
-            {openMenus.includes("marketingCampaigns") && (
-              <div className="ml-2 mt-2 space-y-1">
+          <div className="scrollbar-hover min-h-0 flex-1 overflow-y-auto px-3 py-4">
+            {EXHIBITOR_SIDEBAR_GROUPS.map((group) => (
+              <div key={group.id} className="mb-5">
                 <button
-                  onClick={() => setActiveSection("promotions")}
-                  className={menuItemClass("promotions")}
+                  type="button"
+                  className={cn(
+                    "mb-1 flex w-full cursor-pointer items-center justify-between rounded-md px-2 py-1.5",
+                    exNavGroupLabel,
+                  )}
+                  onClick={() => toggleMenu(group.id)}
                 >
-                  Promotion
+                  <span>{group.label}</span>
+                  {openMenus.includes(group.id) ? (
+                    <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
+                  ) : (
+                    <ChevronRight className="h-3.5 w-3.5 text-slate-400" />
+                  )}
                 </button>
-                <button
-                  onClick={() => setActiveSection("active-promotions")}
-                  className={menuItemClass("active-promotions")}
-                >
-                  Active Promotion
-                </button>
+                {openMenus.includes(group.id) && (
+                  <div className="space-y-0.5">
+                    {group.items.map((item) => (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => {
+                          setActiveSection(item.id)
+                          setSidebarOpen(false)
+                        }}
+                        className={cn(
+                          "flex w-full items-center gap-3 py-2.5 pr-3 text-sm transition-colors",
+                          activeSection === item.id ? exNavActive : exNavInactive,
+                        )}
+                      >
+                        <item.icon className="h-4 w-4 shrink-0" />
+                        <span className="truncate">{item.title}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+            ))}
 
-          {/* Network Dropdown */}
-          <div className="mb-4">
-            <button
-              className="flex items-center justify-between w-full py-2 font-medium text-sm text-gray-700 hover:text-gray-900"
-              onClick={() => toggleMenu("network")}
-            >
-              <span className="flex items-center gap-2">
-                <Users size={16} />
-                Network
-              </span>
-              {openMenus.includes("network") ? (
-                <ChevronDown size={16} />
-              ) : (
-                <ChevronRight size={16} />
-              )}
-            </button>
-            {openMenus.includes("network") && (
-              <div className="ml-2 mt-2 space-y-1">
+            <div className="mt-2 space-y-0.5 border-t border-slate-200 pt-4">
+              {EXHIBITOR_INDIVIDUAL_ITEMS.map((item) => (
                 <button
-                  onClick={() => setActiveSection("follow")}
-                  className={menuItemClass("follow")}
+                  key={item.id}
+                  type="button"
+                  onClick={() => {
+                    setActiveSection(item.id)
+                    setSidebarOpen(false)
+                  }}
+                  className={cn(
+                    "flex w-full items-center gap-3 py-2.5 pr-3 text-sm transition-colors",
+                    activeSection === item.id ? exNavActive : exNavInactive,
+                  )}
                 >
-                  Follow
+                  <item.icon className="h-4 w-4 shrink-0" />
+                  <span className="truncate">{item.title}</span>
                 </button>
-                <button
-                  onClick={() => setActiveSection("messages")}
-                  className={menuItemClass("messages")}
-                >
-                  Messages
-                </button>
-                <button
-                  onClick={() => setActiveSection("connection")}
-                  className={menuItemClass("connection")}
-                >
-                  Connection
-                </button>
-                <button
-                  onClick={() => setActiveSection("appointments")}
-                  className={menuItemClass("appointments")}
-                >
-                  Appointments
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* Help & Support */}
-          <button
-            onClick={() => setActiveSection("help")}
-            className={`flex items-center w-full py-2 gap-2 font-medium text-sm rounded-md transition-colors ${
-              activeSection === "help" 
-                ? "bg-blue-50 text-blue-700" 
-                : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-            }`}
-          >
-            <HelpCircle size={16} />
-            Help & Support
-          </button>
-
-          {/* Settings */}
-          <button
-            onClick={() => setActiveSection("settings")}
-            className={`flex items-center w-full py-2 gap-2 font-medium text-sm rounded-md transition-colors mt-1 ${
-              activeSection === "settings" 
-                ? "bg-blue-50 text-blue-700" 
-                : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-            }`}
-          >
-            <Settings size={16} />
-            Settings
-          </button>
-
-          {/* Logout */}
-          <Button
-            onClick={() => logout()}
-            className="w-full bg-red-500 hover:bg-red-600 text-white mt-8"
-          >
-            Logout
-          </Button>
-        </div>
-      </aside>
-
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-h-screen">
-        {/* Mobile Top Bar */}
-        <div className="md:hidden flex items-center justify-between p-4 bg-white border-b border-gray-200 shadow-sm">
-          <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(true)}>
-            <Menu className="h-5 w-5" />
-          </Button>
-          <div className="w-9" />
-        </div>
-
-        {/* Main Content */}
-        <main className="flex-1 p-6 overflow-auto">
-          <DashboardManagedBanner page="exhibitor-dashboard" />
-          <div className="max-w-7xl mx-auto">
-            {/* Dynamic Content */}
-            <div className="bg-[#F5F4F0] min-h-screen w-full">
-              {renderMainContent()}
+              ))}
             </div>
           </div>
+
+          <div className="shrink-0 space-y-3 border-t border-slate-200 p-4">
+            <div className={exUpgradeCard}>
+              <div className="flex items-start gap-2">
+                <Crown className="mt-0.5 h-5 w-5 shrink-0 text-amber-500" />
+                <div>
+                  <p className="text-sm font-bold text-[#004A96]">Upgrade to Pro</p>
+                  <p className="mt-0.5 text-xs text-slate-600">Unlock advanced booth features and visibility.</p>
+                </div>
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                className={cn("mt-3 h-9 w-full rounded-lg", exPrimaryBtn)}
+                onClick={() => setActiveSection("pricing-plans")}
+              >
+                Upgrade Now
+                <ChevronRight className="ml-1 h-4 w-4" />
+              </Button>
+            </div>
+
+            {exhibitor && (
+              <div className="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2.5">
+                <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-full bg-blue-50 ring-2 ring-blue-100">
+                  {exhibitor.avatar ? (
+                    <AppImage src={exhibitor.avatar} alt={exhibitorDisplayName} fill className="object-cover" />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-xs font-bold text-[#004A96]">
+                      {sidebarInitial}
+                    </div>
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-slate-900">{exhibitorDisplayName}</p>
+                  <div className="mt-1">
+                    <DashboardPlanBadge plan={currentPlan} loading={planLoading} size="sm" />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <Button type="button" onClick={() => logout()} className={cn("h-10 w-full rounded-lg", exPrimaryBtn)}>
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>Logout</span>
+            </Button>
+          </div>
+        </aside>
+      </div>
+
+      <div className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+        <div className="flex items-center justify-between gap-2 border-b border-slate-200 bg-white px-3 py-3 md:hidden">
+          <Button variant="ghost" size="sm" className="shrink-0 text-[#004A96]" onClick={() => setSidebarOpen(true)}>
+            <Menu className="h-5 w-5" />
+          </Button>
+          <div className="min-w-0 flex-1 px-1 text-center">
+            {exhibitorDisplayName ? (
+              <p className="truncate text-xs text-slate-500">{exhibitorDisplayName}</p>
+            ) : null}
+            <p className="truncate text-sm font-semibold text-[#004A96]">{getCurrentSectionTitle()}</p>
+          </div>
+          <div className="w-9 shrink-0" />
+        </div>
+
+        <main className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden p-0">
+          {activeSection !== "overview" && (
+            <DashboardManagedBanner page="exhibitor-dashboard" className="w-full min-w-0" />
+          )}
+          <div className="w-full min-w-0 max-w-full px-2 py-4 sm:px-4 sm:py-5 md:px-6 md:py-6">{renderMainContent()}</div>
         </main>
       </div>
     </div>

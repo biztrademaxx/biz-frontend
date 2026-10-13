@@ -1,30 +1,89 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { signIn } from "next-auth/react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card"
-import { Eye, EyeOff, Mail, Lock, Loader2 } from "lucide-react"
+import { Check, Eye, EyeOff, Loader2, Lock, Mail } from "lucide-react"
+import { motion } from "framer-motion"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { loginWithEmailPassword } from "@/lib/api"
+import { loginWithEmailPassword, consumeLogoutSuccessBanner, getCurrentVisitorDashboardPath } from "@/lib/api"
+import {
+  clearOAuthSignupIntentRole,
+  clearOAuthSignupIntentRoleServer,
+} from "@/lib/oauth-signup-intent"
 
 export default function LoginPage() {
   const router = useRouter()
+  // ─── NEW: read ?callbackUrl from the URL (set by the Follow button redirect) ───
+  const searchParams = useSearchParams()
+  const callbackUrl = searchParams.get("callbackUrl") ?? null
+
+  useEffect(() => {
+    clearOAuthSignupIntentRole()
+    void clearOAuthSignupIntentRoleServer()
+  }, [])
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState("")
+  const [infoMessage, setInfoMessage] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [logoutDialogOpen, setLogoutDialogOpen] = useState(false)
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    if (consumeLogoutSuccessBanner()) {
+      setLogoutDialogOpen(true)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    const q = new URLSearchParams(window.location.search)
+    if (q.get("registered") === "organizer") {
+      setInfoMessage(
+        "Your organizer account was created. An administrator must approve it before you can sign in. You will receive access once approved.",
+      )
+    }
+  }, [])
+
+  // ─── NEW: helper — decide where to send the user after a successful login.
+  // If a callbackUrl param exists (e.g. /exhibitor/uem?autoFollow=123) use that.
+  // Otherwise fall back to the original role-based routing logic.
+  const getPostLoginRedirect = (role: string, userId: string): string => {
+    if (callbackUrl) {
+      // Decode in case it was encoded by encodeURIComponent in the exhibitor page.
+      return decodeURIComponent(callbackUrl)
+    }
+    // Original role-based routing (unchanged):
+    if (role === "ATTENDEE") return getCurrentVisitorDashboardPath() ?? `/dashboard/${userId}`
+    if (role === "ORGANIZER") return `/organizer-dashboard/${userId}`
+    if (role === "SUPER_ADMIN" || role === "SUPERADMIN" || role === "SUB_ADMIN") return "/admin-dashboard"
+    if (role === "EXHIBITOR") return `/exhibitor-dashboard/${userId}`
+    if (role === "SPEAKER") return `/speaker-dashboard/${userId}`
+    if (role === "VENUE_MANAGER") return "/venue-dashboard"
+    return "/"
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
     setError("")
+    setInfoMessage("")
 
     try {
       const result = await loginWithEmailPassword(email, password)
@@ -32,21 +91,25 @@ export default function LoginPage() {
       const role = (user?.role || "").toString().toUpperCase()
       const userId = user?.sub ?? (user as any)?.id
 
-      if (role === "ATTENDEE") {
-        router.push(`/dashboard/${userId}`)
-      } else if (role === "ORGANIZER") {
-        router.push(`/organizer-dashboard/${userId}`)
-      } else if (role === "SUPER_ADMIN" || role === "SUPERADMIN" || role === "SUB_ADMIN") {
-        router.push("/admin-dashboard")
-      } else if (role === "EXHIBITOR") {
-        router.push(`/exhibitor-dashboard/${userId}`)
-      } else if (role === "SPEAKER") {
-        router.push(`/speaker-dashboard/${userId}`)
-      } else if (role === "VENUE_MANAGER") {
-        router.push(`/venue-dashboard/${userId}`)
-      } else {
-        router.push("/")
-      }
+      // ─── CHANGED: was a chain of if/else role checks that called router.push() directly.
+      // Now routes through getPostLoginRedirect() so callbackUrl takes priority.
+      // Previous code:
+      //   if (role === "ATTENDEE") {
+      //     router.push(getCurrentVisitorDashboardPath() ?? `/dashboard/${userId}`)
+      //   } else if (role === "ORGANIZER") {
+      //     router.push(`/organizer-dashboard/${userId}`)
+      //   } else if (role === "SUPER_ADMIN" || role === "SUPERADMIN" || role === "SUB_ADMIN") {
+      //     router.push("/admin-dashboard")
+      //   } else if (role === "EXHIBITOR") {
+      //     router.push(`/exhibitor-dashboard/${userId}`)
+      //   } else if (role === "SPEAKER") {
+      //     router.push(`/speaker-dashboard/${userId}`)
+      //   } else if (role === "VENUE_MANAGER") {
+      //     router.push("/venue-dashboard")
+      //   } else {
+      //     router.push("/")
+      //   }
+      router.push(getPostLoginRedirect(role, userId))
     } catch (err: any) {
       setError(err?.message || "Invalid email or password. Please try again.")
     } finally {
@@ -57,7 +120,11 @@ export default function LoginPage() {
   const handleGoogleLogin = async () => {
     setIsLoading(true)
     try {
-      await signIn("google", { callbackUrl: "/" })
+      // ─── CHANGED: was hardcoded callbackUrl: "/".
+      // Now passes callbackUrl param if present, so Google OAuth also lands back
+      // on the exhibitor page with ?autoFollow intact after OAuth completes.
+      // Previous code: await signIn("google", { callbackUrl: "/" })
+      await signIn("google", { callbackUrl: callbackUrl ? decodeURIComponent(callbackUrl) : "/" })
     } catch (err) {
       console.error("Error during Google login:", err)
       setError("Failed to login with Google.")
@@ -69,7 +136,9 @@ export default function LoginPage() {
   const handleLinkedInLogin = async () => {
     setIsLoading(true)
     try {
-      await signIn("linkedin", { callbackUrl: "/" })
+      // ─── CHANGED: same as Google — was hardcoded callbackUrl: "/".
+      // Previous code: await signIn("linkedin", { callbackUrl: "/" })
+      await signIn("linkedin", { callbackUrl: callbackUrl ? decodeURIComponent(callbackUrl) : "/" })
     } catch (err) {
       console.error("Error during LinkedIn login:", err)
       setError("Failed to login with LinkedIn.")
@@ -79,12 +148,13 @@ export default function LoginPage() {
   }
 
   return (
+    <>
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader className="text-center pb-4">
           <div className="flex justify-center mb-4">
             <Image
-              src="/logo/logo.png"
+                src="/logo/biztradefairs_new2.png"
               alt="TradeFairs.com Logo"
               width={150}
               height={150}
@@ -193,6 +263,12 @@ export default function LoginPage() {
               </Link>
             </div>
 
+            {infoMessage && (
+              <Alert className="border-blue-200 bg-blue-50 text-blue-900">
+                <AlertDescription>{infoMessage}</AlertDescription>
+              </Alert>
+            )}
+
             {error && (
               <Alert variant="destructive">
                 <AlertDescription>{error}</AlertDescription>
@@ -219,12 +295,59 @@ export default function LoginPage() {
         <CardFooter className="flex justify-center border-t pt-6">
           <p className="text-sm text-gray-600">
             Don't have an account?{" "}
-            <Link href="/signup" className="text-blue-600 hover:text-blue-800 font-medium">
+            {/* ─── CHANGED: preserve callbackUrl on the signup link too, so if the user
+                clicks "Sign up" instead of logging in, the same flow works after signup.
+                Previous code: <Link href="/signup" ...>Sign up</Link> */}
+            <Link
+              href={callbackUrl ? `/signup?callbackUrl=${callbackUrl}` : "/signup"}
+              className="text-blue-600 hover:text-blue-800 font-medium"
+            >
               Sign up
             </Link>
           </p>
         </CardFooter>
       </Card>
     </div>
+
+    <Dialog open={logoutDialogOpen} onOpenChange={setLogoutDialogOpen}>
+      <DialogContent className="overflow-hidden border-slate-200 bg-white shadow-[0_20px_50px_rgba(0,74,150,0.15)] sm:max-w-md">
+        <DialogHeader className="items-center space-y-0 text-center sm:text-center">
+          <motion.div
+            initial={{ scale: 0, rotate: -25 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ type: "spring", stiffness: 260, damping: 18 }}
+            className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-[#004A96]/20 to-[#0066cc]/15 text-[#004A96] ring-2 ring-[#004A96]/20"
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.5 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.35, delay: 0.12, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <Check className="h-8 w-8" strokeWidth={2.5} aria-hidden />
+            </motion.div>
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35, delay: 0.2, ease: "easeOut" }}
+          >
+          <DialogTitle className="text-xl font-semibold text-gray-900">Account logged out</DialogTitle>
+          <DialogDescription className="pt-3 text-base leading-relaxed text-gray-600">
+            Stay logged in for more latest updates.
+          </DialogDescription>
+          </motion.div>
+        </DialogHeader>
+        <DialogFooter className="mt-2 sm:justify-center">
+          <Button
+            type="button"
+            className="w-full bg-[#004A96] text-white hover:bg-[#003d7a] sm:w-auto sm:min-w-[140px]"
+            onClick={() => setLogoutDialogOpen(false)}
+          >
+            Got it
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    </>
   )
 }

@@ -28,7 +28,12 @@ import Link from "next/link"
 import { apiFetch } from "@/lib/api"
 import { eventPublicPath } from "@/lib/event-path"
 import { getPublicProfilePath } from "@/lib/profile-path"
+import { formatOrganizerLocationLine } from "@/lib/organizer-location-display"
 import OrganizerPageSkeleton from "@/components/OrganizerPageSkeleton"
+import { PublicApiErrorPanel } from "@/components/public/PublicApiErrorPanel"
+import { getEventDisplayImageUrl } from "@/lib/default-event-image"
+import { hasUsableProfileImage } from "@/lib/has-usable-profile-image"
+import { MarkdownRenderer } from "@/components/MarkdownRenderer"
 
 interface Organizer {
   id: string
@@ -45,9 +50,12 @@ interface Organizer {
   activeEvents: number
   totalAttendees: number
   totalRevenue: number
-  founded: string
+  founded?: string | null
   teamSize: string
   headquarters: string
+  organizerCountry?: string | null
+  organizerState?: string | null
+  organizerCity?: string | null
   specialties: string[]
   achievements: string[]
   certifications: string[]
@@ -60,6 +68,7 @@ interface Organizer {
 }
 
 interface Event {
+  slug: string | null | undefined
   id: number
   title: string
   description: string
@@ -130,7 +139,8 @@ export default function OrganizerPage() {
   const [reviews, setReviews] = useState<Review[]>([])
   const [loading, setLoading] = useState(true)
   const [reviewsLoading, setReviewsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [loadError, setLoadError] = useState<unknown>(null)
+  const [retryKey, setRetryKey] = useState(0)
 
   // Contact modal states
   const [isContactModalOpen, setIsContactModalOpen] = useState(false)
@@ -173,16 +183,18 @@ export default function OrganizerPage() {
         )
         setEvents(eventsData.events || [])
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load organizer")
+        setLoadError(err)
+        setOrganizer(null)
       } finally {
         setLoading(false)
       }
     }
 
     if (organizerId) {
+      setLoadError(null)
       fetchOrganizerData()
     }
-  }, [organizerId])
+  }, [organizerId, retryKey])
 
   // Fetch reviews when reviews tab is active
   useEffect(() => {
@@ -379,14 +391,16 @@ export default function OrganizerPage() {
     return <OrganizerPageSkeleton />
   }
 
-  if (error || !organizer) {
+  if (loadError || !organizer) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Organizer Not Found</h1>
-          <p className="text-gray-600 mb-4">{error || "The organizer you're looking for doesn't exist."}</p>
-          <Button onClick={() => router.push("/organizers")}>Back to Organizers</Button>
-        </div>
+      <div className="min-h-screen bg-[#f1f7fb]">
+        <PublicApiErrorPanel
+          error={loadError ?? new Error("not_found")}
+          kind={loadError ? undefined : "not_found"}
+          backHref="/organizers"
+          backLabel="Back to organizers"
+          onRetry={() => setRetryKey((k) => k + 1)}
+        />
       </div>
     )
   }
@@ -415,143 +429,156 @@ export default function OrganizerPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
-      <div className="bg-[#002C71] text-white">
-        <div className="max-w-7xl mx-auto px-4 py-12">
-          <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
-            {/* Organizer Avatar */}
-            <div className="relative">
-              <Avatar className="w-32 h-32 border-4 border-white shadow-lg">
-                <AvatarImage src={organizer.avatar || "/city/c4.jpg"} alt={organizer.company} />
-                <AvatarFallback className="text-2xl font-bold bg-white text-blue-600">
+      <div className="bg-[#004A96] text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-10 md:py-12">
+          <div className="flex flex-col items-center text-center gap-5 md:flex-row md:items-center md:text-left md:gap-6">
+            {/* Organizer Avatar — contain logo so wide/tall assets are not cropped */}
+            <div className="relative shrink-0">
+              <Avatar className="h-24 w-24 sm:h-28 sm:w-28 md:h-32 md:w-32 border-4 border-white bg-white shadow-lg">
+                <AvatarImage
+                  src={
+                    hasUsableProfileImage(organizer.avatar) ? organizer.avatar : undefined
+                  }
+                  alt={organizer.company}
+                  className="object-contain object-center p-3"
+                />
+                <AvatarFallback className="bg-white text-xl sm:text-2xl font-bold text-[#002C71]">
                   {organizer.company
                     .split(" ")
+                    .filter(Boolean)
                     .map((n) => n[0])
-                    .join("")}
+                    .join("")
+                    .slice(0, 2)
+                    .toUpperCase()}
                 </AvatarFallback>
               </Avatar>
-              <div className="absolute -bottom-2 -right-2 bg-green-500 rounded-full p-2">
-                <CheckCircle className="w-6 h-6 text-white" />
+              <div className="absolute -bottom-2 -right-2 bg-green-500 rounded-full p-1.5 sm:p-2">
+                <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
               </div>
             </div>
 
             {/* Organizer Info */}
-            <div className="flex-1">
-              <div className="flex items-center gap-3 mb-2">
-                <h1 className="text-4xl font-bold">{organizer.company}</h1>
-                <Badge className="bg-yellow-500 text-yellow-900">Verified</Badge>
+            <div className="flex-1 w-full flex flex-col items-center md:items-start">
+              <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 sm:gap-3 mb-3 w-full">
+                <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold break-words">
+                  {organizer.company}
+                </h1>
+                <Badge className="bg-yellow-500 text-yellow-900 shrink-0">Verified</Badge>
               </div>
-              <p className="text-xl text-blue-100 mb-4">{organizer.description}</p>
 
-              {/* Contact Info - Simplified */}
-              <div className="flex flex-wrap gap-6 text-blue-100">
-                <div className="flex items-center gap-2">
-                  <MapPin className="w-4 h-4" />
-                  <span>{organizer.headquarters}</span>
+              {/* Contact / Meta row — stacks on mobile, inline from sm up */}
+              <div className="flex flex-col sm:flex-row sm:items-center sm:flex-wrap items-center gap-3 sm:gap-6 w-full sm:w-auto">
+                <div className="flex items-center gap-2 text-blue-100 text-sm sm:text-base">
+                  <MapPin className="w-4 h-4 shrink-0" />
+                  <span className="break-words">{formatOrganizerLocationLine(organizer) || "—"}</span>
                 </div>
-                 <Button
-                variant="outline"
-                className="border-white text-white hover:bg-white hover:text-blue-600 bg-transparent"
-                onClick={() => setIsShareModalOpen(true)}
-              >
-                <Share2 className="w-4 h-4 mr-2" />
-                Share
-              </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-white text-white hover:bg-white hover:text-blue-600 bg-transparent w-full sm:w-auto"
+                  onClick={() => setIsShareModalOpen(true)}
+                >
+                  <Share2 className="w-4 h-4 mr-2" />
+                  Share
+                </Button>
               </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex flex-col gap-3">
-             
-              {/* <Button
-                variant="outline"
-                className="border-white text-white hover:bg-white hover:text-blue-600 bg-transparent"
-                onClick={handleContactClick}
-              >
-                <Mail className="w-4 h-4 mr-2" />
-                Contact
-              </Button> */}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Stats Section - Updated */}
-      <div className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 py-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+      {/* Stats Section */}
+      <div className="bg-[#F9F9F9] border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-5 sm:py-6">
+          <div className={`grid grid-cols-2 gap-4 sm:gap-6 ${organizer.founded ? "md:grid-cols-4" : "md:grid-cols-3"}`}>
             <div className="text-center">
-              <div className="text-2xl font-bold text-gray-900">{organizer.totalEvents}</div>
-              <div className="text-sm text-gray-600">Total Events</div>
+              <div className="text-xl sm:text-2xl font-bold text-gray-900">{organizer.totalEvents}</div>
+              <div className="text-xs sm:text-sm text-gray-600">Total Events</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-gray-900">{organizer.activeEvents}</div>
-              <div className="text-sm text-gray-600">Active Events</div>
+              <div className="text-xl sm:text-2xl font-bold text-gray-900">{organizer.activeEvents}</div>
+              <div className="text-xs sm:text-sm text-gray-600">Active Events</div>
             </div>
             <div className="text-center">
               <div className="flex items-center justify-center gap-1">
-                <Star className="w-5 h-5 text-yellow-400 fill-current" />
-                <span className="text-2xl font-bold text-gray-900">{stats.avgRating.toFixed(1)}</span>
+                <Star className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-400 fill-current" />
+                <span className="text-xl sm:text-2xl font-bold text-gray-900">{stats.avgRating.toFixed(1)}</span>
               </div>
-              <div className="text-sm text-gray-600">Avg Rating ({stats.totalReviews})</div>
+              <div className="text-xs sm:text-sm text-gray-600">Avg Rating ({stats.totalReviews})</div>
             </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-gray-900">{organizer.founded}</div>
-              <div className="text-sm text-gray-600">Founded</div>
-            </div>
+            {organizer.founded && (
+              <div className="text-center">
+                <div className="text-xl sm:text-2xl font-bold text-gray-900">{organizer.founded}</div>
+                <div className="text-xs sm:text-sm text-gray-600">Founded</div>
+              </div>
+            )}
           </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="events">Events ({stats.totalEvents})</TabsTrigger>
-            <TabsTrigger value="about">About</TabsTrigger>
-            <TabsTrigger value="reviews">Reviews ({stats.totalReviews})</TabsTrigger>
-          </TabsList>
+          {/* Scrollable tab list on narrow screens */}
+          <div className="-mx-4 px-4 sm:mx-0 sm:px-0 overflow-x-auto">
+            <TabsList className="grid w-max min-w-full grid-cols-4 gap-1">
+              <TabsTrigger value="overview" className="text-xs sm:text-sm px-2 sm:px-3">
+                Overview
+              </TabsTrigger>
+              <TabsTrigger value="events" className="text-xs sm:text-sm px-2 sm:px-3">
+                Events ({stats.totalEvents})
+              </TabsTrigger>
+              <TabsTrigger value="about" className="text-xs sm:text-sm px-2 sm:px-3">
+                About
+              </TabsTrigger>
+              <TabsTrigger value="reviews" className="text-xs sm:text-sm px-2 sm:px-3">
+                Reviews ({stats.totalReviews})
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           {/* Overview Tab */}
-          <TabsContent value="overview" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <TabsContent value="overview" className="space-y-6 mt-4 sm:mt-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
               {/* Company Highlights */}
-              <div className="lg:col-span-2 space-y-6">
+              <div className="lg:col-span-2 space-y-4 sm:space-y-6">
                 {/* About Section */}
                 <Card>
-                  <CardContent className="p-6">
-                    <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                      <Building className="w-5 h-5" />
-                      About {organizer.organizationName}
+                  <CardContent className="p-4 sm:p-6">
+                    <h3 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 flex items-center gap-2">
+                      <Building className="w-5 h-5 shrink-0" />
+                      <span className="break-words">About {organizer.organizationName}</span>
                     </h3>
-                    <p className="text-gray-600 leading-relaxed">{organizer.description}</p>
+                    <div className="markdown-content">
+                      <MarkdownRenderer content={organizer.description} />
+                    </div>
                   </CardContent>
                 </Card>
 
                 {/* Recent Events */}
                 <Card>
-                  <CardContent className="p-6">
-                    <h3 className="text-xl font-semibold mb-4">Recent Events</h3>
+                  <CardContent className="p-4 sm:p-6">
+                    <h3 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Recent Events</h3>
                     <div className="space-y-4">
                       {events.slice(0, 3).map((event) => (
-                        <Link href={eventPublicPath(event)} key={event.id}>
-                          <div className="flex gap-4 p-4 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
+                        <Link href={eventPublicPath({ id: String(event.id), slug: event.slug })} key={event.id}>
+                          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 p-3 sm:p-4 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
                             <Image
-                              src={event.bannerImage || "/city/c4.jpg"}
+                              src={getEventDisplayImageUrl(event)}
                               alt={event.title}
                               width={80}
                               height={60}
-                              className="w-20 h-15 rounded"
+                              className="w-full h-40 sm:w-20 sm:h-15 rounded object-cover shrink-0"
                             />
-                            <div className="flex-1">
-                              <h4 className="font-medium text-gray-900 mb-1">{event.title}</h4>
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-medium text-gray-900 mb-1 break-words">{event.title}</h4>
                               <div className="flex items-center text-sm text-gray-600 mb-1">
-                                <Calendar className="w-4 h-4 mr-1" />
-                                {formatDate(event.startDate)}
+                                <Calendar className="w-4 h-4 mr-1 shrink-0" />
+                                <span className="break-words">{formatDate(event.startDate)}</span>
                               </div>
                               <div className="flex items-center text-sm text-gray-600">
-                                <MapPin className="w-4 h-4 mr-1" />
-                                {event.location}
+                                <MapPin className="w-4 h-4 mr-1 shrink-0" />
+                                <span className="break-words">{event.location}</span>
                               </div>
                             </div>
                           </div>
@@ -559,7 +586,7 @@ export default function OrganizerPage() {
                       ))}
                     </div>
                     <div className="mt-4 text-center">
-                      <Button variant="outline" onClick={() => setActiveTab("events")}>
+                      <Button variant="outline" className="w-full sm:w-auto" onClick={() => setActiveTab("events")}>
                         View All Events
                       </Button>
                     </div>
@@ -568,14 +595,18 @@ export default function OrganizerPage() {
               </div>
 
               {/* Sidebar */}
-              <div className="space-y-6">
+              <div className="space-y-4 sm:space-y-6">
                 {/* Specialties */}
                 <Card>
-                  <CardContent className="p-6">
-                    <h3 className="text-lg font-semibold mb-4">Specialties</h3>
+                  <CardContent className="p-4 sm:p-6">
+                    <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Specialties</h3>
                     <div className="flex flex-wrap gap-2">
                       {organizer.specialties.map((specialty, index) => (
-                        <Badge key={index} variant="secondary">
+                        <Badge
+                          key={index}
+                          variant="secondary"
+                          className="max-w-full whitespace-normal break-words text-left h-auto py-1 leading-snug"
+                        >
                           {specialty}
                         </Badge>
                       ))}
@@ -585,16 +616,16 @@ export default function OrganizerPage() {
 
                 {/* Achievements */}
                 <Card>
-                  <CardContent className="p-6">
-                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                      <Award className="w-5 h-5" />
+                  <CardContent className="p-4 sm:p-6">
+                    <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4 flex items-center gap-2">
+                      <Award className="w-5 h-5 shrink-0" />
                       Achievements
                     </h3>
                     <div className="space-y-2">
                       {organizer.achievements.map((achievement, index) => (
                         <div key={index} className="flex items-start gap-2">
                           <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                          <span className="text-sm text-gray-600">{achievement}</span>
+                          <span className="text-sm text-gray-600 break-words">{achievement}</span>
                         </div>
                       ))}
                     </div>
@@ -603,13 +634,13 @@ export default function OrganizerPage() {
 
                 {/* Certifications */}
                 <Card>
-                  <CardContent className="p-6">
-                    <h3 className="text-lg font-semibold mb-4">Certifications</h3>
+                  <CardContent className="p-4 sm:p-6">
+                    <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Certifications</h3>
                     <div className="space-y-2">
                       {organizer.certifications.map((cert, index) => (
                         <div key={index} className="flex items-center gap-2">
-                          <CheckCircle className="w-4 h-4 text-blue-500" />
-                          <span className="text-sm text-gray-600">{cert}</span>
+                          <CheckCircle className="w-4 h-4 text-blue-500 shrink-0" />
+                          <span className="text-sm text-gray-600 break-words">{cert}</span>
                         </div>
                       ))}
                     </div>
@@ -620,41 +651,41 @@ export default function OrganizerPage() {
           </TabsContent>
 
           {/* Events Tab */}
-          <TabsContent value="events" className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xl font-semibold">All Events by {organizer.name}</h3>
+          <TabsContent value="events" className="space-y-6 mt-4 sm:mt-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <h3 className="text-lg sm:text-xl font-semibold break-words">All Events by {organizer.name}</h3>
               <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-600">
+                <span className="text-xs sm:text-sm text-gray-600">
                   Showing {paginatedEvents.length} of {events.length} events
                 </span>
               </div>
             </div>
 
             {/* Events Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {paginatedEvents.map((event) => (
                 <div key={event.id} className="hover:shadow-lg transition-shadow cursor-pointer border-2 rounded-xl">
-                  <Link href={eventPublicPath(event)}>
+                  <Link href={eventPublicPath({ id: event.id.toString() })}>
                     <div className="p-0">
                       <div className="relative">
                         <Image
-                          src={event.bannerImage || "/city/c4.jpg"}
+                          src={getEventDisplayImageUrl(event)}
                           alt={event.title}
                           width={400}
                           height={200}
-                          className="w-full h-48 object-cover rounded-t-lg"
+                          className="w-full h-40 sm:h-48 object-cover rounded-t-lg"
                         />
                       </div>
-                      <div className="p-4">
-                        <h4 className="font-semibold text-lg mb-2 line-clamp-1">{event.title}</h4>
+                      <div className="p-3 sm:p-4">
+                        <h4 className="font-semibold text-base sm:text-lg mb-2 line-clamp-1">{event.title}</h4>
                         <div className="space-y-2 mb-3">
                           <div className="flex items-center text-sm text-gray-600">
-                            <Calendar className="w-4 h-4 mr-2" />
-                            {formatDate(event.startDate)}
+                            <Calendar className="w-4 h-4 mr-2 shrink-0" />
+                            <span className="break-words">{formatDate(event.startDate)}</span>
                           </div>
                           <div className="flex items-center text-sm text-gray-600">
-                            <MapPin className="w-4 h-4 mr-2" />
-                            {event.location}
+                            <MapPin className="w-4 h-4 mr-2 shrink-0" />
+                            <span className="break-words">{event.location}</span>
                           </div>
                         </div>
                       </div>
@@ -666,7 +697,7 @@ export default function OrganizerPage() {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="flex justify-center items-center space-x-2 mt-8">
+              <div className="flex flex-wrap justify-center items-center gap-2 mt-6 sm:mt-8">
                 <Button
                   variant="outline"
                   size="sm"
@@ -701,19 +732,21 @@ export default function OrganizerPage() {
           </TabsContent>
 
           {/* About Tab */}
-          <TabsContent value="about" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <TabsContent value="about" className="space-y-6 mt-4 sm:mt-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
               <Card>
-                <CardContent className="p-6">
-                  <h3 className="text-xl font-semibold mb-4">Company Information</h3>
+                <CardContent className="p-4 sm:p-6">
+                  <h3 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Company Information</h3>
                   <div className="space-y-4">
+                    {organizer.founded && (
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Founded</label>
+                        <p className="text-gray-900">{organizer.founded}</p>
+                      </div>
+                    )}
                     <div>
-                      <label className="text-sm font-medium text-gray-500">Founded</label>
-                      <p className="text-gray-900">{organizer.founded}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">Headquarters</label>
-                      <p className="text-gray-900">{organizer.headquarters}</p>
+                      <label className="text-sm font-medium text-gray-500">Location</label>
+                      <p className="text-gray-900 break-words">{formatOrganizerLocationLine(organizer) || "—"}</p>
                     </div>
                     {organizer.website && (
                       <div>
@@ -722,10 +755,10 @@ export default function OrganizerPage() {
                           href={organizer.website}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-blue-600 hover:underline flex items-center gap-1"
+                          className="text-blue-600 hover:underline flex items-center gap-1 break-all"
                         >
                           {organizer.website}
-                          <ExternalLink className="w-4 h-4" />
+                          <ExternalLink className="w-4 h-4 shrink-0" />
                         </a>
                       </div>
                     )}
@@ -734,22 +767,22 @@ export default function OrganizerPage() {
               </Card>
 
               <Card>
-                <CardContent className="p-6">
-                  <h3 className="text-xl font-semibold mb-4">Event Statistics</h3>
+                <CardContent className="p-4 sm:p-6">
+                  <h3 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Event Statistics</h3>
                   <div className="space-y-4">
-                    <div className="flex justify-between">
+                    <div className="flex justify-between gap-2">
                       <span className="text-gray-600">Total Events Organized</span>
                       <span className="font-semibold">{organizer.totalEvents}</span>
                     </div>
-                    <div className="flex justify-between">
+                    <div className="flex justify-between gap-2">
                       <span className="text-gray-600">Active Events</span>
                       <span className="font-semibold">{organizer.activeEvents}</span>
                     </div>
-                    <div className="flex justify-between">
+                    <div className="flex justify-between gap-2">
                       <span className="text-gray-600">Team Size</span>
                       <span className="font-semibold">{organizer.teamSize}</span>
                     </div>
-                    <div className="flex justify-between">
+                    <div className="flex justify-between gap-2">
                       <span className="text-gray-600">Average Rating</span>
                       <div className="flex items-center gap-1">
                         <Star className="w-4 h-4 text-yellow-400 fill-current" />
@@ -762,20 +795,22 @@ export default function OrganizerPage() {
             </div>
 
             <Card>
-              <CardContent className="p-6">
-                <h3 className="text-xl font-semibold mb-4">Full Description</h3>
-                <p className="text-gray-600 leading-relaxed">{organizer.description}</p>
+              <CardContent className="p-4 sm:p-6">
+                <h3 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Full Description</h3>
+                <div className="markdown-content">
+                  <MarkdownRenderer content={organizer.description} />
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
 
           {/* Reviews Tab */}
-          <TabsContent value="reviews" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <TabsContent value="reviews" className="space-y-6 mt-4 sm:mt-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
               {/* Reviews List */}
-              <div className="lg:col-span-2 space-y-6">
+              <div className="lg:col-span-2 space-y-4 sm:space-y-6">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-xl font-semibold">
+                  <h3 className="text-lg sm:text-xl font-semibold">
                     Reviews ({reviews.length})
                   </h3>
                 </div>
@@ -786,10 +821,10 @@ export default function OrganizerPage() {
                   </div>
                 ) : reviews.length === 0 ? (
                   <Card>
-                    <CardContent className="p-8 text-center">
-                      <Star className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                      <h4 className="text-lg font-semibold text-gray-900 mb-2">No Reviews Yet</h4>
-                      <p className="text-gray-600">Be the first to share your experience with this organizer!</p>
+                    <CardContent className="p-6 sm:p-8 text-center">
+                      <Star className="w-10 h-10 sm:w-12 sm:h-12 text-gray-300 mx-auto mb-4" />
+                      <h4 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">No Reviews Yet</h4>
+                      <p className="text-sm sm:text-base text-gray-600">Be the first to share your experience with this organizer!</p>
                     </CardContent>
                   </Card>
                 ) : (
@@ -808,7 +843,7 @@ export default function OrganizerPage() {
               </div>
 
               {/* Add Review Form */}
-              <div className="space-y-6">
+              <div className="space-y-4 sm:space-y-6">
                 <AddOrganizerReview
                   organizerId={organizerId}
                   onReviewAdded={handleReviewAdded}
@@ -821,20 +856,20 @@ export default function OrganizerPage() {
 
       {/* Contact Modal - Only shown if no website exists */}
       {isContactModalOpen && !organizer?.website && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-3 sm:p-4">
           <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-6 border-b">
-              <h3 className="text-lg font-semibold">Contact {organizer?.name}</h3>
+            <div className="flex items-center justify-between p-4 sm:p-6 border-b">
+              <h3 className="text-base sm:text-lg font-semibold break-words pr-2">Contact {organizer?.name}</h3>
               <button
                 onClick={handleCloseContactModal}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
+                className="text-gray-400 hover:text-gray-600 transition-colors shrink-0"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* Quick Subject Buttons */}
-            <div className="p-6 border-b">
+            <div className="p-4 sm:p-6 border-b">
               <h4 className="text-sm font-medium text-gray-700 mb-3">Quick Options</h4>
               <div className="grid grid-cols-2 gap-2">
                 <Button
@@ -876,7 +911,7 @@ export default function OrganizerPage() {
               </div>
             </div>
 
-            <form onSubmit={handleContactSubmit} className="p-6 space-y-4">
+            <form onSubmit={handleContactSubmit} className="p-4 sm:p-6 space-y-4">
               <div>
                 <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
                   Your Name *
@@ -888,7 +923,7 @@ export default function OrganizerPage() {
                   required
                   value={contactFormData.name}
                   onChange={handleContactFormChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
                   placeholder="Enter your name"
                 />
               </div>
@@ -904,7 +939,7 @@ export default function OrganizerPage() {
                   required
                   value={contactFormData.email}
                   onChange={handleContactFormChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
                   placeholder="Enter your email"
                 />
               </div>
@@ -920,7 +955,7 @@ export default function OrganizerPage() {
                   required
                   value={contactFormData.subject}
                   onChange={handleContactFormChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
                   placeholder="Subject of your message"
                 />
               </div>
@@ -936,21 +971,21 @@ export default function OrganizerPage() {
                   rows={4}
                   value={contactFormData.message}
                   onChange={handleContactFormChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-sm sm:text-base"
                   placeholder="Enter your message..."
                 />
               </div>
 
               {submitMessage && (
-                <div className={`p-3 rounded-md ${submitMessage.includes("successfully")
-                    ? "bg-green-100 text-green-700 border border-green-200"
-                    : "bg-red-100 text-red-700 border border-red-200"
+                <div className={`p-3 rounded-md text-sm ${submitMessage.includes("successfully")
+                  ? "bg-green-100 text-green-700 border border-green-200"
+                  : "bg-red-100 text-red-700 border border-red-200"
                   }`}>
                   {submitMessage}
                 </div>
               )}
 
-              <div className="flex gap-3 pt-2">
+              <div className="flex flex-col sm:flex-row gap-3 pt-2">
                 <Button
                   type="button"
                   variant="outline"
@@ -982,26 +1017,26 @@ export default function OrganizerPage() {
 
       {/* Share Modal */}
       {isShareModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-3 sm:p-4">
           <div className="bg-white rounded-lg max-w-md w-full">
-            <div className="flex items-center justify-between p-6 border-b">
-              <h3 className="text-lg font-semibold">Share {organizer?.name}</h3>
+            <div className="flex items-center justify-between p-4 sm:p-6 border-b">
+              <h3 className="text-base sm:text-lg font-semibold break-words pr-2">Share {organizer?.name}</h3>
               <button
                 onClick={() => setIsShareModalOpen(false)}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
+                className="text-gray-400 hover:text-gray-600 transition-colors shrink-0"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="p-6">
-              <div className="grid grid-cols-3 gap-4 mb-6">
+            <div className="p-4 sm:p-6">
+              <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-6">
                 <Button
                   variant="outline"
-                  className="flex flex-col items-center gap-2 h-auto py-4"
+                  className="flex flex-col items-center gap-2 h-auto py-3 sm:py-4"
                   onClick={() => handleShare('gmail')}
                 >
-                  <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center">
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 bg-red-500 rounded-full flex items-center justify-center">
                     <span className="text-white font-bold text-sm">G</span>
                   </div>
                   <span className="text-xs">Gmail</span>
@@ -1009,10 +1044,10 @@ export default function OrganizerPage() {
 
                 <Button
                   variant="outline"
-                  className="flex flex-col items-center gap-2 h-auto py-4"
+                  className="flex flex-col items-center gap-2 h-auto py-3 sm:py-4"
                   onClick={() => handleShare('whatsapp')}
                 >
-                  <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 bg-green-500 rounded-full flex items-center justify-center">
                     <span className="text-white font-bold text-sm">W</span>
                   </div>
                   <span className="text-xs">WhatsApp</span>
@@ -1020,10 +1055,10 @@ export default function OrganizerPage() {
 
                 <Button
                   variant="outline"
-                  className="flex flex-col items-center gap-2 h-auto py-4"
+                  className="flex flex-col items-center gap-2 h-auto py-3 sm:py-4"
                   onClick={() => handleShare('linkedin')}
                 >
-                  <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 bg-blue-600 rounded-full flex items-center justify-center">
                     <span className="text-white font-bold text-sm">in</span>
                   </div>
                   <span className="text-xs">LinkedIn</span>
@@ -1031,10 +1066,10 @@ export default function OrganizerPage() {
 
                 <Button
                   variant="outline"
-                  className="flex flex-col items-center gap-2 h-auto py-4"
+                  className="flex flex-col items-center gap-2 h-auto py-3 sm:py-4"
                   onClick={() => handleShare('outlook')}
                 >
-                  <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 bg-blue-500 rounded-full flex items-center justify-center">
                     <span className="text-white font-bold text-sm">O</span>
                   </div>
                   <span className="text-xs">Outlook</span>
@@ -1042,10 +1077,10 @@ export default function OrganizerPage() {
 
                 <Button
                   variant="outline"
-                  className="flex flex-col items-center gap-2 h-auto py-4"
+                  className="flex flex-col items-center gap-2 h-auto py-3 sm:py-4"
                   onClick={() => handleShare('twitter')}
                 >
-                  <div className="w-8 h-8 bg-blue-400 rounded-full flex items-center justify-center">
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 bg-blue-400 rounded-full flex items-center justify-center">
                     <span className="text-white font-bold text-sm">X</span>
                   </div>
                   <span className="text-xs">Twitter</span>
@@ -1053,27 +1088,27 @@ export default function OrganizerPage() {
 
                 <Button
                   variant="outline"
-                  className="flex flex-col items-center gap-2 h-auto py-4"
+                  className="flex flex-col items-center gap-2 h-auto py-3 sm:py-4"
                   onClick={() => handleShare('facebook')}
                 >
-                  <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 bg-blue-600 rounded-full flex items-center justify-center">
                     <span className="text-white font-bold text-sm">f</span>
                   </div>
                   <span className="text-xs">Facebook</span>
                 </Button>
               </div>
 
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <input
                   type="text"
                   value={typeof window !== 'undefined' ? window.location.href : ''}
                   readOnly
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm"
+                  className="flex-1 min-w-0 px-3 py-2 border border-gray-300 rounded-md text-sm"
                 />
                 <Button
                   variant="outline"
                   onClick={handleCopyLink}
-                  className="whitespace-nowrap"
+                  className="whitespace-nowrap w-full sm:w-auto"
                 >
                   Copy Link
                 </Button>

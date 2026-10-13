@@ -27,6 +27,8 @@ export interface ExhibitorBooth {
 export interface EventFormData {
   // Basic Info
   title: string
+  /** Short tagline; max 10 characters (enforced in UI). */
+  subTitle: string
   slug: string
   description: string
   eventType: string
@@ -117,8 +119,12 @@ export interface ValidationErrors {
   slug?: string
   description?: string
   eventType?: string
+  categories?: string
   startDate?: string
   endDate?: string
+  city?: string
+  country?: string
+  organizerId?: string
   tags?: string
 }
 

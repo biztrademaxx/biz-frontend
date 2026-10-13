@@ -1,18 +1,18 @@
-import { type NextRequest, NextResponse } from "next/server"
-import { PrismaClient } from "@prisma/client"
+import { NextResponse } from "next/server"
+import { proxyJson } from "@/lib/backend-proxy"
 
-const prisma = new PrismaClient()
-
-// DELETE - Remove speaker session
-export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string; speakerId: string }> }) {
+export async function DELETE(
+  req: Request,
+  { params }: { params: Promise<{ id: string; speakerId: string }> },
+) {
   try {
-    await prisma.speakerSession.delete({
-      where: { id: (await params).speakerId },
-    })
-
-    return NextResponse.json({ message: "Speaker removed successfully" })
-  } catch (error) {
-    console.error("Error deleting speaker:", error)
-    return NextResponse.json({ error: "Failed to delete speaker" }, { status: 500 })
+    const { id, speakerId } = await params
+    return await proxyJson(req, `/api/events/${id}/speakers/${speakerId}`, { method: "DELETE" })
+  } catch (err) {
+    console.error("Proxy DELETE /api/events/[id]/speakers/[speakerId] failed:", err)
+    return NextResponse.json(
+      { success: false, error: "Failed to delete speaker" },
+      { status: 500 },
+    )
   }
 }

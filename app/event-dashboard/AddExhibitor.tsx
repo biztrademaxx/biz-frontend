@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect, useMemo } from "react"
+import { useRouter, useParams } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -14,6 +14,10 @@ import { Search, Building, Mail, Phone, MapPin, Globe, Linkedin, Twitter, AlertC
 import { useToast } from "@/hooks/use-toast"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { apiFetch } from "@/lib/api"
+import { cn } from "@/lib/utils"
+import { getCountryOptions } from "@/lib/location-data"
+
+const FILTER_ALL_COUNTRIES = "__all__"
 
 interface Exhibitor {
   id: string
@@ -26,6 +30,9 @@ interface Exhibitor {
   company?: string
   jobTitle?: string
   location?: string
+  profileCity?: string
+  profileState?: string
+  profileCountry?: string
   website?: string
   linkedin?: string
   twitter?: string
@@ -49,6 +56,9 @@ interface ExhibitionSpace {
   dimensions: string
   area: number
   basePrice: number
+  currency?: string
+  additionalPowerRate?: number
+  compressedAirRate?: number
   location?: string
   isAvailable: boolean
   maxBooths?: number
@@ -63,13 +73,19 @@ export default function AddExhibitor({ eventId }: AddExhibitorProps) {
   const [exhibitors, setExhibitors] = useState<Exhibitor[]>([])
   const [exhibitionSpaces, setExhibitionSpaces] = useState<ExhibitionSpace[]>([])
   const [searchTerm, setSearchTerm] = useState("")
+  const [countryFilter, setCountryFilter] = useState(FILTER_ALL_COUNTRIES)
   const [selectedExhibitor, setSelectedExhibitor] = useState<Exhibitor | null>(null)
   const [selectedSpace, setSelectedSpace] = useState("")
+  const [eventCurrency, setEventCurrency] = useState("")
   const [loading, setLoading] = useState(false)
   const [activeTab, setActiveTab] = useState("existing")
   const [registeredExhibitors, setRegisteredExhibitors] = useState<Set<string>>(new Set())
   const { toast } = useToast()
   const router = useRouter()
+  const routeParams = useParams()
+  /** URL segment (slug preferred); keeps links on pretty path when APIs use UUID. */
+  const dashboardPathSegment =
+    typeof routeParams?.slug === "string" && routeParams.slug.trim() ? routeParams.slug : eventId
 
   const [newExhibitor, setNewExhibitor] = useState<Exhibitor>({
     id: "",
@@ -100,10 +116,70 @@ export default function AddExhibitor({ eventId }: AddExhibitorProps) {
     specialRequests: "",
   })
 
+  const selectedSpaceData = exhibitionSpaces.find((s) => s.id === selectedSpace)
+  const normalizeCurrencyCode = (value?: string) => {
+    const raw = String(value || "").trim()
+    if (!raw) return ""
+    const upper = raw.toUpperCase()
+
+    const aliasMap: Record<string, string> = {
+      "₹": "INR",
+      INR: "INR",
+      RUPEE: "INR",
+      RUPEES: "INR",
+      "INDIAN RUPEE": "INR",
+      "$": "USD",
+      USD: "USD",
+      DOLLAR: "USD",
+      DOLLARS: "USD",
+      "US DOLLAR": "USD",
+      "US DOLLARS": "USD",
+      "€": "EUR",
+      EUR: "EUR",
+      EURO: "EUR",
+      EUROS: "EUR",
+      "£": "GBP",
+      GBP: "GBP",
+      POUND: "GBP",
+      POUNDS: "GBP",
+    }
+
+    return aliasMap[upper] || upper
+  }
+  const selectedCurrencyCode =
+    normalizeCurrencyCode(selectedSpaceData?.currency) ||
+    normalizeCurrencyCode(eventCurrency) ||
+    "USD"
+  const selectedAdditionalPowerRate = selectedSpaceData?.additionalPowerRate ?? 50
+  const selectedCompressedAirRate = selectedSpaceData?.compressedAirRate ?? 100
+
+  const formatCurrency = (amount: number) => {
+    try {
+      return new Intl.NumberFormat("en-IN", {
+        style: "currency",
+        currency: selectedCurrencyCode,
+        maximumFractionDigits: 2,
+      }).format(Number.isFinite(amount) ? amount : 0)
+    } catch {
+      const symbol =
+        selectedCurrencyCode === "INR"
+          ? "₹"
+          : selectedCurrencyCode === "USD"
+            ? "$"
+            : selectedCurrencyCode === "EUR"
+              ? "€"
+              : selectedCurrencyCode === "GBP"
+                ? "£"
+                : ""
+      return `${symbol}${Number.isFinite(amount) ? amount : 0}`
+    }
+  }
+
   useEffect(() => {
     fetchExhibitors()
     if (eventId) {
       fetchRegisteredExhibitors()
+      fetchEventCurrency()
     }
   }, [eventId])
 
@@ -112,6 +188,16 @@ export default function AddExhibitor({ eventId }: AddExhibitorProps) {
       fetchExhibitionSpaces(eventId)
     }
   }, [eventId, selectedExhibitor])
+
+  // Reset dependent booth pricing selections when exhibitor changes.
+  useEffect(() => {
+    setSelectedSpace("")
+    setBoothDetails((prev) => ({
+      ...prev,
+      additionalPower: "",
+      compressedAir: "",
+    }))
+  }, [selectedExhibitor?.id])
 
   const fetchExhibitors = async () => {
     try {
@@ -136,6 +222,15 @@ export default function AddExhibitor({ eventId }: AddExhibitorProps) {
     }
   }
 
+  const fetchEventCurrency = async () => {
+    try {
+      const data = await apiFetch<{ currency?: string }>(`/api/events/${eventId}`, { auth: true })
+      setEventCurrency(typeof data?.currency === "string" ? data.currency : "")
+    } catch {
+      setEventCurrency("")
+    }
+  }
+
   const fetchRegisteredExhibitors = async () => {
     try {
       const data = await apiFetch<{ success?: boolean; data?: { exhibitors?: { exhibitor?: { id: string } }[] } }>(
@@ -152,13 +247,43 @@ export default function AddExhibitor({ eventId }: AddExhibitorProps) {
     }
   }
 
-  const filteredExhibitors = exhibitors.filter(
-    (exhibitor) =>
+  const countryOptions = useMemo(() => getCountryOptions(), [])
+
+  const exhibitorCountryLabel = (exhibitor: Exhibitor) => {
+    const fromProfile = (exhibitor.profileCountry || "").trim()
+    if (fromProfile) return fromProfile
+    const loc = (exhibitor.location || "").trim()
+    if (!loc) return ""
+    const segments = loc.split(",").map((s) => s.trim()).filter(Boolean)
+    return segments.length > 0 ? segments[segments.length - 1] : loc
+  }
+
+  const exhibitorMatchesCountry = (exhibitor: Exhibitor, countryName: string) => {
+    const target = countryName.trim().toLowerCase()
+    if (!target) return true
+    const country = exhibitorCountryLabel(exhibitor).toLowerCase()
+    if (country === target || country.includes(target) || target.includes(country)) return true
+    const loc = (exhibitor.location || "").toLowerCase()
+    return loc.includes(target)
+  }
+
+  const selectedCountryName =
+    countryFilter === FILTER_ALL_COUNTRIES
+      ? ""
+      : countryOptions.find((c) => c.code === countryFilter)?.name ?? ""
+
+  const filteredExhibitors = exhibitors.filter((exhibitor) => {
+    const matchesSearch =
+      !searchTerm.trim() ||
       `${exhibitor.firstName} ${exhibitor.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
       exhibitor.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       exhibitor.company?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      exhibitor.businessEmail?.toLowerCase().includes(searchTerm.toLowerCase()),
-  )
+      exhibitor.businessEmail?.toLowerCase().includes(searchTerm.toLowerCase())
+
+    const matchesCountry = exhibitorMatchesCountry(exhibitor, selectedCountryName)
+
+    return matchesSearch && matchesCountry
+  })
 
   const handleCreateExhibitor = async () => {
     if (!newExhibitor.firstName || !newExhibitor.lastName || !newExhibitor.email || !newExhibitor.company) {
@@ -217,8 +342,10 @@ export default function AddExhibitor({ eventId }: AddExhibitorProps) {
     if (!space) return 0
 
     const baseCost = space.basePrice
-    const powerCost = Number.parseFloat(boothDetails.additionalPower) * 50 || 0 // $50 per KW
-    const airCost = Number.parseFloat(boothDetails.compressedAir) * 100 || 0 // $100 per HP
+    const powerRate = space.additionalPowerRate ?? 50
+    const airRate = space.compressedAirRate ?? 100
+    const powerCost = Number.parseFloat(boothDetails.additionalPower) * powerRate || 0
+    const airCost = Number.parseFloat(boothDetails.compressedAir) * airRate || 0
 
     return baseCost + powerCost + airCost
   }
@@ -281,49 +408,85 @@ export default function AddExhibitor({ eventId }: AddExhibitorProps) {
   const isExhibitorRegistered = selectedExhibitor ? registeredExhibitors.has(selectedExhibitor.id) : false
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Building className="w-5 h-5" />
-            Add Exhibitor to Event
+    <div className="w-full min-w-0 max-w-full space-y-4 sm:space-y-6">
+      <Card className="gap-0 py-0 min-w-0 overflow-hidden">
+        <CardHeader className="px-4 sm:px-6">
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <Building className="w-5 h-5 shrink-0" />
+            <span className="min-w-0">Add Exhibitor to Event</span>
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="existing">Select Existing Exhibitor</TabsTrigger>
-              <TabsTrigger value="new">Create New Exhibitor</TabsTrigger>
+        <CardContent className="px-4 sm:px-6 min-w-0">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6 min-w-0">
+            <TabsList className="flex h-auto w-full flex-col gap-2 bg-muted p-1 sm:grid sm:grid-cols-2 sm:gap-1">
+              <TabsTrigger value="existing" className="w-full whitespace-normal px-3 py-2.5 text-xs sm:text-sm text-center leading-snug">
+                Select Existing Exhibitor
+              </TabsTrigger>
+              <TabsTrigger value="new" className="w-full whitespace-normal px-3 py-2.5 text-xs sm:text-sm text-center leading-snug">
+                Create New Exhibitor
+              </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="existing" className="space-y-6">
-              <div className="relative">
-                <Search className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
-                <Input
-                  placeholder="Search exhibitors by name, email, or company..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
+            <TabsContent value="existing" className="space-y-4 sm:space-y-6 min-w-0">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-end min-w-0">
+                <div className="relative min-w-0 flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Input
+                    placeholder="Search by name, email, or company..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 w-full min-w-0"
+                  />
+                </div>
+                <div className="w-full sm:w-56 shrink-0 space-y-1">
+                  <Label htmlFor="exhibitorCountryFilter" className="text-xs text-muted-foreground">
+                    Country
+                  </Label>
+                  <Select value={countryFilter} onValueChange={setCountryFilter}>
+                    <SelectTrigger id="exhibitorCountryFilter" className="w-full">
+                      <SelectValue placeholder="All countries" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-[280px]">
+                      <SelectItem value={FILTER_ALL_COUNTRIES}>All countries</SelectItem>
+                      {countryOptions.map((country) => (
+                        <SelectItem key={country.code} value={country.code}>
+                          {country.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
-              <div className="grid gap-4 max-h-96 overflow-y-auto">
-                {filteredExhibitors.map((exhibitor) => {
+              <p className="text-xs text-muted-foreground">
+                Showing {filteredExhibitors.length} of {exhibitors.length} exhibitors
+              </p>
+
+              <div className="grid gap-3 sm:gap-4 min-h-[28rem] max-h-[min(70vh,48rem)] overflow-y-auto min-w-0 pr-1">
+                {filteredExhibitors.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-16 text-center text-gray-500">
+                    <MapPin className="h-10 w-10 text-gray-300 mb-3" />
+                    <p className="font-medium text-gray-700">No exhibitors match your filters</p>
+                    <p className="text-sm mt-1">Try a different search term or country.</p>
+                  </div>
+                ) : (
+                filteredExhibitors.map((exhibitor) => {
                   const isRegistered = registeredExhibitors.has(exhibitor.id)
 
                   return (
                     <Card
                       key={exhibitor.id}
-                      className={`cursor-pointer transition-colors ${
+                      className={cn(
+                        "cursor-pointer transition-colors min-w-0 overflow-hidden gap-0 py-0",
                         selectedExhibitor?.id === exhibitor.id
                           ? "ring-2 ring-blue-500 bg-blue-50"
                           : isRegistered
                             ? "opacity-50 cursor-not-allowed"
-                            : "hover:bg-gray-50"
-                      }`}
+                            : "hover:bg-gray-50",
+                      )}
                       onClick={() => !isRegistered && setSelectedExhibitor(exhibitor)}
                     >
-                      <CardContent className="p-4">
+                      <CardContent className="p-3 sm:p-4 min-w-0">
                         {isRegistered && (
                           <div className="mb-2">
                             <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded">
@@ -332,57 +495,57 @@ export default function AddExhibitor({ eventId }: AddExhibitorProps) {
                             </span>
                           </div>
                         )}
-                        <div className="flex items-start gap-4">
-                          <Avatar className="w-16 h-16">
-                            <AvatarImage src={exhibitor.avatar || "/city/c4.jpg"} />
+                        <div className="flex items-start gap-3 sm:gap-4 min-w-0">
+                          <Avatar className="w-12 h-12 sm:w-16 sm:h-16 shrink-0">
+                            <AvatarImage src={exhibitor.avatar } />
                             <AvatarFallback>
                               {exhibitor.firstName[0]}
                               {exhibitor.lastName[0]}
                             </AvatarFallback>
                           </Avatar>
 
-                          <div className="flex-1 space-y-2">
-                            <div>
-                              <h3 className="text-lg font-semibold">
+                          <div className="flex-1 min-w-0 space-y-2">
+                            <div className="min-w-0">
+                              <h3 className="text-base sm:text-lg font-semibold break-words">
                                 {exhibitor.firstName} {exhibitor.lastName}
                               </h3>
-                              <p className="text-sm text-gray-600">
+                              <p className="text-sm text-gray-600 break-words">
                                 {exhibitor.jobTitle} {exhibitor.company && `at ${exhibitor.company}`}
                               </p>
                             </div>
 
-                            <div className="flex items-center gap-4 text-sm text-gray-500">
-                              <div className="flex items-center gap-1">
-                                <Mail className="w-3 h-3" />
-                                {exhibitor.email}
+                            <div className="flex flex-col gap-1.5 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-4 sm:gap-y-1 text-sm text-gray-500">
+                              <div className="flex items-start gap-1 min-w-0">
+                                <Mail className="w-3 h-3 shrink-0 mt-0.5" />
+                                <span className="break-all">{exhibitor.email}</span>
                               </div>
                               {exhibitor.phone && (
-                                <div className="flex items-center gap-1">
-                                  <Phone className="w-3 h-3" />
-                                  {exhibitor.phone}
+                                <div className="flex items-center gap-1 min-w-0">
+                                  <Phone className="w-3 h-3 shrink-0" />
+                                  <span className="break-words">{exhibitor.phone}</span>
                                 </div>
                               )}
                               {exhibitor.location && (
-                                <div className="flex items-center gap-1">
-                                  <MapPin className="w-3 h-3" />
-                                  {exhibitor.location}
+                                <div className="flex items-start gap-1 min-w-0">
+                                  <MapPin className="w-3 h-3 shrink-0 mt-0.5" />
+                                  <span className="break-words">{exhibitor.location}</span>
                                 </div>
                               )}
                             </div>
 
-                            {exhibitor.bio && <p className="text-sm text-gray-600 line-clamp-2">{exhibitor.bio}</p>}
+                            {exhibitor.bio && <p className="text-sm text-gray-600 line-clamp-2 break-words">{exhibitor.bio}</p>}
 
-                            <div className="flex items-center gap-4 text-sm text-gray-500">
+                            <div className="flex flex-col gap-1.5 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-4 text-sm text-gray-500">
                               {exhibitor.businessEmail && (
-                                <div className="flex items-center gap-1">
-                                  <Building className="w-3 h-3" />
-                                  {exhibitor.businessEmail}
+                                <div className="flex items-start gap-1 min-w-0">
+                                  <Building className="w-3 h-3 shrink-0 mt-0.5" />
+                                  <span className="break-all">{exhibitor.businessEmail}</span>
                                 </div>
                               )}
                               {exhibitor.businessPhone && (
-                                <div className="flex items-center gap-1">
-                                  <Phone className="w-3 h-3" />
-                                  {exhibitor.businessPhone}
+                                <div className="flex items-center gap-1 min-w-0">
+                                  <Phone className="w-3 h-3 shrink-0" />
+                                  <span className="break-words">{exhibitor.businessPhone}</span>
                                 </div>
                               )}
                             </div>
@@ -409,7 +572,8 @@ export default function AddExhibitor({ eventId }: AddExhibitorProps) {
                       </CardContent>
                     </Card>
                   )
-                })}
+                })
+                )}
               </div>
             </TabsContent>
 
@@ -569,8 +733,8 @@ export default function AddExhibitor({ eventId }: AddExhibitorProps) {
                   </div>
                 </div>
 
-                <div className="flex justify-end">
-                  <Button onClick={handleCreateExhibitor} disabled={loading}>
+                <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+                  <Button onClick={handleCreateExhibitor} disabled={loading} className="w-full sm:w-auto">
                     {loading ? "Creating..." : "Create Exhibitor"}
                   </Button>
                 </div>
@@ -579,14 +743,14 @@ export default function AddExhibitor({ eventId }: AddExhibitorProps) {
           </Tabs>
 
           {selectedExhibitor && (
-            <Card className="border-blue-200 bg-blue-50/50 dark:bg-blue-950/20 dark:border-blue-800 mt-6">
-              <CardHeader>
-                <CardTitle className="text-lg">
+            <Card className="border-blue-200 bg-blue-50/50 dark:bg-blue-950/20 dark:border-blue-800 mt-4 sm:mt-6 gap-0 py-0 min-w-0 overflow-hidden">
+              <CardHeader className="px-4 sm:px-6">
+                <CardTitle className="text-base sm:text-lg break-words leading-snug">
                   Booth Details for{" "}
                   {selectedExhibitor.company || `${selectedExhibitor.firstName} ${selectedExhibitor.lastName}`}
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-6">
+              <CardContent className="space-y-4 sm:space-y-6 px-4 sm:px-6 min-w-0">
                 {isExhibitorRegistered && (
                   <Alert variant="destructive">
                     <AlertCircle className="h-4 w-4" />
@@ -620,11 +784,11 @@ export default function AddExhibitor({ eventId }: AddExhibitorProps) {
                           <Button
                             type="button"
                             variant="outline"
-                            className="w-full"
-                            onClick={() => router.push(`/event-dashboard/${eventId}?tab=space-cost`)}
+                            className="w-full h-auto min-h-9 whitespace-normal py-2 text-center leading-snug"
+                            onClick={() => router.push(`/event-dashboard/${dashboardPathSegment}?tab=space-cost`)}
                           >
-                            Go to Event Info → Space Cost
-                            <ArrowRight className="ml-2 h-4 w-4" />
+                            <span className="break-words">Go to Event Info → Space Cost</span>
+                            <ArrowRight className="ml-2 h-4 w-4 shrink-0" />
                           </Button>
                         </div>
                       ) : (
@@ -636,7 +800,7 @@ export default function AddExhibitor({ eventId }: AddExhibitorProps) {
                             className="py-2.5"
                           >
                             <span className="block truncate">
-                              {space.name} — {space.spaceType} · ${space.basePrice}
+                              {space.name} — {space.spaceType} · {formatCurrency(space.basePrice)}
                               {!space.isAvailable && " · Unavailable"}
                             </span>
                           </SelectItem>
@@ -645,18 +809,19 @@ export default function AddExhibitor({ eventId }: AddExhibitorProps) {
                     </SelectContent>
                   </Select>
                   {exhibitionSpaces.length === 0 && (
-                    <div className="mt-3 p-4 rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800 space-y-3">
-                      <p className="text-sm text-amber-800 dark:text-amber-200">
+                    <div className="mt-3 p-3 sm:p-4 rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800 space-y-3 min-w-0 overflow-hidden">
+                      <p className="text-sm text-amber-800 dark:text-amber-200 break-words">
                         No exhibition spaces yet. Add them in <strong>Event Info</strong> → <strong>Space Cost</strong> tab, then return here to assign a space.
                       </p>
                       <Button
                         type="button"
                         variant="outline"
                         size="sm"
-                        onClick={() => router.push(`/event-dashboard/${eventId}?tab=space-cost`)}
+                        className="w-full h-auto min-h-9 whitespace-normal py-2 text-center leading-snug"
+                        onClick={() => router.push(`/event-dashboard/${dashboardPathSegment}?tab=space-cost`)}
                       >
-                        Go to Event Info → Space Cost
-                        <ArrowRight className="ml-2 h-4 w-4" />
+                        <span className="break-words">Go to Event Info → Space Cost</span>
+                        <ArrowRight className="ml-2 h-4 w-4 shrink-0" />
                       </Button>
                     </div>
                   )}
@@ -706,7 +871,7 @@ export default function AddExhibitor({ eventId }: AddExhibitorProps) {
                       onChange={(e) => setBoothDetails({ ...boothDetails, additionalPower: e.target.value })}
                       placeholder="0"
                     />
-                    <p className="text-xs text-gray-500 mt-1">$50 per KW</p>
+                    <p className="text-xs text-gray-500 mt-1">{formatCurrency(selectedAdditionalPowerRate)} per KW</p>
                   </div>
 
                   <div>
@@ -719,7 +884,7 @@ export default function AddExhibitor({ eventId }: AddExhibitorProps) {
                       onChange={(e) => setBoothDetails({ ...boothDetails, compressedAir: e.target.value })}
                       placeholder="0"
                     />
-                    <p className="text-xs text-gray-500 mt-1">$100 per HP</p>
+                    <p className="text-xs text-gray-500 mt-1">{formatCurrency(selectedCompressedAirRate)} per HP</p>
                   </div>
                 </div>
 
@@ -750,30 +915,34 @@ export default function AddExhibitor({ eventId }: AddExhibitorProps) {
                     <div className="space-y-1 text-sm">
                       <div className="flex justify-between">
                         <span>Base space cost</span>
-                        <span>${exhibitionSpaces.find((s) => s.id === selectedSpace)?.basePrice || 0}</span>
+                        <span>{formatCurrency(selectedSpaceData?.basePrice || 0)}</span>
                       </div>
                       {boothDetails.additionalPower && (
                         <div className="flex justify-between">
                           <span>Additional power ({boothDetails.additionalPower} KW)</span>
-                          <span>${Number.parseFloat(boothDetails.additionalPower) * 50}</span>
+                          <span>{formatCurrency(Number.parseFloat(boothDetails.additionalPower) * selectedAdditionalPowerRate)}</span>
                         </div>
                       )}
                       {boothDetails.compressedAir && (
                         <div className="flex justify-between">
                           <span>Compressed air ({boothDetails.compressedAir} HP)</span>
-                          <span>${Number.parseFloat(boothDetails.compressedAir) * 100}</span>
+                          <span>{formatCurrency(Number.parseFloat(boothDetails.compressedAir) * selectedCompressedAirRate)}</span>
                         </div>
                       )}
                       <div className="border-t pt-1 flex justify-between font-semibold">
                         <span>Total</span>
-                        <span>${calculateTotalCost()}</span>
+                        <span>{formatCurrency(calculateTotalCost())}</span>
                       </div>
                     </div>
                   </div>
                 )}
 
-                <div className="flex justify-end">
-                  <Button onClick={handleAddExhibitorToEvent} disabled={loading || isExhibitorRegistered}>
+                <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                  <Button
+                    onClick={handleAddExhibitorToEvent}
+                    disabled={loading || isExhibitorRegistered}
+                    className="w-full sm:w-auto"
+                  >
                     {loading ? "Adding..." : "Add Exhibitor to Event"}
                   </Button>
                 </div>

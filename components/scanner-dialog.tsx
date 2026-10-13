@@ -220,7 +220,7 @@ export function ScannerDialog({ open, onOpenChange, eventId }: ScannerDialogProp
                 {/* Header */}
                 <div className="flex items-center gap-4">
                   <Avatar className="w-16 h-16">
-                    <AvatarImage src={selectedAttendee.avatar || "/city/c4.jpg"} />
+                    <AvatarImage src={selectedAttendee.avatar } />
                     <AvatarFallback className="text-lg">
                       {selectedAttendee.firstName[0]}
                       {selectedAttendee.lastName[0]}

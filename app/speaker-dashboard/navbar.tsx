@@ -1,11 +1,22 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import Link from "next/link"
-import Image from "next/image"
-import { ChevronDown, User, LogOut, Settings } from "lucide-react"
-import { useRouter } from "next/navigation"
-import { isAuthenticated, getCurrentUserRole, getCurrentUserId, clearTokens } from "@/lib/api"
+import { useEffect, useState } from "react"
+import {
+  User,
+  LogOut,
+  Settings,
+  HelpCircle,
+  LayoutDashboard,
+  ChevronDown,
+} from "lucide-react"
+import { useRouter, usePathname } from "next/navigation"
+import {
+  isAuthenticated,
+  getCurrentUserRole,
+  getCurrentUserId,
+  clearTokens,
+  markLogoutSuccessBanner,
+} from "@/lib/api"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,96 +24,54 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { useDashboard } from "@/contexts/dashboard-context"
 import { NotificationsDropdown } from "@/components/notifications-dropdown"
+import { DashboardResponsiveNavbar } from "@/components/dashboard-responsive-navbar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
-interface Notification {
-  id: string
-  type: string
-  title: string
-  message: string
-  isRead: boolean
-  createdAt: string
-  priority: string
-}
+// const EXPLORE_LINKS = [
+//   { href: "/trade-fairs", label: "Trade Fairs" },
+//   { href: "/conferences", label: "Conferences" },
+//   { href: "/webinars", label: "Webinars" },
+// ]
 
 export default function Navbar() {
-  const [exploreOpen, setExploreOpen] = useState(false)
-  const [notifications, setNotifications] = useState<Notification[]>([])
-  const [unreadCount, setUnreadCount] = useState(0)
-  const [notificationsOpen, setNotificationsOpen] = useState(false)
+  const [userName, setUserName] = useState("Speaker")
+  const [userEmail, setUserEmail] = useState("")
+  const [userAvatar, setUserAvatar] = useState("")
+  const [userRole, setUserRole] = useState<string | null>(null)
+  const [hydrated, setHydrated] = useState(false)
   const router = useRouter()
-  const { setActiveSection } = useDashboard()
+  const pathname = usePathname()
 
   useEffect(() => {
-    if (isAuthenticated() && getCurrentUserId()) {
-      fetchNotifications()
-    }
+    setHydrated(true)
   }, [])
 
-  const fetchNotifications = async () => {
+  useEffect(() => {
+    if (!hydrated) return
+    if (isAuthenticated() && getCurrentUserId()) {
+      void fetchUserData()
+      setUserRole(getCurrentUserRole())
+    }
+  }, [hydrated])
+
+  const fetchUserData = async () => {
     try {
-      const response = await fetch("/api/notifications")
-      if (response.ok) {
-        const data = await response.json()
-        setNotifications(data.notifications)
-        setUnreadCount(data.unreadCount)
+      const userId = getCurrentUserId()
+      if (!userId) return
+      const response = await fetch(`/api/users/${userId}`)
+      if (!response.ok) return
+      const data = await response.json()
+      if (data.user) {
+        setUserName(`${data.user.firstName || "Speaker"} ${data.user.lastName || ""}`.trim())
+        setUserEmail(data.user.email || "")
+        setUserAvatar(data.user.avatar || "")
       }
     } catch (error) {
-      console.error("Error fetching notifications:", error)
+      console.error("Error fetching user data:", error)
     }
   }
-
-  const markAsRead = async (notificationId: string) => {
-    try {
-      const response = await fetch(`/api/notifications/${notificationId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isRead: true }),
-      })
-
-      if (response.ok) {
-        // Update local state
-        setNotifications((prev) =>
-          prev.map((notif) => (notif.id === notificationId ? { ...notif, isRead: true } : notif)),
-        )
-        setUnreadCount((prev) => Math.max(0, prev - 1))
-      }
-    } catch (error) {
-      console.error("Error marking notification as read:", error)
-    }
-  }
-
-  const markAllAsRead = async () => {
-    try {
-      const response = await fetch("/api/notifications/mark-all-read", {
-        method: "POST",
-      })
-
-      if (response.ok) {
-        setNotifications((prev) => prev.map((notif) => ({ ...notif, isRead: true })))
-        setUnreadCount(0)
-      }
-    } catch (error) {
-      console.error("Error marking all as read:", error)
-    }
-  }
-
-  const formatTimeAgo = (dateString: string) => {
-    const date = new Date(dateString)
-    const now = new Date()
-    const seconds = Math.floor((now.getTime() - date.getTime()) / 1000)
-
-    if (seconds < 60) return "Just now"
-    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`
-    if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`
-    return `${Math.floor(seconds / 86400)}d ago`
-  }
-
-  const toggleExplore = () => setExploreOpen((prev) => !prev)
 
   const handleAddevent = () => {
     if (!isAuthenticated()) {
@@ -118,175 +87,128 @@ export default function Navbar() {
         `You are logged in as '${role}'.\n\nPlease login as an organizer to access this page.\n\nClick OK to logout and login as an organizer, or Cancel to stay logged in.`,
       )
       if (confirmed) {
+        markLogoutSuccessBanner()
         clearTokens()
         router.push("/login")
       }
     }
   }
 
-  // Navigation functions using dashboard context
+  const isOnDashboard = pathname?.includes("/dashboard") || pathname?.includes("/speaker-dashboard")
+  const isOnSpeakerDashboard = pathname?.includes("/speaker-dashboard")
+  const authenticated = hydrated && isAuthenticated()
+
+  const dispatchSection = (section: string) => {
+    window.dispatchEvent(new CustomEvent("navigateDashboard", { detail: { section } }))
+  }
+
   const navigateToProfile = () => {
-    setActiveSection("info")
+    if (isOnSpeakerDashboard) dispatchSection("myprofile")
+    else if (isOnDashboard) dispatchSection("info")
+    else router.push("/dashboard?section=info")
   }
 
   const navigateToSettings = () => {
-    setActiveSection("settings")
+    if (isOnSpeakerDashboard || isOnDashboard) dispatchSection("settings")
+    else router.push("/dashboard?section=settings")
+  }
+
+  const navigateToDashboard = () => {
+    if (isOnSpeakerDashboard) dispatchSection("overview")
+    else if (isOnDashboard) dispatchSection("myprofile")
+    else router.push("/dashboard?section=myprofile")
+  }
+
+  const navigateToHelp = () => {
+    if (isOnSpeakerDashboard || isOnDashboard) dispatchSection("help")
+    else router.push("/dashboard?section=help")
+  }
+
+  const handleLogout = () => {
+    markLogoutSuccessBanner()
+    clearTokens()
+    router.push("/login")
+  }
+
+  const getInitials = () => {
+    const nameParts = userName.split(" ").filter(Boolean)
+    if (nameParts.length >= 2) {
+      return `${nameParts[0][0]}${nameParts[1][0]}`.toUpperCase()
+    }
+    return userName.charAt(0).toUpperCase()
   }
 
   return (
-    <nav className="bg-white shadow-sm">
-      <div className="max-w-1xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
-        <div className="flex justify-between h-20 items-center">
-          {/* Left: Logo + Explore */}
-          <div className="flex items-center space-x-6">
-            <Link href="/" className="inline-block">
-              <Image src="/logo/bizlogo.png" alt="BizTradeFairs.com" width={160} height={80} className="h-42 w-auto" />
-            </Link>
-
-            <div className="relative">
-              {/* <button
-                onClick={toggleExplore}
-                className="flex items-center text-gray-700 hover:text-gray-900 focus:outline-none"
+    <DashboardResponsiveNavbar
+      // exploreLinks={EXPLORE_LINKS}
+      onAddEvent={handleAddevent}
+      actions={
+        <>
+          {authenticated ? <NotificationsDropdown /> : null}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className="flex max-w-[min(52vw,200px)] items-center gap-2 rounded-full px-1 py-1 transition-colors hover:bg-gray-50 focus:outline-none sm:gap-3 sm:px-2"
+                aria-label="Account menu"
               >
-                <span>Explore</span>
-                <ChevronDown className="w-4 h-4 ml-1" />
-              </button> */}
-
-              {exploreOpen && (
-                <div className="absolute left-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-10">
-                  <ul className="py-1">
-                    <li>
-                      <Link href="/trade-fairs">
-                        <p className="block px-4 py-2 hover:bg-gray-100">Trade Fairs</p>
-                      </Link>
-                    </li>
-                    <li>
-                      <Link href="/conferences">
-                        <p className="block px-4 py-2 hover:bg-gray-100">Conferences</p>
-                      </Link>
-                    </li>
-                    <li>
-                      <Link href="/webinars">
-                        <p className="block px-4 py-2 hover:bg-gray-100">Webinars</p>
-                      </Link>
-                    </li>
-                  </ul>
+                <Avatar className="h-9 w-9 shrink-0 ring-2 ring-blue-100 sm:h-10 sm:w-10">
+                  <AvatarImage src={userAvatar} alt={userName} />
+                  <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-sm font-bold text-white">
+                    {getInitials()}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="hidden min-w-0 text-left md:block">
+                  <p className="truncate text-sm font-semibold text-gray-800">{userName}</p>
+                  {userEmail ? <p className="truncate text-xs text-gray-500">{userEmail}</p> : null}
                 </div>
-              )}
-            </div>
-          </div>
+                <ChevronDown className="hidden h-4 w-4 shrink-0 text-gray-500 md:block" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-72" align="end" forceMount>
+              <div className="flex items-center gap-3 border-b p-3">
+                <Avatar className="h-12 w-12 ring-2 ring-blue-100">
+                  <AvatarImage src={userAvatar} alt={userName} />
+                  <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-base font-bold text-white">
+                    {getInitials()}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-bold text-gray-800">{userName}</p>
+                  {userEmail ? <p className="truncate text-xs text-gray-500">{userEmail}</p> : null}
+                  {userRole ? (
+                    <Badge variant="secondary" className="mt-1 text-[10px]">
+                      {userRole}
+                    </Badge>
+                  ) : null}
+                </div>
+              </div>
 
-          {/* Right: Links + Profile */}
-          <div className="flex items-center space-x-6">
-            <Link href="/event">
-              <p className="text-gray-700 hover:text-gray-900">Top 10 Must Visit</p>
-            </Link>
-            <Link href="/speakers">
-              <p className="text-gray-700 hover:text-gray-900">Speakers</p>
-            </Link>
-            <p onClick={handleAddevent} className="text-gray-700 hover:text-gray-900 cursor-pointer">
-              Add Event
-            </p>
-
-            {/* Show both notification systems if you want to keep both */}
-            {isAuthenticated() && (
-              <>
-                {/* Push Notifications Dropdown (from super admin) */}
-                <NotificationsDropdown />
-
-                {/* Optional: Keep your existing system notifications if needed */}
-                {/* Uncomment if you want both */}
-                {/*
-                <DropdownMenu open={notificationsOpen} onOpenChange={setNotificationsOpen}>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" className="relative">
-                      <Bell className="w-5 h-5" />
-                      {unreadCount > 0 && (
-                        <Badge
-                          variant="destructive"
-                          className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
-                        >
-                          {unreadCount > 9 ? "9+" : unreadCount}
-                        </Badge>
-                      )}
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-80" align="end" forceMount>
-                    <div className="flex items-center justify-between p-4 border-b">
-                      <h3 className="font-semibold">System Notifications</h3>
-                      {unreadCount > 0 && (
-                        <Button variant="ghost" size="sm" onClick={markAllAsRead} className="text-xs h-auto p-1">
-                          Mark all read
-                        </Button>
-                      )}
-                    </div>
-                    <ScrollArea className="h-[400px]">
-                      {notifications.length === 0 ? (
-                        <div className="p-4 text-center text-muted-foreground">No notifications</div>
-                      ) : (
-                        notifications.map((notification) => (
-                          <div
-                            key={notification.id}
-                            className={`p-4 border-b hover:bg-accent cursor-pointer transition-colors ${
-                              !notification.isRead ? "bg-blue-50" : ""
-                            }`}
-                            onClick={() => {
-                              if (!notification.isRead) {
-                                markAsRead(notification.id)
-                              }
-                            }}
-                          >
-                            <div className="flex items-start justify-between gap-2">
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2">
-                                  <h4 className="text-sm font-medium truncate">{notification.title}</h4>
-                                  {!notification.isRead && (
-                                    <span className="h-2 w-2 rounded-full bg-blue-600 flex-shrink-0" />
-                                  )}
-                                </div>
-                                <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{notification.message}</p>
-                                <span className="text-xs text-muted-foreground mt-1 block">
-                                  {formatTimeAgo(notification.createdAt)}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        ))
-                      )}
-                    </ScrollArea>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-                */}
-              </>
-            )}
-
-            {/* Profile Menu */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-2 p-2 rounded-full bg-[#002C71] text-white hover:bg-blue-800 focus:outline-none transition-colors">
-                  <User className="w-4 h-4" />
-                  <ChevronDown className="w-3 h-3" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="end" forceMount>
-                <DropdownMenuItem onClick={navigateToProfile}>
-                  <User className="mr-2 h-4 w-4" />
-                  <span>My Profile</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={navigateToSettings}>
-                  <Settings className="mr-2 h-4 w-4" />
-                  <span>Settings</span>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => { clearTokens(); router.push("/login"); }}>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Logout</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
-      </div>
-    </nav>
+              <DropdownMenuItem onClick={navigateToDashboard} className="cursor-pointer py-2.5">
+                <LayoutDashboard className="mr-3 h-4 w-4 text-blue-500" />
+                <span>Dashboard</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={navigateToProfile} className="cursor-pointer py-2.5">
+                <User className="mr-3 h-4 w-4 text-gray-500" />
+                <span>My Profile</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={navigateToSettings} className="cursor-pointer py-2.5">
+                <Settings className="mr-3 h-4 w-4 text-gray-500" />
+                <span>Settings</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={navigateToHelp} className="cursor-pointer py-2.5">
+                <HelpCircle className="mr-3 h-4 w-4 text-gray-500" />
+                <span>Help & Support</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleLogout} className="cursor-pointer py-2.5">
+                <LogOut className="mr-2 h-4 w-4 text-red-500" />
+                <span className="text-red-600">Logout</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </>
+      }
+    />
   )
 }

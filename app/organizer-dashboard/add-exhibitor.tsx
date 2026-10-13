@@ -320,14 +320,14 @@ export default function AddExhibitor({ organizerId }: AddExhibitorProps) {
                   <Card
                     key={exhibitor.id}
                     className={`cursor-pointer transition-colors ${
-                      selectedExhibitor?.id === exhibitor.id ? "ring-2 ring-blue-500 bg-blue-50" : "hover:bg-gray-50"
+                      selectedExhibitor?.id === exhibitor.id ? "ring-2 ring-[#004A96] bg-[#004A96]/10" : "hover:bg-gray-50"
                     }`}
                     onClick={() => setSelectedExhibitor(exhibitor)}
                   >
                     <CardContent className="p-4">
                       <div className="flex items-start gap-4">
                         <Avatar className="w-16 h-16">
-                          <AvatarImage src={exhibitor.avatar || "/city/c4.jpg"} />
+                          <AvatarImage src={exhibitor.avatar } />
                           <AvatarFallback>
                             {exhibitor.firstName[0]}
                             {exhibitor.lastName[0]}
@@ -573,7 +573,7 @@ export default function AddExhibitor({ organizerId }: AddExhibitorProps) {
 
           {/* Booth Details Form */}
           {selectedExhibitor && (
-            <Card className="border-blue-200 bg-blue-50 mt-6">
+            <Card className="border-[#bfdbfe] bg-[#004A96]/10 mt-6">
               <CardHeader>
                 <CardTitle className="text-lg">
                   Booth Details for{" "}

@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Clock, Loader2 } from "lucide-react"
 import { EVENT_FORMAT_SELECT_OPTIONS } from "@/lib/explore-event-types"
+import { isoFromWallClock, resolveEventTimezone, wallClockFromIso } from "@/lib/event-datetime-timezone"
 import type { EventFormData, ValidationErrors } from "./types"
 
 interface BasicInfoTabProps {
@@ -35,6 +36,10 @@ export function BasicInfoTab({
   onFormChange,
   onCategoryToggle,
 }: BasicInfoTabProps) {
+  const eventTimezone = resolveEventTimezone(formData.timezone, formData.country)
+  const startWall = wallClockFromIso(formData.startDate, eventTimezone)
+  const endWall = wallClockFromIso(formData.endDate, eventTimezone)
+
   return (
     <div className="space-y-6">
       <Card>
@@ -55,6 +60,23 @@ export function BasicInfoTab({
                 placeholder="Enter event title"
               />
               {validationErrors.title && <p className="text-sm text-red-500 mt-1">{validationErrors.title}</p>}
+            </div>
+
+            <div className="md:col-span-2">
+              <Label htmlFor="eventSubtitle">Event subtitle</Label>
+              <Input
+                id="eventSubtitle"
+                value={formData.subTitle ?? ""}
+                maxLength={10}
+                onChange={(e) =>
+                  onFormChange({ subTitle: e.target.value.slice(0, 10) })
+                }
+                placeholder="tagline (max 10 characters)"
+                autoComplete="off"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Up to 10 characters. Optional tagline separate from the full description.
+              </p>
             </div>
 
             <div className="md:col-span-2">
@@ -103,7 +125,7 @@ export function BasicInfoTab({
             </div>
 
             <div className="md:col-span-2">
-              <Label>Event Categories</Label>
+              <Label>Event Categories *</Label>
               {isLoadingCategories ? (
                 <div className="flex items-center space-x-2 mt-2">
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -129,6 +151,9 @@ export function BasicInfoTab({
                     </div>
                   ))}
                 </div>
+              )}
+              {validationErrors.categories && (
+                <p className="text-sm text-red-500 mt-1">{validationErrors.categories}</p>
               )}
             </div>
 
@@ -169,13 +194,16 @@ export function BasicInfoTab({
             </div>
 
             <div>
-              <Label htmlFor="city">City</Label>
+              <Label htmlFor="city">City *</Label>
               <Input
                 id="city"
                 value={formData.city}
                 onChange={(e) => onFormChange({ city: e.target.value })}
                 placeholder="Enter city"
               />
+              {validationErrors.city && (
+                <p className="text-sm text-red-500 mt-1">{validationErrors.city}</p>
+              )}
             </div>
 
             <div>
@@ -189,13 +217,16 @@ export function BasicInfoTab({
             </div>
 
             <div>
-              <Label htmlFor="country">Country</Label>
+              <Label htmlFor="country">Country *</Label>
               <Input
                 id="country"
                 value={formData.country}
                 onChange={(e) => onFormChange({ country: e.target.value })}
                 placeholder="Enter country"
               />
+              {validationErrors.country && (
+                <p className="text-sm text-red-500 mt-1">{validationErrors.country}</p>
+              )}
             </div>
 
             <div className="md:col-span-2">
@@ -213,14 +244,17 @@ export function BasicInfoTab({
               <Input
                 id="startDate"
                 type="date"
-                value={formData.startDate ? formData.startDate.split("T")[0] : ""}
+                value={startWall.date}
                 onChange={(e) => {
                   const dateValue = e.target.value
-                  const timeValue = formData.startDate.includes("T")
-                    ? formData.startDate.split("T")[1]
-                    : "00:00:00.000+00:00"
-                  const newStartDate = dateValue ? `${dateValue}T${timeValue.split(":00.000+")[0]}:00.000+00:00` : ""
-                  onFormChange({ startDate: newStartDate })
+                  if (!dateValue) {
+                    onFormChange({ startDate: "" })
+                    return
+                  }
+                  const timeValue = startWall.time || "10:00"
+                  onFormChange({
+                    startDate: isoFromWallClock(dateValue, timeValue, eventTimezone),
+                  })
                 }}
               />
               {validationErrors.startDate && <p className="text-sm text-red-500 mt-1">{validationErrors.startDate}</p>}
@@ -231,18 +265,15 @@ export function BasicInfoTab({
               <Input
                 id="startTime"
                 type="time"
-                value={
-                  formData.startDate && formData.startDate.includes("T")
-                    ? formData.startDate.split("T")[1].slice(0, 5)
-                    : "10:00"
-                }
+                value={startWall.time || "10:00"}
                 onChange={(e) => {
                   const timeValue = e.target.value
-                  const dateValue = formData.startDate
-                    ? formData.startDate.split("T")[0]
-                    : new Date().toISOString().split("T")[0]
-                  const newStartDate = timeValue ? `${dateValue}T${timeValue}:00.000+00:00` : formData.startDate
-                  onFormChange({ startDate: newStartDate })
+                  const dateValue =
+                    startWall.date || new Date().toISOString().split("T")[0]
+                  if (!timeValue) return
+                  onFormChange({
+                    startDate: isoFromWallClock(dateValue, timeValue, eventTimezone),
+                  })
                 }}
               />
             </div>
@@ -252,14 +283,17 @@ export function BasicInfoTab({
               <Input
                 id="endDate"
                 type="date"
-                value={formData.endDate ? formData.endDate.split("T")[0] : ""}
+                value={endWall.date}
                 onChange={(e) => {
                   const dateValue = e.target.value
-                  const timeValue = formData.endDate.includes("T")
-                    ? formData.endDate.split("T")[1]
-                    : "00:00:00.000+00:00"
-                  const newEndDate = dateValue ? `${dateValue}T${timeValue.split(":00.000+")[0]}:00.000+00:00` : ""
-                  onFormChange({ endDate: newEndDate })
+                  if (!dateValue) {
+                    onFormChange({ endDate: "" })
+                    return
+                  }
+                  const timeValue = endWall.time || "18:00"
+                  onFormChange({
+                    endDate: isoFromWallClock(dateValue, timeValue, eventTimezone),
+                  })
                 }}
               />
               {validationErrors.endDate && <p className="text-sm text-red-500 mt-1">{validationErrors.endDate}</p>}
@@ -270,21 +304,21 @@ export function BasicInfoTab({
               <Input
                 id="endTime"
                 type="time"
-                value={
-                  formData.endDate && formData.endDate.includes("T")
-                    ? formData.endDate.split("T")[1].slice(0, 5)
-                    : "18:00"
-                }
+                value={endWall.time || "18:00"}
                 onChange={(e) => {
                   const timeValue = e.target.value
-                  const dateValue = formData.endDate
-                    ? formData.endDate.split("T")[0]
-                    : new Date().toISOString().split("T")[0]
-                  const newEndDate = timeValue ? `${dateValue}T${timeValue}:00.000+00:00` : formData.endDate
-                  onFormChange({ endDate: newEndDate })
+                  const dateValue =
+                    endWall.date || new Date().toISOString().split("T")[0]
+                  if (!timeValue) return
+                  onFormChange({
+                    endDate: isoFromWallClock(dateValue, timeValue, eventTimezone),
+                  })
                 }}
               />
             </div>
+            <p className="md:col-span-2 text-xs text-muted-foreground">
+              Times are saved in {eventTimezone}. Enter the local start and end time for the event.
+            </p>
           </div>
         </CardContent>
       </Card>

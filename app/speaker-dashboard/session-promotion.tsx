@@ -1,5 +1,6 @@
 "use client"
 
+import { AppImage } from "@/components/app-image"
 import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -46,19 +47,19 @@ export function SessionPromotion() {
     {
       id: 1,
       name: "Speaker Badge - Blue",
-      preview: "/city/c4.jpg",
+      preview: "",
       format: "PNG",
     },
     {
       id: 2,
       name: "Speaker Badge - Dark",
-      preview: "/city/c4.jpg",
+      preview: "",
       format: "PNG",
     },
     {
       id: 3,
       name: "QR Code Badge",
-      preview: "/city/c4.jpg",
+      preview: "",
       format: "PNG",
     },
   ]
@@ -155,10 +156,12 @@ export function SessionPromotion() {
                     {speakerBadges.map((badge) => (
                       <div key={badge.id} className="space-y-3">
                         <div className="border rounded-lg p-4 bg-gray-50">
-                          <img
-                            src={badge.preview || "/city/c4.jpg"}
+                          <AppImage
+                            src={badge.preview}
                             alt={badge.name}
-                            className="w-full h-32 object-cover rounded"
+                            width={320}
+                            height={128}
+                            className="h-32 w-full rounded object-cover"
                           />
                         </div>
                         <div className="space-y-2">

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Eye, MousePointer, TrendingUp } from "lucide-react"
+import { apiFetch } from "@/lib/api"
 
 interface Promotion {
   id: string
@@ -35,9 +36,10 @@ export default function ActivePromotions({ organizerId }: { organizerId: string 
   useEffect(() => {
     const fetchPromotions = async () => {
       try {
-        const res = await fetch(`/api/organizers/${organizerId}/promotions`)
-        if (!res.ok) throw new Error("Failed to fetch promotions")
-        const data = await res.json()
+        const data = await apiFetch<{ promotions?: Promotion[] }>(
+          `/api/organizers/${organizerId}/promotions`,
+          { auth: true },
+        )
         setPromotions(data.promotions || [])
       } catch (error) {
         console.error("Error fetching promotions:", error)

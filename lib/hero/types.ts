@@ -5,6 +5,9 @@ export interface HeroVenue {
 }
 
 export interface HeroSlideshowEvent {
+  organizerName: import("react/jsx-runtime").JSX.Element
+  videoUrl: any
+  description: any
   id: string
   title: string
   subTitle: string | null
@@ -12,6 +15,7 @@ export interface HeroSlideshowEvent {
   startDate: string
   endDate?: string | null
   bannerImage?: string | null
+  vipImage?: string | null
   images?: string[] | null
   venue?: HeroVenue | null
 }

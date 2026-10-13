@@ -66,6 +66,7 @@ export default function VenueBookingsPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [selectedBooking, setSelectedBooking] = useState<VenueBooking | null>(null)
+  const [selectedBookingIndex, setSelectedBookingIndex] = useState<number>(0)
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false)
   const [actionDialogOpen, setActionDialogOpen] = useState(false)
   const [currentAction, setCurrentAction] = useState<"confirm" | "cancel" | null>(null)
@@ -79,12 +80,24 @@ export default function VenueBookingsPage() {
     try {
       setLoading(true)
       const data = await adminApi<{ bookings: VenueBooking[] }>("/venue/venue-bookings")
-      setBookings(data?.bookings ?? [])
+      const list = data?.bookings ?? []
+
+      // Sort by createdAt date (newest first)
+      const sortedList = [...list].sort((a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      )
+
+      setBookings(sortedList)
     } catch (error) {
       console.error("Error fetching bookings:", error)
     } finally {
       setLoading(false)
     }
+  }
+
+  // Generate sequential booking ID (e.g., BKG0001, BKG0002, etc.)
+  const getSequentialBookingId = (index: number): string => {
+    return `BKG${String(index + 1).padStart(4, '0')}`
   }
 
   const handleAction = async () => {
@@ -232,100 +245,116 @@ export default function VenueBookingsPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Booking ID</TableHead>
-                <TableHead>Venue</TableHead>
-                <TableHead>Requester</TableHead>
-                <TableHead>Title</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Requested Date</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Priority</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredBookings.length === 0 ? (
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center text-gray-500">
-                    No bookings found
-                  </TableCell>
+                  <TableHead>#</TableHead>
+                  <TableHead>Booking ID</TableHead>
+                  <TableHead>Venue</TableHead>
+                  <TableHead>Requester</TableHead>
+                  <TableHead>Title</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Requested Date</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Priority</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
-              ) : (
-                filteredBookings.map((booking) => (
-                  <TableRow key={booking.id}>
-                    <TableCell className="font-mono text-xs">{booking.id.slice(-8)}</TableCell>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium">{booking.venueName}</div>
-                        <div className="text-xs text-gray-500">{booking.venueEmail}</div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium">{booking.requesterName}</div>
-                        <div className="text-xs text-gray-500">{booking.requesterCompany}</div>
-                      </div>
-                    </TableCell>
-                    <TableCell>{booking.title}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{booking.type.replace(/_/g, " ")}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div>
-                        <div>{new Date(booking.requestedDate).toLocaleDateString()}</div>
-                        <div className="text-xs text-gray-500">{booking.requestedTime}</div>
-                      </div>
-                    </TableCell>
-                    <TableCell>{getStatusBadge(booking.status)}</TableCell>
-                    <TableCell>{getPriorityBadge(booking.priority)}</TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => {
-                            setSelectedBooking(booking)
-                            setDetailsDialogOpen(true)
-                          }}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        {booking.status === "PENDING" && (
-                          <>
-                            <Button
-                              size="sm"
-                              variant="default"
-                              onClick={() => {
-                                setSelectedBooking(booking)
-                                setCurrentAction("confirm")
-                                setActionDialogOpen(true)
-                              }}
-                            >
-                              <CheckCircle className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => {
-                                setSelectedBooking(booking)
-                                setCurrentAction("cancel")
-                                setActionDialogOpen(true)
-                              }}
-                            >
-                              <XCircle className="h-4 w-4" />
-                            </Button>
-                          </>
-                        )}
-                      </div>
+              </TableHeader>
+              <TableBody>
+                {filteredBookings.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={10} className="text-center text-gray-500">
+                      No bookings found
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                ) : (
+                  filteredBookings.map((booking) => {
+                    const originalIndex = bookings.findIndex(b => b.id === booking.id)
+                    const sequentialId = getSequentialBookingId(originalIndex)
+
+                    return (
+                      <TableRow key={booking.id}>
+                        <TableCell className="font-medium text-gray-500">
+                          {originalIndex + 1}
+                        </TableCell>
+                        <TableCell>
+                          <code className="text-sm font-mono font-semibold text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                            {sequentialId}
+                          </code>
+                        </TableCell>
+                        <TableCell>
+                          <div>
+                            <div className="font-medium">{booking.venueName}</div>
+                            <div className="text-xs text-gray-500">{booking.venueEmail}</div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div>
+                            <div className="font-medium">{booking.requesterName}</div>
+                            <div className="text-xs text-gray-500">{booking.requesterCompany}</div>
+                          </div>
+                        </TableCell>
+                        <TableCell>{booking.title}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{booking.type.replace(/_/g, " ")}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div>
+                            <div>{new Date(booking.requestedDate).toLocaleDateString()}</div>
+                            <div className="text-xs text-gray-500">{booking.requestedTime}</div>
+                          </div>
+                        </TableCell>
+                        <TableCell>{getStatusBadge(booking.status)}</TableCell>
+                        <TableCell>{getPriorityBadge(booking.priority)}</TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setSelectedBooking(booking)
+                                setSelectedBookingIndex(originalIndex)
+                                setDetailsDialogOpen(true)
+                              }}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            {booking.status === "PENDING" && (
+                              <>
+                                <Button
+                                  size="sm"
+                                  variant="default"
+                                  onClick={() => {
+                                    setSelectedBooking(booking)
+                                    setCurrentAction("confirm")
+                                    setActionDialogOpen(true)
+                                  }}
+                                >
+                                  <CheckCircle className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={() => {
+                                    setSelectedBooking(booking)
+                                    setCurrentAction("cancel")
+                                    setActionDialogOpen(true)
+                                  }}
+                                >
+                                  <XCircle className="h-4 w-4" />
+                                </Button>
+                              </>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    )
+                  })
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
 
@@ -336,6 +365,14 @@ export default function VenueBookingsPage() {
           </DialogHeader>
           {selectedBooking && (
             <div className="space-y-6">
+              {/* Booking ID Header */}
+              <div className="border-b pb-3">
+                <p className="text-sm text-gray-500">Booking ID</p>
+                <code className="text-lg font-mono font-bold text-blue-600 bg-blue-50 px-3 py-1.5 rounded inline-block">
+                  {getSequentialBookingId(selectedBookingIndex)}
+                </code>
+              </div>
+
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
                   <h3 className="font-semibold mb-2 flex items-center gap-2">

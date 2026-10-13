@@ -1,3 +1,4 @@
+import { resolveEventBannerImage } from "./resolve-event-banner-image"
 import type { FeaturedEventPayload, FeaturedEventVenue } from "./types"
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -28,11 +29,20 @@ function readCategories(raw: unknown): string[] {
 
 function readVenue(raw: unknown): FeaturedEventVenue | null {
   if (!isRecord(raw)) return null
+  const nested = raw.venue
+  if (isRecord(nested)) {
+    return {
+      venueName: readString(nested.venueName),
+      venueAddress: readString(nested.venueAddress),
+      venueCity: readString(nested.venueCity),
+      venueCountry: readString(nested.venueCountry),
+    }
+  }
   return {
     venueName: readString(raw.venueName),
     venueAddress: readString(raw.venueAddress),
-    venueCity: readString(raw.venueCity),
-    venueCountry: readString(raw.venueCountry),
+    venueCity: readString(raw.city) ?? readString(raw.venueCity),
+    venueCountry: readString(raw.country) ?? readString(raw.venueCountry),
   }
 }
 
@@ -50,13 +60,11 @@ export function normalizeFeaturedEvent(raw: unknown): FeaturedEventPayload | nul
   const end = raw.endDate ? new Date(String(raw.endDate)) : start
 
   const images = raw.images
-  let firstImage: string | null = null
-  if (Array.isArray(images) && images.length > 0) {
-    const first = images[0]
-    firstImage = typeof first === "string" ? first : null
-  }
-
-  const bannerImage = readString(raw.bannerImage) ?? firstImage
+  const bannerImage = resolveEventBannerImage({
+    bannerImage: readString(raw.bannerImage),
+    thumbnailImage: readString(raw.thumbnailImage),
+    images,
+  })
 
   const tags = readStringArray(raw.tags)
   const eventType = readStringArray(raw.eventType)
@@ -80,13 +88,14 @@ export function normalizeFeaturedEvent(raw: unknown): FeaturedEventPayload | nul
     startDate: start.toISOString(),
     endDate: end.toISOString(),
     bannerImage,
+    images,
     edition: readString(raw.edition),
     tags,
     eventType,
     categories: mergedCategories,
     averageRating,
     totalReviews,
-    venue: readVenue(raw.venue),
+    venue: readVenue(raw.venue) ?? readVenue(raw),
     isVirtual: raw.isVirtual === true,
   }
 }

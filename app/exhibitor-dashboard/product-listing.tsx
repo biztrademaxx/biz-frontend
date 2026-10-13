@@ -1,8 +1,10 @@
 "use client"
 
+import { AppImage } from "@/components/app-image"
 import type React from "react"
 import { useState, useEffect } from "react"
 import { apiFetch } from "@/lib/api"
+import { uploadFileViaProxy } from "@/components/organizer-create-event/upload-backend"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -13,6 +15,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Skeleton } from "@/components/ui/skeleton"
 import { useToast } from "@/hooks/use-toast"
 import { Package, Plus, Upload, FileText, Edit, Trash2, ExternalLink, Youtube } from "lucide-react"
+import { cn } from "@/lib/utils"
+import { exGlassCard, exBtnPrimary, exPageTitle } from "./dashboard-theme"
 
 interface ProductListingProps {
   exhibitorId: string
@@ -235,7 +239,8 @@ export default function ProductListing({ exhibitorId }: ProductListingProps) {
       setError(null)
 
       const data = await apiFetch<{ products?: Product[] }>(
-        `/api/exhibitors/${exhibitorId}/products`
+        `/api/exhibitors/${exhibitorId}/products`,
+        { auth: true }
       )
       setProducts(data?.products ?? [])
     } catch (err) {
@@ -253,25 +258,10 @@ export default function ProductListing({ exhibitorId }: ProductListingProps) {
 
   const uploadFiles = async (files: File[], type: "image" | "pdf") => {
     const uploadedUrls: string[] = []
-
     for (const file of files) {
-      const formData = new FormData()
-      formData.append("file", file)
-      formData.append("type", type)
-
-      const response = await fetch("/api/exhibitorBrochure", {
-        method: "POST",
-        body: formData,
-      })
-
-      if (!response.ok) {
-        throw new Error(`Failed to upload ${file.name}`)
-      }
-
-      const data = await response.json()
-      uploadedUrls.push(data.url)
+      const url = await uploadFileViaProxy(file, type === "image" ? "image" : "brochure")
+      uploadedUrls.push(url)
     }
-
     return uploadedUrls
   }
 
@@ -286,6 +276,7 @@ export default function ProductListing({ exhibitorId }: ProductListingProps) {
         `/api/exhibitors/${exhibitorId}/products`,
         {
           method: "POST",
+          auth: true,
           body: {
             name: formData.name,
             category: formData.category,
@@ -330,6 +321,7 @@ export default function ProductListing({ exhibitorId }: ProductListingProps) {
         `/api/exhibitors/${exhibitorId}/products/${editingProduct.id}`,
         {
           method: "PUT",
+          auth: true,
           body: {
             name: formData.name,
             category: formData.category,
@@ -368,6 +360,7 @@ export default function ProductListing({ exhibitorId }: ProductListingProps) {
     try {
       await apiFetch(`/api/exhibitors/${exhibitorId}/products/${productId}`, {
         method: "DELETE",
+        auth: true,
       })
       setProducts((prev) => prev.filter((p) => p.id !== productId))
 
@@ -399,7 +392,7 @@ export default function ProductListing({ exhibitorId }: ProductListingProps) {
 
       const data = await apiFetch<{ product: Product }>(
         `/api/exhibitors/${exhibitorId}/products/${productId}`,
-        { method: "PUT", body: { images: updatedImages } }
+        { method: "PUT", auth: true, body: { images: updatedImages } }
       )
 
       await fetch("/api/upload/cloudinary", {
@@ -427,14 +420,16 @@ export default function ProductListing({ exhibitorId }: ProductListingProps) {
   }
 
   const ProductCard = ({ product }: { product: Product }) => (
-    <Card>
+    <Card className={exGlassCard}>
       <CardContent className="p-6">
         <div className="flex items-start gap-4">
           <div className="relative">
-            <img
-              src={product.images[0] || "/city/c4.jpg"}
+            <AppImage
+              src={product.images[0]}
               alt={product.name}
-              className="w-24 h-24 object-cover rounded-lg"
+              width={96}
+              height={96}
+              className="h-24 w-24 rounded-lg object-cover"
             />
             {product.images.length > 1 && (
               <Badge variant="secondary" className="absolute bottom-1 right-1 text-xs">
@@ -549,24 +544,24 @@ export default function ProductListing({ exhibitorId }: ProductListingProps) {
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <p className="text-destructive mb-4">{error}</p>
-          <Button onClick={fetchProducts}>Try Again</Button>
+          <Button className={exBtnPrimary} onClick={fetchProducts}>Try Again</Button>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Product Listing & Brochures</h1>
+    <div className="min-w-0 space-y-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <h1 className={exPageTitle}>Product Listing & Brochures</h1>
         <Dialog open={isAddProductOpen} onOpenChange={setIsAddProductOpen}>
           <DialogTrigger asChild>
-            <Button className="flex items-center gap-2">
+            <Button className={cn("flex w-full items-center justify-center gap-2 sm:w-auto", exBtnPrimary)}>
               <Plus className="w-4 h-4" />
               Add Product/Service
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="w-[calc(100vw-2rem)] max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Add New Product/Service</DialogTitle>
             </DialogHeader>
@@ -580,7 +575,7 @@ export default function ProductListing({ exhibitorId }: ProductListingProps) {
       </div>
 
       <Dialog open={isEditProductOpen} onOpenChange={setIsEditProductOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[calc(100vw-2rem)] max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Product/Service</DialogTitle>
           </DialogHeader>
@@ -598,9 +593,9 @@ export default function ProductListing({ exhibitorId }: ProductListingProps) {
       </Dialog>
 
       <Dialog open={isBrochureDialogOpen} onOpenChange={setIsBrochureDialogOpen}>
-        <DialogContent className="max-w-5xl max-h-[90vh] p-0">
-          <DialogHeader className="p-6 pb-0">
-            <DialogTitle className="flex items-center justify-between">
+        <DialogContent className="w-[calc(100vw-2rem)] max-w-5xl max-h-[90vh] p-0 overflow-hidden">
+          <DialogHeader className="p-4 pb-0 sm:p-6">
+            <DialogTitle className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <span className="flex items-center gap-2">
                 <FileText className="w-5 h-5" />
                 Brochure Viewer
@@ -631,7 +626,7 @@ export default function ProductListing({ exhibitorId }: ProductListingProps) {
         {products.length > 0 ? (
           products.map((product) => <ProductCard key={product.id} product={product} />)
         ) : (
-          <Card>
+          <Card className={exGlassCard}>
             <CardContent className="p-12 text-center">
               <Package className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-muted-foreground mb-2">No products listed</h3>
@@ -641,7 +636,7 @@ export default function ProductListing({ exhibitorId }: ProductListingProps) {
         )}
       </div>
 
-      <Card>
+      <Card className={exGlassCard}>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Package className="w-5 h-5" />
@@ -649,13 +644,13 @@ export default function ProductListing({ exhibitorId }: ProductListingProps) {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:gap-6">
             <div className="text-center">
-              <div className="text-3xl font-bold text-blue-600">{products.length}</div>
+              <div className="text-3xl font-bold text-[#004A96]">{products.length}</div>
               <div className="text-muted-foreground">Total Products</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold text-purple-600">
+              <div className="text-3xl font-bold text-[#004A96]">
                 {products.reduce((sum, p) => sum + (p.images?.length || 0), 0)}
               </div>
               <div className="text-muted-foreground">Total Images</div>

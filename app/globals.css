@@ -40,45 +40,395 @@
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.145 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.145 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.985 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.396 0.141 25.723);
-  --destructive-foreground: oklch(0.637 0.237 25.331);
-  --border: oklch(0.269 0 0);
-  --input: oklch(0.269 0 0);
-  --ring: oklch(0.439 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(0.269 0 0);
-  --sidebar-ring: oklch(0.439 0 0);
+  /* Base */
+  --background: oklch(0.16 0.09 270);
+  --foreground: oklch(0.97 0.01 260);
+
+  /* Cards / surfaces */
+  --card: oklch(0.21 0.08 268);
+  --card-foreground: oklch(0.97 0.01 260);
+
+  --popover: oklch(0.22 0.08 268);
+  --popover-foreground: oklch(0.97 0.01 260);
+
+  /* Brand primary */
+  --primary: oklch(0.68 0.18 265);
+  --primary-foreground: oklch(0.14 0.03 260);
+
+  /* Secondary */
+  --secondary: oklch(0.26 0.06 268);
+  --secondary-foreground: oklch(0.96 0.01 260);
+
+  /* Muted */
+  --muted: oklch(0.25 0.05 268);
+  --muted-foreground: oklch(0.72 0.03 260);
+
+  /* Accent */
+  --accent: oklch(0.3 0.07 268);
+  --accent-foreground: oklch(0.97 0.01 260);
+
+  /* Danger */
+  --destructive: oklch(0.58 0.22 25);
+  --destructive-foreground: oklch(0.98 0.01 25);
+
+  /* Borders / inputs */
+  --border: oklch(0.33 0.05 268);
+  --input: oklch(0.3 0.05 268);
+  --ring: oklch(0.58 0.16 265);
+
+  /* Charts */
+  --chart-1: oklch(0.7 0.18 260);
+  --chart-2: oklch(0.72 0.16 190);
+  --chart-3: oklch(0.78 0.17 85);
+  --chart-4: oklch(0.68 0.22 310);
+  --chart-5: oklch(0.65 0.24 20);
+
+  /* Sidebar */
+  --sidebar: oklch(0.18 0.085 270);
+  --sidebar-foreground: oklch(0.97 0.01 260);
+
+  --sidebar-primary: oklch(0.65 0.2 265);
+  --sidebar-primary-foreground: oklch(0.99 0.005 260);
+
+  --sidebar-accent: oklch(0.27 0.06 268);
+  --sidebar-accent-foreground: oklch(0.97 0.01 260);
+
+  --sidebar-border: oklch(0.32 0.05 268);
+  --sidebar-ring: oklch(0.58 0.16 265);
+}
+
+/* Admin dashboard dark palette (reference: midnight + navy cards + cyan accent) */
+.dark .admin-dashboard-root {
+  --background: #010639;
+  --foreground: #eef2ff;
+  --card: #18193d;
+  --card-foreground: #f0f4ff;
+  --popover: #18193d;
+  --popover-foreground: #f0f4ff;
+  --primary: #17f0f6;
+  --primary-foreground: #010639;
+  --secondary: #122d4d;
+  --secondary-foreground: #e8ecff;
+  --muted: #122d4d;
+  --muted-foreground: #8b9cb8;
+  --accent: #1a2f52;
+  --accent-foreground: #17f0f6;
+  --destructive: oklch(0.58 0.22 25);
+  --destructive-foreground: oklch(0.98 0.01 25);
+  --border: #2a3a5c;
+  --input: #122d4d;
+  --ring: #17f0f6;
+  --chart-1: #17f0f6;
+  --chart-2: #8b5cf6;
+  --chart-3: #f472b6;
+  --chart-4: #38bdf8;
+  --chart-5: #fbbf24;
+  --sidebar: #122d4d;
+  --sidebar-foreground: #f0f4ff;
+  --sidebar-primary: #17f0f6;
+  --sidebar-primary-foreground: #010639;
+  --sidebar-accent: #1a2f52;
+  --sidebar-accent-foreground: #17f0f6;
+  --sidebar-border: #2a3a5c;
+  --sidebar-ring: #17f0f6;
+}
+
+.dark .admin-dashboard-root .admin-panel-card {
+  border-color: var(--border);
+  background-color: var(--card);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
+  --tw-ring-color: rgb(255 255 255 / 0.04);
+}
+
+.dark .admin-dashboard-root .admin-stat-card {
+  border-color: var(--border);
+  background-color: var(--card);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.32);
+}
+
+/*
+ * Hardcoded light utilities appear across most admin tabs (text-gray-*, bg-white, etc.).
+ * Remap them under the admin root so dark mode applies without editing every page.
+ * Status colors (green/yellow/red/purple/blue badges) are intentionally left alone.
+ */
+.dark .admin-dashboard-root {
+  color: var(--foreground);
+}
+
+.dark .admin-dashboard-root .bg-white,
+.dark .admin-dashboard-root .bg-\[\#f8fafc\],
+.dark .admin-dashboard-root .bg-\[\#F5F4F0\],
+.dark .admin-dashboard-root .bg-\[\#f5f4f0\],
+.dark .admin-dashboard-root .bg-gray-50,
+.dark .admin-dashboard-root .bg-slate-50 {
+  background-color: var(--card);
+}
+
+/* Page chrome uses bg-[#f8fafc] / cream — keep it as the canvas, not card */
+.dark .admin-dashboard-root main.bg-\[\#f8fafc\],
+.dark .admin-dashboard-root .bg-\[\#f8fafc\].dark\:bg-background,
+.dark .admin-dashboard-root .min-h-screen.bg-\[\#F5F4F0\],
+.dark .admin-dashboard-root .min-h-screen.bg-\[\#f5f4f0\] {
+  background-color: var(--background);
+}
+
+.dark .admin-dashboard-root .bg-gray-100,
+.dark .admin-dashboard-root .bg-slate-100 {
+  background-color: var(--muted);
+}
+
+/* Primary / active tab pills that use near-black in light mode */
+.dark .admin-dashboard-root .bg-gray-900,
+.dark .admin-dashboard-root .bg-gray-800 {
+  background-color: #17f0f6;
+  color: #010639;
+}
+.dark .admin-dashboard-root .hover\:bg-gray-800:hover,
+.dark .admin-dashboard-root .hover\:bg-gray-900:hover {
+  background-color: color-mix(in oklab, #17f0f6 88%, black);
+  color: #010639;
+}
+.dark .admin-dashboard-root .border-gray-900 {
+  border-color: #17f0f6;
+}
+.dark .admin-dashboard-root .data-\[state\=active\]\:bg-gray-900[data-state="active"] {
+  background-color: #17f0f6;
+  color: #010639;
+}
+
+.dark .admin-dashboard-root .hover\:bg-gray-50:hover,
+.dark .admin-dashboard-root .hover\:bg-gray-50\/60:hover,
+.dark .admin-dashboard-root .hover\:bg-gray-100:hover,
+.dark .admin-dashboard-root .hover\:bg-slate-50:hover,
+.dark .admin-dashboard-root .hover\:bg-slate-100:hover,
+.dark .admin-dashboard-root .hover\:bg-blue-50:hover,
+.dark .admin-dashboard-root .hover\:bg-red-50:hover {
+  background-color: var(--accent);
+}
+
+.dark .admin-dashboard-root .text-gray-900,
+.dark .admin-dashboard-root .text-slate-900,
+.dark .admin-dashboard-root .text-gray-800,
+.dark .admin-dashboard-root .text-slate-800 {
+  color: var(--foreground);
+}
+
+.dark .admin-dashboard-root .text-gray-700,
+.dark .admin-dashboard-root .text-slate-700,
+.dark .admin-dashboard-root .text-gray-600,
+.dark .admin-dashboard-root .text-slate-600 {
+  color: color-mix(in oklab, var(--foreground) 78%, transparent);
+}
+
+.dark .admin-dashboard-root .text-gray-500,
+.dark .admin-dashboard-root .text-slate-500,
+.dark .admin-dashboard-root .text-gray-400,
+.dark .admin-dashboard-root .text-slate-400 {
+  color: var(--muted-foreground);
+}
+
+.dark .admin-dashboard-root .border-gray-100,
+.dark .admin-dashboard-root .border-gray-200,
+.dark .admin-dashboard-root .border-slate-100,
+.dark .admin-dashboard-root .border-slate-200,
+.dark .admin-dashboard-root .border-blue-100 {
+  border-color: var(--border);
+}
+
+.dark .admin-dashboard-root .divide-gray-100 > :not([hidden]) ~ :not([hidden]),
+.dark .admin-dashboard-root .divide-gray-200 > :not([hidden]) ~ :not([hidden]),
+.dark .admin-dashboard-root .divide-slate-100 > :not([hidden]) ~ :not([hidden]),
+.dark .admin-dashboard-root .divide-slate-200 > :not([hidden]) ~ :not([hidden]) {
+  border-color: var(--border);
+}
+
+.dark .admin-dashboard-root .ring-blue-100,
+.dark .admin-dashboard-root .ring-gray-100,
+.dark .admin-dashboard-root .ring-slate-100 {
+  --tw-ring-color: color-mix(in oklab, var(--ring) 25%, transparent);
+}
+
+.dark .admin-dashboard-root .from-gray-50,
+.dark .admin-dashboard-root .from-slate-50,
+.dark .admin-dashboard-root .from-blue-50,
+.dark .admin-dashboard-root .from-green-50,
+.dark .admin-dashboard-root .from-yellow-50,
+.dark .admin-dashboard-root .from-purple-50,
+.dark .admin-dashboard-root .from-pink-50,
+.dark .admin-dashboard-root .from-slate-100 {
+  --tw-gradient-from: var(--muted);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+
+.dark .admin-dashboard-root .to-gray-100,
+.dark .admin-dashboard-root .to-gray-50,
+.dark .admin-dashboard-root .to-slate-50,
+.dark .admin-dashboard-root .to-sky-50,
+.dark .admin-dashboard-root .to-blue-100,
+.dark .admin-dashboard-root .to-green-100,
+.dark .admin-dashboard-root .to-yellow-100,
+.dark .admin-dashboard-root .to-purple-100,
+.dark .admin-dashboard-root .to-pink-50,
+.dark .admin-dashboard-root .to-pink-100,
+.dark .admin-dashboard-root .to-slate-200 {
+  --tw-gradient-to: var(--card);
+}
+
+.dark .admin-dashboard-root .text-blue-900,
+.dark .admin-dashboard-root .text-green-900,
+.dark .admin-dashboard-root .text-yellow-900,
+.dark .admin-dashboard-root .text-purple-700,
+.dark .admin-dashboard-root .text-purple-500,
+.dark .admin-dashboard-root .text-blue-700,
+.dark .admin-dashboard-root .text-red-700,
+.dark .admin-dashboard-root .text-amber-950,
+.dark .admin-dashboard-root .text-emerald-950 {
+  color: var(--foreground);
+}
+
+.dark .admin-dashboard-root .bg-purple-50,
+.dark .admin-dashboard-root .bg-pink-50,
+.dark .admin-dashboard-root .bg-green-50,
+.dark .admin-dashboard-root .bg-yellow-50,
+.dark .admin-dashboard-root .bg-amber-50\/90,
+.dark .admin-dashboard-root .bg-emerald-50\/90,
+.dark .admin-dashboard-root .bg-blue-50\/80 {
+  background-color: color-mix(in oklab, var(--primary) 10%, transparent);
+}
+
+.dark .admin-dashboard-root .border-purple-200,
+.dark .admin-dashboard-root .border-green-200,
+.dark .admin-dashboard-root .border-yellow-200,
+.dark .admin-dashboard-root .border-amber-100,
+.dark .admin-dashboard-root .border-amber-200\/80,
+.dark .admin-dashboard-root .border-emerald-100,
+.dark .admin-dashboard-root .border-emerald-200\/80,
+.dark .admin-dashboard-root .border-slate-200\/90,
+.dark .admin-dashboard-root .border-red-200 {
+  border-color: var(--border);
+}
+
+.dark .admin-dashboard-root .shadow-sm {
+  --tw-shadow-color: rgb(0 0 0 / 0.35);
+}
+
+/* Keep status / semantic badge colors readable on dark surfaces */
+.dark .admin-dashboard-root .bg-green-100 {
+  background-color: color-mix(in oklab, #22c55e 18%, transparent);
+}
+.dark .admin-dashboard-root .text-green-800,
+.dark .admin-dashboard-root .text-green-600 {
+  color: #86efac;
+}
+.dark .admin-dashboard-root .border-green-200 {
+  border-color: color-mix(in oklab, #22c55e 35%, transparent);
+}
+
+.dark .admin-dashboard-root .bg-yellow-100 {
+  background-color: color-mix(in oklab, #eab308 18%, transparent);
+}
+.dark .admin-dashboard-root .text-yellow-800,
+.dark .admin-dashboard-root .text-yellow-600 {
+  color: #fde047;
+}
+.dark .admin-dashboard-root .border-yellow-200 {
+  border-color: color-mix(in oklab, #eab308 35%, transparent);
+}
+
+.dark .admin-dashboard-root .bg-red-100 {
+  background-color: color-mix(in oklab, #ef4444 18%, transparent);
+}
+.dark .admin-dashboard-root .text-red-800,
+.dark .admin-dashboard-root .text-red-600 {
+  color: #fca5a5;
+}
+.dark .admin-dashboard-root .border-red-200 {
+  border-color: color-mix(in oklab, #ef4444 35%, transparent);
+}
+
+.dark .admin-dashboard-root .bg-purple-100 {
+  background-color: color-mix(in oklab, #a855f7 18%, transparent);
+}
+.dark .admin-dashboard-root .text-purple-800,
+.dark .admin-dashboard-root .text-purple-600,
+.dark .admin-dashboard-root .text-purple-900 {
+  color: #d8b4fe;
+}
+.dark .admin-dashboard-root .border-purple-200 {
+  border-color: color-mix(in oklab, #a855f7 35%, transparent);
+}
+
+.dark .admin-dashboard-root .bg-blue-50,
+.dark .admin-dashboard-root .bg-blue-100 {
+  background-color: color-mix(in oklab, #17f0f6 12%, transparent);
+}
+.dark .admin-dashboard-root .text-blue-600,
+.dark .admin-dashboard-root .text-blue-800 {
+  color: #17f0f6;
+}
+.dark .admin-dashboard-root .border-blue-200 {
+  border-color: color-mix(in oklab, #17f0f6 30%, transparent);
+}
+
+.dark .admin-dashboard-root .bg-orange-100 {
+  background-color: color-mix(in oklab, #f97316 18%, transparent);
+}
+.dark .admin-dashboard-root .text-orange-600,
+.dark .admin-dashboard-root .text-orange-800 {
+  color: #fdba74;
+}
+
+.dark .admin-dashboard-root .bg-amber-100 {
+  background-color: color-mix(in oklab, #f59e0b 18%, transparent);
+}
+.dark .admin-dashboard-root .text-amber-600,
+.dark .admin-dashboard-root .text-amber-800 {
+  color: #fcd34d;
+}
+
+.dark .admin-dashboard-root .bg-indigo-100 {
+  background-color: color-mix(in oklab, #6366f1 18%, transparent);
+}
+.dark .admin-dashboard-root .text-indigo-600,
+.dark .admin-dashboard-root .text-indigo-800 {
+  color: #a5b4fc;
+}
+
+.dark .admin-dashboard-root .bg-violet-100 {
+  background-color: color-mix(in oklab, #8b5cf6 18%, transparent);
+}
+.dark .admin-dashboard-root .text-violet-600,
+.dark .admin-dashboard-root .text-violet-800 {
+  color: #c4b5fd;
+}
+
+.dark .admin-dashboard-root .bg-emerald-100 {
+  background-color: color-mix(in oklab, #10b981 18%, transparent);
+}
+.dark .admin-dashboard-root .text-emerald-600,
+.dark .admin-dashboard-root .text-emerald-800 {
+  color: #6ee7b7;
+}
+
+/* Brand accent used across forms / links */
+.dark .admin-dashboard-root .text-\[\#004A96\] {
+  color: #17f0f6;
+}
+.dark .admin-dashboard-root .hover\:text-\[\#004A96\]:hover {
+  color: #17f0f6;
+}
+.dark .admin-dashboard-root .bg-\[\#004A96\] {
+  background-color: #17f0f6;
+  color: #010639;
+}
+.dark .admin-dashboard-root .hover\:bg-\[\#003d7a\]:hover {
+  background-color: color-mix(in oklab, #17f0f6 90%, black);
 }
 
 @theme inline {
-  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
-    Arial, "Noto Sans", "Liberation Sans", sans-serif,
-    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-inter), ui-sans-serif, sans-serif;
+  --font-display: var(--font-montserrat), var(--font-inter), ui-sans-serif, sans-serif;
+  --font-mono: var(--font-inter), ui-monospace, monospace;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -121,9 +471,70 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans font-normal antialiased;
   }
+
+  h1 {
+    @apply font-display font-extrabold tracking-tight;
+  }
+
+  h2 {
+    @apply font-display font-bold tracking-tight;
+  }
+
+  nav,
+  nav a,
+  nav button {
+    @apply font-sans font-medium;
+  }
+
+  label,
+  small,
+  figcaption {
+    @apply font-sans font-normal;
+  }
+}
+
+/* Semantic typography utilities (Montserrat + Inter only) */
+@utility font-display {
+  font-family: var(--font-display);
+}
+
+.type-hero-heading {
+  font-family: var(--font-display);
+  font-weight: 800;
+}
+
+.type-section-heading {
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+
+.type-event-card-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+}
+
+.type-nav {
+  font-family: var(--font-sans);
+  font-weight: 500;
+}
+
+.type-body {
+  font-family: var(--font-sans);
+  font-weight: 400;
+}
+
+.type-label {
+  font-family: var(--font-sans);
+  font-weight: 400;
+}
+
+.type-button {
+  font-family: var(--font-display);
+  font-weight: 600;
 }
 
 @keyframes scratch {
@@ -131,6 +542,7 @@
     transform: translateX(0%);
     opacity: 1;
   }
+
   100% {
     transform: translateX(100%);
     opacity: 0;
@@ -145,9 +557,6 @@
  * 10times.com–style home blocks: Bootstrap 5 sans stack, heading scale, muted subcopy.
  */
 .home-tt-section {
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial,
-    "Noto Sans", "Liberation Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
-    "Segoe UI Symbol", "Noto Color Emoji";
   font-size: 1rem;
   font-weight: 400;
   line-height: 1.5;
@@ -169,6 +578,7 @@
   from {
     transform: translateX(0);
   }
+
   to {
     transform: translateX(-50%);
   }
@@ -197,6 +607,7 @@
 .home-tt-section .home-tt-sub {
   display: block;
   margin-top: 0.15rem;
+  font-family: var(--font-sans);
   font-size: 0.8125rem;
   font-weight: 400;
   line-height: 1.45;
@@ -211,6 +622,7 @@
   background-size: 4px 4px;
   background-position: 0 0, 0 2px, 2px -2px, -2px 0px;
 }
+
 .input-box {
   @apply w-full border rounded-lg px-3 py-2 bg-white text-sm focus:outline-none focus:ring-1 focus:ring-black;
 }
@@ -220,6 +632,7 @@
     opacity: 0.8;
     transform: translateY(10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -234,6 +647,7 @@
   0% {
     transform: translateX(0);
   }
+
   100% {
     transform: translateX(-50%);
   }
@@ -247,6 +661,7 @@
   0% {
     transform: translateX(-100%);
   }
+
   100% {
     transform: translateX(100%);
   }
@@ -265,13 +680,47 @@
   position: absolute;
   inset: 0;
   transform: translateX(-100%);
-  background: linear-gradient(
-    90deg,
-    transparent,
-    oklch(98.5% 0.002 247.839 / 0.9),
-    transparent
-  );
+  background: linear-gradient(90deg,
+      transparent,
+      oklch(98.5% 0.002 247.839 / 0.9),
+      transparent);
   animation: skeleton-shimmer 1.35s ease-in-out infinite;
+}
+
+/* Homepage VIP hero — softer, slower premium placeholder shimmer */
+.hero-premium-shimmer {
+  position: relative;
+  overflow: hidden;
+  border-radius: inherit;
+  background: linear-gradient(118deg, #faf7f2 0%, #f5f0ea 42%, #eef4f8 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+
+.hero-premium-shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(105deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.35) 35%,
+      rgba(255, 255, 255, 0.75) 50%,
+      rgba(255, 255, 255, 0.35) 65%,
+      transparent 100%);
+  animation: skeleton-shimmer 2.1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-premium-shimmer::after {
+    animation: none;
+    opacity: 0.4;
+  }
+}
+
+/* Home hero wipe fallback — slide 1 cream base */
+.hero-travel-surface {
+  background-color: #edece5;
+  background-image: linear-gradient(180deg, #edece5 0%, #cdcfd3 100%);
 }
 
 /* Hide scrollbar completely */
@@ -280,6 +729,173 @@
 }
 
 .no-scrollbar {
-  -ms-overflow-style: none;  /* IE & Edge */
-  scrollbar-width: none;     /* Firefox */
+  -ms-overflow-style: none;
+  /* IE & Edge */
+  scrollbar-width: none;
+  /* Firefox */
+}
+
+/* Visitor dashboard — collapsed sidebar (no horizontal scroll on nav-scroll) */
+.visitor-sidebar-shell--collapsed {
+  overflow-x: hidden !important;
+  overflow-y: auto;
+  min-width: 0;
+}
+
+.visitor-sidebar-shell--collapsed .visitor-sidebar-nav-scroll {
+  overflow: visible !important;
+  flex: none;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.visitor-sidebar-shell--collapsed .visitor-sidebar-nav-scroll nav {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.visitor-sidebar-shell--collapsed .visitor-sidebar-footer {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.visitor-sidebar-shell--collapsed .visitor-sidebar-nav-item {
+  position: relative;
+  z-index: 1;
+  min-height: 3rem;
+}
+
+.visitor-sidebar-shell--collapsed .visitor-sidebar-nav-item--active {
+  z-index: 2;
+}
+
+.visitor-sidebar-shell--collapsed .visitor-sidebar-nav-item button {
+  position: relative;
+  display: flex;
+  min-height: 3rem;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: transparent;
+}
+
+/* Seamless curved tab — stays inside sidebar width (no layout overflow) */
+.visitor-sidebar-shell--collapsed .visitor-sidebar-icon-slot--active {
+  --visitor-tab-curve: 14px;
+  display: flex;
+  height: 3rem;
+  width: 100%;
+  max-width: 100%;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(circle at 0 0,
+      transparent var(--visitor-tab-curve),
+      #ffffff var(--visitor-tab-curve)) 0 0 / var(--visitor-tab-curve) var(--visitor-tab-curve) no-repeat,
+    radial-gradient(circle at 0 100%,
+      transparent var(--visitor-tab-curve),
+      #ffffff var(--visitor-tab-curve)) 0 100% / var(--visitor-tab-curve) var(--visitor-tab-curve) no-repeat,
+    #ffffff;
+  border-radius: 0 var(--visitor-tab-curve) var(--visitor-tab-curve) 0;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.hide-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Scrollbar hidden until the scrollable area is hovered */
+.scrollbar-hover {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scrollbar-hover::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+.scrollbar-hover:hover {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(203 213 225) transparent;
+}
+
+.scrollbar-hover:hover::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollbar-hover:hover::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-hover:hover::-webkit-scrollbar-thumb {
+  border-radius: 9999px;
+  background: rgb(203 213 225 / 0.75);
+}
+
+.scrollbar-hover:hover::-webkit-scrollbar-thumb:hover {
+  background: rgb(148 163 184 / 0.85);
+}
+
+/* Add to your globals.css */
+.organizers-marquee-track {
+  animation: marquee-scroll var(--organizers-marquee-duration, 30s) linear infinite;
+}
+
+.organizers-marquee-track:hover {
+  animation-play-state: paused;
+}
+
+@keyframes marquee-scroll {
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+/* Responsive gaps */
+@media (max-width: 640px) {
+  .flex.w-max.shrink-0.flex-row {
+    gap: 1rem;
+  }
+}
+
+/* Ensure cards don't wrap text badly */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* In your global CSS file */
+.event-table-row:hover .row-actions { 
+  opacity: 1 !important; 
+  pointer-events: auto !important; 
+}
+
+/* Always show actions on touch devices */
+@media (hover: none) {
+  .row-actions { 
+    opacity: 1 !important; 
+    pointer-events: auto !important; 
+  }
 }

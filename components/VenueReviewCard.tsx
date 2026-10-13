@@ -1,5 +1,6 @@
 "use client"
 
+import { AppImage } from "@/components/app-image"
 import { Card, CardContent } from "@/components/ui/card"
 import { Star } from "lucide-react"
 import { format } from "date-fns"
@@ -29,10 +30,12 @@ export function VenueReviewCard({ review }: VenueReviewCardProps) {
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-center gap-3">
             {review.user?.avatar ? (
-              <img
+              <AppImage
                 src={review.user.avatar}
                 alt={`${review.user.firstName} ${review.user.lastName}`}
-                className="w-10 h-10 rounded-full"
+                width={40}
+                height={40}
+                className="h-10 w-10 rounded-full object-cover"
               />
             ) : (
               <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">

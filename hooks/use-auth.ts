@@ -9,6 +9,7 @@ import {
   getCurrentUserPermissions,
   isAuthenticated,
   clearTokens,
+  markLogoutSuccessBanner,
 } from "@/lib/api"
 
 export type UseAuthOptions = {
@@ -53,6 +54,7 @@ export function useAuth(options: UseAuthOptions = {}) {
   }, [requireAuth, token, role, allowedRolesKey, router])
 
   const logout = () => {
+    markLogoutSuccessBanner()
     clearTokens()
     router.replace("/login")
   }

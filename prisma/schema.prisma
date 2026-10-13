@@ -171,6 +171,9 @@ model User {
   companyIndustry String?
   jobTitle        String?
   location        String?
+  profileCity     String?
+  profileState    String?
+  profileCountry  String?
   timezone        String?
   language        String   @default("en")
   interests       String[] @default([])

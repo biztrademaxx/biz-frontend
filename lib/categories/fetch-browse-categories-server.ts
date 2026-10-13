@@ -3,6 +3,8 @@ import { normalizeBrowseCategory } from "./normalize-browse-category"
 
 const PATH = "/api/events/categories/browse"
 
+const BROWSE_CATEGORIES_REVALIDATE_SEC = 120
+
 function getApiBaseUrl(): string {
   return process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"
 }
@@ -26,7 +28,9 @@ function fallbackTiles(): BrowseCategoryTile[] {
 /** Minimal rows for /event listing banner (name → icon URL). Empty on failure — no fake fallback names. */
 export async function fetchBrowseCategoryMetaServer(): Promise<Array<{ name: string; icon: string | null }>> {
   try {
-    const res = await fetch(`${getApiBaseUrl()}${PATH}`, { cache: "no-store" })
+    const res = await fetch(`${getApiBaseUrl()}${PATH}`, {
+      next: { revalidate: BROWSE_CATEGORIES_REVALIDATE_SEC },
+    })
     if (!res.ok) return []
     const data: unknown = await res.json()
     if (!data || typeof data !== "object") return []
@@ -48,7 +52,9 @@ export async function fetchBrowseCategoryMetaServer(): Promise<Array<{ name: str
 
 export async function fetchBrowseCategoriesForHomeServer(): Promise<BrowseCategoryTile[]> {
   try {
-    const res = await fetch(`${getApiBaseUrl()}${PATH}`, { cache: "no-store" })
+    const res = await fetch(`${getApiBaseUrl()}${PATH}`, {
+      next: { revalidate: BROWSE_CATEGORIES_REVALIDATE_SEC },
+    })
     if (!res.ok) return fallbackTiles()
     const data: unknown = await res.json()
     if (!data || typeof data !== "object") return fallbackTiles()

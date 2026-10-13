@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react"
 import { adminApi } from "@/lib/admin-api"
-import { Search, Users, UserPlus, UserCheck, UserX, Eye, Calendar, Mail, Phone, Building2 } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -61,6 +60,7 @@ export default function VisitorConnectionsPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [selectedVisitor, setSelectedVisitor] = useState<Visitor | null>(null)
+  const [selectedVisitorIndex, setSelectedVisitorIndex] = useState<number>(0)
   const [detailsOpen, setDetailsOpen] = useState(false)
 
   useEffect(() => {
@@ -75,7 +75,15 @@ export default function VisitorConnectionsPage() {
       if (statusFilter !== "all") params.append("status", statusFilter)
 
       const data = await adminApi<{ visitors?: Visitor[] }>(`/visitors/visitor-connections?${params}`)
-      setVisitors((data as any)?.visitors ?? [])
+      const list = (data as any)?.visitors ?? []
+
+      // Sort by name alphabetically
+      const sortedList = [...list].sort((a, b) => {
+        if (a.name && b.name) return a.name.localeCompare(b.name)
+        return 0
+      })
+
+      setVisitors(sortedList)
     } catch (error) {
       console.error("Error fetching visitors:", error)
     } finally {
@@ -83,8 +91,19 @@ export default function VisitorConnectionsPage() {
     }
   }
 
-  const handleViewDetails = (visitor: Visitor) => {
+  // Generate sequential visitor ID (e.g., VIS0001, VIS0002, etc.)
+  const getSequentialVisitorId = (index: number): string => {
+    return `VIS${String(index + 1).padStart(4, '0')}`
+  }
+
+  // Generate sequential connection ID (e.g., CON0001, CON0002, etc.)
+  const getSequentialConnectionId = (index: number): string => {
+    return `CON${String(index + 1).padStart(4, '0')}`
+  }
+
+  const handleViewDetails = (visitor: Visitor, index: number) => {
     setSelectedVisitor(visitor)
+    setSelectedVisitorIndex(index)
     setDetailsOpen(true)
   }
 
@@ -110,7 +129,6 @@ export default function VisitorConnectionsPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Visitors</CardTitle>
-            <Users className="h-4 w-4 text-gray-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalVisitors}</div>
@@ -121,7 +139,6 @@ export default function VisitorConnectionsPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Connections</CardTitle>
-            <UserCheck className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalConnections}</div>
@@ -132,7 +149,6 @@ export default function VisitorConnectionsPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Pending Requests</CardTitle>
-            <UserPlus className="h-4 w-4 text-orange-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{pendingRequests}</div>
@@ -143,7 +159,6 @@ export default function VisitorConnectionsPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Avg Connections</CardTitle>
-            <Users className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{avgConnectionsPerVisitor}</div>
@@ -155,12 +170,11 @@ export default function VisitorConnectionsPage() {
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
           <Input
             placeholder="Search by visitor name, email, or company..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
+            className="pl-3"
           />
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -194,9 +208,10 @@ export default function VisitorConnectionsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>#</TableHead>
+                  <TableHead>Visitor ID</TableHead>
                   <TableHead>Visitor</TableHead>
                   <TableHead>Company</TableHead>
-                  {/* <TableHead>Location</TableHead> */}
                   <TableHead className="text-center">Total Connections</TableHead>
                   <TableHead className="text-center">Accepted</TableHead>
                   <TableHead className="text-center">Pending</TableHead>
@@ -204,62 +219,56 @@ export default function VisitorConnectionsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredVisitors.map((visitor) => (
-                  <TableRow key={visitor.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-                          <Users className="h-5 w-5 text-blue-600" />
-                        </div>
+                {filteredVisitors.map((visitor, idx) => {
+                  const originalIndex = visitors.findIndex(v => v.id === visitor.id)
+                  const sequentialId = getSequentialVisitorId(originalIndex)
+
+                  return (
+                    <TableRow key={visitor.id}>
+                      <TableCell className="font-medium text-gray-500">
+                        {originalIndex + 1}
+                      </TableCell>
+                      <TableCell>
+                        <code className="text-sm font-mono font-semibold text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                          {sequentialId}
+                        </code>
+                      </TableCell>
+                      <TableCell>
                         <div>
                           <div className="font-medium">{visitor.name}</div>
                           <div className="text-sm text-gray-500">{visitor.email}</div>
                         </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        {visitor.company && (
-                          <>
-                            <Building2 className="h-4 w-4 text-gray-400" />
-                            <span className="text-sm">{visitor.company}</span>
-                          </>
-                        )}
-                        {!visitor.company && (
-                          <span className="text-sm text-gray-400">N/A</span>
-                        )}
-                      </div>
-                    </TableCell>
-                    {/* <TableCell>
-                      <span className="text-sm">{visitor.location || "N/A"}</span>
-                    </TableCell> */}
-                    <TableCell className="text-center">
-                      <Badge variant="outline">{visitor.totalConnections}</Badge>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                        {visitor.acceptedConnections}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
-                        {visitor.pendingRequests}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex justify-center gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleViewDetails(visitor)}
-                        >
-                          <Eye className="h-4 w-4 mr-1" />
-                          View Details
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm">{visitor.company || "N/A"}</span>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Badge variant="outline">{visitor.totalConnections}</Badge>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                          {visitor.acceptedConnections}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
+                          {visitor.pendingRequests}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex justify-center gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleViewDetails(visitor, originalIndex)}
+                          >
+                            View Details
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )
+                })}
               </TableBody>
             </Table>
           )}
@@ -284,6 +293,12 @@ export default function VisitorConnectionsPage() {
                   <CardTitle className="text-lg">Visitor Information</CardTitle>
                 </CardHeader>
                 <CardContent className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-500">Visitor ID</p>
+                    <code className="text-base font-mono font-bold text-blue-600 bg-blue-50 px-3 py-1.5 rounded inline-block">
+                      {getSequentialVisitorId(selectedVisitorIndex)}
+                    </code>
+                  </div>
                   <div>
                     <p className="text-sm text-gray-500">Name</p>
                     <p className="font-medium">{selectedVisitor.name}</p>
@@ -316,7 +331,6 @@ export default function VisitorConnectionsPage() {
                 <Card>
                   <CardContent className="pt-6">
                     <div className="text-center">
-                      <UserCheck className="h-8 w-8 text-green-600 mx-auto mb-2" />
                       <div className="text-2xl font-bold">{selectedVisitor.acceptedConnections}</div>
                       <p className="text-sm text-gray-600">Accepted</p>
                     </div>
@@ -325,7 +339,6 @@ export default function VisitorConnectionsPage() {
                 <Card>
                   <CardContent className="pt-6">
                     <div className="text-center">
-                      <UserPlus className="h-8 w-8 text-orange-600 mx-auto mb-2" />
                       <div className="text-2xl font-bold">{selectedVisitor.pendingRequests}</div>
                       <p className="text-sm text-gray-600">Pending</p>
                     </div>
@@ -334,7 +347,6 @@ export default function VisitorConnectionsPage() {
                 <Card>
                   <CardContent className="pt-6">
                     <div className="text-center">
-                      <UserX className="h-8 w-8 text-red-600 mx-auto mb-2" />
                       <div className="text-2xl font-bold">{selectedVisitor.rejectedRequests}</div>
                       <p className="text-sm text-gray-600">Rejected</p>
                     </div>
@@ -352,24 +364,23 @@ export default function VisitorConnectionsPage() {
                     <p className="text-center text-gray-500 py-4">No connection requests sent</p>
                   ) : (
                     <div className="space-y-2">
-                      {selectedVisitor.connectionsSent.map((conn) => (
+                      {selectedVisitor.connectionsSent.map((conn, idx) => (
                         <div key={conn.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                          <div className="flex items-center gap-3">
-                            <Calendar className="h-4 w-4 text-gray-400" />
-                            <div>
-                              <p className="text-sm font-medium">Request ID: {conn.id.slice(0, 8)}</p>
-                              <p className="text-xs text-gray-500">
-                                Sent on {new Date(conn.createdAt).toLocaleDateString()}
-                              </p>
-                            </div>
+                          <div>
+                            <p className="text-sm font-medium">
+                              Request ID: {getSequentialConnectionId(idx)}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              Sent on {new Date(conn.createdAt).toLocaleDateString()}
+                            </p>
                           </div>
                           <Badge
                             variant={
                               conn.status === "ACCEPTED"
                                 ? "default"
                                 : conn.status === "PENDING"
-                                ? "secondary"
-                                : "destructive"
+                                  ? "secondary"
+                                  : "destructive"
                             }
                           >
                             {conn.status}
@@ -391,24 +402,23 @@ export default function VisitorConnectionsPage() {
                     <p className="text-center text-gray-500 py-4">No connection requests received</p>
                   ) : (
                     <div className="space-y-2">
-                      {selectedVisitor.connectionsReceived.map((conn) => (
+                      {selectedVisitor.connectionsReceived.map((conn, idx) => (
                         <div key={conn.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                          <div className="flex items-center gap-3">
-                            <Calendar className="h-4 w-4 text-gray-400" />
-                            <div>
-                              <p className="text-sm font-medium">Request ID: {conn.id.slice(0, 8)}</p>
-                              <p className="text-xs text-gray-500">
-                                Received on {new Date(conn.createdAt).toLocaleDateString()}
-                              </p>
-                            </div>
+                          <div>
+                            <p className="text-sm font-medium">
+                              Request ID: {getSequentialConnectionId(idx + selectedVisitor.connectionsSent.length)}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              Received on {new Date(conn.createdAt).toLocaleDateString()}
+                            </p>
                           </div>
                           <Badge
                             variant={
                               conn.status === "ACCEPTED"
                                 ? "default"
                                 : conn.status === "PENDING"
-                                ? "secondary"
-                                : "destructive"
+                                  ? "secondary"
+                                  : "destructive"
                             }
                           >
                             {conn.status}

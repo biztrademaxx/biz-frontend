@@ -1,4 +1,10 @@
-import { unstable_noStore as noStore } from "next/cache"
+import {
+  filterByHomeCountryPrioritizeCity,
+  getTrendingEventCityLabel,
+  getTrendingEventCountryLabel,
+} from "@/lib/home-location"
+import { hasDisplayableEventImage } from "@/lib/event-card-meta"
+import { resolveHomeLocation } from "@/lib/home-location-server"
 import { mergeGoingBundleFromJson } from "./followers-bundle"
 import { normalizeTrendingHomeEvent } from "./normalize-trending-event"
 import { pickTrendingHomeEvents } from "./pick-trending-events"
@@ -27,20 +33,38 @@ export interface TrendingHomePayload {
  * Per-event `/leads` / “going” data is **not** fetched here — `TrendingEventsGridClient` loads it
  * after hydration. Doing 4× many SSR fetches was blocking home for 10s+ when the API was slow.
  */
+function eventIdFromRaw(raw: unknown): string | null {
+  if (!raw || typeof raw !== "object" || !("id" in raw)) return null
+  const id = (raw as { id: unknown }).id
+  return id != null ? String(id) : null
+}
+
 export async function fetchTrendingHomePayloadServer(): Promise<TrendingHomePayload> {
-  noStore()
   const empty: TrendingHomePayload = { events: [], goingBundles: {} }
   try {
-    const res = await fetch(`${getApiBaseUrl()}/api/events`, { cache: "no-store" })
-    if (!res.ok) return empty
-    const data: unknown = await res.json()
-    const rawList = rawEventsFromPayload(data)
+    const loc = await resolveHomeLocation()
+    const base = getApiBaseUrl()
+    const [listRes, vipRes] = await Promise.all([
+      fetch(`${base}/api/events?limit=120`, { next: { revalidate: 60 } }),
+      fetch(`${base}/api/events/vip`, { next: { revalidate: 60 } }),
+    ])
+    const listJson = listRes.ok ? await listRes.json() : null
+    const vipJson = vipRes.ok ? await vipRes.json() : null
+
+    const seen = new Set<string>()
     const normalized: TrendingHomeEvent[] = []
-    for (const row of rawList) {
+    for (const row of [...rawEventsFromPayload(listJson), ...rawEventsFromPayload(vipJson)]) {
+      const id = eventIdFromRaw(row)
+      if (!id || seen.has(id)) continue
+      seen.add(id)
       const ev = normalizeTrendingHomeEvent(row)
       if (ev) normalized.push(ev)
     }
-    const picked = pickTrendingHomeEvents(normalized, TRENDING_HOME_MAX_EVENTS)
+    const locationFiltered = filterByHomeCountryPrioritizeCity(normalized, loc, {
+      getCity: getTrendingEventCityLabel,
+      getCountry: getTrendingEventCountryLabel,
+    }).filter((e) => hasDisplayableEventImage(e))
+    const picked = pickTrendingHomeEvents(locationFiltered, TRENDING_HOME_MAX_EVENTS)
     if (picked.length === 0) return empty
 
     const goingBundles: Record<string, GoingBundle> = {}

@@ -8,6 +8,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Search, Users, UserPlus, UserCheck, UserX, Send, Inbox } from "lucide-react"
 import { apiFetch, getCurrentUserId } from "@/lib/api"
+import { cn } from "@/lib/utils"
+import { formatCityCountryLine } from "@/lib/location-data"
+import { exGlassCard, exGlassInset, exBtnPrimary, exTabsScrollWrapper, exCardShell } from "@/app/exhibitor-dashboard/dashboard-theme"
 
 interface Connection {
   id: string
@@ -24,6 +27,8 @@ interface Connection {
 
 interface ConnectionsSectionProps {
   userId: string
+  /** Use glass panels and brand accents (exhibitor dashboard). */
+  surface?: "default" | "exhibitor"
 }
 
 function connectionName(c: Connection) {
@@ -39,7 +44,7 @@ function searchMatch(c: Connection, term: string) {
   return name.includes(q) || company.includes(q) || job.includes(q)
 }
 
-export function ConnectionsSection({ userId: _userId }: ConnectionsSectionProps) {
+export function ConnectionsSection({ userId: _userId, surface = "default" }: ConnectionsSectionProps) {
   const [connections, setConnections] = useState<Connection[]>([])
   const [connectionRequests, setConnectionRequests] = useState<Connection[]>([])
   const [searchTerm, setSearchTerm] = useState("")
@@ -189,6 +194,23 @@ export function ConnectionsSection({ userId: _userId }: ConnectionsSectionProps)
 
   const filteredList = getFilteredList()
 
+  const isExhibitorShell = surface === "exhibitor"
+  const findPeopleCard = isExhibitorShell ? exGlassCard : "border border-[#F5F4F0]"
+  const gridItemCard = isExhibitorShell ? cn(exGlassInset, "shadow-none") : "border border-gray-100"
+  const listPanelWrap = isExhibitorShell
+    ? cn(exCardShell, "p-1")
+    : "bg-[#F5F4F0] rounded-2xl"
+  const tabBase =
+    "shrink-0 whitespace-nowrap rounded-t-lg px-3 py-2.5 text-xs font-medium transition-colors sm:px-4 sm:text-sm"
+  const tabActive = cn(
+    tabBase,
+    "border border-b-0 -mb-px",
+    isExhibitorShell
+      ? "border-slate-200 bg-white text-[#004A96] shadow-sm"
+      : "border-gray-200 bg-white text-blue-600",
+  )
+  const tabInactive = cn(tabBase, "text-gray-600 hover:bg-white/60 hover:text-gray-900")
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -214,11 +236,11 @@ export function ConnectionsSection({ userId: _userId }: ConnectionsSectionProps)
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="min-w-0 space-y-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-xl font-semibold text-gray-900">Connections</h2>
-        <div className="flex items-center gap-2">
-          <div className="relative flex-1 sm:w-56">
+        <div className="flex min-w-0 items-center gap-2">
+          <div className="relative min-w-0 flex-1 sm:w-56">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
               placeholder="Search by name, company..."
@@ -240,7 +262,7 @@ export function ConnectionsSection({ userId: _userId }: ConnectionsSectionProps)
       </div>
 
       {showFindPeople ? (
-        <Card className="border border-[#F5F4F0]">
+        <Card className={findPeopleCard}>
           <CardContent className="p-6">
             <h3 className="font-medium text-gray-900 mb-4">Find people to connect with</h3>
             <div className="relative max-w-md mb-6">
@@ -260,26 +282,26 @@ export function ConnectionsSection({ userId: _userId }: ConnectionsSectionProps)
             ) : searchResults.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {searchResults.map((user) => (
-                  <Card key={user.id} className="border border-gray-100">
-                    <CardContent className="p-4 flex items-center gap-4">
-                      <Avatar className="h-12 w-12 shrink-0">
+                  <Card key={user.id} className={gridItemCard}>
+                    <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+                      <Avatar className="h-12 w-12 shrink-0 mx-auto sm:mx-0">
                         <AvatarImage src={user.avatar} />
                         <AvatarFallback>
                           {user.firstName?.[0] ?? ""}{user.lastName?.[0] ?? "?"}
                         </AvatarFallback>
                       </Avatar>
-                      <div className="min-w-0 flex-1">
-                        <p className="font-medium text-gray-900 truncate">
+                      <div className="min-w-0 flex-1 text-center sm:text-left">
+                        <p className="font-medium text-gray-900 break-words leading-snug sm:truncate">
                           {user.firstName ?? ""} {user.lastName ?? ""}
                         </p>
                         {user.company && (
-                          <p className="text-sm text-gray-500 truncate">{user.company}</p>
+                          <p className="text-sm text-gray-500 break-words leading-snug sm:truncate">{user.company}</p>
                         )}
                       </div>
                       <Button
                         size="sm"
                         onClick={() => handleConnectionAction(user.id, "connect")}
-                        className="shrink-0"
+                        className={cn("w-full sm:w-auto shrink-0", isExhibitorShell && exBtnPrimary)}
                       >
                         <UserPlus className="h-4 w-4 mr-1" />
                         Connect
@@ -298,26 +320,19 @@ export function ConnectionsSection({ userId: _userId }: ConnectionsSectionProps)
         </Card>
       ) : (
         <>
-          <div className="flex border-b border-[#F0F0F0] gap-1">
+          <div className={cn("min-w-0 border-b border-slate-200", exTabsScrollWrapper)}>
+            <div className="flex w-max min-w-full gap-1">
             <button
               type="button"
               onClick={() => setActiveTab("connected")}
-              className={`px-4 py-2.5 text-sm font-medium rounded-t-lg transition-colors ${
-                activeTab === "connected"
-                  ? "bg-white border border-b-0 border-gray-200 text-blue-600 -mb-px"
-                  : "text-gray-600 hover:text-gray-900"
-              }`}
+              className={activeTab === "connected" ? tabActive : tabInactive}
             >
               My connections ({connectedList.length})
             </button>
             <button
               type="button"
               onClick={() => setActiveTab("sent")}
-              className={`px-4 py-2.5 text-sm font-medium rounded-t-lg transition-colors ${
-                activeTab === "sent"
-                  ? "bg-white border border-b-0 border-gray-200 text-blue-600 -mb-px"
-                  : "text-gray-600 hover:text-gray-900"
-              }`}
+              className={activeTab === "sent" ? tabActive : tabInactive}
             >
               <Send className="h-4 w-4 inline-block mr-1.5 align-middle" />
               Requests sent ({sentList.length})
@@ -325,24 +340,21 @@ export function ConnectionsSection({ userId: _userId }: ConnectionsSectionProps)
             <button
               type="button"
               onClick={() => setActiveTab("received")}
-              className={`px-4 py-2.5 text-sm font-medium rounded-t-lg transition-colors ${
-                activeTab === "received"
-                  ? "bg-white border border-b-0 border-gray-200 text-blue-600 -mb-px"
-                  : "text-gray-600 hover:text-gray-900"
-              }`}
+              className={activeTab === "received" ? tabActive : tabInactive}
             >
               <Inbox className="h-4 w-4 inline-block mr-1.5 align-middle" />
               Requests received ({receivedList.length})
             </button>
+            </div>
           </div>
 
-          <div className="bg-[#F5F4F0]">
-            <CardContent className="p-6">
+          <div className={listPanelWrap}>
+            <CardContent className="p-4 sm:p-6">
               {filteredList.length > 0 ? (
                 <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {filteredList.map((c) => (
                     <li key={c.connectionId ?? c.id}>
-                      <Card className="border border-gray-100 overflow-hidden">
+                      <Card className={cn(gridItemCard, "overflow-hidden")}>
                         <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center gap-4">
                           <Avatar className="h-14 w-14 shrink-0 mx-auto sm:mx-0">
                             <AvatarImage src={c.avatar} />
@@ -356,14 +368,17 @@ export function ConnectionsSection({ userId: _userId }: ConnectionsSectionProps)
                             </AvatarFallback>
                           </Avatar>
                           <div className="min-w-0 flex-1 text-center sm:text-left">
-                            <p className="font-medium text-gray-900 truncate">
+                            <p className="font-medium text-gray-900 break-words leading-snug sm:truncate">
                               {connectionName(c)}
                             </p>
                             {c.company && (
-                              <p className="text-sm text-gray-500 truncate">{c.company}</p>
+                              <p className="text-sm text-gray-500 break-words leading-snug sm:truncate">{c.company}</p>
                             )}
                             {c.jobTitle && (
-                              <p className="text-xs text-gray-400 truncate">{c.jobTitle}</p>
+                              <p className="text-xs text-gray-400 break-words leading-snug sm:truncate">{c.jobTitle}</p>
+                            )}
+                            {formatCityCountryLine(c) && (
+                              <p className="text-xs text-gray-400 break-words leading-snug sm:truncate">{formatCityCountryLine(c)}</p>
                             )}
                           </div>
                           <div className="flex justify-center sm:justify-end gap-2 shrink-0">

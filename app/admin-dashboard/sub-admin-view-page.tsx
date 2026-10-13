@@ -4,7 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
-import { ArrowLeft, Calendar, Phone, Mail, User, Shield, CheckCircle, XCircle } from "lucide-react"
+import { ArrowLeft, Calendar, Phone, Mail, User, Shield, CheckCircle, XCircle, TrendingUp, ExternalLink } from "lucide-react"
+import Link from "next/link"
 
 interface SubAdminViewPageProps {
   subAdmin: {
@@ -25,16 +26,10 @@ interface SubAdminViewPageProps {
   onCancel?: () => void
 }
 
-interface PermissionCategory {
-  id: string
-  title: string
-  subItems: {
-    id: string
-    title: string
-  }[]
-}
-
 export default function SubAdminViewPage({ subAdmin, onCancel }: SubAdminViewPageProps) {
+  // Check if sub-admin has permission to view performance
+  const canViewPerformance = subAdmin.permissions.includes("my-performance-view")
+
   const getRoleDisplay = () =>
     subAdmin.roleDisplayName?.trim() ||
     ({
@@ -52,7 +47,7 @@ export default function SubAdminViewPage({ subAdmin, onCancel }: SubAdminViewPag
     return colorMap[role] || "bg-gray-100 text-gray-800"
   }
 
-  const permissionCategories: PermissionCategory[] = [
+  const permissionCategories = [
     {
       title: "Dashboard Overview",
       id: "dashboard",
@@ -121,6 +116,14 @@ export default function SubAdminViewPage({ subAdmin, onCancel }: SubAdminViewPag
         { title: "Events by Visitor", id: "visitors-events" },
         { title: "Connections", id: "visitors-connections" },
         { title: "Appointments", id: "visitors-appointments" },
+      ],
+    },
+    {
+      title: "Inquiries & registrations",
+      id: "inquiries-registrations",
+      subItems: [
+        { title: "Contact inquiry", id: "contact-inquiries" },
+        { title: "Newsletter", id: "newsletter" },
       ],
     },
     {
@@ -201,12 +204,19 @@ export default function SubAdminViewPage({ subAdmin, onCancel }: SubAdminViewPag
         { title: "Admin Notes", id: "support-notes" },
       ],
     },
+    {
+      title: "My Performance",
+      id: "my-performance",
+      subItems: [
+        { title: "View My Performance", id: "my-performance-view" },
+      ],
+    },
   ]
 
   const getPermissionsByCategory = () => {
     return permissionCategories.map(category => ({
       ...category,
-      subItems: category.subItems.filter(subItem => 
+      subItems: category.subItems.filter(subItem =>
         subAdmin.permissions.includes(subItem.id)
       )
     })).filter(category => category.subItems.length > 0)
@@ -247,6 +257,9 @@ export default function SubAdminViewPage({ subAdmin, onCancel }: SubAdminViewPag
         </div>
 
         <div className="grid gap-6">
+          {/* Performance Overview Card - Only show if sub-admin has permission */}
+          
+
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">

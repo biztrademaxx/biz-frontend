@@ -64,13 +64,13 @@ export function TemporaryStaffForm({ eventId, organizerId }: TemporaryStaffFormP
 
   return (
     <Card className="w-full max-w-4xl mx-auto">
-      <CardHeader className="bg-blue-600 text-white">
+      <CardHeader className="bg-gradient-to-r from-[#004A96] to-[#004A96] text-white">
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="text-xl font-bold">FORM 9 - TEMPORARY STAFF</CardTitle>
-            <p className="text-blue-100 mt-1">(OPTIONAL FORM)</p>
+            <p className="text-white/85 mt-1">(OPTIONAL FORM)</p>
           </div>
-          <Badge variant="secondary" className="bg-blue-800">
+          <Badge variant="secondary" className="bg-[#004A96]">
             Deadline: 7 November 2025
           </Badge>
         </div>
@@ -204,8 +204,8 @@ export function TemporaryStaffForm({ eventId, organizerId }: TemporaryStaffFormP
             </div>
 
             {grandTotal > 0 && (
-              <div className="border-2 border-blue-200 rounded-lg p-4 bg-blue-50">
-                <div className="flex justify-between text-lg font-bold text-blue-800">
+              <div className="border-2 border-[#bfdbfe] rounded-lg p-4 bg-[#004A96]/10">
+                <div className="flex justify-between text-lg font-bold text-[#003d7a]">
                   <span>Grand Total:</span>
                   <span>₹{grandTotal.toLocaleString()}</span>
                 </div>
@@ -214,7 +214,7 @@ export function TemporaryStaffForm({ eventId, organizerId }: TemporaryStaffFormP
           </div>
 
           <div className="flex gap-4 pt-4">
-            <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
+            <Button type="submit" className="bg-[#004A96] hover:bg-[#003d7a]">
               <Send className="w-4 h-4 mr-2" />
               Submit Form
             </Button>

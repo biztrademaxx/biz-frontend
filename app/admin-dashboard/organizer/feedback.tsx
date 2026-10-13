@@ -27,7 +27,7 @@ interface Feedback {
     name: string
     email: string
   }
-  exhibitor: {
+  reviewer: {
     id: string
     name: string
     email: string
@@ -64,7 +64,7 @@ export default function OrganizerFeedbackPage() {
     try {
       setLoading(true)
       const data = await apiFetch<Feedback[] | { data?: Feedback[] }>(
-        "/api/admin/exhibitors/exhibitor-feedback",
+        "/api/admin/organizers/event-feedback",
         { auth: true },
       )
       const list = Array.isArray(data) ? data : data?.data ?? []
@@ -82,7 +82,8 @@ export default function OrganizerFeedbackPage() {
     const matchesSearch =
       (feedback.organizer?.name ?? "").toLowerCase().includes(q) ||
       (feedback.organizer?.email ?? "").toLowerCase().includes(q) ||
-      (feedback.exhibitor?.name ?? "").toLowerCase().includes(q) ||
+      (feedback.reviewer?.name ?? "").toLowerCase().includes(q) ||
+      (feedback.reviewer?.email ?? "").toLowerCase().includes(q) ||
       (feedback.event?.title ?? "").toLowerCase().includes(q)
 
     const matchesStatus =
@@ -284,7 +285,7 @@ export default function OrganizerFeedbackPage() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      {feedback.event.title && feedback.event.title !== "Unknown Event" ? (
+                      {feedback.event?.title ? (
                         <div className="text-sm text-gray-900">{feedback.event.title}</div>
                       ) : (
                         <span className="text-gray-400">General</span>
@@ -359,9 +360,9 @@ export default function OrganizerFeedbackPage() {
                   <p className="text-sm text-gray-900 mt-1">{selectedFeedback.event.title || "General Feedback"}</p>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-gray-600">Exhibitor</Label>
-                  <p className="text-sm text-gray-900 mt-1">{selectedFeedback.exhibitor?.name}</p>
-                  <p className="text-xs text-gray-500">{selectedFeedback.exhibitor?.email}</p>
+                  <Label className="text-sm font-medium text-gray-600">Reviewer</Label>
+                  <p className="text-sm text-gray-900 mt-1">{selectedFeedback.reviewer?.name}</p>
+                  <p className="text-xs text-gray-500">{selectedFeedback.reviewer?.email}</p>
                 </div>
                 <div>
                   <Label className="text-sm font-medium text-gray-600">Rating</Label>

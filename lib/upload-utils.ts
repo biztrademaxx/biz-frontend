@@ -1,9 +1,11 @@
 import { apiFetch } from "./api"
+import { prepareImageFileForUpload } from "./prepare-image-upload"
 
 export async function uploadVenueImages(files: File[]): Promise<string[]> {
   const uploadPromises = files.map(async (file) => {
+    const prepared = await prepareImageFileForUpload(file)
     const formData = new FormData()
-    formData.append("file", file)
+    formData.append("file", prepared)
     formData.append("folder", "venues")
     // images only; backend upload controller enforces image MIME types
     formData.append("type", "image")
@@ -28,8 +30,9 @@ export async function uploadVenueImages(files: File[]): Promise<string[]> {
 }
 
 export async function uploadVenueLogo(file: File): Promise<string> {
+  const prepared = await prepareImageFileForUpload(file)
   const formData = new FormData()
-  formData.append("file", file)
+  formData.append("file", prepared)
   formData.append("folder", "venues/logos")
   formData.append("type", "image")
 

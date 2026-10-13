@@ -1,14 +1,23 @@
 "use client"
 
+import { useRouter } from "next/navigation"
+import { eventPublicPath } from "@/lib/event-path"
 import { useEvents } from "./hooks/useEvents"
 import { EventTable } from "./components/EventTable"
 import { VerifyEventDialog } from "./components/VerifyEventDialog"
-import { EditEventForm } from "../event-management"
+import { EditEventForm } from "./components/EditEventForm"
+import type { Event } from "./types/event.types"
 
-export default function EventManagementPage() {
+interface EventManagementPageProps {
+  onPromote?: (event: Event) => void
+}
+
+export default function EventManagementPage({ onPromote }: EventManagementPageProps = {}) {
+  const router = useRouter()
   const {
     events,
     categories,
+    countries,
     loading,
     categoriesLoading,
     searchTerm,
@@ -17,8 +26,12 @@ export default function EventManagementPage() {
     setSelectedStatus,
     selectedCategory,
     setSelectedCategory,
+    selectedCountry,
+    setSelectedCountry,
     activeTab,
     setActiveTab,
+    page,
+    pagination,
     eventCounts,
     mailCandidates,
     sendingMail,
@@ -28,12 +41,16 @@ export default function EventManagementPage() {
     isVerifyDialogOpen,
     setIsVerifyDialogOpen,
     verifying,
+    handlePageChange,
     handleStatusChange,
     handleFeatureToggle,
     handleVipToggle,
     handlePublicToggle,
     handleVerifyToggle,
     handleDeleteEvent,
+    handleBulkDeleteEvents,
+    handleApproveEvent,
+    handleBulkApproveEvents,
     handleEditEvent,
     handleSaveEvent,
     handleCancelEdit,
@@ -42,10 +59,10 @@ export default function EventManagementPage() {
     handleSendListingEmailBulk,
   } = useEvents()
 
-  if (loading || categoriesLoading) {
+  if (categoriesLoading && events.length === 0 && !loading) {
     return (
       <div className="flex justify-center items-center h-[80vh]">
-        <p className="text-gray-500">Loading events...</p>
+        <p className="text-muted-foreground">Loading events...</p>
       </div>
     )
   }
@@ -65,19 +82,30 @@ export default function EventManagementPage() {
     <>
       <EventTable
         events={events}
+        loading={loading}
         searchTerm={searchTerm}
         selectedStatus={selectedStatus}
         selectedCategory={selectedCategory}
         activeTab={activeTab}
+        page={page}
+        pagination={pagination}
+        onPageChange={handlePageChange}
         eventCounts={eventCounts}
         categories={categories}
+        countries={countries}
+        selectedCountry={selectedCountry}
+        onCountryFilterChange={setSelectedCountry}
         onEdit={handleEditEvent}
+        onView={(event) => router.push(eventPublicPath({ id: event.id, slug: event.slug }))}
         onStatusChange={handleStatusChange}
         onFeatureToggle={handleFeatureToggle}
         onVipToggle={handleVipToggle}
         onPublicToggle={handlePublicToggle}
         onDelete={handleDeleteEvent}
-        onPromote={() => {}}
+        onBulkDelete={handleBulkDeleteEvents}
+        onApprove={handleApproveEvent}
+        onBulkApprove={handleBulkApproveEvents}
+        onPromote={onPromote ?? (() => {})}
         onVerify={handleVerifyEvent}
         onSearchChange={setSearchTerm}
         onStatusFilterChange={setSelectedStatus}

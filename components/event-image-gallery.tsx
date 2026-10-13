@@ -45,10 +45,13 @@ export default function EventImageGallery({ images }: EventImageGalleryProps) {
       <div className="relative">
         {/* Main Image Display */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-6">
-          {allImages.slice(currentImageIndex, currentImageIndex + 3).map((image, index) => (
+          {allImages.slice(currentImageIndex, currentImageIndex + 3).map((image, index) => {
+            const url = image?.url?.trim()
+            if (!url) return null
+            return (
             <div key={image?.id || index} className="relative group overflow-hidden rounded-lg">
               <Image
-                src={image?.url || "/city/c4.jpg"}
+                src={url}
                 alt={image?.alt || "Event image"}
                 width={300}
                 height={200}
@@ -56,7 +59,8 @@ export default function EventImageGallery({ images }: EventImageGalleryProps) {
               />
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
             </div>
-          ))}
+            )
+          })}
         </div>
 
         {/* Navigation Arrows */}

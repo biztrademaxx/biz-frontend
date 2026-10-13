@@ -371,14 +371,14 @@ export default function AddSpeaker({ organizerId }: AddSpeakerProps) {
                   <Card
                     key={speaker.id}
                     className={`cursor-pointer transition-colors ${
-                      selectedSpeaker?.id === speaker.id ? "ring-2 ring-blue-500 bg-blue-50" : "hover:bg-gray-50"
+                      selectedSpeaker?.id === speaker.id ? "ring-2 ring-[#004A96] bg-[#004A96]/10" : "hover:bg-gray-50"
                     }`}
                     onClick={() => setSelectedSpeaker(speaker)}
                   >
                     <CardContent className="p-4">
                       <div className="flex items-start gap-4">
                         <Avatar className="w-16 h-16">
-                          <AvatarImage src={speaker.avatar || "/city/c4.jpg"} />
+                          <AvatarImage src={speaker.avatar } />
                           <AvatarFallback>
                             {speaker.firstName[0]}
                             {speaker.lastName[0]}
@@ -679,7 +679,7 @@ export default function AddSpeaker({ organizerId }: AddSpeakerProps) {
 
           {/* Session Details Form */}
           {selectedSpeaker && (
-            <Card className="border-blue-200 bg-blue-50 mt-6">
+            <Card className="border-[#bfdbfe] bg-[#004A96]/10 mt-6">
               <CardHeader>
                 <CardTitle className="text-lg">
                   Session Details for {selectedSpeaker.firstName} {selectedSpeaker.lastName}

@@ -1,3 +1,4 @@
+import { AppImage } from "@/components/app-image"
 import Link from "next/link"
 import type { Metadata } from "next"
 import { Calendar } from "lucide-react"
@@ -66,11 +67,12 @@ export default async function BlogListingPage() {
                   <Link href={`/blog/${encodeURIComponent(post.slug)}`} className="block">
                     <div className="relative aspect-[16/10] w-full overflow-hidden bg-gray-200">
                       {post.coverImageUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
+                        <AppImage
                           src={post.coverImageUrl}
                           alt={post.title}
-                          className="h-full w-full object-cover"
+                          fill
+                          sizes="(max-width: 768px) 100vw, 33vw"
+                          className="object-cover"
                         />
                       ) : (
                         <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-gray-700 to-gray-900 text-sm text-gray-300">

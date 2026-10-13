@@ -2,12 +2,14 @@
 
 import { useState, useMemo, useEffect } from "react"
 import { Button } from "@/components/ui/button"
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { getCurrentUserId, isAuthenticated } from "@/lib/api"
 import Image from "next/image"
+import { AppImage } from "@/components/app-image"
 import {
   MapPin,
   Phone,
@@ -26,14 +28,15 @@ import {
   Link,
   MessageSquare,
   Reply,
+  ArrowLeft,
 } from "lucide-react"
-import { useParams, useRouter } from "next/navigation"
+import { useParams, useRouter, usePathname, useSearchParams } from "next/navigation"
 import { format } from "date-fns"
 import ScheduleMeetingButton from "@/components/ScheduleMeetingButton"
 import { FollowButton } from "@/components/follow-button"
 import { apiFetch } from "@/lib/api"
 import { eventPublicPath } from "@/lib/event-path"
-import { getPublicProfilePath } from "@/lib/profile-path"
+import { getPublicProfilePath, slugifyPublicProfile } from "@/lib/profile-path"
 
 // Define types for exhibitor data
 interface Exhibitor {
@@ -41,6 +44,8 @@ interface Exhibitor {
   publicSlug?: string
   firstName?: string
   lastName?: string
+  organizationName?: string
+  company?: string
   email: string
   phone?: string
   avatar?: string
@@ -51,9 +56,16 @@ interface Exhibitor {
   industry?: string
   companySize?: string
   foundedYear?: string
+  /** Raw backend field aliases (list endpoint may return these) */
+  founded?: string
+  teamSize?: string
+  companyIndustry?: string
   headquarters?: string
   specialties?: string[]
   certifications?: string[]
+  profileCity?: string
+  profileCountry?: string
+  location?: string
   isVerified: boolean
   createdAt: string
 }
@@ -164,10 +176,10 @@ interface Review {
 }
 
 // Review Card Component with Replies
-function ReviewCard({ review, exhibitorId, onReplyAdded }: { 
-  review: Review 
+function ReviewCard({ review, exhibitorId, onReplyAdded }: {
+  review: Review
   exhibitorId: string
-  onReplyAdded: (reviewId: string, reply: ReviewReply) => void 
+  onReplyAdded: (reviewId: string, reply: ReviewReply) => void
 }) {
   const [showReplyForm, setShowReplyForm] = useState(false)
   const [replyContent, setReplyContent] = useState("")
@@ -180,7 +192,7 @@ function ReviewCard({ review, exhibitorId, onReplyAdded }: {
 
     setIsSubmittingReply(true)
     try {
-      await apiFetch(`/api/exhibitors/${exhibitorId}/reviews/${review.id}/replies`, {
+      await apiFetch(`/api/exhibitors/${encodeURIComponent(exhibitorId)}/reviews/${review.id}/replies`, {
         method: "POST",
         body: { content: replyContent },
         auth: true,
@@ -209,16 +221,18 @@ function ReviewCard({ review, exhibitorId, onReplyAdded }: {
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-center gap-3">
             {review.user?.avatar ? (
-              <img
+              <AppImage
                 src={review.user.avatar}
                 alt={`${review.user.firstName} ${review.user.lastName}`}
-                className="w-10 h-10 rounded-full"
+                width={40}
+                height={40}
+                className="h-10 w-10 rounded-full object-cover"
               />
             ) : (
               <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
-                  <span className="text-sm font-medium">
-                        {([review.user?.firstName?.[0], review.user?.lastName?.[0]].filter(Boolean).join("") || "G").toUpperCase()}
-                      </span>
+                <span className="text-sm font-medium">
+                  {([review.user?.firstName?.[0], review.user?.lastName?.[0]].filter(Boolean).join("") || "G").toUpperCase()}
+                </span>
               </div>
             )}
             <div>
@@ -260,10 +274,12 @@ function ReviewCard({ review, exhibitorId, onReplyAdded }: {
               <div key={reply.id} className="flex items-start gap-3">
                 <div className="flex-shrink-0">
                   {reply.user?.avatar ? (
-                    <img
+                    <AppImage
                       src={reply.user.avatar}
                       alt={`${reply.user.firstName} ${reply.user.lastName}`}
-                      className="w-8 h-8 rounded-full"
+                      width={32}
+                      height={32}
+                      className="h-8 w-8 rounded-full object-cover"
                     />
                   ) : (
                     <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
@@ -362,7 +378,7 @@ function AddReview({ exhibitorId, onReviewAdded }: { exhibitorId: string; onRevi
 
     setIsSubmitting(true)
     try {
-      const newReview = await apiFetch<Review>(`/api/exhibitors/${exhibitorId}/reviews`, {
+      const newReview = await apiFetch<Review>(`/api/exhibitors/${encodeURIComponent(exhibitorId)}/reviews`, {
         method: "POST",
         body: { rating, title, comment },
         auth: true,
@@ -476,24 +492,149 @@ const safeFormatDate = (dateInput: string | null | undefined): string => {
 // Helper function to get location string
 const getLocationString = (venue: any): string => {
   if (!venue) return "Location TBD";
-  
+
   const { venueName, venueAddress, venueCity, venueState, venueCountry } = venue;
-  
+
   const parts = [];
   if (venueName) parts.push(venueName);
   if (venueAddress) parts.push(venueAddress);
   if (venueCity) parts.push(venueCity);
   if (venueState) parts.push(venueState);
   if (venueCountry) parts.push(venueCountry);
-  
+
   return parts.length > 0 ? parts.join(", ") : "Location TBD";
 };
+
+function exhibitorListEntryMatchesSlug(ex: Record<string, any>, target: string): boolean {
+  if (ex.publicSlug && String(ex.publicSlug).toLowerCase() === target) return true
+
+  const company = (ex.company as string) || (ex.companyName as string) || ""
+  const fullName = `${ex.firstName ?? ""} ${ex.lastName ?? ""}`.trim()
+  const candidates = [ex.organizationName, company, fullName, ex.firstName].filter(Boolean) as string[]
+
+  return candidates.some((c) => slugifyPublicProfile(c) === target)
+}
+
+function scoreExhibitorProfile(ex: Exhibitor | Record<string, any>): number {
+  let score = 0
+  if (ex.isVerified) score += 1000
+  if (String(ex.website ?? "").trim()) score += 50
+  if (String(ex.foundedYear ?? ex.founded ?? "").trim()) score += 20
+  if (String(ex.companySize ?? ex.teamSize ?? "").trim()) score += 20
+  if (String(ex.industry ?? ex.companyIndustry ?? "").trim()) score += 20
+  if (String(ex.headquarters ?? "").trim()) score += 15
+  if (String(ex.bio ?? "").trim()) score += 10
+  return score
+}
+
+async function fetchExhibitorById(id: string): Promise<Exhibitor> {
+  const data = await apiFetch<{ success: boolean; exhibitor: Exhibitor }>(
+    `/api/exhibitors/${encodeURIComponent(id)}`,
+    { auth: isAuthenticated() },
+  )
+  if (!data.success || !data.exhibitor) {
+    throw new Error("Exhibitor not found")
+  }
+  return data.exhibitor
+}
+
+/** Pick the best exhibitor when multiple accounts share the same public slug. */
+async function resolveBestExhibitorFromMatches(
+  matches: Record<string, any>[],
+): Promise<{ exhibitor: Exhibitor; resolvedId: string }> {
+  if (matches.length === 0) {
+    throw new Error("Exhibitor not found")
+  }
+
+  const userId = getCurrentUserId()?.trim()
+  if (userId) {
+    const self = matches.find((m) => String(m.id) === userId)
+    if (self?.id) {
+      const exhibitor = await fetchExhibitorById(String(self.id))
+      return { exhibitor, resolvedId: exhibitor.id }
+    }
+  }
+
+  const fullProfiles = await Promise.all(
+    matches.map(async (m) => {
+      if (!m.id) return null
+      try {
+        return await fetchExhibitorById(String(m.id))
+      } catch {
+        return null
+      }
+    }),
+  )
+
+  const valid = fullProfiles.filter(Boolean) as Exhibitor[]
+  if (valid.length === 0) {
+    throw new Error("Exhibitor not found")
+  }
+
+  valid.sort((a, b) => scoreExhibitorProfile(b) - scoreExhibitorProfile(a))
+  const exhibitor = valid[0]
+  return { exhibitor, resolvedId: exhibitor.id }
+}
+
+/**
+ * The exhibitors list page links to /exhibitor/{slug} (see getPublicProfilePath), where
+ * {slug} is derived from the company/org name — it is NOT the database id. Try the route
+ * param as an id or slug on the backend first; if that fails, resolve via the public list.
+ */
+async function resolveExhibitorIdOrSlug(
+  routeParam: string,
+): Promise<{ exhibitor: Exhibitor; resolvedId: string }> {
+  // 1) Backend resolves UUIDs, Mongo ids, and slugs (with duplicate disambiguation).
+  try {
+    const data = await apiFetch<{ success: boolean; exhibitor: Exhibitor }>(
+      `/api/exhibitors/${encodeURIComponent(routeParam)}`,
+      { auth: isAuthenticated() },
+    )
+    if (data.success && data.exhibitor) {
+      return { exhibitor: data.exhibitor, resolvedId: data.exhibitor.id }
+    }
+  } catch {
+    // fall through to list-based slug resolution
+  }
+
+  // 2) Match slug against the public list (may return multiple accounts with the same slug).
+  const listResponse = await apiFetch<unknown>("/api/exhibitors?limit=1000", { auth: false })
+  const list: unknown[] = Array.isArray(listResponse)
+    ? listResponse
+    : Array.isArray((listResponse as any)?.exhibitors)
+      ? (listResponse as any).exhibitors
+      : Array.isArray((listResponse as any)?.data)
+        ? (listResponse as any).data
+        : []
+
+  const target = routeParam.toLowerCase()
+  const matches = (list as Record<string, unknown>[]).filter((raw) =>
+    exhibitorListEntryMatchesSlug(raw as Record<string, any>, target),
+  ) as Record<string, any>[]
+
+  return resolveBestExhibitorFromMatches(matches)
+}
 
 // Main Exhibitor Page Component
 export default function ExhibitorPage() {
   const params = useParams()
   const router = useRouter()
-  const exhibitorId = (params.slug ?? params.id) as string
+  const pathname = usePathname()
+  // ─── NEW: read ?autoFollow=<exhibitorId> from URL after login redirect ───
+  const searchParams = useSearchParams()
+  const routeParam = (params.slug ?? params.id) as string
+
+  // ─── Back navigation: if we arrived here with ?returnTo=..., use it ───
+  const returnTo = searchParams.get("returnTo")
+
+  const handleBack = () => {
+    if (returnTo) {
+      router.push(returnTo)
+    } else {
+      router.back()
+    }
+  }
+  // ────────────────────────────────────────────────────────────────────
 
   const userId = getCurrentUserId()
 
@@ -501,49 +642,98 @@ export default function ExhibitorPage() {
   const [eventsTab, setEventsTab] = useState("upcoming")
   const [currentPage, setCurrentPage] = useState(1)
   const [exhibitor, setExhibitor] = useState<Exhibitor | null>(null)
+  // The real database id, resolved from the route param (which may be a slug).
+  // All follow-up API calls (events, reviews) must use this, not the raw route param.
+  const [exhibitorId, setExhibitorId] = useState<string | null>(null)
+  const [notFound, setNotFound] = useState(false)
   const [booths, setBooths] = useState<Booth[]>([])
   const [reviews, setReviews] = useState<Review[]>([])
   const [loading, setLoading] = useState(true)
   const [eventsLoading, setEventsLoading] = useState(false)
   const [reviewsLoading, setReviewsLoading] = useState(false)
+  // ─── NEW: track whether auto-follow has been triggered to avoid repeat calls ───
+  const [autoFollowTriggered, setAutoFollowTriggered] = useState(false)
   const eventsPerPage = 6
 
-  // Fetch exhibitor data
+  // Resolve route param (id or slug) -> exhibitor + real id
   useEffect(() => {
-    async function fetchExhibitor() {
-      try {
-        const data = await apiFetch<{ success: boolean; exhibitor: Exhibitor }>(
-          `/api/exhibitors/${exhibitorId}`,
-          { auth: false },
-        )
+    let cancelled = false
 
-        if (data.success) {
-          setExhibitor(data.exhibitor)
-          if (data.exhibitor?.publicSlug) {
-            const canonical = getPublicProfilePath("exhibitor", {
-              id: data.exhibitor.id,
-              publicSlug: data.exhibitor.publicSlug,
-              organizationName: data.exhibitor.organizationName,
-              company: data.exhibitor.companyName || data.exhibitor.company,
-            })
-            if (typeof window !== "undefined" && window.location.pathname !== canonical) {
-              router.replace(canonical)
-            }
-          }
-        } else {
-          console.error("Failed to fetch exhibitor")
+    async function fetchExhibitor() {
+      setLoading(true)
+      setNotFound(false)
+      try {
+        const { exhibitor: ex, resolvedId } = await resolveExhibitorIdOrSlug(routeParam)
+        if (cancelled) return
+
+        setExhibitor(ex)
+        setExhibitorId(resolvedId)
+
+        const canonical = getPublicProfilePath("exhibitor", {
+          id: ex.id,
+          publicSlug: ex.publicSlug,
+          organizationName: ex.organizationName,
+          company: ex.companyName || ex.company,
+          firstName: ex.firstName,
+          lastName: ex.lastName,
+        })
+        if (pathname && canonical !== pathname) {
+          router.replace(canonical)
         }
       } catch (error) {
         console.error("Error fetching exhibitor:", error)
+        if (!cancelled) setNotFound(true)
       } finally {
-        setLoading(false)
+        if (!cancelled) setLoading(false)
       }
     }
 
-    if (exhibitorId) {
+    if (routeParam) {
       fetchExhibitor()
     }
-  }, [exhibitorId])
+
+    return () => {
+      cancelled = true
+    }
+  }, [routeParam, pathname, router])
+
+  // ─── NEW: Auto-follow effect ─────────────────────────────────────────────
+  // When the user lands back here after login with ?autoFollow=<exhibitorId>,
+  // fire the follow API call once automatically so they don't need to click again.
+  useEffect(() => {
+    const autoFollowId = searchParams.get("autoFollow")
+
+    // Guard: must have the param, a logged-in user, the resolved exhibitorId,
+    // and must not have already triggered in this session.
+    if (!autoFollowId || !userId || !exhibitorId || autoFollowTriggered) return
+
+    // Only auto-follow if the param matches the exhibitor on this page.
+    if (autoFollowId !== exhibitorId) return
+
+    async function triggerAutoFollow() {
+      setAutoFollowTriggered(true)
+      try {
+        // Call your follow API — adjust endpoint to match your backend.
+        await apiFetch(`/api/follow`, {
+          method: "POST",
+          body: { targetId: exhibitorId, userId },
+          auth: true,
+        })
+      } catch (err) {
+        // Silently fail — the user can still click Follow manually.
+        console.error("Auto-follow failed:", err)
+      } finally {
+        // Clean up the ?autoFollow param from the URL so it doesn't re-trigger
+        // on refresh or navigation, without adding a new browser history entry.
+        const url = new URL(window.location.href)
+        url.searchParams.delete("autoFollow")
+        router.replace(url.pathname + (url.search || ""))
+      }
+    }
+
+    triggerAutoFollow()
+  }, [searchParams, userId, exhibitorId, autoFollowTriggered, router])
+  // ─────────────────────────────────────────────────────────────────────────
 
   // Fetch exhibitor booths (events) from backend
   useEffect(() => {
@@ -552,34 +742,36 @@ export default function ExhibitorPage() {
 
       setEventsLoading(true);
       try {
-        const data = await apiFetch<{ success?: boolean; events?: Array<{
-          id: string
-          eventId: string
-          eventSlug?: string
-          eventName: string
-          bannerImage?: string | null
-          thumbnailImage?: string | null
-          boothNumber: string
-          date?: string
-          endDate?: string
-          rawStartDate: string
-          rawEndDate: string
-          venue:
+        const data = await apiFetch<{
+          success?: boolean; events?: Array<{
+            id: string
+            eventId: string
+            eventSlug?: string
+            eventName: string
+            bannerImage?: string | null
+            thumbnailImage?: string | null
+            boothNumber: string
+            date?: string
+            endDate?: string
+            rawStartDate: string
+            rawEndDate: string
+            venue:
             | string
             | {
-                venueName?: string
-                venueAddress?: string
-                venueCity?: string
-                venueState?: string
-                venueCountry?: string
-                venueZipCode?: string
-              }
+              venueName?: string
+              venueAddress?: string
+              venueCity?: string
+              venueState?: string
+              venueCountry?: string
+              venueZipCode?: string
+            }
             | null
-          organizer?: { id: string; firstName: string; lastName: string; company?: string }
-          currency?: string
-          invoiceAmount?: number
-          status?: string
-        }> }>(`/api/exhibitors/${exhibitorId}/events`);
+            organizer?: { id: string; firstName: string; lastName: string; company?: string }
+            currency?: string
+            invoiceAmount?: number
+            status?: string
+          }>
+        }>(`/api/exhibitors/${encodeURIComponent(exhibitorId)}/events`);
 
         if (data?.events && Array.isArray(data.events)) {
           const mapped: Booth[] = data.events.map((e) => ({
@@ -642,23 +834,23 @@ export default function ExhibitorPage() {
               venue:
                 typeof e.venue === "string"
                   ? {
-                      id: "",
-                      venueName: e.venue,
-                      venueDescription: "",
-                      venueAddress: "",
-                      venueCity: "",
-                      venueState: "",
-                      venueCountry: "",
-                    }
+                    id: "",
+                    venueName: e.venue,
+                    venueDescription: "",
+                    venueAddress: "",
+                    venueCity: "",
+                    venueState: "",
+                    venueCountry: "",
+                  }
                   : {
-                      id: "",
-                      venueName: e.venue?.venueName ?? "",
-                      venueDescription: "",
-                      venueAddress: e.venue?.venueAddress ?? "",
-                      venueCity: e.venue?.venueCity ?? "",
-                      venueState: e.venue?.venueState ?? "",
-                      venueCountry: e.venue?.venueCountry ?? "",
-                    },
+                    id: "",
+                    venueName: e.venue?.venueName ?? "",
+                    venueDescription: "",
+                    venueAddress: e.venue?.venueAddress ?? "",
+                    venueCity: e.venue?.venueCity ?? "",
+                    venueState: e.venue?.venueState ?? "",
+                    venueCountry: e.venue?.venueCountry ?? "",
+                  },
             },
           }));
           setBooths(mapped);
@@ -685,7 +877,7 @@ export default function ExhibitorPage() {
 
       setReviewsLoading(true);
       try {
-        const data = await apiFetch<{ reviews?: Review[] }>(`/api/exhibitors/${exhibitorId}/reviews`);
+        const data = await apiFetch<{ reviews?: Review[] }>(`/api/exhibitors/${encodeURIComponent(exhibitorId)}/reviews`);
         setReviews(data?.reviews ?? []);
       } catch (error) {
         console.error("Error fetching reviews:", error);
@@ -707,9 +899,9 @@ export default function ExhibitorPage() {
 
   // Handle new reply submission
   const handleReplyAdded = (reviewId: string, newReply: ReviewReply) => {
-    setReviews(prevReviews => 
-      prevReviews.map(review => 
-        review.id === reviewId 
+    setReviews(prevReviews =>
+      prevReviews.map(review =>
+        review.id === reviewId
           ? { ...review, replies: [...(review.replies || []), newReply] }
           : review
       )
@@ -750,25 +942,28 @@ export default function ExhibitorPage() {
       reviewAvgRating: Math.round(reviewAvgRating * 10) / 10,
       totalReviews: reviews.length,
       totalReplies,
-      clientsServed: "500+", // Mock data
     };
   }, [booths, reviews]);
 
   // Filter events based on active events tab
   const filteredEvents = useMemo(() => {
-    const currentDate = new Date();
-    
-    if (eventsTab === "upcoming") {
-      return booths.filter(booth => {
-        const eventEndDate = new Date(booth.event.endDate);
-        return eventEndDate > currentDate;
-      });
-    } else {
-      return booths.filter(booth => {
-        const eventEndDate = new Date(booth.event.endDate);
-        return eventEndDate <= currentDate;
-      });
-    }
+    const now = new Date();
+
+    return booths.filter((booth) => {
+      const endDate = booth.event.endDate
+        ? new Date(booth.event.endDate)
+        : booth.event.startDate
+          ? new Date(booth.event.startDate)
+          : null;
+
+      if (!endDate || isNaN(endDate.getTime())) {
+        return true; // show event instead of hiding it
+      }
+
+      return eventsTab === "upcoming"
+        ? endDate >= now
+        : endDate < now;
+    });
   }, [booths, eventsTab]);
 
   // Pagination for events
@@ -797,7 +992,7 @@ export default function ExhibitorPage() {
     )
   }
 
-  if (!exhibitor) {
+  if (notFound || !exhibitor || !exhibitorId) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -811,35 +1006,36 @@ export default function ExhibitorPage() {
   const exhibitorName = exhibitor.companyName || `${exhibitor.firstName} ${exhibitor.lastName}`.trim() || "Exhibitor"
   const exhibitorLogo = exhibitor.companyLogo || exhibitor.avatar
   const exhibitorDescription = exhibitor.bio || "No description available."
-  const exhibitorSpecialties = exhibitor.specialties || ["Enterprise Software", "AI/ML Solutions", "Cloud Computing"]
-  const exhibitorCertifications = exhibitor.certifications || ["ISO 27001:2013", "SOC 2 Type II", "GDPR Compliant"]
-
-  // Mock data for achievements and social proof
-  const mockDetails = {
-    achievements: [
-      "Best Tech Innovation Award 2023",
-      "Top 50 Startups in India 2022",
-      "Excellence in Customer Service",
-      "Sustainability Leader Recognition",
-    ],
-    socialProof: {
-      clientsServed: "500+",
-      projectsCompleted: "1,200+",
-      yearsExperience: "8+",
-      teamSize: "150+",
-    },
-  }
+  const displayHeadquarters =
+    exhibitor.headquarters?.trim() ||
+    exhibitor.location?.trim() ||
+    [exhibitor.profileCity, exhibitor.profileCountry].filter(Boolean).join(", ") ||
+    null
+  const displayValue = (value?: string | null) => (value?.trim() ? value.trim() : "—")
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
       <div className="bg-[#002C71] text-white">
         <div className="max-w-7xl mx-auto px-4 py-12">
+          {/* Back button — only shown when we arrived here from somewhere with a
+              known return destination (e.g. the admin organizers/exhibitors list) */}
+          {returnTo && (
+            <button
+              type="button"
+              onClick={handleBack}
+              className="mb-6 inline-flex items-center gap-2 text-sm font-medium text-blue-100 hover:text-white transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back
+            </button>
+          )}
+
           <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
             {/* Exhibitor Avatar */}
             <div className="relative">
               <Avatar className="w-32 h-32 border-4 border-white shadow-lg">
-                <AvatarImage src={exhibitorLogo || "/city/c4.jpg"} alt={exhibitorName} />
+                <AvatarImage src={exhibitorLogo} alt={exhibitorName} />
                 <AvatarFallback className="text-2xl font-bold bg-white text-blue-600">
                   {exhibitorName
                     .split(" ")
@@ -857,7 +1053,7 @@ export default function ExhibitorPage() {
             {/* Exhibitor Info */}
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-2">
-                <h1 className="text-4xl font-bold">{exhibitorName}</h1>
+                <h1 className="text-3xl font-bold">{exhibitorName}</h1>
                 <div className="space-x-8">
                   <Badge className="bg-gray-200 w-20 py-2 text-yellow-900 rounded-sm">
                     Active
@@ -868,22 +1064,12 @@ export default function ExhibitorPage() {
 
               {/* Contact Info */}
               <div className="flex flex-wrap gap-6 text-blue-100">
-                {exhibitor.headquarters && (
+                {displayHeadquarters && (
                   <div className="flex items-center gap-2">
                     <MapPin className="w-4 h-4" />
-                    <span>{exhibitor.headquarters}</span>
+                    <span>{displayHeadquarters}</span>
                   </div>
                 )}
-                {/* {exhibitor.phone && (
-                  <div className="flex items-center gap-2">
-                    <Phone className="w-4 h-4" />
-                    <span>{exhibitor.phone}</span>
-                  </div>
-                )} */}
-                {/* <div className="flex items-center gap-2">
-                  <Mail className="w-4 h-4" />
-                  <span>{exhibitor.email}</span>
-                </div> */}
                 {exhibitor.website && (
                   <div className="flex items-center gap-2">
                     <Globe className="w-4 h-4" />
@@ -898,13 +1084,30 @@ export default function ExhibitorPage() {
             {/* Action Buttons */}
             <div className="flex flex-col gap-3">
               <div className="flex items-center gap-3">
-                <FollowButton
-                  userId={exhibitor.id}
-                  currentUserId={userId ?? undefined}
-                  variant="default"
-                  size="default"
-                  className="shadow-sm"
-                />
+                {userId ? (
+                  <FollowButton
+                    userId={exhibitor.id}
+                    currentUserId={userId}
+                    variant="default"
+                    size="default"
+                    className="shadow-sm"
+                  />
+                ) : (
+                  <Button
+                    variant="default"
+                    size="default"
+                    className="border-white text-blue-900 bg-white hover:bg-white hover:text-blue-600 shadow-sm"
+                    onClick={() => {
+                      const callbackUrl = encodeURIComponent(
+                        `${window.location.pathname}?autoFollow=${exhibitor.id}`
+                      )
+                      router.push(`/login?callbackUrl=${callbackUrl}`)
+                    }}
+                  >
+                    Follow
+                  </Button>
+                )}
+
                 <Button
                   variant="outline"
                   className="border-white text-white hover:bg-white hover:text-blue-600 bg-transparent"
@@ -935,30 +1138,24 @@ export default function ExhibitorPage() {
       </div>
 
       {/* Stats Section */}
-      <div className="bg-white border-b">
+      <div className="bg-[#f9f9f9] border-b">
         <div className="max-w-7xl mx-auto px-4 py-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
             <div className="text-center">
               <div className="text-2xl font-bold text-gray-900">{stats.totalEvents}</div>
               <div className="text-sm text-gray-600">Events Participated</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-gray-900">{stats.clientsServed}</div>
-              <div className="text-sm text-gray-600">Clients Served</div>
-            </div>
-            <div className="text-center">
               <div className="flex items-center justify-center gap-1">
                 <Star className="w-5 h-5 text-yellow-400 fill-current" />
-                <span className="text-2xl font-bold text-gray-900">{stats.reviewAvgRating}</span>
+                <span className="text-2xl font-bold text-gray-900">
+                  {stats.totalReviews > 0 ? stats.reviewAvgRating : "—"}
+                </span>
               </div>
               <div className="text-sm text-gray-600">Event Rating</div>
             </div>
-            {/* <div className="text-center">
-              <div className="text-2xl font-bold text-gray-900">{stats.totalReplies}</div>
-              <div className="text-sm text-gray-600">Total Replies</div>
-            </div> */}
             <div className="text-center">
-              <div className="text-2xl font-bold text-gray-900">{exhibitor.foundedYear || "2015"}</div>
+              <div className="text-2xl font-bold text-gray-900">{displayValue(exhibitor.foundedYear)}</div>
               <div className="text-sm text-gray-600">Founded</div>
             </div>
           </div>
@@ -966,7 +1163,7 @@ export default function ExhibitorPage() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="max-w-7xl bg-[#f9f9f9] mx-auto px-4 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="overview">Overview</TabsTrigger>
@@ -1042,7 +1239,7 @@ export default function ExhibitorPage() {
                             >
                               {/* Event Image */}
                               <div className="relative w-20 h-20 flex-shrink-0">
-                                <Image
+                                <AppImage
                                   alt={event.title || "Event"}
                                   src={event.bannerImage || event.thumbnailImage || "/images/signupimg.png"}
                                   fill
@@ -1161,8 +1358,8 @@ export default function ExhibitorPage() {
                         const event = booth.event;
 
                         return (
-                          <div 
-                            key={booth.id} 
+                          <div
+                            key={booth.id}
                             className="hover:shadow-lg transition-shadow cursor-pointer border-2 rounded-lg"
                             onClick={() => router.push(eventPublicPath(event))}
                           >
@@ -1195,16 +1392,6 @@ export default function ExhibitorPage() {
                                     Booth: {booth.boothNumber}
                                   </div>
                                 </div>
-                                {/* <div className="flex items-center justify-between">
-                                  <div className="flex items-center gap-1">
-                                    <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                                    <span className="text-sm font-medium">{event.averageRating || "N/A"}</span>
-                                    <span className="text-sm text-gray-500">({event.totalReviews || 0})</span>
-                                  </div>
-                                  <Badge variant="default">
-                                    Upcoming
-                                  </Badge>
-                                </div> */}
                               </div>
                             </CardContent>
                           </div>
@@ -1267,8 +1454,8 @@ export default function ExhibitorPage() {
                         const event = booth.event;
 
                         return (
-                          <Card 
-                            key={booth.id} 
+                          <Card
+                            key={booth.id}
                             className="hover:shadow-lg transition-shadow cursor-pointer"
                             onClick={() => router.push(eventPublicPath(event))}
                           >
@@ -1364,48 +1551,47 @@ export default function ExhibitorPage() {
             <Card>
               <CardContent className="p-8">
                 <h3 className="text-2xl font-bold text-gray-900 mb-6">Company Information</h3>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   <div className="space-y-4">
                     <div>
                       <label className="text-sm font-medium text-gray-500">Founded</label>
-                      <p className="text-lg font-semibold text-gray-900">{exhibitor.foundedYear || "2015"}</p>
+                      <p className="text-lg font-semibold text-gray-900">{displayValue(exhibitor.foundedYear)}</p>
                     </div>
                     <div>
                       <label className="text-sm font-medium text-gray-500">Headquarters</label>
-                      <p className="text-lg font-semibold text-gray-900">{exhibitor.headquarters || "Bangalore, India"}</p>
+                      <p className="text-lg font-semibold text-gray-900">{displayValue(displayHeadquarters)}</p>
                     </div>
                   </div>
 
                   <div className="space-y-4">
                     <div>
                       <label className="text-sm font-medium text-gray-500">Industry</label>
-                      <p className="text-lg font-semibold text-gray-900">{exhibitor.industry || "Technology"}</p>
+                      <p className="text-lg font-semibold text-gray-900">{displayValue(exhibitor.industry)}</p>
                     </div>
                     <div>
                       <label className="text-sm font-medium text-gray-500">Company Size</label>
-                      <p className="text-lg font-semibold text-gray-900">{exhibitor.companySize || "201-500 employees"}</p>
+                      <p className="text-lg font-semibold text-gray-900">{displayValue(exhibitor.companySize)}</p>
                     </div>
                   </div>
 
                   <div className="space-y-4">
                     <div>
                       <label className="text-sm font-medium text-gray-500">Website</label>
-                      <a
-                        href={exhibitor.website || "#"}
-                        className="text-lg font-semibold text-blue-600 hover:text-blue-700 hover:underline flex items-center gap-1"
-                      >
-                        {exhibitor.website || "https://techcorp.com"}
-                        <ExternalLink className="w-4 h-4" />
-                      </a>
+                      {exhibitor.website?.trim() ? (
+                        <a
+                          href={exhibitor.website.startsWith("http") ? exhibitor.website : `https://${exhibitor.website}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-lg font-semibold text-blue-600 hover:text-blue-700 hover:underline flex items-center gap-1"
+                        >
+                          {exhibitor.website}
+                          <ExternalLink className="w-4 h-4" />
+                        </a>
+                      ) : (
+                        <p className="text-lg font-semibold text-gray-900">—</p>
+                      )}
                     </div>
-                    {/* <div>
-                      <label className="text-sm font-medium text-gray-500">Contact</label>
-                      <div className="space-y-1">
-                        <p className="text-lg font-semibold text-gray-900">{exhibitor.phone || "+91 98765 43210"}</p>
-                        <p className="text-sm text-gray-600">{exhibitor.email}</p>
-                      </div>
-                    </div> */}
                   </div>
                 </div>
               </CardContent>
@@ -1457,8 +1643,8 @@ export default function ExhibitorPage() {
                         >
                           {reviews.map((review) => (
                             <div key={review.id} className="pb-4 border-b last:border-b-0 last:pb-0">
-                              <ReviewCard 
-                                review={review} 
+                              <ReviewCard
+                                review={review}
                                 exhibitorId={exhibitorId}
                                 onReplyAdded={handleReplyAdded}
                               />

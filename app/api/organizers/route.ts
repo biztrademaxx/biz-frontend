@@ -1,7 +1,7 @@
 import { proxyJson } from "@/lib/backend-proxy";
 
 export async function GET(req: Request) {
-  return proxyJson(req, "/api/organizers");
+  return proxyJson(req, "/api/organizers", undefined, { revalidateSeconds: 120 });
 }
 
 export async function POST(req: Request) {

@@ -10,9 +10,15 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Search, Plus, User, Mail, Phone, Building, Globe, Linkedin, Twitter } from "lucide-react"
+import { Search, Plus, User, Mail, Phone, Building, Globe, Linkedin, Twitter, Clock } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { apiFetch } from "@/lib/api"
+import {
+  DEFAULT_EVENT_TIMEZONE,
+  isoFromWallClock,
+  resolveEventTimezone,
+  wallClockDurationMinutes,
+} from "@/lib/event-datetime-timezone"
 
 interface Speaker {
   id: string
@@ -51,6 +57,7 @@ export default function AddSpeaker({ eventId }: AddSpeakerProps) {
   const [selectedSpeaker, setSelectedSpeaker] = useState<Speaker | null>(null)
   const [loading, setLoading] = useState(false)
   const [activeTab, setActiveTab] = useState("existing")
+  const [eventTimezone, setEventTimezone] = useState(DEFAULT_EVENT_TIMEZONE)
   const { toast } = useToast()
 
   // New speaker form state
@@ -96,6 +103,46 @@ export default function AddSpeaker({ eventId }: AddSpeakerProps) {
   useEffect(() => {
     fetchSpeakers()
   }, [])
+
+  useEffect(() => {
+    if (!eventId) return
+    let cancelled = false
+    ;(async () => {
+      try {
+        const data = await apiFetch<{ timezone?: string; country?: string }>(
+          `/api/events/${eventId}`,
+          { auth: true },
+        )
+        if (!cancelled) {
+          setEventTimezone(resolveEventTimezone(data.timezone, data.country))
+        }
+      } catch {
+        if (!cancelled) setEventTimezone(DEFAULT_EVENT_TIMEZONE)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [eventId])
+
+  // Auto-calculate duration from startTime and endTime (event timezone wall clock)
+  useEffect(() => {
+    const startDate = sessionDetails.startTime.split("T")[0]
+    const startHm = sessionDetails.startTime.split("T")[1]?.slice(0, 5)
+    const endDate = sessionDetails.endTime.split("T")[0] || startDate
+    const endHm = sessionDetails.endTime.split("T")[1]?.slice(0, 5)
+
+    if (startDate && startHm && endHm) {
+      const diffMinutes = wallClockDurationMinutes(startDate, startHm, endDate, endHm, eventTimezone)
+      if (diffMinutes > 0) {
+        setSessionDetails((prev) => ({ ...prev, duration: String(diffMinutes) }))
+      } else {
+        setSessionDetails((prev) => ({ ...prev, duration: "" }))
+      }
+    } else {
+      setSessionDetails((prev) => ({ ...prev, duration: "" }))
+    }
+  }, [sessionDetails.startTime, sessionDetails.endTime, eventTimezone])
 
   const fetchSpeakers = async () => {
     try {
@@ -187,6 +234,11 @@ export default function AddSpeaker({ eventId }: AddSpeakerProps) {
 
     setLoading(true)
     try {
+      const startDate = sessionDetails.startTime.split("T")[0]
+      const startHm = sessionDetails.startTime.split("T")[1]?.slice(0, 5) || "00:00"
+      const endDate = sessionDetails.endTime.split("T")[0] || startDate
+      const endHm = sessionDetails.endTime.split("T")[1]?.slice(0, 5) || "00:00"
+
       await apiFetch("/api/events/speakers", {
         method: "POST",
         body: {
@@ -196,8 +248,8 @@ export default function AddSpeaker({ eventId }: AddSpeakerProps) {
           description: sessionDetails.description,
           sessionType: sessionDetails.sessionType,
           duration: sessionDetails.duration || 60,
-          startTime: sessionDetails.startTime || new Date().toISOString(),
-          endTime: sessionDetails.endTime || new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+          startTime: isoFromWallClock(startDate, startHm, eventTimezone),
+          endTime: isoFromWallClock(endDate, endHm, eventTimezone),
           room: sessionDetails.room,
           abstract: sessionDetails.abstract,
           learningObjectives: sessionDetails.learningObjectives || [],
@@ -240,103 +292,93 @@ export default function AddSpeaker({ eventId }: AddSpeakerProps) {
 
   const addSpecialty = () => {
     if (newSpecialty.trim() && !newSpeaker.specialties.includes(newSpecialty.trim())) {
-      setNewSpeaker({
-        ...newSpeaker,
-        specialties: [...newSpeaker.specialties, newSpecialty.trim()],
-      })
+      setNewSpeaker({ ...newSpeaker, specialties: [...newSpeaker.specialties, newSpecialty.trim()] })
       setNewSpecialty("")
     }
   }
 
   const removeSpecialty = (specialty: string) => {
-    setNewSpeaker({
-      ...newSpeaker,
-      specialties: newSpeaker.specialties.filter((s) => s !== specialty),
-    })
+    setNewSpeaker({ ...newSpeaker, specialties: newSpeaker.specialties.filter((s) => s !== specialty) })
   }
 
   const addAchievement = () => {
     if (newAchievement.trim() && !newSpeaker.achievements.includes(newAchievement.trim())) {
-      setNewSpeaker({
-        ...newSpeaker,
-        achievements: [...newSpeaker.achievements, newAchievement.trim()],
-      })
+      setNewSpeaker({ ...newSpeaker, achievements: [...newSpeaker.achievements, newAchievement.trim()] })
       setNewAchievement("")
     }
   }
 
   const removeAchievement = (achievement: string) => {
-    setNewSpeaker({
-      ...newSpeaker,
-      achievements: newSpeaker.achievements.filter((a) => a !== achievement),
-    })
+    setNewSpeaker({ ...newSpeaker, achievements: newSpeaker.achievements.filter((a) => a !== achievement) })
   }
 
   const addCertification = () => {
     if (newCertification.trim() && !newSpeaker.certifications.includes(newCertification.trim())) {
-      setNewSpeaker({
-        ...newSpeaker,
-        certifications: [...newSpeaker.certifications, newCertification.trim()],
-      })
+      setNewSpeaker({ ...newSpeaker, certifications: [...newSpeaker.certifications, newCertification.trim()] })
       setNewCertification("")
     }
   }
 
   const removeCertification = (certification: string) => {
-    setNewSpeaker({
-      ...newSpeaker,
-      certifications: newSpeaker.certifications.filter((c) => c !== certification),
-    })
+    setNewSpeaker({ ...newSpeaker, certifications: newSpeaker.certifications.filter((c) => c !== certification) })
   }
 
   const addObjective = () => {
     if (newObjective.trim() && !sessionDetails.learningObjectives.includes(newObjective.trim())) {
-      setSessionDetails({
-        ...sessionDetails,
-        learningObjectives: [...sessionDetails.learningObjectives, newObjective.trim()],
-      })
+      setSessionDetails({ ...sessionDetails, learningObjectives: [...sessionDetails.learningObjectives, newObjective.trim()] })
       setNewObjective("")
     }
   }
 
   const removeObjective = (objective: string) => {
-    setSessionDetails({
-      ...sessionDetails,
-      learningObjectives: sessionDetails.learningObjectives.filter((o) => o !== objective),
-    })
+    setSessionDetails({ ...sessionDetails, learningObjectives: sessionDetails.learningObjectives.filter((o) => o !== objective) })
   }
 
   const addMaterial = () => {
     if (newMaterial.trim() && !sessionDetails.materials.includes(newMaterial.trim())) {
-      setSessionDetails({
-        ...sessionDetails,
-        materials: [...sessionDetails.materials, newMaterial.trim()],
-      })
+      setSessionDetails({ ...sessionDetails, materials: [...sessionDetails.materials, newMaterial.trim()] })
       setNewMaterial("")
     }
   }
 
   const removeMaterial = (material: string) => {
-    setSessionDetails({
-      ...sessionDetails,
-      materials: sessionDetails.materials.filter((m) => m !== material),
-    })
+    setSessionDetails({ ...sessionDetails, materials: sessionDetails.materials.filter((m) => m !== material) })
+  }
+
+  const formatDuration = (minutes: string) => {
+    const mins = parseInt(minutes)
+    if (isNaN(mins) || mins <= 0) return null
+    const h = Math.floor(mins / 60)
+    const m = mins % 60
+    if (h === 0) return `${m}m`
+    if (m === 0) return `${h}h`
+    return `${h}h ${m}m`
   }
 
   return (
-    <div className="space-y-6">
-      <Card>
+    <div className="min-w-0 space-y-6">
+      <Card className="min-w-0 overflow-hidden">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <User className="w-5 h-5" />
+            <User className="w-5 h-5 shrink-0" />
             Add Speaker to Event
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="existing">Select Existing Speaker</TabsTrigger>
-              <TabsTrigger value="new">Create New Speaker</TabsTrigger>
+        <CardContent className="min-w-0">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="min-w-0 space-y-6">
+            <TabsList className="flex h-auto w-full flex-col gap-1 p-1 sm:grid sm:grid-cols-2">
+              <TabsTrigger
+                value="existing"
+                className="h-auto w-full whitespace-normal px-3 py-2.5 text-xs sm:text-sm"
+              >
+                Select Existing Speaker
+              </TabsTrigger>
+              <TabsTrigger
+                value="new"
+                className="h-auto w-full whitespace-normal px-3 py-2.5 text-xs sm:text-sm"
+              >
+                Create New Speaker
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="existing" className="space-y-6">
@@ -352,50 +394,50 @@ export default function AddSpeaker({ eventId }: AddSpeakerProps) {
               </div>
 
               {/* Speakers List */}
-              <div className="grid gap-4 max-h-96 overflow-y-auto">
+              <div className="grid max-h-96 gap-4 overflow-y-auto">
                 {filteredSpeakers.map((speaker) => (
                   <Card
                     key={speaker.id}
-                    className={`cursor-pointer transition-colors ${
+                    className={`min-w-0 cursor-pointer transition-colors ${
                       selectedSpeaker?.id === speaker.id ? "ring-2 ring-blue-500 bg-blue-50" : "hover:bg-gray-50"
                     }`}
                     onClick={() => setSelectedSpeaker(speaker)}
                   >
                     <CardContent className="p-4">
-                      <div className="flex items-start gap-4">
-                        <Avatar className="w-16 h-16">
-                          <AvatarImage src={speaker.avatar || "/city/c4.jpg"} />
+                      <div className="flex min-w-0 flex-col items-start gap-4 sm:flex-row">
+                        <Avatar className="h-16 w-16 shrink-0">
+                          <AvatarImage src={speaker.avatar} />
                           <AvatarFallback>
                             {speaker.firstName[0]}
                             {speaker.lastName[0]}
                           </AvatarFallback>
                         </Avatar>
 
-                        <div className="flex-1 space-y-2">
+                        <div className="min-w-0 flex-1 space-y-2">
                           <div>
-                            <h3 className="text-lg font-semibold">
+                            <h3 className="text-lg font-semibold break-words">
                               {speaker.firstName} {speaker.lastName}
                             </h3>
-                            <p className="text-sm text-gray-600">
+                            <p className="text-sm text-gray-600 break-words">
                               {speaker.jobTitle} {speaker.company && `at ${speaker.company}`}
                             </p>
                           </div>
 
-                          <div className="flex items-center gap-4 text-sm text-gray-500">
-                            <div className="flex items-center gap-1">
-                              <Mail className="w-3 h-3" />
-                              {speaker.email}
+                          <div className="flex flex-col gap-2 text-sm text-gray-500 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
+                            <div className="flex min-w-0 items-center gap-1">
+                              <Mail className="h-3 w-3 shrink-0" />
+                              <span className="break-all">{speaker.email}</span>
                             </div>
                             {speaker.phone && (
                               <div className="flex items-center gap-1">
-                                <Phone className="w-3 h-3" />
+                                <Phone className="h-3 w-3 shrink-0" />
                                 {speaker.phone}
                               </div>
                             )}
                             {speaker.location && (
-                              <div className="flex items-center gap-1">
-                                <Building className="w-3 h-3" />
-                                {speaker.location}
+                              <div className="flex min-w-0 items-center gap-1">
+                                <Building className="h-3 w-3 shrink-0" />
+                                <span className="break-words">{speaker.location}</span>
                               </div>
                             )}
                           </div>
@@ -587,12 +629,7 @@ export default function AddSpeaker({ eventId }: AddSpeakerProps) {
                 </div>
                 <div className="flex flex-wrap gap-2 mt-2">
                   {newSpeaker.specialties.map((specialty) => (
-                    <Badge
-                      key={specialty}
-                      variant="secondary"
-                      className="cursor-pointer"
-                      onClick={() => removeSpecialty(specialty)}
-                    >
+                    <Badge key={specialty} variant="secondary" className="cursor-pointer" onClick={() => removeSpecialty(specialty)}>
                       {specialty} ×
                     </Badge>
                   ))}
@@ -615,12 +652,7 @@ export default function AddSpeaker({ eventId }: AddSpeakerProps) {
                 </div>
                 <div className="flex flex-wrap gap-2 mt-2">
                   {newSpeaker.achievements.map((achievement) => (
-                    <Badge
-                      key={achievement}
-                      variant="secondary"
-                      className="cursor-pointer"
-                      onClick={() => removeAchievement(achievement)}
-                    >
+                    <Badge key={achievement} variant="secondary" className="cursor-pointer" onClick={() => removeAchievement(achievement)}>
                       {achievement} ×
                     </Badge>
                   ))}
@@ -643,12 +675,7 @@ export default function AddSpeaker({ eventId }: AddSpeakerProps) {
                 </div>
                 <div className="flex flex-wrap gap-2 mt-2">
                   {newSpeaker.certifications.map((certification) => (
-                    <Badge
-                      key={certification}
-                      variant="secondary"
-                      className="cursor-pointer"
-                      onClick={() => removeCertification(certification)}
-                    >
+                    <Badge key={certification} variant="secondary" className="cursor-pointer" onClick={() => removeCertification(certification)}>
                       {certification} ×
                     </Badge>
                   ))}
@@ -714,25 +741,19 @@ export default function AddSpeaker({ eventId }: AddSpeakerProps) {
                   />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Start Date, Start Time, End Time, Room — duration auto-calculated */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="duration">Duration (minutes)</Label>
+                    <Label htmlFor="startDate">Start Date</Label>
                     <Input
-                      id="duration"
-                      type="number"
-                      value={sessionDetails.duration}
-                      onChange={(e) => setSessionDetails({ ...sessionDetails, duration: e.target.value })}
-                      placeholder="60"
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="startTime">Start Time</Label>
-                    <Input
-                      id="startTime"
-                      type="datetime-local"
-                      value={sessionDetails.startTime}
-                      onChange={(e) => setSessionDetails({ ...sessionDetails, startTime: e.target.value })}
+                      id="startDate"
+                      type="date"
+                      value={sessionDetails.startTime ? sessionDetails.startTime.split("T")[0] : ""}
+                      onChange={(e) => {
+                        const date = e.target.value
+                        const time = sessionDetails.startTime ? sessionDetails.startTime.split("T")[1] : "00:00"
+                        setSessionDetails({ ...sessionDetails, startTime: `${date}T${time}` })
+                      }}
                     />
                   </div>
 
@@ -746,6 +767,53 @@ export default function AddSpeaker({ eventId }: AddSpeakerProps) {
                     />
                   </div>
                 </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="startTime">Start Time</Label>
+                    <Input
+                      id="startTime"
+                      type="time"
+                      value={sessionDetails.startTime ? sessionDetails.startTime.split("T")[1] : ""}
+                      onChange={(e) => {
+                        const time = e.target.value
+                        const date = sessionDetails.startTime ? sessionDetails.startTime.split("T")[0] : new Date().toISOString().split("T")[0]
+                        setSessionDetails({ ...sessionDetails, startTime: `${date}T${time}` })
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="endTime">End Time</Label>
+                    <Input
+                      id="endTime"
+                      type="time"
+                      value={sessionDetails.endTime ? sessionDetails.endTime.split("T")[1] : ""}
+                      onChange={(e) => {
+                        const time = e.target.value
+                        const date = sessionDetails.startTime ? sessionDetails.startTime.split("T")[0] : new Date().toISOString().split("T")[0]
+                        setSessionDetails({ ...sessionDetails, endTime: `${date}T${time}` })
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* Auto-calculated duration pill */}
+                {sessionDetails.duration && formatDuration(sessionDetails.duration) ? (
+                  <div className="flex items-center gap-2 text-sm text-blue-700">
+                    <Clock className="w-4 h-4" />
+                    <span>
+                      Duration:{" "}
+                      <span className="font-medium">{formatDuration(sessionDetails.duration)}</span>
+                      <span className="text-blue-500 ml-1">({sessionDetails.duration} minutes)</span>
+                    </span>
+                  </div>
+                ) : sessionDetails.startTime && sessionDetails.endTime ? (
+                  <p className="text-sm text-red-500 flex items-center gap-1">
+                    <Clock className="w-4 h-4" />
+                    End time must be after start time.
+                  </p>
+                ) : null}
 
                 <div>
                   <Label htmlFor="abstract">Abstract</Label>
@@ -784,12 +852,7 @@ export default function AddSpeaker({ eventId }: AddSpeakerProps) {
                   </div>
                   <div className="flex flex-wrap gap-2 mt-2">
                     {sessionDetails.learningObjectives.map((objective) => (
-                      <Badge
-                        key={objective}
-                        variant="secondary"
-                        className="cursor-pointer"
-                        onClick={() => removeObjective(objective)}
-                      >
+                      <Badge key={objective} variant="secondary" className="cursor-pointer" onClick={() => removeObjective(objective)}>
                         {objective} ×
                       </Badge>
                     ))}
@@ -812,12 +875,7 @@ export default function AddSpeaker({ eventId }: AddSpeakerProps) {
                   </div>
                   <div className="flex flex-wrap gap-2 mt-2">
                     {sessionDetails.materials.map((material) => (
-                      <Badge
-                        key={material}
-                        variant="secondary"
-                        className="cursor-pointer"
-                        onClick={() => removeMaterial(material)}
-                      >
+                      <Badge key={material} variant="secondary" className="cursor-pointer" onClick={() => removeMaterial(material)}>
                         {material} ×
                       </Badge>
                     ))}

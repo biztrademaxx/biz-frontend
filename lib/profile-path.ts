@@ -28,7 +28,13 @@ function deriveSlug(role: PublicRole, data: ProfilePathInput): string {
     );
   }
   if (role === "exhibitor") {
-    return slugifyPublicProfile(data.organizationName) || slugifyPublicProfile(data.company) || slugifyPublicProfile(data.firstName);
+    const full = `${data.firstName ?? ""} ${data.lastName ?? ""}`.trim();
+    return (
+      slugifyPublicProfile(data.organizationName) ||
+      slugifyPublicProfile(data.company) ||
+      slugifyPublicProfile(full) ||
+      slugifyPublicProfile(data.firstName)
+    );
   }
   return slugifyPublicProfile(`${data.firstName ?? ""} ${data.lastName ?? ""}`);
 }
@@ -37,4 +43,57 @@ export function getPublicProfilePath(role: PublicRole, data: ProfilePathInput): 
   const segment =
     data.publicSlug?.trim() || deriveSlug(role, data) || data.id?.trim() || "profile";
   return `/${role}/${segment}`;
+}
+
+/** Logged-in speaker dashboard URL: same slug segment as public `/speaker/{slug}` when possible. */
+export function getSpeakerDashboardPath(userId: string, data: ProfilePathInput): string {
+  const segment = data.publicSlug?.trim() || deriveSlug("speaker", data);
+  if (segment) {
+    return `/speaker-dashboard/${encodeURIComponent(segment)}`;
+  }
+  return `/speaker-dashboard/${userId}`;
+}
+
+/** Logged-in organizer dashboard URL: same slug segment as public `/organizer/{slug}` when possible. */
+export function getOrganizerDashboardPath(userId: string, data: ProfilePathInput): string {
+  const segment = data.publicSlug?.trim() || deriveSlug("organizer", data);
+  if (segment) {
+    return `/organizer-dashboard/${encodeURIComponent(segment)}`;
+  }
+  return `/organizer-dashboard/${userId}`;
+}
+
+/** Logged-in visitor dashboard URL: full name slug when possible, else UUID. */
+export function getVisitorDashboardPath(userId: string, data: ProfilePathInput): string {
+  const segment = data.publicSlug?.trim() || deriveSlug("user", data);
+  if (segment) {
+    return `/dashboard/${encodeURIComponent(segment)}`;
+  }
+  return `/dashboard/${userId}`;
+}
+
+/** Resolves `/dashboard/[segment]` when segment is a name slug (not the user id). */
+export function visitorDashboardSegmentForUser(data: ProfilePathInput): string {
+  return slugifyPublicProfile(`${data.firstName ?? ""} ${data.lastName ?? ""}`);
+}
+
+/** Logged-in exhibitor dashboard URL: company / org slug, else full name, else UUID. */
+export function getExhibitorDashboardPath(userId: string, data: ProfilePathInput): string {
+  const segment = data.publicSlug?.trim() || deriveSlug("exhibitor", data);
+  if (segment) {
+    return `/exhibitor-dashboard/${encodeURIComponent(segment)}`;
+  }
+  return `/exhibitor-dashboard/${userId}`;
+}
+
+/** Resolves `/exhibitor-dashboard/[segment]` when segment is a slug (not the user id). */
+export function exhibitorDashboardSegmentForUser(data: ProfilePathInput): string {
+  const full = `${data.firstName ?? ""} ${data.lastName ?? ""}`.trim();
+  return (
+    slugifyPublicProfile(data.organizationName) ||
+    slugifyPublicProfile(data.company) ||
+    slugifyPublicProfile(full) ||
+    slugifyPublicProfile(data.firstName) ||
+    ""
+  );
 }

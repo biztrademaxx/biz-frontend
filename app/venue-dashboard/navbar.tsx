@@ -1,171 +1,135 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import Link from "next/link";
-import Image from "next/image";
-import { ChevronDown, User, LogOut, Settings } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { isAuthenticated, getCurrentUserId, getCurrentUserRole, clearTokens } from "@/lib/api";
+import { useEffect, useState } from "react"
+import { User, LogOut, Settings, ChevronDown } from "lucide-react"
+import { useRouter } from "next/navigation"
+import {
+  isAuthenticated,
+  getCurrentUserRole,
+  getCurrentUserDisplayName,
+  getCurrentUserEmail,
+  clearTokens,
+  markLogoutSuccessBanner,
+} from "@/lib/api"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
-import { useDashboard } from "@/contexts/dashboard-context";
-import { NotificationsDropdown } from "@/components/notifications-dropdown";
+} from "@/components/ui/dropdown-menu"
+import { useDashboard } from "@/contexts/dashboard-context"
+import { NotificationsDropdown } from "@/components/notifications-dropdown"
+import { DashboardResponsiveNavbar } from "@/components/dashboard-responsive-navbar"
+
+// const EXPLORE_LINKS = [
+//   { href: "/trade-fairs", label: "Trade Fairs" },
+//   { href: "/conferences", label: "Conferences" },
+//   { href: "/webinars", label: "Webinars" },
+// ]
 
 export default function Navbar() {
-  const [exploreOpen, setExploreOpen] = useState(false);
-  const router = useRouter();
-  const { setActiveSection } = useDashboard();
+  const router = useRouter()
+  const { setActiveSection } = useDashboard()
 
-  const toggleExplore = () => setExploreOpen((prev) => !prev);
+  // Guard against SSR/CSR mismatch — only trust auth state once mounted
+  // on the client.
+  const [hydrated, setHydrated] = useState(false)
+  useEffect(() => {
+    setHydrated(true)
+  }, [])
+
+  const authenticated = hydrated && isAuthenticated()
+  const displayName = hydrated ? getCurrentUserDisplayName() : ""
+  const userEmail = hydrated ? getCurrentUserEmail() : ""
+
+  const initials = hydrated
+    ? (displayName || userEmail || "U")
+      .trim()
+      .split(/\s+/)
+      .map((word) => word[0])
+      .join("")
+      .substring(0, 2)
+      .toUpperCase()
+    : "U"
 
   const handleAddevent = () => {
     if (!isAuthenticated()) {
-      alert("You are not logged in. Please login as an organizer.");
-      router.push("/login");
-      return;
+      alert("You are not logged in. Please login as an organizer.")
+      router.push("/login")
+      return
     }
 
-    const role = getCurrentUserRole();
-    const id = getCurrentUserId();
+    const role = getCurrentUserRole()
     if (role === "VENUE_MANAGER" || role === "venue_manager") {
-      if (id) {
-        router.push(`/venue-dashboard/${id}`);
-      } else {
-        router.push("/venue-dashboard");
-      }
+      router.push("/venue-dashboard")
     } else {
       const confirmed = window.confirm(
-        `You are logged in as '${role ?? "user"}'.\n\nPlease login as an organizer to access this page.\n\nClick OK to logout and login as an organizer, or Cancel to stay logged in.`
-      );
+        `You are logged in as '${role ?? "user"}'.\n\nPlease login as an organizer to access this page.\n\nClick OK to logout and login as an organizer, or Cancel to stay logged in.`,
+      )
       if (confirmed) {
-        clearTokens();
-        router.push("/login");
+        markLogoutSuccessBanner()
+        clearTokens()
+        router.push("/login")
       }
     }
-  };
+  }
 
   const handleLogout = () => {
-    clearTokens();
-    router.push("/login");
-  };
-
-  // Navigation functions using dashboard context
-  const navigateToProfile = () => {
-    setActiveSection("venue-profile");
-  };
-
-  const navigateToSettings = () => {
-    setActiveSection("settings");
-  };
+    markLogoutSuccessBanner()
+    clearTokens()
+    router.push("/login")
+  }
 
   return (
-    <nav className="bg-white shadow-sm">
-      <div className="max-w-1xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
-        <div className="flex justify-between h-20 items-center">
-          {/* Left: Logo + Explore */}
-          <div className="flex items-center space-x-6">
-            <Link href="/" className="inline-block">
-              <Image
-                src="/logo/bizlogo.png"
-                alt="BizTradeFairs.com"
-                width={160}
-                height={80}
-                className="h-42 w-auto"
-              />
-            </Link>
-
-            <div className="relative">
-              {/* <button
-                onClick={toggleExplore}
-                className="flex items-center text-gray-700 hover:text-gray-900 focus:outline-none"
+    <DashboardResponsiveNavbar
+      navClassName="sticky top-0 z-40 border-b border-slate-200 bg-white/65 shadow-sm backdrop-blur-xl"
+      // exploreLinks={EXPLORE_LINKS}
+      onAddEvent={handleAddevent}
+      actions={
+        <>
+          <NotificationsDropdown />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className="flex items-center gap-2 rounded-full bg-[#004A96] p-2 text-white transition-colors hover:bg-[#003d7a] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#004A96] focus-visible:ring-offset-2"
+                aria-label="Account menu"
               >
-                <span>Explore</span>
-                <ChevronDown className="w-4 h-4 ml-1" />
-              </button> */}
-
-              {exploreOpen && (
-                <div className="absolute left-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-10">
-                  <ul className="py-1">
-                    <li>
-                      <Link href="/trade-fairs">
-                        <p className="block px-4 py-2 hover:bg-gray-100">
-                          Trade Fairs
-                        </p>
-                      </Link>
-                    </li>
-                    <li>
-                      <Link href="/conferences">
-                        <p className="block px-4 py-2 hover:bg-gray-100">
-                          Conferences
-                        </p>
-                      </Link>
-                    </li>
-                    <li>
-                      <Link href="/webinars">
-                        <p className="block px-4 py-2 hover:bg-gray-100">
-                          Webinars
-                        </p>
-                      </Link>
-                    </li>
-                  </ul>
+                {authenticated ? (
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white/15 text-xs font-semibold">
+                    {initials}
+                  </span>
+                ) : (
+                  <User className="h-4 w-4" />
+                )}
+                <ChevronDown className="hidden h-3 w-3 sm:block" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56" align="end" forceMount>
+              {authenticated ? (
+                <div className="border-b border-gray-100 px-3 py-2">
+                  <p className="truncate text-sm font-semibold text-gray-900">{displayName}</p>
+                  {userEmail ? <p className="truncate text-xs text-gray-500">{userEmail}</p> : null}
                 </div>
-              )}
-            </div>
-          </div>
-
-          {/* Right: Links + Profile */}
-          <div className="flex items-center space-x-6">
-            <Link href="/event">
-              <p className="text-gray-700 hover:text-gray-900">
-                Top 10 Must Visit
-              </p>
-            </Link>
-            <Link href="/speakers">
-              <p className="text-gray-700 hover:text-gray-900">Speakers</p>
-            </Link>
-            <p
-              onClick={handleAddevent}
-              className="text-gray-700 hover:text-gray-900 cursor-pointer"
-            >
-              Add Event
-            </p>
-
-            {/* Notifications Dropdown */}
-            <NotificationsDropdown />
-
-            {/* Profile Menu */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-2 p-2 rounded-full bg-[#002C71] text-white hover:bg-blue-800 focus:outline-none transition-colors">
-                  <User className="w-4 h-4" />
-                  <ChevronDown className="w-3 h-3" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="end" forceMount>
-                <DropdownMenuItem onClick={navigateToProfile}>
-                  <User className="mr-2 h-4 w-4" />
-                  <span>My Profile</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={navigateToSettings}>
-                  <Settings className="mr-2 h-4 w-4" />
-                  <span>Settings</span>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout}>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Logout</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
-      </div>
-    </nav>
-  );
+              ) : null}
+              <DropdownMenuItem onClick={() => setActiveSection("venue-profile")}>
+                <User className="mr-2 h-4 w-4" />
+                <span>My Profile</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setActiveSection("settings")}>
+                <Settings className="mr-2 h-4 w-4" />
+                <span>Settings</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleLogout}>
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Logout</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </>
+      }
+    />
+  )
 }

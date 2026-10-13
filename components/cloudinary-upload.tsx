@@ -1,5 +1,6 @@
 "use client"
 
+import { AppImage } from "@/components/app-image"
 import { useState, useRef, useEffect } from "react"
 import { X, Image as ImageIcon } from "lucide-react"
 import { apiFetch } from "@/lib/api"
@@ -13,7 +14,7 @@ interface CloudinaryUploadProps {
   emptyLabel?: string
   /** Text when an image is already selected */
   changeLabel?: string
-  /** Applied to the preview <img> (default: small square) */
+  /** Applied to the preview image (default: small square) */
   previewClassName?: string
 }
 
@@ -92,7 +93,7 @@ export default function CloudinaryUpload({
       {/* Preview */}
       {previewUrl && (
         <div className="relative inline-block max-w-full">
-          <img src={previewUrl} alt="" className={previewClassName} />
+          <AppImage src={previewUrl} alt="" width={80} height={80} className={previewClassName} />
           <button
             type="button"
             onClick={removeImage}

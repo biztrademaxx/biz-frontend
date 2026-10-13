@@ -1,4 +1,6 @@
 // lib/api.ts
+import { getVisitorDashboardPath } from "./profile-path";
+
 const DEFAULT_BACKEND_API_ORIGIN = "http://localhost:4000";
 
 function trimmedNextPublicApiUrl(): string {
@@ -74,6 +76,31 @@ export function clearTokens() {
   if (typeof window === "undefined") return;
   window.localStorage.removeItem(ACCESS_TOKEN_KEY);
   window.localStorage.removeItem(REFRESH_TOKEN_KEY);
+}
+
+const LOGOUT_SUCCESS_BANNER_KEY = "biz_logout_success_banner_v1";
+
+/** Call right before `clearTokens()` when the user logs out and you send them to `/login`. */
+export function markLogoutSuccessBanner() {
+  if (typeof window === "undefined") return;
+  try {
+    sessionStorage.setItem(LOGOUT_SUCCESS_BANNER_KEY, "1");
+  } catch {
+    /* quota / private mode */
+  }
+}
+
+/** One-shot: login page reads this after logout to show the confirmation popup. */
+export function consumeLogoutSuccessBanner(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    const v = sessionStorage.getItem(LOGOUT_SUCCESS_BANNER_KEY);
+    if (v !== "1") return false;
+    sessionStorage.removeItem(LOGOUT_SUCCESS_BANNER_KEY);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /** Decode JWT payload without verification (client-side only; for reading sub/role/permissions). */
@@ -163,6 +190,17 @@ export function getCurrentUserEmail(): string | null {
   return payload?.email ?? null;
 }
 
+/** Visitor dashboard URL using name slug from JWT when available (falls back to UUID). */
+export function getCurrentVisitorDashboardPath(): string | null {
+  const userId = getCurrentUserId();
+  if (!userId) return null;
+  const payload = decodeJwtPayload(getAccessToken() ?? "");
+  return getVisitorDashboardPath(userId, {
+    firstName: typeof payload?.firstName === "string" ? payload.firstName : undefined,
+    lastName: typeof payload?.lastName === "string" ? payload.lastName : undefined,
+  });
+}
+
 /** Current user permissions from stored access token (backend sets for ADMIN domain). */
 export function getCurrentUserPermissions(): string[] {
   const token = getAccessToken();
@@ -175,6 +213,16 @@ export function getCurrentUserPermissions(): string[] {
 /** Whether the client has an access token (user considered logged in for API auth). */
 export function isAuthenticated(): boolean {
   return !!getAccessToken();
+}
+
+/** True when a non-expired access token is stored (guest prompts should stay hidden). */
+export function hasActiveAccessToken(): boolean {
+  const token = getAccessToken();
+  if (!token) return false;
+  const payload = decodeJwtPayload(token);
+  if (!payload) return false;
+  if (typeof payload.exp === "number" && payload.exp * 1000 <= Date.now()) return false;
+  return true;
 }
 
 async function refreshAccessToken(): Promise<string | null> {
@@ -197,7 +245,14 @@ async function refreshAccessToken(): Promise<string | null> {
       return null;
     }
 
-    const data = await response.json();
+    const raw = await response.text();
+    let data: { accessToken?: string; refreshToken?: string };
+    try {
+      data = raw.trim() ? JSON.parse(raw) : {};
+    } catch {
+      clearTokens();
+      return null;
+    }
     const newAccessToken: string | undefined = data.accessToken;
     const newRefreshToken: string | undefined = data.refreshToken;
 
@@ -216,6 +271,25 @@ async function refreshAccessToken(): Promise<string | null> {
     console.error("Failed to refresh access token", error);
     clearTokens();
     return null;
+  }
+}
+
+/**
+ * Parse a browser `fetch` Response as JSON without throwing when the body is HTML (e.g. 404 page) or empty.
+ * Use for relative `/api/*` calls that may not exist or may return an HTML error document.
+ */
+export async function safeResponseJson<T = unknown>(response: Response): Promise<T | null> {
+  const raw = await response.text()
+  const trimmed = raw.trim()
+  if (!trimmed) return null
+  const contentType = response.headers.get("content-type") || ""
+  const looksJson =
+    /json/i.test(contentType) || trimmed.startsWith("{") || trimmed.startsWith("[")
+  if (!looksJson) return null
+  try {
+    return JSON.parse(trimmed) as T
+  } catch {
+    return null
   }
 }
 
@@ -304,11 +378,16 @@ export async function apiFetch<T = any>(path: string, options: ApiRequestOptions
   }
 
   if (!response.ok) {
+    const raw = await response.text();
     let errorBody: any = null;
     try {
-      errorBody = await response.json();
+      errorBody = raw.trim() ? JSON.parse(raw) : null;
     } catch {
-      // ignore JSON parse errors
+      errorBody = {
+        message: raw.trim()
+          ? raw.trim().slice(0, 800)
+          : `Request to ${path} failed with status ${response.status}`,
+      };
     }
 
     const primary =
@@ -331,8 +410,37 @@ export async function apiFetch<T = any>(path: string, options: ApiRequestOptions
     return null as T;
   }
 
-  const data = await response.json();
-  return data as T;
+  const raw = await response.text();
+  const trimmed = raw.trim();
+  if (!trimmed) {
+    return null as T;
+  }
+  const contentType = response.headers.get("content-type") || "";
+  const looksJson =
+    /json/i.test(contentType) ||
+    trimmed.startsWith("{") ||
+    trimmed.startsWith("[");
+  if (!looksJson) {
+    const origin = getBrowserBackendApiOrigin();
+    const err: any = new Error(
+      `Expected JSON from ${path} but got a non-JSON response (${contentType || "unknown content-type"}). ` +
+        `Preview: "${trimmed.slice(0, 100).replace(/\s+/g, " ")}"… ` +
+        `Ensure the API is running at ${origin} (biz-backend), CORS allows this origin, ` +
+        `and NEXT_PUBLIC_API_URL is not set to this Next.js URL by mistake.`,
+    );
+    err.status = response.status;
+    err.path = path;
+    throw err;
+  }
+  try {
+    return JSON.parse(trimmed) as T;
+  } catch (cause: unknown) {
+    const err: any = new Error(`Invalid JSON while parsing response from ${path}`);
+    err.status = response.status;
+    err.path = path;
+    err.cause = cause;
+    throw err;
+  }
 }
 
 export async function loginWithEmailPassword(email: string, password: string) {

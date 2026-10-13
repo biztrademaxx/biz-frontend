@@ -1,6 +1,7 @@
 "use client"
 
 import Image from "next/image"
+import { AppImage } from "@/components/app-image"
 import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
@@ -305,7 +306,7 @@ export default function SpeakerPage({ params: _params }: SpeakerPageProps) {
             className="block w-full h-full"
           >
             <Image
-              src={banner.imageUrl || "/city/c4.jpg"}
+              src={banner.imageUrl }
               alt={banner.title}
               fill
               className="object-cover"
@@ -453,11 +454,12 @@ export default function SpeakerPage({ params: _params }: SpeakerPageProps) {
                             <div className="relative aspect-video rounded-lg overflow-hidden bg-gray-200">
                               {thumbnail ? (
                                 <>
-                                  {/* Use regular img tag for external YouTube images */}
-                                  <img
+                                  <AppImage
                                     src={thumbnail}
                                     alt={`YouTube thumbnail for ${session.title}`}
-                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                                    fill
+                                    sizes="(max-width: 768px) 100vw, 50vw"
+                                    className="object-cover transition-transform group-hover:scale-105"
                                   />
                                   <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-colors" />
                                   <div className="absolute inset-0 flex items-center justify-center">

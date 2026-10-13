@@ -392,7 +392,7 @@ export default function AddVenue({ organizerId, onVenueChange }: AddVenueProps) 
                     <CardContent className="p-4">
                       <div className="flex items-start gap-4">
                         <Avatar className="w-16 h-16">
-                          <AvatarImage src={venue.avatar || "/city/c4.jpg"} />
+                          <AvatarImage src={venue.avatar } />
                           <AvatarFallback>
                             {venue.firstName[0]}
                             {venue.lastName[0]}
@@ -436,24 +436,24 @@ export default function AddVenue({ organizerId, onVenueChange }: AddVenueProps) 
                           )}
 
                           <div className="flex items-center gap-4 text-sm text-gray-500">
-                            {venue.maxCapacity && (
+                            {(venue.maxCapacity ?? 0) > 0 ? (
                               <div className="flex items-center gap-1">
                                 <Users className="w-3 h-3" />
                                 Up to {venue.maxCapacity} guests
                               </div>
-                            )}
-                            {venue.totalHalls && (
+                            ) : null}
+                            {(venue.totalHalls ?? 0) > 0 ? (
                               <div className="flex items-center gap-1">
                                 <Building className="w-3 h-3" />
                                 {venue.totalHalls} halls
                               </div>
-                            )}
-                            {venue.averageRating && (
+                            ) : null}
+                            {(venue.averageRating ?? 0) > 0 ? (
                               <div className="flex items-center gap-1">
                                 <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                                {venue.averageRating} ({venue.totalReviews} reviews)
+                                {venue.averageRating} ({venue.totalReviews ?? 0} reviews)
                               </div>
-                            )}
+                            ) : null}
                           </div>
 
                           <div className="flex flex-wrap gap-1">
@@ -469,9 +469,9 @@ export default function AddVenue({ organizerId, onVenueChange }: AddVenueProps) 
                             )}
                           </div>
 
-                          {venue.basePrice && (
+                          {(venue.basePrice ?? 0) > 0 ? (
                             <div className="text-lg font-semibold text-blue-600">${venue.basePrice}/day</div>
-                          )}
+                          ) : null}
                         </div>
                       </div>
                     </CardContent>

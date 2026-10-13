@@ -1,8 +1,9 @@
 "use client"
 
+import { AppImage } from "@/components/app-image"
 import { useCallback, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { Users, UserPlus, UserCheck, User } from "lucide-react"
+import { UserPlus, UserCheck, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { apiFetch, getCurrentUserId, isAuthenticated } from "@/lib/api"
 import { readInterestLocalStorage } from "@/lib/event-leads-client"
@@ -105,24 +106,57 @@ export function EventCardFollowStrip({
     }
   }, [eventId, toast, userId])
 
-  const onFollowClick = (e: React.MouseEvent) => {
+  const onFollowClick = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault()
     e.stopPropagation()
 
-    router.push(eventPath)
+    // Don't redirect when clicking Follow
+    // router.push(eventPath) <-- REMOVE THIS
 
     if (!isAuthenticated() || !userId) {
+      toast({
+        title: "Login required",
+        description: "Please log in to follow this event.",
+        variant: "destructive",
+      })
+      router.push("/login")
       return
     }
 
-    if (isSaved || visiting) {
+    if (busy || isSaved || visiting) {
       return
     }
 
     setBusy(true)
-    setCount((c) => c + 1)
+
+    // Optimistic UI
     setIsSaved(true)
-    void runBackgroundFollow()
+    setCount((c) => c + 1)
+
+    try {
+      await apiFetch(`/api/events/${eventId}/save`, {
+        method: "POST",
+        auth: true,
+      })
+
+      toast({
+        title: "Following",
+        description: `You are now following "${eventTitle}".`,
+      })
+    } catch (err) {
+      console.error(err)
+
+      setIsSaved(false)
+      setCount((c) => Math.max(0, c - 1))
+
+      toast({
+        title: "Could not follow",
+        description: "Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setBusy(false)
+    }
   }
 
   const faces = followerPreview.slice(0, 3)
@@ -131,7 +165,6 @@ export function EventCardFollowStrip({
   return (
     <div className="flex flex-wrap items-center gap-3">
       <div className="flex items-center gap-2 min-w-0">
-        <Users className="w-4 h-4 text-gray-500 shrink-0" aria-hidden />
         <div className="flex items-center -space-x-2">
           {faces.map((f, i) => {
             const src = faceUrl(f)
@@ -142,8 +175,7 @@ export function EventCardFollowStrip({
                 style={{ zIndex: i + 2 }}
               >
                 {src ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={src} alt="" className="h-full w-full object-cover" />
+                  <AppImage src={src} alt="" fill sizes="32px" className="object-cover" />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 text-[10px] font-bold text-slate-600">
                     {faceInitials(f)}

@@ -1,4 +1,16 @@
+import {
+  filterByHomeCountryPrioritizeCity,
+  getHeroSlideshowCityLabel,
+  getHeroSlideshowCountryLabel,
+} from "@/lib/home-location"
+import { hasDisplayableEventImage } from "@/lib/event-card-meta"
+import { resolveHomeLocation } from "@/lib/home-location-server"
 import type { HeroSlideshowEvent } from "./types"
+import { filterVipEventRows } from "./vip-event-filter"
+
+function withDisplayableImage(events: HeroSlideshowEvent[]): HeroSlideshowEvent[] {
+  return events.filter((e) => e.id && hasDisplayableEventImage(e))
+}
 
 const SLIDE_COUNT = 12
 
@@ -39,6 +51,12 @@ function normalizeEvent(event: Record<string, unknown>): HeroSlideshowEvent {
     (event as { sub_title?: unknown }).sub_title
   const subTitle = typeof subRaw === "string" && subRaw.trim() ? subRaw.trim() : null
 
+  const descRaw = event.description ?? event.desc ?? event.about ?? null
+  const description = typeof descRaw === "string" && descRaw.trim() ? descRaw.trim() : null
+
+  const videoRaw = event.videoUrl ?? event.video_url ?? event.video ?? null
+  const videoUrl = typeof videoRaw === "string" && videoRaw.trim() ? videoRaw.trim() : null
+
   return {
     id: String(event.id ?? ""),
     title: typeof event.title === "string" ? event.title : "Event",
@@ -50,20 +68,28 @@ function normalizeEvent(event: Record<string, unknown>): HeroSlideshowEvent {
         : new Date().toISOString(),
     endDate:
       endRaw != null && String(endRaw) ? new Date(String(endRaw)).toISOString() : null,
+    vipImage:
+      typeof event.vipImage === "string"
+        ? event.vipImage.trim() || null
+        : typeof event.vip_image === "string"
+          ? event.vip_image.trim() || null
+          : null,
     bannerImage: firstImageUrl(event),
     images: imageStrings?.length ? imageStrings : null,
+    description,
+    videoUrl,
     venue:
       venue != null
         ? {
-            venueName: typeof venue.venueName === "string" ? venue.venueName : null,
-            venueCity: typeof venue.venueCity === "string" ? venue.venueCity : null,
-            venueCountry: typeof venue.venueCountry === "string" ? venue.venueCountry : null,
-          }
+          venueName: typeof venue.venueName === "string" ? venue.venueName : null,
+          venueCity: typeof venue.venueCity === "string" ? venue.venueCity : null,
+          venueCountry: typeof venue.venueCountry === "string" ? venue.venueCountry : null,
+        }
         : {
-            venueName: typeof event.venueName === "string" ? event.venueName : null,
-            venueCity: typeof event.city === "string" ? event.city : null,
-            venueCountry: typeof event.country === "string" ? event.country : null,
-          },
+          venueName: typeof event.venueName === "string" ? event.venueName : null,
+          venueCity: typeof event.city === "string" ? event.city : null,
+          venueCountry: typeof event.country === "string" ? event.country : null,
+        },
   }
 }
 
@@ -89,8 +115,18 @@ function mergeUniqueById(
   return out
 }
 
+function applyHomeEventFilters(events: HeroSlideshowEvent[], loc: Awaited<ReturnType<typeof resolveHomeLocation>>) {
+  return withDisplayableImage(
+    filterByHomeCountryPrioritizeCity(events, loc, {
+      getCity: getHeroSlideshowCityLabel,
+      getCountry: getHeroSlideshowCountryLabel,
+    }),
+  )
+}
+
 export async function fetchHeroSlideshowEventsServer(): Promise<HeroSlideshowEvent[]> {
-  let events: HeroSlideshowEvent[] = []
+  const loc = await resolveHomeLocation()
+  let pool: HeroSlideshowEvent[] = []
 
   try {
     const vipRes = await fetch(`${getApiBaseUrl()}/api/events/vip`, {
@@ -99,38 +135,28 @@ export async function fetchHeroSlideshowEventsServer(): Promise<HeroSlideshowEve
     if (vipRes.ok) {
       const data = await vipRes.json()
       const raw = Array.isArray(data) ? data : data?.events ?? []
-      events = (raw as Record<string, unknown>[]).map(normalizeEvent).filter((e) => e.id)
+      pool = filterVipEventRows(raw as Record<string, unknown>[])
+        .map(normalizeEvent)
+        .filter((e) => e.id)
     }
 
-    if (events.length === 0) {
-      const listRes = await fetch(`${getApiBaseUrl()}/api/events?limit=24`, {
+    if (pool.length < SLIDE_COUNT) {
+      const listRes = await fetch(`${getApiBaseUrl()}/api/events?limit=60&vip=true`, {
         next: { revalidate: 60 },
       })
       if (listRes.ok) {
         const data = await listRes.json()
-        const list = (data?.events ?? []) as Record<string, unknown>[]
-        const vipOnly = list.filter(
-          (e) => e?.isVIP === true || e?.is_vip === true || e?.vip === true,
+        const rawList = filterVipEventRows((data?.events ?? []) as Record<string, unknown>[])
+        pool = mergeUniqueById(
+          pool,
+          rawList.map(normalizeEvent).filter((e) => e.id),
+          SLIDE_COUNT,
         )
-        events = vipOnly.map(normalizeEvent).filter((e) => e.id)
       }
-    }
-
-    if (events.length < SLIDE_COUNT) {
-      const listRes = await fetch(`${getApiBaseUrl()}/api/events?limit=40`, {
-        next: { revalidate: 60 },
-      })
-      if (listRes.ok) {
-        const data = await listRes.json()
-        const list = ((data?.events ?? []) as Record<string, unknown>[]).map(normalizeEvent)
-        events = mergeUniqueById(events, list, SLIDE_COUNT)
-      }
-    } else {
-      events = events.slice(0, SLIDE_COUNT)
     }
   } catch (err) {
     console.error("Hero slideshow error:", err)
   }
 
-  return events.slice(0, SLIDE_COUNT)
+  return applyHomeEventFilters(pool, loc).slice(0, SLIDE_COUNT)
 }

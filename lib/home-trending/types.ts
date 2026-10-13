@@ -23,6 +23,8 @@ export interface TrendingHomeEvent {
   title: string
   leads: string
   bannerImage?: string
+  thumbnailImage?: string
+  images?: unknown
   logo?: string
   edition?: string
   categories?: string[]

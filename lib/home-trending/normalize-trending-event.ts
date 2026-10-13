@@ -1,3 +1,4 @@
+import { resolveEventBannerImage } from "@/lib/events/resolve-event-banner-image"
 import type { FollowerPreviewItem, TrendingHomeEvent, TrendingVenue } from "./types"
 import { avatarUrlFromRecord } from "@/lib/user-avatar-url"
 
@@ -77,12 +78,23 @@ export function normalizeTrendingHomeEvent(raw: unknown): TrendingHomeEvent | nu
   else if (typeof raw.visitCount === "number") goingCount = raw.visitCount
   else if (typeof countBlock?.leads === "number") goingCount = goingCount ?? countBlock.leads
 
+  const images = raw.images
+  const bannerImage =
+    resolveEventBannerImage({
+      bannerImage: typeof raw.bannerImage === "string" ? raw.bannerImage : null,
+      thumbnailImage: typeof raw.thumbnailImage === "string" ? raw.thumbnailImage : null,
+      logo: typeof raw.logo === "string" ? raw.logo : null,
+      images,
+    }) ?? undefined
+
   const event: TrendingHomeEvent = {
     id,
     slug: typeof raw.slug === "string" ? raw.slug : null,
     title,
     leads: typeof raw.leads === "string" ? raw.leads : "",
-    bannerImage: typeof raw.bannerImage === "string" ? raw.bannerImage : undefined,
+    bannerImage,
+    thumbnailImage: typeof raw.thumbnailImage === "string" ? raw.thumbnailImage : undefined,
+    images,
     logo: typeof raw.logo === "string" ? raw.logo : undefined,
     edition: typeof raw.edition === "string" ? raw.edition : undefined,
     categories: Array.isArray(raw.categories)

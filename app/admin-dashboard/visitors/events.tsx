@@ -1,5 +1,6 @@
 "use client"
 
+import { AppImage } from "@/components/app-image"
 import { useState, useEffect } from "react"
 import { adminApi } from "@/lib/admin-api"
 import {
@@ -82,12 +83,17 @@ export default function VisitorEventsPage() {
 
   const fetchVisitors = async () => {
     try {
-      const data = await adminApi<VisitorEvent[]>("/visitors/visitor-events")
-      const list = Array.isArray(data) ? data : (data as any)?.data ?? []
+      setLoading(true)
+      const data = await adminApi<VisitorEvent[] | { data?: VisitorEvent[] }>(
+        "/visitors/visitor-events",
+      )
+      const list = Array.isArray(data) ? data : data?.data ?? []
       setVisitors(list)
       setFilteredVisitors(list)
     } catch (error) {
       console.error("Error fetching visitors:", error)
+      setVisitors([])
+      setFilteredVisitors([])
     } finally {
       setLoading(false)
     }
@@ -105,8 +111,9 @@ export default function VisitorEventsPage() {
     }
 
     if (statusFilter !== "all") {
+      const wanted = statusFilter.toUpperCase()
       filtered = filtered.filter((visitor) =>
-        visitor.registrations.some((reg) => reg.status.toLowerCase() === statusFilter.toLowerCase())
+        visitor.registrations.some((reg) => reg.status.toUpperCase() === wanted),
       )
     }
 
@@ -255,10 +262,12 @@ export default function VisitorEventsPage() {
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
                             {visitor.visitor.avatar ? (
-                              <img
-                                src={visitor.visitor.avatar || "/city/c4.jpg"}
+                              <AppImage
+                                src={visitor.visitor.avatar}
                                 alt={visitor.visitor.name}
-                                className="w-10 h-10 rounded-full"
+                                width={40}
+                                height={40}
+                                className="h-10 w-10 rounded-full object-cover"
                               />
                             ) : (
                               <span className="text-sm font-medium text-primary">
@@ -274,7 +283,14 @@ export default function VisitorEventsPage() {
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell>{visitor.visitor.email}</TableCell>
+                      <TableCell className="max-w-[220px]">
+                        <div
+                          className="truncate"
+                          title={visitor.visitor.email}
+                        >
+                          {visitor.visitor.email}
+                        </div>
+                      </TableCell>
                       <TableCell>
                         <Badge variant="outline">{visitor.stats.totalRegistrations}</Badge>
                       </TableCell>
@@ -329,9 +345,11 @@ export default function VisitorEventsPage() {
                       <p className="text-sm text-muted-foreground">Name</p>
                       <p className="font-medium">{selectedVisitor.visitor.name}</p>
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <p className="text-sm text-muted-foreground">Email</p>
-                      <p className="font-medium">{selectedVisitor.visitor.email}</p>
+                      <p className="font-medium break-all text-sm">
+                        {selectedVisitor.visitor.email}
+                      </p>
                     </div>
                     {selectedVisitor.visitor.phone && (
                       <div>

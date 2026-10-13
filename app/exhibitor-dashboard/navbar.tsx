@@ -1,11 +1,16 @@
 "use client"
 
-import { useState } from "react"
-import Link from "next/link"
-import Image from "next/image"
-import { ChevronDown, User, LogOut, Settings, Bell } from "lucide-react"
+import { useEffect, useState } from "react"
+import { User, LogOut, Settings, ChevronDown } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { isAuthenticated, getCurrentUserRole, clearTokens } from "@/lib/api"
+import {
+  isAuthenticated,
+  getCurrentUserRole,
+  getCurrentUserDisplayName,
+  getCurrentUserEmail,
+  clearTokens,
+  markLogoutSuccessBanner,
+} from "@/lib/api"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,31 +18,40 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { useDashboard } from "@/contexts/dashboard-context"
 import { NotificationsDropdown } from "@/components/notifications-dropdown"
+import { DashboardResponsiveNavbar } from "@/components/dashboard-responsive-navbar"
 
-interface Notification {
-  id: string
-  type: string
-  title: string
-  message: string
-  isRead: boolean
-  createdAt: string
-  priority: string
-  imageUrl?: string
-  actionUrl?: string
-}
+// const EXPLORE_LINKS = [
+//   { href: "/trade-fairs", label: "Trade Fairs" },
+//   { href: "/conferences", label: "Conferences" },
+//   { href: "/webinars", label: "Webinars" },
+// ]
 
 export default function Navbar() {
-  const [exploreOpen, setExploreOpen] = useState(false)
-  const [notificationsOpen, setNotificationsOpen] = useState(false)
   const router = useRouter()
   const { setActiveSection } = useDashboard()
 
-  const toggleExplore = () => setExploreOpen((prev) => !prev)
+  // Guard against SSR/CSR mismatch — only read auth-derived display info
+  // once mounted on the client.
+  const [hydrated, setHydrated] = useState(false)
+  useEffect(() => {
+    setHydrated(true)
+  }, [])
+
+  const authenticated = hydrated && isAuthenticated()
+  const displayName = hydrated ? getCurrentUserDisplayName() : ""
+  const userEmail = hydrated ? getCurrentUserEmail() : ""
+
+  const initials = hydrated
+    ? (displayName || userEmail || "U")
+      .trim()
+      .split(/\s+/)
+      .map((word) => word[0])
+      .join("")
+      .substring(0, 2)
+      .toUpperCase()
+    : "U"
 
   const handleAddevent = () => {
     if (!isAuthenticated()) {
@@ -53,106 +67,68 @@ export default function Navbar() {
         `You are logged in as '${role}'.\n\nPlease login as an organizer to access this page.\n\nClick OK to logout and login as an organizer, or Cancel to stay logged in.`,
       )
       if (confirmed) {
+        markLogoutSuccessBanner()
         clearTokens()
         router.push("/login")
       }
     }
   }
 
-  // Navigation functions using dashboard context
-  const navigateToProfile = () => {
-    setActiveSection("info")
-  }
-
-  const navigateToSettings = () => {
-    setActiveSection("settings")
-  }
-
   return (
-    <nav className="bg-white shadow-sm">
-      <div className="max-w-1xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
-        <div className="flex justify-between h-20 items-center">
-          {/* Left: Logo + Explore */}
-          <div className="flex items-center space-x-6">
-            <Link href="/" className="inline-block">
-              <Image src="/logo/bizlogo.png" alt="BizTradeFairs.com" width={160} height={80} className="h-42 w-auto" />
-            </Link>
-
-            <div className="relative">
+    <DashboardResponsiveNavbar
+      navClassName="border-b border-slate-200 bg-white shadow-sm sticky top-0 z-50 shrink-0"
+      // exploreLinks={EXPLORE_LINKS}
+      onAddEvent={handleAddevent}
+      actions={
+        <>
+          <NotificationsDropdown />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
               <button
-                onClick={toggleExplore}
-                className="flex items-center text-gray-700 hover:text-gray-900 focus:outline-none"
+                type="button"
+                className="flex items-center gap-2 rounded-full bg-[#004A96] p-2 text-white transition-colors hover:bg-[#003d7a] focus:outline-none"
+                aria-label="Account menu"
               >
-                <span>Explore</span>
-                <ChevronDown className="w-4 h-4 ml-1" />
+                {authenticated ? (
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white/15 text-xs font-semibold">
+                    {initials}
+                  </span>
+                ) : (
+                  <User className="h-4 w-4" />
+                )}
+                <ChevronDown className="hidden h-3 w-3 sm:block" />
               </button>
-
-              {exploreOpen && (
-                <div className="absolute left-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-10">
-                  <ul className="py-1">
-                    <li>
-                      <Link href="/trade-fairs">
-                        <p className="block px-4 py-2 hover:bg-gray-100">Trade Fairs</p>
-                      </Link>
-                    </li>
-                    <li>
-                      <Link href="/conferences">
-                        <p className="block px-4 py-2 hover:bg-gray-100">Conferences</p>
-                      </Link>
-                    </li>
-                    <li>
-                      <Link href="/webinars">
-                        <p className="block px-4 py-2 hover:bg-gray-100">Webinars</p>
-                      </Link>
-                    </li>
-                  </ul>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56" align="end" forceMount>
+              {authenticated ? (
+                <div className="border-b border-gray-100 px-3 py-2">
+                  <p className="truncate text-sm font-semibold text-gray-900">{displayName}</p>
+                  {userEmail ? <p className="truncate text-xs text-gray-500">{userEmail}</p> : null}
                 </div>
-              )}
-            </div>
-          </div>
-
-          {/* Right: Links + Profile */}
-          <div className="flex items-center space-x-6">
-            <Link href="/event">
-              <p className="text-gray-700 hover:text-gray-900">Top 10 Must Visit</p>
-            </Link>
-            <Link href="/speakers">
-              <p className="text-gray-700 hover:text-gray-900">Speakers</p>
-            </Link>
-            <p onClick={handleAddevent} className="text-gray-700 hover:text-gray-900 cursor-pointer">
-              Add Event
-            </p>
-
-            {/* Replace the old notification dropdown with the new component */}
-            <NotificationsDropdown />
-
-            {/* Profile Menu */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-2 p-2 rounded-full bg-[#002C71] text-white hover:bg-blue-800 focus:outline-none transition-colors">
-                  <User className="w-4 h-4" />
-                  <ChevronDown className="w-3 h-3" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="end" forceMount>
-                <DropdownMenuItem onClick={navigateToProfile}>
-                  <User className="mr-2 h-4 w-4" />
-                  <span>My Profile</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={navigateToSettings}>
-                  <Settings className="mr-2 h-4 w-4" />
-                  <span>Settings</span>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => { clearTokens(); router.push("/login"); }}>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Logout</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
-      </div>
-    </nav>
+              ) : null}
+              <DropdownMenuItem onClick={() => setActiveSection("info")}>
+                <User className="mr-2 h-4 w-4" />
+                <span>My Profile</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setActiveSection("settings")}>
+                <Settings className="mr-2 h-4 w-4" />
+                <span>Settings</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => {
+                  markLogoutSuccessBanner()
+                  clearTokens()
+                  router.push("/login")
+                }}
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Logout</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </>
+      }
+    />
   )
 }

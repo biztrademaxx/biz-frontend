@@ -1,29 +1,24 @@
-import { normalizeExploreVenue } from "./normalize-explore-venue"
+import { filterByHomeCountryPrioritizeCity } from "@/lib/home-location"
+import { resolveHomeLocation } from "@/lib/home-location-server"
+import { fetchAllVenuesServer } from "./fetch-all-venues-server"
 import type { ExploreVenueCard } from "./types"
 
-const PATH = "/api/venues?requireVenueImage=1&limit=24"
+const HOME_VENUE_CARD_LIMIT = 8
 
-function getApiBaseUrl(): string {
-  return process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"
+const venueLocationGetters = {
+  getCity: (v: ExploreVenueCard) => v.locationHay || v.city,
+  getCountry: (v: ExploreVenueCard) => v.country,
 }
 
 export async function fetchExploreVenuesForHomeServer(): Promise<ExploreVenueCard[]> {
   try {
-    const res = await fetch(`${getApiBaseUrl()}${PATH}`, { cache: "no-store" })
-    if (!res.ok) return []
-    const data: unknown = await res.json()
-    const rawList: unknown[] =
-      data && typeof data === "object" && !Array.isArray(data) && Array.isArray((data as { data?: unknown[] }).data)
-        ? ((data as { data: unknown[] }).data)
-        : Array.isArray(data)
-          ? data
-          : []
-    const out: ExploreVenueCard[] = []
-    for (const row of rawList) {
-      const v = normalizeExploreVenue(row)
-      if (v) out.push(v)
-    }
-    return out
+    const all = await fetchAllVenuesServer()
+    if (all.length === 0) return []
+
+    const loc = await resolveHomeLocation()
+    const inVisitorCountry = filterByHomeCountryPrioritizeCity(all, loc, venueLocationGetters)
+
+    return inVisitorCountry.slice(0, HOME_VENUE_CARD_LIMIT)
   } catch (e) {
     console.error("fetchExploreVenuesForHomeServer:", e)
     return []

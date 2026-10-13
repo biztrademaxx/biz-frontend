@@ -1,6 +1,7 @@
 "use client"
 
-import { clearTokens } from "@/lib/api"
+import { useRouter } from "next/navigation"
+import { clearTokens, markLogoutSuccessBanner } from "@/lib/api"
 import {
   Sidebar,
   SidebarContent,
@@ -57,7 +58,7 @@ export function DashboardSidebar({ activeSection, setActiveSection, userData }: 
       <SidebarHeader className="border-b p-4">
         <div className="flex items-center gap-3">
           <Avatar className="w-10 h-10">
-            <AvatarImage src={userData.avatar || "/city/c4.jpg"} />
+            <AvatarImage src={userData.avatar } />
             <AvatarFallback>RS</AvatarFallback>
           </Avatar>
           <div>
@@ -85,7 +86,7 @@ export function DashboardSidebar({ activeSection, setActiveSection, userData }: 
               ))}
               <SidebarMenuItem>
                 <Button
-                  onClick={() => { clearTokens(); router.push("/login"); }}
+                  onClick={() => { markLogoutSuccessBanner(); clearTokens(); router.push("/login"); }}
                   className="w-full bg-red-500 hover:bg-red-600 text-white mt-20 "
                 >
                   Logout

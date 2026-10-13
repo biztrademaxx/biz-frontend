@@ -3,29 +3,34 @@
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Calendar, MapPin, Star } from "lucide-react"
+import HomeSectionEmptyState, { homeEmptyDescription } from "@/components/home/HomeSectionEmptyState"
 import type { ExploreVenueCard } from "@/lib/venues/types"
+import { formatVenueLocationLabel } from "@/lib/venues/format-venue-location"
+import { AppImage } from "@/components/app-image"
+import { DEFAULT_VENUE_IMAGE } from "@/lib/default-venue-image"
+import { getVenuePublicPath } from "@/lib/venue-dashboard-path"
 
 function VenueCard({ venue, onNavigate }: { venue: ExploreVenueCard; onNavigate: () => void }) {
   const showRating = venue.averageRating > 0 || venue.totalReviews > 0
-  const locationLabel = venue.city.trim() || "Location TBD"
+  const locationLabel = formatVenueLocationLabel(venue.city, venue.country)
 
   return (
     <button
       type="button"
       onClick={onNavigate}
       aria-label={`View venue: ${venue.name}`}
-      className="group flex h-full w-full cursor-pointer flex-col overflow-hidden rounded-sm border border-gray-200 bg-white text-left shadow-sm transition-shadow duration-200 hover:border-gray-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+      // Updated: Added border and improved shadow
+      className="group flex h-full w-full cursor-pointer flex-col overflow-hidden rounded-sm bg-white border border-gray-200 text-left shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_40px_rgba(0,0,0,0.15)] hover:border-[#002C71]/30 focus:outline-none focus:ring-2 focus:ring-[#002C71] focus:ring-offset-2"
+
     >
       <div className="relative h-28 w-full shrink-0 overflow-hidden bg-gray-100 sm:h-32">
-        <img
+        <AppImage
           src={venue.imageUrl}
-          alt=""
-          aria-hidden
-          className="h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-[1.02]"
-          onError={(e) => {
-            const t = e.target as HTMLImageElement
-            t.src = "/city/c1.jpg"
-          }}
+          alt={venue.name}
+          fill
+          sizes="(max-width: 768px) 100vw, 25vw"
+          fallbackSrc={DEFAULT_VENUE_IMAGE}
+          className="object-cover transition-transform duration-300 ease-out group-hover:scale-[1.02]"
         />
         {venue.eventCount > 0 ? (
           <div className="absolute bottom-1.5 left-1.5 flex items-center gap-0.5 rounded bg-black/55 px-1.5 py-0.5 text-[10px] font-medium text-white backdrop-blur-[2px] sm:text-[11px]">
@@ -71,12 +76,31 @@ function VenueCard({ venue, onNavigate }: { venue: ExploreVenueCard; onNavigate:
 
 export interface ExploreVenuesGridClientProps {
   venues: ExploreVenueCard[]
+  homeCity?: string | null
+  homeCountry?: string | null
 }
 
-export default function ExploreVenuesGridClient({ venues }: ExploreVenuesGridClientProps) {
+export default function ExploreVenuesGridClient({
+  venues,
+  homeCity,
+  homeCountry,
+}: ExploreVenuesGridClientProps) {
+  const subtitle = homeCountry
+    ? homeCity
+      ? `Venues across ${homeCountry} — near ${homeCity} first`
+      : `Discover event spaces and venues in ${homeCountry}`
+    : "Discover event spaces and venues worldwide"
   const router = useRouter()
-  const row1 = venues.slice(0, 3)
-  const row2 = venues.slice(3, 6)
+
+  // Debug log to see how many venues are being received
+  console.log("Total venues received:", venues.length)
+
+  // Only take up to 8 venues
+  const displayVenues = venues.slice(0, 8)
+  console.log("Display venues (first 8):", displayVenues.length)
+
+  const row1 = displayVenues.slice(0, 4)
+  const row2 = displayVenues.slice(4, 8)
 
   return (
     <section className="home-tt-section mx-auto mb-12 w-full min-w-0 max-w-7xl px-3 sm:px-4 lg:px-6">
@@ -84,39 +108,51 @@ export default function ExploreVenuesGridClient({ venues }: ExploreVenuesGridCli
         <h2 className="home-tt-h2 mb-3">
           Explore Venues
           <br />
-          <span className="home-tt-sub">Discover event spaces and venues in top cities</span>
+          <span className="home-tt-sub">{subtitle}</span>
         </h2>
       </div>
 
       <div>
         {venues.length === 0 ? (
-          <p className="py-8 text-center text-sm text-gray-500">No venues available yet.</p>
+          <HomeSectionEmptyState
+            icon="venues"
+            title="No venues in this region yet"
+            description={homeEmptyDescription("venues", homeCity, homeCountry)}
+            homeCity={homeCity}
+            homeCountry={homeCountry}
+            actions={[
+              { label: "Browse all venues", href: "/venues" },
+              { label: "List your venue", href: "/organizer-signup", variant: "secondary" },
+            ]}
+          />
         ) : (
           <>
-            <div className="mb-6 grid grid-cols-1 gap-5 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {row1.map((venue) => (
-                <VenueCard
-                  key={venue.id}
-                  venue={venue}
-                  onNavigate={() => router.push(`/venue/${venue.id}`)}
-                />
-              ))}
-            </div>
-            {row2.length > 0 ? (
-              <div className="grid grid-cols-1 gap-5 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {row1.length > 0 && (
+              <div className="mb-6 grid grid-cols-1 gap-5 sm:gap-6 md:grid-cols-2 lg:grid-cols-4">
+                {row1.map((venue) => (
+                  <VenueCard
+                    key={venue.id}
+                    venue={venue}
+                    onNavigate={() => router.push(getVenuePublicPath(venue.id, venue.name))}
+                  />
+                ))}
+              </div>
+            )}
+            {row2.length > 0 && (
+              <div className="grid grid-cols-1 gap-5 sm:gap-6 md:grid-cols-2 lg:grid-cols-4">
                 {row2.map((venue) => (
                   <VenueCard
                     key={venue.id}
                     venue={venue}
-                    onNavigate={() => router.push(`/venue/${venue.id}`)}
+                    onNavigate={() => router.push(getVenuePublicPath(venue.id, venue.name))}
                   />
                 ))}
               </div>
-            ) : null}
+            )}
             <div className="mt-10 flex justify-center">
               <Link
                 href="/venues"
-                className="inline-flex items-center justify-center rounded-sm bg-[#002C71] px-8 py-3 text-sm font-semibold text-white shadow-sm transition-colors duration-200 hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                className="inline-flex items-center justify-center rounded-sm bg-[#004A96] px-8 py-3 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-[#003a75] hover:shadow-[0_8px_20px_rgba(0,44,113,0.25)] focus:outline-none focus:ring-2 focus:ring-[#004A96]focus:ring-offset-2"
               >
                 View all venues
               </Link>

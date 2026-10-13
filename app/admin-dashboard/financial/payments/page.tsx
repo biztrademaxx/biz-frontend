@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -10,6 +10,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Search, DollarSign, CreditCard, TrendingUp, AlertCircle, Eye, RefreshCw } from "lucide-react"
 import { apiFetch } from "@/lib/api"
+import { formatMoney, formatMoneyTotals, sumByCurrency } from "@/lib/format-currency"
+import { Pagination } from "../../shared/components/Pagination"
+
+const PAGE_SIZE = 20
 
 interface Payment {
   id: string
@@ -29,15 +33,16 @@ interface Payment {
   updatedAt: string
   eventRegistrationsCount: number
   venueBookingsCount: number
+  type?: string
 }
 
 interface Stats {
   totalPayments: number
-  totalRevenue: number
+  totalRevenue: Record<string, number>
   completedPayments: number
   pendingPayments: number
   failedPayments: number
-  refundedAmount: number
+  refundedAmount: Record<string, number>
 }
 // const payments: Payment[] = []
 
@@ -51,14 +56,16 @@ export default function FinancialPaymentsPage() {
   const [gatewayFilter, setGatewayFilter] = useState("all")
   const [stats, setStats] = useState<Stats>({
     totalPayments: 0,
-    totalRevenue: 0,
+    totalRevenue: {},
     completedPayments: 0,
     pendingPayments: 0,
     failedPayments: 0,
-    refundedAmount: 0,
+    refundedAmount: {},
   })
+  const [fetchError, setFetchError] = useState<string | null>(null)
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null)
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false)
+  const [page, setPage] = useState(1)
 
   useEffect(() => {
     fetchPayments()
@@ -68,29 +75,39 @@ export default function FinancialPaymentsPage() {
     filterPayments()
   }, [payments, searchQuery, statusFilter, gatewayFilter])
 
+  useEffect(() => {
+    setPage(1)
+  }, [searchQuery, statusFilter, gatewayFilter])
+
   const fetchPayments = async () => {
     try {
       setLoading(true)
-      const data = await apiFetch<{ success?: boolean; data?: Payment[] }>("/api/admin/financial/payments", {
-        auth: true,
-      })
+      setFetchError(null)
+      const data = await apiFetch<{ success?: boolean; data?: Payment[] }>(
+        "/api/admin/financial/payments?limit=500",
+        { auth: true },
+      )
       const list = data.data ?? []
       setPayments(list)
       const computedStats: Stats = {
         totalPayments: list.length,
-        totalRevenue: list
-          .filter((p) => p.status === "COMPLETED")
-          .reduce((sum, p) => sum + p.amount, 0),
+        totalRevenue: sumByCurrency(list.filter((p) => p.status === "COMPLETED")),
         completedPayments: list.filter((p) => p.status === "COMPLETED").length,
         pendingPayments: list.filter((p) => p.status === "PENDING").length,
         failedPayments: list.filter((p) => p.status === "FAILED").length,
         refundedAmount: list
           .filter((p) => p.status === "REFUNDED" || p.status === "PARTIALLY_REFUNDED")
-          .reduce((sum, p) => sum + (p.refundAmount || 0), 0),
+          .reduce<Record<string, number>>((acc, p) => {
+            const currency = (p.currency ?? "INR").toUpperCase()
+            acc[currency] = (acc[currency] ?? 0) + (p.refundAmount || 0)
+            return acc
+          }, {}),
       }
       setStats(computedStats)
     } catch (error) {
       console.error("Error fetching payments:", error)
+      setFetchError(error instanceof Error ? error.message : "Failed to load payments")
+      setPayments([])
     } finally {
       setLoading(false)
     }
@@ -140,12 +157,10 @@ export default function FinancialPaymentsPage() {
     }
   }
 
-  const formatCurrency = (amount: number, currency: string) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: currency || "USD",
-    }).format(amount)
-  }
+  const formatCurrency = (amount: number, currency: string) => formatMoney(amount, currency)
+
+  const paymentDisplayId = (payment: Payment) =>
+    payment.gatewayTransactionId?.slice(0, 20) ?? payment.id.slice(0, 8)
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString("en-US", {
@@ -161,6 +176,15 @@ export default function FinancialPaymentsPage() {
     setSelectedPayment(payment)
     setDetailsDialogOpen(true)
   }
+
+  const totalPages = Math.max(1, Math.ceil(filteredPayments.length / PAGE_SIZE))
+  const safePage = Math.min(page, totalPages)
+  const paginatedPayments = useMemo(() => {
+    const start = (safePage - 1) * PAGE_SIZE
+    return filteredPayments.slice(start, start + PAGE_SIZE)
+  }, [filteredPayments, safePage])
+  const rangeStart = filteredPayments.length === 0 ? 0 : (safePage - 1) * PAGE_SIZE + 1
+  const rangeEnd = Math.min(safePage * PAGE_SIZE, filteredPayments.length)
 
   if (loading) {
     return (
@@ -178,6 +202,9 @@ export default function FinancialPaymentsPage() {
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Payments Dashboard</h1>
         <p className="text-gray-600 mt-1">Manage all payment transactions and financial activities</p>
+        {fetchError ? (
+          <p className="mt-2 text-sm text-destructive">{fetchError}</p>
+        ) : null}
       </div>
 
       {/* Stats Cards */}
@@ -201,7 +228,7 @@ export default function FinancialPaymentsPage() {
           <CardContent>
             <div className="flex items-center gap-2">
               <DollarSign className="w-4 h-4 text-green-600" />
-              <p className="text-2xl font-bold">{formatCurrency(stats.totalRevenue, "USD")}</p>
+              <p className="text-2xl font-bold">{formatMoneyTotals(stats.totalRevenue)}</p>
             </div>
           </CardContent>
         </Card>
@@ -249,7 +276,7 @@ export default function FinancialPaymentsPage() {
           <CardContent>
             <div className="flex items-center gap-2">
               <RefreshCw className="w-4 h-4 text-purple-600" />
-              <p className="text-2xl font-bold">{formatCurrency(stats.refundedAmount, "USD")}</p>
+              <p className="text-2xl font-bold">{formatMoneyTotals(stats.refundedAmount)}</p>
             </div>
           </CardContent>
         </Card>
@@ -315,16 +342,19 @@ export default function FinancialPaymentsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredPayments.length === 0 ? (
+                {paginatedPayments.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={8} className="text-center py-8 text-gray-500">
                       No payments found
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredPayments.map((payment) => (
+                  paginatedPayments.map((payment) => (
                     <TableRow key={payment.id}>
-                      <TableCell className="font-mono text-xs">{payment.id.slice(0, 8)}...</TableCell>
+                      <TableCell className="font-mono text-xs" title={payment.gatewayTransactionId ?? payment.id}>
+                        {paymentDisplayId(payment)}
+                        {payment.gatewayTransactionId ? "…" : ""}
+                      </TableCell>
                       <TableCell>
                         <div>
                           <p className="font-medium">{payment.userName}</p>
@@ -343,6 +373,11 @@ export default function FinancialPaymentsPage() {
                         <Badge className={getStatusColor(payment.status)}>{payment.status.replace(/_/g, " ")}</Badge>
                       </TableCell>
                       <TableCell>
+                        {payment.type ? (
+                          <Badge variant="outline" className="capitalize">
+                            {payment.type.toLowerCase().replace(/_/g, " ")}
+                          </Badge>
+                        ) : null}
                         {payment.eventRegistrationsCount > 0 && (
                           <Badge variant="outline" className="mr-1">
                             {payment.eventRegistrationsCount} Event{payment.eventRegistrationsCount > 1 ? "s" : ""}
@@ -366,12 +401,21 @@ export default function FinancialPaymentsPage() {
               </TableBody>
             </Table>
           </div>
+
+          {filteredPayments.length > 0 ? (
+            <div className="mt-4 flex flex-col items-center gap-2 sm:flex-row sm:justify-between">
+              <p className="text-sm text-gray-600">
+                Showing {rangeStart}–{rangeEnd} of {filteredPayments.length} payments
+              </p>
+              <Pagination page={safePage} totalPages={totalPages} onPageChange={setPage} />
+            </div>
+          ) : null}
         </CardContent>
       </Card>
 
       {/* Payment Details Dialog */}
       <Dialog open={detailsDialogOpen} onOpenChange={setDetailsDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto rounded-xl">
           <DialogHeader>
             <DialogTitle>Payment Details</DialogTitle>
             <DialogDescription>Complete information about this payment transaction</DialogDescription>

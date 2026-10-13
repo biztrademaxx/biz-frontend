@@ -1,186 +1,227 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useParams } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import Image from "next/image"
+import { useVenueDashboardVenueUserId } from "@/contexts/venue-dashboard-venue-id"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Calendar } from "@/components/ui/calendar"
-import {
-  CalendarIcon,
-  MapPin,
-  Users,
-  Building,
-  Clock,
-  Eye,
-  MessageSquare,
-} from "lucide-react"
+import { venueTabsList, venueTabsScrollWrapper, venueTabsTrigger } from "./venue-dashboard-theme"
+import { Button } from "@/components/ui/button"
+import { CalendarIcon, MapPin, Users, Building, Plus, MoreHorizontal } from "lucide-react"
 import { apiFetch } from "@/lib/api"
+import { cn } from "@/lib/utils"
+import { getEventDisplayImageFromRecord } from "@/lib/default-event-image"
+
+function formatCategory(category: unknown): string {
+  if (Array.isArray(category)) {
+    const parts = category.filter((c): c is string => typeof c === "string" && c.trim().length > 0)
+    return parts.length ? parts.join(", ") : "—"
+  }
+  if (typeof category === "string" && category.trim()) return category.trim()
+  return "—"
+}
+
+function formatStatus(status: unknown): string {
+  if (typeof status !== "string") return "—"
+  return status.replace(/_/g, " ")
+}
+
+function formatEventLocation(event: Record<string, unknown>): string {
+  const city = typeof event.city === "string" ? event.city.trim() : ""
+  const country = typeof event.country === "string" ? event.country.trim() : ""
+  const isVirtual = event.isVirtual === true
+  if (isVirtual && !city && !country) return "Online"
+  const parts = [city, country].filter((p) => p.length > 0)
+  if (parts.length > 0) return parts.join(", ")
+  const tz = typeof event.timezone === "string" ? event.timezone.trim() : ""
+  return tz.length > 0 ? tz : "—"
+}
 
 export default function EventManagement() {
-  const { id: venueId } = useParams() // 👈 get venueId from the URL (like /venue-dashboard/[id])
+  const resolvedVenueUserId = useVenueDashboardVenueUserId()
   const [activeTab, setActiveTab] = useState("upcoming")
-  const [searchTerm, setSearchTerm] = useState("")
-  const [filterStatus, setFilterStatus] = useState("all")
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date())
   const [events, setEvents] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
-  // Fetch events from API
   useEffect(() => {
-    if (!venueId) return
-
+    if (!resolvedVenueUserId) return
     const fetchEvents = async () => {
       try {
         setLoading(true)
         const data = await apiFetch<{ success: boolean; data?: any[]; events?: any[] }>(
-          `/api/venues/${venueId}/events`,
-          { auth: true },
+          `/api/venues/${resolvedVenueUserId}/events`,
+          { auth: true }
         )
-
-        if (data.success) {
-          // Support both { data: [...] } and { events: [...] } shapes
-          setEvents(data.data || data.events || [])
-        } else {
-          console.error("Failed to load events")
-        }
+        if (data.success) setEvents(data.events ?? data.data ?? [])
       } catch (error) {
         console.error("Error fetching events:", error)
       } finally {
         setLoading(false)
       }
     }
-
     fetchEvents()
-  }, [venueId])
+  }, [resolvedVenueUserId])
 
-  // Filter upcoming (includes ongoing) & past events
   const now = new Date()
   const upcomingEvents = events.filter((e) => new Date(e.endDate) >= now)
   const pastEvents = events.filter((e) => new Date(e.endDate) < now)
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Confirmed":
-      case "PUBLISHED":
-        return "bg-green-500"
-      case "Pending Confirmation":
-        return "bg-yellow-500"
-      case "Completed":
-        return "bg-blue-500"
-      case "Cancelled":
-        return "bg-red-500"
-      default:
-        return "bg-gray-500"
-    }
+  const getStatusBadgeClass = (status: unknown) => {
+    const s = (typeof status === "string" ? status : "").toUpperCase().replace(/-/g, "_")
+    if (["PUBLISHED", "CONFIRMED", "LIVE", "APPROVED", "ONGOING"].some((k) => s.includes(k)))
+      return "bg-[#DCFCE7] text-[#16A34A] border-0"
+    if (["DRAFT", "PENDING", "SCHEDULED"].some((k) => s.includes(k)))
+      return "bg-[#FEF9C3] text-[#CA8A04] border-0"
+    if (["CANCELLED", "CANCELED", "REJECTED"].some((k) => s.includes(k)))
+      return "bg-[#FEE2E2] text-[#DC2626] border-0"
+    if (["COMPLETED", "ENDED", "CLOSED"].some((k) => s.includes(k)))
+      return "bg-[#dbeafe] text-[#7C3AED] border-0"
+    return "bg-[#F1F5F9] text-[#64748B] border-0"
   }
 
-  const getEventKey = (event: any, index: number) => {
+  const shortDate = (d: string | undefined) => {
+    if (!d) return "—"
+    try { return new Date(d).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) }
+    catch { return "—" }
+  }
+
+  const getEventKey = (event: any, index: number) =>
+    event.id || event._id || event.eventId || `${event.title || "event"}-${event.startDate || "no-date"}-${index}`
+
+  const EventCard = ({ event }: { event: Record<string, unknown> }) => {
+    const title = typeof event.title === "string" ? event.title : "Event"
+    const imgSrc = getEventDisplayImageFromRecord(event)
+    const startDate = typeof event.startDate === "string" ? event.startDate : undefined
+    const endDate = typeof event.endDate === "string" ? event.endDate : undefined
+    const locationLabel = formatEventLocation(event)
+    const attendees = typeof event.currentAttendees === "number" ? event.currentAttendees : Number(event.currentAttendees) || 0
+    const price = typeof event.basePrice === "number" ? event.basePrice : typeof event.price === "number" ? event.price : null
+    const currency = typeof event.currency === "string" ? event.currency : "₹"
+
     return (
-      event.id ||
-      event._id ||
-      event.eventId ||
-      `${event.title || "event"}-${event.startDate || "no-date"}-${index}`
+      <div className="bg-white rounded-2xl border border-[#E2E8F0] overflow-hidden hover:shadow-md hover:border-[#C7D2FE] transition-all duration-200 group">
+        {/* Image */}
+        <div className="relative h-40 w-full overflow-hidden">
+          <Image
+            src={imgSrc}
+            alt={title}
+            fill
+            className="object-cover group-hover:scale-105 transition-transform duration-300"
+            sizes="(max-width: 640px) 100vw, 320px"
+            unoptimized={imgSrc.startsWith("http")}
+          />
+        </div>
+
+        {/* Content */}
+        <div className="p-4">
+          <p className="text-[11px] font-medium text-[#004A96] mb-1">{formatCategory(event.category)}</p>
+          <h3 className="text-sm font-semibold text-[#1E293B] leading-snug line-clamp-2 mb-2">{title}</h3>
+
+          <div className="space-y-1.5 mb-3">
+            <div className="flex items-center gap-1.5 text-xs text-[#64748B]">
+              <CalendarIcon className="w-3.5 h-3.5 text-[#004A96] shrink-0" />
+              <span>{shortDate(startDate)} – {shortDate(endDate)}</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-xs text-[#64748B]">
+              <MapPin className="w-3.5 h-3.5 text-[#0284C7] shrink-0" />
+              <span className="truncate">{locationLabel}</span>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="flex items-center justify-between pt-3 border-t border-[#F1F5F9]">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1 text-xs text-[#64748B]">
+                <Users className="w-3.5 h-3.5" />
+                <span>{attendees}</span>
+              </div>
+              {price !== null && (
+                <div className="flex items-center gap-1 text-xs text-[#64748B]">
+                  <span>💰</span>
+                  <span>{currency}{price.toLocaleString()}</span>
+                </div>
+              )}
+            </div>
+            <Badge className={cn("text-[10px] font-semibold px-2 py-0.5 rounded-full", getStatusBadgeClass(event.status))}>
+              {formatStatus(event.status)}
+            </Badge>
+          </div>
+        </div>
+      </div>
     )
   }
 
-  const EventCard = ({ event, isPast = false }: { event: any; isPast?: boolean }) => (
-    <Card className="hover:shadow-md transition-shadow">
-      <CardContent className="p-6">
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex-1">
-            <h3 className="text-lg font-semibold mb-2">{event.title}</h3>
-            <div className="space-y-2 text-sm text-gray-600">
-              <div className="flex items-center gap-2">
-                <Building className="w-4 h-4" />
-                {event.category || "N/A"}
-              </div>
-            </div>
-          </div>
-          <div className="flex flex-col items-end gap-2">
-            <Badge className={getStatusColor(event.status)}>{event.status}</Badge>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 text-sm">
-          <div className="space-y-1">
-            <div className="flex items-center gap-1">
-              <CalendarIcon className="w-4 h-4 text-blue-500" />
-              <span className="font-medium">Start Date</span>
-            </div>
-            <p className="text-gray-600">{new Date(event.startDate).toLocaleDateString()}</p>
-          </div>
-
-          <div className="space-y-1">
-            <div className="flex items-center gap-1">
-              <Clock className="w-4 h-4 text-green-500" />
-              <span className="font-medium">End Date</span>
-            </div>
-            <p className="text-gray-600">{new Date(event.endDate).toLocaleDateString()}</p>
-          </div>
-
-          <div className="space-y-1">
-            <div className="flex items-center gap-1">
-              <MapPin className="w-4 h-4 text-purple-500" />
-              <span className="font-medium">Timezone</span>
-            </div>
-            <p className="text-gray-600">{event.timezone || "Asia/Kolkata"}</p>
-          </div>
-
-          <div className="space-y-1">
-            <div className="flex items-center gap-1">
-              <Users className="w-4 h-4 text-orange-500" />
-              <span className="font-medium">Attendees</span>
-            </div>
-            <p className="text-gray-600">{event.currentAttendees || 0} people</p>
-          </div>
-        </div>
-
-        <div className="flex flex-wrap gap-2">
-          <Button variant="outline" size="sm" className="flex items-center gap-2 bg-transparent">
-            <Eye className="w-4 h-4" />
-            View Details
-          </Button>
-          <Button variant="outline" size="sm" className="flex items-center gap-2 bg-transparent">
-            <MessageSquare className="w-4 h-4" />
-            Contact Organizer
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
-  )
-
   return (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-bold text-gray-900">Event Management</h1>
+    <div className="min-w-0 space-y-6">
+      <div>
+        <h1 className="text-xl font-bold text-[#1E293B] sm:text-2xl">Event Management</h1>
+        <p className="text-sm text-[#64748B] mt-0.5">Manage and organize your venue events</p>
+      </div>
 
       {loading ? (
-        <div className="text-center text-gray-500">Loading events...</div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="bg-white rounded-2xl border border-[#E2E8F0] overflow-hidden animate-pulse">
+              <div className="h-40 bg-[#F1F5F9]" />
+              <div className="p-4 space-y-2">
+                <div className="h-3 bg-[#F1F5F9] rounded w-1/3" />
+                <div className="h-4 bg-[#F1F5F9] rounded w-3/4" />
+                <div className="h-3 bg-[#F1F5F9] rounded w-2/3" />
+              </div>
+            </div>
+          ))}
+        </div>
       ) : (
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="upcoming">Upcoming Events</TabsTrigger>
-            <TabsTrigger value="past">Past Events</TabsTrigger>
-          </TabsList>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="min-w-0">
+          <div className={venueTabsScrollWrapper}>
+            <TabsList className={cn(venueTabsList, "mb-0")}>
+              <TabsTrigger value="upcoming" className={venueTabsTrigger}>
+                <span className="sm:hidden">Upcoming</span>
+                <span className="hidden sm:inline">Upcoming Events</span>
+                {upcomingEvents.length > 0 && (
+                  <span className="ml-1.5 bg-[#004A96] text-white text-[10px] px-1.5 py-0.5 rounded-full">
+                    {upcomingEvents.length}
+                  </span>
+                )}
+              </TabsTrigger>
+              <TabsTrigger value="past" className={venueTabsTrigger}>
+                Past Events
+              </TabsTrigger>
+            </TabsList>
+          </div>
+          <div className="mb-5" />
 
-          <TabsContent value="upcoming" className="space-y-4">
+          <TabsContent value="upcoming">
             {upcomingEvents.length > 0 ? (
-              upcomingEvents.map((event, index) => <EventCard key={getEventKey(event, index)} event={event} />)
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {upcomingEvents.map((event, index) => (
+                  <EventCard key={getEventKey(event, index)} event={event} />
+                ))}
+              </div>
             ) : (
-              <p className="text-gray-500 text-center">No upcoming events found.</p>
+              <div className="text-center py-16 bg-white rounded-2xl border border-[#E2E8F0]">
+                <CalendarIcon className="w-12 h-12 text-[#CBD5E1] mx-auto mb-3" />
+                <p className="text-base font-semibold text-[#94A3B8]">No upcoming events</p>
+                <p className="text-sm text-[#CBD5E1] mt-1">Events scheduled for future dates will appear here</p>
+                {/* <Button className="mt-4 rounded-xl bg-[#004A96] text-white">
+                  <Plus className="w-4 h-4 mr-1" />Add Event
+                </Button> */}
+              </div>
             )}
           </TabsContent>
 
-          <TabsContent value="past" className="space-y-4">
+          <TabsContent value="past">
             {pastEvents.length > 0 ? (
-              pastEvents.map((event, index) => (
-                <EventCard key={getEventKey(event, index)} event={event} isPast={true} />
-              ))
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 opacity-90">
+                {pastEvents.map((event, index) => (
+                  <EventCard key={getEventKey(event, index)} event={event} />
+                ))}
+              </div>
             ) : (
-              <p className="text-gray-500 text-center">No past events found.</p>
+              <div className="text-center py-16 bg-white rounded-2xl border border-[#E2E8F0]">
+                <CalendarIcon className="w-12 h-12 text-[#CBD5E1] mx-auto mb-3" />
+                <p className="text-base font-semibold text-[#94A3B8]">No past events</p>
+              </div>
             )}
           </TabsContent>
         </Tabs>

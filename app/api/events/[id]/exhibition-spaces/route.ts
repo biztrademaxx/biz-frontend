@@ -38,9 +38,14 @@ export async function GET(
         id: s.id,
         name: s.name,
         spaceType: s.spaceType,
+        description: s.description,
         dimensions: s.dimensions,
         area: s.area,
         basePrice: s.basePrice,
+        pricePerSqm: s.pricePerSqm,
+        minArea: s.minArea,
+        unit: s.unit,
+        currency: s.currency,
         location: s.location,
         isAvailable: s.isAvailable && (s.bookedBooths ?? 0) < (s.maxBooths ?? 999),
         maxBooths: s.maxBooths,
@@ -95,6 +100,11 @@ export async function POST(
       return NextResponse.json({ error: "name is required" }, { status: 400 })
     }
     try {
+      const ev = await prisma.event.findUnique({
+        where: { id: eventId },
+        select: { currency: true },
+      })
+
       const space = await prisma.exhibitionSpace.create({
         data: {
           eventId,
@@ -108,6 +118,7 @@ export async function POST(
           unit: (body.unit as string) || "sqm",
           pricePerSqm: body.pricePerSqm != null ? Number(body.pricePerSqm) : null,
           maxBooths: body.maxBooths != null ? Number(body.maxBooths) : null,
+          currency: typeof body.currency === "string" && body.currency.trim() ? body.currency.trim() : eventCurrency,
         },
       })
       return NextResponse.json({
@@ -125,6 +136,7 @@ export async function POST(
         minArea: space.minArea,
         unit: space.unit,
         pricePerSqm: space.pricePerSqm,
+        currency: space.currency,
       }, { status: 201 })
     } catch (err) {
       console.error("Exhibition space create fallback error:", err)

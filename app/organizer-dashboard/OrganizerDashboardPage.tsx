@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useState, useEffect } from "react"
-import { useParams, useRouter } from "next/navigation"
+import { useRouter, usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
 import {
@@ -19,9 +19,12 @@ import {
   HelpCircle,
   MessageSquare,
   Users,
-  Star
+  Star,
+  Crown,
+  LogOut,
+  ChevronLeft,
 } from "lucide-react"
-import { clearTokens } from "@/lib/api"
+import { clearTokens, markLogoutSuccessBanner } from "@/lib/api"
 import DashboardOverview from "./dashboard-overview"
 import MyEvents from "./my-events"
 import CreateEvent from "./create-event"
@@ -34,10 +37,22 @@ import { MyAppointments } from "./my-appointments"
 import { useDashboard } from "@/contexts/dashboard-context"
 import { FeedbackSection } from "./FeedbackSection"
 import { OrganizerHelpSupport } from "./help-support"
-import { apiFetch } from "@/lib/api"
-import { DashboardManagedBanner } from "@/components/dashboard-managed-banner"
+import { apiFetch, getCurrentUserId } from "@/lib/api"
+import { getOrganizerDashboardPath } from "@/lib/profile-path"
+import { DashboardPricingPlansView } from "@/components/dashboard-packages"
+import { cn } from "@/lib/utils"
+import {
+  orgNavActive,
+  orgNavInactive,
+  orgNavGroupLabel,
+  orgPageBg,
+  orgPrimaryBtn,
+  orgSidebarSurface,
+  orgUpgradeCard,
+} from "./organizer-dashboard-theme"
 
 interface OrganizerDashboardPageProps {
+  /** UUID or public company slug from `/organizer-dashboard/[id]`. */
   organizerId: string
 }
 
@@ -45,8 +60,10 @@ interface OrganizerData {
   id: string
   name: string
   displayName?: string
+  publicSlug?: string | null
   firstName: string
   lastName: string
+  organizationName?: string
   email: string
   phone: string
   location: string
@@ -60,14 +77,17 @@ interface OrganizerData {
   founded: string
   company: string
   teamSize: string
-  headquarters: string
+  headquarters?: string
+  organizerCountry: string
+  organizerState: string
+  organizerCity: string
   specialties: string[]
   achievements: string[]
   certifications: string[]
 }
 
 interface Event {
-  id: number
+  id: string | number
   title: string
   description: string
   date: string
@@ -84,6 +104,11 @@ interface Event {
   bannerImage?: string
   thumbnailImage?: string
   isPublic: boolean
+  slug?: string
+  images?: string[]
+  currency?: string
+  city?: string
+  state?: string
 }
 
 interface SidebarGroup {
@@ -99,8 +124,8 @@ interface SidebarItem {
 }
 
 export default function OrganizerDashboardSimplified({ organizerId }: OrganizerDashboardPageProps) {
-  const params = useParams()
   const router = useRouter()
+  const pathname = usePathname()
   const { toast } = useToast()
   const { activeSection, setActiveSection } = useDashboard()
   const [expandedGroups, setExpandedGroups] = useState<string[]>(["main", "event-management", "network"])
@@ -114,9 +139,12 @@ export default function OrganizerDashboardSimplified({ organizerId }: OrganizerD
     const fetchOrganizerData = async () => {
       try {
         setLoading(true)
-        const data = await apiFetch<{ organizer: OrganizerData }>(`/api/organizers/${organizerId}`, {
-          auth: true,
-        })
+        const data = await apiFetch<{ organizer: OrganizerData }>(
+          `/api/organizers/${encodeURIComponent(organizerId)}`,
+          {
+            auth: true,
+          },
+        )
 
         setOrganizerData(data.organizer)
 
@@ -148,7 +176,7 @@ export default function OrganizerDashboardSimplified({ organizerId }: OrganizerD
     const fetchEvents = async () => {
       try {
         const data = await apiFetch<{ success?: boolean; events: Event[] }>(
-          `/api/organizers/${organizerId}/events`,
+          `/api/organizers/${encodeURIComponent(organizerId)}/events`,
           { auth: true }
         )
         setEvents(data.events ?? [])
@@ -161,6 +189,42 @@ export default function OrganizerDashboardSimplified({ organizerId }: OrganizerD
       fetchEvents()
     }
   }, [organizerId])
+
+  useEffect(() => {
+    if (!organizerData?.id) return
+    const sessionUser = getCurrentUserId()
+    if (sessionUser && sessionUser !== organizerData.id) {
+      toast({
+        title: "Access denied",
+        description: "You can only open your own organizer dashboard.",
+        variant: "destructive",
+      })
+      router.replace("/login")
+    }
+  }, [organizerData?.id, router, toast])
+
+  useEffect(() => {
+    if (!organizerData?.id) return
+    const canonical = getOrganizerDashboardPath(organizerData.id, {
+      publicSlug: organizerData.publicSlug,
+      organizationName: organizerData.organizationName,
+      company: organizerData.company,
+      firstName: organizerData.firstName,
+      lastName: organizerData.lastName,
+    })
+    if (pathname && canonical !== pathname) {
+      router.replace(canonical)
+    }
+  }, [
+    organizerData?.id,
+    organizerData?.publicSlug,
+    organizerData?.organizationName,
+    organizerData?.company,
+    organizerData?.firstName,
+    organizerData?.lastName,
+    pathname,
+    router,
+  ])
 
   const toggleGroup = (groupId: string) => {
     setExpandedGroups((prev) => (prev.includes(groupId) ? prev.filter((id) => id !== groupId) : [...prev, groupId]))
@@ -235,6 +299,11 @@ export default function OrganizerDashboardSimplified({ organizerId }: OrganizerD
 
   const individualSidebarItems: SidebarItem[] = [
     {
+      title: "Pricing & plans",
+      icon: Crown,
+      id: "subscription-plans",
+    },
+    {
       title: "Help & Support",
       icon: HelpCircle,
       id: "help-support",
@@ -285,8 +354,8 @@ export default function OrganizerDashboardSimplified({ organizerId }: OrganizerD
     if (loading) {
       return (
         <div className="flex items-center justify-center h-64">
-          <Loader2 className="w-8 h-8 animate-spin" />
-          <span className="ml-2">Loading...</span>
+          <Loader2 className="h-8 w-8 animate-spin text-[#004A96]" />
+          <span className="ml-2 text-gray-600">Loading...</span>
         </div>
       )
     }
@@ -309,17 +378,22 @@ export default function OrganizerDashboardSimplified({ organizerId }: OrganizerD
             organizerName={organizerData.displayName ?? organizerData.name}
             dashboardStats={dashboardStats}
             recentEvents={events}
-            organizerId={organizerId}
+            organizerId={organizerData.id}
             onCreateEventClick={() => setActiveSection("create-event")}
+            onViewAllEventsClick={() => setActiveSection("events")}
             onManageAttendeesClick={() => {
-              window.location.href = `/organizers/${organizerId}/total-attendees`
+              window.location.href = `/organizers/${organizerData.id}/total-attendees`
             }}
             onViewAnalyticsClick={() => {
-              window.location.href = `/event-dashboard/${organizerId}?section=analytics`
+              const ev = events?.[0]
+              if (!ev) return
+              const ref = ev.slug || ev.id
+              window.location.href = `/event-dashboard/${ref}?section=analytics`
             }}
-            onSendMessageClick={() => {
-              window.location.href = `/event-dashboard/${organizerId}?section=messages`
-            }}
+            onSendMessageClick={() => setActiveSection("messages")}
+            onVenueBookingClick={() => setActiveSection("venue-booking")}
+            onProfileClick={() => setActiveSection("info")}
+            onUpgradeClick={() => setActiveSection("subscription-plans")}
           />
         )
       case "info":
@@ -332,11 +406,11 @@ export default function OrganizerDashboardSimplified({ organizerId }: OrganizerD
           />
         )
       case "venue-booking":
-        return <MyAppointments userId={organizerId} />
+        return <MyAppointments userId={organizerData.id} />
       case "events":
-        return <MyEvents organizerId={organizerId} />
+        return <MyEvents organizerId={organizerData.id} />
       case "create-event":
-        return <CreateEvent organizerId={organizerId} />
+        return <CreateEvent organizerId={organizerData.id} />
       case "settings":
         return <OrganizerSettings/>
       case "help-support":
@@ -344,85 +418,93 @@ export default function OrganizerDashboardSimplified({ organizerId }: OrganizerD
       case "connect":
         return <ConnectionsSection userId={organizerData.id} />
       case "messages":
-        return <MessagesCenter organizerId={organizerId} />
+        return <MessagesCenter organizerId={organizerData.id} surface="organizer" />
       case "feed-back":
-        return <FeedbackSection organizerId={organizerId} />
+        return <FeedbackSection organizerId={organizerData.id} />
+      case "subscription-plans":
+        return <DashboardPricingPlansView role="ORGANIZER" />
       default:
         return <div>Select a section from the sidebar</div>
     }
   }
 
-  // const getCurrentSectionTitle = () => {
-  //   for (const group of sidebarGroups) {
-  //     const item = group.items.find((item) => item.id === activeSection)
-  //     if (item) return item.title
-  //   }
-  //   const individualItem = individualSidebarItems.find((item) => item.id === activeSection)
-  //   if (individualItem) return individualItem.title
+  const getCurrentSectionTitle = () => {
+    for (const group of sidebarGroups) {
+      const item = group.items.find((item) => item.id === activeSection)
+      if (item) return item.title
+    }
+    const individualItem = individualSidebarItems.find((item) => item.id === activeSection)
+    if (individualItem) return individualItem.title
 
-  //   return "Dashboard"
-  // }
+    return "Dashboard"
+  }
 
   return (
-    <div className="flex min-h-screen w-full bg-[#F5F4F0]">
+    <div className={cn("relative flex min-h-0 flex-1 w-full overflow-hidden", orgPageBg)}>
       {/* Mobile Overlay */}
       {sidebarOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden" onClick={() => setSidebarOpen(false)} />
+        <div
+          className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm md:hidden"
+          onClick={() => setSidebarOpen(false)}
+          aria-hidden
+        />
       )}
 
       {/* Sidebar */}
       <div
-        className={`
-          fixed md:relative
-          w-64 min-h-screen bg-white border-r border-gray-200 z-50
-          transform transition-transform duration-300 ease-in-out
-          ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
-          md:translate-x-0
-          flex flex-col
-        `}
+        className={cn(
+          "fixed inset-y-0 left-0 z-50 flex h-full w-[min(100vw,260px)] max-w-[85vw] shrink-0 flex-col transform transition-transform duration-300 ease-in-out md:static md:max-w-none md:w-[260px] md:translate-x-0",
+          orgSidebarSurface,
+          sidebarOpen ? "translate-x-0" : "-translate-x-full",
+        )}
       >
         {/* Mobile Header */}
-        <div className="md:hidden flex items-center justify-between p-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold">Menu</h2>
-          <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(false)}>
+        <div className="flex items-center justify-between border-b border-slate-200 p-4 md:hidden">
+          <h2 className="text-lg font-semibold text-slate-900">Menu</h2>
+          <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(false)} className="text-gray-600">
             <X className="h-4 w-4" />
           </Button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4">
+        <div className="scrollbar-hover flex-1 overflow-y-auto px-3 py-4">
           {/* Sidebar Groups */}
           {sidebarGroups.map((group) => (
-            <div key={group.id} className="mb-6">
+            <div key={group.id} className="mb-5">
               <div
-                className="flex items-center justify-between cursor-pointer hover:bg-gray-100 px-2 py-2 rounded text-sm font-medium text-gray-700"
+                className={cn("mb-1 flex cursor-pointer items-center justify-between px-2 py-1.5", orgNavGroupLabel)}
                 onClick={() => toggleGroup(group.id)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault()
+                    toggleGroup(group.id)
+                  }
+                }}
+                role="button"
+                tabIndex={0}
               >
-                <span>{group.label}</span>
+                <span className="normal-case tracking-normal text-[11px] font-semibold uppercase text-slate-400">{group.label}</span>
                 {expandedGroups.includes(group.id) ? (
-                  <ChevronDown className="w-4 h-4" />
+                  <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
                 ) : (
-                  <ChevronRight className="w-4 h-4" />
+                  <ChevronRight className="h-3.5 w-3.5 text-slate-400" />
                 )}
               </div>
               {expandedGroups.includes(group.id) && (
-                <div className="mt-2 space-y-1">
+                <div className="space-y-0.5">
                   {group.items.map((item) => (
                     <button
                       key={item.id}
+                      type="button"
                       onClick={() => {
                         setActiveSection(item.id)
                         setSidebarOpen(false)
                       }}
-                      className={`
-                        w-full flex items-center gap-3 px-3 py-2 text-sm rounded-sm transition-colors
-                        ${
-                          activeSection === item.id
-                            ? "bg-blue-50 text-blue-700 border-l-4 border-blue-700"
-                            : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-                        }
-                      `}
+                      className={cn(
+                        "flex w-full items-center gap-3 py-2.5 pr-3 text-sm transition-colors",
+                        activeSection === item.id ? orgNavActive : orgNavInactive,
+                      )}
                     >
-                      <item.icon className="w-4 h-4 flex-shrink-0" />
+                      <item.icon className="h-4 w-4 shrink-0" />
                       <span className="truncate">{item.title}</span>
                     </button>
                   ))}
@@ -432,60 +514,76 @@ export default function OrganizerDashboardSimplified({ organizerId }: OrganizerD
           ))}
 
           {/* Individual Sidebar Items */}
-          <div className="mt-8 space-y-1">
+          <div className="mt-4 space-y-0.5 border-t border-slate-200 pt-4">
             {individualSidebarItems.map((item) => (
               <button
                 key={item.id}
+                type="button"
                 onClick={() => {
                   setActiveSection(item.id)
                   setSidebarOpen(false)
                 }}
-                className={`
-                  w-full flex items-center gap-3 px-3 py-2 text-sm rounded-sm transition-colors
-                  ${
-                    activeSection === item.id
-                      ? "bg-blue-50 text-blue-700 border-l-4 border-blue-700"
-                      : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-                  }
-                `}
+                className={cn(
+                  "flex w-full items-center gap-3 py-2.5 pr-3 text-sm transition-colors",
+                  activeSection === item.id ? orgNavActive : orgNavInactive,
+                )}
               >
-                <item.icon className="w-4 h-4 flex-shrink-0" />
+                <item.icon className="h-4 w-4 shrink-0" />
                 <span className="truncate">{item.title}</span>
               </button>
             ))}
           </div>
         </div>
 
-        {/* Footer with Logout */}
-        <div className="border-t border-gray-200 p-4 flex-shrink-0">
+        {/* Footer */}
+        <div className="flex-shrink-0 space-y-3 border-t border-slate-200 p-4">
+          <div className={orgUpgradeCard}>
+            <div className="flex items-start gap-2">
+              <Crown className="mt-0.5 h-5 w-5 shrink-0 text-amber-500" />
+              <div>
+                <p className="text-sm font-bold text-[#004A96]">Upgrade to Pro</p>
+                <p className="mt-0.5 text-xs text-slate-600">Unlock advanced features and visibility.</p>
+              </div>
+            </div>
+            <Button
+              type="button"
+              size="sm"
+              className={cn("mt-3 h-9 w-full rounded-lg", orgPrimaryBtn)}
+              onClick={() => setActiveSection("subscription-plans")}
+            >
+              Upgrade Now
+              <ChevronRight className="ml-1 h-4 w-4" />
+            </Button>
+          </div>
           <Button
-            onClick={() => { clearTokens(); router.push("/login"); }}
-            className="w-full bg-red-600 hover:bg-red-700 text-white"
+            onClick={() => {
+              markLogoutSuccessBanner()
+              clearTokens()
+              router.push("/login")
+            }}
+            className={cn("h-10 w-full rounded-lg bg-red-600")}
           >
-            <User className="mr-2 h-4 w-4" />
+            <LogOut className="mr-2 h-4 w-4" />
             <span>Logout</span>
           </Button>
         </div>
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-h-screen">
-        {/* Mobile Top Bar */}
-        <div className="md:hidden flex items-center justify-between p-4 bg-white border-b border-gray-200 shadow-sm">
-          <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(true)}>
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+        <div className="flex items-center justify-between gap-2 border-b border-slate-200 bg-white px-3 py-3 md:hidden">
+          <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(true)} className="shrink-0 text-[#004A96]">
             <Menu className="h-5 w-5" />
           </Button>
-          <div className="w-9" />
+          <span className="min-w-0 truncate text-center text-sm font-semibold text-[#004A96]">
+            {getCurrentSectionTitle()}
+          </span>
+          <div className="w-9 shrink-0" />
         </div>
 
-        {/* Main Content */}
-        <main className="flex-1 p-6 overflow-auto">
-          <DashboardManagedBanner page="organizer-dashboard" />
-          <div className="max-w-7xl mx-auto">
-            {/* Dynamic Content */}
-            <div className="bg-[#F5F4F0] min-h-screen w-full ">
-              {renderContent()}
-            </div>
+        <main className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden p-0">
+          <div className="min-h-0 w-full min-w-0 max-w-full px-3 py-4 sm:px-4 sm:py-5 md:px-6 md:py-6">
+            {renderContent()}
           </div>
         </main>
       </div>

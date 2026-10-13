@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useToast } from "@/hooks/use-toast"
@@ -31,6 +32,21 @@ import {
   Plus,
   CheckCircle,
 } from "lucide-react"
+import { cn } from "@/lib/utils"
+import {
+  ProfileLocationFields,
+  profileLocationFromLegacy,
+} from "@/components/location/ProfileLocationFields"
+import { uploadFileViaProxy } from "@/components/organizer-create-event/upload-backend"
+import {
+  exGlassCardPremium,
+  exGlassNested,
+  exCompanyGlowLayer,
+  exInput,
+  exCtaGradient,
+} from "./dashboard-theme"
+import { DashboardPlanBadge } from "@/components/dashboard-packages"
+import { useDashboardPlan } from "@/hooks/use-dashboard-plan"
 
 interface ExhibitorData {
   id: string
@@ -38,15 +54,32 @@ interface ExhibitorData {
   lastName: string
   email: string
   phone?: string
-  company?: string
+  company?: string | null
   jobTitle?: string
   bio?: string
   website?: string
   linkedin?: string
   twitter?: string
   avatar?: string
-  location?: any
+  location?: string
+  profileCity?: string
+  profileState?: string
+  profileCountry?: string
+  foundedYear?: string
+  companySize?: string
+  industry?: string
+  headquarters?: string
+  specialties?: string[]
 }
+
+const COMPANY_SIZE_OPTIONS = [
+  "1-10 employees",
+  "11-50 employees",
+  "51-200 employees",
+  "201-500 employees",
+  "501-1000 employees",
+  "1000+ employees",
+] as const
 
 interface CompanyInfoProps {
   exhibitorId: string
@@ -56,16 +89,64 @@ interface CompanyInfoProps {
 
 export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProps) {
   const { toast } = useToast()
+  const { plan: currentPlan, loading: planLoading } = useDashboardPlan("EXHIBITOR")
   const [isEditing, setIsEditing] = useState(false)
   const [loading, setLoading] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [formData, setFormData] = useState(exhibitorData)
-  const [categories, setCategories] = useState<string[]>(["Technology", "Software", "AI/ML"])
+  const [productTags, setProductTags] = useState<string[]>(exhibitorData.specialties ?? [])
+  const [industryOptions, setIndustryOptions] = useState<string[]>([])
+  const [customProductTag, setCustomProductTag] = useState("")
 
   useEffect(() => {
     setFormData(exhibitorData)
+    setProductTags(exhibitorData.specialties ?? [])
   }, [exhibitorData])
 
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      try {
+        const data = await apiFetch<{ categories?: Array<{ name?: string }> }>(
+          "/api/events/categories/browse",
+          { auth: false },
+        )
+        if (cancelled) return
+        const names = (data.categories ?? [])
+          .map((c) => (typeof c.name === "string" ? c.name.trim() : ""))
+          .filter(Boolean)
+        setIndustryOptions(Array.from(new Set(names)).sort((a, b) => a.localeCompare(b)))
+      } catch {
+        if (!cancelled) setIndustryOptions([])
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+
+  const handleBannerUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    try {
+      setUploading(true)
+
+      const bannerUrl = await uploadFileViaProxy(file, "image")
+
+      
+
+      // save banner url here
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setUploading(false)
+    }
+  }
+  // const bannerUrl = await uploadFileViaProxy(file, "image")
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -93,25 +174,12 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
     try {
       setUploading(true)
 
-      const formData = new FormData()
-      formData.append("file", file)
-      formData.append("type", "image")
+      const { uploadFileViaProxy } = await import("@/components/organizer-create-event/upload-backend")
+      const avatarUrl = await uploadFileViaProxy(file, "image")
 
-      const data = await apiFetch<{ success: boolean; url: string; publicId?: string }>(
-        "/api/upload/cloudinary",
-        {
-          method: "POST",
-          body: formData,
-          auth: true,
-        },
-      )
-
-      if (data.success && data.url) {
-        // Update local state
-        setFormData((prev) => ({ ...prev, avatar: data.url }))
-
-        // Save to database immediately
-        await onUpdate({ avatar: data.url })
+      if (avatarUrl) {
+        setFormData((prev) => ({ ...prev, avatar: avatarUrl }))
+        await onUpdate({ avatar: avatarUrl })
 
         toast({
           title: "Success",
@@ -135,7 +203,18 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
   const handleSave = async () => {
     try {
       setLoading(true)
-      await onUpdate(formData)
+      const headquarters =
+        formData.headquarters?.trim() ||
+        [formData.profileCity, formData.profileCountry].filter(Boolean).join(", ") ||
+        undefined
+      await onUpdate({
+        ...formData,
+        foundedYear: formData.foundedYear,
+        companySize: formData.companySize,
+        industry: formData.industry,
+        headquarters,
+        specialties: productTags,
+      })
       setIsEditing(false)
       toast({
         title: "Success",
@@ -153,21 +232,22 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
     }
   }
 
-  const handleAddCategory = (newCategory: string) => {
-    if (newCategory.trim() && !categories.includes(newCategory.trim())) {
-      setCategories([...categories, newCategory.trim()])
-    }
+  const handleAddProductTag = (value: string) => {
+    const trimmed = value.trim()
+    if (!trimmed || productTags.includes(trimmed)) return
+    setProductTags([...productTags, trimmed])
+    setCustomProductTag("")
   }
 
-  const handleRemoveCategory = (categoryToRemove: string) => {
-    setCategories(categories.filter((cat) => cat !== categoryToRemove))
+  const handleRemoveProductTag = (tag: string) => {
+    setProductTags(productTags.filter((t) => t !== tag))
   }
 
   const socialLinks = [
-    { name: "Facebook", icon: Facebook, url: "https://facebook.com/company", color: "text-blue-600" },
-    { name: "LinkedIn", icon: Linkedin, url: formData.linkedin || "", color: "text-blue-700" },
-    { name: "Twitter", icon: Twitter, url: formData.twitter || "", color: "text-blue-400" },
-    { name: "Instagram", icon: Instagram, url: "https://instagram.com/company", color: "text-pink-600" },
+    { name: "Facebook", icon: Facebook, url: "https://facebook.com/company", color: "text-[#004A96]" },
+    { name: "LinkedIn", icon: Linkedin, url: formData.linkedin || "", color: "text-[#004A96]" },
+    { name: "Twitter", icon: Twitter, url: formData.twitter || "", color: "text-sky-500" },
+    { name: "Instagram", icon: Instagram, url: "https://instagram.com/company", color: "text-pink-500" },
   ]
 
   if (loading && !formData) {
@@ -184,86 +264,95 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-900">Company Information</h1>
-        <Button
-          onClick={() => (isEditing ? handleSave() : setIsEditing(true))}
-          className="flex items-center gap-2"
-          disabled={loading}
-        >
-          {isEditing ? <Save className="w-4 h-4" /> : <Edit className="w-4 h-4" />}
-          {loading ? "Saving..." : isEditing ? "Save Changes" : "Edit Profile"}
-        </Button>
-      </div>
+    <div className="relative min-w-0">
+      <div className={exCompanyGlowLayer} aria-hidden />
+      <div className="relative z-10 space-y-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="space-y-2">
+            <h1 className="text-2xl font-bold tracking-tight text-slate-800 md:text-3xl">
+              Company Information
+            </h1>
+            <DashboardPlanBadge plan={currentPlan} loading={planLoading} />
+          </div>
+          <Button
+            onClick={() => (isEditing ? handleSave() : setIsEditing(true))}
+            className={cn("flex w-full items-center justify-center gap-2 shadow-md sm:w-auto", exCtaGradient)}
+            disabled={loading}
+          >
+            {isEditing ? <Save className="w-4 h-4" /> : <Edit className="w-4 h-4" />}
+            {loading ? "Saving..." : isEditing ? "Save Changes" : "Edit Profile"}
+          </Button>
+        </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Company Logo & Banner */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Building2 className="w-5 h-5" />
-              Company Logo & Banner
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="text-center">
-              <div className="relative inline-block">
-                <Avatar className="w-32 h-32 mx-auto mb-4">
-                  <AvatarImage src={formData.avatar || "/city/c4.jpg"} />
-                  <AvatarFallback className="text-2xl">
-                    {formData.firstName?.[0]}
-                    {formData.lastName?.[0]}
-                  </AvatarFallback>
-                </Avatar>
-                {isEditing && (
-                  <label
-                    htmlFor="avatar-upload"
-                    className="absolute bottom-4 right-1/2 translate-x-16 bg-blue-600 text-white p-2 rounded-full cursor-pointer hover:bg-blue-700 transition-colors"
-                  >
-                    {uploading ? (
-                      <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
-                    ) : (
-                      <Camera className="w-4 h-4" />
-                    )}
-                  </label>
-                )}
-                <input
-                  id="avatar-upload"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleAvatarUpload}
-                  className="hidden"
-                  disabled={uploading}
-                />
+        <div className="grid min-w-0 grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-3">
+          {/* Company Logo & Banner */}
+          <Card className={cn(exGlassCardPremium, "min-w-0 overflow-hidden")}>
+            <CardHeader className="pb-3">
+              <CardTitle className="flex flex-wrap items-center gap-2 text-slate-800">
+                <Building2 className="h-5 w-5 text-[#004A96]" />
+                Company Logo & Banner
+                <DashboardPlanBadge plan={currentPlan} loading={planLoading} size="sm" className="ml-auto" />
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className={cn(exGlassNested, "p-4 text-center")}>
+                <div className="relative inline-block">
+                  <Avatar className="mx-auto mb-4 h-32 w-32 ring-2 ring-[#004A96]/20 ring-offset-2 ring-offset-white/50">
+                    <AvatarImage src={formData.avatar } />
+                    <AvatarFallback className="bg-[#004A96]/10 text-2xl font-semibold text-[#004A96]">
+                      {formData.firstName?.[0]}
+                      {formData.lastName?.[0]}
+                    </AvatarFallback>
+                  </Avatar>
+                  {isEditing && (
+                    <label
+                      htmlFor="avatar-upload"
+                      className="absolute bottom-4 right-1/2 flex translate-x-16 cursor-pointer rounded-full bg-[#004A96] p-2 text-white transition-colors hover:bg-[#003d7a]"
+                    >
+                      {uploading ? (
+                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                      ) : (
+                        <Camera className="h-4 w-4" />
+                      )}
+                    </label>
+                  )}
+                  <input
+                    id="avatar-upload"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarUpload}
+                    className="hidden"
+                    disabled={uploading}
+                  />
+                </div>
               </div>
-            </div>
 
-            <div className="space-y-2">
+              <div className="space-y-2">
               <Label>Company Banner</Label>
-              <div className="h-24 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-semibold">
-                {formData.company || "Company Name"}
+              <div className="flex min-h-[5.5rem] items-center justify-center rounded-2xl bg-gradient-to-br from-[#004A96] via-[#003d7a] to-[#002f5e] px-4 text-center font-semibold text-white shadow-[0_12px_40px_rgba(0,74,150,0.25)]">
+                <span className="drop-shadow-sm">{formData.company || "Company Name"}</span>
               </div>
-              {isEditing && (
-                <Button variant="outline" size="sm" className="w-full flex items-center gap-2 bg-transparent">
+              {/* {isEditing && (
+                <Button variant="outline" size="sm" className="w-full border-[#004A96]/30 bg-white/40 backdrop-blur-sm">
                   <Upload className="w-4 h-4" />
                   Upload Banner
                 </Button>
-              )}
+              )} */}
             </div>
           </CardContent>
         </Card>
 
         {/* Contact Information */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <User className="w-5 h-5" />
+        <Card className={cn(exGlassCardPremium, "min-w-0 overflow-hidden")}>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-slate-800">
+              <User className="h-5 w-5 text-[#004A96]" />
               Contact Information
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+          <CardContent className="min-w-0">
+            <div className={cn(exGlassNested, "min-w-0 space-y-4 p-4 sm:p-5")}>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="first-name">First Name</Label>
                 <Input
@@ -271,6 +360,7 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
                   value={formData.firstName}
                   onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
                   disabled={!isEditing}
+                  className={cn(exInput, "disabled:opacity-60")}
                 />
               </div>
               <div className="space-y-2">
@@ -280,6 +370,7 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
                   value={formData.lastName}
                   onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
                   disabled={!isEditing}
+                  className={cn(exInput, "disabled:opacity-60")}
                 />
               </div>
             </div>
@@ -291,6 +382,7 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
                 value={formData.company || ""}
                 onChange={(e) => setFormData({ ...formData, company: e.target.value })}
                 disabled={!isEditing}
+                className={cn(exInput, "disabled:opacity-60")}
               />
             </div>
 
@@ -301,20 +393,19 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
                 value={formData.jobTitle || ""}
                 onChange={(e) => setFormData({ ...formData, jobTitle: e.target.value })}
                 disabled={!isEditing}
+                className={cn(exInput, "disabled:opacity-60")}
               />
             </div>
 
             {/* Email Field - Always Read Only */}
-            <div className="space-y-2">
+            <div className="min-w-0 space-y-2">
               <Label htmlFor="email">Email</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
-                <div className="flex items-center justify-between p-2 bg-muted rounded-md border border-input">
-                  <span className="text-sm pl-7">{formData.email}</span>
-                  {!isEditing && (
-                    <CheckCircle className="w-4 h-4 text-green-500" />
-                  )}
-                </div>
+              <div className="flex min-w-0 items-start gap-2.5 rounded-md border border-white/60 bg-white/45 p-3 backdrop-blur-sm">
+                <Mail className="mt-0.5 h-4 w-4 shrink-0 text-[#004A96]/60" />
+                <span className="min-w-0 flex-1 break-all text-sm leading-snug">{formData.email}</span>
+                {!isEditing && (
+                  <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-green-500" />
+                )}
               </div>
               {isEditing && (
                 <p className="text-xs text-muted-foreground">
@@ -324,16 +415,16 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
             </div>
 
             {/* Phone Field - Always Read Only */}
-            <div className="space-y-2">
+            <div className="min-w-0 space-y-2">
               <Label htmlFor="phone">Phone</Label>
-              <div className="relative">
-                <Phone className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
-                <div className="flex items-center justify-between p-2 bg-muted rounded-md border border-input">
-                  <span className="text-sm pl-7">{formData.phone || "Not provided"}</span>
-                  {!isEditing && formData.phone && (
-                    <CheckCircle className="w-4 h-4 text-green-500" />
-                  )}
-                </div>
+              <div className="flex min-w-0 items-start gap-2.5 rounded-md border border-white/60 bg-white/45 p-3 backdrop-blur-sm">
+                <Phone className="mt-0.5 h-4 w-4 shrink-0 text-[#004A96]/60" />
+                <span className="min-w-0 flex-1 break-all text-sm leading-snug">
+                  {formData.phone || "Not provided"}
+                </span>
+                {!isEditing && formData.phone && (
+                  <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-green-500" />
+                )}
               </div>
               {isEditing && (
                 <p className="text-xs text-muted-foreground">
@@ -345,33 +436,168 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
             <div className="space-y-2">
               <Label htmlFor="website">Website</Label>
               <div className="relative">
-                <Globe className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+                <Globe className="absolute left-3 top-3 h-4 w-4 text-[#004A96]/60" />
                 <Input
                   id="website"
                   value={formData.website || ""}
                   onChange={(e) => setFormData({ ...formData, website: e.target.value })}
                   disabled={!isEditing}
-                  className="pl-10"
+                  className={cn(exInput, "pl-10 disabled:opacity-60")}
                 />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Location</Label>
+              <ProfileLocationFields
+                value={{
+                  city: formData.profileCity ?? "",
+                  state: formData.profileState ?? "",
+                  country: formData.profileCountry ?? "",
+                }}
+                onChange={(next) =>
+                  setFormData({
+                    ...formData,
+                    profileCity: next.city,
+                    profileState: next.state,
+                    profileCountry: next.country,
+                  })
+                }
+                disabled={!isEditing}
+                className="mt-1"
+              />
+            </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Company Details */}
+        <Card className={cn(exGlassCardPremium, "min-w-0 overflow-hidden")}>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-slate-800">
+              <Building2 className="h-5 w-5 text-[#004A96]" />
+              Company Details
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="min-w-0">
+            <div className={cn(exGlassNested, "min-w-0 space-y-4 p-4 sm:p-5")}>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="founded-year">Founded Year</Label>
+                  {isEditing ? (
+                    <Input
+                      id="founded-year"
+                      type="number"
+                      min={1800}
+                      max={2100}
+                      placeholder="e.g. 2015"
+                      value={formData.foundedYear || ""}
+                      onChange={(e) => setFormData({ ...formData, foundedYear: e.target.value })}
+                      className={exInput}
+                    />
+                  ) : (
+                    <p className="text-sm font-medium text-slate-800">{formData.foundedYear || "—"}</p>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="company-size">Company Size</Label>
+                  {isEditing ? (
+                    <Select
+                      value={formData.companySize || ""}
+                      onValueChange={(value) => setFormData({ ...formData, companySize: value })}
+                    >
+                      <SelectTrigger id="company-size" className={cn(exInput, "w-full")}>
+                        <SelectValue placeholder="Select company size" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {COMPANY_SIZE_OPTIONS.map((size) => (
+                          <SelectItem key={size} value={size}>
+                            {size}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <p className="text-sm font-medium text-slate-800">{formData.companySize || "—"}</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="industry">Industry / Category</Label>
+                  {isEditing ? (
+                    <Select
+                      value={formData.industry || ""}
+                      onValueChange={(value) => setFormData({ ...formData, industry: value })}
+                    >
+                      <SelectTrigger id="industry" className={cn(exInput, "w-full")}>
+                        <SelectValue placeholder="Select industry category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {(() => {
+                          const options =
+                            formData.industry && !industryOptions.includes(formData.industry)
+                              ? [formData.industry, ...industryOptions]
+                              : industryOptions
+                          if (options.length === 0) {
+                            return (
+                              <SelectItem value="__loading__" disabled>
+                                Loading categories…
+                              </SelectItem>
+                            )
+                          }
+                          return options.map((name) => (
+                            <SelectItem key={name} value={name}>
+                              {name}
+                            </SelectItem>
+                          ))
+                        })()}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <p className="text-sm font-medium text-slate-800">{formData.industry || "—"}</p>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="headquarters">Headquarters</Label>
+                  {isEditing ? (
+                    <Input
+                      id="headquarters"
+                      placeholder="e.g. Bangalore, India"
+                      value={formData.headquarters || ""}
+                      onChange={(e) => setFormData({ ...formData, headquarters: e.target.value })}
+                      className={exInput}
+                    />
+                  ) : (
+                    <p className="text-sm font-medium text-slate-800">
+                      {formData.headquarters ||
+                        [formData.profileCity, formData.profileCountry].filter(Boolean).join(", ") ||
+                        "—"}
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
           </CardContent>
         </Card>
 
         {/* Social Media Links */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Social Media Links</CardTitle>
+        <Card className={cn(exGlassCardPremium, "min-w-0 overflow-hidden")}>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-slate-800">Social Media Links</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="min-w-0">
+            <div className={cn(exGlassNested, "min-w-0 space-y-4 p-4 sm:p-5")}>
             {socialLinks.map((social) => (
-              <div key={social.name} className="flex items-center gap-3">
-                <social.icon className={`w-5 h-5 ${social.color}`} />
-                <div className="flex-1">
+              <div key={social.name} className="flex min-w-0 items-center gap-3">
+                <social.icon className={`h-5 w-5 shrink-0 ${social.color}`} />
+                <div className="min-w-0 flex-1">
                   <Input
                     value={social.url}
                     disabled={!isEditing}
                     placeholder={`${social.name} URL`}
+                    className={cn(exInput, "disabled:opacity-60")}
                     onChange={(e) => {
                       if (social.name === "LinkedIn") {
                         setFormData({ ...formData, linkedin: e.target.value })
@@ -383,71 +609,99 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
                 </div>
               </div>
             ))}
+            </div>
           </CardContent>
         </Card>
       </div>
 
       {/* Product Categories & Description */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Product Categories / Services</CardTitle>
+      <div className="grid min-w-0 grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2">
+        <Card className={cn(exGlassCardPremium, "min-w-0 overflow-hidden")}>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-slate-800">Product Categories / Services</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="min-w-0">
+            <div className={cn(exGlassNested, "min-w-0 space-y-4 p-4 sm:p-5")}>
             <div className="flex flex-wrap gap-2">
-              {categories.map((category) => (
-                <Badge key={category} variant="secondary" className="flex items-center gap-1">
-                  {category}
+              {productTags.map((tag) => (
+                <Badge
+                  key={tag}
+                  variant="secondary"
+                  className="flex items-center gap-1 border-[#004A96]/20 bg-[#004A96]/10 text-[#004A96]"
+                >
+                  {tag}
                   {isEditing && (
                     <X
-                      className="w-3 h-3 cursor-pointer hover:text-red-500"
-                      onClick={() => handleRemoveCategory(category)}
+                      className="h-3 w-3 cursor-pointer hover:text-[#004A96]"
+                      onClick={() => handleRemoveProductTag(tag)}
                     />
                   )}
                 </Badge>
               ))}
+              {productTags.length === 0 && !isEditing ? (
+                <p className="text-sm text-muted-foreground">No product categories added yet.</p>
+              ) : null}
             </div>
 
             {isEditing && (
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Add new category"
-                  onKeyPress={(e) => {
-                    if (e.key === "Enter") {
-                      handleAddCategory(e.currentTarget.value)
-                      e.currentTarget.value = ""
-                    }
-                  }}
-                />
-                <Button
-                  onClick={() => {
-                    const input = document.querySelector('input[placeholder="Add new category"]') as HTMLInputElement
-                    if (input) {
-                      handleAddCategory(input.value)
-                      input.value = ""
-                    }
-                  }}
-                  size="sm"
-                >
-                  <Plus className="w-4 h-4" />
-                </Button>
+              <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                <Select onValueChange={(v) => handleAddProductTag(v)}>
+                  <SelectTrigger className={cn(exInput, "w-full sm:flex-1")}>
+                    <SelectValue placeholder="Add from event categories" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {industryOptions
+                      .filter((name) => !productTags.includes(name))
+                      .map((name) => (
+                        <SelectItem key={name} value={name}>
+                          {name}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Or type custom tag"
+                    value={customProductTag}
+                    onChange={(e) => setCustomProductTag(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault()
+                        handleAddProductTag(customProductTag)
+                      }
+                    }}
+                    className={exInput}
+                  />
+                  <Button
+                    type="button"
+                    onClick={() => handleAddProductTag(customProductTag)}
+                    size="sm"
+                    className={cn("shadow-md", exCtaGradient)}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             )}
+            </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Company Description</CardTitle>
+        <Card className={cn(exGlassCardPremium, "min-w-0 overflow-hidden")}>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-slate-800">Company Description</CardTitle>
           </CardHeader>
-          <CardContent>
-            <Textarea
-              value={formData.bio || ""}
-              onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-              disabled={!isEditing}
-              rows={6}
-              placeholder="Describe your company, products, and services..."
-            />
+          <CardContent className="min-w-0">
+            <div className={cn(exGlassNested, "min-w-0 p-4 sm:p-5")}>
+              <Textarea
+                value={formData.bio || ""}
+                onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+                disabled={!isEditing}
+                rows={6}
+                placeholder="Describe your company, products, and services..."
+                className={cn(exInput, "min-h-[140px] disabled:opacity-60")}
+              />
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -457,19 +711,36 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
         <div className="flex justify-end gap-3">
           <Button
             variant="outline"
+            className="rounded-2xl border-[#004A96]/35 bg-white/50 backdrop-blur-sm"
             onClick={() => {
               setIsEditing(false)
-              setFormData(exhibitorData)
+              const loc = profileLocationFromLegacy(exhibitorData.location, {
+                city: exhibitorData.profileCity,
+                state: exhibitorData.profileState,
+                country: exhibitorData.profileCountry,
+              })
+              setFormData({
+                ...exhibitorData,
+                profileCity: loc.city,
+                profileState: loc.state,
+                profileCountry: loc.country,
+              })
+              setProductTags(exhibitorData.specialties ?? [])
             }}
             disabled={loading}
           >
             Cancel
           </Button>
-          <Button onClick={handleSave} disabled={loading}>
+          <Button
+            onClick={handleSave}
+            disabled={loading}
+            className={cn("rounded-2xl shadow-md", exCtaGradient)}
+          >
             {loading ? "Saving..." : "Save Changes"}
           </Button>
         </div>
       )}
+      </div>
     </div>
   )
 }  

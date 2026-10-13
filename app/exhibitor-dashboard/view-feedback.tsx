@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { Star } from "lucide-react"
+import { cn } from "@/lib/utils"
+import { exGlassCard, exBtnPrimary, exPageTitle, exInput } from "./dashboard-theme"
 
 interface Review {
   id: string
@@ -87,22 +89,22 @@ export default function ViewFeedback({ exhibitorId }: { exhibitorId: string }) {
   }
 
   return (
-    <div className="space-y-4">
-      <h2 className="text-2xl font-semibold">Customer Feedback</h2>
+    <div className="min-w-0 space-y-4">
+      <h2 className={cn(exPageTitle, "text-xl sm:text-2xl")}>Customer Feedback</h2>
 
       {list.map((review) => (
-        <Card key={review.id}>
+        <Card key={review.id} className={cn(exGlassCard, "min-w-0 overflow-hidden")}>
           <CardHeader>
-            <div className="flex items-center space-x-3">
-              <Avatar>
-                <AvatarImage src={review.user.avatar || "/city/c4.jpg"} />
+            <div className="flex items-start gap-3 min-w-0">
+              <Avatar className="shrink-0">
+                <AvatarImage src={review.user.avatar } />
               <AvatarFallback>
                 {review.user?.firstName?.[0] ?? ""}
                 {review.user?.lastName?.[0] ?? ""}
               </AvatarFallback>
               </Avatar>
-              <div>
-                <h3 className="font-medium">
+              <div className="min-w-0">
+                <h3 className="font-medium break-words">
                   {[review.user?.firstName, review.user?.lastName].filter(Boolean).join(" ").trim() || "Anonymous"}
                 </h3>
                 <div className="flex items-center text-yellow-500">
@@ -118,7 +120,7 @@ export default function ViewFeedback({ exhibitorId }: { exhibitorId: string }) {
             </div>
           </CardHeader>
           <CardContent>
-            <p className="text-gray-700 mb-2">{review.comment}</p>
+            <p className="text-gray-700 mb-2 break-words">{review.comment}</p>
             <p className="text-xs text-gray-400">
               {new Date(review.createdAt).toLocaleString()}
             </p>
@@ -127,7 +129,7 @@ export default function ViewFeedback({ exhibitorId }: { exhibitorId: string }) {
             {(review.replies?.length ?? 0) > 0 && (
               <div className="mt-4 space-y-2">
                 {(review.replies ?? []).map((rep) => (
-                  <div key={rep.id} className="pl-4 border-l-2 border-gray-200">
+                  <div key={rep.id} className="border-l-2 border-[#004A96]/35 pl-4">
                     <p className="text-sm text-gray-800">
                       <span className="font-semibold">
                         {rep.isOrganizerReply ? "You" : ([rep.user?.firstName, rep.user?.lastName].filter(Boolean).join(" ").trim() || "Anonymous")}
@@ -149,14 +151,16 @@ export default function ViewFeedback({ exhibitorId }: { exhibitorId: string }) {
                   value={replyContent}
                   onChange={(e) => setReplyContent(e.target.value)}
                   placeholder="Write a reply..."
+                  className={exInput}
                 />
-                <div className="flex gap-2">
-                  <Button size="sm" onClick={() => handleReply(review.id)}>
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <Button size="sm" className={cn(exBtnPrimary, "w-full sm:w-auto")} onClick={() => handleReply(review.id)}>
                     Send Reply
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
+                    className="w-full sm:w-auto"
                     onClick={() => {
                       setReplying(null)
                       setReplyContent("")
@@ -170,7 +174,7 @@ export default function ViewFeedback({ exhibitorId }: { exhibitorId: string }) {
               <Button
                 variant="ghost"
                 size="sm"
-                className="mt-3"
+                className="mt-3 w-full sm:w-auto"
                 onClick={() => setReplying(review.id)}
               >
                 Reply
