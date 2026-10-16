@@ -50,7 +50,7 @@ export function SavedEvents({ userId }: { userId?: string }) {
       setLoading(true)
 
       // Use the endpoint that matches your backend
-      const data = await apiFetch<{ events?: Event[] }>(`/api/users/${targetUserId}/interested-events`, {
+      const data = await apiFetch<{ events?: Event[] }>(`/api/users/${targetUserId}/saved-events`, {
         auth: true,
       })
 
@@ -73,9 +73,8 @@ export function SavedEvents({ userId }: { userId?: string }) {
 
     try {
       // Use the endpoint that matches your backend
-      await apiFetch(`/api/users/${targetUserId}/interested-events`, {
-        method: 'DELETE',
-        body: { eventId },
+      await apiFetch(`/api/events/${eventId}/save`, {
+        method: "DELETE",
         auth: true,
       })
 

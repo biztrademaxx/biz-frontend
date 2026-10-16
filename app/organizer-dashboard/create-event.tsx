@@ -465,6 +465,8 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
       setFormData(getDefaultCreateEventFormData())
       setValidationErrors({} as ValidationErrors)
       setSelectedVenueId("")
+      setShowValidationErrors(false)
+      setSlugManuallyEdited(false)
       setCompletionPercentage(0)
       setActiveTab("basic")
       setTabValidationErrors({})

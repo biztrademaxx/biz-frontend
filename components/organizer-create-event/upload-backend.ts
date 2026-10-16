@@ -1,4 +1,4 @@
-import { getAccessToken } from "@/lib/api"
+import { getAccessToken, refreshAccessTokenIfExpiringSoon } from "@/lib/api"
 import {
   IMAGE_UPLOAD_HINT,
   prepareImageFileForUpload,
@@ -50,6 +50,7 @@ export async function uploadEventFileToBackend(file: File, kind: UploadProxyKind
   formData.append("file", uploadFile)
   const path = useImageRoute ? "/api/upload/cloudinary" : "/api/upload/brochure"
 
+  await refreshAccessTokenIfExpiringSoon()
   const token = getAccessToken()
   if (!token) {
     throw new Error("Please log in to upload files")

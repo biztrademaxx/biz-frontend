@@ -35,11 +35,13 @@ export function getCountryCatalog(): CountryCatalogOption[] {
 export function getCountryTimezoneByName(countryName: string): string | null {
   const typed = countryName.trim().toLowerCase()
   if (!typed) return null
-  const country = Country.getAllCountries().find((c) => {
-    const name = c.name.trim().toLowerCase()
-    const code = c.isoCode.trim().toLowerCase()
-    return name === typed || code === typed || typed.includes(name) || name.includes(typed)
-  })
+  const countries = Country.getAllCountries()
+  const country =
+    countries.find((c) => c.name.trim().toLowerCase() === typed || c.isoCode.toLowerCase() === typed) ??
+    countries.find((c) => {
+      const name = c.name.trim().toLowerCase()
+      return typed.includes(name) || name.includes(typed)
+    })
   if (!country) return null
   // Prefer canonical business timezones for countries we commonly use.
   if (country.isoCode === "IN") return "Asia/Kolkata"

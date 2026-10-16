@@ -127,9 +127,8 @@ export function DashboardOverview({ userId, events, userName, interests = [] }: 
 
   const fetchSavedEvents = async () => {
     try {
-      // Try the endpoint that matches your backend
-      // Based on your error, it seems you have /api/users/:userId/interested-events
-      const data = await apiFetch<{ events?: any[] }>(`/api/users/${userId}/interested-events`, {
+      // Keep saved IDs in sync with the visitor wishlist.
+      const data = await apiFetch<{ events?: any[] }>(`/api/users/${userId}/saved-events`, {
         auth: true,
       })
       const savedIds = new Set((data?.events || []).map((e) => e.id))

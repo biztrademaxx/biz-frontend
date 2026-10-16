@@ -14,11 +14,6 @@ export default function ConditionalLayout({
   const pathname = usePathname()
   const isHome = pathname === "/"
 
-  // Show only the coming-soon page on the homepage.
-  if (isHome) {
-    return <>{children}</>
-  }
-
   // Hide Navbar/Footer on dashboard routes
   const hideLayout =
     // pathname.startsWith("/") ||

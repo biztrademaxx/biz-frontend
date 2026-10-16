@@ -142,7 +142,7 @@ function cloneFormData(fd: FormData): FormData {
  * If access token expires within `bufferSec`, refresh first — avoids 401 on large uploads
  * (e.g. POST /api/upload/brochure) when the token expired between page load and click.
  */
-async function refreshAccessTokenIfExpiringSoon(bufferSec = 120): Promise<void> {
+export async function refreshAccessTokenIfExpiringSoon(bufferSec = 120): Promise<void> {
   const token = getAccessToken();
   if (!token) return;
   const payload = decodeJwtPayload(token);

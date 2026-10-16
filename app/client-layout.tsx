@@ -3,7 +3,6 @@
 import type React from "react";
 import { Providers } from "./providers";
 import { Suspense } from "react";
-import { usePathname } from "next/navigation";
 import AppSuspenseFallback from "@/components/AppSuspenseFallback";
 import CookieConsentBanner from "@/components/cookies/CookieConsentBanner";
 import CookieScripts from "@/components/cookies/CookieScripts";
@@ -18,13 +17,6 @@ export default function ClientLayout({
   children: React.ReactNode;
   locationSeed?: HomeLocationClientSeed;
 }) {
-  const isComingSoonPage = usePathname() === "/";
-
-  // Keep the coming-soon homepage free of cookie and signup overlays.
-  if (isComingSoonPage) {
-    return <>{children}</>;
-  }
-
   return (
     <>
       <Suspense fallback={<AppSuspenseFallback />}>
