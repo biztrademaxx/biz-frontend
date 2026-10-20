@@ -13,6 +13,7 @@ import {
   MapPin,
   UserCircle,
   DollarSign,
+  CreditCard,
   FileText,
   Megaphone,
   BarChart3,
@@ -88,6 +89,7 @@ import PushNotifications from "./push-notifications"
 import PushTemplates from "./push-templates"
 import FinancialPaymentsPage from "./financial/payments/page"
 import FinancialSubscriptionsPage from "./financial/subscriptions/page"
+import SubscriptionPlansPage from "./subscription-plans/page"
 import FinancialInvoicesPage from "./financial/invoices/page"
 import FinancialTransactionsPage from "./financial/transactions/page"
 import PaymentIntegrationsPage from "./integrations/page"
@@ -182,6 +184,7 @@ const MENU_PERMISSIONS = {
   "visitors-events": "visitors-events",
   "visitors-connections": "visitors-connections",
   "visitors-appointments": "visitors-appointments",
+  "subscription-plans": "subscription-plans",
   financial: "financial",
   "financial-payments": "financial-payments",
   "financial-subscriptions": "financial-subscriptions",
@@ -420,6 +423,11 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
       subItems: [
         { title: "Contact inquiry", id: "contact-inquiries" },
       ],
+    },
+    {
+      title: "Subscription Plan",
+      icon: CreditCard,
+      id: "subscription-plans",
     },
     {
       title: "Financial & Transactions",
@@ -768,6 +776,8 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
         return <VenueManagement />
       case "visitors":
         return <VisitorManagement />
+      case "subscription-plans":
+        return <SubscriptionPlansPage />
       case "financial":
         return <FinancialPaymentsPage />
       case "content":

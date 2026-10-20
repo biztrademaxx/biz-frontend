@@ -92,6 +92,11 @@ export const ADMIN_PERMISSION_CATEGORIES: PermissionCategory[] = [
     ],
   },
   {
+    title: "Subscription Plan",
+    id: "subscription-plans",
+    subItems: [{ title: "Manage plan prices", id: "subscription-plans" }],
+  },
+  {
     title: "Financial & Transactions",
     id: "financial",
     subItems: [

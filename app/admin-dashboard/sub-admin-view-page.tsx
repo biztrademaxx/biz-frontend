@@ -127,6 +127,11 @@ export default function SubAdminViewPage({ subAdmin, onCancel }: SubAdminViewPag
       ],
     },
     {
+      title: "Subscription Plan",
+      id: "subscription-plans",
+      subItems: [{ title: "Manage plan prices", id: "subscription-plans" }],
+    },
+    {
       title: "Financial & Transactions",
       id: "financial",
       subItems: [

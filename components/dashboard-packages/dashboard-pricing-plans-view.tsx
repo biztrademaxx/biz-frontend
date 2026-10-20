@@ -12,10 +12,11 @@ import {
   type PlanFeatureState,
   dashboardPlansPageSubtitle,
   dashboardPlansPageTitle,
-  getDashboardPlansForRole,
   isFreeDashboardPlan,
 } from "@/lib/dashboard-packages"
 import { PlanPaymentDialog } from "@/components/dashboard-packages/plan-payment-dialog"
+import { PlanPricingStatus } from "@/components/dashboard-packages/plan-pricing-status"
+import { useDashboardPlanPrices } from "@/hooks/use-dashboard-plan-prices"
 import {
   activateFreeDashboardPlan,
   fetchCurrentDashboardPlan,
@@ -186,7 +187,7 @@ export interface DashboardPricingPlansViewProps {
 
 export function DashboardPricingPlansView({ role, onPlanSelect }: DashboardPricingPlansViewProps) {
   const { toast } = useToast()
-  const plans = getDashboardPlansForRole(role)
+  const { plans, pricingLoading, pricingError, retryPrices } = useDashboardPlanPrices(role)
   const accent: "visitor" | "exhibitor" | "organizer" =
     role === "VISITOR" ? "visitor" : role === "EXHIBITOR" ? "exhibitor" : "organizer"
 
@@ -252,6 +253,10 @@ export function DashboardPricingPlansView({ role, onPlanSelect }: DashboardPrici
   // whichever one matches the account's current plan is marked "Current plan"
   // (disabled); the rest behave as normal upgrade options.
   const visiblePlans = plans.filter((plan) => !isFreeDashboardPlan(plan))
+
+  if (pricingLoading || pricingError || plans.length === 0) {
+    return <PlanPricingStatus error={pricingError} onRetry={retryPrices} />
+  }
 
   return (
     <>

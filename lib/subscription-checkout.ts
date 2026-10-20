@@ -43,11 +43,11 @@ export async function activateFreeDashboardPlan(role: DashboardPackageRole, plan
   return data;
 }
 
-async function createSubscriptionOrder(role: DashboardPackageRole, planSlug: string) {
+async function createSubscriptionOrder(role: DashboardPackageRole, planSlug: string, expectedAmountInr: number) {
   const response = await fetch("/api/subscriptions/create-order", {
     method: "POST",
     headers: authHeaders(),
-    body: JSON.stringify({ role, planSlug }),
+    body: JSON.stringify({ role, planSlug, expectedAmountInr }),
   });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
@@ -118,7 +118,7 @@ export async function openSubscriptionCheckout(params: OpenSubscriptionCheckoutP
 
   await waitForCheckoutOverlayCleanup(params.delayBeforeOpenMs ?? 400);
 
-  const order = await createSubscriptionOrder(params.role, params.planSlug);
+  const order = await createSubscriptionOrder(params.role, params.planSlug, params.amountInr);
 
   return new Promise<{ paymentTransactionId: string }>((resolve, reject) => {
     const rzp = new window.Razorpay!({

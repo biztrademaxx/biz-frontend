@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from 'react'
 import { Loader2 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import {
-  getDashboardPlansForRole,
   isFreeDashboardPlan,
   type DashboardPlanDefinition,
   type PlanFeatureState,
@@ -16,6 +15,8 @@ import {
 import { PlanPaymentDialog } from '@/components/dashboard-packages/plan-payment-dialog'
 import { getAccessToken } from '@/lib/api'
 import './packages.css'
+import { useDashboardPlanPrices } from '@/hooks/use-dashboard-plan-prices'
+import { PlanPricingStatus } from '@/components/dashboard-packages/plan-pricing-status'
 
 function planShortName(plan: DashboardPlanDefinition): string {
   return plan.name.replace(/\s*Plan\s*$/i, '').trim() || plan.name
@@ -56,7 +57,7 @@ function pricingLabel(plan: DashboardPlanDefinition): string {
 
 export default function PackagesPage() {
   const { toast } = useToast()
-  const plans = useMemo(() => getDashboardPlansForRole('ORGANIZER'), [])
+  const { plans, pricingLoading, pricingError, retryPrices } = useDashboardPlanPrices('ORGANIZER')
 
   const [currentPlanSlug, setCurrentPlanSlug] = useState<string | null>(null)
   const [loadingPlan, setLoadingPlan] = useState(true)
@@ -205,6 +206,10 @@ export default function PackagesPage() {
       if (row) return row
     }
     return null
+  }
+
+  if (pricingLoading || pricingError || plans.length === 0) {
+    return <PlanPricingStatus error={pricingError} onRetry={retryPrices} />
   }
 
   return (
