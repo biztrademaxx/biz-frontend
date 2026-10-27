@@ -197,7 +197,7 @@ export default function EventPage({ params }: EventPageProps) {
 
           isRegistrationOpen: data.isAvailable,
           spotsRemaining: data.availableTickets,
-          images: data.images || [data.bannerImage].filter(Boolean),
+          images: Array.isArray(data.images) ? data.images : [],
           category: data.category || "General",
           tags: data.tags || [],
           venue: data.venue || {},
@@ -671,6 +671,12 @@ export default function EventPage({ params }: EventPageProps) {
         <div className="mb-6 sm:mb-10">
           <EventHero
             event={event}
+            onImagesUpdate={(images) =>
+              setEvent((prev: Record<string, unknown> | null) => (prev ? { ...prev, images } : prev))
+            }
+            onBannerImageUpdate={(bannerImage) =>
+              setEvent((prev: Record<string, unknown> | null) => (prev ? { ...prev, bannerImage } : prev))
+            }
             onScheduleUpdate={(patch) =>
               setEvent((prev: Record<string, unknown> | null) => (prev ? { ...prev, ...patch } : prev))
             }

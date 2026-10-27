@@ -5,17 +5,17 @@ import { Calendar, Clock, Ticket, Users } from "lucide-react"
 import { useKeenSlider } from "keen-slider/react"
 import "keen-slider/keen-slider.min.css"
 import Image from "next/image"
-import { useEffect, useState } from "react"
+import { EventDetailsBanner } from "@/components/event-details-banner"
+import { useEffect, useMemo, useState } from "react"
 import { formatPublicTicketPriceLine } from "@/lib/ticket-price-display"
 import { formatEventSidebarTimeRange } from "@/lib/event-sidebar-time-range"
 import { formatEventPublicDateRange, getEventPostponedNotice, isEventPostponed } from "@/lib/event-schedule-display"
 import { BRAND_IMAGE_BOTTOM_FADE } from "@/lib/brand-image-gradients"
-import { resolveEventBannerImage } from "@/lib/events/resolve-event-banner-image"
 
 const DEFAULT_EVENT_HERO_IMAGE = "/herosection-images/eventbanner.jpeg"
 
 interface Event {
-  bannerImage: unknown
+  bannerImage?: string | null
   thumbnailImage: unknown
   logo: unknown
   id: string
@@ -144,7 +144,15 @@ function EventCountdownBanner({ startDate }: { startDate?: string }) {
 // ── Main component ────────────────────────────────────────────────────────────
 export default function EventHero({ event }: EventHeroProps) {
   const [currentSlide, setCurrentSlide] = useState(0)
-  const [images, setImages] = useState<string[]>(event.images || [])
+  const slideImages = useMemo(() => {
+    const raw = Array.isArray(event.images) ? event.images : []
+    return raw
+      .filter(
+        (img): img is string =>
+          typeof img === "string" && img.trim() !== "" && img.trim() !== "null" && img.trim() !== "undefined",
+      )
+      .map((img) => img.trim())
+  }, [event.images])
 
   const [sliderRef, instanceRef] = useKeenSlider<HTMLDivElement>({
     loop: true,
@@ -156,26 +164,12 @@ export default function EventHero({ event }: EventHeroProps) {
 
   useEffect(() => {
     const slider = instanceRef.current
-    if (!slider) return
+    if (!slider || slideImages.length < 2) return
     const interval = setInterval(() => {
       slider.next()
     }, 10000)
     return () => clearInterval(interval)
-  }, [instanceRef])
-
-  useEffect(() => {
-    const raw = Array.isArray(event.images) ? event.images : []
-    const cleaned = raw.filter(
-      (img): img is string =>
-        typeof img === "string" && img.trim() !== "" && img !== "null" && img !== "undefined",
-    )
-    const banner = resolveEventBannerImage(event as Parameters<typeof resolveEventBannerImage>[0])
-    if (banner && !cleaned.includes(banner)) {
-      setImages([banner, ...cleaned])
-    } else {
-      setImages(cleaned)
-    }
-  }, [event.images, event.bannerImage, event.thumbnailImage, event.logo])
+  }, [instanceRef, slideImages.length])
 
   const getTicketPriceDisplay = () => formatPublicTicketPriceLine(event.ticketTypes)
 
@@ -189,12 +183,7 @@ export default function EventHero({ event }: EventHeroProps) {
   const followersCount = getFollowersCount()
   const postponed = isEventPostponed(event)
 
-  const slideImages = images.filter(
-    (img) =>
-      typeof img === "string" && img.trim() !== "" && img !== "null" && img !== "undefined"
-  )
-  const videoSlides = event.videos ?? []
-  const hasMainSliderMedia = slideImages.length > 0 || videoSlides.length > 0
+
 
   const rawHeroLabel =
     (event.subTitle || event.subtitle || "").trim() || (event.title || "").trim()
@@ -243,7 +232,7 @@ export default function EventHero({ event }: EventHeroProps) {
               ref={sliderRef}
               className="keen-slider absolute inset-0 h-full w-full"
             >
-              {hasMainSliderMedia ? (
+              {slideImages.length > 0 ? (
                 <>
                   {slideImages.map((imgSrc, index) => (
                     <div
@@ -265,26 +254,11 @@ export default function EventHero({ event }: EventHeroProps) {
                     </div>
                   ))}
 
-                  {videoSlides.map((vid: string, index: number) => (
-                    <div
-                      key={`video-${index}`}
-                      className="keen-slider__slide relative h-full w-full"
-                    >
-                      <video className="h-full w-full object-cover" autoPlay loop muted playsInline>
-                        <source src={vid} type="video/mp4" />
-                      </video>
-                    </div>
-                  ))}
+
                 </>
               ) : (
-                <div className="keen-slider__slide relative h-full w-full bg-neutral-100">
-                  <Image
-                    src={DEFAULT_EVENT_HERO_IMAGE}
-                    alt={event.title}
-                    fill
-                    className="object-cover"
-                    sizes="(max-width: 768px) 100vw, 66vw"
-                  />
+                <div className="keen-slider__slide relative flex h-full w-full items-center justify-center bg-neutral-100 p-4 text-sm text-neutral-500">
+                  No event images added yet
                 </div>
               )}
             </div>
@@ -310,37 +284,54 @@ export default function EventHero({ event }: EventHeroProps) {
               {eventSubtitle}
             </h2>
 
-            <div className="space-y-3 text-xs sm:text-sm text-gray-800 py-2">
-              {/* Date */}
-              <div className="flex items-center gap-2 sm:gap-3">
-                <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-black flex-shrink-0" />
-                <p className="leading-tight">{formatEventPublicDateRange(event.startDate, event.endDate)}</p>
-              </div>
-
-              {/* Time */}
-              <div className="flex items-center gap-2 sm:gap-3">
-                <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-black flex-shrink-0" />
-                <span className="leading-tight">{formatEventSidebarTimeRange(event)}</span>
-              </div>
-
-              {/* Ticket Price */}
-              <div className="flex items-center gap-2 sm:gap-3">
-                <Ticket className="w-4 h-4 sm:w-5 sm:h-5 text-black flex-shrink-0" />
-                <span className="leading-tight font-medium">
-                  {getTicketPriceDisplay()}
-                </span>
-              </div>
-
-              {/* Followers */}
-              {followersCount !== null && followersCount > 0 && (
+            <div className="flex items-center justify-between gap-3 sm:gap-4 py-2">
+              <div className="space-y-3 text-xs sm:text-sm text-gray-800 min-w-0 flex-1">
+                {/* Date */}
                 <div className="flex items-center gap-2 sm:gap-3">
-                  <Users className="w-4 h-4 sm:w-5 sm:h-5 text-black flex-shrink-0" />
-                  <span className="leading-tight">
-                    {followersCount.toLocaleString()} {followersCount === 1 ? "Follower" : "Followers"}
+                  <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-black flex-shrink-0" />
+                  <p className="leading-tight">{formatEventPublicDateRange(event.startDate, event.endDate)}</p>
+                </div>
+
+                {/* Time */}
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-black flex-shrink-0" />
+                  <span className="leading-tight">{formatEventSidebarTimeRange(event)}</span>
+                </div>
+
+                {/* Ticket Price */}
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <Ticket className="w-4 h-4 sm:w-5 sm:h-5 text-black flex-shrink-0" />
+                  <span className="leading-tight font-medium">
+                    {getTicketPriceDisplay()}
                   </span>
                 </div>
-              )}
+
+                {/* Followers */}
+                {followersCount !== null && followersCount > 0 && (
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <Users className="w-4 h-4 sm:w-5 sm:h-5 text-black flex-shrink-0" />
+                    <span className="leading-tight">
+                      {followersCount.toLocaleString()} {followersCount === 1 ? "Follower" : "Followers"}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              <EventDetailsBanner
+                imageUrl={event.bannerImage}
+                title={event.title}
+                className="w-24 h-24 sm:w-28 sm:h-28 shrink-0 rounded-lg"
+              />
             </div>
+
+            {/* Status Badge if postponed */}
+            {event.postponedReason && (
+              <div className="mt-2">
+                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                  Postponed: {event.postponedReason}
+                </span>
+              </div>
+            )}
 
             {/* ── Countdown Timer ── */}
             <EventCountdownBanner startDate={event.startDate} />
