@@ -5,8 +5,10 @@ import { toast } from "@/hooks/use-toast"
 import * as api from "../services/events.api"
 import type { Event, Category } from "../types/event.types"
 import { getOrganizerDisplay, getCategoryDisplay } from "../types/event.types"
+import { getAssignmentName } from "../event-assignment"
 
 const PAGE_SIZE = 15
+const EVENTS_LIST_STATE_KEY = "admin:events:listState"
 
 function normalizeStatusLabel(status: unknown): Event["status"] {
   const raw = String(status ?? "").trim().toUpperCase()
@@ -30,7 +32,9 @@ function normalizeStatusLabel(status: unknown): Event["status"] {
 }
 
 function normalizeEvent(raw: any): Event {
-  const organizerStr = getOrganizerDisplay(raw.organizer)
+  const organizerDetails = raw.organizer && typeof raw.organizer === "object" ? raw.organizer : raw.organizerDetails ?? null
+  const venueDetails = raw.venue && typeof raw.venue === "object" ? raw.venue : raw.venueDetails ?? null
+  const organizerStr = organizerDetails ? getAssignmentName(organizerDetails, "organizers") : getOrganizerDisplay(raw.organizer)
   const categoryVal = Array.isArray(raw.category)
     ? raw.category
     : typeof raw.category === "string" && raw.category.trim()
@@ -40,6 +44,10 @@ function normalizeEvent(raw: any): Event {
   return {
     ...raw,
     organizer: organizerStr,
+    organizerId: raw.organizerId ?? organizerDetails?.id ?? "",
+    venueId: raw.venueId === null ? null : raw.venueId ?? venueDetails?.id ?? null,
+    organizerDetails,
+    venueDetails: raw.venueId === null ? null : venueDetails,
     category: categoryStr,
     date: raw.startDate ?? raw.date ?? "",
     endDate: raw.endDate ?? "",
@@ -49,7 +57,7 @@ function normalizeEvent(raw: any): Event {
     organizerEmail:
       raw.organizer && typeof raw.organizer === "object"
         ? ((raw.organizer as { email?: string }).email ?? null)
-        : null,
+        : organizerDetails?.email ?? raw.organizerEmail ?? null,
     status: normalizeStatusLabel(raw.status),
     attendees: raw.currentAttendees ?? raw.attendees ?? 0,
     maxCapacity: raw.maxAttendees ?? raw.maxCapacity ?? 0,
@@ -76,6 +84,7 @@ export function useEvents() {
   const [selectedCountry, setSelectedCountry] = useState("all")
   const [activeTab, setActiveTab] = useState("all")
   const [page, setPage] = useState(1)
+  const [listStateRestored, setListStateRestored] = useState(false)
   const [pagination, setPagination] = useState<api.EventPagination>({
     page: 1,
     limit: PAGE_SIZE,
@@ -103,14 +112,66 @@ export function useEvents() {
   const [sendingMail, setSendingMail] = useState(false)
   const [sendingMailFor, setSendingMailFor] = useState<string | null>(null)
   const fetchIdRef = useRef(0)
+  const editRequestIdRef = useRef(0)
+
+  // Restore the saved query and page before requesting the event list.
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(EVENTS_LIST_STATE_KEY)
+      if (raw) {
+        const saved = JSON.parse(raw) as {
+          page?: number
+          search?: string
+          status?: string
+          category?: string
+          country?: string
+          tab?: string
+        }
+        if (typeof saved?.page === "number" && Number.isSafeInteger(saved.page) && saved.page > 0) {
+          setPage(saved.page)
+        }
+        if (typeof saved?.search === "string") {
+          setSearchTerm(saved.search)
+          setDebouncedSearch(saved.search.trim())
+        }
+        if (typeof saved?.status === "string" && saved.status) setSelectedStatus(saved.status)
+        if (typeof saved?.category === "string" && saved.category) setSelectedCategory(saved.category)
+        if (typeof saved?.country === "string" && saved.country) setSelectedCountry(saved.country)
+        if (typeof saved?.tab === "string" && saved.tab) setActiveTab(saved.tab)
+      }
+    } catch {
+      /* ignore malformed/blocked storage */
+    }
+    setListStateRestored(true)
+  }, [])
 
   useEffect(() => {
+    if (!listStateRestored) return
+    try {
+      sessionStorage.setItem(
+        EVENTS_LIST_STATE_KEY,
+        JSON.stringify({
+          page,
+          search: debouncedSearch,
+          status: selectedStatus,
+          category: selectedCategory,
+          country: selectedCountry,
+          tab: activeTab,
+        }),
+      )
+    } catch {
+      /* ignore blocked/full storage */
+    }
+  }, [page, debouncedSearch, selectedStatus, selectedCategory, selectedCountry, activeTab, listStateRestored])
+
+  useEffect(() => {
+    if (!listStateRestored || searchTerm.trim() === debouncedSearch) return
     const t = setTimeout(() => {
       setDebouncedSearch(searchTerm.trim())
       setPage(1)
     }, 350)
     return () => clearTimeout(t)
-  }, [searchTerm])
+  }, [searchTerm, debouncedSearch, listStateRestored])
 
   const fetchStats = useCallback(async () => {
     try {
@@ -138,6 +199,8 @@ export function useEvents() {
       const list = data.events ?? data.data?.events ?? []
       setEvents((Array.isArray(list) ? list : []).map(normalizeEvent))
       if (data.pagination) {
+        const lastPage = Math.max(1, data.pagination.totalPages)
+        if (page > lastPage) setPage(lastPage)
         setPagination(data.pagination)
       }
     } catch (error) {
@@ -167,12 +230,13 @@ export function useEvents() {
   }, [])
 
   useEffect(() => {
+    if (!listStateRestored) return
     if (activeTab === "send-email" || activeTab === "email-verified") {
       setLoading(false)
       return
     }
     void fetchEvents()
-  }, [fetchEvents, activeTab])
+  }, [fetchEvents, activeTab, listStateRestored])
 
   useEffect(() => {
     void fetchStats()
@@ -458,9 +522,22 @@ export function useEvents() {
     [refreshAfterMutation]
   )
 
-  const handleEditEvent = useCallback((event: Event) => {
-    setSelectedEvent(event)
-    setIsEditing(true)
+  const handleEditEvent = useCallback(async (event: Event) => {
+    const requestId = ++editRequestIdRef.current
+    setLoading(true)
+    try {
+      const result = await api.getEventById(event.id)
+      if (requestId !== editRequestIdRef.current) return
+      if (!result.data || typeof result.data !== "object") throw new Error("Could not load event details")
+      setSelectedEvent(normalizeEvent({ ...event, ...result.data }))
+      setIsEditing(true)
+    } catch (error) {
+      if (requestId === editRequestIdRef.current) {
+        toast({ title: "Error", description: error instanceof Error ? error.message : "Could not load event details", variant: "destructive" })
+      }
+    } finally {
+      if (requestId === editRequestIdRef.current) setLoading(false)
+    }
   }, [])
 
   const handleSaveEvent = useCallback(

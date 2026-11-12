@@ -3,6 +3,8 @@
  * Use display helpers for organizer/category to avoid rendering objects in JSX.
  */
 
+import type { EventAssignmentContact } from "../event-assignment"
+
 export interface EventOrganizer {
   _id: any
   companyName: any
@@ -29,6 +31,9 @@ export interface Event {
   /** Normalized to string for display; backend may return object */
   organizer: string | EventOrganizer
   organizerId?: string
+  venueId?: string | null
+  organizerDetails?: EventAssignmentContact | null
+  venueDetails?: EventAssignmentContact | null
   date: string
   endDate: string
   location: string

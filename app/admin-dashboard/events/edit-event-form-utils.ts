@@ -1,48 +1,6 @@
-export type EditEventCategory = {
-  id: string
-  name: string
-  color?: string
-  isActive: boolean
-}
-
-export type EditEventRecord = {
-  id: string
-  title: string
-  organizer: string
-  organizerId: string
-  date: string
-  endDate: string
-  location: string
-  venue: string
-  status: "Approved" | "Pending Review" | "Flagged" | "Rejected" | "Draft"
-  attendees: number
-  maxCapacity: number
-  ticketPrice: number
-  category: string
-  featured: boolean
-  vip: boolean
-  description: string
-  shortDescription: string
-  subTitle?: string
-  slug: string
-  edition: string
-  tags: string[]
-  eventType: string
-  timezone: string
-  currency: string
-  bannerImage: string
-  vipImage?: string | null
-  thumbnailImage: string
-  images: string[]
-  videos: string[]
-  youtubeVideoUrl?: string | null
-  brochure: string
-  layout: string
-  documents: string[]
-  isVerified: boolean
-  isPublic?: boolean
-  verifiedBadgeImage: string | null
-}
+import type { EditEventRecord } from "./edit-event-schema"
+import { getAssignmentName, type EventAssignmentContact } from "./event-assignment"
+export type { EditEventCategory, EditEventRecord } from "./edit-event-schema"
 
 export function toDateOnly(value?: string | null): string {
   if (!value) return ""
@@ -109,16 +67,11 @@ export function mapPatchedEventToEditRecord(
   raw: Record<string, unknown>,
   previous?: Partial<EditEventRecord>,
 ): EditEventRecord {
-  const organizer =
-    raw.organizer && typeof raw.organizer === "object"
-      ? String(
-          (raw.organizer as { company?: string; organizationName?: string; name?: string }).company ||
-            (raw.organizer as { organizationName?: string }).organizationName ||
-            (raw.organizer as { name?: string }).name ||
-            previous?.organizer ||
-            "",
-        )
-      : String(raw.organizer ?? previous?.organizer ?? "")
+  const organizerDetails = (raw.organizer && typeof raw.organizer === "object"
+    ? raw.organizer : raw.organizerDetails ?? previous?.organizerDetails ?? null) as EventAssignmentContact | null
+  const venueDetails = (raw.venueId === null || raw.venue === null ? null
+    : raw.venue && typeof raw.venue === "object" ? raw.venue : raw.venueDetails ?? previous?.venueDetails ?? null) as EventAssignmentContact | null
+  const organizer = organizerDetails ? getAssignmentName(organizerDetails, "organizers") : String(raw.organizer ?? previous?.organizer ?? "")
 
   const categoryRaw = raw.category ?? previous?.category
   const category =
@@ -132,15 +85,16 @@ export function mapPatchedEventToEditRecord(
     id: String(raw.id ?? previous?.id ?? ""),
     title: String(raw.title ?? previous?.title ?? ""),
     organizer,
-    organizerId: String(raw.organizerId ?? previous?.organizerId ?? ""),
+    organizerId: String(raw.organizerId ?? organizerDetails?.id ?? previous?.organizerId ?? ""),
+    venueId: raw.venueId === null ? null : String(raw.venueId ?? venueDetails?.id ?? previous?.venueId ?? "") || null,
+    organizerDetails,
+    venueDetails,
+    country: "country" in raw ? String(raw.country ?? "") : String(venueDetails?.venueCountry ?? previous?.country ?? ""),
+    state: "state" in raw ? String(raw.state ?? "") : String(venueDetails?.venueState ?? previous?.state ?? ""),
     date: toDateOnly(String(raw.startDate ?? raw.date ?? previous?.date ?? "")),
     endDate: toDateOnly(String(raw.endDate ?? previous?.endDate ?? "")),
-    location: String(raw.city ?? raw.location ?? previous?.location ?? ""),
-    venue: String(
-      typeof raw.venue === "string"
-        ? raw.venue
-        : (raw.venue as { venueName?: string } | null)?.venueName ?? previous?.venue ?? "",
-    ),
+    location: "city" in raw ? String(raw.city ?? "") : String(venueDetails?.venueCity ?? raw.location ?? previous?.location ?? ""),
+    venue: raw.venueId === null || raw.venue === null ? "" : typeof raw.venue === "string" ? raw.venue : venueDetails ? getAssignmentName(venueDetails, "venues") : previous?.venue ?? "",
     status: (raw.status as EditEventRecord["status"]) ?? previous?.status ?? "Draft",
     attendees: Number(raw.currentAttendees ?? raw.attendees ?? previous?.attendees ?? 0),
     maxCapacity: Number(raw.maxAttendees ?? raw.maxCapacity ?? previous?.maxCapacity ?? 0),

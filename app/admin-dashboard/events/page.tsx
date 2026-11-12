@@ -1,5 +1,6 @@
 "use client"
 
+import { useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { eventPublicPath } from "@/lib/event-path"
 import { useEvents } from "./hooks/useEvents"
@@ -59,6 +60,7 @@ export default function EventManagementPage({ onPromote }: EventManagementPagePr
     handleSendListingEmail,
     handleSendListingEmailBulk,
   } = useEvents()
+  const editRecord = useMemo(() => selectedEvent ? mapPatchedEventToEditRecord({ ...selectedEvent }) : null, [selectedEvent])
 
   if (categoriesLoading && events.length === 0 && !loading) {
     return (
@@ -68,10 +70,10 @@ export default function EventManagementPage({ onPromote }: EventManagementPagePr
     )
   }
 
-  if (isEditing && selectedEvent) {
+  if (isEditing && selectedEvent && editRecord) {
     return (
       <EditEventForm
-        event={mapPatchedEventToEditRecord({ ...selectedEvent })}
+        event={editRecord}
         onSave={(updated) => handleSaveEvent({
           ...selectedEvent,
           ...updated,

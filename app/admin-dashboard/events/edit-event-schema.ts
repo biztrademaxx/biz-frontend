@@ -1,6 +1,7 @@
 // app/admin-dashboard/events/edit-event-schema.ts
 
 import { z } from "zod"
+import type { EventAssignmentContact } from "./event-assignment"
 
 export const editEventStatusEnum = z.enum([
   "Approved",
@@ -20,6 +21,8 @@ export const editEventFormSchema = z
     shortDescription: z.string().max(200, "Max 200 characters"),
     subTitle: z.string().max(200, "Max 200 characters"),
     edition: z.string(),
+    organizerId: z.string().trim().min(1, "Select an organizer"),
+    venueId: z.string(),
     date: z.string().min(1, "Start date is required"),
     endDate: z.string().min(1, "End date is required"),
     timezone: z.string().min(1, "Timezone is required"),
@@ -68,6 +71,11 @@ export type EditEventRecord = {
   title: string
   organizer: string
   organizerId: string
+  venueId?: string | null
+  organizerDetails?: EventAssignmentContact | null
+  venueDetails?: EventAssignmentContact | null
+  country?: string
+  state?: string
   date: string
   endDate: string
   location: string

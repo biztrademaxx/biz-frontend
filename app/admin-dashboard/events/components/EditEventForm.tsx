@@ -40,6 +40,7 @@ import {
   toDateOnly,
 } from "../edit-event-form-utils"
 import { AdminEventFileUpload, AdminEventImagePreview } from "./AdminEventFileUpload"
+import { EventAssignmentFields } from "./EventAssignmentFields"
 
 type EditEventFormProps = {
   event: EditEventRecord
@@ -76,6 +77,8 @@ export function EditEventForm({ event, onSave, onCancel, categories }: EditEvent
       shortDescription: event.shortDescription || "",
       subTitle: event.subTitle || "",
       edition: event.edition || "",
+      organizerId: event.organizerId || "",
+      venueId: event.venueId || "",
       date: toDateOnly(event.date) || "",
       endDate: toDateOnly(event.endDate) || "",
       timezone: event.timezone || "IST",
@@ -120,6 +123,8 @@ export function EditEventForm({ event, onSave, onCancel, categories }: EditEvent
       shortDescription: event.shortDescription || "",
       subTitle: event.subTitle || "",
       edition: event.edition || "",
+      organizerId: event.organizerId || "",
+      venueId: event.venueId || "",
       date: toDateOnly(event.date) || "",
       endDate: toDateOnly(event.endDate) || "",
       timezone: event.timezone || "IST",
@@ -223,6 +228,8 @@ export function EditEventForm({ event, onSave, onCancel, categories }: EditEvent
         subTitle: values.subTitle ?? "",
         slug: values.slug,
         edition: values.edition ?? "",
+        ...(values.organizerId !== event.organizerId ? { organizerId: values.organizerId } : {}),
+        ...(values.venueId !== (event.venueId || "") ? { venueId: values.venueId || null } : {}),
         ...(values.date !== toDateOnly(event.date) ? { startDate: values.date } : {}),
         ...(values.endDate !== toDateOnly(event.endDate) ? { endDate: values.endDate } : {}),
         status: values.status,
@@ -333,6 +340,7 @@ export function EditEventForm({ event, onSave, onCancel, categories }: EditEvent
 
               <section className="space-y-4">
                 <SectionTitle>Basic Information</SectionTitle>
+                <EventAssignmentFields key={event.id} event={event} disabled={uploading} />
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <FormField
                     control={form.control}
@@ -481,25 +489,6 @@ export function EditEventForm({ event, onSave, onCancel, categories }: EditEvent
                       </FormItem>
                     )}
                   />
-                </div>
-              </section>
-
-              <section className="space-y-4">
-                <SectionTitle>Location & Venue</SectionTitle>
-                <p className="text-xs text-muted-foreground">Read-only on edit (change via event setup if needed).</p>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <FormItem>
-                    <FormLabel>Venue</FormLabel>
-                    <FormControl>
-                      <Input value={event.venue} disabled className="bg-muted/50" />
-                    </FormControl>
-                  </FormItem>
-                  <FormItem>
-                    <FormLabel>Location</FormLabel>
-                    <FormControl>
-                      <Input value={event.location} disabled className="bg-muted/50" />
-                    </FormControl>
-                  </FormItem>
                 </div>
               </section>
 
