@@ -19,6 +19,12 @@ interface Connection {
   jobTitle?: string
   company?: string
   avatar?: string
+  city?: string | null
+  country?: string | null
+  locationDisplay?: string | null
+  profileCity?: string | null
+  profileCountry?: string | null
+  location?: string | null
   mutualConnections?: number
   status: "connected" | "pending" | "request_received"
   connectionId?: string

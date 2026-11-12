@@ -407,6 +407,9 @@ export default function Navbar() {
       <button
         type="button"
         onClick={() => setShowAccountMenu((v) => !v)}
+        aria-label="Account menu"
+        aria-haspopup="menu"
+        aria-expanded={showAccountMenu}
         className="h-10 w-10 overflow-hidden rounded-full bg-[#002C71] focus:outline-none"
       >
         {profileImage ? (

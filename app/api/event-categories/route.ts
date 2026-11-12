@@ -1,11 +1,14 @@
 import { NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
+import { prisma as legacyPrisma } from "@/lib/prisma"
 
 /**
  * Public list of active event categories (for homepage, organizer forms, etc.).
  * No auth required — read-only.
  */
 export async function GET() {
+  const prisma = legacyPrisma
+  if (!prisma) return NextResponse.json({ error: "Database is not configured for this legacy endpoint" }, { status: 503 })
+
   try {
     const rows = await prisma.eventCategory.findMany({
       where: { isActive: true },

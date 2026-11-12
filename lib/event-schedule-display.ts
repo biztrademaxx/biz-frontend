@@ -43,3 +43,10 @@ export function getEventPostponedNotice(event: {
 }): string {
   return `This event has been postponed to ${formatEventPublicDateRange(event.startDate, event.endDate)}.`
 }
+
+export function isUpcomingEvent(event: { startDate?: string | Date | null; endDate?: string | Date | null }, now = new Date()): boolean {
+  if (!event.startDate) return false
+  const start = new Date(event.startDate).getTime()
+  const end = event.endDate ? new Date(event.endDate).getTime() : start
+  return Number.isFinite(start) && Number.isFinite(end) && end >= start && start > now.getTime()
+}

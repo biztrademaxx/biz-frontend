@@ -9,8 +9,9 @@ export const dynamic = "force-dynamic";
 // POST: Create a new venue review – proxy to backend and include userId from session
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
+  const routeParams = await params
   const session = await getServerSession(authOptions);
 
   if (!session?.user?.id) {
@@ -37,7 +38,7 @@ export async function POST(
     }),
   });
 
-  return proxyJson(enrichedRequest, `/api/venues/${params.id}/reviews`, {
+  return proxyJson(enrichedRequest, `/api/venues/${routeParams.id}/reviews`, {
     method: "POST",
   });
 }
@@ -45,7 +46,8 @@ export async function POST(
 // GET: Fetch reviews for a venue – proxy to backend
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
-  return proxyJson(req, `/api/venues/${params.id}/reviews`);
+  const routeParams = await params
+  return proxyJson(req, `/api/venues/${routeParams.id}/reviews`);
 }

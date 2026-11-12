@@ -18,7 +18,7 @@ interface SubAdminViewPageProps {
     permissions: string[]
     isActive: boolean
     createdAt: string
-    createdBy: {
+    createdBy?: {
       name: string
       email: string
     }
@@ -328,7 +328,7 @@ export default function SubAdminViewPage({ subAdmin, onCancel }: SubAdminViewPag
                 <div className="md:col-span-2">
                   <Label className="text-sm font-medium text-gray-500">Created By</Label>
                   <p className="mt-1">
-                    {subAdmin.createdBy.name} ({subAdmin.createdBy.email})
+                    {subAdmin.createdBy ? `${subAdmin.createdBy.name} (${subAdmin.createdBy.email})` : "Not available"}
                   </p>
                 </div>
               </div>

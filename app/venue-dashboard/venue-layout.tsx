@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { useToast } from "@/hooks/use-toast"
 import { apiFetch, getCurrentUserId } from "@/lib/api"
 import { cn } from "@/lib/utils"
+import { getVenueMonthlyActivity, type VenueEventActivity } from "@/lib/venue-activity"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
@@ -109,6 +110,7 @@ interface RawVenueData {
   timezone?: string;
   capacity?: CapacityObject;
   stats?: StatsObject;
+  monthlyEvents?: VenueEventActivity[];
   location?: LocationObject;
   manager?: {
     venueName?: string;
@@ -163,6 +165,7 @@ type VenueData = {
   amenities: string[]
   meetingSpaces: MeetingSpace[]
   timezone?: string
+  monthlyEvents: VenueEventActivity[]
   manager?: { isVerified?: boolean;[key: string]: unknown }
 }
 
@@ -295,6 +298,7 @@ export default function VenueDashboardPage({ routeSegment }: UserDashboardProps)
         meetingSpaces: meetingSpaces as MeetingSpace[],
         timezone: (raw.timezone ?? raw.location?.timezone ?? "") as string,
         manager: mgr,
+        monthlyEvents: raw.monthlyEvents ?? [],
       }
       setVenueData(merged)
       setAccountUnderReview(venuePayloadUnderReview(payload))
@@ -547,41 +551,12 @@ function VenueDashboardHome({
   const [loadingBookings, setLoadingBookings] = useState(false)
   const [selectedPeriod, setSelectedPeriod] = useState<"thisMonth" | "lastMonth">("thisMonth")
 
-  // Monthly data from screenshot - values are counts, need to be scaled to percentage of max
-  const monthlyDataRaw = {
-    thisMonth: [
-      { day: "May 1", value: 75 },
-      { day: "May 5", value: 43 },
-      { day: "May 10", value: 72 },
-      { day: "May 15", value: 84 },
-      { day: "May 20", value: 33 },
-      { day: "May 25", value: 67 },
-      { day: "May 30", value: 68 },
-    ],
-    lastMonth: [
-      { day: "Apr 1", value: 95 },
-      { day: "Apr 5", value: 52 },
-      { day: "Apr 10", value: 46 },
-      { day: "Apr 15", value: 78 },
-      { day: "Apr 20", value: 46 },
-      { day: "Apr 25", value: 48 },
-      { day: "Apr 30", value: 41 },
-    ]
-  }
-
-  // Find max value to scale bars properly (max height will be 85% of container)
-  const maxValueThisMonth = Math.max(...monthlyDataRaw.thisMonth.map(d => d.value))
-  const maxValueLastMonth = Math.max(...monthlyDataRaw.lastMonth.map(d => d.value))
-  const globalMax = Math.max(maxValueThisMonth, maxValueLastMonth)
-
-  // Scale values to percentage (max bar height = 85% of container, so highest value becomes 85%)
-  const maxBarHeight = 85
-  const scaleValue = (value: number) => (value / globalMax) * maxBarHeight
-
-  const currentData = (selectedPeriod === "thisMonth" ? monthlyDataRaw.thisMonth : monthlyDataRaw.lastMonth).map(item => ({
-    ...item,
-    scaledHeight: scaleValue(item.value)
+  const monthlyDataRaw = getVenueMonthlyActivity(venueData.monthlyEvents, venueData.timezone)
+  const globalMax = Math.max(1, ...monthlyDataRaw.thisMonth.map((d) => d.value), ...monthlyDataRaw.lastMonth.map((d) => d.value))
+  const currentData = monthlyDataRaw[selectedPeriod].map((item) => ({
+    ...item, scaledHeight: (item.value / globalMax) * 170,
   }))
+  const selectedMonthTotal = currentData.reduce((sum, day) => sum + day.value, 0)
 
   // Calculate real stats from venueData - ENSURE we're using the latest data
   const totalHalls = venueData.totalHalls || venueData.meetingSpaces?.length || 0
@@ -702,9 +677,7 @@ function VenueDashboardHome({
               <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center", stat.color.split(" ")[0])}>
                 <stat.icon className="w-5 h-5" />
               </div>
-              <span className="text-[10px] font-medium text-[#22C55E] bg-[#F0FDF4] px-2 py-0.5 rounded-full">
-                +12%
-              </span>
+
             </div>
             <p className="text-2xl font-bold text-[#1E293B]">{stat.value}</p>
             <p className="text-xs text-[#64748B] mt-1">{stat.label}</p>
@@ -745,13 +718,17 @@ function VenueDashboardHome({
             </div>
           </div>
 
-          {/* Bar Chart - FIXED: using scaled heights */}
+          <p className="mb-3 text-sm text-slate-500">
+            {selectedMonthTotal === 0 ? "No events scheduled in this month" : `${selectedMonthTotal} events scheduled in this month`}
+          </p>
+          {/* Daily event counts in the venue timezone. */}
           <div className="flex items-end justify-between gap-2 h-56 mb-2">
             {currentData.map((item, index) => (
               <div key={index} className="flex-1 flex flex-col items-center gap-2">
                 <div className="relative w-full flex justify-center">
                   <div
                     className="w-full max-w-[40px] bg-gradient-to-t from-[#004A96] to-[#3b82f6] rounded-t-lg transition-all duration-300 hover:from-[#003d7a] hover:to-[#2563eb] cursor-pointer"
+                    title={`${item.day}: ${item.value} events`}
                     style={{ height: `${item.scaledHeight}px` }}
                   />
                 </div>

@@ -40,6 +40,7 @@ import {
 } from "@/components/location/ProfileLocationFields"
 import type { UserData } from "@/types/user"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { isUpcomingEvent } from "@/lib/event-schedule-display"
 import { apiFetch } from "@/lib/api"
 import { cn } from "@/lib/utils"
 import { useDashboard } from "@/contexts/dashboard-context"
@@ -149,6 +150,7 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
   const [localUserData, setLocalUserData] = useState<UserData>(userData)
   const [connectionsCount, setConnectionsCount] = useState<number>(0)
   const [interestedEventsCount, setInterestedEventsCount] = useState<number>(0)
+  const [upcomingEventsCount, setUpcomingEventsCount] = useState(0)
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
 
   const displayLocation = useMemo(
@@ -323,6 +325,7 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
       const data = await apiFetch<{ events?: any[]; data?: any[] }>(`/api/users/${userData.id}/interested-events`, { auth: true })
       const list = data.events ?? data.data ?? []
       setInterestedEventsCount(Array.isArray(list) ? list.length : 0)
+      setUpcomingEventsCount(Array.isArray(list) ? list.filter((event) => isUpcomingEvent(event)).length : 0)
     } catch (error) {
       console.error("Error fetching interested events:", error)
     }
@@ -396,7 +399,7 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
           </span>
           <div>
             <h3 className="text-sm font-semibold text-slate-800">Upcoming events</h3>
-            <p className="mt-1 text-lg font-bold text-[#004A96]">{interestedEventsCount}</p>
+            <p className="mt-1 text-lg font-bold text-[#004A96]">{upcomingEventsCount}</p>
             <p className="text-xs text-slate-500">Interested with future dates</p>
           </div>
         </button>

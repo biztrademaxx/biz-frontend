@@ -81,8 +81,19 @@ const faqList: FAQ[] = [
     },
 ]
 
+const venueFaqList: FAQ[] = [
+    { question: "How do I update my venue listing?", answer: "Open Venue Profile, select Edit Profile, update your details, halls, or amenities, and select Save Changes. Cancel discards unsaved edits. Image changes are saved when you upload or remove them." },
+    { question: "Where can I see events at my venue?", answer: "Open Event Management to view the events associated with your venue. The Dashboard shows totals and monthly event activity." },
+    { question: "How do I manage appointment requests?", answer: "Open Booking System to review pending requests, approve or decline them, and mark confirmed meetings as complete. Use the search and status filters in list or calendar view." },
+    { question: "How do I contact organizers?", answer: "Use Messages for conversations and Connections to manage your professional network." },
+    { question: "Where can I manage venue feedback?", answer: "Open Reviews & Ratings to review feedback submitted for your venue." },
+    { question: "How do I change my account preferences?", answer: "Open Settings to manage the account options available to your venue manager profile." },
+    { question: "How do I report a technical issue?", answer: "Use Help & Support to create a support ticket. Include the section, steps taken, and the result you expected." },
+]
+
 export function HelpSupport({ variant = "default" }: { variant?: "default" | "venue" }) {
     const venue = variant === "venue"
+    const displayedFaqs = venue ? venueFaqList : faqList
     const accentIcon = "text-[#004A96]"
     const accentSoft = "bg-blue-50 rounded-lg border border-blue-100"
     const sectionShell = venue
@@ -228,7 +239,7 @@ export function HelpSupport({ variant = "default" }: { variant?: "default" | "ve
                     <span className="min-w-0">Frequently Asked Questions</span>
                 </h2>
                 <div className={venue ? "space-y-3 sm:space-y-4" : "space-y-4"}>
-                    {faqList.map((faq, index) => (
+                    {displayedFaqs.map((faq, index) => (
                         <div
                             key={index}
                             className={cn(

@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth-options'
-import { prisma } from '@/lib/prisma'
+import { prisma as legacyPrisma } from '@/lib/prisma'
 
 export async function DELETE(
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
+  const prisma = legacyPrisma
+  if (!prisma) return NextResponse.json({ error: "Database is not configured for this legacy endpoint" }, { status: 503 })
+
   try {
     const params = await context.params
     const session = await getServerSession(authOptions)

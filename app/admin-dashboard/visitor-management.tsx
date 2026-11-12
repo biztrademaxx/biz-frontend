@@ -56,6 +56,8 @@ interface Visitor {
   }
 }
 
+interface VisitorSummary { active: number; inactive: number; verified: number }
+
 interface PaginationInfo { page: number; limit: number; total: number; totalPages: number }
 
 interface VisitorDetails extends Visitor {
@@ -77,6 +79,7 @@ function getAvatarColor(name: string) { return avatarColors[name.charCodeAt(0) %
 export default function VisitorManagement() {
   const router = useRouter()
   const [visitors, setVisitors] = useState<Visitor[]>([])
+  const [summary, setSummary] = useState<VisitorSummary>({ active: 0, inactive: 0, verified: 0 })
   const [selectedVisitor, setSelectedVisitor] = useState<VisitorDetails | null>(null)
   const [showDetailsModal, setShowDetailsModal] = useState(false)
   const [showSuggestionsModal, setShowSuggestionsModal] = useState(false)
@@ -98,7 +101,7 @@ export default function VisitorManagement() {
         ...(searchTerm && { search: searchTerm }),
         ...(statusFilter !== "all" && { status: statusFilter }),
       })
-      const result = await adminApi<{ success?: boolean; data?: { visitors: Visitor[]; pagination: PaginationInfo }; error?: string }>(`/visitors?${params}`)
+      const result = await adminApi<{ success?: boolean; data?: { visitors: Visitor[]; pagination: PaginationInfo; stats: VisitorSummary }; error?: string }>(`/visitors?${params}`)
       if (result.success && result.data) {
         const validatedVisitors = (result.data.visitors ?? []).map((visitor: any) => ({
           ...visitor,
@@ -113,6 +116,7 @@ export default function VisitorManagement() {
           },
         }))
         setVisitors(validatedVisitors)
+        setSummary(result.data.stats)
         setPagination(result.data.pagination ?? { page: 1, limit: 10, total: 0, totalPages: 0 })
       } else {
         setError((result as any).error ?? "Failed to fetch visitors")
@@ -179,7 +183,7 @@ export default function VisitorManagement() {
   const handleStatusToggle = async (visitorId: string, currentStatus: boolean) => {
     try {
       await adminApi(`/visitors/${visitorId}`, { method: "PATCH", body: { isActive: !currentStatus } })
-      setVisitors((prev) => prev.map((v) => v.id === visitorId ? { ...v, isActive: !currentStatus } : v))
+      await fetchVisitors()
       setShowActionsMenu(null)
     } catch (error) { console.error("Error updating visitor status:", error); setError("Failed to update visitor status") }
   }
@@ -191,7 +195,7 @@ export default function VisitorManagement() {
     if (confirm("Are you sure you want to delete this visitor? This action cannot be undone.")) {
       try {
         await adminApi(`/visitors/${visitorId}`, { method: "DELETE" })
-        setVisitors((prev) => prev.filter((v) => v.id !== visitorId))
+        await fetchVisitors()
       } catch (error) { console.error("Error deleting visitor:", error); setError("Failed to delete visitor") }
     }
     setShowActionsMenu(null)
@@ -205,10 +209,7 @@ export default function VisitorManagement() {
     )
   }
 
-  // Derive summary stats from loaded data
-  const totalActive = visitors.filter((v) => v.isActive).length
-  const totalVerified = visitors.filter((v) => v.isVerified).length
-  const totalInactive = visitors.filter((v) => !v.isActive).length
+  const { active: totalActive, verified: totalVerified, inactive: totalInactive } = summary
 
   return (
     <div className="min-h-screen bg-transparent p-8">
@@ -232,9 +233,9 @@ export default function VisitorManagement() {
       {/* Stat Cards */}
       <div className="grid grid-cols-4 gap-4 mb-8">
         {[
-          { label: "TOTAL VISITORS", value: pagination.total || visitors.length, sub: "All registered", subColor: "text-gray-400" },
+          { label: "TOTAL VISITORS", value: pagination.total, sub: "All registered", subColor: "text-gray-400" },
           { label: "ACTIVE", value: totalActive, sub: "Currently active", subColor: "text-emerald-600" },
-          { label: "VERIFIED", value: totalVerified, sub: `${Math.round((totalVerified / Math.max(visitors.length, 1)) * 100)}% verified`, subColor: "text-emerald-600" },
+          { label: "VERIFIED", value: totalVerified, sub: `${Math.round((totalVerified / Math.max(pagination.total, 1)) * 100)}% verified`, subColor: "text-emerald-600" },
           { label: "INACTIVE", value: totalInactive, sub: "Needs action", subColor: "text-gray-400" },
         ].map((s) => (
           <div key={s.label} className="bg-white rounded-xl p-5 border border-gray-100">

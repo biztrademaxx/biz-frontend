@@ -1,8 +1,11 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
+import { prisma as legacyPrisma } from "@/lib/prisma"
 
 // GET - Fetch statistics for legal documents
 export async function GET(request: NextRequest) {
+  const prisma = legacyPrisma
+  if (!prisma) return NextResponse.json({ error: "Database is not configured for this legacy endpoint" }, { status: 503 })
+
   try {
     const searchParams = request.nextUrl.searchParams
     const venueId = searchParams.get("venueId")

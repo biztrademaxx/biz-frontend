@@ -3,9 +3,11 @@ import { devLog } from "@/lib/dev-log"
 import { type NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth-options"
-import { prisma } from "@/lib/prisma"
+import { prisma as legacyPrisma } from "@/lib/prisma"
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const prisma = legacyPrisma
+
   try {
     const eventId = (await params).id
     const { searchParams } = new URL(request.url)
@@ -38,7 +40,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     // Then fetch user data for each review separately
     const reviewsWithUsers = await Promise.all(
       reviews.map(async (review) => {
-        const user = await prisma.user.findUnique({
+        const user = review.userId ? await prisma.user.findUnique({
           where: { id: review.userId },
           select: {
             id: true,
@@ -46,7 +48,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
             lastName: true,
             avatar: true,
           },
-        })
+        }) : null
 
         let replies: any[] = []
         if (includeReplies) {
@@ -113,6 +115,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 }
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const prisma = legacyPrisma
+  if (!prisma) return NextResponse.json({ error: "Database is not configured for this legacy endpoint" }, { status: 503 })
+
   try {
     const session = await getServerSession(authOptions)
 

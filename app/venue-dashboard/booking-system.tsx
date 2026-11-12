@@ -417,11 +417,13 @@ export default function AppointmentScheduling({ venueId, onCountChange }: Appoin
       .filter(group => group.appointments.length > 0)
   }, [groupedByVisitor, searchTerm, statusFilter])
 
+  const filteredAppointments = useMemo(() => filteredGroups.flatMap((group) => group.appointments), [filteredGroups])
+
   // Calendar helpers
   const getDayAppointments = (day: number) => {
     const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day)
     const dateStr = date.toLocaleDateString()
-    return appointments.filter((a) => a.requestedDate === dateStr)
+    return filteredAppointments.filter((a) => a.requestedDate === dateStr)
   }
 
   const startOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1)
@@ -518,7 +520,7 @@ export default function AppointmentScheduling({ venueId, onCountChange }: Appoin
         </div>
       </div>
 
-      {appointments.length === 0 ? (
+      {filteredAppointments.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-slate-200 bg-white py-16 text-center">
           <CalendarIcon className="mx-auto mb-3 h-12 w-12 text-slate-300" />
           <h3 className="text-base font-semibold text-slate-700">No Appointments Found</h3>

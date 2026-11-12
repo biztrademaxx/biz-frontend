@@ -1,10 +1,13 @@
 // app/api/faqs/route.ts - UPDATED
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
-import { prisma } from '@/lib/prisma'
+import { prisma as legacyPrisma } from '@/lib/prisma'
 import { authOptions } from '@/lib/auth-options'
 
 export async function GET(request: NextRequest) {
+  const prisma = legacyPrisma
+  if (!prisma) return NextResponse.json({ error: "Database is not configured for this legacy endpoint" }, { status: 503 })
+
   try {
     const session = await getServerSession(authOptions)
     if (!session) {
@@ -50,6 +53,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const prisma = legacyPrisma
+  if (!prisma) return NextResponse.json({ error: "Database is not configured for this legacy endpoint" }, { status: 503 })
+
   try {
     const session = await getServerSession(authOptions)
     if (!session) {

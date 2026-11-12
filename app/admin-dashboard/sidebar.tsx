@@ -247,9 +247,8 @@ const LEGACY_PERMISSION_ALIASES: Record<string, string[]> = {
   "settings-deactivations": ["settings-modules"],
 }
 
-// sessionStorage key set by child pages (e.g. OrganizerManagement) right
-// before navigating away to a full page route, so we can reopen the same
-// section/sub-section when the admin comes back.
+// Keep the active section across refreshes and trips to full-page routes.
+// Child pages can also set this key before navigating away.
 const RETURN_SECTION_KEY = "admin:returnSection"
 
 export default function AdminDashboard({ userRole, userPermissions }: AdminDashboardProps) {
@@ -259,9 +258,9 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
   const [activeSubSection, setActiveSubSection] = useState("")
   const [openMenus, setOpenMenus] = useState<Set<string>>(new Set(["dashboard"]))
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [sectionRestored, setSectionRestored] = useState(false)
 
-  // Restore section/sub-section if we're returning from a page we navigated
-  // away to (e.g. an organizer's public profile). Runs once on mount.
+  // Restore the section before saving changes, preserving the stored value on mount.
   useEffect(() => {
     try {
       const raw = sessionStorage.getItem(RETURN_SECTION_KEY)
@@ -276,12 +275,24 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
             return next
           })
         }
-        sessionStorage.removeItem(RETURN_SECTION_KEY)
       }
     } catch {
       /* ignore malformed/blocked storage */
     }
+    setSectionRestored(true)
   }, [])
+
+  useEffect(() => {
+    if (!sectionRestored) return
+    try {
+      sessionStorage.setItem(
+        RETURN_SECTION_KEY,
+        JSON.stringify({ section: activeSection, sub: activeSubSection })
+      )
+    } catch {
+      /* ignore blocked/full storage */
+    }
+  }, [activeSection, activeSubSection, sectionRestored])
 
   const hasPermission = (itemId: string): boolean => {
     if (userRole === "SUPER_ADMIN") return true

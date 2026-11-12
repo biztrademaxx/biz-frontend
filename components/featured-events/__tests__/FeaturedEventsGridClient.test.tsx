@@ -12,7 +12,7 @@ function makeEvent(over: Partial<FeaturedEventPayload> = {}): FeaturedEventPaylo
     slug: "gmw-2026",
     startDate: "2026-04-10T09:00:00.000Z",
     endDate: "2026-04-12T18:00:00.000Z",
-    bannerImage: null,
+    bannerImage: "https://images.example.com/manufacturing-week.jpg",
     edition: "2026",
     tags: [],
     eventType: ["Trade"],
@@ -32,12 +32,21 @@ function makeEvent(over: Partial<FeaturedEventPayload> = {}): FeaturedEventPaylo
 describe("FeaturedEventsGridClient", () => {
   it("renders empty state message and browse CTA", () => {
     renderWithProviders(<FeaturedEventsGridClient events={[]} homeCountry="France" />)
-    expect(screen.getByText(/no featured events in france/i)).toBeInTheDocument()
+    const status = screen.getByRole("status")
+    expect(within(status).getByRole("heading", { name: "No featured events here yet" })).toBeInTheDocument()
+    expect(within(status).getByText(/showing results for france/i)).toBeInTheDocument()
     expect(screen.getByRole("link", { name: /browse all events/i })).toHaveAttribute("href", "/event")
     expect(screen.getByRole("link", { name: /^add event$/i })).toHaveAttribute(
       "href",
       "/organizer-signup",
     )
+  })
+
+  it("shows the empty state when the supplied events have no display image", () => {
+    renderWithProviders(<FeaturedEventsGridClient events={[makeEvent({ bannerImage: null })]} />)
+    expect(screen.getByRole("status")).toBeInTheDocument()
+    expect(screen.queryByRole("region", { name: /featured events/i })).not.toBeInTheDocument()
+    expect(screen.queryByText("Global Manufacturing Week")).not.toBeInTheDocument()
   })
 
   it("renders event title, category link, and event detail link", () => {

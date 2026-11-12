@@ -31,6 +31,7 @@ import {
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
+import { formatAppointmentDateTime } from "@/lib/appointment-display"
 import { formatCityCountryLine } from "@/lib/location-data"
 
 interface Appointment {
@@ -139,15 +140,6 @@ function formatDate(dateStr?: string) {
   })
 }
 
-function formatDateTime(dateStr?: string) {
-  if (!dateStr) return { date: "TBD", time: "" }
-  const d = new Date(dateStr)
-  return {
-    date: d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
-    time: d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }),
-  }
-}
-
 function getAppointmentLocationDisplay(appt: Pick<Appointment, "location" | "city" | "country" | "locationDisplay">): string {
   const display = formatCityCountryLine(appt)
   return display || "Location TBD"
@@ -175,7 +167,7 @@ function CompactAppointmentCard({
   onCancel?: (id: string) => void
   onViewDetails: (appt: Appointment) => void
 }) {
-  const { date, time } = formatDateTime(appt.requestedDate)
+  const { date, time } = formatAppointmentDateTime(appt)
   const locationDisplay = getAppointmentLocationDisplay(appt)
   const getTypeLabel = (type: string) => {
     switch (type) {
@@ -639,7 +631,7 @@ export function MyAppointments({ userId }: MyAppointmentsProps) {
             <DialogTitle>Appointment Details</DialogTitle>
           </DialogHeader>
           {selectedAppointment && (() => {
-            const { date, time } = formatDateTime(selectedAppointment.requestedDate)
+            const { date, time } = formatAppointmentDateTime(selectedAppointment)
             const locationDisplay = getAppointmentLocationDisplay(selectedAppointment)
             const getTypeLabel = (type: string) => {
               switch (type) {

@@ -1,9 +1,12 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
+import { prisma as legacyPrisma } from "@/lib/prisma"
 import {Cloudinary } from "@/lib/cloudinary"
 
 // GET - Fetch single legal document
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const prisma = legacyPrisma
+  if (!prisma) return NextResponse.json({ error: "Database is not configured for this legacy endpoint" }, { status: 503 })
+
   try {
     const document = await prisma.legalDocument.findUnique({
       where: { id: (await params).id },
@@ -43,6 +46,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
 // PATCH - Update legal document
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const prisma = legacyPrisma
+  if (!prisma) return NextResponse.json({ error: "Database is not configured for this legacy endpoint" }, { status: 503 })
+
   try {
     const formData = await request.formData()
     const file = formData.get("file") as File | null
@@ -161,6 +167,9 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
 // DELETE - Delete legal document
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const prisma = legacyPrisma
+  if (!prisma) return NextResponse.json({ error: "Database is not configured for this legacy endpoint" }, { status: 503 })
+
   try {
     const document = await prisma.legalDocument.findUnique({
       where: { id:(await params).id },

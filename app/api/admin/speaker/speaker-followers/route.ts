@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server"
-import {prisma} from "@/lib/prisma"
+import { prisma as legacyPrisma } from "@/lib/prisma"
 
 export async function GET() {
+  const prisma = legacyPrisma
+  if (!prisma) return NextResponse.json({ error: "Database is not configured for this legacy endpoint" }, { status: 503 })
+
   try {
     // Fetch all speakers with their follower counts and session statistics
     const speakers = await prisma.user.findMany({

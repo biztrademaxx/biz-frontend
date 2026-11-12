@@ -3,11 +3,14 @@ import { devLog } from "@/lib/dev-log"
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { prisma as legacyPrisma } from "@/lib/prisma";
 import { sendVerificationEmail } from "@/lib/email";
 
 // POST — Send email verification code
 export async function POST(request: NextRequest) {
+  const prisma = legacyPrisma
+  if (!prisma) return NextResponse.json({ error: "Database is not configured for this legacy endpoint" }, { status: 503 })
+
   try {
     const session = await getServerSession(authOptions);
 
@@ -105,6 +108,9 @@ export async function POST(request: NextRequest) {
 
 // PUT — Verify email code
 export async function PUT(request: NextRequest) {
+  const prisma = legacyPrisma
+  if (!prisma) return NextResponse.json({ error: "Database is not configured for this legacy endpoint" }, { status: 503 })
+
   try {
     const session = await getServerSession(authOptions);
 

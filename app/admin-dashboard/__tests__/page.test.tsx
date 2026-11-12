@@ -4,6 +4,12 @@ import AdminDashboardPage from "@/app/admin-dashboard/page"
 import { useAuth } from "@/hooks/use-auth"
 import { renderWithProviders } from "@/test/test-utils"
 
+const replace = jest.fn()
+
+jest.mock("next/navigation", () => ({
+  useRouter: () => ({ replace }),
+}))
+
 jest.mock("@/hooks/use-auth", () => ({
   useAuth: jest.fn(),
 }))
@@ -18,12 +24,6 @@ jest.mock("@/app/admin-dashboard/sidebar", () => ({
 jest.mock("@/app/admin-dashboard/navbar", () => ({
   __esModule: true,
   default: () => <header data-testid="admin-navbar" />,
-}))
-
-jest.mock("@/app/admin-dashboard/NameBanner", () => ({
-  NameBanner: ({ designation }: { designation: string }) => (
-    <div data-testid="name-banner">{designation}</div>
-  ),
 }))
 
 const useAuthMock = useAuth as jest.MockedFunction<typeof useAuth>
@@ -65,10 +65,15 @@ describe("AdminDashboardPage", () => {
     await waitFor(() => {
       expect(screen.getByTestId("admin-sidebar")).toHaveTextContent("SUPER_ADMIN")
     })
-    expect(screen.getByTestId("name-banner")).toHaveTextContent("Super Administrator")
+    expect(screen.getByTestId("admin-navbar")).toBeInTheDocument()
+    expect(replace).not.toHaveBeenCalled()
+    expect(useAuthMock).toHaveBeenCalledWith({
+      requireAuth: true,
+      allowedRoles: ["SUPER_ADMIN", "SUB_ADMIN"],
+    })
   })
 
-  it("renders sub-admin designation when role is SUB_ADMIN", async () => {
+  it("redirects sub-admins to their dedicated dashboard", async () => {
     useAuthMock.mockReturnValue({
       role: "SUB_ADMIN",
       permissions: [],
@@ -82,7 +87,7 @@ describe("AdminDashboardPage", () => {
     renderWithProviders(<AdminDashboardPage />)
 
     await waitFor(() => {
-      expect(screen.getByTestId("name-banner")).toHaveTextContent("Sub Administrator")
+      expect(replace).toHaveBeenCalledWith("/sub-admin/dashboard")
     })
   })
 })

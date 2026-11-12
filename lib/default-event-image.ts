@@ -70,10 +70,10 @@ export function getEventDisplayImageUrl(event: {
 /** Loose API / dashboard records (`Record<string, unknown>`). */
 export function getEventDisplayImageFromRecord(event: Record<string, unknown>): string {
   return getEventDisplayImageUrl({
-    thumbnailImage: event.thumbnailImage,
-    bannerImage: event.bannerImage,
-    vipImage: event.vipImage,
-    image: event.image,
+    thumbnailImage: firstCleanUrl(event.thumbnailImage),
+    bannerImage: firstCleanUrl(event.bannerImage),
+    vipImage: firstCleanUrl(event.vipImage),
+    image: firstCleanUrl(event.image),
     images: event.images,
   })
 }

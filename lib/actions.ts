@@ -3,5 +3,5 @@
 import { revalidateTag } from "next/cache"
 
 export default async function reloade(){
-    revalidateTag("events")
+    revalidateTag("events", { expire: 0 })
 }

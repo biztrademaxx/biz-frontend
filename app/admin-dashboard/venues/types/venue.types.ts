@@ -7,6 +7,7 @@ export type VenueCardAccent = "blue" | "amber" | "emerald"
 export const VENUES_PER_PAGE = 10
 
 export interface MeetingSpace {
+  description?: string
   id: string
   name: string
   capacity: number

@@ -26,7 +26,7 @@ interface Connection {
   avatar: string
   role: string
   company: string
-  jobTitle: string
+  jobTitle?: string
   lastLogin?: string | null
   isOnline: boolean
 }

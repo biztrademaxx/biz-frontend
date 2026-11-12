@@ -11,7 +11,18 @@ export type DeactivationSummary = {
   rejectReason?: string | null;
 };
 
-export type SettingsResponse = Record<string, unknown> & { deactivation?: DeactivationSummary };
+export type SettingsResponse = Record<string, unknown> & {
+  profileVisibility?: string;
+  phoneNumber?: string | null;
+  email?: string | null;
+  emailVerified?: boolean;
+  introduceMe?: boolean;
+  emailNotifications?: boolean;
+  eventReminders?: boolean;
+  newMessages?: boolean;
+  connectionRequests?: boolean;
+  deactivation?: DeactivationSummary;
+};
 
 export function useSettings() {
   const { toast } = useToast();

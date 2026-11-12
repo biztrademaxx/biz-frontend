@@ -1260,7 +1260,7 @@ function EventList({
 }) {
   const getFilteredEvents = () => {
     return events.filter((event) => {
-      const organizerStr = typeof event.organizer === "string" ? event.organizer : (event.organizer?.name ?? event.organizer?.email ?? "")
+      const organizerStr = event.organizer
       const matchesSearch =
         event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         organizerStr.toLowerCase().includes(searchTerm.toLowerCase())
@@ -1539,7 +1539,7 @@ function EventList({
                                 </div>
                                 <div className="flex items-center gap-2 text-gray-600">
                                   <Building2 className="w-4 h-4 text-gray-400" />
-                                  <span className="truncate">{typeof event.organizer === "string" ? event.organizer : event.organizer?.name || "Organizer"}</span>
+                                  <span className="truncate">{event.organizer || "Organizer"}</span>
                                 </div>
                               </div>
                               <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-gray-400">
@@ -1727,7 +1727,7 @@ export default function EventManagement() {
 
   const handleFeatureToggle = async (eventId: string, current: boolean) => {
     try {
-      const result = await apiFetch<{ event?: any }>(`/api/admin/events/${eventId}`, {
+      const result = await apiFetch<{ event?: Partial<Event>; data?: Partial<Event> }>(`/api/admin/events/${eventId}`, {
         method: "PATCH",
         body: { featured: !current },
         auth: true,
@@ -1752,7 +1752,7 @@ export default function EventManagement() {
 
   const handleVipToggle = async (eventId: string, current: boolean) => {
     try {
-      const result = await apiFetch<{ event?: any }>(`/api/admin/events/${eventId}`, {
+      const result = await apiFetch<{ event?: Partial<Event>; data?: Partial<Event> }>(`/api/admin/events/${eventId}`, {
         method: "PATCH",
         body: { vip: !current },
         auth: true,
@@ -1777,7 +1777,7 @@ export default function EventManagement() {
 
   const handlePublicToggle = async (eventId: string, current: boolean) => {
     try {
-      const result = await apiFetch<{ event?: any }>(`/api/admin/events/${eventId}`, {
+      const result = await apiFetch<{ event?: Partial<Event>; data?: Partial<Event> }>(`/api/admin/events/${eventId}`, {
         method: "PATCH",
         body: { isPublic: !current },
         auth: true,
@@ -1936,7 +1936,6 @@ export default function EventManagement() {
         onStatusChange={handleStatusChange}
         onFeatureToggle={handleFeatureToggle}
         onVipToggle={handleVipToggle}
-        onPublicToggle={handlePublicToggle}
         onDelete={handleDeleteEvent}
         onPromote={(event) => {
           setSelectedEvent(event)

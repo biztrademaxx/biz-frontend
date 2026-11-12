@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
+import type { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -58,7 +59,7 @@ export default function AddOrganizerForm({ onSuccess, onCancel }: AddOrganizerFo
   const [error, setError] = useState<string | null>(null)
   const [tempPassword, setTempPassword] = useState<string | null>(null)
 
-  const form = useForm<AddOrganizerFormValues>({
+  const form = useForm<z.input<typeof addOrganizerFormSchema>, unknown, AddOrganizerFormValues>({
     resolver: zodResolver(addOrganizerFormSchema),
     defaultValues: {
       firstName: "",
@@ -319,9 +320,9 @@ export default function AddOrganizerForm({ onSuccess, onCancel }: AddOrganizerFo
             />
 
             <OrganizerLocationSelects
-              country={form.watch("country")}
-              state={form.watch("state")}
-              city={form.watch("city")}
+              country={form.watch("country") ?? ""}
+              state={form.watch("state") ?? ""}
+              city={form.watch("city") ?? ""}
               onCountryChange={(name) => form.setValue("country", name, { shouldValidate: true })}
               onStateChange={(name) => form.setValue("state", name, { shouldValidate: true })}
               onCityChange={(name) => form.setValue("city", name, { shouldValidate: true })}

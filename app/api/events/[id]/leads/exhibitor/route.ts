@@ -3,9 +3,9 @@ import { PrismaClient } from "@prisma/client"
 
 const prisma = new PrismaClient()
 
-export async function GET(request: NextRequest, { params }: { params: Promise<{ eventId: string }> }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { eventId } = await params
+    const { id: eventId } = await params
 
     const exhibitorLeads = await prisma.eventLead.findMany({
       where: {

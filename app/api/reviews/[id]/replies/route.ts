@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth-options'
-import { prisma } from '@/lib/prisma'
+import { prisma as legacyPrisma } from '@/lib/prisma'
 
 export async function POST(
     request: NextRequest,
     context: { params: Promise<{ id: string }> }
 ) {
+  const prisma = legacyPrisma
+  if (!prisma) return NextResponse.json({ error: "Database is not configured for this legacy endpoint" }, { status: 503 })
+
     try {
         const { id: reviewId } = await context.params   // ✅ Use 'id' and rename to reviewId
         const session = await getServerSession(authOptions)
@@ -72,6 +75,9 @@ export async function GET(
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
+  const prisma = legacyPrisma
+  if (!prisma) return NextResponse.json({ error: "Database is not configured for this legacy endpoint" }, { status: 503 })
+
     try {
         const { id: reviewId } = await params
         const session = await getServerSession(authOptions)

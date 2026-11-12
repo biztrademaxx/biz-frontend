@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { adminApi } from "@/lib/admin-api"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { BarChart3, Globe2, Pencil } from "lucide-react"
-import { formatCreatedUpdated, type SubAdminActivityData } from "@/lib/sub-admin-activity-types"
+import { formatCreatedUpdated, type SubAdminActivityData, type SubAdminActivityPoint as ActivityPoint } from "@/lib/sub-admin-activity-types"
 
 type ResponseData = SubAdminActivityData & {
   eventCountries?: { country: string; events: number }[]
@@ -32,9 +32,9 @@ export default function SubAdminAnalyticsPanel() {
   if (loading) return <div className="text-sm text-muted-foreground">Loading analytics...</div>
   if (!data) return <div className="text-sm text-muted-foreground">No analytics data available.</div>
 
-  const latestDaily = data.daily.slice(-7)
-  const latestWeekly = data.weekly.slice(-6)
-  const latestMonthly = data.monthly.slice(-6)
+  const latestDaily = (data.daily ?? []).slice(-7)
+  const latestWeekly = (data.weekly ?? []).slice(-6)
+  const latestMonthly = (data.monthly ?? []).slice(-6)
   const topCountries = (data.eventCountries ?? []).slice(0, 6)
   const updated = data.totalsUpdated ?? {
     eventsUpdated: 0,

@@ -1,17 +1,21 @@
 import { NextRequest, NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
+import { prisma as legacyPrisma } from "@/lib/prisma"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { uploadToCloudinary, deleteFromCloudinary } from "@/lib/cloudinary"
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 // GET single city
 export async function GET(request: NextRequest, { params }: RouteParams) {
+  const routeParams = await params
+  const prisma = legacyPrisma
+  if (!prisma) return NextResponse.json({ error: "Database is not configured for this legacy endpoint" }, { status: 503 })
+
   try {
     const session = await getServerSession(authOptions)
     
@@ -20,7 +24,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     const city = await prisma.city.findUnique({
-      where: { id: params.id },
+      where: { id: routeParams.id },
       include: {
         country: {
           select: {
@@ -41,7 +45,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     // Get event count
     const newSystemCount = await prisma.eventsOnCities.count({
-      where: { cityId: params.id }
+      where: { cityId: routeParams.id }
     })
 
     const oldSystemCount = await prisma.event.count({
@@ -70,6 +74,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
 // PUT update city
 export async function PUT(request: NextRequest, { params }: RouteParams) {
+  const routeParams = await params
   try {
     const session = await getServerSession(authOptions)
     
@@ -82,10 +87,10 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
     if (contentType.includes('multipart/form-data')) {
       // Handle form data with file upload
-      return await handleFormDataRequest(request, params.id)
+      return await handleFormDataRequest(request, routeParams.id)
     } else if (contentType.includes('application/json')) {
       // Handle JSON data (without file upload)
-      return await handleJsonRequest(request, params.id)
+      return await handleJsonRequest(request, routeParams.id)
     } else {
       return NextResponse.json(
         { error: "Unsupported content type" },
@@ -103,6 +108,9 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
 // Handle form data requests (with file upload)
 async function handleFormDataRequest(request: NextRequest, cityId: string) {
+  const prisma = legacyPrisma
+  if (!prisma) return NextResponse.json({ error: "Database is not configured for this legacy endpoint" }, { status: 503 })
+
   const formData = await request.formData()
   const name = formData.get('name') as string
   const countryId = formData.get('countryId') as string
@@ -231,6 +239,9 @@ async function handleFormDataRequest(request: NextRequest, cityId: string) {
 
 // Handle JSON requests (without file upload)
 async function handleJsonRequest(request: NextRequest, cityId: string) {
+  const prisma = legacyPrisma
+  if (!prisma) return NextResponse.json({ error: "Database is not configured for this legacy endpoint" }, { status: 503 })
+
   const jsonData = await request.json()
   const { name, countryId, latitude, longitude, timezone, image, isActive, isPermitted } = jsonData
 
@@ -311,6 +322,10 @@ async function handleJsonRequest(request: NextRequest, cityId: string) {
 
 // DELETE city
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
+  const routeParams = await params
+  const prisma = legacyPrisma
+  if (!prisma) return NextResponse.json({ error: "Database is not configured for this legacy endpoint" }, { status: 503 })
+
   try {
     const session = await getServerSession(authOptions)
     
@@ -320,7 +335,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
 
     // Check if city exists and has events
     const city = await prisma.city.findUnique({
-      where: { id: params.id },
+      where: { id: routeParams.id },
       include: {
         _count: {
           select: {
@@ -354,7 +369,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     }
 
     await prisma.city.delete({
-      where: { id: params.id }
+      where: { id: routeParams.id }
     })
 
     return NextResponse.json({ message: "City deleted successfully" })

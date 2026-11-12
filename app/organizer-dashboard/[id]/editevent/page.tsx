@@ -35,6 +35,8 @@ interface Event {
   endDate: string
   categories: string[]
   tags: string[]
+  bannerImage?: string | null
+  thumbnailImage?: string | null
   images: { url: string }[]
   location: {
     city: string

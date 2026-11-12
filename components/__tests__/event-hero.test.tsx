@@ -1,12 +1,7 @@
-import { screen, waitFor } from "@testing-library/react"
+import { screen } from "@testing-library/react"
 
 import EventHero from "@/components/event-hero"
-import * as api from "@/lib/api"
 import { renderWithProviders } from "@/test/test-utils"
-
-jest.mock("@/lib/api", () => ({
-  apiFetch: jest.fn(),
-}))
 
 jest.mock("keen-slider/react", () => ({
   useKeenSlider: () => {
@@ -15,8 +10,6 @@ jest.mock("keen-slider/react", () => ({
     return [ref, inst]
   },
 }))
-
-const apiFetch = api.apiFetch as jest.MockedFunction<typeof api.apiFetch>
 
 function baseEvent(
   over: Partial<{
@@ -42,6 +35,8 @@ function baseEvent(
   return {
     id: "e1",
     title: "Industrial Fair 2026",
+    thumbnailImage: "",
+    logo: "",
     images: ["/img1.jpg"],
     videos: [] as string[],
     description: "Full description",
@@ -58,19 +53,12 @@ function baseEvent(
 }
 
 describe("EventHero", () => {
-  beforeEach(() => {
-    jest.clearAllMocks()
-    apiFetch.mockResolvedValue([] as never)
-  })
-
-  it("fetches hero banners on mount", async () => {
+  it("renders the event hero banner and gallery image", () => {
     renderWithProviders(<EventHero event={baseEvent()} />)
-    await waitFor(() => {
-      expect(apiFetch).toHaveBeenCalledWith(
-        expect.stringContaining("/api/content/banners?page=event-detail&position=hero"),
-        expect.objectContaining({ auth: false })
-      )
-    })
+    expect(screen.getByRole("img", { name: "Industrial Fair 2026", exact: true }))
+      .toHaveAttribute("src", "/herosection-images/eventbanner.jpeg")
+    expect(screen.getByRole("img", { name: "Industrial Fair 2026 Image 1", exact: true }))
+      .toHaveAttribute("src", "/img1.jpg")
   })
 
   it("renders subtitle, free entry when no tickets, and TBA dates when missing", () => {
@@ -85,7 +73,7 @@ describe("EventHero", () => {
       />
     )
     expect(screen.getByRole("heading", { level: 2, name: /big show/i })).toBeInTheDocument()
-    expect(screen.getByText(/date to be announced/i)).toBeInTheDocument()
+    expect(screen.getByText(/dates? to be announced/i)).toBeInTheDocument()
     expect(screen.getByText(/time to be announced/i)).toBeInTheDocument()
     expect(screen.getByText(/^free$/i)).toBeInTheDocument()
   })

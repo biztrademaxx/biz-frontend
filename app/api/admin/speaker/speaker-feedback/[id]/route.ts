@@ -1,15 +1,19 @@
 // app/api/admin/speaker/speaker-feedback/[id]/route.ts
 import { type NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { prisma as legacyPrisma } from "@/lib/prisma";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const routeParams = await params
+  const prisma = legacyPrisma
+  if (!prisma) return NextResponse.json({ error: "Database is not configured for this legacy endpoint" }, { status: 503 })
+
   try {
     // First get the review
     const review = await prisma.review.findUnique({
-      where: { id: params.id },
+      where: { id: routeParams.id },
     });
 
     if (!review) {
@@ -156,15 +160,19 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const routeParams = await params
+  const prisma = legacyPrisma
+  if (!prisma) return NextResponse.json({ error: "Database is not configured for this legacy endpoint" }, { status: 503 })
+
   try {
     const body = await request.json();
     const { isApproved, isPublic } = body;
 
     // Update the review
     const review = await prisma.review.update({
-      where: { id: params.id },
+      where: { id: routeParams.id },
       data: {
         ...(isApproved !== undefined && { isApproved }),
         ...(isPublic !== undefined && { isPublic }),

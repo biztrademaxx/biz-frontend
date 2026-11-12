@@ -35,6 +35,7 @@ const slugifyTitle = (value: string): string =>
     .replace(/^-|-$/g, "")
 
 export function CreateEventForm() {
+  const { toast } = useToast()
   const [activeTab, setActiveTab] = useState("basic")
   const [formData, setFormData] = useState<EventFormData>({
     title: "",

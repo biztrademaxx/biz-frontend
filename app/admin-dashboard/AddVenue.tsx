@@ -31,6 +31,7 @@ import { adminApi } from "@/lib/admin-api"
 import { uploadVenueImages, uploadVenueLogo, uploadVenueDocuments } from "@/lib/upload-utils"
 import { getCityOptions, getCountryOptions, getStateOptions } from "@/lib/location-data"
 import { useForm } from "react-hook-form"
+import type { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { addVenueFormSchema, type AddVenueFormValues } from "./schemas/venue-schema"
 import {
@@ -90,7 +91,7 @@ const LOCATION_NONE = "__none__"
 export default function AddVenueComponent() {
   const [activeTab, setActiveTab] = useState("profile")
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const validationForm = useForm<AddVenueFormValues>({
+  const validationForm = useForm<z.input<typeof addVenueFormSchema>, unknown, AddVenueFormValues>({
     resolver: zodResolver(addVenueFormSchema),
     defaultValues: {
       venueName: "",

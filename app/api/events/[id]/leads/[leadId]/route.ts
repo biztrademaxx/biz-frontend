@@ -34,7 +34,7 @@ export async function PATCH(
       },
     })
 
-    if (!lead) {
+    if (!lead || !lead.event) {
       return NextResponse.json({ error: "Lead not found" }, { status: 404 })
     }
 

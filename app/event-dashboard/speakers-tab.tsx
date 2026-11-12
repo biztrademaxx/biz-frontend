@@ -65,7 +65,7 @@ export default function SpeakersTab({ eventId }: { eventId: string }) {
               <div className="flex gap-4 items-center mb-4">
                 <div className="w-16 h-16 flex justify-center">
                   <Image
-                    src={speaker.imageUrl }
+                    src={speaker.imageUrl || "/placeholder.svg"}
                     alt={speaker.name}
                     width={60}
                     height={60}

@@ -21,7 +21,7 @@ export interface Event {
   startDate: string
   city: string
   isFeatured: boolean
-  country: import("react/jsx-runtime").JSX.Element
+  country: string
   // subHeading: string | undefined
   subTitle: string | undefined
   id: string

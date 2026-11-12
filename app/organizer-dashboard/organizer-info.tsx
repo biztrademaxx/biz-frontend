@@ -140,7 +140,7 @@ export default function OrganizerInfo({ organizerData: initialData, onOrganizerU
   type Section = "basic" | "contact" | "company" | "specialties" | "achievements" | "certifications"
 
   const handleSave = async (section: Section) => {
-    let payload: Partial<OrganizerData> = {}
+    let payload: Omit<Partial<OrganizerData>, "organizerCountry" | "organizerState" | "organizerCity"> & { organizerCountry?: string | null; organizerState?: string | null; organizerCity?: string | null } = {}
 
     if (section === "basic") {
       payload = {

@@ -1,13 +1,16 @@
 import { devLog } from "@/lib/dev-log"
 
 import { NextRequest, NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
+import { prisma as legacyPrisma } from "@/lib/prisma"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { uploadToCloudinary, deleteFromCloudinary } from "@/lib/cloudinary"
 
 // GET all countries
 export async function GET(request: NextRequest) {
+  const prisma = legacyPrisma
+  if (!prisma) return NextResponse.json({ error: "Database is not configured for this legacy endpoint" }, { status: 503 })
+
   try {
     const session = await getServerSession(authOptions)
     
@@ -127,6 +130,9 @@ export async function GET(request: NextRequest) {
 
 // GET single country
 export async function GET_SINGLE(request: NextRequest, { params }: { params: { id: string } }) {
+  const prisma = legacyPrisma
+  if (!prisma) return NextResponse.json({ error: "Database is not configured for this legacy endpoint" }, { status: 503 })
+
   try {
     const session = await getServerSession(authOptions)
     
@@ -262,6 +268,9 @@ export async function POST(request: NextRequest) {
 
 // Handle form data requests (with file upload)
 async function handleFormDataRequest(request: NextRequest) {
+  const prisma = legacyPrisma
+  if (!prisma) return NextResponse.json({ error: "Database is not configured for this legacy endpoint" }, { status: 503 })
+
   const formData = await request.formData()
   const name = formData.get('name') as string
   const code = formData.get('code') as string
@@ -333,6 +342,9 @@ async function handleFormDataRequest(request: NextRequest) {
 
 // Handle JSON requests (without file upload)
 async function handleJsonRequest(request: NextRequest) {
+  const prisma = legacyPrisma
+  if (!prisma) return NextResponse.json({ error: "Database is not configured for this legacy endpoint" }, { status: 503 })
+
   const jsonData = await request.json()
   const { name, code, flag, currency, timezone, isActive } = jsonData
 

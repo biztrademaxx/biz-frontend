@@ -15,6 +15,7 @@ interface AuthResult {
 }
 
 export async function authMiddleware(request: NextRequest): Promise<AuthResult> {
+  if (!prisma) return { isValid: false, user: null }
   try {
     // Get token from NextAuth
     const token = await getToken({ 

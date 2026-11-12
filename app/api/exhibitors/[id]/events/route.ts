@@ -1,18 +1,21 @@
 import { devLog } from "@/lib/dev-log"
 
 import { type NextRequest, NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
+import { prisma as legacyPrisma } from "@/lib/prisma"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth-options"
 
 interface Params {
-  exhibitorId: string
+  id: string
 }
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<Params> } // 👈 params is a Promise
 ) {
+  const prisma = legacyPrisma
+  if (!prisma) return NextResponse.json({ error: "Database is not configured for this legacy endpoint" }, { status: 503 })
+
   try {
     devLog("[v0] GET /api/exhibitors/[exhibitorId]/events called")
 
@@ -22,7 +25,7 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { exhibitorId } = await params // 👈 await here
+    const { id: exhibitorId } = await params // 👈 await here
     devLog("[v0] Fetching events for exhibitorId:", exhibitorId)
 
     if (!exhibitorId) {
@@ -54,7 +57,6 @@ export async function GET(
                 venueState: true,
                 venueCountry: true,
                 venueZipCode: true,
-                venuepostalCode: true,
               },
             },
             status: true,
@@ -98,7 +100,7 @@ export async function GET(
             venueCity: booth.event.venue.venueCity ?? "",
             venueState: booth.event.venue.venueState ?? "",
             venueCountry: booth.event.venue.venueCountry ?? "",
-            venueZipCode: booth.event.venue.venueZipCode ?? booth.event.venue.venuepostalCode ?? "",
+            venueZipCode: booth.event.venue.venueZipCode ?? booth.event.venue.venueZipCode ?? "",
           }
         : null,
       boothSize: `${booth.spaceId}`,

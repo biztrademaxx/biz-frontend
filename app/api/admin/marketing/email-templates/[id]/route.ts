@@ -1,10 +1,14 @@
 import { NextResponse } from "next/server"
-import {prisma} from "@/lib/prisma"
+import { prisma as legacyPrisma } from "@/lib/prisma"
 
-export async function GET(request: Request, { params }: { params: { id: string } }) {
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const routeParams = await params
+  const prisma = legacyPrisma
+  if (!prisma) return NextResponse.json({ error: "Database is not configured for this legacy endpoint" }, { status: 503 })
+
   try {
     const template = await prisma.emailTemplate.findUnique({
-      where: { id: params.id },
+      where: { id: routeParams.id },
     })
 
     if (!template) {
@@ -18,11 +22,15 @@ export async function GET(request: Request, { params }: { params: { id: string }
   }
 }
 
-export async function PUT(request: Request, { params }: { params: { id: string } }) {
+export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const routeParams = await params
+  const prisma = legacyPrisma
+  if (!prisma) return NextResponse.json({ error: "Database is not configured for this legacy endpoint" }, { status: 503 })
+
   try {
     const body = await request.json()
     const template = await prisma.emailTemplate.update({
-      where: { id: params.id },
+      where: { id: routeParams.id },
       data: body,
     })
 
@@ -33,10 +41,14 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   }
 }
 
-export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const routeParams = await params
+  const prisma = legacyPrisma
+  if (!prisma) return NextResponse.json({ error: "Database is not configured for this legacy endpoint" }, { status: 503 })
+
   try {
     await prisma.emailTemplate.delete({
-      where: { id: params.id },
+      where: { id: routeParams.id },
     })
 
     return NextResponse.json({ success: true })

@@ -112,7 +112,7 @@ export default function EventDetailsPanel({
   const fetchEventDetails = async () => {
     try {
       setLoading(true)
-      const data = await apiFetch<{ success?: boolean; event?: EventDetails; data?: any }>(`/api/admin/events/${eventId}`, { auth: true })
+      const data = await apiFetch<{ success?: boolean; event?: EventDetails; data?: any; error?: string }>(`/api/admin/events/${eventId}`, { auth: true })
       const raw = data.event ?? data.data
       if (data.success !== false && raw) {
         const v = raw.venue

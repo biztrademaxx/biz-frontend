@@ -193,7 +193,7 @@ export function ExhibitorDashboardOverview({ exhibitor, onNavigate }: ExhibitorO
             apiFetch<{ count?: number; totalLeads?: number }>(
               `/api/exhibitors/${exhibitor.id}/leads-count`,
               { auth: true },
-            ).catch(() => ({ count: 0 })),
+            ).catch(() => ({ count: 0, totalLeads: 0 })),
             apiFetch<{
               success?: boolean
               followers?: {

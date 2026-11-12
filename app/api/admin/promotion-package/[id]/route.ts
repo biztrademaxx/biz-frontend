@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server"
-import {prisma} from "@/lib/prisma"
+import { prisma as legacyPrisma } from "@/lib/prisma"
 
-export async function GET(request: Request, { params }: { params: { id: string } }) {
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const prisma = legacyPrisma
+  if (!prisma) return NextResponse.json({ error: "Database is not configured for this legacy endpoint" }, { status: 503 })
+
   try {
     const pkg = await prisma.promotionPackage.findUnique({
-      where: { id: params.id },
+      where: { id: (await params).id },
     })
 
     if (!pkg) {
@@ -18,12 +21,15 @@ export async function GET(request: Request, { params }: { params: { id: string }
   }
 }
 
-export async function PATCH(request: Request, { params }: { params: { id: string } }) {
+export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const prisma = legacyPrisma
+  if (!prisma) return NextResponse.json({ error: "Database is not configured for this legacy endpoint" }, { status: 503 })
+
   try {
     const body = await request.json()
 
     const pkg = await prisma.promotionPackage.update({
-      where: { id: params.id },
+      where: { id: (await params).id },
       data: {
         ...(body.name && { name: body.name }),
         ...(body.description && { description: body.description }),
@@ -47,10 +53,13 @@ export async function PATCH(request: Request, { params }: { params: { id: string
   }
 }
 
-export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const prisma = legacyPrisma
+  if (!prisma) return NextResponse.json({ error: "Database is not configured for this legacy endpoint" }, { status: 503 })
+
   try {
     await prisma.promotionPackage.delete({
-      where: { id: params.id },
+      where: { id: (await params).id },
     })
 
     return NextResponse.json({ success: true })

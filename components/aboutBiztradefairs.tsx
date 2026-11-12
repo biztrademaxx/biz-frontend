@@ -174,7 +174,7 @@ export default function AboutBizTrade() {
                                 <Users size={28} className="text-white" />
                             </span>{" "}
                             Leaders Worldwide
-                        </h2>
+                        </h1>
 
                         {/* Accent line */}
                         <div className="mt-6 h-[4px] w-12 rounded-full bg-[#2563EB]" />

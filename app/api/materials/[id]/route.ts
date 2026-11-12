@@ -1,9 +1,12 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
+import { prisma as legacyPrisma } from "@/lib/prisma"
 import {Cloudinary} from "@/lib/cloudinary"
 
 // GET - Fetch single material
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const prisma = legacyPrisma
+  if (!prisma) return NextResponse.json({ error: "Database is not configured for this legacy endpoint" }, { status: 503 })
+
   try {
     const material = await prisma.material.findUnique({
       where: { id:(await params).id },
@@ -40,6 +43,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
 // PATCH - Update material settings
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const prisma = legacyPrisma
+  if (!prisma) return NextResponse.json({ error: "Database is not configured for this legacy endpoint" }, { status: 503 })
+
   try {
     const body = await request.json()
     const { allowDownload, status, description, version } = body
@@ -76,6 +82,9 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
 // DELETE - Delete material from Cloudinary and database
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const prisma = legacyPrisma
+  if (!prisma) return NextResponse.json({ error: "Database is not configured for this legacy endpoint" }, { status: 503 })
+
   try {
     // First, get the material to retrieve the publicId
     const material = await prisma.material.findUnique({

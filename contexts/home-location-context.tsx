@@ -108,8 +108,8 @@ async function persistLocation(payload: {
 
 function applyGeoHint(
   geo: { city?: string | null; countryCode?: string | null; countryName?: string | null },
-  setCityState: (c: string | null) => void,
-  setCountryState: (c: string | null) => void,
+  setCityState: Dispatch<SetStateAction<string | null>>,
+  setCountryState: Dispatch<SetStateAction<string | null>>,
 ) {
   applyApiLocation(
     {

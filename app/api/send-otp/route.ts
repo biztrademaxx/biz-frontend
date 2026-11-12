@@ -2,9 +2,12 @@ import { NextResponse } from "next/server";
 import nodemailer from "nodemailer";
 import dbConnect from "@/lib/dbConnect";
 import Otp from "@/models/otp";
-import { prisma } from "@/lib/prisma";
+import { prisma as legacyPrisma } from "@/lib/prisma";
 
 export async function POST(req: Request) {
+  const prisma = legacyPrisma
+  if (!prisma) return NextResponse.json({ error: "Database is not configured for this legacy endpoint" }, { status: 503 })
+
   try {
     const { email } = await req.json();
 

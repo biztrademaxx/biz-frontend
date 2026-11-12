@@ -4,9 +4,12 @@ import { devLog } from "@/lib/dev-log"
 import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth-options"
-import { prisma } from "@/lib/prisma"
+import { prisma as legacyPrisma } from "@/lib/prisma"
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const prisma = legacyPrisma
+  if (!prisma) return NextResponse.json({ error: "Database is not configured for this legacy endpoint" }, { status: 503 })
+
   try {
     devLog("[v0] Raw params:", params)
 

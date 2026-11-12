@@ -13,7 +13,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { ImageUpload } from "@/components/ui/image-upload"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Loader2, Plus, Trash2, Edit, Eye, Upload, X, Check } from "lucide-react"
@@ -320,10 +319,24 @@ export function VenueBannerManager() {
 
             <div className="space-y-2">
               <Label>Banner Image</Label>
-              <ImageUpload
-                onFileSelect={handleFileChange}
+              <Input
+                type="file"
                 accept="image/*"
-                maxSize={5 * 1024 * 1024} // 5MB
+                disabled={uploading}
+                onChange={(event) => {
+                  const file = event.currentTarget.files?.[0]
+                  if (!file) return
+                  if (!file.type.startsWith("image/") || file.size > 5 * 1024 * 1024) {
+                    toast({
+                      title: "Invalid image",
+                      description: "Choose an image up to 5 MB.",
+                      variant: "destructive",
+                    })
+                    event.currentTarget.value = ""
+                    return
+                  }
+                  handleFileChange(file)
+                }}
               />
               <p className="text-sm text-gray-500">
                 Recommended size: 1920x600px, Max file size: 5MB

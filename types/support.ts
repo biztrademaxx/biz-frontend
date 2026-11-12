@@ -1,4 +1,4 @@
-import { UserRole, DashboardType, TicketPriority, TicketStatus } from "@prisma/client"
+import type { UserRole, DashboardType, SupportTicketPriority as TicketPriority, SupportTicketStatus as TicketStatus } from "@prisma/client"
 
 // types/support.ts
 export interface HelpSupportContent {

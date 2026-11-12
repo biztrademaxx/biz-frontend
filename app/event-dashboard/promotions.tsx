@@ -207,9 +207,9 @@ export default function EventPromotion({ eventId }: { eventId: string }) {
       })
 
       // Transform API response to match component structure
-      const transformedPackages = data.packages
+      const transformedPackages: PromotionPackage[] = data.packages
         .filter((pkg: { id: string }) => CANONICAL_PACKAGE_IDS.has(pkg.id))
-        .map((pkg: any) => ({
+        .map((pkg: any): PromotionPackage => ({
         id: pkg.id,
         name: pkg.name,
         description: pkg.description,

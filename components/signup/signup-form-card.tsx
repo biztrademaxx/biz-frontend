@@ -314,6 +314,11 @@ export default function SignupFormCard({ variant, onRegistrationSuccess }: Signu
             validationErrors[field] = error.message
           })
           setErrors(validationErrors)
+          if (Object.keys(formData).some((field) => validationErrors[field])) {
+            setStep("form")
+            setOtp("")
+            setPasswordData({ password: "", confirmPassword: "" })
+          }
         }
       } else {
         toast({

@@ -446,7 +446,7 @@ export default function DashboardOverview({
                           Manage
                         </Button>
                         <Button size="sm" className={cn("h-8 flex-1 text-xs sm:flex-none", orgPrimaryBtn)} asChild>
-                          <Link href={eventPublicPath(event)}>View</Link>
+                          <Link href={eventPublicPath({ ...event, id: String(event.id) })}>View</Link>
                         </Button>
                       </div>
                     </div>

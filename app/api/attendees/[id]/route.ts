@@ -1,12 +1,15 @@
 import { devLog } from "@/lib/dev-log"
 
 import { NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
+import { prisma as legacyPrisma } from "@/lib/prisma"
 
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const prisma = legacyPrisma
+  if (!prisma) return NextResponse.json({ error: "Database is not configured for this legacy endpoint" }, { status: 503 })
+
   try {
     const { id } = await params
 
@@ -39,7 +42,7 @@ export async function GET(
       },
     })
 
-    if (!attendeeLead || !attendeeLead.user) {
+    if (!attendeeLead || !attendeeLead.user || !attendeeLead.event) {
       devLog("Attendee not found for ID:", id)
       return NextResponse.json({ error: "Attendee not found" }, { status: 404 })
     }

@@ -2,10 +2,13 @@ import { devLog } from "@/lib/dev-log"
 
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
-import { prisma } from "@/lib/prisma"
+import { prisma as legacyPrisma } from "@/lib/prisma"
 import { sendBadgeEmail } from "@/lib/email-service"
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const prisma = legacyPrisma
+  if (!prisma) return NextResponse.json({ error: "Database is not configured for this legacy endpoint" }, { status: 503 })
+
   try {
     // ✅ Await params before accessing (Next.js 15 requirement)
     const { id: eventId } = await params
@@ -53,7 +56,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           },
         })
 
-        if (!attendeeLead || !attendeeLead.user) {
+        if (!attendeeLead || !attendeeLead.user || !attendeeLead.event) {
           devLog("[v0] Attendee lead not found for ID:", attendeeId)
           results.failed.push({
             id: attendeeId,

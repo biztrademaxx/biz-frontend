@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
-import { prisma } from '@/lib/prisma'
+import { prisma as legacyPrisma } from '@/lib/prisma'
 import { authOptions } from '@/lib/auth-options'
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const routeParams = await params
+  const prisma = legacyPrisma
+  if (!prisma) return NextResponse.json({ error: "Database is not configured for this legacy endpoint" }, { status: 503 })
+
   try {
     const session = await getServerSession(authOptions)
     
@@ -28,7 +32,7 @@ export async function PATCH(
     }
 
     const { action, message } = await request.json()
-    const organizerId = params.id
+    const organizerId = routeParams.id
 
     // Find the organizer
     const organizer = await prisma.user.findUnique({

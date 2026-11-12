@@ -7,12 +7,6 @@ const nextConfig: NextConfig = {
       exclude: ["error", "warn"],
     },
   },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  typescript: {
-    ignoreBuildErrors: true,
-  },
   async redirects() {
     return [
       {
@@ -104,7 +98,7 @@ const nextConfig: NextConfig = {
       ...(process.env.NODE_ENV === "development"
         ? [
             {
-              protocol: "https",
+              protocol: "https" as const,
               hostname: "**",
               pathname: "/**",
             },

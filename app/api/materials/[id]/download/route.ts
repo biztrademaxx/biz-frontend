@@ -1,8 +1,11 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
+import { prisma as legacyPrisma } from "@/lib/prisma"
 
 // GET - Track download and return file URL
 export async function GET(request: NextRequest, { params }:{ params:  Promise<{ id: string }> }) {
+  const prisma = legacyPrisma
+  if (!prisma) return NextResponse.json({ error: "Database is not configured for this legacy endpoint" }, { status: 503 })
+
   try {
     const material = await prisma.material.findUnique({
       where: { id: (await params).id },

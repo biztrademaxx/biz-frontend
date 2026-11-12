@@ -171,9 +171,8 @@ function getInitials(company?: string) {
     .toUpperCase()
 }
 
-// Keys used to persist "where the admin was" across the trip to the
-// public organizer profile page and back, since the admin dashboard is a
-// single-page app (no per-section URLs) and can't rely on query params.
+// Keep the organizer list in this browser tab across refreshes and trips
+// to public profiles. The dashboard shell also remembers the active section.
 const ORGANIZERS_RETURN_SECTION_KEY = "admin:returnSection"
 const ORGANIZERS_LIST_STATE_KEY = "admin:organizers:listState"
 
@@ -207,7 +206,7 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
   const [avatarFile, setAvatarFile] = useState<File | null>(null)
   // Gates the debounced fetch effect until we've had a chance to restore
   // saved list state from sessionStorage, so it doesn't fetch page 1 first.
-  const [hydratedFromUrl, setHydratedFromUrl] = useState(false)
+  const [listStateRestored, setListStateRestored] = useState(false)
 
   const fetchOrganizerStats = async () => {
     try {
@@ -240,9 +239,7 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
     }
   };
 
-  // Restore list state (page/search/country/tab) from sessionStorage on
-  // mount. This is set right before navigating to a profile page, so coming
-  // back lands on the exact same page/search/tab/filter instead of resetting.
+  // Restore the saved list before fetching so refresh does not request page 1.
   useEffect(() => {
     try {
       const raw = sessionStorage.getItem(ORGANIZERS_LIST_STATE_KEY)
@@ -253,17 +250,35 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
           country?: string
           tab?: "all" | "bulk-import"
         }
-        if (saved.page) setCurrentPage(saved.page)
-        if (saved.search) setSearchTerm(saved.search)
-        if (saved.country) setSelectedCountry(saved.country)
-        if (saved.tab === "all" || saved.tab === "bulk-import") setActiveTab(saved.tab)
-        sessionStorage.removeItem(ORGANIZERS_LIST_STATE_KEY)
+        if (typeof saved?.page === "number" && Number.isSafeInteger(saved.page) && saved.page > 0) {
+          setCurrentPage(saved.page)
+        }
+        if (typeof saved?.search === "string") setSearchTerm(saved.search)
+        if (typeof saved?.country === "string" && saved.country) setSelectedCountry(saved.country)
+        if (saved?.tab === "all" || saved?.tab === "bulk-import") setActiveTab(saved.tab)
       }
     } catch {
       /* ignore malformed/blocked storage */
     }
-    setHydratedFromUrl(true)
+    setListStateRestored(true)
   }, [])
+
+  useEffect(() => {
+    if (!listStateRestored) return
+    try {
+      sessionStorage.setItem(
+        ORGANIZERS_LIST_STATE_KEY,
+        JSON.stringify({
+          page: currentPage,
+          search: searchTerm,
+          country: selectedCountry,
+          tab: activeTab,
+        })
+      )
+    } catch {
+      /* ignore blocked/full storage */
+    }
+  }, [currentPage, searchTerm, selectedCountry, activeTab, listStateRestored])
 
   useEffect(() => {
     const loadCountries = async () => {
@@ -278,13 +293,13 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
   }, [])
 
   useEffect(() => {
-    if (!hydratedFromUrl) return
+    if (!listStateRestored) return
     const timer = setTimeout(() => {
       fetchOrganizers(currentPage, searchTerm, selectedCountry)
     }, 250)
 
     return () => clearTimeout(timer)
-  }, [currentPage, searchTerm, selectedCountry, hydratedFromUrl])
+  }, [currentPage, searchTerm, selectedCountry, listStateRestored])
 
   useEffect(() => {
     fetchOrganizerStats();
@@ -415,16 +430,6 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
 
   const handleOpenOrganizerProfile = (organizer: TransformedOrganizer) => {
     try {
-      // Remember exactly where we are in this list so we can restore it.
-      sessionStorage.setItem(
-        ORGANIZERS_LIST_STATE_KEY,
-        JSON.stringify({
-          page: currentPage,
-          search: searchTerm.trim(),
-          country: selectedCountry,
-          tab: activeTab,
-        })
-      )
       // Tell the dashboard shell which section/sub-section to reopen.
       sessionStorage.setItem(
         ORGANIZERS_RETURN_SECTION_KEY,

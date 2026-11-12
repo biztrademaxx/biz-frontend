@@ -17,6 +17,7 @@ jest.mock("@/lib/api", () => ({
   getCurrentUserPermissions: jest.fn(),
   isAuthenticated: jest.fn(),
   clearTokens: jest.fn(),
+  markLogoutSuccessBanner: jest.fn(),
 }))
 
 const getAccessToken = api.getAccessToken as jest.MockedFunction<typeof api.getAccessToken>
@@ -66,6 +67,7 @@ describe("useAuth", () => {
     const { result } = renderHook(() => useAuth({ requireAuth: false }))
     await waitFor(() => expect(result.current.loading).toBe(false))
     result.current.logout()
+    expect(api.markLogoutSuccessBanner).toHaveBeenCalled()
     expect(clearTokens).toHaveBeenCalled()
     expect(replace).toHaveBeenCalledWith("/login")
   })

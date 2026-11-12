@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
-import { prisma } from '@/lib/prisma'
+import { prisma as legacyPrisma } from '@/lib/prisma'
 import { authOptions } from '@/lib/auth-options'
 import { UserRole } from '@prisma/client'
 
@@ -13,6 +13,9 @@ interface Params {
 
 // ================= GET SINGLE NOTE ==================
 export async function GET(request: NextRequest, { params }: Params) {
+  const prisma = legacyPrisma
+  if (!prisma) return NextResponse.json({ error: "Database is not configured for this legacy endpoint" }, { status: 503 })
+
   try {
     // Await the params first
     const { id } = await params
@@ -76,6 +79,9 @@ export async function GET(request: NextRequest, { params }: Params) {
 
 // ================= UPDATE NOTE ==================
 export async function PUT(request: NextRequest, { params }: Params) {
+  const prisma = legacyPrisma
+  if (!prisma) return NextResponse.json({ error: "Database is not configured for this legacy endpoint" }, { status: 503 })
+
   try {
     // Await the params first
     const { id } = await params
@@ -160,6 +166,9 @@ export async function PUT(request: NextRequest, { params }: Params) {
 
 // ================= DELETE NOTE ==================
 export async function DELETE(request: NextRequest, { params }: Params) {
+  const prisma = legacyPrisma
+  if (!prisma) return NextResponse.json({ error: "Database is not configured for this legacy endpoint" }, { status: 503 })
+
   try {
     // Await the params first
     const { id } = await params

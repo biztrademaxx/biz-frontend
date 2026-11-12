@@ -622,7 +622,8 @@ export default function AnalyticsDashboard({
                       cx="50%"
                       cy="50%"
                       labelLine={false}
-                      label={({ category, count }) => `${category}: ${count}`}
+                      nameKey="category"
+                      label={({ name, value }) => `${name}: ${value}`}
                       outerRadius={80}
                       fill="#8884d8"
                       dataKey="count"

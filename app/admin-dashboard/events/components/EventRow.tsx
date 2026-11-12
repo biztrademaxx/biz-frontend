@@ -30,7 +30,10 @@ interface EventRowProps {
   getStatusColor: (status: Event["status"]) => "default" | "secondary" | "destructive" | "outline"
 }
 
-function getEventStatusByDate(event: Event): "Live" | "Upcoming" | "Ended" | "Draft" | "Pending" {
+function getEventStatusByDate(event: Event): "Live" | "Upcoming" | "Ended" | "Draft" | "Pending" | "Invalid dates" {
+  const start = new Date(event.startDate || event.date).getTime()
+  const end = new Date(event.endDate || event.startDate || event.date).getTime()
+  if (!Number.isFinite(start) || !Number.isFinite(end) || end < start) return "Invalid dates"
   if (event.status === "Pending Review") return "Pending"
   if (event.status === "Draft") return "Draft"
   const today = new Date(); today.setHours(0, 0, 0, 0)
@@ -46,6 +49,7 @@ function getEventStatusByDate(event: Event): "Live" | "Upcoming" | "Ended" | "Dr
 function formatDateRange(startDate: string, endDate: string): string {
   const start = new Date(startDate)
   const end = new Date(endDate)
+  if (!Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime()) || end < start) return "Invalid dates — edit schedule"
   const startMonth = start.toLocaleDateString("en-US", { month: "short" })
   const startDay = start.getDate()
   const endMonth = end.toLocaleDateString("en-US", { month: "short" })
@@ -167,8 +171,9 @@ function CategoryPill({ name }: { name: string }) {
   )
 }
 
-function StatusPill({ status }: { status: "Live" | "Upcoming" | "Ended" | "Draft" | "Pending" }) {
+function StatusPill({ status }: { status: ReturnType<typeof getEventStatusByDate> }) {
   const STYLES = {
+    "Invalid dates": { className: "bg-red-100 text-red-800 dark:bg-red-500/20 dark:text-red-300", dot: "#dc2626" },
     Live: { className: "bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300", dot: "#16a34a" },
     Upcoming: { className: "bg-blue-100 text-blue-800 dark:bg-blue-500/20 dark:text-blue-300", dot: "#3b82f6" },
     Ended: { className: "bg-muted text-muted-foreground", dot: "#9ca3af" },

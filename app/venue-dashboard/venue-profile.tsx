@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, useRef } from "react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -119,10 +119,10 @@ const mapBackendToVenueData = (data: any): VenueData => {
     description: data.description || data.manager?.description || "",
     maxCapacity: maxCapacity,
     totalHalls: totalHalls,
-    totalEvents: data.totalEvents || data.stats?.totalEvents || 0,
-    activeBookings: data.activeBookings || data.stats?.activeBookings || 0,
-    averageRating: data.averageRating || data.stats?.averageRating || 0,
-    totalReviews: data.totalReviews || data.stats?.totalReviews || 0,
+    totalEvents: data.totalEvents ?? data.stats?.totalEvents ?? 0,
+    activeBookings: data.activeBookings ?? data.stats?.activeBookings ?? 0,
+    averageRating: data.averageRating ?? data.stats?.averageRating ?? 0,
+    totalReviews: data.totalReviews ?? data.stats?.totalReviews ?? 0,
     amenities: data.amenities || [],
     meetingSpaces: meetingSpaces,
     venueImages: sanitizeImageList(data.venueImages || data.images),
@@ -161,6 +161,7 @@ const applyVenueState = (
 
 export default function VenueProfile({ venueData }: VenueProfileProps) {
   const [isEditing, setIsEditing] = useState(false)
+  const savedVenue = useRef<VenueData>(venueData)
   const [profileData, setProfileData] = useState<VenueData>(() => venueData)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -185,6 +186,7 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
   }, [ianaZones, tzFilter])
 
   useEffect(() => {
+    savedVenue.current = venueData
     applyVenueState(venueData, {
       setProfileData,
       setAmenities,
@@ -205,6 +207,7 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
         )
         if (data?.success && data.data != null) {
           const mappedData = mapBackendToVenueData(data.data)
+          savedVenue.current = mappedData
           applyVenueState(mappedData, {
             setProfileData,
             setAmenities,
@@ -369,6 +372,7 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
 
       if (data?.success && data.venue) {
         const mappedData = mapBackendToVenueData(data.venue)
+        savedVenue.current = mappedData
         applyVenueState(mappedData, {
           setProfileData,
           setAmenities,
@@ -400,6 +404,13 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
         variant: "destructive",
       })
     }
+  }
+
+  const handleCancel = () => {
+    applyVenueState(savedVenue.current, { setProfileData, setAmenities, setMeetingSpaces, setImages, setFloorPlans })
+    setNewAmenity("")
+    setNewSpace({ name: "", capacity: "", area: "", hourlyRate: "", features: "" })
+    setIsEditing(false)
   }
 
   const handleSave = async () => {
@@ -442,6 +453,7 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
 
       if (data?.success && data.venue) {
         const mappedData = mapBackendToVenueData(data.venue)
+        savedVenue.current = mappedData
         applyVenueState(mappedData, {
           setProfileData,
           setAmenities,
@@ -545,7 +557,7 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => setIsEditing(false)}
+                  onClick={handleCancel}
                   disabled={isSaving}
                   className="w-full rounded-xl border-[#E2E8F0] text-[#64748B] sm:w-auto"
                 >

@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
+import type { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -35,7 +36,7 @@ export default function AddExhibitorForm({ onSuccess, onCancel }: AddExhibitorFo
   const router = useRouter()
   const { toast } = useToast()
   const [loading, setLoading] = useState(false)
-  const form = useForm<AddExhibitorFormValues>({
+  const form = useForm<z.input<typeof addExhibitorFormSchema>, unknown, AddExhibitorFormValues>({
     resolver: zodResolver(addExhibitorFormSchema),
     defaultValues: {
       firstName: "",
@@ -82,7 +83,7 @@ export default function AddExhibitorForm({ onSuccess, onCancel }: AddExhibitorFo
   const countryOptions = useMemo(() => getCountryOptions(), [])
   const resolvedCountryCode = useMemo(() => {
     if (countryPick !== LOCATION_NONE) return countryPick
-    const typed = formData.country.trim().toLowerCase()
+    const typed = (formData.country ?? "").trim().toLowerCase()
     if (!typed) return ""
     const row = countryOptions.find((c) => c.name.trim().toLowerCase() === typed)
     return row?.code ?? ""
@@ -90,7 +91,7 @@ export default function AddExhibitorForm({ onSuccess, onCancel }: AddExhibitorFo
   const stateOptions = useMemo(() => getStateOptions(resolvedCountryCode), [resolvedCountryCode])
   const resolvedStateCode = useMemo(() => {
     if (statePick !== LOCATION_NONE) return statePick
-    const typed = formData.state.trim().toLowerCase()
+    const typed = (formData.state ?? "").trim().toLowerCase()
     if (!typed) return ""
     const row = stateOptions.find((s) => s.name.trim().toLowerCase() === typed)
     return row?.code ?? ""
@@ -464,7 +465,10 @@ export default function AddExhibitorForm({ onSuccess, onCancel }: AddExhibitorFo
                       if (!row) return
                       setStatePick(LOCATION_NONE)
                       setCityPick(LOCATION_NONE)
-                      setFormData((prev) => ({ ...prev, country: row.name, state: "", city: "", location: row.name }))
+                      form.setValue("country", row.name, { shouldDirty: true })
+                      form.setValue("state", "", { shouldDirty: true })
+                      form.setValue("city", "", { shouldDirty: true })
+                      form.setValue("location", row.name, { shouldDirty: true })
                     }}
                     disabled={loading}
                   >
@@ -492,7 +496,9 @@ export default function AddExhibitorForm({ onSuccess, onCancel }: AddExhibitorFo
                       const row = stateOptions.find((s) => s.code === value)
                       if (!row) return
                       setCityPick(LOCATION_NONE)
-                      setFormData((prev) => ({ ...prev, state: row.name, city: "" }))
+                      form.setValue("state", row.name, { shouldDirty: true })
+                      form.setValue("city", "", { shouldDirty: true })
+                      form.setValue("location", [row.name, form.getValues("country")].filter(Boolean).join(", "), { shouldDirty: true })
                     }}
                     disabled={loading || !resolvedCountryCode}
                   >
@@ -519,11 +525,8 @@ export default function AddExhibitorForm({ onSuccess, onCancel }: AddExhibitorFo
                       if (value === LOCATION_NONE) return
                       const row = cityOptions.find((c) => c.name === value)
                       if (row) {
-                        setFormData((prev) => ({
-                          ...prev,
-                          city: row.name,
-                          location: [row.name, prev.state, prev.country].filter(Boolean).join(", "),
-                        }))
+                        form.setValue("city", row.name, { shouldDirty: true })
+                        form.setValue("location", [row.name, form.getValues("state"), form.getValues("country")].filter(Boolean).join(", "), { shouldDirty: true })
                       }
                     }}
                     disabled={loading || !resolvedCountryCode || !resolvedStateCode}

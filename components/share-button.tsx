@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast"
 interface ShareButtonProps {
   id: string
   title: string
-  type: "event" | "blog"
+  type: "event" | "blog" | "venue"
   children?: ReactNode
   className?: string
 }

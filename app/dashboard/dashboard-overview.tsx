@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { AppImage } from "@/components/app-image"
 import { EVENT_CARD_PLACEHOLDER_IMAGE, getEventCardImageUrl } from "@/lib/event-card-meta"
 import { cn } from "@/lib/utils"
+import { isUpcomingEvent } from "@/lib/event-schedule-display"
 import { apiFetch, getCurrentUserId, isAuthenticated } from "@/lib/api"
 import { useToast } from "@/hooks/use-toast"
 
@@ -114,9 +115,10 @@ export function DashboardOverview({ userId, events, userName, interests = [] }: 
   const [savedEventIds, setSavedEventIds] = useState<Set<string>>(new Set())
   const [savingInProgress, setSavingInProgress] = useState<Set<string>>(new Set())
 
-  const upcomingEvents = events?.filter((e) => new Date(e.startDate) > new Date()).slice(0, 5) || []
+  const allUpcomingEvents = events?.filter((event) => isUpcomingEvent(event)) || []
+  const upcomingEvents = allUpcomingEvents.slice(0, 5)
   const interestedCount = events?.length || 0
-  const upcomingCount = upcomingEvents.length
+  const upcomingCount = allUpcomingEvents.length
 
   // Load saved events on mount
   useEffect(() => {

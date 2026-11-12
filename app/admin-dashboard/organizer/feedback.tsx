@@ -293,8 +293,8 @@ export default function OrganizerFeedbackPage() {
                     </TableCell>
                     <TableCell>
                       <div>
-                        <div className="text-sm text-gray-900">{feedback.exhibitor?.name}</div>
-                        <div className="text-xs text-gray-500">{feedback.exhibitor?.email}</div>
+                        <div className="text-sm text-gray-900">{feedback.reviewer?.name}</div>
+                        <div className="text-xs text-gray-500">{feedback.reviewer?.email}</div>
                       </div>
                     </TableCell>
                     <TableCell>{renderStars(feedback.rating)}</TableCell>

@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
+import { prisma as legacyPrisma } from "@/lib/prisma"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { uploadToCloudinary, deleteFromCloudinary } from "@/lib/cloudinary"
 
 // GET all cities
 export async function GET(request: NextRequest) {
+  const prisma = legacyPrisma
+  if (!prisma) return NextResponse.json({ error: "Database is not configured for this legacy endpoint" }, { status: 503 })
+
   try {
     const session = await getServerSession(authOptions)
     
@@ -118,8 +121,12 @@ export async function POST(request: NextRequest) {
 
 // Handle form data requests (with file upload)
 async function handleCityFormDataRequest(request: NextRequest) {
+  const prisma = legacyPrisma
+  if (!prisma) return NextResponse.json({ error: "Database is not configured for this legacy endpoint" }, { status: 503 })
+
   const formData = await request.formData()
   const name = formData.get('name') as string
+  const state = String(formData.get('state') ?? '').trim()
   const countryId = formData.get('countryId') as string
   const latitude = formData.get('latitude') as string
   const longitude = formData.get('longitude') as string
@@ -127,9 +134,9 @@ async function handleCityFormDataRequest(request: NextRequest) {
   const imageFile = formData.get('image') as File | null
   const isActive = formData.get('isActive') === 'true'
 
-  if (!name || !countryId) {
+  if (!name || !state || !countryId) {
     return NextResponse.json(
-      { error: "City name and country are required" },
+      { error: "City name, state and country are required" },
       { status: 400 }
     )
   }
@@ -182,6 +189,7 @@ async function handleCityFormDataRequest(request: NextRequest) {
   const city = await prisma.city.create({
     data: {
       name,
+      state,
       countryId,
       latitude: latitude ? parseFloat(latitude) : undefined,
       longitude: longitude ? parseFloat(longitude) : undefined,
@@ -209,12 +217,15 @@ async function handleCityFormDataRequest(request: NextRequest) {
 
 // Handle JSON requests (without file upload)
 async function handleCityJsonRequest(request: NextRequest) {
-  const jsonData = await request.json()
-  const { name, countryId, latitude, longitude, timezone, image, isActive } = jsonData
+  const prisma = legacyPrisma
+  if (!prisma) return NextResponse.json({ error: "Database is not configured for this legacy endpoint" }, { status: 503 })
 
-  if (!name || !countryId) {
+  const jsonData = await request.json()
+  const { name, state, countryId, latitude, longitude, timezone, image, isActive } = jsonData
+
+  if (!name || !state || !countryId) {
     return NextResponse.json(
-      { error: "City name and country are required" },
+      { error: "City name, state and country are required" },
       { status: 400 }
     )
   }
@@ -249,6 +260,7 @@ async function handleCityJsonRequest(request: NextRequest) {
   const city = await prisma.city.create({
     data: {
       name,
+      state,
       countryId,
       latitude: latitude ? parseFloat(latitude) : undefined,
       longitude: longitude ? parseFloat(longitude) : undefined,

@@ -3,7 +3,8 @@
 import Image from "next/image";
 import { Facebook, Linkedin, Twitter, Instagram, Upload, X } from "lucide-react";
 import { useState, useCallback, useMemo } from "react";
-import { useForm } from "react-hook-form";
+import { useForm } from "react-hook-form"
+import type { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { apiFetch } from "@/lib/api";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -34,7 +35,7 @@ const emptyForm = {
 
 export default function AddSpeaker() {
   const { toast } = useToast();
-  const form = useForm<AddSpeakerFormValues>({
+  const form = useForm<z.input<typeof addSpeakerFormSchema>, unknown, AddSpeakerFormValues>({
     resolver: zodResolver(addSpeakerFormSchema),
     defaultValues: emptyForm,
   });

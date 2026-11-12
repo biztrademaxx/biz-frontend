@@ -1,9 +1,12 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
+import { prisma as legacyPrisma } from "@/lib/prisma"
 import {Cloudinary} from "@/lib/cloudinary"
 
 // GET - Fetch materials (optionally filtered by sessionId or speakerId)
 export async function GET(request: NextRequest) {
+  const prisma = legacyPrisma
+  if (!prisma) return NextResponse.json({ error: "Database is not configured for this legacy endpoint" }, { status: 503 })
+
   try {
     const searchParams = request.nextUrl.searchParams
     const sessionId = searchParams.get("sessionId")
@@ -48,6 +51,9 @@ export async function GET(request: NextRequest) {
 
 // POST - Upload new material to Cloudinary and save to database
 export async function POST(request: NextRequest) {
+  const prisma = legacyPrisma
+  if (!prisma) return NextResponse.json({ error: "Database is not configured for this legacy endpoint" }, { status: 503 })
+
   try {
     const formData = await request.formData()
     const file = formData.get("file") as File

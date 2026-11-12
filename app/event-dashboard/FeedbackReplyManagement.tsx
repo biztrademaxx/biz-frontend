@@ -176,13 +176,7 @@ export default function FeedbackReplyManagement({ eventId }: { eventId: string }
     }
 
     try {
-      const newReply = await apiFetch<{
-        id: string
-        content: string
-        isOrganizerReply: boolean
-        createdAt: string
-        user: { id: string; firstName: string; lastName: string; avatar?: string }
-      }>(`/api/reviews/${reviewId}/replies`, {
+      const newReply = await apiFetch<ReviewReply>(`/api/reviews/${reviewId}/replies`, {
         method: "POST",
         body: { content: replyContent.trim() },
         auth: true,

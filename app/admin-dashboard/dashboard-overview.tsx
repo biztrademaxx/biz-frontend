@@ -1,5 +1,7 @@
 "use client"
 
+import { downloadCsv } from "@/lib/csv"
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -425,6 +427,27 @@ export default function DashboardOverview({
     return list
   }, [activities])
 
+  const exportReport = () => {
+    downloadCsv(`admin-dashboard-${eventOverviewRange}-${format(new Date(), "yyyy-MM-dd")}.csv`, [
+      ["Admin dashboard report"],
+      ["Generated at", new Date().toISOString()],
+      ["Event activity period", dateRangeLabel],
+      [],
+      ["Lifetime metric", "Value"],
+      ...stats.map((stat) => [stat.title, stat.value]),
+      ["Confirmed registration revenue", revenue?.total ?? 0, revenue?.currency ?? "USD"],
+      [],
+      ["Activity date", "Events created", "Published events", "Registrations"],
+      ...trend.map((row) => [row.key, row.eventsCreated, row.publishedEvents, row.registrations]),
+      [],
+      ["Event status", "Events (all time)"],
+      ...registrationsByStatus.map((row) => [row.name, row.value]),
+      [],
+      ["Top event", "Registrations (all time)", "Capacity"],
+      ...topEvents.map((row) => [row.title, row.registrations, row.maxAttendees]),
+    ])
+  }
+
   return (
     <div className="space-y-6 lg:space-y-8">
       {/* Header */}
@@ -444,6 +467,8 @@ export default function DashboardOverview({
           </Button>
           <Button
             variant="outline"
+            onClick={exportReport}
+            disabled={trendLoading || stats.length === 0}
             className="h-10 flex items-center gap-2 rounded-2xl border-border bg-card font-semibold text-foreground shadow-sm hover:bg-muted/80"
           >
             <Download className="h-4 w-4" />

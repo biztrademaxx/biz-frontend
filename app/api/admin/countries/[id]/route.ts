@@ -1,17 +1,21 @@
 import { NextRequest, NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
+import { prisma as legacyPrisma } from "@/lib/prisma"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { uploadToCloudinary, deleteFromCloudinary } from "@/lib/cloudinary"
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 // GET single country
 export async function GET(request: NextRequest, { params }: RouteParams) {
+  const routeParams = await params
+  const prisma = legacyPrisma
+  if (!prisma) return NextResponse.json({ error: "Database is not configured for this legacy endpoint" }, { status: 503 })
+
   try {
     const session = await getServerSession(authOptions)
     
@@ -20,7 +24,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     const country = await prisma.country.findUnique({
-      where: { id: params.id },
+      where: { id: routeParams.id },
       include: {
         cities: {
           where: { isActive: true },
@@ -44,7 +48,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     // Get all active cities for this country
     const countryCities = await prisma.city.findMany({
       where: { 
-        countryId: params.id,
+        countryId: routeParams.id,
         isActive: true 
       },
       select: { id: true, name: true }
@@ -74,7 +78,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     // Also count country-level events
     const countryNewSystemCount = await prisma.eventsOnCountries.count({
-      where: { countryId: params.id }
+      where: { countryId: routeParams.id }
     })
 
     const countryOldSystemCount = await prisma.event.count({
@@ -114,6 +118,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
 // PUT update country
 export async function PUT(request: NextRequest, { params }: RouteParams) {
+  const routeParams = await params
   try {
     const session = await getServerSession(authOptions)
     
@@ -126,10 +131,10 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
     if (contentType.includes('multipart/form-data')) {
       // Handle form data with file upload
-      return await handleFormDataRequest(request, params.id)
+      return await handleFormDataRequest(request, routeParams.id)
     } else if (contentType.includes('application/json')) {
       // Handle JSON data (without file upload)
-      return await handleJsonRequest(request, params.id)
+      return await handleJsonRequest(request, routeParams.id)
     } else {
       return NextResponse.json(
         { error: "Unsupported content type" },
@@ -147,6 +152,9 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
 // Handle form data requests (with file upload)
 async function handleFormDataRequest(request: NextRequest, countryId: string) {
+  const prisma = legacyPrisma
+  if (!prisma) return NextResponse.json({ error: "Database is not configured for this legacy endpoint" }, { status: 503 })
+
   const formData = await request.formData()
   const name = formData.get('name') as string
   const code = formData.get('code') as string
@@ -280,6 +288,9 @@ async function handleFormDataRequest(request: NextRequest, countryId: string) {
 
 // Handle JSON requests (without file upload)
 async function handleJsonRequest(request: NextRequest, countryId: string) {
+  const prisma = legacyPrisma
+  if (!prisma) return NextResponse.json({ error: "Database is not configured for this legacy endpoint" }, { status: 503 })
+
   const jsonData = await request.json()
   const { name, code, flag, currency, timezone, isActive, isPermitted } = jsonData
 
@@ -366,6 +377,10 @@ async function handleJsonRequest(request: NextRequest, countryId: string) {
 
 // DELETE country
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
+  const routeParams = await params
+  const prisma = legacyPrisma
+  if (!prisma) return NextResponse.json({ error: "Database is not configured for this legacy endpoint" }, { status: 503 })
+
   try {
     const session = await getServerSession(authOptions)
     
@@ -375,7 +390,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
 
     // Check if country exists and has events/cities
     const country = await prisma.country.findUnique({
-      where: { id: params.id },
+      where: { id: routeParams.id },
       include: {
         _count: {
           select: {
@@ -410,7 +425,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     }
 
     await prisma.country.delete({
-      where: { id: params.id }
+      where: { id: routeParams.id }
     })
 
     return NextResponse.json({ message: "Country deleted successfully" })

@@ -196,13 +196,7 @@ export default function FeedbackReplyManagement({ speakerId }: { speakerId?: str
     }
 
     try {
-      const newReply = await apiFetch<{
-        id: string
-        content: string
-        isOrganizerReply: boolean
-        createdAt: string
-        user: { id: string; firstName: string; lastName: string; avatar: string | null }
-      }>(`/api/reviews/${reviewId}/replies`, {
+      const newReply = await apiFetch<ReviewReply>(`/api/reviews/${reviewId}/replies`, {
         method: "POST",
         body: { content: replyContent.trim() },
         auth: true,

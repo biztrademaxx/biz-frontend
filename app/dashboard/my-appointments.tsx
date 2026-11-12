@@ -31,6 +31,7 @@ import {
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
+import { formatAppointmentDateTime } from "@/lib/appointment-display"
 import { formatCityCountryLine } from "@/lib/location-data"
 
 interface Appointment {
@@ -42,6 +43,8 @@ interface Appointment {
   exhibitorPhone?: string
   exhibitorAvatar?: string
   boothNumber?: string
+  requestedDate?: string
+  requestedTime?: string
   scheduledAt: string
   status: "PENDING" | "CONFIRMED" | "CANCELLED" | "COMPLETED"
   notes?: string
@@ -106,15 +109,6 @@ function formatDate(dateStr?: string) {
   })
 }
 
-function formatDateTime(dateStr?: string) {
-  if (!dateStr) return { date: "TBD", time: "" }
-  const d = new Date(dateStr)
-  return {
-    date: d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
-    time: d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }),
-  }
-}
-
 function formatEventDateRange(startDate?: string, endDate?: string): string {
   if (!startDate) return "Date TBD"
   const start = new Date(startDate)
@@ -157,7 +151,7 @@ function AppointmentCard({
   onCancel?: (id: string) => void
   onViewDetails: (appt: Appointment) => void
 }) {
-  const { date, time } = formatDateTime(appt.scheduledAt)
+  const { date, time } = formatAppointmentDateTime(appt)
   const eventLocation = getEventLocation(appt)
 
   return (
@@ -508,7 +502,7 @@ export function MyAppointments({ userId }: MyAppointmentsProps) {
             <DialogTitle>Appointment Details</DialogTitle>
           </DialogHeader>
           {selectedAppointment && (() => {
-            const { date, time } = formatDateTime(selectedAppointment.scheduledAt)
+            const { date, time } = formatAppointmentDateTime(selectedAppointment)
             const eventDateRange = formatEventDateRange(selectedAppointment.eventStartDate, selectedAppointment.eventEndDate)
             const eventLocation = getEventLocation(selectedAppointment)
 

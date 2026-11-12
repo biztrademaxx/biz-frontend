@@ -1,15 +1,19 @@
 // app/api/faqs/[id]/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
-import { prisma } from '@/lib/prisma'
+import { prisma as legacyPrisma } from '@/lib/prisma'
 
 interface Params {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 export async function GET(request: NextRequest, { params }: Params) {
+  const routeParams = await params
+  const prisma = legacyPrisma
+  if (!prisma) return NextResponse.json({ error: "Database is not configured for this legacy endpoint" }, { status: 503 })
+
   try {
     const session = await getServerSession()
     if (!session) {
@@ -17,7 +21,7 @@ export async function GET(request: NextRequest, { params }: Params) {
     }
 
     const faq = await prisma.fAQ.findUnique({
-      where: { id: params.id }
+      where: { id: routeParams.id }
     })
 
     if (!faq) {
@@ -35,6 +39,10 @@ export async function GET(request: NextRequest, { params }: Params) {
 }
 
 export async function PUT(request: NextRequest, { params }: Params) {
+  const routeParams = await params
+  const prisma = legacyPrisma
+  if (!prisma) return NextResponse.json({ error: "Database is not configured for this legacy endpoint" }, { status: 503 })
+
   try {
     const session = await getServerSession()
     if (!session) {
@@ -44,7 +52,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
     const body = await request.json()
     
     const updatedFAQ = await prisma.fAQ.update({
-      where: { id: params.id },
+      where: { id: routeParams.id },
       data: body
     })
 
@@ -59,6 +67,10 @@ export async function PUT(request: NextRequest, { params }: Params) {
 }
 
 export async function DELETE(request: NextRequest, { params }: Params) {
+  const routeParams = await params
+  const prisma = legacyPrisma
+  if (!prisma) return NextResponse.json({ error: "Database is not configured for this legacy endpoint" }, { status: 503 })
+
   try {
     const session = await getServerSession()
     if (!session) {
@@ -66,7 +78,7 @@ export async function DELETE(request: NextRequest, { params }: Params) {
     }
 
     await prisma.fAQ.delete({
-      where: { id: params.id }
+      where: { id: routeParams.id }
     })
 
     return NextResponse.json({ message: 'FAQ deleted successfully' })

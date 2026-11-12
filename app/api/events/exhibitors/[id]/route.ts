@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
+import { prisma as legacyPrisma } from "@/lib/prisma"
 
 interface Params {
   id: string
@@ -10,6 +10,9 @@ export async function GET(
   req: NextRequest,
   context: { params: Promise<Params> } // params is a Promise
 ) {
+  const prisma = legacyPrisma
+  if (!prisma) return NextResponse.json({ error: "Database is not configured for this legacy endpoint" }, { status: 503 })
+
   try {
     const { id: exhibitorId } = await context.params
 

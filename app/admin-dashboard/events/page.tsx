@@ -7,6 +7,7 @@ import { EventTable } from "./components/EventTable"
 import { VerifyEventDialog } from "./components/VerifyEventDialog"
 import { EditEventForm } from "./components/EditEventForm"
 import type { Event } from "./types/event.types"
+import { mapPatchedEventToEditRecord } from "./edit-event-form-utils"
 
 interface EventManagementPageProps {
   onPromote?: (event: Event) => void
@@ -70,8 +71,16 @@ export default function EventManagementPage({ onPromote }: EventManagementPagePr
   if (isEditing && selectedEvent) {
     return (
       <EditEventForm
-        event={selectedEvent}
-        onSave={handleSaveEvent}
+        event={mapPatchedEventToEditRecord({ ...selectedEvent })}
+        onSave={(updated) => handleSaveEvent({
+          ...selectedEvent,
+          ...updated,
+          currentAttendees: updated.attendees,
+          maxAttendees: updated.maxCapacity,
+          startDate: updated.date,
+          city: updated.location,
+          isFeatured: updated.featured,
+        })}
         onCancel={handleCancelEdit}
         categories={categories}
       />

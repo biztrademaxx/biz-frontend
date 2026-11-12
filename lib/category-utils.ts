@@ -1,6 +1,8 @@
-import { prisma } from "@/lib/prisma"
+import { prisma as legacyPrisma } from "@/lib/prisma"
 
 export async function getCategoryWithEventCount(categoryId: string) {
+  const prisma = legacyPrisma
+  if (!prisma) return null
   const category = await prisma.eventCategory.findUnique({
     where: { id: categoryId }
   })
@@ -22,6 +24,8 @@ export async function getCategoryWithEventCount(categoryId: string) {
 }
 
 export async function getAllCategoriesWithEventCounts() {
+  const prisma = legacyPrisma
+  if (!prisma) return []
   const categories = await prisma.eventCategory.findMany({
     orderBy: {
       name: 'asc'

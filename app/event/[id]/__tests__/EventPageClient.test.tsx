@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event"
 
 import EventPageClient from "@/app/event/[id]/EventPageClient"
 import * as api from "@/lib/api"
+import { trackEventMetric } from "@/lib/track-event-metric"
 import { renderWithProviders } from "@/test/test-utils"
 
 jest.mock("next/navigation", () => ({
@@ -12,6 +13,8 @@ jest.mock("next/navigation", () => ({
 jest.mock("@/lib/api", () => ({
   apiFetch: jest.fn(),
 }))
+
+jest.mock("@/lib/track-event-metric", () => ({ trackEventMetric: jest.fn() }))
 
 jest.mock("@/app/event/EventPageContent", () => ({
   __esModule: true,
@@ -40,6 +43,7 @@ describe("EventPageClient", () => {
       />
     )
     expect(screen.getByTestId("event-content")).toHaveTextContent("Expo 2026")
+    expect(trackEventMetric).toHaveBeenCalledWith("1", "click", "event_page")
     expect(screen.queryByTestId("event-skeleton")).not.toBeInTheDocument()
     expect(apiFetch).not.toHaveBeenCalled()
   })

@@ -9,6 +9,7 @@ const push = jest.fn()
 
 jest.mock("next/navigation", () => ({
   useRouter: () => ({ push, replace: jest.fn(), prefetch: jest.fn() }),
+  useSearchParams: () => new URLSearchParams(),
 }))
 
 jest.mock("next-auth/react", () => ({
@@ -17,6 +18,13 @@ jest.mock("next-auth/react", () => ({
 
 jest.mock("@/lib/api", () => ({
   loginWithEmailPassword: jest.fn(),
+  consumeLogoutSuccessBanner: jest.fn(() => false),
+  getCurrentVisitorDashboardPath: jest.fn(() => null),
+}))
+
+jest.mock("@/lib/oauth-signup-intent", () => ({
+  clearOAuthSignupIntentRole: jest.fn(),
+  clearOAuthSignupIntentRoleServer: jest.fn().mockResolvedValue(undefined),
 }))
 
 const loginWithEmailPassword = api.loginWithEmailPassword as jest.MockedFunction<

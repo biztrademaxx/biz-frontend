@@ -144,7 +144,7 @@ export function mapPatchedEventToEditRecord(
     status: (raw.status as EditEventRecord["status"]) ?? previous?.status ?? "Draft",
     attendees: Number(raw.currentAttendees ?? raw.attendees ?? previous?.attendees ?? 0),
     maxCapacity: Number(raw.maxAttendees ?? raw.maxCapacity ?? previous?.maxCapacity ?? 0),
-    ticketPrice: Number(previous?.ticketPrice ?? 0),
+    ticketPrice: Number(raw.ticketPrice ?? previous?.ticketPrice ?? 0),
     category,
     featured: Boolean(raw.isFeatured ?? raw.featured ?? previous?.featured ?? false),
     vip: Boolean(raw.isVIP ?? raw.vip ?? previous?.vip ?? false),

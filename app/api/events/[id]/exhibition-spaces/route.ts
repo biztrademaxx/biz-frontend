@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
+import { ExhibitionSpaceType } from "@prisma/client"
 import { proxyJson } from "@/lib/backend-proxy"
 import { prisma } from "@/lib/prisma"
 
@@ -90,10 +91,7 @@ export async function POST(
     return NextResponse.json(data, { status: res.status })
   }
   if (res.status === 404 && prisma) {
-    const validTypes = [
-      "SHELL_SPACE", "RAW_SPACE", "TWO_SIDE_OPEN", "THREE_SIDE_OPEN",
-      "FOUR_SIDE_OPEN", "MEZZANINE", "ADDITIONAL_POWER", "COMPRESSED_AIR", "CUSTOM",
-    ]
+    const spaceType = Object.values(ExhibitionSpaceType).find((type) => type === body.spaceType) ?? ExhibitionSpaceType.RAW_SPACE
     const name = typeof body.name === "string" ? body.name.trim() : ""
     const basePrice = Number(body.basePrice) ?? 0
     if (!name) {
@@ -109,7 +107,7 @@ export async function POST(
         data: {
           eventId,
           name,
-          spaceType: validTypes.includes(body.spaceType as string) ? (body.spaceType as string) : "RAW_SPACE",
+          spaceType,
           description: (body.description as string) || name,
           dimensions: (body.dimensions as string) || null,
           area: Number(body.area) || 100,
@@ -118,7 +116,7 @@ export async function POST(
           unit: (body.unit as string) || "sqm",
           pricePerSqm: body.pricePerSqm != null ? Number(body.pricePerSqm) : null,
           maxBooths: body.maxBooths != null ? Number(body.maxBooths) : null,
-          currency: typeof body.currency === "string" && body.currency.trim() ? body.currency.trim() : eventCurrency,
+          currency: typeof body.currency === "string" && body.currency.trim() ? body.currency.trim() : ev?.currency || "USD",
         },
       })
       return NextResponse.json({

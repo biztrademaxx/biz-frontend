@@ -1,11 +1,14 @@
 import { devLog } from "@/lib/dev-log"
 
 import { NextRequest, NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
+import { prisma as legacyPrisma } from "@/lib/prisma"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth-options"
 
 export async function POST(request: NextRequest) {
+  const prisma = legacyPrisma
+  if (!prisma) return NextResponse.json({ error: "Database is not configured for this legacy endpoint" }, { status: 503 })
+
   try {
     const session = await getServerSession(authOptions)
     
@@ -150,6 +153,9 @@ async function sendEventApprovalNotification(
   approved: boolean, 
   reason: string
 ) {
+  const prisma = legacyPrisma
+  if (!prisma) return
+
   try {
     // Create notification for organizer
     await prisma.notification.create({
@@ -181,6 +187,9 @@ async function sendEventApprovalNotification(
 
 // Fixed: Notify only the admin who performed the action
 async function notifyAdminAboutEventUpdate(eventTitle: string, action: "approved" | "rejected", adminId: string) {
+  const prisma = legacyPrisma
+  if (!prisma) return
+
   try {
     // Get admin details
     let admin

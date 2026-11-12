@@ -21,11 +21,21 @@ jest.mock("@/components/ExploreMegaMenu", () => ({
 
 jest.mock("@/lib/api", () => ({
   clearTokens: jest.fn(),
+  markLogoutSuccessBanner: jest.fn(),
+  getCurrentVisitorDashboardPath: jest.fn(() => null),
   getCurrentUserDisplayName: jest.fn(() => "Test User"),
   getCurrentUserEmail: jest.fn(() => "test@example.com"),
   getCurrentUserId: jest.fn(() => "user-1"),
   getCurrentUserRole: jest.fn(() => "ATTENDEE"),
   isAuthenticated: jest.fn(() => false),
+}))
+
+jest.mock("@/contexts/home-location-context", () => ({
+  useHomeLocation: () => ({ countryName: "India", city: "Mumbai", isLoading: false }),
+}))
+
+jest.mock("@/lib/subscription-checkout", () => ({
+  fetchCurrentDashboardPlan: jest.fn().mockResolvedValue(null),
 }))
 
 const isAuthenticated = api.isAuthenticated as jest.MockedFunction<typeof api.isAuthenticated>
@@ -51,9 +61,22 @@ describe("Navbar", () => {
 
   it("renders home logo link and primary nav labels", () => {
     renderWithProviders(<Navbar />)
-    expect(screen.getByRole("link", { name: /biztradefairs/i })).toHaveAttribute("href", "/")
-    expect(screen.getByRole("link", { name: /top 100 must visit/i })).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: /explore menu/i })).toBeInTheDocument()
+    for (const logo of screen.getAllByRole("link", { name: /biztradefairs/i })) {
+      expect(logo).toHaveAttribute("href", "/")
+    }
+    for (const link of screen.getAllByRole("link", { name: /^organizers$/i })) {
+      expect(link).toHaveAttribute("href", "/organizers")
+    }
+    for (const link of screen.getAllByRole("link", { name: /^venues$/i })) {
+      expect(link).toHaveAttribute("href", "/venues")
+    }
+    for (const link of screen.getAllByRole("link", { name: /^exhibitors$/i })) {
+      expect(link).toHaveAttribute("href", "/exhibitor")
+    }
+    for (const link of screen.getAllByRole("link", { name: /^speakers$/i })) {
+      expect(link).toHaveAttribute("href", "/speakers")
+    }
+    expect(screen.getAllByLabelText("Showing content for India").length).toBeGreaterThan(0)
   })
 
   it("opens account menu and shows Sign in when logged out", async () => {
@@ -63,7 +86,10 @@ describe("Navbar", () => {
       expect(screen.getAllByRole("button", { name: /account menu/i }).length).toBeGreaterThan(0)
     )
     const accountBtn = screen.getAllByRole("button", { name: /account menu/i })[0]
+    expect(accountBtn).toHaveAttribute("aria-expanded", "false")
     await user.click(accountBtn)
+    expect(accountBtn).toHaveAttribute("aria-expanded", "true")
+    expect(accountBtn).toHaveAttribute("aria-haspopup", "menu")
     expect(screen.getAllByRole("link", { name: /^sign in$/i })[0]).toHaveAttribute("href", "/login")
     expect(screen.getAllByRole("link", { name: /create an account/i })[0]).toHaveAttribute(
       "href",
@@ -134,6 +160,7 @@ describe("Navbar", () => {
     )
     await user.click(screen.getAllByRole("button", { name: /account menu/i })[0])
     await user.click(screen.getAllByRole("menuitem", { name: /^logout$/i })[0])
+    expect(api.markLogoutSuccessBanner).toHaveBeenCalled()
     expect(clearTokens).toHaveBeenCalled()
     expect(push).toHaveBeenCalledWith("/login")
   })
