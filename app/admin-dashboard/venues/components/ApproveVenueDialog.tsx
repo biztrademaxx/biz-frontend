@@ -28,7 +28,7 @@ export function ApproveVenueDialog({
 }: ApproveVenueDialogProps) {
   const many = count > 1
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={(open) => { if (!open && !confirming) onClose() }}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-green-600">
@@ -51,7 +51,7 @@ export function ApproveVenueDialog({
             disabled={confirming}
           >
             <ThumbsUp className="mr-2 h-4 w-4" />
-            {confirming ? "Approving…" : many ? `Approve ${count} venues` : "Approve Venue"}
+            {confirming ? "Approving..." : many ? `Approve ${count} venues` : "Approve Venue"}
           </Button>
         </DialogFooter>
       </DialogContent>

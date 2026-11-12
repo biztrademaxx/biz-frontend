@@ -3,6 +3,7 @@
 import { AppImage } from "@/components/app-image"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -84,6 +85,9 @@ export type VenueCardListProps = {
   venues: Venue[]
   accent: VenueCardAccent
   mode: "pending" | "manage"
+  selectedIds?: ReadonlySet<string>
+  onSelectionChange?: (venueId: string, checked: boolean) => void
+  selectionDisabled?: boolean
   onView: (venue: Venue) => void
   onEdit: (venue: Venue) => void
   onApprove?: (venue: Venue) => void
@@ -98,6 +102,9 @@ export function VenueCardList({
   venues,
   accent,
   mode,
+  selectedIds,
+  onSelectionChange,
+  selectionDisabled,
   onView,
   onEdit,
   onApprove,
@@ -128,6 +135,15 @@ export function VenueCardList({
           >
             <div className={cn("h-1 bg-gradient-to-r", theme.bar)} />
             <CardContent className="flex items-start gap-4 px-4 py-3.5">
+              {onSelectionChange ? (
+                <Checkbox
+                  className="mt-2 shrink-0"
+                  aria-label={`Select ${venue.venueName}`}
+                  checked={selectedIds?.has(venue.id) ?? false}
+                  disabled={selectionDisabled || (venue.isVerified && venue.isActive)}
+                  onCheckedChange={(checked) => onSelectionChange(venue.id, checked === true)}
+                />
+              ) : null}
               <VenueThumbnail src={thumb} alt={venue.venueName} accent={accent} />
 
               <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2">

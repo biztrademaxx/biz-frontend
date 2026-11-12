@@ -1,6 +1,7 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useVenueListState } from "./useVenueListState"
 import { toast } from "sonner"
 import {
   deriveVenueStatus,
@@ -26,15 +27,20 @@ export function useVenueManagement(initialTab: VenueTab = "all") {
   const [venues, setVenues] = useState<Venue[]>([])
   const [pendingVenues, setPendingVenues] = useState<Venue[]>([])
   const [loading, setLoading] = useState(true)
-  const [searchTerm, setSearchTerm] = useState("")
-  const [statusFilter, setStatusFilter] = useState("all")
+  const {
+    searchTerm, setSearchTerm, statusFilter, setStatusFilter,
+    activeTab, setActiveTab, listPage, setListPage, restored,
+  } = useVenueListState(initialTab)
+  const [hasLoaded, setHasLoaded] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [bulkApprovalIds, setBulkApprovalIds] = useState<string[]>([])
+  const [isApproving, setIsApproving] = useState(false)
+  const approvalInProgress = useRef(false)
   const [selectedVenue, setSelectedVenue] = useState<Venue | null>(null)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false)
   const [isApproveDialogOpen, setIsApproveDialogOpen] = useState(false)
   const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false)
-  const [activeTab, setActiveTab] = useState<VenueTab>(initialTab)
-  const [listPage, setListPage] = useState(1)
   const [detailLoading, setDetailLoading] = useState(false)
 
   const loadVenues = useCallback(async () => {
@@ -42,6 +48,7 @@ export function useVenueManagement(initialTab: VenueTab = "all") {
       setLoading(true)
       const mapped = await fetchAllVenues()
       setVenues(mapped)
+      setHasLoaded(true)
       setPendingVenues(mapped.filter((v) => !v.isVerified))
     } catch (error) {
       console.error("Error fetching venues:", error)
@@ -54,10 +61,6 @@ export function useVenueManagement(initialTab: VenueTab = "all") {
   useEffect(() => {
     void loadVenues()
   }, [loadVenues])
-
-  useEffect(() => {
-    setActiveTab(initialTab)
-  }, [initialTab])
 
   const filteredVenues = useMemo(
     () =>
@@ -92,10 +95,68 @@ export function useVenueManagement(initialTab: VenueTab = "all") {
   )
 
   useEffect(() => {
-    setListPage(1)
+    setSelectedIds(new Set())
   }, [searchTerm, activeTab, statusFilter])
 
+  const approvableIds = useMemo(
+    () => new Set(filteredVenues.filter((v) => !v.isVerified || !v.isActive).map((v) => v.id)),
+    [filteredVenues],
+  )
+  const pageSelectionIds = paginatedAll.items.filter((v) => approvableIds.has(v.id)).map((v) => v.id)
+  const selectedVenueIds = useMemo(
+    () => new Set([...selectedIds].filter((id) => approvableIds.has(id))),
+    [selectedIds, approvableIds],
+  )
+
   useEffect(() => {
+    setSelectedIds((prev) => {
+      const next = new Set([...prev].filter((id) => approvableIds.has(id)))
+      return next.size === prev.size ? prev : next
+    })
+  }, [approvableIds])
+
+  const openApproveVenue = (venue: Venue) => {
+    setBulkApprovalIds([])
+    setSelectedVenue(venue)
+    setIsApproveDialogOpen(true)
+  }
+
+  const bulkSelection = {
+    selectedIds: selectedVenueIds,
+    totalCount: approvableIds.size,
+    pageCount: pageSelectionIds.length,
+    pageSelectedCount: pageSelectionIds.filter((id) => selectedVenueIds.has(id)).length,
+    approving: isApproving,
+    toggleVenue: (venueId: string, checked: boolean) => {
+      if (!approvableIds.has(venueId) || isApproving) return
+      setSelectedIds((prev) => {
+        const next = new Set(prev)
+        if (checked) next.add(venueId)
+        else next.delete(venueId)
+        return next
+      })
+    },
+    togglePage: (checked: boolean) => {
+      setSelectedIds((prev) => {
+        const next = new Set(prev)
+        for (const id of pageSelectionIds) {
+          if (checked) next.add(id)
+          else next.delete(id)
+        }
+        return next
+      })
+    },
+    selectAll: () => setSelectedIds(new Set(approvableIds)),
+    clear: () => setSelectedIds(new Set()),
+    openApproval: () => {
+      if (selectedVenueIds.size === 0 || isApproving) return
+      setBulkApprovalIds([...selectedVenueIds])
+      setIsApproveDialogOpen(true)
+    },
+  }
+
+  useEffect(() => {
+    if (loading || !hasLoaded || !restored) return
     const len =
       activeTab === "pending"
         ? filteredPendingVenues.length
@@ -107,6 +168,10 @@ export function useVenueManagement(initialTab: VenueTab = "all") {
     const totalPages = Math.max(1, Math.ceil(len / VENUES_PER_PAGE) || 1)
     if (listPage > totalPages) setListPage(totalPages)
   }, [
+    loading,
+    hasLoaded,
+    restored,
+    setListPage,
     activeTab,
     filteredVenues.length,
     filteredPendingVenues.length,
@@ -185,6 +250,9 @@ export function useVenueManagement(initialTab: VenueTab = "all") {
   }
 
   const handleApproveVenue = async (venueId: string) => {
+    if (approvalInProgress.current) return
+    approvalInProgress.current = true
+    setIsApproving(true)
     try {
       await patchVenue(venueId, { isVerified: true, isActive: true })
       setIsApproveDialogOpen(false)
@@ -193,23 +261,34 @@ export function useVenueManagement(initialTab: VenueTab = "all") {
     } catch (error) {
       console.error("Error approving venue:", error)
       toast.error("Failed to approve venue")
+    } finally {
+      approvalInProgress.current = false
+      setIsApproving(false)
     }
   }
 
   const handleBulkApproveVenues = async (venueIds: string[]) => {
+    if (approvalInProgress.current) return
     const ids = [...new Set(venueIds.filter(Boolean))]
     if (ids.length === 0) {
       toast.error("Select at least one venue to approve")
       return
     }
+    approvalInProgress.current = true
+    setIsApproving(true)
     try {
       const result = await bulkApproveVenues(ids)
+      setSelectedIds(new Set())
+      setBulkApprovalIds([])
       setIsApproveDialogOpen(false)
       await loadVenues()
       toast.success(`${result.approvedCount ?? ids.length} venue(s) approved`)
     } catch (error) {
       console.error("Error bulk-approving venues:", error)
       toast.error("Failed to approve selected venues")
+    } finally {
+      approvalInProgress.current = false
+      setIsApproving(false)
     }
   }
 
@@ -303,6 +382,10 @@ export function useVenueManagement(initialTab: VenueTab = "all") {
 
   return {
     loading,
+    bulkSelection,
+    bulkApprovalIds,
+    isApproving,
+    openApproveVenue,
     searchTerm,
     setSearchTerm,
     statusFilter,

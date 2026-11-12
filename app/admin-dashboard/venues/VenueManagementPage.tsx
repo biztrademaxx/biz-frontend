@@ -16,7 +16,6 @@ import {
 import { useVenueManagement } from "./hooks/useVenueManagement"
 import type { VenueTab } from "./types/venue.types"
 
-// Add default export here
 export default function VenueManagementPage({
   initialTab = "all",
 }: {
@@ -104,7 +103,8 @@ export default function VenueManagementPage({
           setListPage={vm.setListPage}
           cardActions={vm.cardActions}
           setSelectedVenue={vm.setSelectedVenue}
-          setIsApproveDialogOpen={vm.setIsApproveDialogOpen}
+          openApproveVenue={vm.openApproveVenue}
+          bulkSelection={vm.bulkSelection}
           setIsRejectDialogOpen={vm.setIsRejectDialogOpen}
         />
       </Tabs>
@@ -127,8 +127,16 @@ export default function VenueManagementPage({
 
       <ApproveVenueDialog
         isOpen={vm.isApproveDialogOpen}
-        onClose={() => vm.setIsApproveDialogOpen(false)}
-        onConfirm={() => vm.selectedVenue && void vm.handleApproveVenue(vm.selectedVenue.id)}
+        onClose={() => { if (!vm.isApproving) vm.setIsApproveDialogOpen(false) }}
+        count={vm.bulkApprovalIds.length || 1}
+        confirming={vm.isApproving}
+        onConfirm={() => {
+          if (vm.bulkApprovalIds.length > 0) {
+            void vm.handleBulkApproveVenues(vm.bulkApprovalIds)
+          } else if (vm.selectedVenue) {
+            void vm.handleApproveVenue(vm.selectedVenue.id)
+          }
+        }}
       />
 
       <RejectVenueDialog

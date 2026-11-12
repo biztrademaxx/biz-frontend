@@ -8,6 +8,7 @@ import { TabsContent } from "@/components/ui/tabs"
 import { Building2, CheckCircle, Clock, Filter, RefreshCw } from "lucide-react"
 import type { useVenueManagement } from "../hooks/useVenueManagement"
 import { VenueCardList } from "./VenueCardList"
+import { VenueBulkActions } from "./VenueBulkActions"
 import { VenueListPagination } from "./VenueListPagination"
 import { VenueListSection } from "./VenueListSection"
 
@@ -28,7 +29,8 @@ type VenueTabsContentProps = Pick<
   | "setListPage"
   | "cardActions"
   | "setSelectedVenue"
-  | "setIsApproveDialogOpen"
+  | "openApproveVenue"
+  | "bulkSelection"
   | "setIsRejectDialogOpen"
 >
 
@@ -46,7 +48,8 @@ export function VenueTabsContent({
   setListPage,
   cardActions,
   setSelectedVenue,
-  setIsApproveDialogOpen,
+  openApproveVenue,
+  bulkSelection,
   setIsRejectDialogOpen,
 }: VenueTabsContentProps) {
   return (
@@ -90,7 +93,11 @@ export function VenueTabsContent({
             />
           }
         >
+          <VenueBulkActions selection={bulkSelection} />
           <VenueCardList
+            selectedIds={bulkSelection.selectedIds}
+            onSelectionChange={bulkSelection.toggleVenue}
+            selectionDisabled={bulkSelection.approving}
             venues={paginatedAll.items}
             accent="blue"
             mode="manage"
@@ -140,10 +147,7 @@ export function VenueTabsContent({
               mode="pending"
               onView={cardActions.onView}
               onEdit={cardActions.onEdit}
-              onApprove={(venue) => {
-                setSelectedVenue(venue)
-                setIsApproveDialogOpen(true)
-              }}
+              onApprove={openApproveVenue}
               onReject={(venue) => {
                 setSelectedVenue(venue)
                 setIsRejectDialogOpen(true)
