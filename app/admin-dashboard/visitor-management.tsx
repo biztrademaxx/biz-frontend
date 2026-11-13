@@ -2,8 +2,7 @@
 
 import { AdminTableAvatar } from "@/components/admin-dashboard/admin-table-avatar"
 import { devLog } from "@/lib/dev-log"
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect, useCallback, useRef } from "react"
 import {
   Search,
   Download,
@@ -67,6 +66,9 @@ interface VisitorDetails extends Visitor {
   savedEvents: Array<{ id: string; event: { id: string; title: string; startDate: string } }>
 }
 
+const VISITORS_LIST_STATE_KEY = "admin:visitors:list"
+const VISITOR_STATUSES = ["all", "active", "inactive", "verified", "unverified"]
+
 const avatarColors = [
   "bg-emerald-100 text-emerald-700",
   "bg-blue-100 text-blue-700",
@@ -77,7 +79,6 @@ const avatarColors = [
 ]
 function getAvatarColor(name: string) { return avatarColors[name.charCodeAt(0) % avatarColors.length] }
 export default function VisitorManagement() {
-  const router = useRouter()
   const [visitors, setVisitors] = useState<Visitor[]>([])
   const [summary, setSummary] = useState<VisitorSummary>({ active: 0, inactive: 0, verified: 0 })
   const [selectedVisitor, setSelectedVisitor] = useState<VisitorDetails | null>(null)
@@ -90,18 +91,23 @@ export default function VisitorManagement() {
   const [error, setError] = useState("")
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
+  const [debouncedSearch, setDebouncedSearch] = useState("")
+  const [listStateRestored, setListStateRestored] = useState(false)
+  const fetchIdRef = useRef(0)
   const [pagination, setPagination] = useState<PaginationInfo>({ page: 1, limit: 10, total: 0, totalPages: 0 })
 
-  const fetchVisitors = async () => {
+  const fetchVisitors = useCallback(async () => {
+    const fetchId = ++fetchIdRef.current
     try {
       setLoading(true); setError("")
       const params = new URLSearchParams({
         page: pagination.page.toString(),
         limit: pagination.limit.toString(),
-        ...(searchTerm && { search: searchTerm }),
+        ...(debouncedSearch && { search: debouncedSearch }),
         ...(statusFilter !== "all" && { status: statusFilter }),
       })
       const result = await adminApi<{ success?: boolean; data?: { visitors: Visitor[]; pagination: PaginationInfo; stats: VisitorSummary }; error?: string }>(`/visitors?${params}`)
+      if (fetchId !== fetchIdRef.current) return
       if (result.success && result.data) {
         const validatedVisitors = (result.data.visitors ?? []).map((visitor: any) => ({
           ...visitor,
@@ -117,13 +123,20 @@ export default function VisitorManagement() {
         }))
         setVisitors(validatedVisitors)
         setSummary(result.data.stats)
-        setPagination(result.data.pagination ?? { page: 1, limit: 10, total: 0, totalPages: 0 })
+        const incoming = result.data.pagination
+        if (incoming) {
+          const lastPage = Math.max(1, incoming.totalPages)
+          setPagination({ ...incoming, page: Math.min(pagination.page, lastPage) })
+        }
       } else {
         setError((result as any).error ?? "Failed to fetch visitors")
       }
-    } catch (err) { setError("Failed to fetch visitors"); console.error(err) }
-    finally { setLoading(false) }
-  }
+    } catch (err) {
+      if (fetchId === fetchIdRef.current) { setError("Failed to fetch visitors"); console.error(err) }
+    } finally {
+      if (fetchId === fetchIdRef.current) setLoading(false)
+    }
+  }, [pagination.page, pagination.limit, debouncedSearch, statusFilter])
 
   const fetchVisitorDetails = async (visitorId: string) => {
     try {
@@ -163,14 +176,79 @@ export default function VisitorManagement() {
     finally { setExportLoading(false) }
   }
 
-  useEffect(() => { fetchVisitors() }, [pagination.page, statusFilter])
+  // Restore before fetching so a refresh never briefly requests page 1.
   useEffect(() => {
-    const t = setTimeout(() => {
-      if (pagination.page === 1) fetchVisitors()
-      else setPagination((p) => ({ ...p, page: 1 }))
+    const restoreListState = () => {
+      const params = new URLSearchParams(window.location.search)
+      const section = params.get("section")
+      const sub = params.get("sub")
+      const isVisitorUrl = (!section || section === "visitors") &&
+        (!sub || sub === "visitors-all" || sub === "visitors-suggestions")
+      let saved: { page?: unknown; search?: unknown; status?: unknown } = {}
+      try {
+        saved = JSON.parse(sessionStorage.getItem(VISITORS_LIST_STATE_KEY) || "{}") || {}
+      } catch {
+        /* ignore malformed/blocked storage */
+      }
+      const hasUrlState = isVisitorUrl &&
+        ["page", "search", "status"].some((key) => params.has(key))
+      const page = Number(hasUrlState ? params.get("page") || 1 : saved.page || 1)
+      const search = hasUrlState ? params.get("search") || "" : saved.search
+      const status = hasUrlState ? params.get("status") || "all" : saved.status
+      const restoredSearch = typeof search === "string" ? search : ""
+      setPagination((previous) => ({
+        ...previous,
+        page: Number.isSafeInteger(page) && page > 0 ? page : 1,
+      }))
+      setSearchTerm(restoredSearch)
+      setDebouncedSearch(restoredSearch)
+      setStatusFilter(typeof status === "string" && VISITOR_STATUSES.includes(status) ? status : "all")
+      setListStateRestored(true)
+    }
+    const handlePopState = () => {
+      const section = new URLSearchParams(window.location.search).get("section")
+      if (!section || section === "visitors") restoreListState()
+    }
+    restoreListState()
+    window.addEventListener("popstate", handlePopState)
+    return () => window.removeEventListener("popstate", handlePopState)
+  }, [])
+
+  useEffect(() => {
+    if (!listStateRestored) return
+    try {
+      sessionStorage.setItem(
+        VISITORS_LIST_STATE_KEY,
+        JSON.stringify({ page: pagination.page, search: debouncedSearch, status: statusFilter })
+      )
+    } catch {
+      /* ignore blocked/full storage */
+    }
+    const url = new URL(window.location.href)
+    url.searchParams.set("page", String(pagination.page))
+    if (debouncedSearch) url.searchParams.set("search", debouncedSearch)
+    else url.searchParams.delete("search")
+    if (statusFilter !== "all") url.searchParams.set("status", statusFilter)
+    else url.searchParams.delete("status")
+    if (url.href !== window.location.href) {
+      window.history.replaceState(window.history.state, "", url)
+    }
+  }, [listStateRestored, pagination.page, debouncedSearch, statusFilter])
+
+  useEffect(() => {
+    if (!listStateRestored) return
+    void fetchVisitors()
+    return () => { fetchIdRef.current += 1 }
+  }, [listStateRestored, fetchVisitors])
+
+  useEffect(() => {
+    if (!listStateRestored || searchTerm === debouncedSearch) return
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchTerm)
+      setPagination((previous) => ({ ...previous, page: 1 }))
     }, 500)
-    return () => clearTimeout(t)
-  }, [searchTerm])
+    return () => clearTimeout(timer)
+  }, [listStateRestored, searchTerm, debouncedSearch])
 
   useEffect(() => {
     const handleClickOutside = () => { if (showActionsMenu) setShowActionsMenu(null) }
@@ -260,7 +338,10 @@ export default function VisitorManagement() {
         </div>
         <select
           value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
+          onChange={(e) => {
+            setStatusFilter(e.target.value)
+            setPagination((previous) => ({ ...previous, page: 1 }))
+          }}
           className="px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900/10"
         >
           <option value="all">All Status</option>

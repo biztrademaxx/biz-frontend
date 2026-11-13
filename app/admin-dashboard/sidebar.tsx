@@ -260,26 +260,35 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [sectionRestored, setSectionRestored] = useState(false)
 
-  // Restore the section before saving changes, preserving the stored value on mount.
+  // Explicit links take priority over the section saved in this tab.
   useEffect(() => {
-    try {
-      const raw = sessionStorage.getItem(RETURN_SECTION_KEY)
-      if (raw) {
-        const saved = JSON.parse(raw) as { section?: string; sub?: string }
-        if (saved.section) {
-          setActiveSection(saved.section)
-          setActiveSubSection(saved.sub || "")
-          setOpenMenus((prev) => {
-            const next = new Set(prev)
-            next.add(saved.section!)
-            return next
-          })
+    const restoreSection = () => {
+      const params = new URLSearchParams(window.location.search)
+      const requestedItem = sidebarItems.find((item) => item.id === params.get("section"))
+      let saved: { section?: string; sub?: string } = {}
+      if (requestedItem) {
+        const requestedSub = params.get("sub")
+        saved = {
+          section: requestedItem.id,
+          sub: requestedItem.subItems?.some((item) => item.id === requestedSub) ? requestedSub! : "",
+        }
+      } else {
+        try {
+          saved = JSON.parse(sessionStorage.getItem(RETURN_SECTION_KEY) || "{}") || {}
+        } catch {
+          /* ignore malformed/blocked storage */
         }
       }
-    } catch {
-      /* ignore malformed/blocked storage */
+      if (saved.section) {
+        setActiveSection(saved.section)
+        setActiveSubSection(saved.sub || "")
+        setOpenMenus((previous) => new Set([...previous, saved.section!]))
+      }
+      setSectionRestored(true)
     }
-    setSectionRestored(true)
+    restoreSection()
+    window.addEventListener("popstate", restoreSection)
+    return () => window.removeEventListener("popstate", restoreSection)
   }, [])
 
   useEffect(() => {
@@ -291,6 +300,17 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
       )
     } catch {
       /* ignore blocked/full storage */
+    }
+    const url = new URL(window.location.href)
+    if (url.searchParams.get("section") !== activeSection ||
+        (url.searchParams.get("sub") || "") !== activeSubSection) {
+      for (const key of ["page", "search", "status"]) url.searchParams.delete(key)
+    }
+    url.searchParams.set("section", activeSection)
+    if (activeSubSection) url.searchParams.set("sub", activeSubSection)
+    else url.searchParams.delete("sub")
+    if (url.href !== window.location.href) {
+      window.history.replaceState(window.history.state, "", url)
     }
   }, [activeSection, activeSubSection, sectionRestored])
 
@@ -1007,7 +1027,7 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
         </div>
 
         <main className={cn("min-h-0 flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-5 lg:p-8", adminPageBg)}>
-          <div className="min-h-0 w-full min-w-0 max-w-full">{renderContent()}</div>
+          <div className="min-h-0 w-full min-w-0 max-w-full">{sectionRestored ? renderContent() : null}</div>
         </main>
       </div>
     </div>
