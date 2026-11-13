@@ -267,25 +267,28 @@ export function useVenueManagement(initialTab: VenueTab = "all") {
     }
   }
 
-  const handleBulkApproveVenues = async (venueIds: string[]) => {
-    if (approvalInProgress.current) return
+  const handleBulkApproveVenues = async (venueIds: string[]): Promise<boolean> => {
+    if (approvalInProgress.current) return false
     const ids = [...new Set(venueIds.filter(Boolean))]
     if (ids.length === 0) {
       toast.error("Select at least one venue to approve")
-      return
+      return false
     }
     approvalInProgress.current = true
     setIsApproving(true)
     try {
       const result = await bulkApproveVenues(ids)
+      if (result.success === false) throw new Error("Approval failed")
       setSelectedIds(new Set())
       setBulkApprovalIds([])
       setIsApproveDialogOpen(false)
       await loadVenues()
       toast.success(`${result.approvedCount ?? ids.length} venue(s) approved`)
+      return true
     } catch (error) {
       console.error("Error bulk-approving venues:", error)
       toast.error("Failed to approve selected venues")
+      return false
     } finally {
       approvalInProgress.current = false
       setIsApproving(false)

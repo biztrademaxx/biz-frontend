@@ -1,7 +1,10 @@
 // app/admin/approvals/components/OrganizerApprovals.tsx
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
+import { ApprovalBulkActions } from "./ApprovalBulkActions"
+import { useApprovalSelection } from "../hooks/useApprovalSelection"
+import { collectApprovalPages } from "../lib/collect-approval-pages"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -110,7 +113,9 @@ export default function OrganizerApprovals() {
     const [debouncedSearch, setDebouncedSearch] = useState("")
     const [currentPage, setCurrentPage] = useState(1)
     const [totalPages, setTotalPages] = useState(1)
-    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+    const { selectedIds, setSelectedIds, selecting, selectAll } = useApprovalSelection(JSON.stringify([activeTab, debouncedSearch]))
+    const bulkApproveInProgress = useRef(false)
+    const fetchPageRequest = useRef(0)
     const [approveDialogOpen, setApproveDialogOpen] = useState(false)
     const [bulkApproveMode, setBulkApproveMode] = useState<"selected" | "all" | null>(null)
     const [bulkApproving, setBulkApproving] = useState(false)
@@ -118,12 +123,13 @@ export default function OrganizerApprovals() {
     const { toast } = useToast()
 
     useEffect(() => {
+        if (searchTerm === debouncedSearch) return
         const timer = setTimeout(() => {
             setDebouncedSearch(searchTerm)
             setCurrentPage(1)
         }, 500)
         return () => clearTimeout(timer)
-    }, [searchTerm])
+    }, [searchTerm, debouncedSearch])
 
     const buildOrganizersQuery = useCallback(
         (tab: "pending" | "active", page: number, search: string) => {
@@ -159,10 +165,12 @@ export default function OrganizerApprovals() {
     }, [])
 
     const fetchPage = useCallback(async () => {
+        const request = ++fetchPageRequest.current
         try {
             setLoading(true)
             const params = buildOrganizersQuery(activeTab, currentPage, debouncedSearch)
             const response = await adminApi<PaginatedResponse>(`/organizers?${params.toString()}`)
+            if (request !== fetchPageRequest.current) return
             const list = response?.data ?? []
             setOrganizers(Array.isArray(list) ? list : [])
             const total = Number(response?.pagination?.total ?? list.length)
@@ -170,20 +178,15 @@ export default function OrganizerApprovals() {
             setListTotal(Number.isFinite(total) ? total : 0)
             setTotalPages(pages)
             if (currentPage > pages) setCurrentPage(pages)
-            const valid = new Set((Array.isArray(list) ? list : []).map((o) => o.id))
-            setSelectedIds((prev) => {
-                const next = new Set([...prev].filter((id) => valid.has(id)))
-                if (next.size === prev.size) return prev
-                return next
-            })
         } catch (error) {
+            if (request !== fetchPageRequest.current) return
             console.error("Error fetching organizers:", error)
             setOrganizers([])
             setListTotal(0)
             setTotalPages(1)
             toast({ title: "Error", description: "Failed to load organizers", variant: "destructive" })
         } finally {
-            setLoading(false)
+            if (request === fetchPageRequest.current) setLoading(false)
         }
     }, [activeTab, buildOrganizersQuery, currentPage, debouncedSearch])
 
@@ -193,6 +196,7 @@ export default function OrganizerApprovals() {
 
     useEffect(() => {
         void fetchPage()
+        return () => { fetchPageRequest.current += 1 }
     }, [fetchPage])
 
     const refreshAllData = async () => {
@@ -212,6 +216,7 @@ export default function OrganizerApprovals() {
                 method: "PATCH",
                 body: { isVerified: true, isActive: true },
             })
+            setSelectedIds((previous) => new Set([...previous].filter((id) => id !== organizerId)))
             toast({ title: "Success", description: "Organizer approved successfully" })
             await fetchCounts()
             await fetchPage()
@@ -230,6 +235,7 @@ export default function OrganizerApprovals() {
                 method: "POST",
                 body: { reason: rejectReason },
             })
+            setSelectedIds((previous) => new Set([...previous].filter((id) => id !== selectedOrganizer.id)))
             toast({ title: "Success", description: "Organizer rejected successfully" })
             await fetchCounts()
             await fetchPage()
@@ -247,10 +253,8 @@ export default function OrganizerApprovals() {
     const activeCount = activeTotal
     const totalCount = totalOrganizers
     const searching = debouncedSearch.trim().length > 0
-    const approveAllCount = searching ? listTotal : pendingCount
+    const approveAllCount = listTotal
     const selectedCount = selectedIds.size
-    const allSelected = organizers.length > 0 && selectedCount === organizers.length
-    const someSelected = selectedCount > 0 && !allSelected
 
     const toggleOne = (id: string, checked: boolean) => {
         setSelectedIds((prev) => {
@@ -261,8 +265,21 @@ export default function OrganizerApprovals() {
         })
     }
 
-    const toggleAll = (checked: boolean) => {
-        setSelectedIds(checked ? new Set(organizers.map((o) => o.id)) : new Set())
+    const toggleAll = async (checked: boolean) => {
+        if (!checked) { setSelectedIds(new Set()); return }
+        try {
+            await selectAll(async () => {
+                const all = await collectApprovalPages<Organizer>(async (page) => {
+                    const params = buildOrganizersQuery("pending", page, debouncedSearch)
+                    params.set("limit", "100")
+                    const response = await adminApi<PaginatedResponse>("/organizers?" + params.toString())
+                    return { items: response.data, totalPages: response.pagination?.totalPages }
+                })
+                return all.map((item) => item.id)
+            })
+        } catch {
+            toast({ title: "Error", description: "Failed to select all pending organizers", variant: "destructive" })
+        }
     }
 
     const openBulkApprove = (mode: "selected" | "all") => {
@@ -273,17 +290,19 @@ export default function OrganizerApprovals() {
     }
 
     const handleBulkApprove = async () => {
-        if (!bulkApproveMode) return
+        if (!bulkApproveMode || bulkApproveInProgress.current || selecting) return
+        bulkApproveInProgress.current = true
         setBulkApproving(true)
         try {
             const body =
                 bulkApproveMode === "all"
                     ? { allPending: true, search: debouncedSearch.trim() || undefined }
                     : { ids: [...selectedIds] }
-            const result = await adminApi<{ success?: boolean; approvedCount?: number }>("/organizers/bulk-approve", {
+            const result = await adminApi<{ success?: boolean; approvedCount?: number; error?: string }>("/organizers/bulk-approve", {
                 method: "POST",
                 body,
             })
+            if (result.success === false) throw new Error(result.error || "Approval failed")
             const count = result.approvedCount ?? (bulkApproveMode === "all" ? approveAllCount : selectedCount)
             toast({ title: "Success", description: `${count} organizer(s) approved` })
             setSelectedIds(new Set())
@@ -294,6 +313,7 @@ export default function OrganizerApprovals() {
         } catch (error) {
             toast({ title: "Error", description: "Failed to approve organizers", variant: "destructive" })
         } finally {
+            bulkApproveInProgress.current = false
             setBulkApproving(false)
         }
     }
@@ -328,7 +348,7 @@ export default function OrganizerApprovals() {
                     variant="outline"
                     size="sm"
                     onClick={refreshAllData}
-                    disabled={refreshing}
+                    disabled={refreshing || bulkApproving || selecting}
                     className="gap-2"
                 >
                     <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
@@ -382,6 +402,7 @@ export default function OrganizerApprovals() {
                     <Input
                         placeholder="Search by name, email, or organization..."
                         value={searchTerm}
+                        disabled={bulkApproving || selecting}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="pl-10"
                     />
@@ -400,7 +421,7 @@ export default function OrganizerApprovals() {
                 }}
             >
                 <TabsList className="grid w-full max-w-md grid-cols-2">
-                    <TabsTrigger value="pending" className="flex items-center gap-2">
+                    <TabsTrigger value="pending" disabled={bulkApproving || selecting} className="flex items-center gap-2">
                         <Clock className="h-4 w-4" />
                         Pending Review
                         {pendingCount > 0 && (
@@ -409,7 +430,7 @@ export default function OrganizerApprovals() {
                             </Badge>
                         )}
                     </TabsTrigger>
-                    <TabsTrigger value="active" className="flex items-center gap-2">
+                    <TabsTrigger value="active" disabled={bulkApproving || selecting} className="flex items-center gap-2">
                         <UserCheck className="h-4 w-4" />
                         Active Organizers
                         {activeCount > 0 && (
@@ -436,42 +457,17 @@ export default function OrganizerApprovals() {
                         </div>
                     ) : (
                         <>
-                            <div className="flex flex-col gap-3 rounded-lg border bg-white p-4 sm:flex-row sm:items-center sm:justify-between mb-3">
-                                <label className="flex cursor-pointer items-center gap-2 text-sm font-medium">
-                                    <Checkbox
-                                        checked={allSelected ? true : someSelected ? "indeterminate" : false}
-                                        onCheckedChange={(value) => toggleAll(value === true)}
-                                        aria-label="Select all organizers on this page"
-                                    />
-                                    Select all ({organizers.length})
-                                    {selectedCount > 0 && (
-                                        <span className="text-muted-foreground font-normal">
-                                            · {selectedCount} selected
-                                        </span>
-                                    )}
-                                </label>
-                                <div className="flex flex-wrap items-center gap-2">
-                                    <Button
-                                        size="sm"
-                                        variant="outline"
-                                        disabled={selectedCount === 0 || bulkApproving}
-                                        onClick={() => openBulkApprove("selected")}
-                                    >
-                                        Approve selected{selectedCount > 0 ? ` (${selectedCount})` : ""}
-                                    </Button>
-                                    <Button
-                                        size="sm"
-                                        className="bg-green-600 hover:bg-green-700"
-                                        disabled={approveAllCount === 0 || bulkApproving}
-                                        onClick={() => openBulkApprove("all")}
-                                    >
-                                        <CheckCheck className="mr-1.5 h-4 w-4" />
-                                        {searching
-                                            ? `Approve all matching (${approveAllCount})`
-                                            : `Approve all organizers (${approveAllCount})`}
-                                    </Button>
-                                </div>
-                            </div>
+                            <ApprovalBulkActions
+                                entity="organizers"
+                                totalCount={approveAllCount}
+                                selectedCount={selectedCount}
+                                onSelectAll={(checked) => void toggleAll(checked)}
+                                onApproveSelected={() => openBulkApprove("selected")}
+                                onApproveAll={() => openBulkApprove("all")}
+                                disabled={loading || processingId !== null || searchTerm !== debouncedSearch}
+                                selecting={selecting}
+                                approving={bulkApproving}
+                            />
                             <div className="space-y-3">
                                 {organizers.map((organizer) => (
                                     <OrganizerCard
@@ -481,7 +477,7 @@ export default function OrganizerApprovals() {
                                         organization={getOrganization(organizer)}
                                         initials={getInitials(getOrganizerName(organizer))}
                                         isPending={true}
-                                        isProcessing={processingId === organizer.id}
+                                        isProcessing={processingId === organizer.id || bulkApproving || selecting}
                                         selected={selectedIds.has(organizer.id)}
                                         onSelectedChange={(checked) => toggleOne(organizer.id, checked)}
                                         onView={() => {
@@ -508,7 +504,7 @@ export default function OrganizerApprovals() {
                                             variant="outline"
                                             size="sm"
                                             onClick={() => handlePageChange(currentPage - 1)}
-                                            disabled={currentPage === 1}
+                                            disabled={currentPage === 1 || bulkApproving || selecting}
                                         >
                                             <ChevronLeft className="h-4 w-4 mr-1" />
                                             Previous
@@ -520,7 +516,7 @@ export default function OrganizerApprovals() {
                                             variant="outline"
                                             size="sm"
                                             onClick={() => handlePageChange(currentPage + 1)}
-                                            disabled={currentPage === totalPages}
+                                            disabled={currentPage === totalPages || bulkApproving || selecting}
                                         >
                                             Next
                                             <ChevronRight className="h-4 w-4 ml-1" />
@@ -832,6 +828,7 @@ function OrganizerCard({
                             <Checkbox
                                 className="mt-4"
                                 checked={selected}
+                                disabled={isProcessing}
                                 onCheckedChange={(value) => onSelectedChange(value === true)}
                                 aria-label={`Select ${name}`}
                             />

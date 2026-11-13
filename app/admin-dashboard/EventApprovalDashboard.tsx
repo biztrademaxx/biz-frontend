@@ -1,6 +1,10 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
+import { Checkbox } from "@/components/ui/checkbox"
+import { ApprovalBulkActions } from "./approvals/components/ApprovalBulkActions"
+import { useApprovalSelection } from "./approvals/hooks/useApprovalSelection"
+import { collectApprovalPages } from "./approvals/lib/collect-approval-pages"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -108,7 +112,11 @@ export default function EventApprovalDashboard() {
   const [rejectReason, setRejectReason] = useState("")
   const [approving, setApproving] = useState<string | null>(null)
   const [rejecting, setRejecting] = useState<string | null>(null)
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [bulkApproveIds, setBulkApproveIds] = useState<string[]>([])
+  const [bulkApproving, setBulkApproving] = useState(false)
+  const [bulkRejecting, setBulkRejecting] = useState(false)
+  const bulkActionInProgress = useRef(false)
+  const fetchIdRef = useRef(0)
   const [stats, setStats] = useState({
     pending: 0,
     approved: 0,
@@ -116,6 +124,7 @@ export default function EventApprovalDashboard() {
     avgReviewTime: "2.4h",
   })
   const [activeTab, setActiveTab] = useState<TabType>("pending")
+  const { selectedIds, setSelectedIds, selecting, selectAll } = useApprovalSelection(JSON.stringify([activeTab, search]))
   const { toast } = useToast()
   const [isViewPanelOpen, setIsViewPanelOpen] = useState(false)
 
@@ -124,15 +133,12 @@ export default function EventApprovalDashboard() {
   }, [])
 
   useEffect(() => {
-    setPage(1)
-    fetchEvents()
-  }, [activeTab, search])
-
-  useEffect(() => {
-    fetchEvents()
-  }, [page])
+    void fetchEvents()
+    return () => { fetchIdRef.current += 1 }
+  }, [activeTab, search, page])
 
   const fetchEvents = async () => {
+    const fetchId = ++fetchIdRef.current
     try {
       setLoading(true)
       const statusMap = {
@@ -155,12 +161,15 @@ export default function EventApprovalDashboard() {
         error?: string
       }>(`/api/admin/events?${params.toString()}`, { auth: true })
 
+      if (fetchId !== fetchIdRef.current) return
       const eventsList = data.events ?? (data as any).data?.events
       const total = data.pagination?.total ?? (data as any).data?.total ?? 0
 
       if (data.success !== false) {
         setEvents(Array.isArray(eventsList) ? eventsList : [])
-        setTotalPages(data.pagination?.totalPages ?? 1)
+        const pages = Math.max(1, data.pagination?.totalPages ?? 1)
+        setTotalPages(pages)
+        if (page > pages) setPage(pages)
         setTotalItems(total)
       } else {
         toast({
@@ -170,9 +179,10 @@ export default function EventApprovalDashboard() {
         })
       }
     } catch (error) {
+      if (fetchId !== fetchIdRef.current) return
       toast({ title: "Error", description: "Failed to fetch events", variant: "destructive" })
     } finally {
-      setLoading(false)
+      if (fetchId === fetchIdRef.current) setLoading(false)
     }
   }
 
@@ -200,30 +210,66 @@ export default function EventApprovalDashboard() {
     setIsViewPanelOpen(true)
   }
 
-  const handleBulkApprove = async () => {
-    const ids = Array.from(selectedIds)
-    if (ids.length === 0) return
+  const selectAllPending = async (openApproval = false) => {
     try {
-      const data = await apiFetch<{ success?: boolean; error?: string }>(
-        "/api/admin/events/bulk-approve",
-        { method: "POST", body: { eventIds: ids }, auth: true },
-      )
-      if (data.success !== false) {
-        toast({ title: "Success", description: `${ids.length} events approved successfully` })
-        setSelectedIds(new Set())
-        fetchEvents()
-        fetchStats()
-      } else {
-        toast({ title: "Error", description: data.error || "Failed to approve events", variant: "destructive" })
-      }
+      const ids = await selectAll(async () => {
+        const all = await collectApprovalPages<{ id: string }>(async (nextPage) => {
+          const params = new URLSearchParams({
+            status: "PENDING_APPROVAL", page: String(nextPage), limit: "100", search,
+          })
+          const response = await apiFetch<{
+            success?: boolean; error?: string; events?: Event[];
+            data?: { events?: Event[] }; pagination?: { totalPages: number };
+          }>("/api/admin/events?" + params.toString(), { auth: true })
+          if (response.success === false) throw new Error(response.error || "Failed to load events")
+          return { items: response.events ?? response.data?.events ?? [], totalPages: response.pagination?.totalPages }
+        })
+        return all.map((event) => event.id)
+      })
+      if (openApproval && ids.length > 0) setBulkApproveIds(ids)
     } catch {
-      toast({ title: "Error", description: "Failed to approve events", variant: "destructive" })
+      toast({ title: "Error", description: "Failed to select all pending events", variant: "destructive" })
+    }
+  }
+
+  const handleBulkApprove = async () => {
+    const ids = [...bulkApproveIds]
+    if (ids.length === 0 || bulkActionInProgress.current) return
+    bulkActionInProgress.current = true
+    setBulkApproving(true)
+    try {
+      const data = await apiFetch<{
+        success?: boolean; error?: string; approved?: number;
+        results?: Array<{ eventId: string; ok: boolean }>;
+      }>("/api/admin/events/bulk-approve", {
+        method: "POST", body: { eventIds: ids }, auth: true,
+      })
+      if (data.success === false) throw new Error(data.error || "Failed to approve events")
+      const failed = data.results?.filter((result) => !result.ok).map((result) => result.eventId) ?? []
+      const failedIds = new Set(failed)
+      const succeeded = new Set(ids.filter((id) => !failedIds.has(id)))
+      setSelectedIds((previous) => new Set([...previous].filter((id) => !succeeded.has(id))))
+      setBulkApproveIds(failed)
+      const count = data.approved ?? succeeded.size
+      toast({
+        title: failed.length ? "Some events could not be approved" : "Success",
+        description: count + " events approved" + (failed.length ? "; " + failed.length + " remain selected for retry." : " successfully"),
+        ...(failed.length ? { variant: "destructive" as const } : {}),
+      })
+      await Promise.all([fetchEvents(), fetchStats()])
+    } catch {
+      toast({ title: "Error", description: "Failed to approve events. Your selection has been kept.", variant: "destructive" })
+    } finally {
+      bulkActionInProgress.current = false
+      setBulkApproving(false)
     }
   }
 
   const handleBulkReject = async () => {
     const ids = Array.from(selectedIds)
-    if (ids.length === 0) return
+    if (ids.length === 0 || bulkActionInProgress.current || selecting) return
+    bulkActionInProgress.current = true
+    setBulkRejecting(true)
     try {
       const data = await apiFetch<{ success?: boolean; error?: string }>(
         "/api/admin/events/bulk-reject",
@@ -239,6 +285,9 @@ export default function EventApprovalDashboard() {
       }
     } catch {
       toast({ title: "Error", description: "Failed to reject events", variant: "destructive" })
+    } finally {
+      bulkActionInProgress.current = false
+      setBulkRejecting(false)
     }
   }
 
@@ -331,11 +380,15 @@ export default function EventApprovalDashboard() {
   }
 
   const toggleSelectAll = () => {
-    if (selectedIds.size === events.length) {
-      setSelectedIds(new Set())
-    } else {
-      setSelectedIds(new Set(events.map((e) => e.id)))
-    }
+    const allOnPageSelected = events.length > 0 && events.every((event) => selectedIds.has(event.id))
+    setSelectedIds((previous) => {
+      const next = new Set(previous)
+      for (const event of events) {
+        if (allOnPageSelected) next.delete(event.id)
+        else next.add(event.id)
+      }
+      return next
+    })
   }
 
   const formatDateRange = (startDate: string, endDate: string) => {
@@ -455,14 +508,8 @@ export default function EventApprovalDashboard() {
               <div className="flex gap-2">
                 <button
                   type="button"
-                  onClick={handleBulkApprove}
-                  className="rounded-lg bg-emerald-700 px-4 py-1.5 text-[13px] text-white hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500"
-                >
-                  Approve Selected ({selectedIds.size})
-                </button>
-                <button
-                  type="button"
                   onClick={handleBulkReject}
+                  disabled={bulkApproving || bulkRejecting || selecting || loading}
                   className="rounded-lg border border-red-200 bg-card px-4 py-1.5 text-[13px] text-red-700 hover:bg-red-50 dark:border-red-500/40 dark:text-red-300 dark:hover:bg-red-500/10"
                 >
                   Reject Selected ({selectedIds.size})
@@ -476,6 +523,7 @@ export default function EventApprovalDashboard() {
               <button
                 key={tab}
                 type="button"
+                disabled={bulkApproving || bulkRejecting || selecting}
                 onClick={() => {
                   setActiveTab(tab)
                   setSelectedIds(new Set())
@@ -494,17 +542,37 @@ export default function EventApprovalDashboard() {
           </div>
         </div>
 
+        {activeTab === "pending" && (
+          <div className="px-5 pt-4">
+            <ApprovalBulkActions
+              entity="events"
+              totalCount={totalItems}
+              selectedCount={selectedIds.size}
+              onSelectAll={(checked) => {
+                if (checked) void selectAllPending()
+                else setSelectedIds(new Set())
+              }}
+              onApproveSelected={() => setBulkApproveIds([...selectedIds])}
+              onApproveAll={() => void selectAllPending(true)}
+              disabled={loading || approving !== null || rejecting !== null || bulkRejecting}
+              selecting={selecting}
+              approving={bulkApproving}
+            />
+          </div>
+        )}
+
         <div className="overflow-x-auto">
           <table className="w-full border-collapse">
             <thead>
               <tr className="border-b border-border">
                 <th className="w-10 py-3 pl-5 text-left">
                   {activeTab === "pending" && events.length > 0 && (
-                    <input
-                      type="checkbox"
-                      checked={selectedIds.size === events.length && events.length > 0}
-                      onChange={toggleSelectAll}
-                      className="h-[15px] w-[15px] cursor-pointer accent-emerald-600 dark:accent-[#17F0F6]"
+                    <Checkbox
+                      aria-label="Select all events on this page"
+                      checked={events.every((event) => selectedIds.has(event.id)) ? true :
+                        events.some((event) => selectedIds.has(event.id)) ? "indeterminate" : false}
+                      onCheckedChange={toggleSelectAll}
+                      disabled={loading || bulkApproving || bulkRejecting || selecting}
                     />
                   )}
                 </th>
@@ -541,6 +609,8 @@ export default function EventApprovalDashboard() {
                           <input
                             type="checkbox"
                             checked={selectedIds.has(event.id)}
+                            aria-label={"Select " + event.title}
+                            disabled={loading || bulkApproving || bulkRejecting || selecting}
                             onChange={() => toggleSelect(event.id)}
                             className="h-[15px] w-[15px] cursor-pointer accent-emerald-600 dark:accent-[#17F0F6]"
                           />
@@ -588,7 +658,7 @@ export default function EventApprovalDashboard() {
                               <button
                                 type="button"
                                 onClick={() => handleApprove(event.id)}
-                                disabled={approving === event.id}
+                                disabled={approving === event.id || bulkApproving || bulkRejecting || selecting}
                                 className={approveBtn}
                               >
                                 {approving === event.id ? (
@@ -601,7 +671,7 @@ export default function EventApprovalDashboard() {
                               <button type="button" onClick={() => handleViewEvent(event.id)} className={ghostBtn}>
                                 Review
                               </button>
-                              <button type="button" onClick={() => openRejectDialog(event)} className={rejectBtn}>
+                              <button type="button" disabled={bulkApproving || bulkRejecting || selecting} onClick={() => openRejectDialog(event)} className={rejectBtn}>
                                 <X size={12} />
                                 Reject
                               </button>
@@ -653,7 +723,7 @@ export default function EventApprovalDashboard() {
             <button
               type="button"
               onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page === 1}
+              disabled={page === 1 || loading || bulkApproving || bulkRejecting || selecting}
               className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-card text-muted-foreground disabled:cursor-not-allowed disabled:opacity-40"
             >
               <ChevronLeft size={14} />
@@ -663,6 +733,9 @@ export default function EventApprovalDashboard() {
                 key={p}
                 type="button"
                 onClick={() => setPage(p)}
+                aria-label={"Go to page " + p}
+                aria-current={page === p ? "page" : undefined}
+                disabled={loading || bulkApproving || bulkRejecting || selecting}
                 className={cn(
                   "flex h-8 w-8 items-center justify-center rounded-lg text-[13px]",
                   page === p
@@ -676,7 +749,7 @@ export default function EventApprovalDashboard() {
             <button
               type="button"
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={page === totalPages}
+              disabled={page === totalPages || loading || bulkApproving || bulkRejecting || selecting}
               className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-card text-muted-foreground disabled:cursor-not-allowed disabled:opacity-40"
             >
               <ChevronRight size={14} />
@@ -697,6 +770,29 @@ export default function EventApprovalDashboard() {
           fetchStats()
         }}
       />
+
+      <AlertDialog
+        open={bulkApproveIds.length > 0}
+        onOpenChange={(open) => { if (!open && !bulkApproving) setBulkApproveIds([]) }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{"Approve " + bulkApproveIds.length + " events"}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {"Approve " + bulkApproveIds.length + " selected pending events? They will be published and visible to visitors."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={bulkApproving}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={bulkApproving}
+              onClick={(event) => { event.preventDefault(); void handleBulkApprove() }}
+            >
+              {bulkApproving ? "Approving..." : "Approve " + bulkApproveIds.length + " events"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
         <AlertDialogContent>

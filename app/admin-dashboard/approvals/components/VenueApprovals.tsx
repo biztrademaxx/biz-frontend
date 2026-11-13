@@ -1,12 +1,13 @@
 // app/admin/approvals/components/VenueApprovals.tsx
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useState, useRef } from "react"
+import { ApprovalBulkActions } from "./ApprovalBulkActions"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
-import { CheckCheck, Clock, RefreshCw, Users } from "lucide-react"
+import { Clock, RefreshCw, Users } from "lucide-react"
 import {
     ApproveVenueDialog,
     RejectVenueDialog,
@@ -20,6 +21,7 @@ export default function VenueApprovals() {
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
     const [bulkIds, setBulkIds] = useState<string[]>([])
     const [bulkApproving, setBulkApproving] = useState(false)
+    const confirmationInProgress = useRef(false)
 
     const pendingList = vm.filteredPendingVenues || vm.pendingVenues || []
 
@@ -46,13 +48,18 @@ export default function VenueApprovals() {
     }
 
     const handleConfirmApprove = async () => {
+        if (confirmationInProgress.current || vm.isApproving) return
         if (bulkIds.length > 0) {
+            confirmationInProgress.current = true
             setBulkApproving(true)
             try {
-                await vm.handleBulkApproveVenues(bulkIds)
-                setSelectedIds(new Set())
-                setBulkIds([])
+                const approved = await vm.handleBulkApproveVenues(bulkIds)
+                if (approved) {
+                    setSelectedIds(new Set())
+                    setBulkIds([])
+                }
             } finally {
+                confirmationInProgress.current = false
                 setBulkApproving(false)
             }
             return
@@ -74,11 +81,14 @@ export default function VenueApprovals() {
         <div className="space-y-6">
             <Tabs
                 value={vm.activeTab}
-                onValueChange={(value) => vm.setActiveTab(value as VenueTab)}
+                onValueChange={(value) => {
+                    vm.setActiveTab(value as VenueTab)
+                    setSelectedIds(new Set())
+                }}
                 className="w-full"
             >
                 <TabsList className="mb-6 grid h-auto w-full max-w-md grid-cols-2 gap-1 rounded-lg bg-muted/60 p-1">
-                    <TabsTrigger value="pending" className="flex items-center gap-2">
+                    <TabsTrigger value="pending" disabled={bulkApproving || vm.isApproving} className="flex items-center gap-2">
                         <Clock className="h-4 w-4" />
                         Pending
                         {vm.stats.pendingVenuesCount > 0 && (
@@ -87,7 +97,7 @@ export default function VenueApprovals() {
                             </Badge>
                         )}
                     </TabsTrigger>
-                    <TabsTrigger value="active" className="flex items-center gap-2">
+                    <TabsTrigger value="active" disabled={bulkApproving || vm.isApproving} className="flex items-center gap-2">
                         <Users className="h-4 w-4" />
                         Active
                         <Badge variant="secondary" className="ml-1 bg-green-100 text-green-800">
@@ -106,6 +116,7 @@ export default function VenueApprovals() {
                         onApproveAll={() => openBulkApprove(pendingList.map((v) => v.id))}
                         onApproveSelected={() => openBulkApprove([...selectedIds])}
                         onApproveOne={openSingleApprove}
+                        busy={bulkApproving || vm.isApproving}
                     />
                 </TabsContent>
 
@@ -128,13 +139,13 @@ export default function VenueApprovals() {
             <ApproveVenueDialog
                 isOpen={vm.isApproveDialogOpen}
                 onClose={() => {
-                    if (bulkApproving) return
+                    if (bulkApproving || vm.isApproving) return
                     vm.setIsApproveDialogOpen(false)
                     setBulkIds([])
                 }}
                 onConfirm={() => void handleConfirmApprove()}
                 count={bulkIds.length || 1}
-                confirming={bulkApproving}
+                confirming={bulkApproving || vm.isApproving}
             />
 
             <RejectVenueDialog
@@ -156,6 +167,7 @@ function VenueList({
     onApproveAll,
     onApproveSelected,
     onApproveOne,
+    busy = false,
 }: {
     venues: Venue[]
     vm: ReturnType<typeof useVenueManagement>
@@ -165,11 +177,10 @@ function VenueList({
     onApproveAll?: () => void
     onApproveSelected?: () => void
     onApproveOne?: (venue: Venue) => void
+    busy?: boolean
 }) {
     const allIds = useMemo(() => venues.map((v) => v.id), [venues])
     const selectedCount = selectedIds?.size ?? 0
-    const allSelected = type === "pending" && venues.length > 0 && selectedCount === venues.length
-    const someSelected = selectedCount > 0 && !allSelected
 
     const toggleOne = (id: string, checked: boolean) => {
         if (!selectedIds || !onSelectedIdsChange) return
@@ -209,39 +220,15 @@ function VenueList({
     return (
         <div className="space-y-4">
             {type === "pending" && (
-                <div className="flex flex-col gap-3 rounded-lg border bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
-                    <label className="flex cursor-pointer items-center gap-2 text-sm font-medium">
-                        <Checkbox
-                            checked={allSelected ? true : someSelected ? "indeterminate" : false}
-                            onCheckedChange={(value) => toggleAll(value === true)}
-                            aria-label="Select all pending venues"
-                        />
-                        Select all ({venues.length})
-                        {selectedCount > 0 && (
-                            <span className="text-muted-foreground font-normal">
-                                · {selectedCount} selected
-                            </span>
-                        )}
-                    </label>
-                    <div className="flex flex-wrap items-center gap-2">
-                        <Button
-                            size="sm"
-                            variant="outline"
-                            disabled={selectedCount === 0}
-                            onClick={onApproveSelected}
-                        >
-                            Approve selected{selectedCount > 0 ? ` (${selectedCount})` : ""}
-                        </Button>
-                        <Button
-                            size="sm"
-                            className="bg-green-600 hover:bg-green-700"
-                            onClick={onApproveAll}
-                        >
-                            <CheckCheck className="mr-1.5 h-4 w-4" />
-                            Approve all venues
-                        </Button>
-                    </div>
-                </div>
+                <ApprovalBulkActions
+                    entity="venues"
+                    totalCount={venues.length}
+                    selectedCount={selectedCount}
+                    onSelectAll={toggleAll}
+                    onApproveSelected={() => onApproveSelected?.()}
+                    onApproveAll={() => onApproveAll?.()}
+                    approving={busy}
+                />
             )}
 
             {venues.map((venue) => (
@@ -252,6 +239,7 @@ function VenueList({
                                 <Checkbox
                                     className="mt-1"
                                     checked={selectedIds?.has(venue.id) ?? false}
+                                    disabled={busy}
                                     onCheckedChange={(value) => toggleOne(venue.id, value === true)}
                                     aria-label={`Select ${venue.venueName || "venue"}`}
                                 />
@@ -282,6 +270,7 @@ function VenueList({
                                 <Button
                                     size="sm"
                                     className="bg-green-600 hover:bg-green-700"
+                                    disabled={busy}
                                     onClick={() => onApproveOne?.(venue)}
                                 >
                                     Approve
@@ -289,6 +278,7 @@ function VenueList({
                                 <Button
                                     size="sm"
                                     variant="destructive"
+                                    disabled={busy}
                                     onClick={() => {
                                         vm.setSelectedVenue(venue)
                                         vm.setIsRejectDialogOpen(true)
