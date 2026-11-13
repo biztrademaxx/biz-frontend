@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
+import { readAdminListUrl, writeAdminListUrl, parseAdminListPage, listenForAdminListNavigation } from "@/lib/admin-list-url"
 import { useRouter } from "next/navigation"
 import { apiFetch } from "@/lib/api"
 import { getPublicProfilePath } from "@/lib/profile-path"
@@ -46,9 +47,7 @@ import { AdminTableAvatar } from "@/components/admin-dashboard/admin-table-avata
 
 const PAGE_SIZE = 15
 
-// Keys used to persist "where the admin was" across the trip to the
-// public exhibitor profile page and back, since the admin dashboard is a
-// single-page app (no per-section URLs) and can't rely on query params.
+// Keep list state when returning from public exhibitor profiles or opening without a page link.
 const EXHIBITORS_RETURN_SECTION_KEY = "admin:returnSection"
 const EXHIBITORS_LIST_STATE_KEY = "admin:exhibitors:listState"
 
@@ -180,33 +179,42 @@ export default function ExhibitorManagement({ initialTab = "all" }: { initialTab
   // Gates the debounced fetch effect until we've had a chance to restore
   // saved list state from sessionStorage, so it doesn't fetch page 1 first.
   const [hydratedFromUrl, setHydratedFromUrl] = useState(false)
+  const fetchIdRef = useRef(0)
 
-  // Restore list state (page/search/status/industry) from sessionStorage on
-  // mount. This is set right before navigating to a profile page, so coming
-  // back lands on the exact same page/search/filter instead of resetting.
+  // Restore before fetching and retain state across refreshes and profile visits.
   useEffect(() => {
-    try {
-      const raw = sessionStorage.getItem(EXHIBITORS_LIST_STATE_KEY)
-      if (raw) {
-        const saved = JSON.parse(raw) as {
-          page?: number
-          search?: string
-          status?: string
-          industry?: string
-          tab?: string
-        }
-        if (saved.page) setCurrentPage(saved.page)
-        if (saved.search) setSearchTerm(saved.search)
-        if (saved.status) setStatusFilter(saved.status)
-        if (saved.industry) setIndustryFilter(saved.industry)
-        if (saved.tab) setActiveTab(saved.tab as "all" | "bulk-import")
-        sessionStorage.removeItem(EXHIBITORS_LIST_STATE_KEY)
+    const restore = () => {
+      let saved = { page: 1, search: "", status: "all", industry: "all", tab: initialTab as string }
+      try {
+        saved = { ...saved, ...JSON.parse(sessionStorage.getItem(EXHIBITORS_LIST_STATE_KEY) || "{}") }
+      } catch {
+        /* ignore malformed/blocked storage */
       }
-    } catch {
-      /* ignore malformed/blocked storage */
+      const state = (initialTab === "all" ? readAdminListUrl("exhibitors") : null) ?? saved
+      setCurrentPage(parseAdminListPage(state.page))
+      setSearchTerm(typeof state.search === "string" ? state.search : "")
+      setStatusFilter(typeof state.status === "string" && ["all", "active", "suspended"].includes(state.status) ? state.status : "all")
+      setIndustryFilter(typeof state.industry === "string" && state.industry ? state.industry : "all")
+      setActiveTab(initialTab === "bulk-import" || state.tab === "bulk-import" ? "bulk-import" : "all")
+      setHydratedFromUrl(true)
     }
-    setHydratedFromUrl(true)
-  }, [])
+    restore()
+    if (initialTab === "all") return listenForAdminListNavigation("exhibitors", restore)
+  }, [initialTab])
+
+  useEffect(() => {
+    if (!hydratedFromUrl) return
+    try {
+      sessionStorage.setItem(EXHIBITORS_LIST_STATE_KEY, JSON.stringify({
+        page: currentPage, search: searchTerm, status: statusFilter, industry: industryFilter, tab: activeTab,
+      }))
+    } catch {
+      /* ignore blocked/full storage */
+    }
+    if (initialTab === "all") writeAdminListUrl("exhibitors", {
+      page: currentPage, search: searchTerm, status: statusFilter, industry: industryFilter, tab: activeTab,
+    })
+  }, [currentPage, searchTerm, statusFilter, industryFilter, activeTab, hydratedFromUrl, initialTab])
 
   useEffect(() => {
     void fetchStats()
@@ -217,7 +225,7 @@ export default function ExhibitorManagement({ initialTab = "all" }: { initialTab
     const timer = setTimeout(() => {
       void fetchExhibitors(currentPage, searchTerm, statusFilter, industryFilter)
     }, 250)
-    return () => clearTimeout(timer)
+    return () => { clearTimeout(timer); fetchIdRef.current += 1 }
   }, [currentPage, searchTerm, statusFilter, industryFilter, hydratedFromUrl])
 
   const fetchExhibitors = async (
@@ -226,6 +234,7 @@ export default function ExhibitorManagement({ initialTab = "all" }: { initialTab
     statusArg?: string,
     industryArg?: string,
   ) => {
+    const fetchId = ++fetchIdRef.current
     try {
       setLoading(true)
       setError(null)
@@ -247,6 +256,7 @@ export default function ExhibitorManagement({ initialTab = "all" }: { initialTab
         data?: Array<Record<string, unknown>>
         pagination?: { page?: number; limit?: number; total?: number; totalPages?: number }
       }>(path, { auth: true })
+      if (fetchId !== fetchIdRef.current) return
       const raw = Array.isArray(res?.data) ? res.data : []
       const safeExhibitors: Exhibitor[] = raw.map((u: Record<string, unknown>) => {
         const companyName = (u.company as string) ?? "Unnamed Company"
@@ -285,11 +295,12 @@ export default function ExhibitorManagement({ initialTab = "all" }: { initialTab
       setTotalPages(incomingPages)
       if (page > incomingPages) setCurrentPage(incomingPages)
     } catch (err) {
+      if (fetchId !== fetchIdRef.current) return
       console.error("Error fetching exhibitors:", err)
       setError("Failed to load exhibitors")
       setExhibitors([])
     } finally {
-      setLoading(false)
+      if (fetchId === fetchIdRef.current) setLoading(false)
     }
   }
 

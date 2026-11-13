@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
+import { readAdminListUrl, writeAdminListUrl, parseAdminListPage, listenForAdminListNavigation } from "@/lib/admin-list-url"
 import { useRouter } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -207,6 +208,7 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
   // Gates the debounced fetch effect until we've had a chance to restore
   // saved list state from sessionStorage, so it doesn't fetch page 1 first.
   const [listStateRestored, setListStateRestored] = useState(false)
+  const fetchIdRef = useRef(0)
 
   const fetchOrganizerStats = async () => {
     try {
@@ -239,29 +241,24 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
     }
   };
 
-  // Restore the saved list before fetching so refresh does not request page 1.
+  // Restore before fetching; explicit page links override this tab's saved list.
   useEffect(() => {
-    try {
-      const raw = sessionStorage.getItem(ORGANIZERS_LIST_STATE_KEY)
-      if (raw) {
-        const saved = JSON.parse(raw) as {
-          page?: number
-          search?: string
-          country?: string
-          tab?: "all" | "bulk-import"
-        }
-        if (typeof saved?.page === "number" && Number.isSafeInteger(saved.page) && saved.page > 0) {
-          setCurrentPage(saved.page)
-        }
-        if (typeof saved?.search === "string") setSearchTerm(saved.search)
-        if (typeof saved?.country === "string" && saved.country) setSelectedCountry(saved.country)
-        if (saved?.tab === "all" || saved?.tab === "bulk-import") setActiveTab(saved.tab)
+    const restore = () => {
+      let saved = { page: 1, search: "", country: "all" }
+      try {
+        saved = { ...saved, ...JSON.parse(sessionStorage.getItem(ORGANIZERS_LIST_STATE_KEY) || "{}") }
+      } catch {
+        /* ignore malformed/blocked storage */
       }
-    } catch {
-      /* ignore malformed/blocked storage */
+      const state = (initialTab === "all" ? readAdminListUrl("organizers") : null) ?? saved
+      setCurrentPage(parseAdminListPage(state.page))
+      setSearchTerm(typeof state.search === "string" ? state.search : "")
+      setSelectedCountry(typeof state.country === "string" && state.country ? state.country : "all")
+      setListStateRestored(true)
     }
-    setListStateRestored(true)
-  }, [])
+    restore()
+    if (initialTab === "all") return listenForAdminListNavigation("organizers", restore)
+  }, [initialTab])
 
   useEffect(() => {
     if (!listStateRestored) return
@@ -278,7 +275,10 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
     } catch {
       /* ignore blocked/full storage */
     }
-  }, [currentPage, searchTerm, selectedCountry, activeTab, listStateRestored])
+    if (initialTab === "all") writeAdminListUrl("organizers", {
+      page: currentPage, search: searchTerm, country: selectedCountry,
+    })
+  }, [currentPage, searchTerm, selectedCountry, activeTab, listStateRestored, initialTab])
 
   useEffect(() => {
     const loadCountries = async () => {
@@ -298,7 +298,7 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
       fetchOrganizers(currentPage, searchTerm, selectedCountry)
     }, 250)
 
-    return () => clearTimeout(timer)
+    return () => { clearTimeout(timer); fetchIdRef.current += 1 }
   }, [currentPage, searchTerm, selectedCountry, listStateRestored])
 
   useEffect(() => {
@@ -310,6 +310,7 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
   }, [initialTab])
 
   const fetchOrganizers = async (pageArg?: number, searchArg?: string, countryArg?: string) => {
+    const fetchId = ++fetchIdRef.current
     try {
       const page = typeof pageArg === "number" ? pageArg : currentPage
       setLoading(true)
@@ -333,6 +334,7 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
         pagination?: { page?: number; limit?: number; total?: number; totalPages?: number }
         stats?: { total?: number; verified?: number; premium?: number; pending?: number }
       }>(`/organizers?${query.toString()}`)
+      if (fetchId !== fetchIdRef.current) return
       const list = data?.data ?? (data as any)?.organizers ?? []
       setOrganizers(Array.isArray(list) ? list : [])
       const incomingTotal = Number(data?.pagination?.total ?? list?.length ?? 0)
@@ -344,11 +346,12 @@ export default function OrganizerManagement({ initialTab = "all" }: { initialTab
       }
       setSelectedIds(new Set())
     } catch (err) {
+      if (fetchId !== fetchIdRef.current) return
       console.error("Error fetching organizers:", err)
       setError("Failed to load organizers")
       toast({ title: "Error", description: "Failed to load organizers", variant: "destructive" })
     } finally {
-      setLoading(false)
+      if (fetchId === fetchIdRef.current) setLoading(false)
     }
   }
 

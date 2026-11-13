@@ -130,6 +130,7 @@ import {
   adminUpgradeCard,
 } from "./admin-dashboard-theme"
 import { cn } from "@/lib/utils"
+import { ADMIN_LIST_QUERY_KEYS } from "@/lib/admin-list-url"
 
 interface AdminDashboardProps {
   userRole: "SUPER_ADMIN" | "SUB_ADMIN"
@@ -304,7 +305,7 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
     const url = new URL(window.location.href)
     if (url.searchParams.get("section") !== activeSection ||
         (url.searchParams.get("sub") || "") !== activeSubSection) {
-      for (const key of ["page", "search", "status"]) url.searchParams.delete(key)
+      for (const key of ADMIN_LIST_QUERY_KEYS) url.searchParams.delete(key)
     }
     url.searchParams.set("section", activeSection)
     if (activeSubSection) url.searchParams.set("sub", activeSubSection)

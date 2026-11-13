@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback, useRef } from "react"
+import { readAdminListUrl, writeAdminListUrl, parseAdminListPage, listenForAdminListNavigation } from "@/lib/admin-list-url"
 import { toast } from "@/hooks/use-toast"
 import * as api from "../services/events.api"
 import type { Event, Category } from "../types/event.types"
@@ -114,35 +115,28 @@ export function useEvents() {
   const fetchIdRef = useRef(0)
   const editRequestIdRef = useRef(0)
 
-  // Restore the saved query and page before requesting the event list.
+  // Restore the explicit URL or saved list before requesting any events.
   useEffect(() => {
-    try {
-      const raw = sessionStorage.getItem(EVENTS_LIST_STATE_KEY)
-      if (raw) {
-        const saved = JSON.parse(raw) as {
-          page?: number
-          search?: string
-          status?: string
-          category?: string
-          country?: string
-          tab?: string
-        }
-        if (typeof saved?.page === "number" && Number.isSafeInteger(saved.page) && saved.page > 0) {
-          setPage(saved.page)
-        }
-        if (typeof saved?.search === "string") {
-          setSearchTerm(saved.search)
-          setDebouncedSearch(saved.search.trim())
-        }
-        if (typeof saved?.status === "string" && saved.status) setSelectedStatus(saved.status)
-        if (typeof saved?.category === "string" && saved.category) setSelectedCategory(saved.category)
-        if (typeof saved?.country === "string" && saved.country) setSelectedCountry(saved.country)
-        if (typeof saved?.tab === "string" && saved.tab) setActiveTab(saved.tab)
+    const restore = () => {
+      let saved = { page: 1, search: "", status: "all", category: "all", country: "all", tab: "all" }
+      try {
+        saved = { ...saved, ...JSON.parse(sessionStorage.getItem(EVENTS_LIST_STATE_KEY) || "{}") }
+      } catch {
+        /* ignore malformed/blocked storage */
       }
-    } catch {
-      /* ignore malformed/blocked storage */
+      const state = readAdminListUrl("events") ?? saved
+      const search = typeof state.search === "string" ? state.search : ""
+      setPage(parseAdminListPage(state.page))
+      setSearchTerm(search)
+      setDebouncedSearch(search.trim())
+      setSelectedStatus(typeof state.status === "string" && state.status ? state.status : "all")
+      setSelectedCategory(typeof state.category === "string" && state.category ? state.category : "all")
+      setSelectedCountry(typeof state.country === "string" && state.country ? state.country : "all")
+      setActiveTab(typeof state.tab === "string" && state.tab ? state.tab : "all")
+      setListStateRestored(true)
     }
-    setListStateRestored(true)
+    restore()
+    return listenForAdminListNavigation("events", restore)
   }, [])
 
   useEffect(() => {
@@ -162,6 +156,10 @@ export function useEvents() {
     } catch {
       /* ignore blocked/full storage */
     }
+    writeAdminListUrl("events", {
+      page, search: debouncedSearch, status: selectedStatus,
+      category: selectedCategory, country: selectedCountry, tab: activeTab,
+    })
   }, [page, debouncedSearch, selectedStatus, selectedCategory, selectedCountry, activeTab, listStateRestored])
 
   useEffect(() => {
@@ -236,6 +234,7 @@ export function useEvents() {
       return
     }
     void fetchEvents()
+    return () => { fetchIdRef.current += 1 }
   }, [fetchEvents, activeTab, listStateRestored])
 
   useEffect(() => {
