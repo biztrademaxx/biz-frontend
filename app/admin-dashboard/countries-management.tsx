@@ -1,7 +1,11 @@
 "use client"
 
 import { AppImage } from "@/components/app-image"
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, useRef } from "react"
+import { Pagination } from "./shared/components/Pagination"
+import { useLocationListState, type LocationTab } from "./locations/hooks/useLocationListState"
+import { ADMIN_LIST_QUERY_KEYS } from "@/lib/admin-list-url"
+
 import { 
   Plus, 
   Edit3, 
@@ -19,6 +23,8 @@ import {
 import CloudinaryUpload from "@/components/cloudinary-upload"
 import { apiFetch } from "@/lib/api"
 import { getCountryCatalog, getCountryOptions } from "@/lib/location-data"
+
+const LOCATIONS_PER_PAGE = 12
 
 interface Country {
   id: string
@@ -60,7 +66,8 @@ interface City {
 }
 
 interface CountriesManagementProps {
-  activeTab?: "countries" | "states" | "cities"
+  activeTab?: LocationTab
+  onTabChange?: (tab: LocationTab) => void
 }
 
 interface StateRow {
@@ -78,14 +85,15 @@ interface StateRow {
   }
 }
 
-export default function CountriesManagement({ activeTab = "countries" }: CountriesManagementProps) {
+export default function CountriesManagement({ activeTab = "countries", onTabChange }: CountriesManagementProps) {
   const [countries, setCountries] = useState<Country[]>([])
   const [cities, setCities] = useState<City[]>([])
   const [loading, setLoading] = useState(true)
   const [fetchError, setFetchError] = useState("")
-  const [searchTerm, setSearchTerm] = useState("")
-  const [currentActiveTab, setCurrentActiveTab] = useState<"countries" | "states" | "cities">(activeTab)
-  const [selectedStateCountry, setSelectedStateCountry] = useState("")
+  const [currentActiveTab, setCurrentActiveTab] = useState<LocationTab>(activeTab)
+  const { page, setPage, searchTerm, setSearchTerm, selectedStateCountry, setSelectedStateCountry, restored } = useLocationListState(currentActiveTab)
+  const [loadedTab, setLoadedTab] = useState<LocationTab | null>(null)
+  const fetchIdRef = useRef(0)
   const [states, setStates] = useState<StateRow[]>([])
   const [showCountryForm, setShowCountryForm] = useState(false)
   const [showStateForm, setShowStateForm] = useState(false)
@@ -128,21 +136,25 @@ export default function CountriesManagement({ activeTab = "countries" }: Countri
   }, [activeTab])
 
   useEffect(() => {
-    fetchData()
+    void fetchData()
+    return () => { fetchIdRef.current += 1 }
   }, [currentActiveTab])
 
   const fetchData = async () => {
+    const fetchId = ++fetchIdRef.current
     try {
       setLoading(true)
       setFetchError("")
       if (currentActiveTab === "countries") {
         const data = await apiFetch<Country[]>("/api/admin/countries?includeCounts=true", { auth: true })
+        if (fetchId !== fetchIdRef.current) return
         setCountries(Array.isArray(data) ? data : [])
       } else if (currentActiveTab === "states") {
         const [countriesResult, statesResult] = await Promise.allSettled([
           apiFetch<Country[]>("/api/admin/countries?includeCounts=true", { auth: true }),
           apiFetch<StateRow[]>("/api/admin/states?includeCounts=true", { auth: true }),
         ])
+        if (fetchId !== fetchIdRef.current) return
         if (countriesResult.status === "fulfilled") {
           setCountries(Array.isArray(countriesResult.value) ? countriesResult.value : [])
         }
@@ -157,15 +169,18 @@ export default function CountriesManagement({ activeTab = "countries" }: Countri
         }
       } else {
         const data = await apiFetch<City[]>("/api/admin/cities?includeCounts=true", { auth: true })
+        if (fetchId !== fetchIdRef.current) return
         setCities(Array.isArray(data) ? data : [])
       }
+      setLoadedTab(currentActiveTab)
     } catch (error) {
+      if (fetchId !== fetchIdRef.current) return
       console.error("Failed to fetch data:", error)
       const message =
         error instanceof Error ? error.message : "Failed to load location data. Is the backend running?"
       setFetchError(message)
     } finally {
-      setLoading(false)
+      if (fetchId === fetchIdRef.current) setLoading(false)
     }
   }
 
@@ -370,6 +385,35 @@ export default function CountriesManagement({ activeTab = "countries" }: Countri
     .filter((s) => !selectedStateCountry || s.country?.code === selectedStateCountry)
     .filter((s) => s.name.toLowerCase().includes(searchTerm.toLowerCase()))
     .sort((a, b) => b.eventCount - a.eventCount || a.name.localeCompare(b.name))
+  const paginatedTab = currentActiveTab === "countries" || currentActiveTab === "states"
+  const matchingCount = currentActiveTab === "countries" ? filteredCountries.length :
+    selectedStateCountry ? filteredStates.length : 0
+  const totalPages = Math.max(1, Math.ceil(matchingCount / LOCATIONS_PER_PAGE))
+  const visiblePage = Math.min(page, totalPages)
+  const pageStart = (visiblePage - 1) * LOCATIONS_PER_PAGE
+  const paginatedCountries = filteredCountries.slice(pageStart, pageStart + LOCATIONS_PER_PAGE)
+  const paginatedStates = filteredStates.slice(pageStart, pageStart + LOCATIONS_PER_PAGE)
+
+  useEffect(() => {
+    if (!restored || loading || fetchError || loadedTab !== currentActiveTab || !paginatedTab) return
+    if (currentActiveTab === "states" && !selectedStateCountry) return
+    if (page > totalPages) setPage(totalPages)
+  }, [restored, loading, fetchError, loadedTab, currentActiveTab, paginatedTab, selectedStateCountry, page, totalPages, setPage])
+
+  const handleTabChange = (tab: LocationTab) => {
+    if (tab === currentActiveTab) return
+    if (onTabChange) {
+      onTabChange(tab)
+      return
+    }
+    const url = new URL(window.location.href)
+    for (const key of ADMIN_LIST_QUERY_KEYS) url.searchParams.delete(key)
+    url.searchParams.set("section", "locations")
+    url.searchParams.set("sub", tab)
+    window.history.replaceState(window.history.state, "", url)
+    setCurrentActiveTab(tab)
+  }
+
   const stateCountryOptions: Array<{ code: string; name: string }> =
     countries.length > 0
       ? countries.map((c) => ({ code: c.code, name: c.name }))
@@ -430,6 +474,16 @@ export default function CountriesManagement({ activeTab = "countries" }: Countri
     )
   }
 
+  const paginationControls = paginatedTab && matchingCount > 0 ? (
+    <div className="rounded-lg border border-gray-200 bg-white px-4 pt-4">
+      <p className="text-sm text-gray-600" aria-live="polite">
+        Showing {pageStart + 1}&ndash;{Math.min(pageStart + LOCATIONS_PER_PAGE, matchingCount)} of {matchingCount} {currentActiveTab}
+        {" ? "}Page {visiblePage} of {totalPages}
+      </p>
+      <Pagination page={visiblePage} totalPages={totalPages} onPageChange={setPage} />
+    </div>
+  ) : null
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -444,7 +498,7 @@ export default function CountriesManagement({ activeTab = "countries" }: Countri
       <div className="border-b border-gray-200">
         <nav className="-mb-px flex space-x-8">
           <button
-            onClick={() => setCurrentActiveTab("countries")}
+            onClick={() => handleTabChange("countries")}
             className={`py-2 px-1 border-b-2 font-medium text-sm ${
               currentActiveTab === "countries"
                 ? "border-blue-500 text-blue-600"
@@ -455,7 +509,7 @@ export default function CountriesManagement({ activeTab = "countries" }: Countri
             Countries ({countries.length})
           </button>
           <button
-            onClick={() => setCurrentActiveTab("states")}
+            onClick={() => handleTabChange("states")}
             className={`py-2 px-1 border-b-2 font-medium text-sm ${
               currentActiveTab === "states"
                 ? "border-blue-500 text-blue-600"
@@ -466,7 +520,7 @@ export default function CountriesManagement({ activeTab = "countries" }: Countri
             States
           </button>
           <button
-            onClick={() => setCurrentActiveTab("cities")}
+            onClick={() => handleTabChange("cities")}
             className={`py-2 px-1 border-b-2 font-medium text-sm ${
               currentActiveTab === "cities"
                 ? "border-blue-500 text-blue-600"
@@ -560,8 +614,9 @@ export default function CountriesManagement({ activeTab = "countries" }: Countri
       {currentActiveTab === "states" && (
         <div className="space-y-4">
           <div className="max-w-sm">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Country</label>
+            <label htmlFor="states-country-filter" className="block text-sm font-medium text-gray-700 mb-1">Country</label>
             <select
+              id="states-country-filter"
               value={selectedStateCountry}
               onChange={(e) => setSelectedStateCountry(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -580,7 +635,7 @@ export default function CountriesManagement({ activeTab = "countries" }: Countri
               <p className="text-sm text-gray-600">Select a country to view states.</p>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                {filteredStates.map((s) => (
+                {paginatedStates.map((s) => (
                   <div key={s.id} className="px-3 py-2 rounded-md bg-slate-50 border border-slate-200">
                     <div className="flex items-center justify-between gap-2">
                       <div className="text-sm font-medium text-slate-900">{s.name}</div>
@@ -610,6 +665,7 @@ export default function CountriesManagement({ activeTab = "countries" }: Countri
                           <Edit3 className="w-4 h-4" />
                         </button>
                         <button
+                          aria-label={"Delete " + s.name}
                           onClick={() => handleDeleteState(s.id)}
                           className="p-1 text-red-600 hover:bg-red-50 rounded transition-colors"
                         >
@@ -625,6 +681,10 @@ export default function CountriesManagement({ activeTab = "countries" }: Countri
               </div>
             )}
           </div>
+          {selectedStateCountry && filteredStates.length === 0 && (
+            <p className="py-4 text-center text-sm text-gray-500">No states found. Try another search or country.</p>
+          )}
+          {selectedStateCountry ? paginationControls : null}
         </div>
       )}
 
@@ -695,7 +755,7 @@ export default function CountriesManagement({ activeTab = "countries" }: Countri
       {/* Countries Grid */}
       {currentActiveTab === "countries" && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredCountries.map((country) => (
+          {paginatedCountries.map((country) => (
             <div
               key={country.id}
               className={`bg-white rounded-lg border p-6 hover:shadow-md transition-shadow ${
@@ -791,6 +851,7 @@ export default function CountriesManagement({ activeTab = "countries" }: Countri
                     <Edit3 className="w-4 h-4" />
                   </button>
                   <button
+                    aria-label={"Delete " + country.name}
                     onClick={() => handleDeleteCountry(country.id)}
                     className="p-2 text-red-600 hover:bg-red-50 rounded transition-colors"
                   >
@@ -802,6 +863,8 @@ export default function CountriesManagement({ activeTab = "countries" }: Countri
           ))}
         </div>
       )}
+
+      {currentActiveTab === "countries" ? paginationControls : null}
 
       {/* Cities Grid */}
       {currentActiveTab === "cities" && (

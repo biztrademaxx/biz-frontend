@@ -17,17 +17,17 @@ export function parseAdminListPage(value: unknown): number {
   return typeof page === "number" && Number.isSafeInteger(page) && page > 0 ? page : 1
 }
 
-function isAdminListUrl(section: string): boolean {
+function isAdminListUrl(section: string, subSection = section + "-all"): boolean {
   const params = new URLSearchParams(window.location.search)
   const currentSection = params.get("section")
   const sub = params.get("sub")
-  return (!currentSection || currentSection === section) && (!sub || sub === section + "-all")
+  return (!currentSection || currentSection === section) && (!sub || sub === subSection)
 }
 
 // A page link describes its own filters; saved filters only apply without URL list state.
-export function readAdminListUrl(section: string): AdminListUrlState | null {
+export function readAdminListUrl(section: string, subSection?: string): AdminListUrlState | null {
   const params = new URLSearchParams(window.location.search)
-  if (!isAdminListUrl(section) || !ADMIN_LIST_QUERY_KEYS.some((key) => params.has(key))) return null
+  if (!isAdminListUrl(section, subSection) || !ADMIN_LIST_QUERY_KEYS.some((key) => params.has(key))) return null
   return {
     page: parseAdminListPage(params.get("page")),
     search: params.get("search") || "",
@@ -42,8 +42,9 @@ export function readAdminListUrl(section: string): AdminListUrlState | null {
 export function writeAdminListUrl(
   section: string,
   state: Pick<AdminListUrlState, "page"> & Partial<Omit<AdminListUrlState, "page">>,
+  subSection?: string,
 ): void {
-  if (!isAdminListUrl(section)) return
+  if (!isAdminListUrl(section, subSection)) return
   const url = new URL(window.location.href)
   for (const key of ADMIN_LIST_QUERY_KEYS) {
     const value = state[key]
@@ -54,8 +55,8 @@ export function writeAdminListUrl(
   if (url.href !== window.location.href) window.history.replaceState(window.history.state, "", url)
 }
 
-export function listenForAdminListNavigation(section: string, restore: () => void): () => void {
-  const handlePopState = () => { if (isAdminListUrl(section)) restore() }
+export function listenForAdminListNavigation(section: string, restore: () => void, subSection?: string): () => void {
+  const handlePopState = () => { if (isAdminListUrl(section, subSection)) restore() }
   window.addEventListener("popstate", handlePopState)
   return () => window.removeEventListener("popstate", handlePopState)
 }

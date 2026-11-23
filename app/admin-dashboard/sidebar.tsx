@@ -643,11 +643,11 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
         case "bulk-data":
           return <ImportPage />
         case "countries":
-          return <CountriesManagement activeTab="countries" />
+          return <CountriesManagement key="countries" activeTab="countries" onTabChange={(tab) => navigateToSubSection("locations", tab)} />
         case "states":
-          return <CountriesManagement activeTab="states" />
+          return <CountriesManagement key="states" activeTab="states" onTabChange={(tab) => navigateToSubSection("locations", tab)} />
         case "cities":
-          return <CountriesManagement activeTab="cities" />
+          return <CountriesManagement key="cities" activeTab="cities" onTabChange={(tab) => navigateToSubSection("locations", tab)} />
         case "organizers-add":
           return <AddOrganizerForm />
         case "organizers-all":
@@ -797,7 +797,7 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
       case "events":
         return <EventManagement onPromote={navigateToEventPromotions} />
       case "locations":
-        return <CountriesManagement activeTab="countries" />
+        return <CountriesManagement key="countries" activeTab="countries" onTabChange={(tab) => navigateToSubSection("locations", tab)} />
       case "organizers":
         return <OrganizerManagement />
       case "exhibitors":

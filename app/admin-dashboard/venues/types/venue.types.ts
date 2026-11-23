@@ -8,6 +8,7 @@ export const VENUES_PER_PAGE = 10
 
 export interface MeetingSpace {
   description?: string
+  features?: string[]
   id: string
   name: string
   capacity: number
@@ -74,6 +75,7 @@ export interface VenueEditFormData {
   maxCapacity: number
   totalHalls: number
   amenities: string[]
+  meetingSpaces?: MeetingSpace[]
   logo?: string
   venueImages?: string[]
   isVerified?: boolean
