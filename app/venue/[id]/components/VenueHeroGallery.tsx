@@ -4,7 +4,7 @@ import { ShareButton } from "@/components/share-button"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Building, Calendar, CheckCircle, ChevronLeft, ChevronRight, Loader2, MapPin, Star } from "lucide-react"
-import Image from "next/image"
+import { AppImage } from "@/components/app-image"
 import type { VenueDetail } from "../types/venue-detail.types"
 import { getGalleryImage, getVenueDisplayName } from "../lib/venue-detail-utils"
 
@@ -46,11 +46,12 @@ export function VenueHeroGallery({
   return (
     <div className="relative h-64 overflow-hidden xs:h-72 sm:h-80 md:h-96">
       {images.length > 0 ? (
-        <Image
+        <AppImage
           src={getGalleryImage(images, currentImageIndex)}
           alt={displayName}
           fill
           priority
+          fallbackSrc="/logo/Logo-1.png"
           sizes="100vw"
           className="object-cover"
         />
